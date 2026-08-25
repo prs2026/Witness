@@ -754,10 +754,253 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Sensor_Pressure:MS5607-02BA"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "U"
+				(at -6.35 8.89 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "MS5607-02BA"
+				(at 7.62 8.89 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "Package_LGA:LGA-8_3x5mm_P1.25mm"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" "https://www.te.com/commerce/DocumentDelivery/DDEController?Action=showdoc&DocId=Data+Sheet%7FMS5607-02BA03%7FB2%7Fpdf%7FEnglish%7FENG_DS_MS5607-02BA03_B2.pdf%7FCAT-BLPS0035"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Barometric pressure sensor, 20cm resolution, 10 to 1200 mbar, I2C and SPI interface up to 20MHz, LGA-8"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "pressure SPI I2C"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "LGA*3x5mm*P1.25mm*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "MS5607-02BA_0_1"
+				(rectangle
+					(start -7.62 7.62)
+					(end 7.62 -7.62)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+			)
+			(symbol "MS5607-02BA_1_1"
+				(pin power_in line
+					(at 0 10.16 270)
+					(length 2.54)
+					(name "VDD"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -10.16 5.08 0)
+					(length 2.54)
+					(name "PS"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 0 -10.16 90)
+					(length 2.54)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -10.16 -5.08 0)
+					(length 2.54)
+					(name "CSB"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -10.16 -5.08 0)
+					(length 2.54)
+					(hide yes)
+					(name "CSB"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin output line
+					(at -10.16 2.54 0)
+					(length 2.54)
+					(name "SDO"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at -10.16 0 0)
+					(length 2.54)
+					(name "SDI/SDA"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -10.16 -2.54 0)
+					(length 2.54)
+					(name "SCLK"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 	)
 	(rectangle
-		(start 149.86 49.53)
-		(end 256.54 151.13)
+		(start 17.78 110.49)
+		(end 109.22 189.23)
 		(stroke
 			(width 0)
 			(type default)
@@ -768,8 +1011,20 @@
 		(uuid "08705bdf-5a51-4381-a50a-336bf1f080f2")
 	)
 	(rectangle
-		(start 33.02 50.8)
-		(end 127 152.4)
+		(start 132.08 24.13)
+		(end 226.06 101.6)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(uuid "18150739-341f-44cc-aab2-e506aa830304")
+	)
+	(rectangle
+		(start 16.51 24.13)
+		(end 110.49 101.6)
 		(stroke
 			(width 0)
 			(type default)
@@ -781,7 +1036,7 @@
 	)
 	(text "320G IMU"
 		(exclude_from_sim no)
-		(at 78.74 49.276 0)
+		(at 62.23 22.606 0)
 		(effects
 			(font
 				(size 2.54 2.54)
@@ -791,7 +1046,7 @@
 	)
 	(text "32G IMU"
 		(exclude_from_sim no)
-		(at 200.406 47.244 0)
+		(at 53.086 108.204 0)
 		(effects
 			(font
 				(size 2.54 2.54)
@@ -799,9 +1054,19 @@
 		)
 		(uuid "7ea1e9d4-2ce7-4b06-a918-08d271149335")
 	)
+	(text "BAROMETER"
+		(exclude_from_sim no)
+		(at 177.8 22.606 0)
+		(effects
+			(font
+				(size 2.54 2.54)
+			)
+		)
+		(uuid "d2cada89-7c9f-48b7-9986-f9e95b699e7a")
+	)
 	(symbol
 		(lib_id "Sensor_Motion:LSM6DS3")
-		(at 81.28 90.17 0)
+		(at 50.8 54.61 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -812,7 +1077,7 @@
 		(fields_autoplaced yes)
 		(uuid "50d0f882-9280-43fb-8fd4-157df94b14fe")
 		(property "Reference" "U4"
-			(at 83.4233 105.41 0)
+			(at 52.9433 69.85 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -823,7 +1088,7 @@
 			)
 		)
 		(property "Value" "LSM6DS3"
-			(at 83.4233 107.95 0)
+			(at 52.9433 72.39 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -834,7 +1099,7 @@
 			)
 		)
 		(property "Footprint" "Package_LGA:LGA-14_3x2.5mm_P0.5mm_LayoutBorder3x4y"
-			(at 71.12 107.95 0)
+			(at 40.64 72.39 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -846,7 +1111,7 @@
 			)
 		)
 		(property "Datasheet" "https://www.st.com/resource/en/datasheet/lsm6ds3tr-c.pdf"
-			(at 83.82 106.68 0)
+			(at 53.34 71.12 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -857,7 +1122,7 @@
 			)
 		)
 		(property "Description" "I2C/SPI, iNEMO inertial module: always-on 3D accelerometer and 3D gyroscope"
-			(at 81.28 90.17 0)
+			(at 50.8 54.61 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -920,7 +1185,7 @@
 	)
 	(symbol
 		(lib_id "Sensor_Motion:ICM-20602")
-		(at 203.2 91.44 0)
+		(at 62.23 137.16 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -931,7 +1196,7 @@
 		(fields_autoplaced yes)
 		(uuid "9a01781f-7226-4230-9814-0b2107071388")
 		(property "Reference" "U5"
-			(at 205.3433 104.14 0)
+			(at 64.3733 149.86 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -942,7 +1207,7 @@
 			)
 		)
 		(property "Value" "ICM-20602"
-			(at 205.3433 106.68 0)
+			(at 64.3733 152.4 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -953,7 +1218,7 @@
 			)
 		)
 		(property "Footprint" "Package_LGA:LGA-16_3x3mm_P0.5mm_LayoutBorder3x5y"
-			(at 203.2 85.09 0)
+			(at 62.23 130.81 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -964,7 +1229,7 @@
 			)
 		)
 		(property "Datasheet" "http://www.invensense.com/wp-content/uploads/2016/10/DS-000176-ICM-20602-v1.0.pdf"
-			(at 204.47 67.31 0)
+			(at 63.5 113.03 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -975,7 +1240,7 @@
 			)
 		)
 		(property "Description" "High performance 6-Axis MEMS motion tracking, SPI/I2C interface, LGA-16"
-			(at 203.2 91.44 0)
+			(at 62.23 137.16 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -1037,6 +1302,106 @@
 			(project "witnessv0.1"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b/6023f714-3146-4cd2-9fdd-9f3ecdc641a0"
 					(reference "U5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Sensor_Pressure:MS5607-02BA")
+		(at 175.26 55.88 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "c69b7ca1-cc3c-4341-8daa-4950c0166e10")
+		(property "Reference" "U7"
+			(at 184.15 54.6099 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MS5607-02BA"
+			(at 184.15 57.1499 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Package_LGA:LGA-8_3x5mm_P1.25mm"
+			(at 175.26 55.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" "https://www.te.com/commerce/DocumentDelivery/DDEController?Action=showdoc&DocId=Data+Sheet%7FMS5607-02BA03%7FB2%7Fpdf%7FEnglish%7FENG_DS_MS5607-02BA03_B2.pdf%7FCAT-BLPS0035"
+			(at 175.26 55.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Barometric pressure sensor, 20cm resolution, 10 to 1200 mbar, I2C and SPI interface up to 20MHz, LGA-8"
+			(at 175.26 55.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "235e5042-cbe6-496f-b581-e01efde51101")
+		)
+		(pin "4"
+			(uuid "fb483096-394b-485d-be14-1d83c6467b3b")
+		)
+		(pin "8"
+			(uuid "91746652-1ea7-43cd-a931-715bbf414436")
+		)
+		(pin "1"
+			(uuid "16b5b201-159e-4f25-b713-4c466830ef6e")
+		)
+		(pin "3"
+			(uuid "ab9f1f8b-eec6-4dd0-aaba-95a02b9b45ab")
+		)
+		(pin "5"
+			(uuid "6ff11822-85b0-48f6-9ca6-f9aba9521e7f")
+		)
+		(pin "6"
+			(uuid "2d62c3e6-e5ef-41b8-a9af-4f7938cc0712")
+		)
+		(pin "7"
+			(uuid "23e384a3-532c-4816-8261-237778632add")
+		)
+		(instances
+			(project "witnessv0.1"
+				(path "/c7e4a338-55e7-4896-822a-22161197db9b/6023f714-3146-4cd2-9fdd-9f3ecdc641a0"
+					(reference "U7")
 					(unit 1)
 				)
 			)
