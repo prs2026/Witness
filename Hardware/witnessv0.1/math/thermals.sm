@@ -1,0 +1,415 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?application progid="SMath Solver" version="1.5.0.9678"?>
+<worksheet xmlns="http://smath.info/schemas/worksheet/1.0">
+  <settings ppi="96">
+    <identity>
+      <id>11b9bc67-2a03-415c-9a9c-9d98128e37be</id>
+      <revision>6</revision>
+    </identity>
+    <calculation>
+      <precision>4</precision>
+      <exponentialThreshold>5</exponentialThreshold>
+      <trailingZeros>false</trailingZeros>
+      <significantDigitsMode>false</significantDigitsMode>
+      <mixedNumbers>false</mixedNumbers>
+      <roundingMode>0</roundingMode>
+      <approximateEqualAccuracy>3</approximateEqualAccuracy>
+      <fractions>decimal</fractions>
+    </calculation>
+    <pageModel active="false" viewMode="1" printGrid="false" printAreas="true" simpleEqualsOnly="false" printBackgroundImages="true" hideElementsHighlightings="true">
+      <paper id="1" orientation="Portrait" width="850" height="1100" />
+      <margins left="39" right="39" top="49" bottom="49" />
+      <header alignment="Center" color="#a9a9a9">&amp;[DATE] &amp;[TIME] - &amp;[FILENAME]</header>
+      <footer alignment="Center" color="#a9a9a9">&amp;[PAGENUM] / &amp;[COUNT]</footer>
+      <backgrounds />
+    </pageModel>
+    <dependencies>
+      <assembly name="SMath Core" version="1.75.9678.0" guid="a37cba83-b69c-4c71-9992-55ff666763bd" />
+      <assembly name="MathRegion" version="1.75.9678.0" guid="02f1ab51-215b-466e-a74d-5d8b1cf85e8d" />
+    </dependencies>
+  </settings>
+  <regions type="content">
+    <region left="90" top="9" width="102" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">V.in</e>
+          <e type="operand">4.2</e>
+          <e type="operand" style="unit">V</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="396" top="18" width="111" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">I.FC</e>
+          <e type="operand">250</e>
+          <e type="operand" style="unit">mA</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="648" top="18" width="119" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">I.GPS</e>
+          <e type="operand">220</e>
+          <e type="operand" style="unit">mA</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="918" top="18" width="115" height="59" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">h.c</e>
+          <e type="operand">10</e>
+          <e type="operand" style="unit">W</e>
+          <e type="operand" style="unit">m</e>
+          <e type="operand">2</e>
+          <e type="operator" args="2">^</e>
+          <e type="operand" style="unit">K</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">/</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="90" top="45" width="294" height="35" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">P.inLDO</e>
+          <e type="operand">I.FC</e>
+          <e type="operand">I.GPS</e>
+          <e type="operator" args="2">+</e>
+          <e type="bracket">(</e>
+          <e type="operand">V.in</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">1.974</e>
+          <e type="operand" style="unit">W</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="396" top="45" width="102" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">V.FC</e>
+          <e type="operand">3.3</e>
+          <e type="operand" style="unit">V</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="648" top="45" width="109" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">V.GPS</e>
+          <e type="operand">3.3</e>
+          <e type="operand" style="unit">V</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="648" top="72" width="228" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">P.GPS</e>
+          <e type="operand">I.GPS</e>
+          <e type="operand">V.GPS</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">0.726</e>
+          <e type="operand" style="unit">W</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="396" top="81" width="205" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">P.FC</e>
+          <e type="operand">I.FC</e>
+          <e type="operand">V.FC</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">0.825</e>
+          <e type="operand" style="unit">W</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="27" top="90" width="340" height="35" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">P.lossLDO</e>
+          <e type="operand">P.inLDO</e>
+          <e type="operand">P.FC</e>
+          <e type="operand">P.GPS</e>
+          <e type="operator" args="2">+</e>
+          <e type="bracket">(</e>
+          <e type="operator" args="2">-</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">0.423</e>
+          <e type="operand" style="unit">W</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="648" top="99" width="101" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">q.GPS</e>
+          <e type="operand">P.GPS</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="396" top="117" width="171" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">q.FC</e>
+          <e type="operand">P.FC</e>
+          <e type="operand">P.lossLDO</e>
+          <e type="operator" args="2">+</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="648" top="126" width="111" height="45" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">a.GPS</e>
+          <e type="operand">5</e>
+          <e type="operand" style="unit">in</e>
+          <e type="operand">2</e>
+          <e type="operator" args="2">^</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="54" top="144" width="95" height="27" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">eff</e>
+          <e type="operand">90</e>
+          <e type="operand" style="unit">%</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="396" top="144" width="88" height="39" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">a</e>
+          <e type="operand">3</e>
+          <e type="operand" style="unit">in</e>
+          <e type="operand">2</e>
+          <e type="operator" args="2">^</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="45" top="162" width="319" height="47" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">P.inSMPS</e>
+          <e type="operand">P.FC</e>
+          <e type="operand">P.GPS</e>
+          <e type="operator" args="2">+</e>
+          <e type="bracket">(</e>
+          <e type="operand">1</e>
+          <e type="operand">eff</e>
+          <e type="operator" args="2">/</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">1.7233</e>
+          <e type="operand" style="unit">W</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="396" top="180" width="198" height="59" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">dt</e>
+          <e type="operand">q.FC</e>
+          <e type="operand">h.c</e>
+          <e type="operand">a</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">/</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">64.4801</e>
+          <e type="operand" style="unit">K</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="648" top="180" width="212" height="59" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">dt</e>
+          <e type="operand">q.GPS</e>
+          <e type="operand">h.c</e>
+          <e type="operand">a.GPS</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">/</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">22.506</e>
+          <e type="operand" style="unit">K</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="27" top="216" width="357" height="35" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">P.lossSMP</e>
+          <e type="operand">P.inSMPS</e>
+          <e type="operand">P.FC</e>
+          <e type="operand">P.GPS</e>
+          <e type="operator" args="2">+</e>
+          <e type="bracket">(</e>
+          <e type="operator" args="2">-</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">0.1723</e>
+          <e type="operand" style="unit">W</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="396" top="243" width="171" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">q.FC</e>
+          <e type="operand">P.FC</e>
+          <e type="operand">P.lossSMP</e>
+          <e type="operator" args="2">+</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="396" top="270" width="88" height="39" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">a</e>
+          <e type="operand">3</e>
+          <e type="operand" style="unit">in</e>
+          <e type="operand">2</e>
+          <e type="operator" args="2">^</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="54" top="306" width="182" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">Batt.cap</e>
+          <e type="operand">1200</e>
+          <e type="operand" style="unit">mA</e>
+          <e type="operator" args="2">*</e>
+          <e type="operand" style="unit">Hr</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="396" top="306" width="189" height="59" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">dt</e>
+          <e type="operand">q.FC</e>
+          <e type="operand">h.c</e>
+          <e type="operand">a</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">/</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">51.529</e>
+          <e type="operand" style="unit">K</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="54" top="360" width="293" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">Batt.P</e>
+          <e type="operand">Batt.cap</e>
+          <e type="operand">3.7</e>
+          <e type="operator" args="2">*</e>
+          <e type="operand" style="unit">V</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">4.44</e>
+          <e type="operand" style="unit">Hr</e>
+          <e type="operator" args="2">*</e>
+          <e type="operand" style="unit">W</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="63" top="405" width="279" height="59" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">Runtime.LDO</e>
+          <e type="operand">Batt.P</e>
+          <e type="operand">P.inLDO</e>
+          <e type="operator" args="2">/</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">2.2492</e>
+          <e type="operand" style="unit">Hr</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="63" top="459" width="294" height="59" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">Runtime.SMPS</e>
+          <e type="operand">Batt.P</e>
+          <e type="operand">P.inSMPS</e>
+          <e type="operator" args="2">/</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">2.5764</e>
+          <e type="operand" style="unit">Hr</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+  </regions>
+</worksheet>
