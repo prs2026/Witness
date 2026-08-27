@@ -661,7 +661,7 @@
         "uuid": "c7e4a338-55e7-4896-822a-22161197db9b"
       }
     ],
-    "used_designators": "U1-7,C1-6,J1-4,P1,Y1,D1,#PWR1-4",
+    "used_designators": "U1-7,C1-31,BZ1,J1-4,P1,Y1,D1,#PWR1-33,R1-10,L1-4",
     "variants": []
   },
   "sheets": [
@@ -684,6 +684,10 @@
     [
       "5a3b15b3-53d3-4c9c-a1c0-f7e9d04d876d",
       "IO"
+    ],
+    [
+      "85be8285-b453-4356-8eb2-bc62ae848ee1",
+      "Radio"
     ]
   ],
   "text_variables": {},

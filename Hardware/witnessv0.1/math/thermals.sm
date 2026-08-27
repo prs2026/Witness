@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?application progid="SMath Solver" version="1.5.0.9678"?>
 <worksheet xmlns="http://smath.info/schemas/worksheet/1.0">
-  <settings ppi="144">
+  <settings ppi="96">
     <identity>
       <id>11b9bc67-2a03-415c-9a9c-9d98128e37be</id>
-      <revision>8</revision>
+      <revision>9</revision>
     </identity>
     <calculation>
       <precision>4</precision>
@@ -208,7 +208,7 @@
       <math>
         <input>
           <e type="operand">eff</e>
-          <e type="operand">95</e>
+          <e type="operand">90</e>
           <e type="operand" style="unit">%</e>
           <e type="operator" args="2">*</e>
           <e type="operator" args="2">:</e>
@@ -243,7 +243,7 @@
           <e type="operator" args="2">:</e>
         </input>
         <result action="numeric">
-          <e type="operand">1.6326</e>
+          <e type="operand">1.7233</e>
           <e type="operand" style="unit">W</e>
           <e type="operator" args="2">*</e>
         </result>
@@ -298,7 +298,7 @@
           <e type="operator" args="2">:</e>
         </input>
         <result action="numeric">
-          <e type="operand">0.0816</e>
+          <e type="operand">0.1723</e>
           <e type="operand" style="unit">W</e>
           <e type="operator" args="2">*</e>
         </result>
@@ -341,7 +341,7 @@
         </input>
       </math>
     </region>
-    <region left="396" top="306" width="198" height="59" color="#000000" fontSize="12">
+    <region left="396" top="306" width="189" height="59" color="#000000" fontSize="12">
       <math>
         <input>
           <e type="operand">dt</e>
@@ -353,7 +353,7 @@
           <e type="operator" args="2">:</e>
         </input>
         <result action="numeric">
-          <e type="operand">46.8427</e>
+          <e type="operand">51.529</e>
           <e type="operand" style="unit">K</e>
           <e type="operator" args="2">*</e>
         </result>
@@ -405,7 +405,7 @@
           <e type="operator" args="2">:</e>
         </input>
         <result action="numeric">
-          <e type="operand">2.7195</e>
+          <e type="operand">2.5764</e>
           <e type="operand" style="unit">Hr</e>
           <e type="operator" args="2">*</e>
         </result>

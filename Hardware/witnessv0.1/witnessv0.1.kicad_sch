@@ -144,7 +144,53 @@
 		)
 	)
 	(sheet
-		(at 172.72 66.04)
+		(at 111.76 36.83)
+		(size 46.99 46.99)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0)
+		)
+		(uuid "85be8285-b453-4356-8eb2-bc62ae848ee1")
+		(property "Sheetname" "Radio"
+			(at 111.76 36.1184 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "radio.kicad_sch"
+			(at 111.76 84.4046 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "witnessv0.1"
+				(path "/c7e4a338-55e7-4896-822a-22161197db9b"
+					(page "6")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 199.39 31.75)
 		(size 58.42 39.37)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -160,7 +206,7 @@
 		)
 		(uuid "e1fc9771-294d-4cbf-8437-96abea4a6606")
 		(property "Sheetname" "Power"
-			(at 172.72 65.3284 0)
+			(at 199.39 31.0384 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -171,7 +217,7 @@
 			)
 		)
 		(property "Sheetfile" "power.kicad_sch"
-			(at 172.72 105.9946 0)
+			(at 199.39 71.7046 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects

@@ -1209,7 +1209,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_USB:USB_C_Receptacle_G-Switch_GT-USB-7010ASV"
+		(property "Footprint" "KicadLibs:CONN_10164359-00011LF_AMP"
 			(at 234.95 113.03 0)
 			(hide yes)
 			(show_name no)
