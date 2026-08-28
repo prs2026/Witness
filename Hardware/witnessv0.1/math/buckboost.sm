@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?application progid="SMath Solver" version="1.5.0.9678"?>
 <worksheet xmlns="http://smath.info/schemas/worksheet/1.0">
-  <settings ppi="96">
+  <settings ppi="144">
     <identity>
       <id>ceb40312-0daa-414e-a568-927b5b2ce2ed</id>
-      <revision>3</revision>
+      <revision>4</revision>
     </identity>
     <calculation>
       <precision>4</precision>
@@ -26,6 +26,7 @@
     <dependencies>
       <assembly name="SMath Core" version="1.75.9678.0" guid="a37cba83-b69c-4c71-9992-55ff666763bd" />
       <assembly name="MathRegion" version="1.75.9678.0" guid="02f1ab51-215b-466e-a74d-5d8b1cf85e8d" />
+      <assembly name="TextRegion" version="1.75.9678.0" guid="485d28c5-349a-48b6-93be-12a35a1c1e39" />
     </dependencies>
   </settings>
   <regions type="content">
@@ -42,7 +43,7 @@
       <math>
         <input>
           <e type="operand">V.IN</e>
-          <e type="operand">3.3</e>
+          <e type="operand">3.6</e>
           <e type="operator" args="2">:</e>
         </input>
       </math>
@@ -69,11 +70,11 @@
         </input>
       </math>
     </region>
-    <region left="234" top="81" width="127" height="39" color="#000000" fontSize="12">
+    <region left="234" top="81" width="108" height="39" color="#000000" fontSize="12">
       <math>
         <input>
           <e type="operand">L</e>
-          <e type="operand">1.5</e>
+          <e type="operand">1</e>
           <e type="operand">10</e>
           <e type="operand">6</e>
           <e type="operator" args="1">-</e>
@@ -107,7 +108,7 @@
           <e type="operator" args="2">:</e>
         </input>
         <result action="numeric">
-          <e type="operand">0.34</e>
+          <e type="operand">0.28</e>
         </result>
       </math>
     </region>
@@ -137,7 +138,7 @@
           <e type="operator" args="2">:</e>
         </input>
         <result action="numeric">
-          <e type="operand">3.5228</e>
+          <e type="operand">3.2964</e>
         </result>
       </math>
     </region>
@@ -162,11 +163,93 @@
           <e type="operator" args="2">:</e>
         </input>
         <result action="numeric">
-          <e type="operand">1.1561</e>
+          <e type="operand">2.0637</e>
           <e type="operand">10</e>
           <e type="operand">5</e>
           <e type="operator" args="2">^</e>
           <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="90" top="351" width="416" height="23" color="#000000" fontSize="10">
+      <text lang="eng" fontFamily="Arial" fontSize="10">
+        <content>
+          <p>Suggested values give outputs that suggest it would be unstable... ?</p>
+        </content>
+      </text>
+    </region>
+    <region left="90" top="396" width="100" height="29" color="#000000" fontSize="10">
+      <math>
+        <input>
+          <e type="operand">V.UVLO</e>
+          <e type="operand">3.6</e>
+          <e type="operand" style="unit">V</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="90" top="423" width="87" height="29" color="#000000" fontSize="10">
+      <math>
+        <input>
+          <e type="operand">V.EN</e>
+          <e type="operand">0.8</e>
+          <e type="operand" style="unit">V</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="90" top="459" width="97" height="29" color="#000000" fontSize="10">
+      <math optimize="2">
+        <input>
+          <e type="operand">R.1</e>
+          <e type="operand">35</e>
+          <e type="operand" style="unit">kohm</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="90" top="513" width="190" height="51" color="#000000" fontSize="10">
+      <math>
+        <input>
+          <e type="operand">R.2</e>
+          <e type="operand">R.1</e>
+          <e type="operand">V.EN</e>
+          <e type="operator" args="2">*</e>
+          <e type="operand">V.UVLO</e>
+          <e type="operand">V.EN</e>
+          <e type="operator" args="2">-</e>
+          <e type="operator" args="2">/</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">10000</e>
+          <e type="operand" style="unit">Ω</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="81" top="594" width="190" height="57" color="#000000" fontSize="10">
+      <math>
+        <input>
+          <e type="operand">I.R</e>
+          <e type="operand">V.UVLO</e>
+          <e type="bracket">(</e>
+          <e type="operand">R.1</e>
+          <e type="operand">R.2</e>
+          <e type="operator" args="2">+</e>
+          <e type="bracket">(</e>
+          <e type="operator" args="2">/</e>
+          <e type="bracket">(</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <contract>
+          <e type="operand" style="unit">mA</e>
+        </contract>
+        <result action="numeric">
+          <e type="operand">0.08</e>
         </result>
       </math>
     </region>
