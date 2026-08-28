@@ -4,7 +4,7 @@
   <settings ppi="96">
     <identity>
       <id>11b9bc67-2a03-415c-9a9c-9d98128e37be</id>
-      <revision>9</revision>
+      <revision>10</revision>
     </identity>
     <calculation>
       <precision>4</precision>
@@ -26,6 +26,7 @@
     <dependencies>
       <assembly name="SMath Core" version="1.75.9678.0" guid="a37cba83-b69c-4c71-9992-55ff666763bd" />
       <assembly name="MathRegion" version="1.75.9678.0" guid="02f1ab51-215b-466e-a74d-5d8b1cf85e8d" />
+      <assembly name="TextRegion" version="1.75.9678.0" guid="485d28c5-349a-48b6-93be-12a35a1c1e39" />
     </dependencies>
   </settings>
   <regions type="content">
@@ -407,6 +408,72 @@
         <result action="numeric">
           <e type="operand">2.5764</e>
           <e type="operand" style="unit">Hr</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="63" top="558" width="152" height="26" color="#000000" fontSize="12">
+      <text lang="eng" fontFamily="Arial" fontSize="12">
+        <content>
+          <p>pmos thermal calcs</p>
+        </content>
+      </text>
+    </region>
+    <region left="63" top="594" width="227" height="59" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">I.PMOS</e>
+          <e type="operand">P.inSMPS</e>
+          <e type="operand">V.in</e>
+          <e type="operator" args="2">/</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">0.4103</e>
+          <e type="operand" style="unit">A</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="63" top="657" width="140" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">Rds.ON</e>
+          <e type="operand">40</e>
+          <e type="operand" style="unit">mohm</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="72" top="711" width="252" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">Vds</e>
+          <e type="operand">I.PMOS</e>
+          <e type="operand">Rds.ON</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">0.0164</e>
+          <e type="operand" style="unit">V</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="72" top="747" width="279" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">P.lossPMOS</e>
+          <e type="operand">Vds</e>
+          <e type="operand">I.PMOS</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">0.0067</e>
+          <e type="operand" style="unit">W</e>
           <e type="operator" args="2">*</e>
         </result>
       </math>

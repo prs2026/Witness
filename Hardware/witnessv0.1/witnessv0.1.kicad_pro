@@ -611,12 +611,30 @@
           "label": "Datasheet",
           "name": "Datasheet",
           "show": true
+        },
+        {
+          "group_by": false,
+          "label": "Description",
+          "name": "Description",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "#",
+          "name": "${ITEM_NUMBER}",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "Sim.Pins",
+          "name": "Sim.Pins",
+          "show": false
         }
       ],
       "filter_string": "",
       "group_symbols": true,
       "include_excluded_from_bom": true,
-      "name": "Default Editing",
+      "name": "",
       "sort_asc": true,
       "sort_field": "Reference"
     },
@@ -661,7 +679,7 @@
         "uuid": "c7e4a338-55e7-4896-822a-22161197db9b"
       }
     ],
-    "used_designators": "U1-8,C1-34,BZ1,J1-4,P1,Y1,D1-3,#PWR1-56,R1-29,AE1,L1-5",
+    "used_designators": "U1-11,C1-42,BZ1,J1-4,P1,Y1,D1-5,#PWR1-79,R1-34,AE1,L1-5,Q1-2,F1",
     "variants": []
   },
   "sheets": [
