@@ -2,4 +2,5 @@
 	(version 7)
 	(lib (name "Witness") (type "KiCad") (uri "C:/Users/E/Documents/GitHub/Witness/Hardware/KicadLibs/Witness.pretty") (options "") (descr ""))
 	(lib (name "KicadLibs") (type "KiCad") (uri "C:/Users/E/Documents/GitHub/Witness/Hardware/KicadLibs") (options "") (descr ""))
+	(lib (name "microSD_Card") (type "KiCad") (uri "C:/Users/E/Documents/GitHub/Witness/Hardware/KicadLibs/microSD_Card") (options "") (descr ""))
 )

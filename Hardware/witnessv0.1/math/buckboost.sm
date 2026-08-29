@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?application progid="SMath Solver" version="1.5.0.9678"?>
 <worksheet xmlns="http://smath.info/schemas/worksheet/1.0">
-  <settings ppi="144">
+  <settings ppi="96">
     <identity>
       <id>ceb40312-0daa-414e-a568-927b5b2ce2ed</id>
-      <revision>4</revision>
+      <revision>5</revision>
     </identity>
     <calculation>
       <precision>4</precision>
@@ -35,6 +35,17 @@
         <input>
           <e type="operand">V.OUT</e>
           <e type="operand">5</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="630" top="18" width="90" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">I.MAX</e>
+          <e type="operand">3</e>
+          <e type="operand" style="unit">A</e>
+          <e type="operator" args="2">*</e>
           <e type="operator" args="2">:</e>
         </input>
       </math>
@@ -70,6 +81,17 @@
         </input>
       </math>
     </region>
+    <region left="630" top="72" width="134" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">R.sense</e>
+          <e type="operand">5</e>
+          <e type="operand" style="unit">mohm</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
     <region left="234" top="81" width="108" height="39" color="#000000" fontSize="12">
       <math>
         <input>
@@ -95,6 +117,19 @@
         </input>
       </math>
     </region>
+    <region left="630" top="126" width="119" height="47" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">Gain</e>
+          <e type="operand">100</e>
+          <e type="operand" style="unit">V</e>
+          <e type="operand" style="unit">V</e>
+          <e type="operator" args="2">/</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
     <region left="81" top="135" width="196" height="61" color="#000000" fontSize="12">
       <math>
         <input>
@@ -109,6 +144,22 @@
         </input>
         <result action="numeric">
           <e type="operand">0.28</e>
+        </result>
+      </math>
+    </region>
+    <region left="630" top="189" width="251" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">V.drop</e>
+          <e type="operand">I.MAX</e>
+          <e type="operand">R.sense</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">0.015</e>
+          <e type="operand" style="unit">V</e>
+          <e type="operator" args="2">*</e>
         </result>
       </math>
     </region>
@@ -142,6 +193,22 @@
         </result>
       </math>
     </region>
+    <region left="630" top="234" width="222" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">V.out</e>
+          <e type="operand">Gain</e>
+          <e type="operand">V.drop</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">1.5</e>
+          <e type="operand" style="unit">V</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
     <region left="90" top="279" width="302" height="72" color="#000000" fontSize="12">
       <math>
         <input>
@@ -167,6 +234,22 @@
           <e type="operand">10</e>
           <e type="operand">5</e>
           <e type="operator" args="2">^</e>
+          <e type="operator" args="2">*</e>
+        </result>
+      </math>
+    </region>
+    <region left="630" top="279" width="243" height="33" color="#000000" fontSize="12">
+      <math>
+        <input>
+          <e type="operand">P.loss</e>
+          <e type="operand">V.drop</e>
+          <e type="operand">I.MAX</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">0.045</e>
+          <e type="operand" style="unit">W</e>
           <e type="operator" args="2">*</e>
         </result>
       </math>

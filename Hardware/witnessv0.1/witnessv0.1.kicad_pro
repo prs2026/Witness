@@ -580,25 +580,25 @@
           "group_by": true,
           "label": "Exclude from BOM",
           "name": "${EXCLUDE_FROM_BOM}",
-          "show": true
+          "show": false
         },
         {
           "group_by": true,
           "label": "Exclude from Board",
           "name": "${EXCLUDE_FROM_BOARD}",
-          "show": true
+          "show": false
         },
         {
           "group_by": true,
           "label": "Exclude from Simulation",
           "name": "${EXCLUDE_FROM_SIM}",
-          "show": true
+          "show": false
         },
         {
           "group_by": true,
           "label": "Exclude from Position Files",
           "name": "${EXCLUDE_FROM_POS_FILES}",
-          "show": true
+          "show": false
         },
         {
           "group_by": true,
@@ -636,7 +636,7 @@
       "include_excluded_from_bom": true,
       "name": "",
       "sort_asc": true,
-      "sort_field": "Reference"
+      "sort_field": "${EXCLUDE_FROM_POS_FILES}"
     },
     "bus_aliases": {},
     "connection_grid_size": 50.0,
@@ -679,7 +679,7 @@
         "uuid": "c7e4a338-55e7-4896-822a-22161197db9b"
       }
     ],
-    "used_designators": "U1-11,C1-42,BZ1,J1-4,P1,Y1,D1-5,#PWR1-79,R1-34,AE1,L1-5,Q1-2,F1",
+    "used_designators": "U1-11,C1-43,BZ1,J1-10,P1,Y1,D1-5,#PWR1-96,R1-34,AE1,L1-5,Q1-2,F1,JP1-6,H1-7",
     "variants": []
   },
   "sheets": [
