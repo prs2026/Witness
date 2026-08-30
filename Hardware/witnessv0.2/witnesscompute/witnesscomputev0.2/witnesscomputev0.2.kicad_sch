@@ -67,7 +67,7 @@
 			)
 		)
 		(instances
-			(project "witnessv0.1"
+			(project "witnesscomputev0.2"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b"
 					(page "5")
 				)
@@ -233,7 +233,7 @@
 			)
 		)
 		(instances
-			(project "witnessv0.1"
+			(project "witnesscomputev0.2"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b"
 					(page "4")
 				)
@@ -279,7 +279,7 @@
 			)
 		)
 		(instances
-			(project "witnessv0.1"
+			(project "witnesscomputev0.2"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b"
 					(page "2")
 				)
@@ -405,7 +405,7 @@
 			)
 		)
 		(instances
-			(project "witnessv0.1"
+			(project "witnesscomputev0.2"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b"
 					(page "6")
 				)
@@ -481,7 +481,7 @@
 			)
 		)
 		(instances
-			(project "witnessv0.1"
+			(project "witnesscomputev0.2"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b"
 					(page "3")
 				)

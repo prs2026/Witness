@@ -3479,7 +3479,7 @@
 			(uuid "ea13d96d-c486-4ef3-a936-11e902c536f8")
 		)
 		(instances
-			(project "witnessv0.1"
+			(project "witnesspowerv0.2"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b/85be8285-b453-4356-8eb2-bc62ae848ee1"
 					(reference "#PWR080")
 					(unit 1)
@@ -3558,7 +3558,7 @@
 			(uuid "1384c849-0c8e-4c43-9347-fcd0636f7021")
 		)
 		(instances
-			(project "witnessv0.1"
+			(project "witnesspowerv0.2"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b/85be8285-b453-4356-8eb2-bc62ae848ee1"
 					(reference "#PWR075")
 					(unit 1)
@@ -3651,7 +3651,7 @@
 			(uuid "2aac8ee5-015f-42d7-acdd-8346215daad5")
 		)
 		(instances
-			(project "witnessv0.1"
+			(project "witnesspowerv0.2"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b/85be8285-b453-4356-8eb2-bc62ae848ee1"
 					(reference "C41")
 					(unit 1)
@@ -3729,7 +3729,7 @@
 			(uuid "6c1c314d-e6f9-400f-a2d1-ea7dc90b4a88")
 		)
 		(instances
-			(project "witnessv0.1"
+			(project "witnesspowerv0.2"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b/85be8285-b453-4356-8eb2-bc62ae848ee1"
 					(reference "#PWR073")
 					(unit 1)
@@ -3822,7 +3822,7 @@
 			(uuid "eebcccdb-e0f0-4856-83d7-cf021563fe0f")
 		)
 		(instances
-			(project "witnessv0.1"
+			(project "witnesspowerv0.2"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b/85be8285-b453-4356-8eb2-bc62ae848ee1"
 					(reference "C43")
 					(unit 1)
@@ -3900,7 +3900,7 @@
 			(uuid "c7ffbd4e-80b6-4e2c-b633-80e5cf3b297a")
 		)
 		(instances
-			(project "witnessv0.1"
+			(project "witnesspowerv0.2"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b/85be8285-b453-4356-8eb2-bc62ae848ee1"
 					(reference "#PWR076")
 					(unit 1)
@@ -4006,7 +4006,7 @@
 			(uuid "76476d04-7ff7-413b-975a-fd722c01c6ad")
 		)
 		(instances
-			(project "witnessv0.1"
+			(project "witnesspowerv0.2"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b/85be8285-b453-4356-8eb2-bc62ae848ee1"
 					(reference "JP6")
 					(unit 1)
@@ -4128,7 +4128,7 @@
 			(uuid "f33dd1dd-f2da-4dd1-9e1a-47e7d8f28295")
 		)
 		(instances
-			(project "witnessv0.1"
+			(project "witnesspowerv0.2"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b/85be8285-b453-4356-8eb2-bc62ae848ee1"
 					(reference "U10")
 					(unit 1)
@@ -4206,7 +4206,7 @@
 			(uuid "8136d866-a3ca-4752-be81-1b5f48b4f674")
 		)
 		(instances
-			(project "witnessv0.1"
+			(project "witnesspowerv0.2"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b/85be8285-b453-4356-8eb2-bc62ae848ee1"
 					(reference "#PWR058")
 					(unit 1)
@@ -4299,7 +4299,7 @@
 			(uuid "e21ab045-de33-4c36-bae6-24c6b8f5ecbc")
 		)
 		(instances
-			(project "witnessv0.1"
+			(project "witnesspowerv0.2"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b/85be8285-b453-4356-8eb2-bc62ae848ee1"
 					(reference "C42")
 					(unit 1)

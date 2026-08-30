@@ -488,7 +488,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "witnessv0.1.kicad_pro",
+    "filename": "witnesspowerv0.2.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -680,12 +680,12 @@
     "subpart_id_separator": 0,
     "top_level_sheets": [
       {
-        "filename": "witnessv0.1.kicad_sch",
+        "filename": "witnesspowerv0.2.kicad_sch",
         "name": "Root",
         "uuid": "c7e4a338-55e7-4896-822a-22161197db9b"
       }
     ],
-    "used_designators": "U1-11,C1-43,BZ1,J1-10,P1,Y1,D1-5,#PWR1-96,R1-34,AE1,L1-5,Q1-2,F1,JP1-6,H1-7",
+    "used_designators": "U1-11,C1-46,BZ1,J1-10,P1,Y1,D1-7,#PWR1-96,R1-36,AE1,L1-6,Q1-4,F1,JP1-6,H1-7",
     "variants": []
   },
   "sheets": [
@@ -694,24 +694,12 @@
       "Root"
     ],
     [
-      "84c7cad5-6a87-4e90-b655-2e6037ab0db0",
-      "MCU"
-    ],
-    [
       "e1fc9771-294d-4cbf-8437-96abea4a6606",
       "Power"
     ],
     [
-      "6023f714-3146-4cd2-9fdd-9f3ecdc641a0",
-      "Sensors"
-    ],
-    [
       "5a3b15b3-53d3-4c9c-a1c0-f7e9d04d876d",
       "IO"
-    ],
-    [
-      "85be8285-b453-4356-8eb2-bc62ae848ee1",
-      "Radio"
     ]
   ],
   "text_variables": {},
