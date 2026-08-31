@@ -1,0 +1,111 @@
+(footprint "OWMB-505020S-40-12D"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(property "Reference" "REF**"
+		(at -5.625 -11.15 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "a9e62862-0d43-4444-ac77-33ce8c4ed6e9")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "OWMB-505020S-40-12D"
+		(at -5.625 -9.65 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "4b16e58d-3250-4f00-8265-00408dedb366")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" "https://products.owolff.com/acoustics/buzzers-(print)-/@1252/OWMB-505020S-40-12D?output=pdf&delay=3000&recordid393=1252"
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "2386b267-6052-4d3e-9b89-35e122a336af")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "c7704517-a47e-4aa5-a1de-82a0b5555d9f")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr smd)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_rect
+		(start -3.1 -2.65)
+		(end 3 2.65)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.SilkS")
+		(uuid "9d225f32-999f-4d11-8319-1db79508ad45")
+	)
+	(fp_rect
+		(start -3.1 -2.65)
+		(end 3 2.65)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.CrtYd")
+		(uuid "1d697571-802d-4e5b-98b8-f20119756acf")
+	)
+	(fp_text user "${REFERENCE}"
+		(at -5.625 -8.15 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "5563d649-0b37-4bf9-a5fa-a3b6e0a004cd")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(pad "1" smd rect
+		(at -2 1.5)
+		(size 2 1.2)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(uuid "2a5de5b4-1836-4b64-ab8c-493b32574300")
+	)
+	(pad "2" smd rect
+		(at 1.9 1.5)
+		(size 2 1.2)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(uuid "d044b8a0-41c1-4cee-9123-5e4d5e6d86dd")
+	)
+	(pad "NC" smd rect
+		(at -2 -1.5)
+		(size 2 1.2)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(uuid "9d15c58e-3dc2-4a34-911d-39d6c4147db3")
+	)
+	(embedded_fonts no)
+)
