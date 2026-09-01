@@ -69,7 +69,13 @@
           "thermal_relief_spoke_width": 0.5
         }
       },
-      "diff_pair_dimensions": [],
+      "diff_pair_dimensions": [
+        {
+          "gap": 0.0,
+          "via_gap": 0.0,
+          "width": 0.0
+        }
+      ],
       "drc_exclusions": [],
       "meta": {
         "version": 2
@@ -140,7 +146,7 @@
       },
       "rules": {
         "max_error": 0.005,
-        "min_clearance": 0.0,
+        "min_clearance": 0.1,
         "min_connection": 0.0,
         "min_copper_edge_clearance": 0.5,
         "min_groove_width": 0.0,
@@ -203,7 +209,11 @@
           "td_width_to_size_filter_ratio": 0.9
         }
       ],
-      "track_widths": [],
+      "track_widths": [
+        0.0,
+        0.2,
+        0.5
+      ],
       "tuning_pattern_settings": {
         "diff_pair_defaults": {
           "corner_radius_percentage": 80,
@@ -230,7 +240,16 @@
           "spacing": 0.6
         }
       },
-      "via_dimensions": [],
+      "via_dimensions": [
+        {
+          "diameter": 0.0,
+          "drill": 0.0
+        },
+        {
+          "diameter": 0.7,
+          "drill": 0.3
+        }
+      ],
       "zones_allow_external_fillets": false
     },
     "ipc2581": {
@@ -495,7 +514,7 @@
     "classes": [
       {
         "bus_width": 12,
-        "clearance": 0.2,
+        "clearance": 0.15,
         "diff_pair_gap": 0.25,
         "diff_pair_via_gap": 0.25,
         "diff_pair_width": 0.2,
@@ -526,7 +545,7 @@
       "netlist": "",
       "plot": "",
       "specctra_dsn": "",
-      "step": "",
+      "step": "witnessv0.2.step",
       "vrml": ""
     },
     "page_layout_descr_file": ""
@@ -673,7 +692,7 @@
     "meta": {
       "version": 1
     },
-    "page_layout_descr_file": "",
+    "page_layout_descr_file": "Overview",
     "plot_directory": "",
     "reuse_designators": true,
     "subpart_first_id": 65,
@@ -685,7 +704,7 @@
         "uuid": "c7e4a338-55e7-4896-822a-22161197db9b"
       }
     ],
-    "used_designators": "U1-11,C1-43,BZ1,J1-10,P1,Y1,D1-5,#PWR1-96,R1-34,AE1,L1-5,Q1-2,F1,JP1-6,H1-7",
+    "used_designators": "U1-11,C1-43,BZ1,J1-10,P1,Y1,D1-5,#PWR1-96,R1-39,AE1,L1-5,Q1-2,F1,JP1-6,H1-7",
     "variants": []
   },
   "sheets": [

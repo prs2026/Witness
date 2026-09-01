@@ -2880,6 +2880,26 @@
 		)
 		(uuid "14d51b6b-0a95-4045-ae07-304774bdd72d")
 	)
+	(label "USB_UNSAFE_D+"
+		(at 237.49 121.92 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "1b7a25b5-ed9d-44f7-a347-f44d2869ac84")
+	)
+	(label "USB_UNSAFE_D-"
+		(at 237.49 124.46 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "1f7328a2-67d2-420d-850a-60a5862de020")
+	)
 	(label "TXD_MCU"
 		(at 245.11 36.83 0)
 		(effects
@@ -3052,7 +3072,7 @@
 	)
 	(hierarchical_label "USB_D+"
 		(shape bidirectional)
-		(at 257.81 29.21 0)
+		(at 257.81 31.75 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3118,7 +3138,7 @@
 	)
 	(hierarchical_label "USB_D-"
 		(shape bidirectional)
-		(at 257.81 31.75 0)
+		(at 257.81 29.21 0)
 		(effects
 			(font
 				(size 1.27 1.27)
