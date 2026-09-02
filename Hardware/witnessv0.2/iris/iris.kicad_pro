@@ -721,16 +721,12 @@
       "Power"
     ],
     [
-      "6023f714-3146-4cd2-9fdd-9f3ecdc641a0",
-      "Sensors"
+      "55dc0873-0e17-42de-bccf-06c705bcd0c7",
+      "2A Load Switch"
     ],
     [
       "5a3b15b3-53d3-4c9c-a1c0-f7e9d04d876d",
       "IO"
-    ],
-    [
-      "85be8285-b453-4356-8eb2-bc62ae848ee1",
-      "Radio"
     ]
   ],
   "text_variables": {},
