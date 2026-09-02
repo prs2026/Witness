@@ -704,7 +704,7 @@
         "uuid": "c7e4a338-55e7-4896-822a-22161197db9b"
       }
     ],
-    "used_designators": "U1-11,C1-43,BZ1,J1-10,P1,Y1,D1-5,#PWR1-96,R1-39,AE1,L1-5,Q1-2,F1,JP1-6,H1-7",
+    "used_designators": "U1-11,C1-43,BZ1,J1-10,P1,Y1,D1-5,#PWR1-96,R1-55,AE1,L1-5,Q1-18,F1,JP1-6,H1-7",
     "variants": []
   },
   "sheets": [
@@ -722,7 +722,7 @@
     ],
     [
       "55dc0873-0e17-42de-bccf-06c705bcd0c7",
-      "2A Load Switch"
+      "Load Switches"
     ],
     [
       "5a3b15b3-53d3-4c9c-a1c0-f7e9d04d876d",
