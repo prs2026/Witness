@@ -171,6 +171,16 @@
 	)
 	(wire
 		(pts
+			(xy 175.26 110.49) (xy 170.18 110.49)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "00ff24ca-267e-4864-a218-af3fe5e279fd")
+	)
+	(wire
+		(pts
 			(xy 99.06 83.82) (xy 107.95 83.82)
 		)
 		(stroke
@@ -191,13 +201,23 @@
 	)
 	(wire
 		(pts
-			(xy 170.18 106.68) (xy 177.8 106.68)
+			(xy 170.18 101.6) (xy 186.69 101.6)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "0e2ea006-3fa3-4058-98c6-582a47d19673")
+	)
+	(wire
+		(pts
+			(xy 158.75 133.35) (xy 175.26 133.35)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "13c16d5c-749d-4c1c-aee8-33b5a2eb3524")
 	)
 	(wire
 		(pts
@@ -211,7 +231,27 @@
 	)
 	(wire
 		(pts
-			(xy 170.18 110.49) (xy 175.26 110.49)
+			(xy 173.99 130.81) (xy 158.75 130.81)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "260f3fef-73e4-48f9-8cf4-ba353329322d")
+	)
+	(wire
+		(pts
+			(xy 175.26 133.35) (xy 175.26 110.49)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "38a98f0f-c4e5-4f4e-8787-17f554b9c606")
+	)
+	(wire
+		(pts
+			(xy 170.18 105.41) (xy 182.88 105.41)
 		)
 		(stroke
 			(width 0)
@@ -241,7 +281,7 @@
 	)
 	(wire
 		(pts
-			(xy 173.99 113.03) (xy 173.99 132.08)
+			(xy 179.07 107.95) (xy 179.07 135.89)
 		)
 		(stroke
 			(width 0)
@@ -268,16 +308,6 @@
 			(type default)
 		)
 		(uuid "47015ef0-fab3-423e-af32-378775803956")
-	)
-	(wire
-		(pts
-			(xy 99.06 74.93) (xy 116.84 74.93)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "47a7c903-4eac-49c8-8fed-5e343fc6bc5b")
 	)
 	(wire
 		(pts
@@ -321,7 +351,7 @@
 	)
 	(wire
 		(pts
-			(xy 172.72 129.54) (xy 172.72 115.57)
+			(xy 172.72 128.27) (xy 172.72 115.57)
 		)
 		(stroke
 			(width 0)
@@ -331,7 +361,7 @@
 	)
 	(wire
 		(pts
-			(xy 158.75 140.97) (xy 180.34 140.97)
+			(xy 158.75 144.78) (xy 190.5 144.78)
 		)
 		(stroke
 			(width 0)
@@ -351,7 +381,7 @@
 	)
 	(wire
 		(pts
-			(xy 180.34 140.97) (xy 180.34 102.87)
+			(xy 190.5 144.78) (xy 190.5 97.79)
 		)
 		(stroke
 			(width 0)
@@ -361,7 +391,7 @@
 	)
 	(wire
 		(pts
-			(xy 175.26 134.62) (xy 175.26 110.49)
+			(xy 182.88 138.43) (xy 182.88 105.41)
 		)
 		(stroke
 			(width 0)
@@ -411,7 +441,17 @@
 	)
 	(wire
 		(pts
-			(xy 173.99 132.08) (xy 158.75 132.08)
+			(xy 173.99 113.03) (xy 173.99 130.81)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8f6b02ed-a072-4490-b0d2-8ab02afe8b1b")
+	)
+	(wire
+		(pts
+			(xy 179.07 135.89) (xy 158.75 135.89)
 		)
 		(stroke
 			(width 0)
@@ -421,7 +461,7 @@
 	)
 	(wire
 		(pts
-			(xy 170.18 113.03) (xy 173.99 113.03)
+			(xy 170.18 107.95) (xy 179.07 107.95)
 		)
 		(stroke
 			(width 0)
@@ -441,7 +481,7 @@
 	)
 	(wire
 		(pts
-			(xy 158.75 134.62) (xy 175.26 134.62)
+			(xy 158.75 138.43) (xy 182.88 138.43)
 		)
 		(stroke
 			(width 0)
@@ -461,16 +501,6 @@
 	)
 	(wire
 		(pts
-			(xy 170.18 92.71) (xy 194.31 92.71)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "a34f676b-c6f4-4739-87a9-5d52189fb6a2")
-	)
-	(wire
-		(pts
 			(xy 170.18 115.57) (xy 172.72 115.57)
 		)
 		(stroke
@@ -481,7 +511,7 @@
 	)
 	(wire
 		(pts
-			(xy 180.34 102.87) (xy 170.18 102.87)
+			(xy 190.5 97.79) (xy 170.18 97.79)
 		)
 		(stroke
 			(width 0)
@@ -511,13 +541,13 @@
 	)
 	(wire
 		(pts
-			(xy 99.06 77.47) (xy 116.84 77.47)
+			(xy 170.18 113.03) (xy 173.99 113.03)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "b6d1013f-08be-4773-ac05-cca8c4f227ae")
+		(uuid "bd427884-047d-4682-9f12-79f90ef7ba98")
 	)
 	(wire
 		(pts
@@ -541,7 +571,7 @@
 	)
 	(wire
 		(pts
-			(xy 177.8 106.68) (xy 177.8 137.16)
+			(xy 186.69 101.6) (xy 186.69 140.97)
 		)
 		(stroke
 			(width 0)
@@ -601,7 +631,7 @@
 	)
 	(wire
 		(pts
-			(xy 158.75 129.54) (xy 172.72 129.54)
+			(xy 158.75 128.27) (xy 172.72 128.27)
 		)
 		(stroke
 			(width 0)
@@ -611,7 +641,7 @@
 	)
 	(wire
 		(pts
-			(xy 177.8 137.16) (xy 158.75 137.16)
+			(xy 186.69 140.97) (xy 158.75 140.97)
 		)
 		(stroke
 			(width 0)
@@ -1097,16 +1127,6 @@
 				(justify right)
 			)
 		)
-		(pin "GPIO" bidirectional
-			(at 194.31 92.71 180)
-			(uuid "ae268a9e-5b09-47ec-8135-b1f50ae7258e")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
 		(instances
 			(project "witness"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b"
@@ -1173,16 +1193,6 @@
 				(justify right)
 			)
 		)
-		(pin "I2C_SDA" bidirectional
-			(at 99.06 74.93 0)
-			(uuid "30714472-91ed-4b37-bed9-f7148fb3225b")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
 		(pin "SPI3_COPI" input
 			(at 99.06 83.82 0)
 			(uuid "0baa9ea6-4f3d-4a29-8b7b-391815b117cf")
@@ -1226,16 +1236,6 @@
 		(pin "SPI3_SCLK" input
 			(at 99.06 81.28 0)
 			(uuid "b4ff2edb-fe93-4af9-bb18-0ebd4fa626c4")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(pin "I2C_SCL" input
-			(at 99.06 77.47 0)
-			(uuid "d0b574d6-a8ea-42ab-a54a-8be3b993eb8b")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1289,16 +1289,6 @@
 				(justify left top)
 			)
 		)
-		(pin "I2C_SDA" bidirectional
-			(at 116.84 74.93 180)
-			(uuid "aff3e885-600d-4a72-9745-d14de6a31c7a")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
 		(pin "SPI3_SCLK" output
 			(at 116.84 81.28 180)
 			(uuid "b55c3a97-aada-4c9e-b9e8-9c362ba913fb")
@@ -1330,7 +1320,7 @@
 			)
 		)
 		(pin "RAD_CS" output
-			(at 170.18 102.87 0)
+			(at 170.18 97.79 0)
 			(uuid "9e03aa99-f583-4650-9199-fce36442ce7e")
 			(effects
 				(font
@@ -1340,7 +1330,7 @@
 			)
 		)
 		(pin "RAD_RF_EN" output
-			(at 170.18 110.49 0)
+			(at 170.18 105.41 0)
 			(uuid "45699ac1-8b60-4149-ba98-ac628f35c6dd")
 			(effects
 				(font
@@ -1360,7 +1350,7 @@
 			)
 		)
 		(pin "RAD_RST" output
-			(at 170.18 106.68 0)
+			(at 170.18 101.6 0)
 			(uuid "a05905c7-a8cf-4778-aa47-febf38b9ed73")
 			(effects
 				(font
@@ -1429,18 +1419,8 @@
 				(justify left)
 			)
 		)
-		(pin "I2C_SCL" output
-			(at 116.84 77.47 180)
-			(uuid "9e888ac0-69dc-4eb0-83ed-0e01dda08dbd")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
 		(pin "RAD_BUSY" output
-			(at 170.18 113.03 0)
+			(at 170.18 107.95 0)
 			(uuid "317f2386-1d26-4def-b54c-228d96a2eaa6")
 			(effects
 				(font
@@ -1499,9 +1479,19 @@
 				(justify right)
 			)
 		)
-		(pin "GPIO" bidirectional
-			(at 170.18 92.71 0)
-			(uuid "c7d42c7f-849e-4bf0-9788-cceb671a5248")
+		(pin "RAD_DIO3" input
+			(at 170.18 110.49 0)
+			(uuid "5e6d8f47-6447-47dc-91cc-860590b47497")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "RAD_DIO2" input
+			(at 170.18 113.03 0)
+			(uuid "18204326-e43e-45fd-a3f4-e50e48dcdf12")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1556,7 +1546,7 @@
 			)
 		)
 		(pin "RAD_BUSY" output
-			(at 158.75 132.08 0)
+			(at 158.75 135.89 0)
 			(uuid "5cd24e6a-d9d6-45c0-8fa4-de9838bc1280")
 			(effects
 				(font
@@ -1566,7 +1556,7 @@
 			)
 		)
 		(pin "RAD_RF_EN" input
-			(at 158.75 134.62 0)
+			(at 158.75 138.43 0)
 			(uuid "dad56624-5bd5-4393-a6e8-2b98fc4995f9")
 			(effects
 				(font
@@ -1576,7 +1566,7 @@
 			)
 		)
 		(pin "RAD_DIO1" input
-			(at 158.75 129.54 0)
+			(at 158.75 128.27 0)
 			(uuid "013ca357-2076-4234-a61f-1fca49bdb421")
 			(effects
 				(font
@@ -1606,7 +1596,7 @@
 			)
 		)
 		(pin "RAD_RST" input
-			(at 158.75 137.16 0)
+			(at 158.75 140.97 0)
 			(uuid "dfc113ec-1d92-4203-9971-e630ef5f69a0")
 			(effects
 				(font
@@ -1626,8 +1616,28 @@
 			)
 		)
 		(pin "RAD_CS" input
-			(at 158.75 140.97 0)
+			(at 158.75 144.78 0)
 			(uuid "27a0d68b-4ca1-43ac-b5d8-6ccf7a8b4fa0")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "RAD_DIO3" input
+			(at 158.75 133.35 0)
+			(uuid "eefb8d5d-0550-427a-854b-8d7f315a0bb4")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "RAD_DIO2" input
+			(at 158.75 130.81 0)
+			(uuid "049d31d3-ccd1-45ba-aeb4-d83401371106")
 			(effects
 				(font
 					(size 1.27 1.27)

@@ -2636,6 +2636,12 @@
 		(uuid "d5efcefd-ef67-428d-bf35-f194230e572e")
 	)
 	(junction
+		(at 213.36 138.43)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "16ce8ab7-cdc3-4f54-a4a2-ffa7b0ed20b0")
+	)
+	(junction
 		(at 163.83 68.58)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2662,10 +2668,6 @@
 	(no_connect
 		(at 220.98 127)
 		(uuid "30d3d816-b700-4825-b0f8-c5abb77ba812")
-	)
-	(no_connect
-		(at 210.82 132.08)
-		(uuid "4362b913-3ca2-4e4c-a1d2-fc3606d5150b")
 	)
 	(no_connect
 		(at 176.53 102.87)
@@ -3127,6 +3129,16 @@
 	)
 	(wire
 		(pts
+			(xy 213.36 138.43) (xy 213.36 139.7)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "825f976b-c49f-4fce-8316-133f22d62813")
+	)
+	(wire
+		(pts
 			(xy 245.11 77.47) (xy 257.81 77.47)
 		)
 		(stroke
@@ -3287,6 +3299,16 @@
 	)
 	(wire
 		(pts
+			(xy 210.82 138.43) (xy 213.36 138.43)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c0a4b382-6818-46b6-9451-100207ab815a")
+	)
+	(wire
+		(pts
 			(xy 250.19 121.92) (xy 262.89 121.92)
 		)
 		(stroke
@@ -3297,7 +3319,7 @@
 	)
 	(wire
 		(pts
-			(xy 213.36 132.08) (xy 213.36 135.89)
+			(xy 213.36 132.08) (xy 213.36 138.43)
 		)
 		(stroke
 			(width 0)
@@ -3334,6 +3356,16 @@
 			(type default)
 		)
 		(uuid "ddd57816-411f-4049-9c05-1fb43cb555f3")
+	)
+	(wire
+		(pts
+			(xy 210.82 132.08) (xy 210.82 133.35)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "dde30c7d-a485-49ee-b9a5-9970fa846fc9")
 	)
 	(wire
 		(pts
@@ -5026,6 +5058,96 @@
 		)
 	)
 	(symbol
+		(lib_id "Device:R_Small")
+		(at 210.82 135.89 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "5ce54016-6839-469c-a477-03ad968f5cf3")
+		(property "Reference" "R47"
+			(at 212.598 135.89 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.016 1.016)
+				)
+			)
+		)
+		(property "Value" "0"
+			(at 209.042 135.89 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
+			(at 210.82 135.89 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 210.82 135.89 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Resistor, small symbol"
+			(at 210.82 135.89 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC_Part" "C17168"
+			(at 210.82 135.89 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "4286ce4e-9f36-499c-b5a8-852105e39372")
+		)
+		(pin "1"
+			(uuid "dc555047-574e-4b3e-bced-c4a984c8d4f1")
+		)
+		(instances
+			(project "iris"
+				(path "/c7e4a338-55e7-4896-822a-22161197db9b/5a3b15b3-53d3-4c9c-a1c0-f7e9d04d876d"
+					(reference "R47")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 245.11 130.81 0)
 		(unit 1)
@@ -5609,7 +5731,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 213.36 135.89 0)
+		(at 213.36 139.7 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -5620,7 +5742,7 @@
 		(fields_autoplaced yes)
 		(uuid "aee94ea7-b631-41cc-b2c5-a00981ca9dd1")
 		(property "Reference" "#PWR010"
-			(at 213.36 142.24 0)
+			(at 213.36 146.05 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5631,7 +5753,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 213.36 140.97 0)
+			(at 213.36 144.78 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -5641,7 +5763,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 213.36 135.89 0)
+			(at 213.36 139.7 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5652,7 +5774,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 213.36 135.89 0)
+			(at 213.36 139.7 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5663,7 +5785,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 213.36 135.89 0)
+			(at 213.36 139.7 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5940,8 +6062,7 @@
 	)
 	(symbol
 		(lib_id "Isolator:LTV-817S")
-		(at 77.47 78.74 0)
-		(mirror y)
+		(at 77.47 78.74 180)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -5951,7 +6072,7 @@
 		(dnp no)
 		(uuid "cbcc430b-8dc3-4a3c-bb9b-79b600de62d0")
 		(property "Reference" "U3"
-			(at 77.47 69.85 0)
+			(at 77.47 87.63 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -5961,7 +6082,7 @@
 			)
 		)
 		(property "Value" "LTV-817S"
-			(at 77.47 72.39 0)
+			(at 77.47 85.09 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -5971,7 +6092,7 @@
 			)
 		)
 		(property "Footprint" "Package_DIP:SMDIP-4_W9.53mm"
-			(at 77.47 86.36 0)
+			(at 77.47 71.12 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5982,7 +6103,7 @@
 			)
 		)
 		(property "Datasheet" "http://www.us.liteon.com/downloads/LTV-817-827-847.PDF"
-			(at 86.36 71.12 0)
+			(at 86.36 86.36 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
