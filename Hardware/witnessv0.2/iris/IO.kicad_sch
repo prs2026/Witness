@@ -2787,7 +2787,7 @@
 	)
 	(wire
 		(pts
-			(xy 57.5931 114.3) (xy 59.69 114.3)
+			(xy 57.15 114.3) (xy 59.69 114.3)
 		)
 		(stroke
 			(width 0)
@@ -3027,7 +3027,7 @@
 	)
 	(wire
 		(pts
-			(xy 41.91 114.3) (xy 52.5131 114.3)
+			(xy 41.91 114.3) (xy 52.07 114.3)
 		)
 		(stroke
 			(width 0)
@@ -3054,6 +3054,16 @@
 			(type default)
 		)
 		(uuid "6d7a8af2-bb88-4fa9-8d89-b6bdcc406d8c")
+	)
+	(wire
+		(pts
+			(xy 90.17 86.36) (xy 90.17 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6d82a3a3-d1ac-4df8-87ed-27c71c943040")
 	)
 	(wire
 		(pts
@@ -3094,6 +3104,16 @@
 			(type default)
 		)
 		(uuid "7c082e6c-c4b1-4b8d-8ce3-e2a58160757f")
+	)
+	(wire
+		(pts
+			(xy 85.09 76.2) (xy 99.06 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7e9761da-e5bd-4a34-8233-9a2acd63023e")
 	)
 	(wire
 		(pts
@@ -3317,6 +3337,16 @@
 	)
 	(wire
 		(pts
+			(xy 85.09 81.28) (xy 90.17 81.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "de18f0b0-fcde-4b16-bbd9-8cd1c76568cd")
+	)
+	(wire
+		(pts
 			(xy 257.81 72.39) (xy 245.11 72.39)
 		)
 		(stroke
@@ -3504,6 +3534,16 @@
 			(justify left bottom)
 		)
 		(uuid "5ddfa4f5-9d9b-4bec-9b76-1d1da3dcaa8b")
+	)
+	(label "BUTTON"
+		(at 99.06 76.2 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "738aeea6-7c8d-4aec-b5cf-7346be768570")
 	)
 	(label "USB_D+"
 		(at 245.11 25.4 0)
@@ -4323,6 +4363,96 @@
 		)
 	)
 	(symbol
+		(lib_id "Device:R_Small")
+		(at 90.17 83.82 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "1a0ebaab-7e56-43a0-a75d-47d40a0e86bb")
+		(property "Reference" "R46"
+			(at 87.376 83.82 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.016 1.016)
+				)
+			)
+		)
+		(property "Value" "1k"
+			(at 92.202 83.82 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
+			(at 90.17 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 90.17 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Resistor, small symbol"
+			(at 90.17 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC_Part" "C11702"
+			(at 90.17 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "bb2c677d-3156-47ac-97ca-39315467d390")
+		)
+		(pin "1"
+			(uuid "d6f07084-2037-4a0d-b0ed-82620aad01a5")
+		)
+		(instances
+			(project "iris"
+				(path "/c7e4a338-55e7-4896-822a-22161197db9b/5a3b15b3-53d3-4c9c-a1c0-f7e9d04d876d"
+					(reference "R46")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 59.69 124.46 0)
 		(unit 1)
@@ -4660,7 +4790,7 @@
 	)
 	(symbol
 		(lib_id "Device:R_Small")
-		(at 55.0531 114.3 90)
+		(at 54.61 114.3 90)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -4671,7 +4801,7 @@
 		(fields_autoplaced yes)
 		(uuid "45d517b5-efff-4c7f-ba1e-7a7946258d0e")
 		(property "Reference" "R13"
-			(at 55.0531 109.22 90)
+			(at 54.61 109.22 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4681,7 +4811,7 @@
 			)
 		)
 		(property "Value" "0"
-			(at 55.0531 111.76 90)
+			(at 54.61 111.76 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4691,7 +4821,7 @@
 			)
 		)
 		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
-			(at 55.0531 114.3 0)
+			(at 54.61 114.3 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4702,7 +4832,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 55.0531 114.3 0)
+			(at 54.61 114.3 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4713,7 +4843,7 @@
 			)
 		)
 		(property "Description" "Resistor, small symbol"
-			(at 55.0531 114.3 0)
+			(at 54.61 114.3 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5550,6 +5680,85 @@
 			(project "iris"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b/5a3b15b3-53d3-4c9c-a1c0-f7e9d04d876d"
 					(reference "#PWR010")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 90.17 88.9 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "bd4b66fb-1ee9-420d-aa69-cd51037d48fb")
+		(property "Reference" "#PWR066"
+			(at 90.17 95.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 90.17 93.98 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 90.17 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 90.17 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 90.17 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "8b3b1789-8a76-4c46-81be-c20b13f317d1")
+		)
+		(instances
+			(project "iris"
+				(path "/c7e4a338-55e7-4896-822a-22161197db9b/5a3b15b3-53d3-4c9c-a1c0-f7e9d04d876d"
+					(reference "#PWR066")
 					(unit 1)
 				)
 			)
