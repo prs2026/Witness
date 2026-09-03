@@ -2857,7 +2857,7 @@
 	)
 	(wire
 		(pts
-			(xy 41.91 54.61) (xy 44.45 54.61)
+			(xy 41.91 54.61) (xy 57.15 54.61)
 		)
 		(stroke
 			(width 0)
@@ -2937,7 +2937,7 @@
 	)
 	(wire
 		(pts
-			(xy 41.91 52.07) (xy 44.45 52.07)
+			(xy 41.91 52.07) (xy 57.15 52.07)
 		)
 		(stroke
 			(width 0)
@@ -3485,26 +3485,6 @@
 		)
 		(uuid "4d8bad9a-7add-45c2-a275-ce297043fd9d")
 	)
-	(label "TXD2_MCU"
-		(at 44.45 52.07 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "50af8f6f-4998-483e-9c4d-554454670b7e")
-	)
-	(label "RXD2_MCU"
-		(at 44.45 54.61 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "5725a367-e8af-4be7-9907-a5d292f38849")
-	)
 	(label "BATT_RAW"
 		(at 243.84 96.52 0)
 		(effects
@@ -3645,6 +3625,16 @@
 		)
 		(uuid "d284087a-4578-4972-accb-782c650a0bde")
 	)
+	(label "TXD0_MCU"
+		(at 57.15 52.07 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "d3116ec3-a875-4912-a4f5-c99db500b0e3")
+	)
 	(label "TXD1_MCU"
 		(at 245.11 36.83 0)
 		(effects
@@ -3654,6 +3644,16 @@
 			(justify left bottom)
 		)
 		(uuid "e319d810-a0a9-4ce7-8c40-9967da6c2d32")
+	)
+	(label "RXD0_MCU"
+		(at 57.15 54.61 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "ebe9b55b-2bf9-48ed-87f9-d0b8fb18cab5")
 	)
 	(label "CAN_L"
 		(at 49.53 116.84 180)
