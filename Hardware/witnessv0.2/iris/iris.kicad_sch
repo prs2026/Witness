@@ -429,16 +429,6 @@
 			(embedded_fonts no)
 		)
 	)
-	(text "This line is kinda funny, \nbut on the board these two \nsheets will be basically colocated."
-		(exclude_from_sim no)
-		(at 226.822 98.298 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-		)
-		(uuid "16df6d08-f9db-4112-ac31-b7c8006efa9c")
-	)
 	(junction
 		(at 106.68 115.57)
 		(diameter 0)
@@ -468,16 +458,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "f1bc0b8b-b944-4579-978c-c97139cfbba3")
-	)
-	(wire
-		(pts
-			(xy 208.28 139.7) (xy 208.28 43.18)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "0248d3ed-94bd-4866-ba61-901689f6394f")
 	)
 	(wire
 		(pts
@@ -558,16 +538,6 @@
 			(type default)
 		)
 		(uuid "49543dd2-b3ce-4d02-84fe-edf331d3f63e")
-	)
-	(wire
-		(pts
-			(xy 134.62 139.7) (xy 208.28 139.7)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "539ea398-0b3a-49d8-b530-654e142283b9")
 	)
 	(wire
 		(pts
@@ -808,16 +778,6 @@
 			(type default)
 		)
 		(uuid "e0ca6815-9434-49b6-92cc-8a50b996fd56")
-	)
-	(wire
-		(pts
-			(xy 208.28 43.18) (xy 217.17 43.18)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "e0cd0dcb-9fd1-4d34-b62e-34666854fc30")
 	)
 	(wire
 		(pts
