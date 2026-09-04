@@ -16154,7 +16154,7 @@
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
-		(dnp no)
+		(dnp yes)
 		(fields_autoplaced yes)
 		(uuid "5ec32b96-8965-4585-bb54-591c7bccdc0b")
 		(property "Reference" "C32"
@@ -17083,7 +17083,7 @@
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
-		(dnp no)
+		(dnp yes)
 		(fields_autoplaced yes)
 		(uuid "933c2a03-a85a-449a-bdcb-a4b1896f276b")
 		(property "Reference" "C33"
@@ -17764,7 +17764,7 @@
 				)
 			)
 		)
-		(property "Value" "L_Small"
+		(property "Value" "0"
 			(at 195.58 139.7 90)
 			(show_name no)
 			(do_not_autoplace no)

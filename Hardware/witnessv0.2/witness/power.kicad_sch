@@ -1973,10 +1973,22 @@
 		(uuid "3918fef5-b224-42b4-969c-106fe9d61c75")
 	)
 	(junction
+		(at 153.67 74.93)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "8d2a6a4f-20dd-478c-ae10-c949592bfad7")
+	)
+	(junction
 		(at 64.77 74.93)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "af9d7de8-d5ac-44b2-a6af-5fde722769e0")
+	)
+	(junction
+		(at 148.59 85.09)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "b6dd149f-5efc-4d8a-a132-18c903467e09")
 	)
 	(junction
 		(at 64.77 63.5)
@@ -2047,6 +2059,16 @@
 			(type default)
 		)
 		(uuid "048a0edb-2b14-4107-b1ff-d898dfde320d")
+	)
+	(wire
+		(pts
+			(xy 153.67 74.93) (xy 153.67 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "251acb27-6178-45c5-9c5b-d36f1ab09db8")
 	)
 	(wire
 		(pts
@@ -2140,6 +2162,16 @@
 	)
 	(wire
 		(pts
+			(xy 153.67 85.09) (xy 148.59 85.09)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "53ea9d84-6b90-49a0-8163-8799e743b3cf")
+	)
+	(wire
+		(pts
 			(xy 120.65 85.09) (xy 133.35 85.09)
 		)
 		(stroke
@@ -2220,6 +2252,16 @@
 	)
 	(wire
 		(pts
+			(xy 153.67 74.93) (xy 160.02 74.93)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7ca62082-6a2e-4483-ac6c-07b2e17e3be3")
+	)
+	(wire
+		(pts
 			(xy 41.91 88.9) (xy 41.91 90.17)
 		)
 		(stroke
@@ -2230,7 +2272,17 @@
 	)
 	(wire
 		(pts
-			(xy 148.59 74.93) (xy 160.02 74.93)
+			(xy 153.67 81.28) (xy 153.67 85.09)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8c058948-2aad-43b2-ab98-f4f7cd0a3ba7")
+	)
+	(wire
+		(pts
+			(xy 148.59 74.93) (xy 153.67 74.93)
 		)
 		(stroke
 			(width 0)
@@ -2696,7 +2748,7 @@
 				)
 			)
 		)
-		(property "Value" "1k"
+		(property "Value" "5k"
 			(at 77.978 85.09 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2739,7 +2791,7 @@
 				)
 			)
 		)
-		(property "LCSC_Part" "C11702"
+		(property "LCSC_Part" ""
 			(at 80.01 85.09 0)
 			(hide yes)
 			(show_name no)
@@ -3128,6 +3180,98 @@
 			(project "witness"
 				(path "/c7e4a338-55e7-4896-822a-22161197db9b/e1fc9771-294d-4cbf-8437-96abea4a6606"
 					(reference "R37")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C_Small")
+		(at 153.67 78.74 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "59fe9a8a-8c06-42b4-b5b4-34849143aa1a")
+		(property "Reference" "C12"
+			(at 156.21 77.4762 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "10u"
+			(at 156.21 80.0162 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
+			(at 153.67 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 153.67 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Unpolarized capacitor, small symbol"
+			(at 153.67 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC_Part" "C440198"
+			(at 153.67 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "81f07eba-b637-40fc-bcc4-d80a35c48d51")
+		)
+		(pin "1"
+			(uuid "6662b1ab-99b7-4bb6-b13b-09e26c759062")
+		)
+		(instances
+			(project "witness"
+				(path "/c7e4a338-55e7-4896-822a-22161197db9b/e1fc9771-294d-4cbf-8437-96abea4a6606"
+					(reference "C12")
 					(unit 1)
 				)
 			)
@@ -4075,8 +4219,8 @@
 				)
 			)
 		)
-		(property "Value" "1k"
-			(at 77.978 77.47 0)
+		(property "Value" "15k"
+			(at 77.216 77.47 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4118,7 +4262,7 @@
 				)
 			)
 		)
-		(property "LCSC_Part" "C11702"
+		(property "LCSC_Part" ""
 			(at 80.01 77.47 0)
 			(hide yes)
 			(show_name no)

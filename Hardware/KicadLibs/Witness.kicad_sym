@@ -1567,7 +1567,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "http://www.ti.com/lit/ds/symlink/tcan1043-q1.pdf"
+		(property "Datasheet" "https://www.ti.com/lit/ds/symlink/tcan1044a-q1.pdf?ts=1788489815545"
 			(at -0.762 -34.29 0)
 			(show_name no)
 			(do_not_autoplace no)

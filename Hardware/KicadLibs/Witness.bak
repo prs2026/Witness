@@ -712,7 +712,7 @@
 				)
 			)
 		)
-		(property "Value" "ME6118A33B3G"
+		(property "Value" "ME6118A33PG"
 			(at 10.16 8.636 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -722,7 +722,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-223-3_TabPin2"
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-89-3"
 			(at -0.508 -13.462 0)
 			(show_name no)
 			(do_not_autoplace no)

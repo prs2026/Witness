@@ -1236,6 +1236,17 @@
 				)
 			)
 		)
+		(property "LCSC_Part" "C21189"
+			(at 100.33 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "6afd088b-f2f2-4baf-af95-3aa7ccaaef52")
 		)
@@ -1307,6 +1318,17 @@
 			)
 		)
 		(property "Description" "Resistor, small symbol"
+			(at 109.22 151.13 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC_Part" "C21189"
 			(at 109.22 151.13 0)
 			(hide yes)
 			(show_name no)
@@ -1389,6 +1411,17 @@
 			)
 		)
 		(property "Description" "Resistor, small symbol"
+			(at 100.33 118.11 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC_Part" "C21189"
 			(at 100.33 118.11 0)
 			(hide yes)
 			(show_name no)
@@ -1984,6 +2017,17 @@
 				)
 			)
 		)
+		(property "LCSC_Part" "C21189"
+			(at 109.22 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "ad7af052-9fc8-41b5-8719-dd6fcfd5aa15")
 		)
@@ -2055,6 +2099,17 @@
 			)
 		)
 		(property "Description" "Resistor, small symbol"
+			(at 109.22 118.11 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC_Part" "C21189"
 			(at 109.22 118.11 0)
 			(hide yes)
 			(show_name no)
@@ -2137,6 +2192,17 @@
 			)
 		)
 		(property "Description" "Resistor, small symbol"
+			(at 100.33 151.13 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC_Part" "C21189"
 			(at 100.33 151.13 0)
 			(hide yes)
 			(show_name no)
