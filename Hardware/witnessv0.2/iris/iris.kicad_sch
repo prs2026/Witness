@@ -561,7 +561,7 @@
 	)
 	(wire
 		(pts
-			(xy 85.09 31.75) (xy 217.17 31.75)
+			(xy 85.09 30.48) (xy 217.17 30.48)
 		)
 		(stroke
 			(width 0)
@@ -701,7 +701,7 @@
 	)
 	(wire
 		(pts
-			(xy 85.09 34.29) (xy 217.17 34.29)
+			(xy 85.09 33.02) (xy 217.17 33.02)
 		)
 		(stroke
 			(width 0)
@@ -2717,7 +2717,7 @@
 			)
 		)
 		(pin "VSENSE" input
-			(at 85.09 31.75 0)
+			(at 85.09 30.48 0)
 			(uuid "a67d417d-aebf-41f5-aa1d-7817267fb18d")
 			(effects
 				(font
@@ -2827,7 +2827,7 @@
 			)
 		)
 		(pin "5V_EN" output
-			(at 85.09 34.29 0)
+			(at 85.09 33.02 0)
 			(uuid "077bc14a-a931-4240-8f91-79d86c4b97b9")
 			(effects
 				(font
@@ -2883,7 +2883,7 @@
 			)
 		)
 		(pin "VSENSE" output
-			(at 217.17 31.75 180)
+			(at 217.17 30.48 180)
 			(uuid "cc845f05-4f93-4595-a8a5-cb25d1378087")
 			(effects
 				(font
@@ -2903,7 +2903,7 @@
 			)
 		)
 		(pin "5V_EN" input
-			(at 217.17 34.29 180)
+			(at 217.17 33.02 180)
 			(uuid "5f637872-45f5-41c8-92d9-d039bad78075")
 			(effects
 				(font
