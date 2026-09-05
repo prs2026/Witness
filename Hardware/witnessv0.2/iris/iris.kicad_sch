@@ -429,6 +429,29 @@
 			(embedded_fonts no)
 		)
 	)
+	(rectangle
+		(start 161.29 119.38)
+		(end 276.86 144.78)
+		(stroke
+			(width 0)
+			(type solid)
+		)
+		(fill
+			(type none)
+		)
+		(uuid "de26360e-f331-4e71-8c51-a4ef2a6026f5")
+	)
+	(text "ESP32-S3 for compute, \nLSM6DSV320P IMU for +-320G accel, +-32G accel, and 4000dps gyro \nMS5607 Barometer\nUART output for attaching an external GPS module \n800mW radio module for downlink\n1gbit of flash storage for flight data\nCAN to talk to the rest of the vehicle"
+		(exclude_from_sim no)
+		(at 162.052 131.826 0)
+		(effects
+			(font
+				(size 1.905 1.905)
+			)
+			(justify left)
+		)
+		(uuid "92152426-fa09-489c-86a4-412ad68c8f80")
+	)
 	(junction
 		(at 106.68 115.57)
 		(diameter 0)

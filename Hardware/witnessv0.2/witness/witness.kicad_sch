@@ -151,6 +151,29 @@
 			(embedded_fonts no)
 		)
 	)
+	(rectangle
+		(start 58.42 19.05)
+		(end 198.12 40.64)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(uuid "b8901c5f-69ee-4432-bd4c-fbd288d1630f")
+	)
+	(text "ESP32-C3 MCU\n3x 2A load switches that can either source 5V power from a 5v Buck Boost or raw battery. \ncurrent monitoring on all channels  \nCAN to talk to the rest of the vehicle avionics. \noptocoupler to \"push\" the button on a gopro to start and end recording.\n"
+		(exclude_from_sim no)
+		(at 59.182 30.226 0)
+		(effects
+			(font
+				(size 1.905 1.905)
+			)
+			(justify left)
+		)
+		(uuid "47ed0339-b90b-4844-9d91-2f70b6090500")
+	)
 	(junction
 		(at 110.49 81.28)
 		(diameter 0)
