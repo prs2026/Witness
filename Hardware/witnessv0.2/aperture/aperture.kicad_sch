@@ -4,6 +4,9 @@
 	(generator_version "10.0")
 	(uuid "bbb5ca96-b171-4542-a81f-987223bb96ae")
 	(paper "A4")
+	(title_block
+		(title "APERTURE")
+	)
 	(lib_symbols
 		(symbol "Device:C_Small"
 			(pin_numbers
@@ -2288,16 +2291,6 @@
 			(type default)
 		)
 		(uuid "7c2ee05e-02cb-4d7e-ba4b-95615c3c8451")
-	)
-	(wire
-		(pts
-			(xy 142.24 132.08) (xy 152.4 132.08)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "7cc53df4-6e1e-47cc-8407-73cd1d42960c")
 	)
 	(wire
 		(pts

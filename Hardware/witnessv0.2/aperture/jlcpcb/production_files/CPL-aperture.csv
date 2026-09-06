@@ -1,0 +1,9 @@
+Designator,Val,Package,Mid X,Mid Y,Rotation,Layer
+A1,Adafruit_Feather_HUZZAH32_ESP32,Adafruit_Feather,11.42,25.325,0.0,top
+C41,10u,C_0603_1608Metric,10.975,46.4,0.0,top
+C42,100n,C_0603_1608Metric,15.4,25.1,0.0,top
+C43,100n,C_0603_1608Metric,11.575,25.1,0.0,top
+R1,o,R_0603_1608Metric,15.09,47.225,90.0,top
+R2,o,R_0603_1608Metric,16.75,47.25,-90.0,top
+U1,L80-R,Quectel_L80-R,11.1,36.3,180.0,top
+U10,RA-01SH-P,Ai-Thinker-Ra-01-LoRa,11.5,14.7,-90.0,top

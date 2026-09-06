@@ -1,0 +1,8 @@
+Comment,Designator,Footprint,LCSC,Quantity
+100n,"C42,C43",C_0603_1608Metric,C96446,2
+10u,C41,C_0603_1608Metric,C96446,1
+Adafruit_Feather_HUZZAH32_ESP32,A1,Adafruit_Feather,,1
+L80-R,U1,Quectel_L80-R,,1
+o,R1,R_0603_1608Metric,,1
+RA-01SH-P,U10,Ai-Thinker-Ra-01-LoRa,,1
+o,R2,R_0603_1608Metric,,1
