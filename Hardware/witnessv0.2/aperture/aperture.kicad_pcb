@@ -2297,8 +2297,32 @@
 			(justify left bottom)
 		)
 	)
+	(gr_text "no data?"
+		(at 129.6 101.9 0)
+		(layer "F.SilkS")
+		(uuid "a3dc2aca-5d0c-43ea-81c4-f0e87fc0ab8e")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "DESIGNED BY: \nELIJAH SOHN\nIF FOUND CALL\n646 618 4415\n"
+		(at 135.6 101.4 -0)
+		(layer "B.SilkS")
+		(uuid "6a5147fb-d0e7-4e15-b820-9d2973df87fb")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+			(justify left bottom mirror)
+		)
+	)
 	(gr_text "JLCJLCJLCJLC"
-		(at 139.3 80.5 180)
+		(at 126.4 77.4 180)
 		(layer "B.SilkS")
 		(uuid "4cc3becf-eaae-404a-a372-2c0f88937c3a")
 		(effects
@@ -2306,7 +2330,7 @@
 				(size 1 1)
 				(thickness 0.15)
 			)
-			(justify left bottom)
+			(justify left bottom mirror)
 		)
 	)
 	(segment
