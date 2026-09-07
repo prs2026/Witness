@@ -430,27 +430,27 @@
 		)
 	)
 	(rectangle
-		(start 161.29 119.38)
-		(end 276.86 144.78)
+		(start 138.938 141.224)
+		(end 278.638 162.814)
 		(stroke
 			(width 0)
-			(type solid)
+			(type default)
 		)
 		(fill
 			(type none)
 		)
-		(uuid "de26360e-f331-4e71-8c51-a4ef2a6026f5")
+		(uuid "94d44fe7-8076-4a1b-bef9-5cc0ed0e3af8")
 	)
-	(text "ESP32-S3 for compute, \nLSM6DSV320P IMU for +-320G accel, +-32G accel, and 4000dps gyro \nMS5607 Barometer\nUART output for attaching an external GPS module \n800mW radio module for downlink\n1gbit of flash storage for flight data\nCAN to talk to the rest of the vehicle"
+	(text "ESP32-C3 MCU\n3x 2A load switches that can either source 5V power from a 5v Buck Boost or raw battery. \ncurrent monitoring on all channels  \nCAN to talk to the rest of the vehicle avionics. \noptocoupler to \"push\" the button on a gopro to start and end recording.\n"
 		(exclude_from_sim no)
-		(at 162.052 131.826 0)
+		(at 139.7 152.4 0)
 		(effects
 			(font
 				(size 1.905 1.905)
 			)
 			(justify left)
 		)
-		(uuid "92152426-fa09-489c-86a4-412ad68c8f80")
+		(uuid "6062506f-2b99-4603-9041-e6a49346c77b")
 	)
 	(junction
 		(at 106.68 115.57)
