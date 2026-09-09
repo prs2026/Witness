@@ -10,6 +10,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
+#include "driver/uart.h"
 #include "esp_log.h"
 #include "led_strip.h"
 #include "sdkconfig.h"
@@ -20,53 +21,47 @@ static const char *TAG = "example";
    or you can edit the following line and set a number here.
 */
 #define BLINK_GPIO 2
+#define ECHO_BUFFER_SIZE 256
+#define UART_RX_BUFFER_SIZE 1024
 
 static uint8_t s_led_state = 0;
 
-#ifdef CONFIG_BLINK_LED_STRIP
-
-static led_strip_handle_t led_strip;
-
-static void blink_led(void)
+static void serial_echo_task(void *arg)
 {
-    /* If the addressable LED is enabled */
-    if (s_led_state) {
-        /* Set the LED pixel using RGB from 0 (0%) to 255 (100%) for each color */
-        led_strip_set_pixel(led_strip, 0, 16, 16, 16);
-        /* Refresh the strip to send data */
-        led_strip_refresh(led_strip);
-    } else {
-        /* Set all LED off to clear all pixels */
-        led_strip_clear(led_strip);
+    const uart_port_t uart_port = (uart_port_t)CONFIG_ESP_CONSOLE_UART_NUM;
+    uint8_t data[ECHO_BUFFER_SIZE];
+
+    while (1) {
+        const int bytes_read = uart_read_bytes(uart_port, data, sizeof(data), portMAX_DELAY);
+        if (bytes_read > 0) {
+            uart_write_bytes(uart_port, data, bytes_read);
+        }
     }
 }
 
-static void configure_led(void)
+static void configure_serial_echo(void)
 {
-    ESP_LOGI(TAG, "Example configured to blink addressable LED!");
-    /* LED strip initialization with the GPIO and pixels number*/
-    led_strip_config_t strip_config = {
-        .strip_gpio_num = BLINK_GPIO,
-        .max_leds = 1, // at least one LED on board
+    const uart_port_t uart_port = (uart_port_t)CONFIG_ESP_CONSOLE_UART_NUM;
+    const uart_config_t uart_config = {
+        .baud_rate = CONFIG_ESP_CONSOLE_UART_BAUDRATE,
+        .data_bits = UART_DATA_8_BITS,
+        .parity = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk = UART_SCLK_DEFAULT,
     };
-#if CONFIG_BLINK_LED_STRIP_BACKEND_RMT
-    led_strip_rmt_config_t rmt_config = {
-        .resolution_hz = 10 * 1000 * 1000, // 10MHz
-        .flags.with_dma = false,
-    };
-    ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config, &rmt_config, &led_strip));
-#elif CONFIG_BLINK_LED_STRIP_BACKEND_SPI
-    led_strip_spi_config_t spi_config = {
-        .spi_bus = SPI2_HOST,
-        .flags.with_dma = true,
-    };
-    ESP_ERROR_CHECK(led_strip_new_spi_device(&strip_config, &spi_config, &led_strip));
-#else
-#error "unsupported LED strip backend"
-#endif
-    /* Set all LED off to clear all pixels */
-    led_strip_clear(led_strip);
+
+    ESP_ERROR_CHECK(uart_param_config(uart_port, &uart_config));
+    ESP_ERROR_CHECK(uart_driver_install(uart_port, UART_RX_BUFFER_SIZE, 0, 0, NULL, 0));
+    ESP_ERROR_CHECK(xTaskCreate(serial_echo_task, "serial_echo", 2048, NULL, 10, NULL) == pdPASS
+                        ? ESP_OK
+                        : ESP_ERR_NO_MEM);
+    ESP_LOGI(TAG, "Serial echo ready on UART%d at %d baud", uart_port,
+             CONFIG_ESP_CONSOLE_UART_BAUDRATE);
 }
+
+#ifdef CONFIG_BLINK_LED_STRIP
+
 
 #elif CONFIG_BLINK_LED_GPIO
 
@@ -93,6 +88,7 @@ void app_main(void)
 
     /* Configure the peripheral according to the LED type */
     configure_led();
+    configure_serial_echo();
 
     while (1) {
         ESP_LOGI(TAG, "Turning the LED %s!", s_led_state == true ? "ON" : "OFF");
