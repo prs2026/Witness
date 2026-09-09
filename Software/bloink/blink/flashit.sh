@@ -1,0 +1,1 @@
+/home/elijahsohn/esptool-linux-aarch64/esptool --chip esp32 --port /dev/ttyUSB0 --baud 460800 write_flash --flash_mode dio --flash_freq 40m --flash_size 2MB 0x1000 ./build/bootloader/bootloader.bin 0x8000 ./build/partition_table/partition-table.bin 0x10000 ./build/blink.bin
