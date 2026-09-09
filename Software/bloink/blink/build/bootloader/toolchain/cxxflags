@@ -1,0 +1,7 @@
+"-specs=C:/Users/Ejfso/Documents/GitHub/witness/Software/bloink/blink/build/bootloader/specs/picolibc.specs"
+-Wno-frame-address
+-mlongcalls
+-fno-builtin-memcpy
+-fno-builtin-memset
+-fno-builtin-bzero
+-fno-rtti
