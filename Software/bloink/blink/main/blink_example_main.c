@@ -23,6 +23,8 @@ static const char *TAG = "example";
 #define BLINK_GPIO 2
 #define ECHO_BUFFER_SIZE 256
 #define UART_RX_BUFFER_SIZE 1024
+#define UART_TX_PIN 1
+#define UART_RX_PIN 3
 
 static uint8_t s_led_state = 0;
 
@@ -32,9 +34,11 @@ static void serial_echo_task(void *arg)
     uint8_t data[ECHO_BUFFER_SIZE];
 
     while (1) {
-        const int bytes_read = uart_read_bytes(uart_port, data, sizeof(data), portMAX_DELAY);
+        const int bytes_read = uart_read_bytes(uart_port, data, sizeof(data),
+                                               pdMS_TO_TICKS(20));
         if (bytes_read > 0) {
-            uart_write_bytes(uart_port, data, bytes_read);
+            uart_write_bytes(uart_port, (const char *)data, bytes_read);
+            ESP_LOGI(TAG, "Received and echoed %d byte(s)", bytes_read);
         }
     }
 }
@@ -51,13 +55,15 @@ static void configure_serial_echo(void)
         .source_clk = UART_SCLK_DEFAULT,
     };
 
-    ESP_ERROR_CHECK(uart_param_config(uart_port, &uart_config));
     ESP_ERROR_CHECK(uart_driver_install(uart_port, UART_RX_BUFFER_SIZE, 0, 0, NULL, 0));
-    ESP_ERROR_CHECK(xTaskCreate(serial_echo_task, "serial_echo", 2048, NULL, 10, NULL) == pdPASS
+    ESP_ERROR_CHECK(uart_param_config(uart_port, &uart_config));
+    ESP_ERROR_CHECK(uart_set_pin(uart_port, UART_TX_PIN, UART_RX_PIN,
+                                 UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    ESP_ERROR_CHECK(xTaskCreate(serial_echo_task, "serial_echo", 4096, NULL, 10, NULL) == pdPASS
                         ? ESP_OK
                         : ESP_ERR_NO_MEM);
-    ESP_LOGI(TAG, "Serial echo ready on UART%d at %d baud", uart_port,
-             CONFIG_ESP_CONSOLE_UART_BAUDRATE);
+    ESP_LOGI(TAG, "Serial echo ready on UART%d (TX GPIO%d, RX GPIO%d) at %d baud",
+             uart_port, UART_TX_PIN, UART_RX_PIN, CONFIG_ESP_CONSOLE_UART_BAUDRATE);
 }
 
 #ifdef CONFIG_BLINK_LED_STRIP
