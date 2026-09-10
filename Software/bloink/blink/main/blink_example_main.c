@@ -38,7 +38,7 @@ static void serial_echo_task(void *arg)
                                                pdMS_TO_TICKS(20));
         if (bytes_read > 0) {
             uart_write_bytes(uart_port, (const char *)data, bytes_read);
-            ESP_LOGI(TAG, "Received and echoed %d byte(s)", bytes_read);
+            //ESP_LOGI(TAG, "Received and echoed %d byte(s)", bytes_read);
         }
     }
 }
@@ -97,7 +97,7 @@ void app_main(void)
     configure_serial_echo();
 
     while (1) {
-        ESP_LOGI(TAG, "Turning the LED %s! NEW PROGRAm", s_led_state == true ? "ON" : "OFF");
+        ESP_LOGI(TAG, "LED %s", s_led_state == true ? "ON" : "OFF");
         blink_led();
         /* Toggle the LED state */
         s_led_state = !s_led_state;
