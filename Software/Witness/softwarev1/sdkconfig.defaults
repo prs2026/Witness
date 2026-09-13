@@ -1,0 +1,2 @@
+# FreeRTOS uses one 100 Hz (10 ms) scheduler tick rate across both ESP32-S3 cores.
+CONFIG_FREERTOS_HZ=100
