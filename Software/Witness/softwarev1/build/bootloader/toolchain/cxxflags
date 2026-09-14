@@ -1,0 +1,6 @@
+"-specs=C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/build/bootloader/specs/picolibc.specs"
+-mlongcalls
+-fno-builtin-memcpy
+-fno-builtin-memset
+-fno-builtin-bzero
+-fno-rtti

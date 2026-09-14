@@ -17,11 +17,11 @@
 *.log
 
 # Build artifacts and directories
-**/build/
-build/
-*.o
-*.a
-*.out
+#**/build/
+#build/
+#*.o
+#*.a
+#*.out
 *.exe # For any host-side utilities compiled on Windows
 
 # ESP-IDF specific build outputs
