@@ -4,6 +4,8 @@
 #include <cstdint>
 
 #include "driver/usb_serial_jtag.h"
+#include "driver/usb_serial_jtag_vfs.h"
+#include "sdkconfig.h"
 
 esp_err_t UsbSerialEcho::start()
 {
@@ -20,6 +22,12 @@ esp_err_t UsbSerialEcho::start()
         return result;
     }
 
+#if CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
+    // The USB console initially uses polling I/O. Route it through the
+    // interrupt-driven driver shared with the echo task.
+    usb_serial_jtag_vfs_use_driver();
+#endif
+
     const BaseType_t task_created = xTaskCreate(
         task_entry,
         "usb_serial_echo",
@@ -30,6 +38,9 @@ esp_err_t UsbSerialEcho::start()
 
     if (task_created != pdPASS) {
         task_handle_ = nullptr;
+#if CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
+        usb_serial_jtag_vfs_use_nonblocking();
+#endif
         usb_serial_jtag_driver_uninstall();
         return ESP_ERR_NO_MEM;
     }

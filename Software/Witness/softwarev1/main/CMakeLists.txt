@@ -1,2 +1,2 @@
-idf_component_register(SRCS "main.cpp" "usb_serial_echo.cpp"
+idf_component_register(SRCS "heartbeat.cpp" "main.cpp" "usb_serial_echo.cpp"
                     INCLUDE_DIRS ".")

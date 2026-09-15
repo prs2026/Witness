@@ -20,7 +20,7 @@
     }
   },
   "idf.openOcdConfigs": [
-    "board/esp32s3-builtin.cfg"
+    "board/esp32s3-bridge.cfg"
   ],
   "idf.currentSetup": "C:\\esp\\v6.1\\esp-idf",
   "idf.customExtraVars": {
@@ -31,5 +31,7 @@
     "--background-index",
     "--query-driver=**",
     "--compile-commands-dir=c:\\Users\\Ejfso\\Documents\\GitHub\\witness\\Software\\Witness\\softwarev1\\build"
-  ]
+  ],
+  "idf.flashType": "UART",
+  "idf.portWin": "COM9"
 }

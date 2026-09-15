@@ -1,2 +1,8 @@
 # FreeRTOS uses one 100 Hz (10 ms) scheduler tick rate across both ESP32-S3 cores.
 CONFIG_FREERTOS_HZ=100
+
+# Route the primary diagnostic console through the built-in USB Serial/JTAG port.
+# CONFIG_ESP_CONSOLE_UART_DEFAULT is not set
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+CONFIG_ESP_CONSOLE_SECONDARY_NONE=y
+# CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG is not set
