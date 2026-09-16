@@ -7,11 +7,9 @@
 #include "esp_err.h"
 #include "hardware.h"
 
-class Mcp23008;
-
 class UsbSerialEcho final {
 public:
-    explicit UsbSerialEcho(Mcp23008 &gpio_expander);
+    UsbSerialEcho() = default;
 
     UsbSerialEcho(const UsbSerialEcho &) = delete;
     UsbSerialEcho &operator=(const UsbSerialEcho &) = delete;
@@ -34,7 +32,6 @@ private:
     void set_camera_state(std::size_t camera_index, bool enabled);
     void poll_heartbeat(std::int64_t now_us);
 
-    Mcp23008 &gpio_expander_;
     bool initialized_ = false;
     char command_buffer_[kCommandBufferSize]{};
     std::size_t command_length_ = 0;
