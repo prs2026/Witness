@@ -1,0 +1,4 @@
+-march=rv32imc_zicsr_zifencei
+-mtune=esp-base
+"-specs=C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/specs/picolibc.specs"
+-fno-rtti

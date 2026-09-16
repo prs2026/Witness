@@ -1,0 +1,1 @@
+/home/elijahsohn/esptool-linux-aarch64/esptool -p COM10 -b 460800 --before default-reset --after hard-reset --chip esp32c3 write_flash --flash_mode dio --flash_freq 80m --flash_size 4MB 0x0 bootloader/bootloader.bin 0x8000 partition_table/partition-table.bin 0x10000 softwarev1.bin

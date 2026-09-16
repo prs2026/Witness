@@ -5,12 +5,13 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "hardware_pins.h"
 #include "spi_data_forwarder.h"
 
 namespace {
 
 constexpr char kLogTag[] = "heartbeat";
-constexpr gpio_num_t kHeartbeatGpio = GPIO_NUM_33;
+constexpr gpio_num_t kHeartbeatGpio = HW_PIN_LED_RED;
 constexpr TickType_t kPulseDuration = pdMS_TO_TICKS(100);
 
 }  // namespace
@@ -84,7 +85,8 @@ void Heartbeat::blink_gpio()
     const bool base_state = led_on_.load();
     esp_err_t result = gpio_set_level(kHeartbeatGpio, !base_state);
     if (result != ESP_OK) {
-        ESP_LOGE(kLogTag, "failed to pulse GPIO13: %s", esp_err_to_name(result));
+        ESP_LOGE(kLogTag, "failed to pulse red LED GPIO%d: %s",
+                 static_cast<int>(kHeartbeatGpio), esp_err_to_name(result));
         return;
     }
 
@@ -93,7 +95,8 @@ void Heartbeat::blink_gpio()
     // Restore the latest commanded state in case it changed during the pulse.
     result = gpio_set_level(kHeartbeatGpio, led_on_.load());
     if (result != ESP_OK) {
-        ESP_LOGE(kLogTag, "failed to restore GPIO13: %s", esp_err_to_name(result));
+        ESP_LOGE(kLogTag, "failed to restore red LED GPIO%d: %s",
+                 static_cast<int>(kHeartbeatGpio), esp_err_to_name(result));
     }
 }
 
