@@ -10,6 +10,7 @@
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
+#include "mcp23008.h"
 #include "sdkconfig.h"
 
 namespace {
@@ -48,6 +49,11 @@ std::size_t normalize_command(char *command, const std::size_t length)
 }
 
 }  // namespace
+
+UsbSerialEcho::UsbSerialEcho(Mcp23008 &gpio_expander)
+    : gpio_expander_(gpio_expander)
+{
+}
 
 esp_err_t UsbSerialEcho::initialize()
 {
@@ -218,6 +224,12 @@ void UsbSerialEcho::poll_heartbeat(const std::int64_t now_us)
                      esp_err_to_name(result));
         }
 
+        const esp_err_t blue_result = gpio_expander_.write_pin(
+            IRIS_MCP23008_PIN_LED_BLUE, false);
+        if (blue_result != ESP_OK) {
+            ESP_LOGE(kLogTag, "failed to restore blue heartbeat LED: %s",
+                     esp_err_to_name(blue_result));
+        }
     }
 
     if (!heartbeat_pulse_active_ && now_us >= next_heartbeat_us_) {
@@ -229,6 +241,13 @@ void UsbSerialEcho::poll_heartbeat(const std::int64_t now_us)
 
         heartbeat_pulse_active_ = true;
         heartbeat_pulse_end_us_ = now_us + kHeartbeatPulseUs;
+
+        const esp_err_t blue_result = gpio_expander_.write_pin(
+            IRIS_MCP23008_PIN_LED_BLUE, true);
+        if (blue_result != ESP_OK) {
+            ESP_LOGE(kLogTag, "failed to pulse blue heartbeat LED: %s",
+                     esp_err_to_name(blue_result));
+        }
 
         do {
             next_heartbeat_us_ += kHeartbeatPeriodUs;

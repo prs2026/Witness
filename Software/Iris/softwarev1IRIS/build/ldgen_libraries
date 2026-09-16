@@ -89,8 +89,12 @@ C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-i
 C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_libc/libesp_libc.a
 C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/pthread/libpthread.a
 C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/cxx/libcxx.a
+C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_i2c/libesp_hal_i2c.a
 C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_ringbuf/libesp_ringbuf.a
+C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_driver_i2c/libesp_driver_i2c.a
+C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_i2c/libesp_hal_i2c.a
 C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_driver_usb_serial_jtag/libesp_driver_usb_serial_jtag.a
 C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_psram/libesp_psram.a
 C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_driver_uart/libesp_driver_uart.a
 C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/main/libmain.a
+C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_driver_i2c/libesp_driver_i2c.a
