@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <cstring>
 
-#include "comms.h"
 #include "driver/usb_serial_jtag.h"
 #include "driver/usb_serial_jtag_vfs.h"
 #include "esp_log.h"
@@ -166,55 +165,30 @@ void UsbSerialEcho::process_command()
         return;
     }
 
-    if (process_expander_set_command()) {
+    if (process_set_command()) {
         return;
     }
 
-    if (std::strcmp(command_buffer_, "LED 1") == 0 ||
-        std::strcmp(command_buffer_, "LED ON") == 0) {
-        const esp_err_t result = set_led(true);
-        if (result == ESP_OK) {
-            ESP_LOGI(kLogTag, "LED ON");
-        } else {
-            ESP_LOGE(kLogTag, "LED ON failed: %s", esp_err_to_name(result));
-        }
-    } else if (std::strcmp(command_buffer_, "LED 0") == 0 ||
-               std::strcmp(command_buffer_, "LED OFF") == 0) {
-        const esp_err_t result = set_led(false);
-        if (result == ESP_OK) {
-            ESP_LOGI(kLogTag, "LED OFF");
-        } else {
-            ESP_LOGE(kLogTag, "LED OFF failed: %s", esp_err_to_name(result));
-        }
-    } else if (std::strcmp(command_buffer_, "CAM 1 ON") == 0) {
-        set_camera_state(0, true);
-    } else if (std::strcmp(command_buffer_, "CAM 1 OFF") == 0) {
-        set_camera_state(0, false);
-    } else if (std::strcmp(command_buffer_, "CAM 2 ON") == 0) {
-        set_camera_state(1, true);
-    } else if (std::strcmp(command_buffer_, "CAM 2 OFF") == 0) {
-        set_camera_state(1, false);
-    } else {
-        ESP_LOGW(kLogTag, "unknown command: %s", command_buffer_);
-    }
+    ESP_LOGW(kLogTag, "unknown command: %s", command_buffer_);
 }
 
-bool UsbSerialEcho::process_expander_set_command()
+bool UsbSerialEcho::process_set_command()
 {
     if (command_buffer_[0] != 'S') {
         return false;
     }
 
     // Commands are exactly "S <output> <state>". Outputs 1, 2, 3, and 5
-    // control their corresponding enable nets; B controls LED_B.
+    // control their corresponding enable nets; R and B control the LEDs.
     if (std::strlen(command_buffer_) != 5 ||
         command_buffer_[1] != ' ' || command_buffer_[3] != ' ' ||
         (command_buffer_[4] != '0' && command_buffer_[4] != '1')) {
         ESP_LOGW(kLogTag,
-                 "invalid set command; use S {1|2|3|5|B} {0|1}");
+                 "invalid set command; use S {1|2|3|5|R|B} {0|1}");
         return true;
     }
 
+    const bool enabled = command_buffer_[4] == '1';
     std::uint8_t pin = 0;
     const char *name = nullptr;
     switch (command_buffer_[2]) {
@@ -238,13 +212,23 @@ bool UsbSerialEcho::process_expander_set_command()
             pin = IRIS_MCP23008_PIN_LED_BLUE;
             name = "LED_B";
             break;
+        case 'R': {
+            const esp_err_t result = set_led(enabled);
+            if (result == ESP_OK) {
+                ESP_LOGI(kLogTag, "LED_R %s", enabled ? "ON" : "OFF");
+            } else {
+                ESP_LOGE(kLogTag, "LED_R set failed: %s",
+                         esp_err_to_name(result));
+            }
+            return true;
+        }
         default:
             ESP_LOGW(kLogTag,
-                     "unknown output; use S {1|2|3|5|B} {0|1}");
+                     "unknown output; use S {1|2|3|5|R|B} {0|1}");
             return true;
     }
 
-    set_expander_output(pin, name, command_buffer_[4] == '1');
+    set_expander_output(pin, name, enabled);
     return true;
 }
 
@@ -273,16 +257,6 @@ esp_err_t UsbSerialEcho::set_led(const bool on)
         led_on_ = on;
     }
     return result;
-}
-
-void UsbSerialEcho::set_camera_state(
-    const std::size_t camera_index,
-    const bool enabled)
-{
-    camera_enabled_[camera_index] = enabled;
-    ESP_LOGI(kLogTag, "CAM %u %s",
-             static_cast<unsigned>(camera_index + 1),
-             enabled ? "ON" : "OFF");
 }
 
 void UsbSerialEcho::poll_heartbeat(const std::int64_t now_us)

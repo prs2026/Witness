@@ -33,5 +33,5 @@
     "--compile-commands-dir=c:\\Users\\Ejfso\\Documents\\GitHub\\witness\\Software\\Iris\\softwarev1IRIS\\build"
   ],
   "idf.flashType": "UART",
-  "idf.portWin": "COM20"
+  "idf.portWin": "COM21"
 }
