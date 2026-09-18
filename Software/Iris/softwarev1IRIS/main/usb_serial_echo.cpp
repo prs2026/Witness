@@ -166,6 +166,10 @@ void UsbSerialEcho::process_command()
         return;
     }
 
+    if (process_expander_set_command()) {
+        return;
+    }
+
     if (std::strcmp(command_buffer_, "LED 1") == 0 ||
         std::strcmp(command_buffer_, "LED ON") == 0) {
         const esp_err_t result = set_led(true);
@@ -193,6 +197,73 @@ void UsbSerialEcho::process_command()
     } else {
         ESP_LOGW(kLogTag, "unknown command: %s", command_buffer_);
     }
+}
+
+bool UsbSerialEcho::process_expander_set_command()
+{
+    if (command_buffer_[0] != 'S') {
+        return false;
+    }
+
+    // Commands are exactly "S <output> <state>". Outputs 1, 2, 3, and 5
+    // control their corresponding enable nets; B controls LED_B.
+    if (std::strlen(command_buffer_) != 5 ||
+        command_buffer_[1] != ' ' || command_buffer_[3] != ' ' ||
+        (command_buffer_[4] != '0' && command_buffer_[4] != '1')) {
+        ESP_LOGW(kLogTag,
+                 "invalid set command; use S {1|2|3|5|B} {0|1}");
+        return true;
+    }
+
+    std::uint8_t pin = 0;
+    const char *name = nullptr;
+    switch (command_buffer_[2]) {
+        case '1':
+            pin = IRIS_MCP23008_PIN_OUT1_ENABLE;
+            name = "OUT1_EN";
+            break;
+        case '2':
+            pin = IRIS_MCP23008_PIN_OUT2_ENABLE;
+            name = "OUT2_EN";
+            break;
+        case '3':
+            pin = IRIS_MCP23008_PIN_OUT3_ENABLE;
+            name = "OUT3_EN";
+            break;
+        case '5':
+            pin = IRIS_MCP23008_PIN_5V_ENABLE;
+            name = "5V_EN";
+            break;
+        case 'B':
+            pin = IRIS_MCP23008_PIN_LED_BLUE;
+            name = "LED_B";
+            break;
+        default:
+            ESP_LOGW(kLogTag,
+                     "unknown output; use S {1|2|3|5|B} {0|1}");
+            return true;
+    }
+
+    set_expander_output(pin, name, command_buffer_[4] == '1');
+    return true;
+}
+
+void UsbSerialEcho::set_expander_output(
+    const std::uint8_t pin,
+    const char *const name,
+    const bool enabled)
+{
+    const esp_err_t result = gpio_expander_.write_pin(pin, enabled);
+    if (result != ESP_OK) {
+        ESP_LOGE(kLogTag, "%s set failed: %s",
+                 name, esp_err_to_name(result));
+        return;
+    }
+
+    if (pin == IRIS_MCP23008_PIN_LED_BLUE) {
+        blue_led_on_ = enabled;
+    }
+    ESP_LOGI(kLogTag, "%s %s", name, enabled ? "ON" : "OFF");
 }
 
 esp_err_t UsbSerialEcho::set_led(const bool on)
@@ -225,7 +296,7 @@ void UsbSerialEcho::poll_heartbeat(const std::int64_t now_us)
         }
 
         const esp_err_t blue_result = gpio_expander_.write_pin(
-            IRIS_MCP23008_PIN_LED_BLUE, false);
+            IRIS_MCP23008_PIN_LED_BLUE, blue_led_on_);
         if (blue_result != ESP_OK) {
             ESP_LOGE(kLogTag, "failed to restore blue heartbeat LED: %s",
                      esp_err_to_name(blue_result));
@@ -243,7 +314,7 @@ void UsbSerialEcho::poll_heartbeat(const std::int64_t now_us)
         heartbeat_pulse_end_us_ = now_us + kHeartbeatPulseUs;
 
         const esp_err_t blue_result = gpio_expander_.write_pin(
-            IRIS_MCP23008_PIN_LED_BLUE, true);
+            IRIS_MCP23008_PIN_LED_BLUE, !blue_led_on_);
         if (blue_result != ESP_OK) {
             ESP_LOGE(kLogTag, "failed to pulse blue heartbeat LED: %s",
                      esp_err_to_name(blue_result));

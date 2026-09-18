@@ -30,6 +30,8 @@ private:
     void echo_bytes(const std::uint8_t *data, std::size_t length);
     void consume_command_bytes(const std::uint8_t *data, std::size_t length);
     void process_command();
+    bool process_expander_set_command();
+    void set_expander_output(std::uint8_t pin, const char *name, bool enabled);
     esp_err_t set_led(bool on);
     void set_camera_state(std::size_t camera_index, bool enabled);
     void poll_heartbeat(std::int64_t now_us);
@@ -41,6 +43,7 @@ private:
     bool command_overflow_ = false;
     bool camera_enabled_[2]{};
     bool led_on_ = false;
+    bool blue_led_on_ = false;
     bool heartbeat_pulse_active_ = false;
     std::int64_t next_heartbeat_us_ = 0;
     std::int64_t heartbeat_pulse_end_us_ = 0;
