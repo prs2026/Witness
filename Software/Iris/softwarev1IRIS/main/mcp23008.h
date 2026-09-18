@@ -15,6 +15,7 @@ public:
     esp_err_t initialize();
     esp_err_t configure_output(std::uint8_t pin, bool initial_level);
     esp_err_t write_pin(std::uint8_t pin, bool level);
+    i2c_master_bus_handle_t bus_handle() const { return bus_handle_; }
 
 private:
     static constexpr std::uint32_t kBusFrequencyHz = 400000;

@@ -6116,6 +6116,112 @@
                     {
                         "children": [],
                         "depends_on": null,
+                        "help": "Place ISR version ADC oneshot mode read function into IRAM.",
+                        "id": "ADC_ONESHOT_CTRL_FUNC_IN_IRAM",
+                        "name": "ADC_ONESHOT_CTRL_FUNC_IN_IRAM",
+                        "range": null,
+                        "title": "Place ISR version ADC oneshot mode read function into IRAM",
+                        "type": "bool"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": "SOC_ADC_DMA_SUPPORTED",
+                        "help": "Ensure the ADC continuous mode ISR is IRAM-Safe. When enabled, the ISR handler\nwill be available when the cache is disabled.",
+                        "id": "ADC_CONTINUOUS_ISR_IRAM_SAFE",
+                        "name": "ADC_CONTINUOUS_ISR_IRAM_SAFE",
+                        "range": null,
+                        "title": "ADC continuous mode driver ISR IRAM-Safe",
+                        "type": "bool"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "depends_on": "IDF_TARGET_ESP32",
+                                "help": "Some ESP32s have Two Point calibration values burned into eFuse BLOCK3.\nThis option will allow the ADC calibration component to characterize the\nADC-Voltage curve using Two Point values if they are available.",
+                                "id": "ADC_CALI_EFUSE_TP_ENABLE",
+                                "name": "ADC_CALI_EFUSE_TP_ENABLE",
+                                "range": null,
+                                "title": "Use Two Point Values",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "IDF_TARGET_ESP32",
+                                "help": "Some ESP32s have Vref burned into eFuse BLOCK0. This option will allow\nthe ADC calibration component to characterize the ADC-Voltage curve using\neFuse Vref if it is available.",
+                                "id": "ADC_CALI_EFUSE_VREF_ENABLE",
+                                "name": "ADC_CALI_EFUSE_VREF_ENABLE",
+                                "range": null,
+                                "title": "Use eFuse Vref",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "IDF_TARGET_ESP32",
+                                "help": "This option will allow the ADC calibration component to use Lookup Tables\nto correct for non-linear behavior in 11db attenuation. Other attenuations\ndo not exhibit non-linear behavior hence will not be affected by this option.",
+                                "id": "ADC_CALI_LUT_ENABLE",
+                                "name": "ADC_CALI_LUT_ENABLE",
+                                "range": null,
+                                "title": "Use Lookup Tables",
+                                "type": "bool"
+                            }
+                        ],
+                        "depends_on": "IDF_TARGET_ESP32",
+                        "id": "component-config-adc-and-adc-calibration-adc-calibration-configurations-C:-esp-v6.1-esp-idf-components-esp_adc-Kconfig-19",
+                        "title": "ADC Calibration Configurations",
+                        "type": "menu"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": "SOC_DAC_SUPPORTED",
+                        "help": "By default, this is set. The ADC oneshot driver will disable the output of the\ncorresponding DAC channels:\nESP32:   IO25 and IO26\nESP32S2: IO17 and IO18\n\nDisable this option so as to measure the output of DAC by internal ADC, for test usage.",
+                        "id": "ADC_DISABLE_DAC_OUTPUT",
+                        "name": "ADC_DISABLE_DAC_OUTPUT",
+                        "range": null,
+                        "title": "Disable DAC when ADC2 is in use",
+                        "type": "bool"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": "IDF_TARGET_ESP32C3 || IDF_TARGET_ESP32S3",
+                        "help": "On ESP32C3 and ESP32S3, ADC2 Digital Controller is not stable. Therefore,\nADC2 continuous mode is not suggested on ESP32S3 and ESP32C3\n\nIf you stick to this, you can enable this option to force use ADC2 under above conditions.\nFor more details, you can search for errata on espressif website.",
+                        "id": "ADC_CONTINUOUS_FORCE_USE_ADC2_ON_C3_S3",
+                        "name": "ADC_CONTINUOUS_FORCE_USE_ADC2_ON_C3_S3",
+                        "range": null,
+                        "title": "Force use ADC2 continuous mode on ESP32S3 or ESP32C3",
+                        "type": "bool"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": "IDF_TARGET_ESP32C3",
+                        "help": "On ESP32C3, ADC2 Digital Controller is not stable. Therefore,\nADC2 oneshot mode is not suggested on ESP32C3\n\nIf you stick to this, you can enable this option to force use ADC2 under above conditions.\nFor more details, you can search for errata on espressif website.",
+                        "id": "ADC_ONESHOT_FORCE_USE_ADC2_ON_C3",
+                        "name": "ADC_ONESHOT_FORCE_USE_ADC2_ON_C3",
+                        "range": null,
+                        "title": "Force use ADC2 oneshot mode on ESP32C3",
+                        "type": "bool"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": null,
+                        "help": "whether to enable the debug log message for ADC driver.\nNote that this option only controls the ADC driver log, will not affect other drivers.",
+                        "id": "ADC_ENABLE_DEBUG_LOG",
+                        "name": "ADC_ENABLE_DEBUG_LOG",
+                        "range": null,
+                        "title": "Enable ADC debug log",
+                        "type": "bool"
+                    }
+                ],
+                "depends_on": null,
+                "id": "component-config-adc-and-adc-calibration-C:-esp-v6.1-esp-idf-components-esp_adc-Kconfig-1",
+                "title": "ADC and ADC Calibration",
+                "type": "menu"
+            },
+            {
+                "children": [
+                    {
+                        "children": [],
+                        "depends_on": null,
                         "help": "Functions esp_err_to_name() and esp_err_to_name_r() return string representations of error codes from a\npre-generated lookup table. This option can be used to turn off the use of the look-up table in order to\nsave memory but this comes at the price of sacrificing distinguishable (meaningful) output string\nrepresentations.",
                         "id": "ESP_ERR_TO_NAME_LOOKUP",
                         "name": "ESP_ERR_TO_NAME_LOOKUP",
@@ -6347,6 +6453,64 @@
                 "depends_on": "SOC_I2C_SUPPORTED",
                 "id": "component-config-esp-driver-i2c-configurations-C:-esp-v6.1-esp-idf-components-esp_driver_i2c-Kconfig-1",
                 "title": "ESP-Driver:I2C Configurations",
+                "type": "menu"
+            },
+            {
+                "children": [
+                    {
+                        "children": [],
+                        "depends_on": "SOC_TWAI_SUPPORTED",
+                        "help": "Place the TWAI ISR in to IRAM to reduce latency and increase performance",
+                        "id": "TWAI_ISR_IN_IRAM",
+                        "name": "TWAI_ISR_IN_IRAM",
+                        "range": null,
+                        "title": "Place TWAI ISR function in IRAM",
+                        "type": "bool"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": "SOC_TWAI_SUPPORTED",
+                        "help": "Place certain TWAI I/O functions (like twai_transmit) in IRAM to reduce latency",
+                        "id": "TWAI_IO_FUNC_IN_IRAM",
+                        "name": "TWAI_IO_FUNC_IN_IRAM",
+                        "range": null,
+                        "title": "Place TWAI I/O functions in IRAM",
+                        "type": "bool"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": "SOC_TWAI_SUPPORTED",
+                        "help": "Allow TWAI works under Cache disabled (such as when writing to SPI Flash),\nto enabled this config, all callbacks and user_ctx should also place in IRAM",
+                        "id": "TWAI_ISR_CACHE_SAFE",
+                        "name": "TWAI_ISR_CACHE_SAFE",
+                        "range": null,
+                        "title": "Allow TWAI ISR execute when cache disabled",
+                        "type": "bool"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": "SOC_TWAI_SUPPORTED",
+                        "help": "This will ensure the TWAI driver object will not be allocated from a memory region\nwhere its cache can be disabled.",
+                        "id": "TWAI_OBJ_CACHE_SAFE",
+                        "name": "TWAI_OBJ_CACHE_SAFE",
+                        "range": null,
+                        "title": null,
+                        "type": "bool"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": "SOC_TWAI_SUPPORTED",
+                        "help": "If enabled, TWAI driver component will:\n1. ignore the global logging settings\n2. compile all log messages into the binary\n3. set the runtime log level to VERBOSE\nPlease enable this option by caution, as it will increase the binary size.",
+                        "id": "TWAI_ENABLE_DEBUG_LOG",
+                        "name": "TWAI_ENABLE_DEBUG_LOG",
+                        "range": null,
+                        "title": "Force enable debug log",
+                        "type": "bool"
+                    }
+                ],
+                "depends_on": "SOC_TWAI_SUPPORTED",
+                "id": "component-config-esp-driver-twai-configurations-C:-esp-v6.1-esp-idf-components-esp_driver_twai-Kconfig-1",
+                "title": "ESP-Driver:TWAI Configurations",
                 "type": "menu"
             },
             {

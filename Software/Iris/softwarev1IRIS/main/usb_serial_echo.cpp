@@ -1,20 +1,61 @@
 #include "usb_serial_echo.h"
 
+#include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 
 #include "driver/usb_serial_jtag.h"
 #include "driver/usb_serial_jtag_vfs.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
+#include "comms.h"
 #include "mcp23008.h"
+#include "pac1931.h"
 #include "sdkconfig.h"
 
 namespace {
 
 constexpr char kLogTag[] = "serial_command";
+
+static_assert(IRIS_PACKET_CAMERA_FRAME_LENGTH == 19U);
+static_assert(
+    IRIS_PACKET_CAMERA_BATTERY_VOLTAGE_OFFSET +
+        IRIS_PACKET_CAMERA_BATTERY_VOLTAGE_LENGTH ==
+    IRIS_PACKET_CAMERA_DATA_LENGTH);
+static_assert(IRIS_PACKET_CAMERA_BATTERY_VOLTAGE_LENGTH == 1U);
+
+void store_u16_be(std::uint8_t *destination, const std::uint16_t value)
+{
+    destination[0] = static_cast<std::uint8_t>(value >> 8U);
+    destination[1] = static_cast<std::uint8_t>(value);
+}
+
+void store_u32_be(std::uint8_t *destination, const std::uint32_t value)
+{
+    destination[0] = static_cast<std::uint8_t>(value >> 24U);
+    destination[1] = static_cast<std::uint8_t>(value >> 16U);
+    destination[2] = static_cast<std::uint8_t>(value >> 8U);
+    destination[3] = static_cast<std::uint8_t>(value);
+}
+
+std::uint16_t packet_crc16(const std::uint8_t *data, const std::size_t length)
+{
+    std::uint16_t crc = IRIS_PACKET_CRC_INITIAL_VALUE;
+    for (std::size_t index = 0; index < length; ++index) {
+        crc ^= static_cast<std::uint16_t>(data[index]) << 8U;
+        for (unsigned bit = 0; bit < 8; ++bit) {
+            crc = (crc & 0x8000U) != 0
+                ? static_cast<std::uint16_t>((crc << 1U) ^
+                                             IRIS_PACKET_CRC_POLYNOMIAL)
+                : static_cast<std::uint16_t>(crc << 1U);
+        }
+    }
+    return crc;
+}
 
 std::size_t normalize_command(char *command, const std::size_t length)
 {
@@ -49,8 +90,10 @@ std::size_t normalize_command(char *command, const std::size_t length)
 
 }  // namespace
 
-UsbSerialEcho::UsbSerialEcho(Mcp23008 &gpio_expander)
-    : gpio_expander_(gpio_expander)
+UsbSerialEcho::UsbSerialEcho(
+    Mcp23008 &gpio_expander,
+    Pac1931 &current_monitor)
+    : gpio_expander_(gpio_expander), current_monitor_(current_monitor)
 {
 }
 
@@ -90,8 +133,16 @@ esp_err_t UsbSerialEcho::initialize()
     usb_serial_jtag_vfs_use_driver();
 #endif
 
+    // Application logs use the same USB endpoint as the binary protocol.
+    // Suppress them after initialization so they cannot split or corrupt a
+    // telemetry frame. Received ASCII commands are still echoed explicitly.
+    esp_log_level_set("*", ESP_LOG_NONE);
+
     initialized_ = true;
-    next_heartbeat_us_ = esp_timer_get_time() + kHeartbeatPeriodUs;
+    const std::int64_t now_us = esp_timer_get_time();
+    next_heartbeat_us_ = now_us + kHeartbeatPeriodUs;
+    next_current_sample_us_ = now_us + kCurrentSamplePeriodUs;
+    next_current_report_us_ = now_us + kCurrentReportPeriodUs;
     return ESP_OK;
 }
 
@@ -109,7 +160,19 @@ void UsbSerialEcho::poll()
         consume_command_bytes(buffer, byte_count);
     }
 
-    poll_heartbeat(esp_timer_get_time());
+    const std::int64_t now_us = esp_timer_get_time();
+    poll_heartbeat(now_us);
+    poll_current_monitor(now_us);
+}
+
+void UsbSerialEcho::update_battery_voltage(
+    const std::uint32_t millivolts,
+    const bool valid)
+{
+    if (valid) {
+        battery_voltage_millivolts_ = millivolts;
+    }
+    battery_voltage_valid_ = valid;
 }
 
 void UsbSerialEcho::echo_bytes(
@@ -297,5 +360,104 @@ void UsbSerialEcho::poll_heartbeat(const std::int64_t now_us)
         do {
             next_heartbeat_us_ += kHeartbeatPeriodUs;
         } while (next_heartbeat_us_ <= now_us);
+    }
+}
+
+void UsbSerialEcho::poll_current_monitor(const std::int64_t now_us)
+{
+    if (now_us >= next_current_sample_us_) {
+        Pac1931::CurrentArray currents{};
+        const esp_err_t result =
+            current_monitor_.read_currents_microamps(currents);
+        if (result == ESP_OK) {
+            for (std::size_t channel = 0; channel < currents.size(); ++channel) {
+                peak_current_microamps_[channel] = std::max(
+                    peak_current_microamps_[channel], currents[channel]);
+            }
+            ++valid_current_samples_;
+        } else {
+            current_sample_error_ = true;
+        }
+
+        do {
+            next_current_sample_us_ += kCurrentSamplePeriodUs;
+        } while (next_current_sample_us_ <= now_us);
+    }
+
+    if (now_us >= next_current_report_us_) {
+        send_current_report(now_us);
+        peak_current_microamps_.fill(0);
+        valid_current_samples_ = 0;
+        current_sample_error_ = false;
+        do {
+            next_current_report_us_ += kCurrentReportPeriodUs;
+        } while (next_current_report_us_ <= now_us);
+    }
+}
+
+void UsbSerialEcho::send_current_report(const std::int64_t now_us)
+{
+    std::array<std::uint8_t, IRIS_PACKET_CAMERA_FRAME_LENGTH> packet{};
+    packet[0] = IRIS_PACKET_ID_CAMERA;
+    std::uint8_t *const data = packet.data() + IRIS_PACKET_ID_LENGTH;
+
+    // FC fields are unavailable on Iris. This MCU owns the IRIS/camera fields.
+    store_u16_be(data + IRIS_PACKET_CAMERA_FC_STATUS_OFFSET, 0);
+    store_u32_be(data + IRIS_PACKET_CAMERA_FC_UPTIME_OFFSET, 0);
+
+    std::uint16_t status = 0;
+    if (current_sample_error_ || valid_current_samples_ == 0) {
+        status |= IRIS_PACKET_CAMERA_STATUS_CURRENT_MONITOR_ERROR;
+    }
+    if (!battery_voltage_valid_) {
+        status |= IRIS_PACKET_CAMERA_STATUS_BATTERY_MONITOR_ERROR;
+    }
+    store_u16_be(data + IRIS_PACKET_CAMERA_STATUS_OFFSET, status);
+    store_u32_be(data + IRIS_PACKET_CAMERA_UPTIME_OFFSET,
+                 static_cast<std::uint32_t>(now_us / 1000));
+
+    constexpr std::uint32_t kMicroampsPerCurrentCount =
+        IRIS_LORA_CURRENT_SENSE_MILLIAMPS_PER_COUNT * 1000U;
+    for (std::size_t channel = 0;
+         channel < IRIS_PACKET_CAMERA_CURRENT_CHANNELS;
+         ++channel) {
+        const std::uint32_t rounded_counts =
+            (peak_current_microamps_[channel] +
+             kMicroampsPerCurrentCount / 2U) /
+            kMicroampsPerCurrentCount;
+        data[IRIS_PACKET_CAMERA_CURRENT_SENSE_OFFSET + channel] =
+            static_cast<std::uint8_t>(std::min<std::uint32_t>(
+                rounded_counts, std::numeric_limits<std::uint8_t>::max()));
+    }
+
+    const std::uint32_t rounded_battery_counts =
+        (battery_voltage_millivolts_ +
+         IRIS_LORA_BATTERY_VOLTAGE_MILLIVOLTS_PER_COUNT / 2U) /
+        IRIS_LORA_BATTERY_VOLTAGE_MILLIVOLTS_PER_COUNT;
+    data[IRIS_PACKET_CAMERA_BATTERY_VOLTAGE_OFFSET] =
+        static_cast<std::uint8_t>(std::min<std::uint32_t>(
+            rounded_battery_counts,
+            std::numeric_limits<std::uint8_t>::max()));
+
+    const std::uint16_t crc = packet_crc16(
+        packet.data(), IRIS_PACKET_ID_LENGTH + IRIS_PACKET_CAMERA_DATA_LENGTH);
+    store_u16_be(data + IRIS_PACKET_CAMERA_CRC_OFFSET, crc);
+    write_packet(packet.data(), packet.size());
+}
+
+void UsbSerialEcho::write_packet(
+    const std::uint8_t *data,
+    const std::size_t length)
+{
+    std::size_t bytes_written_total = 0;
+    while (bytes_written_total < length) {
+        const int bytes_written = usb_serial_jtag_write_bytes(
+            data + bytes_written_total,
+            length - bytes_written_total,
+            pdMS_TO_TICKS(10));
+        if (bytes_written <= 0) {
+            return;
+        }
+        bytes_written_total += static_cast<std::size_t>(bytes_written);
     }
 }

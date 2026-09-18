@@ -1,0 +1,196 @@
+[11:08:54.123] RX  01
+[11:08:54.124] RX  0f 00 00 00 00 1a ff fc 01 42 f7 f2 ff da 00 12 00 20 02 10 00 00 00 00 1a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f cf c6 33 ff 00 00 00 00 00 1a
+[11:08:54.124] LORA sensors: status=3840, uptime=26, accel=[-0.001952, 0.157136, -1.006256], gyro=[-2.66, 1.26, 2.24], crc=None
+[11:08:54.124] CAN  sensors: status=3840, uptime=26, accel=[-0.001952, 0.157136, -1.006256], gyro=[-2.66, 1.26, 2.24]
+[11:08:54.125] LORA state: status=4096, uptime=26, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127206854, witness_battery_voltage=51, crc=None
+[11:08:54.125] LORA heartbeat: status=0, uptime=26
+[11:08:54.125] CAN  heartbeat: status=0, uptime=26
+[11:08:55.137] RX  01
+[11:08:55.138] RX  0b 00 00 00 00 1b ff f2 01 3e f7 e6 ff db 00 11 00 21 02 10 00 00 00 00 1b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f e5 6c 33 ff 01 00 00 00 00 1b
+[11:08:55.138] LORA sensors: status=2816, uptime=27, accel=[-0.006832, 0.155184, -1.012112], gyro=[-2.59, 1.19, 2.31], crc=None
+[11:08:55.138] CAN  sensors: status=2816, uptime=27, accel=[-0.006832, 0.155184, -1.012112], gyro=[-2.59, 1.19, 2.31]
+[11:08:55.139] LORA state: status=4096, uptime=27, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127212396, witness_battery_voltage=51, crc=None
+[11:08:55.139] LORA heartbeat: status=256, uptime=27
+[11:08:55.139] CAN  heartbeat: status=256, uptime=27
+[11:08:56.099] RX  01
+[11:08:56.100] RX  0f 00 00 00 00 1c ff fd 01 3f f7 f3 ff db 00 12 00 21 02 10 00 00 00 00 1c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f ba 21 33 ff 00 00 00 00 00 1c
+[11:08:56.100] LORA sensors: status=3840, uptime=28, accel=[-0.001464, 0.155672, -1.005768], gyro=[-2.59, 1.26, 2.31], crc=None
+[11:08:56.100] CAN  sensors: status=3840, uptime=28, accel=[-0.001464, 0.155672, -1.005768], gyro=[-2.59, 1.26, 2.31]
+[11:08:56.100] LORA state: status=4096, uptime=28, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127201313, witness_battery_voltage=51, crc=None
+[11:08:56.101] LORA heartbeat: status=0, uptime=28
+[11:08:56.101] CAN  heartbeat: status=0, uptime=28
+[11:08:57.115] RX  01
+[11:08:57.115] RX  0f 00 00 00 00 1d ff fc 01 41 f7 f0 ff da 00 12 00 21 02 10 00 00 00 00 1d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f a4 7c 33 ff 01 00 00 00 00 1d
+[11:08:57.116] LORA sensors: status=3840, uptime=29, accel=[-0.001952, 0.156648, -1.007232], gyro=[-2.66, 1.26, 2.31], crc=None
+[11:08:57.116] CAN  sensors: status=3840, uptime=29, accel=[-0.001952, 0.156648, -1.007232], gyro=[-2.66, 1.26, 2.31]
+[11:08:57.117] LORA state: status=4096, uptime=29, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127195772, witness_battery_voltage=51, crc=None
+[11:08:57.118] LORA heartbeat: status=256, uptime=29
+[11:08:57.118] CAN  heartbeat: status=256, uptime=29
+[11:08:58.096] RX  01
+[11:08:58.097] RX  0b 00 00 00 00 1e ff fd 01 3e f7 f3 ff db 00 13 00 20 02 10 00 00 00 00 1e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f cf c6 33 ff 00 00 00 00 00 1e
+[11:08:58.098] LORA sensors: status=2816, uptime=30, accel=[-0.001464, 0.155184, -1.005768], gyro=[-2.59, 1.33, 2.24], crc=None
+[11:08:58.098] CAN  sensors: status=2816, uptime=30, accel=[-0.001464, 0.155184, -1.005768], gyro=[-2.59, 1.33, 2.24]
+[11:08:58.098] LORA state: status=4096, uptime=30, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127206854, witness_battery_voltage=51, crc=None
+[11:08:58.098] LORA heartbeat: status=0, uptime=30
+[11:08:58.098] CAN  heartbeat: status=0, uptime=30
+[11:08:59.107] RX  01
+[11:08:59.109] RX  0f 00 00 00 00 1f ff fc 01 44 f7 f1 ff db 00 12 00 21 02 10 00 00 00 00 1f 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f e5 6c 33 ff 01 00 00 00 00 1f
+[11:08:59.110] LORA sensors: status=3840, uptime=31, accel=[-0.001952, 0.158112, -1.006744], gyro=[-2.59, 1.26, 2.31], crc=None
+[11:08:59.110] CAN  sensors: status=3840, uptime=31, accel=[-0.001952, 0.158112, -1.006744], gyro=[-2.59, 1.26, 2.31]
+[11:08:59.110] LORA state: status=4096, uptime=31, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127212396, witness_battery_voltage=51, crc=None
+[11:08:59.110] LORA heartbeat: status=256, uptime=31
+[11:08:59.110] CAN  heartbeat: status=256, uptime=31
+[11:09:00.105] RX  01
+[11:09:00.107] RX  0b 00 00 00 00 20 ff fc 01 42 f7 f2 ff db 00 12 00 20 02 10 00 00 00 00 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f e5 6c 33 ff 00 00 00 00 00 20
+[11:09:00.107] LORA sensors: status=2816, uptime=32, accel=[-0.001952, 0.157136, -1.006256], gyro=[-2.59, 1.26, 2.24], crc=None
+[11:09:00.107] CAN  sensors: status=2816, uptime=32, accel=[-0.001952, 0.157136, -1.006256], gyro=[-2.59, 1.26, 2.24]
+[11:09:00.107] LORA state: status=4096, uptime=32, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127212396, witness_battery_voltage=51, crc=None
+[11:09:00.108] LORA heartbeat: status=0, uptime=32
+[11:09:00.108] CAN  heartbeat: status=0, uptime=32
+[11:09:01.131] RX  01
+[11:09:01.132] RX  0f 00 00 00 00 21 ff fb 01 41 f7 f1 ff db 00 12 00 21 02 10 00 00 00 00 21 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f e5 6c 33 ff 01 00 00 00 00 21
+[11:09:01.132] LORA sensors: status=3840, uptime=33, accel=[-0.00244, 0.156648, -1.006744], gyro=[-2.59, 1.26, 2.31], crc=None
+[11:09:01.133] CAN  sensors: status=3840, uptime=33, accel=[-0.00244, 0.156648, -1.006744], gyro=[-2.59, 1.26, 2.31]
+[11:09:01.133] LORA state: status=4096, uptime=33, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127212396, witness_battery_voltage=51, crc=None
+[11:09:01.133] LORA heartbeat: status=256, uptime=33
+[11:09:01.133] CAN  heartbeat: status=256, uptime=33
+[11:09:02.127] RX  01
+[11:09:02.131] RX  0b 00 00 00 00 22 ff f8 01 44 f7 f1 ff db 00 12 00 21 02 10 00 00 00 00 22 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f ba 21 33 ff 00 00 00 00 00 22
+[11:09:02.132] LORA sensors: status=2816, uptime=34, accel=[-0.003904, 0.158112, -1.006744], gyro=[-2.59, 1.26, 2.31], crc=None
+[11:09:02.132] CAN  sensors: status=2816, uptime=34, accel=[-0.003904, 0.158112, -1.006744], gyro=[-2.59, 1.26, 2.31]
+[11:09:02.132] LORA state: status=4096, uptime=34, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127201313, witness_battery_voltage=51, crc=None
+[11:09:02.132] LORA heartbeat: status=0, uptime=34
+[11:09:02.132] CAN  heartbeat: status=0, uptime=34
+[11:09:03.106] RX  01
+[11:09:03.107] RX  0f 00 00 00 00 23 ff fa 01 43 f7 f3 ff db 00 12 00 21 02 10 00 00 00 00 23 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f cf c6 33 ff 01 00 00 00 00 23
+[11:09:03.107] LORA sensors: status=3840, uptime=35, accel=[-0.002928, 0.157624, -1.005768], gyro=[-2.59, 1.26, 2.31], crc=None
+[11:09:03.107] CAN  sensors: status=3840, uptime=35, accel=[-0.002928, 0.157624, -1.005768], gyro=[-2.59, 1.26, 2.31]
+[11:09:03.108] LORA state: status=4096, uptime=35, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127206854, witness_battery_voltage=51, crc=None
+[11:09:03.108] LORA heartbeat: status=256, uptime=35
+[11:09:03.108] CAN  heartbeat: status=256, uptime=35
+[11:09:04.118] RX  01
+[11:09:04.122] RX  0f 00 00 00 00 24 ff fd 01 43 f7 f1 ff db 00 12 00 21
+[11:09:04.123] LORA sensors: status=3840, uptime=36, accel=[-0.001464, 0.157624, -1.006744], gyro=[-2.59, 1.26, 2.31], crc=None
+[11:09:04.123] CAN  sensors: status=3840, uptime=36, accel=[-0.001464, 0.157624, -1.006744], gyro=[-2.59, 1.26, 2.31]
+[11:09:04.123] RX  02 10 00 00 00 00 24 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f cf c6 33 ff 00 00 00 00 00 24
+[11:09:04.123] LORA state: status=4096, uptime=36, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127206854, witness_battery_voltage=51, crc=None
+[11:09:04.124] LORA heartbeat: status=0, uptime=36
+[11:09:04.124] CAN  heartbeat: status=0, uptime=36
+[11:09:05.102] RX  01
+[11:09:05.106] RX  0b 00 00 00 00 25 ff fb 01 43 f7 f3 ff db 00 12 00 20 02 10 00 00 00 00 25 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f a4 7c 33 ff 01 00 00 00 00 25
+[11:09:05.107] LORA sensors: status=2816, uptime=37, accel=[-0.00244, 0.157624, -1.005768], gyro=[-2.59, 1.26, 2.24], crc=None
+[11:09:05.107] CAN  sensors: status=2816, uptime=37, accel=[-0.00244, 0.157624, -1.005768], gyro=[-2.59, 1.26, 2.24]
+[11:09:05.107] LORA state: status=4096, uptime=37, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127195772, witness_battery_voltage=51, crc=None
+[11:09:05.107] LORA heartbeat: status=256, uptime=37
+[11:09:05.107] CAN  heartbeat: status=256, uptime=37
+[11:09:06.125] RX  01
+[11:09:06.125] RX  0f 00 00 00 00 26 ff fc 01 42 f7 f0 ff db 00 12 00 20 02 10 00 00 00 00 26 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f cf c6 33 ff 00 00 00 00 00 26
+[11:09:06.126] LORA sensors: status=3840, uptime=38, accel=[-0.001952, 0.157136, -1.007232], gyro=[-2.59, 1.26, 2.24], crc=None
+[11:09:06.126] CAN  sensors: status=3840, uptime=38, accel=[-0.001952, 0.157136, -1.007232], gyro=[-2.59, 1.26, 2.24]
+[11:09:06.126] LORA state: status=4096, uptime=38, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127206854, witness_battery_voltage=51, crc=None
+[11:09:06.127] LORA heartbeat: status=0, uptime=38
+[11:09:06.127] CAN  heartbeat: status=0, uptime=38
+[11:09:07.118] RX  01
+[11:09:07.118] RX  0b 00 00 00 00 27 ff fb 01 42 f7 ef ff db 00 12 00 20 02 10 00 00 00 00 27 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f cf c6 33 ff 01 00 00 00 00 27
+[11:09:07.119] LORA sensors: status=2816, uptime=39, accel=[-0.00244, 0.157136, -1.00772], gyro=[-2.59, 1.26, 2.24], crc=None
+[11:09:07.119] CAN  sensors: status=2816, uptime=39, accel=[-0.00244, 0.157136, -1.00772], gyro=[-2.59, 1.26, 2.24]
+[11:09:07.119] LORA state: status=4096, uptime=39, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127206854, witness_battery_voltage=51, crc=None
+[11:09:07.119] LORA heartbeat: status=256, uptime=39
+[11:09:07.119] CAN  heartbeat: status=256, uptime=39
+[11:09:08.131] RX  01
+[11:09:08.133] RX  0f 00 00 00 00 28 ff fb 01 42 f7 f2 ff da 00 12 00 21 02 10 00 00 00 00 28 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f fb 11 33 ff 00 00 00 00 00 28
+[11:09:08.134] LORA sensors: status=3840, uptime=40, accel=[-0.00244, 0.157136, -1.006256], gyro=[-2.66, 1.26, 2.31], crc=None
+[11:09:08.134] CAN  sensors: status=3840, uptime=40, accel=[-0.00244, 0.157136, -1.006256], gyro=[-2.66, 1.26, 2.31]
+[11:09:08.134] LORA state: status=4096, uptime=40, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127217937, witness_battery_voltage=51, crc=None
+[11:09:08.135] LORA heartbeat: status=0, uptime=40
+[11:09:08.135] CAN  heartbeat: status=0, uptime=40
+[11:09:09.126] RX  01
+[11:09:09.126] RX  0b 00 00 00 00 29 ff fa 01 43 f7 f0 ff db 00 12 00 21 02 10 00 00 00 00 29 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f a4 7c 33 ff 01 00 00 00 00 29
+[11:09:09.127] LORA sensors: status=2816, uptime=41, accel=[-0.002928, 0.157624, -1.007232], gyro=[-2.59, 1.26, 2.31], crc=None
+[11:09:09.127] CAN  sensors: status=2816, uptime=41, accel=[-0.002928, 0.157624, -1.007232], gyro=[-2.59, 1.26, 2.31]
+[11:09:09.127] LORA state: status=4096, uptime=41, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127195772, witness_battery_voltage=51, crc=None
+[11:09:09.127] LORA heartbeat: status=256, uptime=41
+[11:09:09.127] CAN  heartbeat: status=256, uptime=41
+[11:09:10.085] RX  01
+[11:09:10.086] RX  0f 00 00 00 00 2a ff fa 01 44 f7 f5 ff da 00 11 00 22 02 10 00 00 00 00 2a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f cf c6 33 ff 00 00 00 00 00 2a
+[11:09:10.086] LORA sensors: status=3840, uptime=42, accel=[-0.002928, 0.158112, -1.004792], gyro=[-2.66, 1.19, 2.38], crc=None
+[11:09:10.087] CAN  sensors: status=3840, uptime=42, accel=[-0.002928, 0.158112, -1.004792], gyro=[-2.66, 1.19, 2.38]
+[11:09:10.087] LORA state: status=4096, uptime=42, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127206854, witness_battery_voltage=51, crc=None
+[11:09:10.087] LORA heartbeat: status=0, uptime=42
+[11:09:10.088] CAN  heartbeat: status=0, uptime=42
+[11:09:11.109] RX  01
+[11:09:11.111] RX  0b 00 00 00 00 2b ff fb 01 43 f7 f1 ff db 00 12 00 21 02 10 00 00 00 00 2b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f e5 6c 33 ff 01 00 00 00 00 2b
+[11:09:11.112] LORA sensors: status=2816, uptime=43, accel=[-0.00244, 0.157624, -1.006744], gyro=[-2.59, 1.26, 2.31], crc=None
+[11:09:11.112] CAN  sensors: status=2816, uptime=43, accel=[-0.00244, 0.157624, -1.006744], gyro=[-2.59, 1.26, 2.31]
+[11:09:11.112] LORA state: status=4096, uptime=43, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127212396, witness_battery_voltage=51, crc=None
+[11:09:11.112] LORA heartbeat: status=256, uptime=43
+[11:09:11.113] CAN  heartbeat: status=256, uptime=43
+[11:09:12.098] RX  01
+[11:09:12.098] RX  0f 00 00 00 00 2c ff fd 01 45 f7 ef ff db 00 12 00 20 02 10 00 00 00 00 2c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f cf c6 33
+[11:09:12.099] LORA sensors: status=3840, uptime=44, accel=[-0.001464, 0.1586, -1.00772], gyro=[-2.59, 1.26, 2.24], crc=None
+[11:09:12.099] CAN  sensors: status=3840, uptime=44, accel=[-0.001464, 0.1586, -1.00772], gyro=[-2.59, 1.26, 2.24]
+[11:09:12.099] LORA state: status=4096, uptime=44, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127206854, witness_battery_voltage=51, crc=None
+[11:09:12.099] RX  ff 00 00 00 00 00 2c
+[11:09:12.099] LORA heartbeat: status=0, uptime=44
+[11:09:12.099] CAN  heartbeat: status=0, uptime=44
+[11:09:13.116] RX  01
+[11:09:13.116] RX  0f 00 00 00 00 2d ff fc 01 42 f7 f3 ff da 00 13 00 20 02 10 00 00 00 00 2d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f fb 11 33
+[11:09:13.116] LORA sensors: status=3840, uptime=45, accel=[-0.001952, 0.157136, -1.005768], gyro=[-2.66, 1.33, 2.24], crc=None
+[11:09:13.117] CAN  sensors: status=3840, uptime=45, accel=[-0.001952, 0.157136, -1.005768], gyro=[-2.66, 1.33, 2.24]
+[11:09:13.117] LORA state: status=4096, uptime=45, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127217937, witness_battery_voltage=51, crc=None
+[11:09:13.117] RX  ff 01 00 00 00 00 2d
+[11:09:13.117] LORA heartbeat: status=256, uptime=45
+[11:09:13.117] CAN  heartbeat: status=256, uptime=45
+[11:09:14.132] RX  01
+[11:09:14.133] RX  0b 00 00 00 00 2e ff fb 01 43 f7 f0 ff db 00 12 00 21 02 10 00 00 00 00 2e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f e5 6c 33 ff 00 00 00 00 00 2e
+[11:09:14.134] LORA sensors: status=2816, uptime=46, accel=[-0.00244, 0.157624, -1.007232], gyro=[-2.59, 1.26, 2.31], crc=None
+[11:09:14.134] CAN  sensors: status=2816, uptime=46, accel=[-0.00244, 0.157624, -1.007232], gyro=[-2.59, 1.26, 2.31]
+[11:09:14.134] LORA state: status=4096, uptime=46, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127212396, witness_battery_voltage=51, crc=None
+[11:09:14.134] LORA heartbeat: status=0, uptime=46
+[11:09:14.134] CAN  heartbeat: status=0, uptime=46
+[11:09:15.143] RX  01
+[11:09:15.144] RX  0f 00 00 00 00 2f ff fc 01 42 f7 ef ff db 00 12 00 21
+[11:09:15.145] LORA sensors: status=3840, uptime=47, accel=[-0.001952, 0.157136, -1.00772], gyro=[-2.59, 1.26, 2.31], crc=None
+[11:09:15.145] CAN  sensors: status=3840, uptime=47, accel=[-0.001952, 0.157136, -1.00772], gyro=[-2.59, 1.26, 2.31]
+[11:09:15.145] RX  02 10 00 00 00 00 2f 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f cf c6 33 ff 01 00 00 00 00 2f
+[11:09:15.145] LORA state: status=4096, uptime=47, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127206854, witness_battery_voltage=51, crc=None
+[11:09:15.145] LORA heartbeat: status=256, uptime=47
+[11:09:15.145] CAN  heartbeat: status=256, uptime=47
+[11:09:16.125] RX  01
+[11:09:16.126] RX  0b 00 00 00 00 30 ff fc 01 42 f7 f0 ff db 00 12 00 21 02 10 00 00 00 00 30 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 30 26 5b 33
+[11:09:16.127] LORA sensors: status=2816, uptime=48, accel=[-0.001952, 0.157136, -1.007232], gyro=[-2.59, 1.26, 2.31], crc=None
+[11:09:16.128] CAN  sensors: status=2816, uptime=48, accel=[-0.001952, 0.157136, -1.007232], gyro=[-2.59, 1.26, 2.31]
+[11:09:16.129] LORA state: status=4096, uptime=48, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127229019, witness_battery_voltage=51, crc=None
+[11:09:16.129] RX  ff 00 00 00 00 00 30
+[11:09:16.129] LORA heartbeat: status=0, uptime=48
+[11:09:16.130] CAN  heartbeat: status=0, uptime=48
+[11:09:17.103] RX  01
+[11:09:17.104] RX  0f 00 00 00 00 31 ff fb 01 42 f7 f3 ff db 00 11 00 21 02 10 00 00 00 00 31 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f cf c6 33 ff 01 00 00 00 00 31
+[11:09:17.104] LORA sensors: status=3840, uptime=49, accel=[-0.00244, 0.157136, -1.005768], gyro=[-2.59, 1.19, 2.31], crc=None
+[11:09:17.104] CAN  sensors: status=3840, uptime=49, accel=[-0.00244, 0.157136, -1.005768], gyro=[-2.59, 1.19, 2.31]
+[11:09:17.105] LORA state: status=4096, uptime=49, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127206854, witness_battery_voltage=51, crc=None
+[11:09:17.105] LORA heartbeat: status=256, uptime=49
+[11:09:17.105] CAN  heartbeat: status=256, uptime=49
+[11:09:18.102] RX  01
+[11:09:18.102] RX  0b 00 00 00 00 32 ff fc 01 43 f7 f1 ff da 00 12 00 21 02 10 00 00 00 00 32 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f e5 6c 33 ff 00 00 00 00 00 32
+[11:09:18.103] LORA sensors: status=2816, uptime=50, accel=[-0.001952, 0.157624, -1.006744], gyro=[-2.66, 1.26, 2.31], crc=None
+[11:09:18.103] CAN  sensors: status=2816, uptime=50, accel=[-0.001952, 0.157624, -1.006744], gyro=[-2.66, 1.26, 2.31]
+[11:09:18.103] LORA state: status=4096, uptime=50, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127212396, witness_battery_voltage=51, crc=None
+[11:09:18.103] LORA heartbeat: status=0, uptime=50
+[11:09:18.104] CAN  heartbeat: status=0, uptime=50
+[11:09:19.090] RX  01
+[11:09:19.091] RX  0f 00 00 00 00 33 ff fc 01 42 f7 f1 ff da 00 12 00 21 02 10 00 00 00 00 33 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f e5 6c 33
+[11:09:19.091] LORA sensors: status=3840, uptime=51, accel=[-0.001952, 0.157136, -1.006744], gyro=[-2.66, 1.26, 2.31], crc=None
+[11:09:19.091] CAN  sensors: status=3840, uptime=51, accel=[-0.001952, 0.157136, -1.006744], gyro=[-2.66, 1.26, 2.31]
+[11:09:19.092] LORA state: status=4096, uptime=51, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127212396, witness_battery_voltage=51, crc=None
+[11:09:19.092] RX  ff 01 00 00 00 00 33
+[11:09:19.092] LORA heartbeat: status=256, uptime=51
+[11:09:19.092] CAN  heartbeat: status=256, uptime=51
+[11:09:20.111] RX  01
+[11:09:20.111] RX  0f 00 00 00 00 34 ff fc 01 43 f7 f1 ff da 00 12 00 20 02 10 00 00 00 00 34 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2f e5 6c 33
+[11:09:20.113] LORA sensors: status=3840, uptime=52, accel=[-0.001952, 0.157624, -1.006744], gyro=[-2.66, 1.26, 2.24], crc=None
+[11:09:20.115] CAN  sensors: status=3840, uptime=52, accel=[-0.001952, 0.157624, -1.006744], gyro=[-2.66, 1.26, 2.24]
+[11:09:20.115] LORA state: status=4096, uptime=52, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1127212396, witness_battery_voltage=51, crc=None
+[11:09:20.115] RX  ff 00 00 00 00 00 34
+[11:09:20.116] LORA heartbeat: status=0, uptime=52
+[11:09:20.116] CAN  heartbeat: status=0, uptime=52

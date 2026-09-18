@@ -6,21 +6,6 @@
 
 #include "driver/usb_serial_jtag.h"
 
-namespace {
-
-constexpr std::uint8_t kDummySpiPacketId = 0x01;
-constexpr std::size_t kDummyPayloadSize = 8;
-
-void write_u32_be(std::uint8_t *destination, const std::uint32_t value)
-{
-    destination[0] = static_cast<std::uint8_t>(value >> 24);
-    destination[1] = static_cast<std::uint8_t>(value >> 16);
-    destination[2] = static_cast<std::uint8_t>(value >> 8);
-    destination[3] = static_cast<std::uint8_t>(value);
-}
-
-}  // namespace
-
 esp_err_t SpiDataForwarder::start()
 {
     if (forward_queue_ != nullptr || command_queue_ != nullptr) {
@@ -122,17 +107,6 @@ void SpiDataForwarder::spi_task_entry(void *context)
     static_cast<SpiDataForwarder *>(context)->run_spi_interface();
 }
 
-void SpiDataForwarder::generate_dummy_spi_packet()
-{
-    // TODO: Replace this generator with an SPI receive transaction. The dummy
-    // packet follows [packet ID][6..64 payload bytes].
-    std::uint8_t payload[kDummyPayloadSize] = {
-        0x10, 0x20, 0x30, 0x40, 0x00, 0x00, 0x00, 0x00,
-    };
-    write_u32_be(&payload[4], dummy_sequence_number_++);
-    (void)queue_packet(kDummySpiPacketId, payload, sizeof(payload));
-}
-
 void SpiDataForwarder::send_spi_packet(const Packet &packet)
 {
     // TODO: Send packet.packet_id followed by packet.payload_length raw payload
@@ -176,20 +150,13 @@ void SpiDataForwarder::run_forwarder()
 void SpiDataForwarder::run_spi_interface()
 {
     Packet command{};
-    TickType_t last_dummy_packet = xTaskGetTickCount();
 
     for (;;) {
         if (xQueueReceive(
                 command_queue_,
                 &command,
-                kDummyPacketPeriod) == pdTRUE) {
+                portMAX_DELAY) == pdTRUE) {
             send_spi_packet(command);
-        }
-
-        const TickType_t now = xTaskGetTickCount();
-        if ((now - last_dummy_packet) >= kDummyPacketPeriod) {
-            generate_dummy_spi_packet();
-            last_dummy_packet = now;
         }
     }
 }

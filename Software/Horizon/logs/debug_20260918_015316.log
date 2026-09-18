@@ -1,0 +1,115 @@
+[01:53:16.605] RX  01
+[01:53:16.607] RX  0f 00 00 00 00 9b ff f5 01 5a f7 f7 ff db 00 13 00 20 02 10 00 00 00 00 9b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c 98 92 ff 01 00 00 00 00 9b
+[01:53:16.607] LORA sensors: status=3840, uptime=155, accel=[-0.005368, 0.168848, -1.003816], gyro=[-2.59, 1.33, 2.24], crc=None
+[01:53:16.607] CAN  sensors: status=3840, uptime=155, accel=[-0.005368, 0.168848, -1.003816], gyro=[-2.59, 1.33, 2.24]
+[01:53:16.608] LORA state: status=4096, uptime=155, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1126996114, crc=65281
+[01:53:17.616] RX  01
+[01:53:17.616] RX  0f 00 00 00 00 9c ff f5 01 5a f7 f7 ff da 00 12 00 21 02 10 00 00 00 00 9c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c c3 dc ff 00 00 00 00 00 9c
+[01:53:17.617] LORA sensors: status=3840, uptime=156, accel=[-0.005368, 0.168848, -1.003816], gyro=[-2.66, 1.26, 2.31], crc=None
+[01:53:17.619] CAN  sensors: status=3840, uptime=156, accel=[-0.005368, 0.168848, -1.003816], gyro=[-2.66, 1.26, 2.31]
+[01:53:17.623] LORA state: status=4096, uptime=156, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1127007196, crc=65280
+[01:53:18.610] RX  01
+[01:53:18.611] RX  0b 00 00 00 00 9d ff f5 01 58 f7 f7 ff db 00 13 00 21 02 10 00 00 00 00 9d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c 98 92
+[01:53:18.612] LORA sensors: status=2816, uptime=157, accel=[-0.005368, 0.167872, -1.003816], gyro=[-2.59, 1.33, 2.31], crc=None
+[01:53:18.612] CAN  sensors: status=2816, uptime=157, accel=[-0.005368, 0.167872, -1.003816], gyro=[-2.59, 1.33, 2.31]
+[01:53:18.612] RX  ff 01 00 00 00 00 9d
+[01:53:18.613] LORA state: status=4096, uptime=157, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1126996114, crc=65281
+[01:53:19.643] RX  01
+[01:53:19.646] RX  0f 00 00 00 00 9e ff f5 01 58 f7 f7 ff da 00 13 00 21 02 10 00 00 00 00 9e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c ae 37 ff 00 00 00 00 00 9e
+[01:53:19.646] LORA sensors: status=3840, uptime=158, accel=[-0.005368, 0.167872, -1.003816], gyro=[-2.66, 1.33, 2.31], crc=None
+[01:53:19.647] CAN  sensors: status=3840, uptime=158, accel=[-0.005368, 0.167872, -1.003816], gyro=[-2.66, 1.33, 2.31]
+[01:53:19.647] LORA state: status=4096, uptime=158, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1127001655, crc=65280
+[01:53:20.626] RX  01
+[01:53:20.627] RX  0b 00 00 00 00 9f ff f6 01 58 f7 f6 ff da 00 12 00 22 02 10 00 00 00 00 9f 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c ae 37 ff 01 00 00 00 00 9f
+[01:53:20.628] LORA sensors: status=2816, uptime=159, accel=[-0.00488, 0.167872, -1.004304], gyro=[-2.66, 1.26, 2.38], crc=None
+[01:53:20.628] CAN  sensors: status=2816, uptime=159, accel=[-0.00488, 0.167872, -1.004304], gyro=[-2.66, 1.26, 2.38]
+[01:53:20.628] LORA state: status=4096, uptime=159, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1127001655, crc=65281
+[01:53:21.636] RX  01
+[01:53:21.637] RX  0f 00 00 00 00 a0 ff f4 01 59 f7 f7 ff da 00 13 00 20 02 10 00 00 00 00 a0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c 82 ec ff 00 00 00 00 00 a0
+[01:53:21.637] LORA sensors: status=3840, uptime=160, accel=[-0.005856, 0.16836, -1.003816], gyro=[-2.66, 1.33, 2.24], crc=None
+[01:53:21.638] CAN  sensors: status=3840, uptime=160, accel=[-0.005856, 0.16836, -1.003816], gyro=[-2.66, 1.33, 2.24]
+[01:53:21.638] LORA state: status=4096, uptime=160, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1126990572, crc=65280
+[01:53:22.626] RX  01
+[01:53:22.627] RX  0b 00 00 00 00 a1 ff f6 01 57 f7 f5 ff da 00 12 00 21 02 10 00 00 00 00 a1 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c 98 92
+[01:53:22.627] LORA sensors: status=2816, uptime=161, accel=[-0.00488, 0.167384, -1.004792], gyro=[-2.66, 1.26, 2.31], crc=None
+[01:53:22.627] CAN  sensors: status=2816, uptime=161, accel=[-0.00488, 0.167384, -1.004792], gyro=[-2.66, 1.26, 2.31]
+[01:53:22.628] RX  ff 01 00 00 00 00 a1
+[01:53:22.628] LORA state: status=4096, uptime=161, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1126996114, crc=65281
+[01:53:23.642] RX  01
+[01:53:23.643] RX  0f 00 00 00 00 a2 ff f4 01 57 f7 f6 ff da 00 12 00 21 02 10 00 00 00 00 a2 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c 98 92
+[01:53:23.644] LORA sensors: status=3840, uptime=162, accel=[-0.005856, 0.167384, -1.004304], gyro=[-2.66, 1.26, 2.31], crc=None
+[01:53:23.644] CAN  sensors: status=3840, uptime=162, accel=[-0.005856, 0.167384, -1.004304], gyro=[-2.66, 1.26, 2.31]
+[01:53:23.644] RX  ff 00 00 00 00 00 a2
+[01:53:23.645] LORA state: status=4096, uptime=162, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1126996114, crc=65280
+[01:53:24.634] RX  01
+[01:53:24.635] RX  0f 00 00 00 00 a3 ff f6 01 59 f7 f6 ff db 00 12 00 21 02 10 00 00 00 00 a3 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c ef 27
+[01:53:24.636] LORA sensors: status=3840, uptime=163, accel=[-0.00488, 0.16836, -1.004304], gyro=[-2.59, 1.26, 2.31], crc=None
+[01:53:24.636] CAN  sensors: status=3840, uptime=163, accel=[-0.00488, 0.16836, -1.004304], gyro=[-2.59, 1.26, 2.31]
+[01:53:24.637] RX  ff 01 00 00 00 00 a3
+[01:53:24.637] LORA state: status=4096, uptime=163, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1127018279, crc=65281
+[01:53:25.641] RX  01
+[01:53:25.644] RX  0b 00 00 00 00 a4 ff f6 01 59 f7 f8 ff da 00 13 00 20 02 10 00 00 00 00 a4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c c3 dc ff 00 00 00 00 00 a4
+[01:53:25.645] LORA sensors: status=2816, uptime=164, accel=[-0.00488, 0.16836, -1.003328], gyro=[-2.66, 1.33, 2.24], crc=None
+[01:53:25.645] CAN  sensors: status=2816, uptime=164, accel=[-0.00488, 0.16836, -1.003328], gyro=[-2.66, 1.33, 2.24]
+[01:53:25.646] LORA state: status=4096, uptime=164, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1127007196, crc=65280
+[01:53:26.657] RX  01
+[01:53:26.658] RX  0f 00 00 00 00 a5 ff f3 01 58 f7 f6 ff db 00 12 00 20 02 10 00 00 00 00 a5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c 57 a2 ff 01 00 00 00 00 a5
+[01:53:26.659] LORA sensors: status=3840, uptime=165, accel=[-0.006344, 0.167872, -1.004304], gyro=[-2.59, 1.26, 2.24], crc=None
+[01:53:26.659] CAN  sensors: status=3840, uptime=165, accel=[-0.006344, 0.167872, -1.004304], gyro=[-2.59, 1.26, 2.24]
+[01:53:26.660] LORA state: status=4096, uptime=165, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1126979490, crc=65281
+[01:53:27.604] RX  01
+[01:53:27.605] RX  0b 00 00 00 00 a6 ff f3 01 59 f7 f5 ff db 00 12 00 21 02 10 00 00 00 00 a6 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c d9 81 ff 00 00 00 00 00 a6
+[01:53:27.606] LORA sensors: status=2816, uptime=166, accel=[-0.006344, 0.16836, -1.004792], gyro=[-2.59, 1.26, 2.31], crc=None
+[01:53:27.606] CAN  sensors: status=2816, uptime=166, accel=[-0.006344, 0.16836, -1.004792], gyro=[-2.59, 1.26, 2.31]
+[01:53:27.606] LORA state: status=4096, uptime=166, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1127012737, crc=65280
+[01:53:28.629] RX  01
+[01:53:28.630] RX  0f 00 00 00 00 a7 ff f3 01 59 f7 f4 ff da 00 12 00 20 02 10 00 00 00 00 a7 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c 98 92 ff 01 00 00 00 00 a7
+[01:53:28.630] LORA sensors: status=3840, uptime=167, accel=[-0.006344, 0.16836, -1.00528], gyro=[-2.66, 1.26, 2.24], crc=None
+[01:53:28.631] CAN  sensors: status=3840, uptime=167, accel=[-0.006344, 0.16836, -1.00528], gyro=[-2.66, 1.26, 2.24]
+[01:53:28.631] LORA state: status=4096, uptime=167, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1126996114, crc=65281
+[01:53:29.606] RX  01
+[01:53:29.607] RX  0b 00 00 00 00 a8 ff f0 01 58 f7 f9 ff da 00 11 00 21 02 10 00 00 00 00 a8 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c 82 ec ff 00 00 00 00 00 a8
+[01:53:29.607] LORA sensors: status=2816, uptime=168, accel=[-0.007808, 0.167872, -1.00284], gyro=[-2.66, 1.19, 2.31], crc=None
+[01:53:29.607] CAN  sensors: status=2816, uptime=168, accel=[-0.007808, 0.167872, -1.00284], gyro=[-2.66, 1.19, 2.31]
+[01:53:29.608] LORA state: status=4096, uptime=168, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1126990572, crc=65280
+[01:53:30.618] RX  01
+[01:53:30.619] RX  0f 00 00 00 00 a9 ff f5 01 58 f7 f5 ff da 00 13 00 21 02 10 00 00 00 00 a9 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c ae 37 ff 01 00 00 00 00 a9
+[01:53:30.619] LORA sensors: status=3840, uptime=169, accel=[-0.005368, 0.167872, -1.004792], gyro=[-2.66, 1.33, 2.31], crc=None
+[01:53:30.620] CAN  sensors: status=3840, uptime=169, accel=[-0.005368, 0.167872, -1.004792], gyro=[-2.66, 1.33, 2.31]
+[01:53:30.620] LORA state: status=4096, uptime=169, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1127001655, crc=65281
+[01:53:31.628] RX  01
+[01:53:31.629] RX  0f 00 00 00 00 aa ff f5 01 57 f7 f6 ff da 00 12 00 20 02 10 00 00 00 00 aa 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c c3 dc ff 00 00 00 00 00 aa
+[01:53:31.629] LORA sensors: status=3840, uptime=170, accel=[-0.005368, 0.167384, -1.004304], gyro=[-2.66, 1.26, 2.24], crc=None
+[01:53:31.630] CAN  sensors: status=3840, uptime=170, accel=[-0.005368, 0.167384, -1.004304], gyro=[-2.66, 1.26, 2.24]
+[01:53:31.630] LORA state: status=4096, uptime=170, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1127007196, crc=65280
+[01:53:32.654] RX  01
+[01:53:32.654] RX  0f 00 00 00 00 ab ff f4 01 58 f7 f4 ff db 00 13 00 21 02 10 00 00 00 00 ab 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c ae 37 ff 01 00 00 00 00 ab
+[01:53:32.655] LORA sensors: status=3840, uptime=171, accel=[-0.005856, 0.167872, -1.00528], gyro=[-2.59, 1.33, 2.31], crc=None
+[01:53:32.655] CAN  sensors: status=3840, uptime=171, accel=[-0.005856, 0.167872, -1.00528], gyro=[-2.59, 1.33, 2.31]
+[01:53:32.656] LORA state: status=4096, uptime=171, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1127001655, crc=65281
+[01:53:33.604] RX  01
+[01:53:33.606] RX  0f 00 00 00 00 ac ff f6 01 58 f7 f5 ff da 00 12 00 21 02 10 00 00 00 00 ac 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c ae 37 ff 00 00 00 00 00 ac
+[01:53:33.607] LORA sensors: status=3840, uptime=172, accel=[-0.00488, 0.167872, -1.004792], gyro=[-2.66, 1.26, 2.31], crc=None
+[01:53:33.607] CAN  sensors: status=3840, uptime=172, accel=[-0.00488, 0.167872, -1.004792], gyro=[-2.66, 1.26, 2.31]
+[01:53:33.608] LORA state: status=4096, uptime=172, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1127001655, crc=65280
+[01:53:34.630] RX  01
+[01:53:34.631] RX  0b 00 00 00 00 ad ff f3 01 57 f7 f6 ff db 00 13 00 20 02 10 00 00 00 00 ad 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c c3 dc
+[01:53:34.632] LORA sensors: status=2816, uptime=173, accel=[-0.006344, 0.167384, -1.004304], gyro=[-2.59, 1.33, 2.24], crc=None
+[01:53:34.632] CAN  sensors: status=2816, uptime=173, accel=[-0.006344, 0.167384, -1.004304], gyro=[-2.59, 1.33, 2.24]
+[01:53:34.632] RX  ff 01 00 00 00 00 ad
+[01:53:34.633] LORA state: status=4096, uptime=173, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1127007196, crc=65281
+[01:53:35.646] RX  01
+[01:53:35.647] RX  0f 00 00 00 00 ae ff f6 01 57 f7 f8 ff da 00 13 00 21 02 10 00 00 00 00 ae 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c ef 27 ff 00 00 00 00 00 ae
+[01:53:35.648] LORA sensors: status=3840, uptime=174, accel=[-0.00488, 0.167384, -1.003328], gyro=[-2.66, 1.33, 2.31], crc=None
+[01:53:35.649] CAN  sensors: status=3840, uptime=174, accel=[-0.00488, 0.167384, -1.003328], gyro=[-2.66, 1.33, 2.31]
+[01:53:35.654] LORA state: status=4096, uptime=174, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1127018279, crc=65280
+[01:53:36.624] RX  01
+[01:53:36.625] RX  0b 00 00 00 00 af ff f5 01 58 f7 f4 ff da 00 12 00 20 02 10 00 00 00 00 af 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c c3 dc ff 01 00 00 00 00 af
+[01:53:36.626] LORA sensors: status=2816, uptime=175, accel=[-0.005368, 0.167872, -1.00528], gyro=[-2.66, 1.26, 2.24], crc=None
+[01:53:36.626] CAN  sensors: status=2816, uptime=175, accel=[-0.005368, 0.167872, -1.00528], gyro=[-2.66, 1.26, 2.24]
+[01:53:36.627] LORA state: status=4096, uptime=175, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1127007196, crc=65281
+[01:53:37.642] RX  01
+[01:53:37.644] RX  0f 00 00 00 00 b0 ff f2 01 58 f7 f5 ff db 00 12 00 20 02 10 00 00 00 00 b0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c 82 ec ff 00 00 00 00 00 b0
+[01:53:37.645] LORA sensors: status=3840, uptime=176, accel=[-0.006832, 0.167872, -1.004792], gyro=[-2.59, 1.26, 2.24], crc=None
+[01:53:37.646] CAN  sensors: status=3840, uptime=176, accel=[-0.006832, 0.167872, -1.004792], gyro=[-2.59, 1.26, 2.24]
+[01:53:37.646] LORA state: status=4096, uptime=176, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_time=0, gps_altitude=1126990572, crc=65280

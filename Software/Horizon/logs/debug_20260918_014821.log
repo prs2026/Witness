@@ -1,0 +1,120 @@
+[01:48:21.892] RX  01
+[01:48:21.897] RX  0b 00 00 00 00 1e ff f2 01 63 f7 fb ff db 00 12 00 20 ff 00 00 00 00 00 1e
+[01:48:21.897] LORA sensors: status=2816, uptime=30, accel=[-0.006832, 0.17324, -1.001864], gyro=[-2.59, 1.26, 2.24], crc=None
+[01:48:21.898] CAN  sensors: status=2816, uptime=30, accel=[-0.006832, 0.17324, -1.001864], gyro=[-2.59, 1.26, 2.24]
+[01:48:21.898] LORA heartbeat: status=0, uptime=30
+[01:48:21.898] CAN  heartbeat: status=0, uptime=30
+[01:48:23.043] RX  01
+[01:48:23.043] RX  0f 00 00 00 00 1f ff f3 01 63 f7 f8 ff db 00 12 00 21 ff 01 00 00 00 00 1f
+[01:48:23.047] LORA sensors: status=3840, uptime=31, accel=[-0.006344, 0.17324, -1.003328], gyro=[-2.59, 1.26, 2.31], crc=None
+[01:48:23.048] CAN  sensors: status=3840, uptime=31, accel=[-0.006344, 0.17324, -1.003328], gyro=[-2.59, 1.26, 2.31]
+[01:48:23.049] LORA heartbeat: status=256, uptime=31
+[01:48:23.050] CAN  heartbeat: status=256, uptime=31
+[01:48:23.898] RX  01
+[01:48:23.898] RX  0f 00 00 00 00 20 ff f2 01 64 f7 fa ff db 00 13 00 20 ff 00 00 00 00 00 20
+[01:48:23.899] LORA sensors: status=3840, uptime=32, accel=[-0.006832, 0.173728, -1.002352], gyro=[-2.59, 1.33, 2.24], crc=None
+[01:48:23.899] CAN  sensors: status=3840, uptime=32, accel=[-0.006832, 0.173728, -1.002352], gyro=[-2.59, 1.33, 2.24]
+[01:48:23.899] LORA heartbeat: status=0, uptime=32
+[01:48:23.900] CAN  heartbeat: status=0, uptime=32
+[01:48:24.871] RX  01
+[01:48:24.872] RX  0b 00 00 00 00 21 ff f3 01 63 f7 fa ff da 00 12 00 21 ff 01 00 00 00 00 21
+[01:48:24.872] LORA sensors: status=2816, uptime=33, accel=[-0.006344, 0.17324, -1.002352], gyro=[-2.66, 1.26, 2.31], crc=None
+[01:48:24.873] CAN  sensors: status=2816, uptime=33, accel=[-0.006344, 0.17324, -1.002352], gyro=[-2.66, 1.26, 2.31]
+[01:48:24.873] LORA heartbeat: status=256, uptime=33
+[01:48:24.874] CAN  heartbeat: status=256, uptime=33
+[01:48:25.914] RX  01
+[01:48:25.917] RX  0f 00 00 00 00 22 ff f4 01 62 f7 fb ff dc 00 12 00 21 ff 00 00 00 00 00 22
+[01:48:25.917] LORA sensors: status=3840, uptime=34, accel=[-0.005856, 0.172752, -1.001864], gyro=[-2.52, 1.26, 2.31], crc=None
+[01:48:25.918] CAN  sensors: status=3840, uptime=34, accel=[-0.005856, 0.172752, -1.001864], gyro=[-2.52, 1.26, 2.31]
+[01:48:25.919] LORA heartbeat: status=0, uptime=34
+[01:48:25.919] CAN  heartbeat: status=0, uptime=34
+[01:48:26.905] RX  01
+[01:48:26.906] RX  0b 00 00 00 00 23 00 00 01 67 f8 0a ff db 00 0b 00 1f ff 01 00 00 00 00 23
+[01:48:26.907] LORA sensors: status=2816, uptime=35, accel=[0.0, 0.175192, -0.994544], gyro=[-2.59, 0.77, 2.17], crc=None
+[01:48:26.907] CAN  sensors: status=2816, uptime=35, accel=[0.0, 0.175192, -0.994544], gyro=[-2.59, 0.77, 2.17]
+[01:48:26.908] LORA heartbeat: status=256, uptime=35
+[01:48:26.908] CAN  heartbeat: status=256, uptime=35
+[01:48:27.888] RX  01
+[01:48:27.889] RX  0f 00 00 00 00 24 ff dc 06 e8 fd 44 fe 73 00 67 01 63 ff 00 00 00 00 00 24
+[01:48:27.890] LORA sensors: status=3840, uptime=36, accel=[-0.017568, 0.862784, -0.3416], gyro=[-27.79, 7.21, 24.85], crc=None
+[01:48:27.892] CAN  sensors: status=3840, uptime=36, accel=[-0.017568, 0.862784, -0.3416], gyro=[-27.79, 7.21, 24.85]
+[01:48:27.893] LORA heartbeat: status=0, uptime=36
+[01:48:27.894] CAN  heartbeat: status=0, uptime=36
+[01:48:28.872] RX  01
+[01:48:28.876] RX  0b 00 00 00 00 25 00 0d 07 a7 fe 2f ff f8 00 11 00 20 ff 01 00 00 00 00 25
+[01:48:28.879] LORA sensors: status=2816, uptime=37, accel=[0.006344, 0.955992, -0.22692], gyro=[-0.56, 1.19, 2.24], crc=None
+[01:48:28.881] CAN  sensors: status=2816, uptime=37, accel=[0.006344, 0.955992, -0.22692], gyro=[-0.56, 1.19, 2.24]
+[01:48:28.888] LORA heartbeat: status=256, uptime=37
+[01:48:28.897] CAN  heartbeat: status=256, uptime=37
+[01:48:29.892] RX  01
+[01:48:29.894] RX  0f 00 00 00 00 26 00 0e 07 a3 fe 09 ff e7 00 11 00 20 ff 00 00 00 00 00 26
+[01:48:29.896] LORA sensors: status=3840, uptime=38, accel=[0.006832, 0.95404, -0.245464], gyro=[-1.75, 1.19, 2.24], crc=None
+[01:48:29.897] CAN  sensors: status=3840, uptime=38, accel=[0.006832, 0.95404, -0.245464], gyro=[-1.75, 1.19, 2.24]
+[01:48:29.898] LORA heartbeat: status=0, uptime=38
+[01:48:29.899] CAN  heartbeat: status=0, uptime=38
+[01:48:30.883] RX  01
+[01:48:30.884] RX  0f 00 00 00 00 27 00 0e 07 a1 fe 06 ff d8 00 12 00 20 ff 01 00 00 00 00 27
+[01:48:30.885] LORA sensors: status=3840, uptime=39, accel=[0.006832, 0.953064, -0.246928], gyro=[-2.8, 1.26, 2.24], crc=None
+[01:48:30.886] CAN  sensors: status=3840, uptime=39, accel=[0.006832, 0.953064, -0.246928], gyro=[-2.8, 1.26, 2.24]
+[01:48:30.886] LORA heartbeat: status=256, uptime=39
+[01:48:30.887] CAN  heartbeat: status=256, uptime=39
+[01:48:31.931] RX  01
+[01:48:31.932] RX  0b 00 00 00 00 28 00 0d 07 a1 fe 0b ff d8 00 12 00 20 ff 00 00 00 00 00 28
+[01:48:31.933] LORA sensors: status=2816, uptime=40, accel=[0.006344, 0.953064, -0.244488], gyro=[-2.8, 1.26, 2.24], crc=None
+[01:48:31.934] CAN  sensors: status=2816, uptime=40, accel=[0.006344, 0.953064, -0.244488], gyro=[-2.8, 1.26, 2.24]
+[01:48:31.935] LORA heartbeat: status=0, uptime=40
+[01:48:31.935] CAN  heartbeat: status=0, uptime=40
+[01:48:32.880] RX  01
+[01:48:32.881] RX  0f 00 00 00 00 29 ff 88 02 33 f7 b1 00 0d ff e8 00 17 ff 01 00 00 00 00 29
+[01:48:32.881] LORA sensors: status=3840, uptime=41, accel=[-0.05856, 0.274744, -1.037976], gyro=[0.91, -1.68, 1.61], crc=None
+[01:48:32.882] CAN  sensors: status=3840, uptime=41, accel=[-0.05856, 0.274744, -1.037976], gyro=[0.91, -1.68, 1.61]
+[01:48:32.883] LORA heartbeat: status=256, uptime=41
+[01:48:32.883] CAN  heartbeat: status=256, uptime=41
+[01:48:33.883] RX  01
+[01:48:33.883] RX  0b 00 00 00 00 2a ff f2 01 f7 f8 1b ff db 00 12 00 20 ff 00 00 00 00 00 2a
+[01:48:33.884] LORA sensors: status=2816, uptime=42, accel=[-0.006832, 0.245464, -0.986248], gyro=[-2.59, 1.26, 2.24], crc=None
+[01:48:33.885] CAN  sensors: status=2816, uptime=42, accel=[-0.006832, 0.245464, -0.986248], gyro=[-2.59, 1.26, 2.24]
+[01:48:33.885] LORA heartbeat: status=0, uptime=42
+[01:48:33.886] CAN  heartbeat: status=0, uptime=42
+[01:48:34.914] RX  01
+[01:48:34.915] RX  0f 00 00 00 00 2b ff f2 01 f3 f8 18 ff db 00 13 00 20 ff 01 00 00 00 00 2b
+[01:48:34.916] LORA sensors: status=3840, uptime=43, accel=[-0.006832, 0.243512, -0.987712], gyro=[-2.59, 1.33, 2.24], crc=None
+[01:48:34.917] CAN  sensors: status=3840, uptime=43, accel=[-0.006832, 0.243512, -0.987712], gyro=[-2.59, 1.33, 2.24]
+[01:48:34.917] LORA heartbeat: status=256, uptime=43
+[01:48:34.918] CAN  heartbeat: status=256, uptime=43
+[01:48:35.918] RX  01
+[01:48:35.929] RX  0b 00 00 00 00 2c 00 18 01 7e f7 e0 ff bb ff ea 00 33 ff 00 00 00 00 00 2c
+[01:48:35.932] LORA sensors: status=2816, uptime=44, accel=[0.011712, 0.186416, -1.01504], gyro=[-4.83, -1.54, 3.57], crc=None
+[01:48:35.933] CAN  sensors: status=2816, uptime=44, accel=[0.011712, 0.186416, -1.01504], gyro=[-4.83, -1.54, 3.57]
+[01:48:35.933] LORA heartbeat: status=0, uptime=44
+[01:48:35.934] CAN  heartbeat: status=0, uptime=44
+[01:48:36.895] RX  01
+[01:48:36.896] RX  0f 00 00 00 00 2d ff ed 01 95 f8 04 ff dc 00 13 00 21 ff 01 00 00 00 00 2d
+[01:48:36.897] LORA sensors: status=3840, uptime=45, accel=[-0.009272, 0.19764, -0.997472], gyro=[-2.52, 1.33, 2.31], crc=None
+[01:48:36.898] CAN  sensors: status=3840, uptime=45, accel=[-0.009272, 0.19764, -0.997472], gyro=[-2.52, 1.33, 2.31]
+[01:48:36.898] LORA heartbeat: status=256, uptime=45
+[01:48:36.899] CAN  heartbeat: status=256, uptime=45
+[01:48:37.901] RX  01
+[01:48:37.902] RX  0f 00 00 00 00 2e fe 93 02 8a f9 17 06 63 fe cf 00 95 ff 00 00 00 00 00 2e
+[01:48:37.903] LORA sensors: status=3840, uptime=46, accel=[-0.17812, 0.3172, -0.863272], gyro=[114.45, -21.35, 10.43], crc=None
+[01:48:37.903] CAN  sensors: status=3840, uptime=46, accel=[-0.17812, 0.3172, -0.863272], gyro=[114.45, -21.35, 10.43]
+[01:48:37.904] LORA heartbeat: status=0, uptime=46
+[01:48:37.904] CAN  heartbeat: status=0, uptime=46
+[01:48:38.909] RX  01
+[01:48:38.910] RX  0b 00 00 00 00 2f ff dd 01 ad f8 13 00 03 00 46 00 2f ff 01 00 00 00 00 2f
+[01:48:38.911] LORA sensors: status=2816, uptime=47, accel=[-0.01708, 0.209352, -0.990152], gyro=[0.21, 4.9, 3.29], crc=None
+[01:48:38.912] CAN  sensors: status=2816, uptime=47, accel=[-0.01708, 0.209352, -0.990152], gyro=[0.21, 4.9, 3.29]
+[01:48:38.913] LORA heartbeat: status=256, uptime=47
+[01:48:38.913] CAN  heartbeat: status=256, uptime=47
+[01:48:39.896] RX  01
+[01:48:39.898] RX  0f 00 00 00 00 30 00 09 01 77 f8 00 ff db 00 13 00 20 ff 00 00 00 00 00 30
+[01:48:39.899] LORA sensors: status=3840, uptime=48, accel=[0.004392, 0.183, -0.999424], gyro=[-2.59, 1.33, 2.24], crc=None
+[01:48:39.900] CAN  sensors: status=3840, uptime=48, accel=[0.004392, 0.183, -0.999424], gyro=[-2.59, 1.33, 2.24]
+[01:48:39.900] LORA heartbeat: status=0, uptime=48
+[01:48:39.901] CAN  heartbeat: status=0, uptime=48
+[01:48:40.888] RX  01
+[01:48:40.889] RX  0b 00 00 00 00 31 00 06 01 76 f7 fc ff db 00 11 00 21 ff 01 00 00 00 00 31
+[01:48:40.890] LORA sensors: status=2816, uptime=49, accel=[0.002928, 0.182512, -1.001376], gyro=[-2.59, 1.19, 2.31], crc=None
+[01:48:40.890] CAN  sensors: status=2816, uptime=49, accel=[0.002928, 0.182512, -1.001376], gyro=[-2.59, 1.19, 2.31]
+[01:48:40.891] LORA heartbeat: status=256, uptime=49
+[01:48:40.892] CAN  heartbeat: status=256, uptime=49

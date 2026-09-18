@@ -21,6 +21,17 @@
 #define IRIS_PIN_UART0_RX GPIO_NUM_20
 #define IRIS_PIN_UART0_TX GPIO_NUM_21
 
+// ESP32-C3 TWAI controller connected to the TCAN1044A-Q1. The transceiver's
+// STB input is strapped low on the board, selecting normal mode.
+#define IRIS_TWAI_BITRATE 500000U
+
+// Battery voltage monitor on GPIO0/ADC1 channel 0. The battery is connected
+// through a 15 kohm high-side and 5 kohm low-side divider (4:1 ratio).
+#define IRIS_BATTERY_DIVIDER_HIGH_OHMS 15000U
+#define IRIS_BATTERY_DIVIDER_LOW_OHMS 5000U
+#define IRIS_BATTERY_ADC_SAMPLE_COUNT 16U
+#define IRIS_BATTERY_VOLTAGE_READ_INTERVAL_MS 1000U
+
 // MCP23008 I/O expander. A2:A0 are tied low, giving address 0x20.
 #define IRIS_MCP23008_I2C_ADDRESS 0x20U
 #define IRIS_MCP23008_PIN_OUT1_ENABLE 0U
@@ -42,4 +53,10 @@
 
 // The expander RESET input shares the LS_EN net.
 #define IRIS_PIN_MCP23008_RESET IRIS_PIN_LOAD_SWITCH_ENABLE
+
+// PAC193x current monitor. ADDRSEL is tied to ground. Channels 1-3 each
+// use a 20 milliohm shunt on the Iris board.
+#define IRIS_PAC1931_I2C_ADDRESS 0x10U
+#define IRIS_PAC1931_CHANNEL_COUNT 3U
+#define IRIS_PAC1931_SENSE_RESISTOR_MICROOHMS 20000U
 

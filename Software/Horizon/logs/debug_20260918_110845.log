@@ -1,0 +1,24 @@
+[11:08:45.738] RX  03
+[11:08:45.740] RX  00 00 00 00 00 00 00 00 00 00 1f 4d 00 00 00 34 6f 88
+[11:08:45.740] LORA camera: fc_status=0, fc_uptime=0, status=0, uptime=8013, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=28552
+[11:08:46.732] RX  03
+[11:08:46.733] RX  00 00 00 00 00 00 00 00 00 00 23 35 00 00 00 34 54 4c
+[11:08:46.734] LORA camera: fc_status=0, fc_uptime=0, status=0, uptime=9013, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=21580
+[11:08:47.708] RX  03
+[11:08:47.709] RX  00 00 00 00 00 00 00 00 00 00 27 1d 00 00 00 34 58 74
+[11:08:47.709] LORA camera: fc_status=0, fc_uptime=0, status=0, uptime=10013, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=22644
+[11:08:48.696] RX  03
+[11:08:48.696] RX  00 00 00 00 00 00 00 00 00 00 2b 05 00 00 00 34 55 e0
+[11:08:48.696] LORA camera: fc_status=0, fc_uptime=0, status=0, uptime=11013, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=21984
+[11:08:49.739] RX  03
+[11:08:49.739] RX  00 00 00 00 00 00 00 00 00 00 2e ed 00 00 00 34 2f c0
+[11:08:49.740] LORA camera: fc_status=0, fc_uptime=0, status=0, uptime=12013, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=12224
+[11:08:50.725] RX  03
+[11:08:50.725] RX  00 00 00 00 00 00 00 00 00 00 32 d5 00 00 00 34 30 64
+[11:08:50.726] LORA camera: fc_status=0, fc_uptime=0, status=0, uptime=13013, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=12388
+[11:08:51.726] RX  03
+[11:08:51.727] RX  00 00 00 00 00 00 00 00 00 00 36 bd 00 00 00 34 2d 34
+[11:08:51.727] LORA camera: fc_status=0, fc_uptime=0, status=0, uptime=14013, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=11572
+[11:08:52.746] RX  03
+[11:08:52.746] RX  00 00 00 00 00 00 00 00 00 00 3a a5 00 00 00 34 20 a0
+[11:08:52.747] LORA camera: fc_status=0, fc_uptime=0, status=0, uptime=15013, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=8352

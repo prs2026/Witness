@@ -4,17 +4,37 @@
 #include <cstdint>
 
 #include "driver/spi_master.h"
+#include "esp_adc/adc_cali.h"
+#include "esp_adc/adc_oneshot.h"
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
+#include "ms5607.h"
+
+class SpiDataForwarder;
 
 class Sensors final {
 public:
     // Task configuration. kTaskRateHz must divide evenly into 1000 ms.
     static constexpr UBaseType_t kTaskPriority = 4;
     static constexpr std::uint32_t kTaskRateHz = 100;
+    static constexpr std::uint32_t kPacketRateHz = 1;
+    static constexpr std::uint32_t kStatePacketRateHz = 1;
+    static constexpr std::uint32_t kBatterySampleRateHz = 10;
     static constexpr std::uint32_t kTaskStackSize = 4096;
+
+    // GPIO1 uses ADC1 channel 0. The board divider is 15k high / 5k low.
+    static constexpr adc_unit_t kBatteryAdcUnit = ADC_UNIT_1;
+    static constexpr adc_channel_t kBatteryAdcChannel = ADC_CHANNEL_0;
+    static constexpr adc_atten_t kBatteryAdcAttenuation = ADC_ATTEN_DB_12;
+    static constexpr adc_bitwidth_t kBatteryAdcBitWidth =
+        ADC_BITWIDTH_DEFAULT;
+    static constexpr std::uint32_t kBatteryDividerHighOhms = 15'000;
+    static constexpr std::uint32_t kBatteryDividerLowOhms = 5'000;
+    static constexpr std::uint32_t kBatteryAdcSamples = 16;
+    // The 0x02 LoRa packet allocates one byte to FC battery voltage.
+    static constexpr std::uint32_t kBatteryPacketMillivoltsPerCount = 100;
 
     // LSM6DSV320X SPI and sampling configuration.
     static constexpr int kSpiClockFrequencyHz = 10'000'000;
@@ -35,14 +55,20 @@ public:
         float high_g_accel_mg[3]{};
         float gyro_mdps[3]{};
         float temperature_celsius = 0.0F;
+        std::int32_t pressure_centi_mbar = 0;
+        std::int32_t ms5607_temperature_centi_celsius = 0;
+        float barometric_altitude_meters = 0.0F;
+        std::uint32_t battery_voltage_mv = 0;
+        int battery_adc_raw = 0;
         std::uint64_t timestamp_us = 0;
         bool low_g_accel_ready = false;
         bool high_g_accel_ready = false;
         bool gyro_ready = false;
         bool temperature_ready = false;
+        bool ms5607_ready = false;
     };
 
-    Sensors() = default;
+    explicit Sensors(SpiDataForwarder &data_forwarder);
 
     Sensors(const Sensors &) = delete;
     Sensors &operator=(const Sensors &) = delete;
@@ -53,8 +79,23 @@ public:
 private:
     static_assert(kTaskRateHz > 0 && (1000U % kTaskRateHz) == 0,
                   "Sensors task rate must divide evenly into 1000 ms");
+    static_assert(kPacketRateHz > 0 && (1000U % kPacketRateHz) == 0,
+                  "Sensor packet rate must divide evenly into 1000 ms");
+    static_assert(
+        kStatePacketRateHz > 0 && (1000U % kStatePacketRateHz) == 0,
+        "State packet rate must divide evenly into 1000 ms");
+    static_assert(
+        kBatterySampleRateHz > 0 &&
+            (kTaskRateHz % kBatterySampleRateHz) == 0,
+        "Battery sample rate must be an integer divisor of the sensor rate");
     static constexpr TickType_t kTaskPeriod =
         pdMS_TO_TICKS(1000U / kTaskRateHz);
+    static constexpr TickType_t kPacketPeriod =
+        pdMS_TO_TICKS(1000U / kPacketRateHz);
+    static constexpr TickType_t kStatePacketPeriod =
+        pdMS_TO_TICKS(1000U / kStatePacketRateHz);
+    static constexpr std::uint32_t kBatterySampleDivider =
+        kTaskRateHz / kBatterySampleRateHz;
     static constexpr spi_host_device_t kSpiHost = SPI3_HOST;
     static constexpr std::size_t kMaximumRegisterTransfer = 14;
     static constexpr std::uint32_t kBootDelayMs = 35;
@@ -83,6 +124,7 @@ private:
     static constexpr std::uint8_t kStatusGyroReady = 1U << 1;
     static constexpr std::uint8_t kStatusTemperatureReady = 1U << 2;
     static constexpr std::uint8_t kStatusHighGAccelReady = 1U << 3;
+    static constexpr std::uint8_t kStatusMs5607Ready = 1U << 4;
 
     static constexpr float kLowGAccelSensitivityMg = 0.488F;
     static constexpr float kHighGAccelSensitivityMg = 10.417F;
@@ -90,7 +132,9 @@ private:
 
     static void task_entry(void *context);
     static std::int16_t decode_i16(const std::uint8_t *bytes);
+    static std::uint8_t encode_battery_voltage(std::uint32_t millivolts);
     esp_err_t initialize_spi();
+    esp_err_t initialize_battery_adc();
     esp_err_t initialize_lsm6dsv320x();
     esp_err_t read_registers(
         std::uint8_t first_register,
@@ -102,11 +146,18 @@ private:
         std::size_t length);
     esp_err_t write_register(std::uint8_t register_address, std::uint8_t value);
     esp_err_t fetch_lsm6dsv320x();
+    esp_err_t queue_sensor_packet();
+    esp_err_t queue_state_packet();
+    esp_err_t read_battery_voltage();
     void publish_sample();
     void run();
     void release_resources();
 
+    SpiDataForwarder &data_forwarder_;
+    Ms5607 ms5607_{};
     spi_device_handle_t spi_device_ = nullptr;
+    adc_oneshot_unit_handle_t battery_adc_handle_ = nullptr;
+    adc_cali_handle_t battery_adc_calibration_ = nullptr;
     TaskHandle_t task_handle_ = nullptr;
     SemaphoreHandle_t sample_mutex_ = nullptr;
     bool owns_spi_bus_ = false;

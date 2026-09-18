@@ -33,7 +33,6 @@ private:
     static constexpr UBaseType_t kForwardTaskPriority = 2;
     static constexpr UBaseType_t kSpiTaskPriority = 2;
     static constexpr std::uint32_t kTaskStackSize = 3072;
-    static constexpr TickType_t kDummyPacketPeriod = pdMS_TO_TICKS(1000);
     static constexpr std::size_t kQueueDepth = 16;
     static constexpr std::size_t kMinimumPayloadSize = 6;
     static constexpr std::size_t kMaximumPayloadSize = 64;
@@ -51,7 +50,6 @@ private:
         const std::uint8_t *payload,
         std::size_t payload_length);
     static void send_spi_packet(const Packet &packet);
-    void generate_dummy_spi_packet();
     void forward_packet(const Packet &packet);
     void run_forwarder();
     void run_spi_interface();
@@ -60,5 +58,4 @@ private:
     QueueHandle_t command_queue_ = nullptr;
     TaskHandle_t forward_task_handle_ = nullptr;
     TaskHandle_t spi_task_handle_ = nullptr;
-    std::uint32_t dummy_sequence_number_ = 0;
 };

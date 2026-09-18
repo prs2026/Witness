@@ -1,0 +1,15 @@
+[10:59:18.073] RX  01
+[10:59:18.074] RX  0b 00 00 00 00 0b ff f7 01 41 f7 f1 ff dc 00 12 00 21 02 10 00 00 00 00 0b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c 82 ec ff 01 00 00 00 00 0b
+[10:59:18.075] LORA sensors: status=2816, uptime=11, accel=[-0.004392, 0.156648, -1.006744], gyro=[-2.52, 1.26, 2.31], crc=None
+[10:59:18.075] CAN  sensors: status=2816, uptime=11, accel=[-0.004392, 0.156648, -1.006744], gyro=[-2.52, 1.26, 2.31]
+[10:59:18.075] LORA state: status=4096, uptime=11, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1126990572, crc=65281
+[10:59:19.067] RX  01
+[10:59:19.068] RX  0f 00 00 00 00 0c ff f6 01 3f f7 f2 ff db 00 12 00 20 02 10 00 00 00 00 0c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c 98 92 ff 00 00 00 00 00 0c
+[10:59:19.069] LORA sensors: status=3840, uptime=12, accel=[-0.00488, 0.155672, -1.006256], gyro=[-2.59, 1.26, 2.24], crc=None
+[10:59:19.069] CAN  sensors: status=3840, uptime=12, accel=[-0.00488, 0.155672, -1.006256], gyro=[-2.59, 1.26, 2.24]
+[10:59:19.070] LORA state: status=4096, uptime=12, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1126996114, crc=65280
+[10:59:20.101] RX  01
+[10:59:20.103] RX  0b 00 00 00 00 0d ff f8 01 42 f7 f3 ff db 00 13 00 20 02 10 00 00 00 00 0d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 2c 6c 9a ff 01 00 00 00 00 0d
+[10:59:20.104] LORA sensors: status=2816, uptime=13, accel=[-0.003904, 0.157136, -1.005768], gyro=[-2.59, 1.33, 2.24], crc=None
+[10:59:20.104] CAN  sensors: status=2816, uptime=13, accel=[-0.003904, 0.157136, -1.005768], gyro=[-2.59, 1.33, 2.24]
+[10:59:20.105] LORA state: status=4096, uptime=13, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1126984858, crc=65281
