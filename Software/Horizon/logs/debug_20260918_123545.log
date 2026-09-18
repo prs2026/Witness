@@ -1,0 +1,1509 @@
+[12:35:45.307] RX  01
+[12:35:45.308] RX  0f 00 00 00 0c 95 ff b8 01 ad f7 fe ff df 00 09 00 20
+[12:35:45.311] PACKET sensors: status=3840, uptime=3221, accel=[-0.035136, 0.209352, -1.0004], gyro=[-2.31, 0.63, 2.24], crc=None
+[12:35:45.432] RX  01
+[12:35:45.432] RX  0f 00 00 00 0c 95 ff b3 01 ac f7 fb ff db 00 14 00 21
+[12:35:45.433] PACKET sensors: status=3840, uptime=3221, accel=[-0.037576, 0.208864, -1.001864], gyro=[-2.59, 1.4, 2.31], crc=None
+[12:35:45.537] RX  01
+[12:35:45.538] RX  0b 00 00 00 0c 95 ff b2 01 a7 f8 05 ff d6 00 1b 00 22
+[12:35:45.538] PACKET sensors: status=2816, uptime=3221, accel=[-0.038064, 0.206424, -0.996984], gyro=[-2.94, 1.89, 2.38], crc=None
+[12:35:45.664] RX  01
+[12:35:45.667] RX  0b 00 00 00 0c 95 ff b4 01 a5 f8 0b ff dd 00 0c 00 20
+[12:35:45.668] PACKET sensors: status=2816, uptime=3221, accel=[-0.037088, 0.205448, -0.994056], gyro=[-2.45, 0.84, 2.24], crc=None
+[12:35:45.718] RX  01
+[12:35:45.718] RX  0b 00 00 00 0c 95 ff b6 01 ac f8 06 ff d7 00 18 00 22
+[12:35:45.719] PACKET sensors: status=2816, uptime=3221, accel=[-0.036112, 0.208864, -0.996496], gyro=[-2.87, 1.68, 2.38], crc=None
+[12:35:45.837] RX  01
+[12:35:45.839] RX  0f 00 00 00 0c 95 ff db 00 fa f8 0e ff d3 00 21 00 1f
+[12:35:45.840] PACKET sensors: status=3840, uptime=3221, accel=[-0.018056, 0.122, -0.992592], gyro=[-3.15, 2.31, 2.17], crc=None
+[12:35:45.963] RX  01
+[12:35:45.964] RX  0f 00 00 00 0c 95 ff c3 01 9e f8 21 ff db 00 13 00 24
+[12:35:45.965] PACKET sensors: status=3840, uptime=3221, accel=[-0.029768, 0.202032, -0.98332], gyro=[-2.59, 1.33, 2.52], crc=None
+[12:35:46.027] RX  01
+[12:35:46.028] RX  0f 00 00 00 0c 95 ff bf 01 b3 f7 f4 ff d6 00 1d 00 22
+[12:35:46.029] PACKET sensors: status=3840, uptime=3221, accel=[-0.03172, 0.21228, -1.00528], gyro=[-2.94, 2.03, 2.38], crc=None
+[12:35:46.139] RX  01
+[12:35:46.140] RX  0f 00 00 00 0c 96 ff af 01 a7 f8 08 ff e0 00 05 00 1f
+[12:35:46.140] PACKET sensors: status=3840, uptime=3222, accel=[-0.039528, 0.206424, -0.99552], gyro=[-2.24, 0.35, 2.17], crc=None
+[12:35:46.250] RX  01
+[12:35:46.251] RX  0b 00 00 00 0c 96 ff af 01 a5 f8 0b ff e1 00 05 00 20 02 10 00 00 00 0c 96 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 19 9b 33 ff 00 00 00 00 0c 96
+[12:35:46.252] PACKET sensors: status=2816, uptime=3222, accel=[-0.039528, 0.205448, -0.994056], gyro=[-2.17, 0.35, 2.24], crc=None
+[12:35:46.252] PACKET state: status=4096, uptime=3222, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128339867, witness_battery_voltage=51, crc=None
+[12:35:46.252] PACKET heartbeat: status=0, uptime=3222
+[12:35:46.310] RX  01
+[12:35:46.311] RX  0b 00 00 00 0c 96 ff b5 01 a8 f8 0c ff d7 00 1b 00 22
+[12:35:46.312] PACKET sensors: status=2816, uptime=3222, accel=[-0.0366, 0.206912, -0.993568], gyro=[-2.87, 1.89, 2.38], crc=None
+[12:35:46.436] RX  01
+[12:35:46.439] RX  0b 00 00 00 0c 96 ff b2 01 ac f8 03 ff d8 00 17 00 21
+[12:35:46.439] PACKET sensors: status=2816, uptime=3222, accel=[-0.038064, 0.208864, -0.99796], gyro=[-2.8, 1.61, 2.31], crc=None
+[12:35:46.560] RX  01
+[12:35:46.561] RX  0f 00 00 00 0c 96 ff b5 01 a9 f8 06 ff db 00 10 00 21
+[12:35:46.561] PACKET sensors: status=3840, uptime=3222, accel=[-0.0366, 0.2074, -0.996496], gyro=[-2.59, 1.12, 2.31], crc=None
+[12:35:46.623] RX  01
+[12:35:46.624] RX  0f 00 00 00 0c 96 ff b3 01 a9 f8 0c ff dd 00 0e 00 21
+[12:35:46.625] PACKET sensors: status=3840, uptime=3222, accel=[-0.037576, 0.2074, -0.993568], gyro=[-2.45, 0.98, 2.31], crc=None
+[12:35:46.746] RX  01
+[12:35:46.747] RX  0f 00 00 00 0c 96 ff b5 01 a9 f8 09 ff da 00 13 00 21
+[12:35:46.747] PACKET sensors: status=3840, uptime=3222, accel=[-0.0366, 0.2074, -0.995032], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:35:46.809] RX  01
+[12:35:46.810] RX  0f 00 00 00 0c 96 ff b2 01 a7 f8 05 ff d9 00 15 00 22
+[12:35:46.811] PACKET sensors: status=3840, uptime=3222, accel=[-0.038064, 0.206424, -0.996984], gyro=[-2.73, 1.47, 2.38], crc=None
+[12:35:46.937] RX  01
+[12:35:46.937] RX  0b 00 00 00 0c 96 ff b5 01 a6 f8 07 ff db 00 10 00 22
+[12:35:46.938] PACKET sensors: status=2816, uptime=3222, accel=[-0.0366, 0.205936, -0.996008], gyro=[-2.59, 1.12, 2.38], crc=None
+[12:35:47.050] RX  01
+[12:35:47.054] RX  0b 00 00 00 0c 96 ff b2 01 ac f8 07 ff db 00 11 00 21
+[12:35:47.055] PACKET sensors: status=2816, uptime=3222, accel=[-0.038064, 0.208864, -0.996008], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:35:47.110] RX  01
+[12:35:47.110] RX  0b 00 00 00 0c 97 ff b3 01 a8 f8 08 ff d9 00 14 00 21
+[12:35:47.111] PACKET sensors: status=2816, uptime=3223, accel=[-0.037576, 0.206912, -0.99552], gyro=[-2.73, 1.4, 2.31], crc=None
+[12:35:47.238] RX  01
+[12:35:47.239] RX  0f 00 00 00 0c 97 ff b4 01 a9 f8 08 ff db 00 11 00 20
+[12:35:47.240] PACKET sensors: status=3840, uptime=3223, accel=[-0.037088, 0.2074, -0.99552], gyro=[-2.59, 1.19, 2.24], crc=None
+[12:35:47.240] RX  02 10 00 00 00 0c 97 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 2f 40 33 ff 01 00 00 00 0c 97
+[12:35:47.240] PACKET state: status=4096, uptime=3223, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128345408, witness_battery_voltage=51, crc=None
+[12:35:47.240] PACKET heartbeat: status=256, uptime=3223
+[12:35:47.351] RX  01
+[12:35:47.352] RX  0f 00 00 00 0c 97 ff b3 01 a7 f8 04 ff da 00 13 00 20
+[12:35:47.352] PACKET sensors: status=3840, uptime=3223, accel=[-0.037576, 0.206424, -0.997472], gyro=[-2.66, 1.33, 2.24], crc=None
+[12:35:47.411] RX  01
+[12:35:47.413] RX  0f 00 00 00 0c 97 ff b5 01 a7 f8 07 ff da 00 13 00 21
+[12:35:47.413] PACKET sensors: status=3840, uptime=3223, accel=[-0.0366, 0.206424, -0.996008], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:35:47.538] RX  01
+[12:35:47.539] RX  0f 00 00 00 0c 97 ff b4 01 a9 f8 07 ff db 00 12 00 21
+[12:35:47.540] PACKET sensors: status=3840, uptime=3223, accel=[-0.037088, 0.2074, -0.996008], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:35:47.663] RX  01
+[12:35:47.664] RX  0b 00 00 00 0c 97 ff b3 01 a6 f8 06 ff da 00 15 00 22
+[12:35:47.664] PACKET sensors: status=2816, uptime=3223, accel=[-0.037576, 0.205936, -0.996496], gyro=[-2.66, 1.47, 2.38], crc=None
+[12:35:47.724] RX  01
+[12:35:47.725] RX  0b 00 00 00 0c 97 ff b2 01 a6 f8 07 ff da 00 11 00 21
+[12:35:47.725] PACKET sensors: status=2816, uptime=3223, accel=[-0.038064, 0.205936, -0.996008], gyro=[-2.66, 1.19, 2.31], crc=None
+[12:35:47.850] RX  01
+[12:35:47.852] RX  0b 00 00 00 0c 97 ff b3 01 a6 f8 0a ff da 00 13 00 21
+[12:35:47.853] PACKET sensors: status=2816, uptime=3223, accel=[-0.037576, 0.205936, -0.994544], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:35:47.914] RX  01
+[12:35:47.915] RX  0f 00 00 00 0c 97 ff b3 01 a8 f8 08 ff da 00 13 00 20
+[12:35:47.916] PACKET sensors: status=3840, uptime=3223, accel=[-0.037576, 0.206912, -0.99552], gyro=[-2.66, 1.33, 2.24], crc=None
+[12:35:48.039] RX  01
+[12:35:48.040] RX  0f 00 00 00 0c 97 ff b3 01 a6 f8 0a ff dd 00 0d 00 21
+[12:35:48.041] PACKET sensors: status=3840, uptime=3223, accel=[-0.037576, 0.205936, -0.994544], gyro=[-2.45, 0.91, 2.31], crc=None
+[12:35:48.164] RX  01
+[12:35:48.165] RX  0f 00 00 00 0c 98 ff b3 01 a7 f8 0b ff da 00 14 00 21
+[12:35:48.168] PACKET sensors: status=3840, uptime=3224, accel=[-0.037576, 0.206424, -0.994056], gyro=[-2.66, 1.4, 2.31], crc=None
+[12:35:48.228] RX  01
+[12:35:48.228] RX  0f 00 00 00 0c 98 ff b3 01 a7 f8 08 ff d8 00 15 00 21 02 10 00 00 00 0c 98 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 c3 06 33 ff 00 00 00 00 0c 98
+[12:35:48.228] PACKET sensors: status=3840, uptime=3224, accel=[-0.037576, 0.206424, -0.99552], gyro=[-2.8, 1.47, 2.31], crc=None
+[12:35:48.229] PACKET state: status=4096, uptime=3224, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128317702, witness_battery_voltage=51, crc=None
+[12:35:48.230] PACKET heartbeat: status=0, uptime=3224
+[12:35:48.352] RX  01
+[12:35:48.353] RX  0b 00 00 00 0c 98 ff b4 01 a9 f8 06 ff dc 00 12 00 21
+[12:35:48.354] PACKET sensors: status=2816, uptime=3224, accel=[-0.037088, 0.2074, -0.996496], gyro=[-2.52, 1.26, 2.31], crc=None
+[12:35:48.414] RX  01
+[12:35:48.415] RX  0b 00 00 00 0c 98 ff b2 01 aa f8 08 ff db 00 12 00 21
+[12:35:48.416] PACKET sensors: status=2816, uptime=3224, accel=[-0.038064, 0.207888, -0.99552], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:35:48.539] RX  01
+[12:35:48.541] RX  0b 00 00 00 0c 98 ff b4 01 a7 f8 09 ff da 00 13 00 21
+[12:35:48.541] PACKET sensors: status=2816, uptime=3224, accel=[-0.037088, 0.206424, -0.995032], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:35:48.603] RX  01
+[12:35:48.604] RX  0f 00 00 00 0c 98 ff b2 01 a8 f8 08 ff d9 00 14 00 21
+[12:35:48.605] PACKET sensors: status=3840, uptime=3224, accel=[-0.038064, 0.206912, -0.99552], gyro=[-2.73, 1.4, 2.31], crc=None
+[12:35:48.728] RX  01
+[12:35:48.731] RX  0f 00 00 00 0c 98 ff b2 01 aa f8 07 ff db 00 12 00 21
+[12:35:48.732] PACKET sensors: status=3840, uptime=3224, accel=[-0.038064, 0.207888, -0.996008], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:35:48.851] RX  01
+[12:35:48.852] RX  0f 00 00 00 0c 98 ff b4 01 a9 f8 06 ff db 00 12 00 20
+[12:35:48.853] PACKET sensors: status=3840, uptime=3224, accel=[-0.037088, 0.2074, -0.996496], gyro=[-2.59, 1.26, 2.24], crc=None
+[12:35:48.913] RX  01
+[12:35:48.914] RX  0f 00 00 00 0c 98 ff b4 01 a9 f8 07 ff d9 00 14 00 21
+[12:35:48.914] PACKET sensors: status=3840, uptime=3224, accel=[-0.037088, 0.2074, -0.996008], gyro=[-2.73, 1.4, 2.31], crc=None
+[12:35:49.040] RX  01
+[12:35:49.041] RX  0b 00 00 00 0c 98 ff b3 01 a7 f8 07 ff db 00 12 00 22
+[12:35:49.042] PACKET sensors: status=2816, uptime=3224, accel=[-0.037576, 0.206424, -0.996008], gyro=[-2.59, 1.26, 2.38], crc=None
+[12:35:49.101] RX  01
+[12:35:49.102] RX  0b 00 00 00 0c 99 ff b4 01 a7 f8 09 ff d9 00 13 00 21
+[12:35:49.103] PACKET sensors: status=2816, uptime=3225, accel=[-0.037088, 0.206424, -0.995032], gyro=[-2.73, 1.33, 2.31], crc=None
+[12:35:49.216] RX  01
+[12:35:49.216] RX  0b 00 00 00 0c 99 ff b4 01 a8 f8 05 ff db 00 13 00 21 02 10 00 00 00 0c 99 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 d8 ab 33 ff 01 00 00 00 0c 99
+[12:35:49.216] PACKET sensors: status=2816, uptime=3225, accel=[-0.037088, 0.206912, -0.996984], gyro=[-2.59, 1.33, 2.31], crc=None
+[12:35:49.217] PACKET state: status=4096, uptime=3225, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128323243, witness_battery_voltage=51, crc=None
+[12:35:49.217] PACKET heartbeat: status=256, uptime=3225
+[12:35:49.325] RX  01
+[12:35:49.325] RX  0f 00 00 00 0c 99 ff b2 01 a7 f8 09 ff db 00 10 00 21
+[12:35:49.325] PACKET sensors: status=3840, uptime=3225, accel=[-0.038064, 0.206424, -0.995032], gyro=[-2.59, 1.12, 2.31], crc=None
+[12:35:49.439] RX  01
+[12:35:49.440] RX  0f 00 00 00 0c 99 ff b1 01 a6 f8 0a ff da 00 12 00 22
+[12:35:49.442] PACKET sensors: status=3840, uptime=3225, accel=[-0.038552, 0.205936, -0.994544], gyro=[-2.66, 1.26, 2.38], crc=None
+[12:35:49.596] RX  01
+[12:35:49.596] RX  0f 00 00 00 0c 99 ff b3 01 a6 f8 07 ff da 00 12 00 22
+[12:35:49.597] PACKET sensors: status=3840, uptime=3225, accel=[-0.037576, 0.205936, -0.996008], gyro=[-2.66, 1.26, 2.38], crc=None
+[12:35:49.651] RX  01
+[12:35:49.651] RX  0f 00 00 00 0c 99 ff b3 01 a8 f8 07 ff da 00 12 00 21
+[12:35:49.652] PACKET sensors: status=3840, uptime=3225, accel=[-0.037576, 0.206912, -0.996008], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:35:49.714] RX  01
+[12:35:49.717] RX  0b 00 00 00 0c 99 ff b3 01 aa f8 09 ff db 00 12 00 21
+[12:35:49.718] PACKET sensors: status=2816, uptime=3225, accel=[-0.037576, 0.207888, -0.995032], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:35:49.837] RX  01
+[12:35:49.838] RX  0b 00 00 00 0c 99 ff b4 01 a8 f8 0a ff da 00 13 00 21
+[12:35:49.839] PACKET sensors: status=2816, uptime=3225, accel=[-0.037088, 0.206912, -0.994544], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:35:49.960] RX  01
+[12:35:49.961] RX  0b 00 00 00 0c 99 ff b3 01 a8 f8 0a ff da 00 13 00 21
+[12:35:49.962] PACKET sensors: status=2816, uptime=3225, accel=[-0.037576, 0.206912, -0.994544], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:35:50.022] RX  01
+[12:35:50.024] RX  0f 00 00 00 0c 99 ff b2 01 a9 f8 08 ff db 00 12 00 21
+[12:35:50.025] PACKET sensors: status=3840, uptime=3225, accel=[-0.038064, 0.2074, -0.99552], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:35:50.145] RX  01
+[12:35:50.147] RX  0f 00 00 00 0c 9a ff b5 01 a8 f8 08 ff da 00 13 00 21
+[12:35:50.149] PACKET sensors: status=3840, uptime=3226, accel=[-0.0366, 0.206912, -0.99552], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:35:50.207] RX  01
+[12:35:50.208] RX  0f 00 00 00 0c 9a ff b5 01 a8 f8 06 ff dc 00 0f 00 21 02 10 00 00 00 0c 9a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 ee 50 33
+[12:35:50.209] PACKET sensors: status=3840, uptime=3226, accel=[-0.0366, 0.206912, -0.996496], gyro=[-2.52, 1.05, 2.31], crc=None
+[12:35:50.210] PACKET state: status=4096, uptime=3226, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128328784, witness_battery_voltage=51, crc=None
+[12:35:50.210] RX  ff 00 00 00 00 0c 9a
+[12:35:50.210] PACKET heartbeat: status=0, uptime=3226
+[12:35:50.331] RX  01
+[12:35:50.334] RX  0f 00 00 00 0c 9a ff b5 01 a9 f8 08 ff dc 00 10 00 21
+[12:35:50.334] PACKET sensors: status=3840, uptime=3226, accel=[-0.0366, 0.2074, -0.99552], gyro=[-2.52, 1.12, 2.31], crc=None
+[12:35:50.456] RX  01
+[12:35:50.459] RX  0b 00 00 00 0c 9a ff b3 01 a9 f8 08 ff da 00 13 00 22
+[12:35:50.459] PACKET sensors: status=2816, uptime=3226, accel=[-0.037576, 0.2074, -0.99552], gyro=[-2.66, 1.33, 2.38], crc=None
+[12:35:50.520] RX  01
+[12:35:50.520] RX  0b 00 00 00 0c 9a ff b3 01 a8 f8 08 ff db 00 10 00 21
+[12:35:50.521] PACKET sensors: status=2816, uptime=3226, accel=[-0.037576, 0.206912, -0.99552], gyro=[-2.59, 1.12, 2.31], crc=None
+[12:35:50.644] RX  01
+[12:35:50.645] RX  0b 00 00 00 0c 9a ff b3 01 aa f8 08 ff db 00 11 00 21
+[12:35:50.645] PACKET sensors: status=2816, uptime=3226, accel=[-0.037576, 0.207888, -0.99552], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:35:50.706] RX  01
+[12:35:50.706] RX  0f 00 00 00 0c 9a ff b3 01 a8 f8 08 ff da 00 14 00 22
+[12:35:50.707] PACKET sensors: status=3840, uptime=3226, accel=[-0.037576, 0.206912, -0.99552], gyro=[-2.66, 1.4, 2.38], crc=None
+[12:35:50.831] RX  01
+[12:35:50.833] RX  0f 00 00 00 0c 9a ff b3 01 a7 f8 09 ff da 00 12 00 22
+[12:35:50.833] PACKET sensors: status=3840, uptime=3226, accel=[-0.037576, 0.206424, -0.995032], gyro=[-2.66, 1.26, 2.38], crc=None
+[12:35:50.953] RX  01
+[12:35:50.954] RX  0f 00 00 00 0c 9a ff b3 01 a8 f8 07 ff da 00 12 00 21
+[12:35:50.955] PACKET sensors: status=3840, uptime=3226, accel=[-0.037576, 0.206912, -0.996008], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:35:51.016] RX  01
+[12:35:51.016] RX  0f 00 00 00 0c 9a ff b4 01 a8 f8 04 ff da 00 12 00 21
+[12:35:51.017] PACKET sensors: status=3840, uptime=3226, accel=[-0.037088, 0.206912, -0.997472], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:35:51.140] RX  01
+[12:35:51.143] RX  0b 00 00 00 0c 9b ff b3 01 a8 f8 09 ff db 00 11 00 22
+[12:35:51.144] PACKET sensors: status=2816, uptime=3227, accel=[-0.037576, 0.206912, -0.995032], gyro=[-2.59, 1.19, 2.38], crc=None
+[12:35:51.202] RX  01
+[12:35:51.203] RX  0b 00 00 00 0c 9b ff b5 01 a7 f8 07 ff db 00 11 00 21
+[12:35:51.204] PACKET sensors: status=2816, uptime=3227, accel=[-0.0366, 0.206424, -0.996008], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:35:51.204] RX  02 10 00 00 00 0c 9b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 c3 06 33 ff 01 00 00 00 0c 9b
+[12:35:51.205] PACKET state: status=4096, uptime=3227, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128317702, witness_battery_voltage=51, crc=None
+[12:35:51.205] PACKET heartbeat: status=256, uptime=3227
+[12:35:51.327] RX  01
+[12:35:51.328] RX  0b 00 00 00 0c 9b ff b1 01 a9 f8 06 ff da 00 13 00 20
+[12:35:51.329] PACKET sensors: status=2816, uptime=3227, accel=[-0.038552, 0.2074, -0.996496], gyro=[-2.66, 1.33, 2.24], crc=None
+[12:35:51.451] RX  01
+[12:35:51.453] RX  0f 00 00 00 0c 9b ff b6 01 a8 f8 08 ff db 00 11 00 21
+[12:35:51.453] PACKET sensors: status=3840, uptime=3227, accel=[-0.036112, 0.206912, -0.99552], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:35:51.514] RX  01
+[12:35:51.515] RX  0f 00 00 00 0c 9b ff b5 01 a9 f8 07 ff db 00 0f 00 21
+[12:35:51.515] PACKET sensors: status=3840, uptime=3227, accel=[-0.0366, 0.2074, -0.996008], gyro=[-2.59, 1.05, 2.31], crc=None
+[12:35:51.638] RX  01
+[12:35:51.639] RX  0f 00 00 00 0c 9b ff b3 01 a8 f8 07 ff da 00 14 00 21
+[12:35:51.640] PACKET sensors: status=3840, uptime=3227, accel=[-0.037576, 0.206912, -0.996008], gyro=[-2.66, 1.4, 2.31], crc=None
+[12:35:51.761] RX  01
+[12:35:51.762] RX  0f 00 00 00 0c 9b ff b4 01 a6 f8 09 ff da 00 14 00 21
+[12:35:51.768] PACKET sensors: status=3840, uptime=3227, accel=[-0.037088, 0.205936, -0.995032], gyro=[-2.66, 1.4, 2.31], crc=None
+[12:35:51.824] RX  01
+[12:35:51.824] RX  0b 00 00 00 0c 9b ff b3 01 a8 f8 08 ff db 00 11 00 21
+[12:35:51.824] PACKET sensors: status=2816, uptime=3227, accel=[-0.037576, 0.206912, -0.99552], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:35:51.950] RX  01
+[12:35:51.951] RX  0b 00 00 00 0c 9b ff b4 01 a9 f8 09 ff db 00 12 00 21
+[12:35:51.951] PACKET sensors: status=2816, uptime=3227, accel=[-0.037088, 0.2074, -0.995032], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:35:52.011] RX  01
+[12:35:52.016] RX  0b 00 00 00 0c 9b ff b3 01 a9 f8 0a ff da 00 12 00 21
+[12:35:52.017] PACKET sensors: status=2816, uptime=3227, accel=[-0.037576, 0.2074, -0.994544], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:35:52.136] RX  01
+[12:35:52.137] RX  0f 00 00 00 0c 9c ff b3 01 a7 f8 06 ff d9 00 13 00 20
+[12:35:52.137] PACKET sensors: status=3840, uptime=3228, accel=[-0.037576, 0.206424, -0.996496], gyro=[-2.73, 1.33, 2.24], crc=None
+[12:35:52.260] RX  01
+[12:35:52.261] RX  0f 00 00 00 0c 9c ff b4 01 a7 f8 09 ff da 00 11 00 21
+[12:35:52.261] PACKET sensors: status=3840, uptime=3228, accel=[-0.037088, 0.206424, -0.995032], gyro=[-2.66, 1.19, 2.31], crc=None
+[12:35:52.261] RX  02 10 00 00 00 0c 9c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 ee 50 33
+[12:35:52.262] PACKET state: status=4096, uptime=3228, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128328784, witness_battery_voltage=51, crc=None
+[12:35:52.262] RX  ff 00 00 00 00 0c 9c
+[12:35:52.262] PACKET heartbeat: status=0, uptime=3228
+[12:35:52.324] RX  01
+[12:35:52.324] RX  0f 00 00 00 0c 9c ff b3 01 a8 f8 08 ff db 00 12 00 21
+[12:35:52.325] PACKET sensors: status=3840, uptime=3228, accel=[-0.037576, 0.206912, -0.99552], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:35:52.448] RX  01
+[12:35:52.451] RX  0f 00 00 00 0c 9c ff b2 01 aa f8 0b ff db 00 12 00 21
+[12:35:52.452] PACKET sensors: status=3840, uptime=3228, accel=[-0.038064, 0.207888, -0.994056], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:35:52.511] RX  01
+[12:35:52.512] RX  0b 00 00 00 0c 9c ff b6 01 a4 f8 07 ff db 00 11 00 21
+[12:35:52.512] PACKET sensors: status=2816, uptime=3228, accel=[-0.036112, 0.20496, -0.996008], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:35:52.634] RX  01
+[12:35:52.635] RX  0b 00 00 00 0c 9c ff b1 01 a7 f8 06 ff da 00 12 00 21
+[12:35:52.636] PACKET sensors: status=2816, uptime=3228, accel=[-0.038552, 0.206424, -0.996496], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:35:52.757] RX  01
+[12:35:52.758] RX  0b 00 00 00 0c 9c ff b4 01 a8 f8 06 ff da 00 13 00 21
+[12:35:52.759] PACKET sensors: status=2816, uptime=3228, accel=[-0.037088, 0.206912, -0.996496], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:35:52.819] RX  01
+[12:35:52.820] RX  0f 00 00 00 0c 9c ff b2 01 a8 f8 08 ff da 00 12 00 21
+[12:35:52.821] PACKET sensors: status=3840, uptime=3228, accel=[-0.038064, 0.206912, -0.99552], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:35:52.944] RX  01
+[12:35:52.945] RX  0f 00 00 00 0c 9c ff b3 01 a7 f8 08 ff db 00 11 00 21
+[12:35:52.945] PACKET sensors: status=3840, uptime=3228, accel=[-0.037576, 0.206424, -0.99552], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:35:53.007] RX  01
+[12:35:53.012] RX  0f 00 00 00 0c 9c ff b3 01 a8 f8 07 ff da 00 12 00 21
+[12:35:53.013] PACKET sensors: status=3840, uptime=3228, accel=[-0.037576, 0.206912, -0.996008], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:35:53.133] RX  01
+[12:35:53.133] RX  0f 00 00 00 0c 9d ff b2 01 a8 f8 07 ff d9 00 14 00 20
+[12:35:53.134] PACKET sensors: status=3840, uptime=3229, accel=[-0.038064, 0.206912, -0.996008], gyro=[-2.73, 1.4, 2.24], crc=None
+[12:35:53.256] RX  01
+[12:35:53.257] RX  0b 00 00 00 0c 9d ff b4 01 a6 f8 09 ff db 00 10 00 22 02 10 00 00 00 0c 9d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 d8 ab 33 ff 01 00 00 00 0c 9d
+[12:35:53.258] PACKET sensors: status=2816, uptime=3229, accel=[-0.037088, 0.205936, -0.995032], gyro=[-2.59, 1.12, 2.38], crc=None
+[12:35:53.258] PACKET state: status=4096, uptime=3229, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128323243, witness_battery_voltage=51, crc=None
+[12:35:53.259] PACKET heartbeat: status=256, uptime=3229
+[12:35:53.318] RX  01
+[12:35:53.320] RX  0b 00 00 00 0c 9d ff b5 01 a4 f8 08 ff db 00 12 00 21
+[12:35:53.321] PACKET sensors: status=2816, uptime=3229, accel=[-0.0366, 0.20496, -0.99552], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:35:53.441] RX  01
+[12:35:53.442] RX  0b 00 00 00 0c 9d ff b4 01 a8 f8 05 ff da 00 13 00 21
+[12:35:53.443] PACKET sensors: status=2816, uptime=3229, accel=[-0.037088, 0.206912, -0.996984], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:35:53.504] RX  01
+[12:35:53.504] RX  0f 00 00 00 0c 9d ff b1 01 a9 f8 10 ff d6 00 17 00 21
+[12:35:53.505] PACKET sensors: status=3840, uptime=3229, accel=[-0.038552, 0.2074, -0.991616], gyro=[-2.94, 1.61, 2.31], crc=None
+[12:35:53.608] RX  01
+[12:35:53.609] RX  0f 00 00 00 0c 9d ff b1 01 a8 f8 09 ff dc 00 0f 00 22
+[12:35:53.609] PACKET sensors: status=3840, uptime=3229, accel=[-0.038552, 0.206912, -0.995032], gyro=[-2.52, 1.05, 2.38], crc=None
+[12:35:53.720] RX  01
+[12:35:53.721] RX  0f 00 00 00 0c 9d ff b4 01 a8 f8 08 ff dc 00 0f 00 21
+[12:35:53.722] PACKET sensors: status=3840, uptime=3229, accel=[-0.037088, 0.206912, -0.99552], gyro=[-2.52, 1.05, 2.31], crc=None
+[12:35:53.827] RX  01
+[12:35:53.827] RX  0f 00 00 00 0c 9d ff b5 01 a7 f8 06 ff d9 00 15 00 22
+[12:35:53.828] PACKET sensors: status=3840, uptime=3229, accel=[-0.0366, 0.206424, -0.996496], gyro=[-2.73, 1.47, 2.38], crc=None
+[12:35:53.932] RX  01
+[12:35:53.933] RX  0b 00 00 00 0c 9d ff b3 01 a8 f8 08 ff dc 00 10 00 22
+[12:35:53.933] PACKET sensors: status=2816, uptime=3229, accel=[-0.037576, 0.206912, -0.99552], gyro=[-2.52, 1.12, 2.38], crc=None
+[12:35:54.038] RX  01
+[12:35:54.039] RX  0b 00 00 00 0c 9d ff b4 01 a8 f8 06 ff db 00 12 00 21
+[12:35:54.039] PACKET sensors: status=2816, uptime=3229, accel=[-0.037088, 0.206912, -0.996496], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:35:54.144] RX  01
+[12:35:54.145] RX  0b 00 00 00 0c 9e ff b4 01 a9 f8 08 ff d9 00 14 00 21
+[12:35:54.145] PACKET sensors: status=2816, uptime=3230, accel=[-0.037088, 0.2074, -0.99552], gyro=[-2.73, 1.4, 2.31], crc=None
+[12:35:54.247] RX  01
+[12:35:54.248] RX  0f 00 00 00 0c 9e ff b5 01 a8 f8 05 ff db 00 13 00 22 02 10 00 00 00 0c 9e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 ad 61 33 ff 00 00 00 00 0c 9e
+[12:35:54.248] PACKET sensors: status=3840, uptime=3230, accel=[-0.0366, 0.206912, -0.996984], gyro=[-2.59, 1.33, 2.38], crc=None
+[12:35:54.249] PACKET state: status=4096, uptime=3230, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128312161, witness_battery_voltage=51, crc=None
+[12:35:54.250] PACKET heartbeat: status=0, uptime=3230
+[12:35:54.307] RX  01
+[12:35:54.307] RX  0f 00 00 00 0c 9e ff b2 01 a9 f8 05 ff db 00 12 00 21
+[12:35:54.308] PACKET sensors: status=3840, uptime=3230, accel=[-0.038064, 0.2074, -0.996984], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:35:54.417] RX  01
+[12:35:54.417] RX  0f 00 00 00 0c 9e ff b2 01 a9 f8 07 ff da 00 13 00 20
+[12:35:54.418] PACKET sensors: status=3840, uptime=3230, accel=[-0.038064, 0.2074, -0.996008], gyro=[-2.66, 1.33, 2.24], crc=None
+[12:35:54.530] RX  01
+[12:35:54.534] RX  0f 00 00 00 0c 9e ff b4 01 a8 f8 07 ff db 00 11 00 22
+[12:35:54.535] PACKET sensors: status=3840, uptime=3230, accel=[-0.037088, 0.206912, -0.996008], gyro=[-2.59, 1.19, 2.38], crc=None
+[12:35:54.654] RX  01
+[12:35:54.656] RX  0b 00 00 00 0c 9e ff b4 01 a8 f8 08 ff da 00 12 00 22
+[12:35:54.657] PACKET sensors: status=2816, uptime=3230, accel=[-0.037088, 0.206912, -0.99552], gyro=[-2.66, 1.26, 2.38], crc=None
+[12:35:54.709] RX  01
+[12:35:54.710] RX  0b 00 00 00 0c 9e ff b4 01 a9 f8 07 ff db 00 12 00 22
+[12:35:54.711] PACKET sensors: status=2816, uptime=3230, accel=[-0.037088, 0.2074, -0.996008], gyro=[-2.59, 1.26, 2.38], crc=None
+[12:35:54.827] RX  01
+[12:35:54.828] RX  0b 00 00 00 0c 9e ff b5 01 aa f8 07 ff db 00 0f 00 22
+[12:35:54.829] PACKET sensors: status=2816, uptime=3230, accel=[-0.0366, 0.207888, -0.996008], gyro=[-2.59, 1.05, 2.38], crc=None
+[12:35:54.936] RX  01
+[12:35:54.937] RX  0f 00 00 00 0c 9e ff b3 01 a7 f8 0a ff da 00 13 00 21
+[12:35:54.937] PACKET sensors: status=3840, uptime=3230, accel=[-0.037576, 0.206424, -0.994544], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:35:55.045] RX  01
+[12:35:55.045] RX  0f 00 00 00 0c 9e ff b2 01 a8 f8 09 ff db 00 12 00 21
+[12:35:55.046] PACKET sensors: status=3840, uptime=3230, accel=[-0.038064, 0.206912, -0.995032], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:35:55.149] RX  01
+[12:35:55.149] RX  0f 00 00 00 0c 9f ff b3 01 a8 f8 08 ff db 00 12 00 21
+[12:35:55.150] PACKET sensors: status=3840, uptime=3231, accel=[-0.037576, 0.206912, -0.99552], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:35:55.203] RX  01
+[12:35:55.204] RX  0f 00 00 00 0c 9f ff b2 01 a7 f8 06 ff da 00 13 00 21 02 10 00 00 00 0c 9f 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 c3 06 33 ff 01 00 00 00 0c 9f
+[12:35:55.204] PACKET sensors: status=3840, uptime=3231, accel=[-0.038064, 0.206424, -0.996496], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:35:55.205] PACKET state: status=4096, uptime=3231, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128317702, witness_battery_voltage=51, crc=None
+[12:35:55.205] PACKET heartbeat: status=256, uptime=3231
+[12:35:55.309] RX  01
+[12:35:55.309] RX  0b 00 00 00 0c 9f ff b4 01 a9 f8 07 ff da 00 13 00 22
+[12:35:55.310] PACKET sensors: status=2816, uptime=3231, accel=[-0.037088, 0.2074, -0.996008], gyro=[-2.66, 1.33, 2.38], crc=None
+[12:35:55.434] RX  01
+[12:35:55.435] RX  0b 00 00 00 0c 9f ff b3 01 a8 f8 09 ff da 00 13 00 21
+[12:35:55.435] PACKET sensors: status=2816, uptime=3231, accel=[-0.037576, 0.206912, -0.995032], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:35:55.561] RX  01
+[12:35:55.565] RX  0b 00 00 00 0c 9f ff b3 01 a7 f8 05 ff d9 00 14 00 22
+[12:35:55.573] PACKET sensors: status=2816, uptime=3231, accel=[-0.037576, 0.206424, -0.996984], gyro=[-2.73, 1.4, 2.38], crc=None
+[12:35:55.628] RX  01
+[12:35:55.628] RX  0f 00 00 00 0c 9f ff b6 01 a9 f8 07 ff d5 00 1d 00 23
+[12:35:55.629] PACKET sensors: status=3840, uptime=3231, accel=[-0.036112, 0.2074, -0.996008], gyro=[-3.01, 2.03, 2.45], crc=None
+[12:35:55.731] RX  01
+[12:35:55.732] RX  0f 00 00 00 0c 9f ff b4 01 a9 f8 0a ff dc 00 10 00 21
+[12:35:55.733] PACKET sensors: status=3840, uptime=3231, accel=[-0.037088, 0.2074, -0.994544], gyro=[-2.52, 1.12, 2.31], crc=None
+[12:35:55.834] RX  01
+[12:35:55.834] RX  0f 00 00 00 0c 9f ff b2 01 a8 f8 08 ff dc 00 10 00 20
+[12:35:55.835] PACKET sensors: status=3840, uptime=3231, accel=[-0.038064, 0.206912, -0.99552], gyro=[-2.52, 1.12, 2.24], crc=None
+[12:35:55.940] RX  01
+[12:35:55.940] RX  0f 00 00 00 0c 9f ff b3 01 a8 f8 08 ff d8 00 15 00 22
+[12:35:55.941] PACKET sensors: status=3840, uptime=3231, accel=[-0.037576, 0.206912, -0.99552], gyro=[-2.8, 1.47, 2.38], crc=None
+[12:35:56.041] RX  01
+[12:35:56.041] RX  0b 00 00 00 0c 9f ff b6 01 aa f8 08 ff dc 00 11 00 21
+[12:35:56.042] PACKET sensors: status=2816, uptime=3231, accel=[-0.036112, 0.207888, -0.99552], gyro=[-2.52, 1.19, 2.31], crc=None
+[12:35:56.145] RX  01
+[12:35:56.145] RX  0b 00 00 00 0c a0 ff b4 01 ac f8 0b ff dc 00 0e 00 20
+[12:35:56.145] PACKET sensors: status=2816, uptime=3232, accel=[-0.037088, 0.208864, -0.994056], gyro=[-2.52, 0.98, 2.24], crc=None
+[12:35:56.260] RX  01
+[12:35:56.261] RX  0b 00 00 00 0c a0 ff b2 01 a8 f8 0d ff d9 00 15 00 21 02 10 00 00 00 0c a0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 81 69 33
+[12:35:56.262] PACKET sensors: status=2816, uptime=3232, accel=[-0.038064, 0.206912, -0.99308], gyro=[-2.73, 1.47, 2.31], crc=None
+[12:35:56.262] PACKET state: status=4096, uptime=3232, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128300905, witness_battery_voltage=51, crc=None
+[12:35:56.263] RX  ff 00 00 00 00 0c a0
+[12:35:56.263] PACKET heartbeat: status=0, uptime=3232
+[12:35:56.324] RX  01
+[12:35:56.325] RX  0f 00 00 00 0c a0 ff b4 01 a8 f8 05 ff dc 00 12 00 21
+[12:35:56.326] PACKET sensors: status=3840, uptime=3232, accel=[-0.037088, 0.206912, -0.996984], gyro=[-2.52, 1.26, 2.31], crc=None
+[12:35:56.448] RX  01
+[12:35:56.449] RX  0f 00 00 00 0c a0 ff b4 01 a9 f8 06 ff d8 00 15 00 20
+[12:35:56.449] PACKET sensors: status=3840, uptime=3232, accel=[-0.037088, 0.2074, -0.996496], gyro=[-2.8, 1.47, 2.24], crc=None
+[12:35:56.504] RX  01
+[12:35:56.504] RX  0f 00 00 00 0c a0 ff b3 01 a9 f8 0b ff da 00 15 00 21
+[12:35:56.505] PACKET sensors: status=3840, uptime=3232, accel=[-0.037576, 0.2074, -0.994056], gyro=[-2.66, 1.47, 2.31], crc=None
+[12:35:56.606] RX  01
+[12:35:56.606] RX  0f 00 00 00 0c a0 ff b1 01 aa f8 0b ff dc 00 0e 00 21
+[12:35:56.607] PACKET sensors: status=3840, uptime=3232, accel=[-0.038552, 0.207888, -0.994056], gyro=[-2.52, 0.98, 2.31], crc=None
+[12:35:56.711] RX  01
+[12:35:56.712] RX  0b 00 00 00 0c a0 ff b6 01 ab f8 03 ff d7 00 1a 00 22
+[12:35:56.712] PACKET sensors: status=2816, uptime=3232, accel=[-0.036112, 0.208376, -0.99796], gyro=[-2.87, 1.82, 2.38], crc=None
+[12:35:56.821] RX  01
+[12:35:56.824] RX  0b 00 00 00 0c a0 ff b6 01 a9 f8 06 ff d9 00 14 00 21
+[12:35:56.825] PACKET sensors: status=2816, uptime=3232, accel=[-0.036112, 0.2074, -0.996496], gyro=[-2.73, 1.4, 2.31], crc=None
+[12:35:56.939] RX  01
+[12:35:56.941] RX  0b 00 00 00 0c a0 ff b7 01 ab f8 05 ff db 00 12 00 20
+[12:35:56.942] PACKET sensors: status=2816, uptime=3232, accel=[-0.035624, 0.208376, -0.996984], gyro=[-2.59, 1.26, 2.24], crc=None
+[12:35:57.002] RX  01
+[12:35:57.003] RX  0f 00 00 00 0c a0 ff b7 01 a9 f8 08 ff d9 00 16 00 22
+[12:35:57.004] PACKET sensors: status=3840, uptime=3232, accel=[-0.035624, 0.2074, -0.99552], gyro=[-2.73, 1.54, 2.38], crc=None
+[12:35:57.118] RX  01
+[12:35:57.119] RX  0f 00 00 00 0c a1 ff b6 01 a8 f8 07 ff d8 00 17 00 22
+[12:35:57.120] PACKET sensors: status=3840, uptime=3233, accel=[-0.036112, 0.206912, -0.996008], gyro=[-2.8, 1.61, 2.38], crc=None
+[12:35:57.234] RX  01
+[12:35:57.235] RX  0f 00 00 00 0c a1 ff b6 01 aa f8 08 ff db 00 10 00 21 02 10 00 00 00 0c a1 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 6b c4 33 ff 01 00 00 00 0c a1
+[12:35:57.236] PACKET sensors: status=3840, uptime=3233, accel=[-0.036112, 0.207888, -0.99552], gyro=[-2.59, 1.12, 2.31], crc=None
+[12:35:57.236] PACKET state: status=4096, uptime=3233, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128295364, witness_battery_voltage=51, crc=None
+[12:35:57.236] PACKET heartbeat: status=256, uptime=3233
+[12:35:57.349] RX  01
+[12:35:57.350] RX  0f 00 00 00 0c a1 ff b6 01 a9 f8 07 ff db 00 13 00 21
+[12:35:57.351] PACKET sensors: status=3840, uptime=3233, accel=[-0.036112, 0.2074, -0.996008], gyro=[-2.59, 1.33, 2.31], crc=None
+[12:35:57.405] RX  01
+[12:35:57.412] RX  0b 00 00 00 0c a1 ff b4 01 a8 f8 08 ff db 00 11 00 21
+[12:35:57.417] PACKET sensors: status=2816, uptime=3233, accel=[-0.037088, 0.206912, -0.99552], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:35:57.534] RX  01
+[12:35:57.537] RX  0b 00 00 00 0c a1 ff b6 01 a8 f8 07 ff d8 00 14 00 21
+[12:35:57.538] PACKET sensors: status=2816, uptime=3233, accel=[-0.036112, 0.206912, -0.996008], gyro=[-2.8, 1.4, 2.31], crc=None
+[12:35:57.657] RX  01
+[12:35:57.657] RX  0b 00 00 00 0c a1 ff b4 01 a8 f8 07 ff da 00 13 00 21
+[12:35:57.658] PACKET sensors: status=2816, uptime=3233, accel=[-0.037088, 0.206912, -0.996008], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:35:57.714] RX  01
+[12:35:57.715] RX  0f 00 00 00 0c a1 ff b6 01 aa f8 06 ff db 00 10 00 21
+[12:35:57.715] PACKET sensors: status=3840, uptime=3233, accel=[-0.036112, 0.207888, -0.996496], gyro=[-2.59, 1.12, 2.31], crc=None
+[12:35:57.830] RX  01
+[12:35:57.831] RX  0f 00 00 00 0c a1 ff b5 01 a8 f8 0a ff db 00 11 00 22
+[12:35:57.833] PACKET sensors: status=3840, uptime=3233, accel=[-0.0366, 0.206912, -0.994544], gyro=[-2.59, 1.19, 2.38], crc=None
+[12:35:57.951] RX  01
+[12:35:57.952] RX  0f 00 00 00 0c a1 ff b5 01 a8 f8 08 ff da 00 12 00 20
+[12:35:57.952] PACKET sensors: status=3840, uptime=3233, accel=[-0.0366, 0.206912, -0.99552], gyro=[-2.66, 1.26, 2.24], crc=None
+[12:35:58.013] RX  01
+[12:35:58.014] RX  0f 00 00 00 0c a1 ff b5 01 a7 f8 07 ff da 00 12 00 21
+[12:35:58.014] PACKET sensors: status=3840, uptime=3233, accel=[-0.0366, 0.206424, -0.996008], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:35:58.134] RX  01
+[12:35:58.135] RX  0b 00 00 00 0c a2 ff b5 01 a9 f8 07 ff db 00 12 00 21
+[12:35:58.141] PACKET sensors: status=2816, uptime=3234, accel=[-0.0366, 0.2074, -0.996008], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:35:58.250] RX  01
+[12:35:58.250] RX  0b 00 00 00 0c a2 ff b6 01 aa f8 08 ff db 00 10 00 21
+[12:35:58.251] PACKET sensors: status=2816, uptime=3234, accel=[-0.036112, 0.207888, -0.99552], gyro=[-2.59, 1.12, 2.31], crc=None
+[12:35:58.251] RX  02 10 00 00 00 0c a2 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 81 69 33 ff 00 00 00 00 0c a2
+[12:35:58.251] PACKET state: status=4096, uptime=3234, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128300905, witness_battery_voltage=51, crc=None
+[12:35:58.251] PACKET heartbeat: status=0, uptime=3234
+[12:35:58.302] RX  01
+[12:35:58.302] RX  0b 00 00 00 0c a2 ff b5 01 a7 f8 09 ff dd 00 0c 00 20
+[12:35:58.302] PACKET sensors: status=2816, uptime=3234, accel=[-0.0366, 0.206424, -0.995032], gyro=[-2.45, 0.84, 2.24], crc=None
+[12:35:58.408] RX  01
+[12:35:58.409] RX  0f 00 00 00 0c a2 ff b3 01 a8 f8 07 ff db 00 11 00 22
+[12:35:58.409] PACKET sensors: status=3840, uptime=3234, accel=[-0.037576, 0.206912, -0.996008], gyro=[-2.59, 1.19, 2.38], crc=None
+[12:35:58.527] RX  01
+[12:35:58.528] RX  0f 00 00 00 0c a2 ff b3 01 a8 f8 09 ff d9 00 14 00 21
+[12:35:58.528] PACKET sensors: status=3840, uptime=3234, accel=[-0.037576, 0.206912, -0.995032], gyro=[-2.73, 1.4, 2.31], crc=None
+[12:35:58.646] RX  01
+[12:35:58.648] RX  0f 00 00 00 0c a2 ff b0 01 a9 f8 08 ff ec ff f4 00 1f
+[12:35:58.648] PACKET sensors: status=3840, uptime=3234, accel=[-0.03904, 0.2074, -0.99552], gyro=[-1.4, -0.84, 2.17], crc=None
+[12:35:58.707] RX  01
+[12:35:58.709] RX  0f 00 00 00 0c a2 ff b9 01 ac f7 ff ff db 00 11 00 21
+[12:35:58.710] PACKET sensors: status=3840, uptime=3234, accel=[-0.034648, 0.208864, -0.999912], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:35:58.826] RX  01
+[12:35:58.827] RX  0b 00 00 00 0c a2 ff ae 01 a7 f8 0d ff dc 00 11 00 21
+[12:35:58.827] PACKET sensors: status=2816, uptime=3234, accel=[-0.040016, 0.206424, -0.99308], gyro=[-2.52, 1.19, 2.31], crc=None
+[12:35:58.943] RX  01
+[12:35:58.944] RX  0b 00 00 00 0c a2 ff b2 01 a7 f8 0b ff db 00 0e 00 20
+[12:35:58.945] PACKET sensors: status=2816, uptime=3234, accel=[-0.038064, 0.206424, -0.994056], gyro=[-2.59, 0.98, 2.24], crc=None
+[12:35:59.003] RX  01
+[12:35:59.005] RX  0b 00 00 00 0c a2 ff b3 01 a8 f8 09 ff df 00 0a 00 20
+[12:35:59.006] PACKET sensors: status=2816, uptime=3234, accel=[-0.037576, 0.206912, -0.995032], gyro=[-2.31, 0.7, 2.24], crc=None
+[12:35:59.111] RX  01
+[12:35:59.115] RX  0f 00 00 00 0c a3 ff b3 01 a8 f8 08 ff d6 00 1a 00 22
+[12:35:59.116] PACKET sensors: status=3840, uptime=3235, accel=[-0.037576, 0.206912, -0.99552], gyro=[-2.94, 1.82, 2.38], crc=None
+[12:35:59.239] RX  01
+[12:35:59.241] RX  0f 00 00 00 0c a3 ff b2 01 a8 f8 0c ff d7 00 17 00 21 02 10 00 00 00 0c a3 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 03 f6 33
+[12:35:59.242] PACKET sensors: status=3840, uptime=3235, accel=[-0.038064, 0.206912, -0.993568], gyro=[-2.87, 1.61, 2.31], crc=None
+[12:35:59.242] PACKET state: status=4096, uptime=3235, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128334326, witness_battery_voltage=51, crc=None
+[12:35:59.242] RX  ff 01 00 00 00 0c a3
+[12:35:59.243] PACKET heartbeat: status=256, uptime=3235
+[12:35:59.360] RX  01
+[12:35:59.361] RX  0f 00 00 00 0c a3 ff b2 01 a6 f8 07 ff e1 00 07 00 1f
+[12:35:59.362] PACKET sensors: status=3840, uptime=3235, accel=[-0.038064, 0.205936, -0.996008], gyro=[-2.17, 0.49, 2.17], crc=None
+[12:35:59.418] RX  01
+[12:35:59.418] RX  0f 00 00 00 0c a3 ff b3 01 a7 f8 0b ff d8 00 16 00 21
+[12:35:59.419] PACKET sensors: status=3840, uptime=3235, accel=[-0.037576, 0.206424, -0.994056], gyro=[-2.8, 1.54, 2.31], crc=None
+[12:35:59.545] RX  01
+[12:35:59.546] RX  0b 00 00 00 0c a3 ff b4 01 a8 f8 09 ff dd 00 0c 00 22
+[12:35:59.548] PACKET sensors: status=2816, uptime=3235, accel=[-0.037088, 0.206912, -0.995032], gyro=[-2.45, 0.84, 2.38], crc=None
+[12:35:59.606] RX  01
+[12:35:59.609] RX  0b 00 00 00 0c a3 ff b3 01 a8 f8 07 ff d8 00 15 00 20
+[12:35:59.610] PACKET sensors: status=2816, uptime=3235, accel=[-0.037576, 0.206912, -0.996008], gyro=[-2.8, 1.47, 2.24], crc=None
+[12:35:59.722] RX  01
+[12:35:59.723] RX  0b 00 00 00 0c a3 ff b4 01 a8 f8 09 ff da 00 13 00 21
+[12:35:59.724] PACKET sensors: status=2816, uptime=3235, accel=[-0.037088, 0.206912, -0.995032], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:35:59.847] RX  01
+[12:35:59.848] RX  0f 00 00 00 0c a3 ff b3 01 a9 f8 07 ff dc 00 11 00 22
+[12:35:59.849] PACKET sensors: status=3840, uptime=3235, accel=[-0.037576, 0.2074, -0.996008], gyro=[-2.52, 1.19, 2.38], crc=None
+[12:35:59.911] RX  01
+[12:35:59.911] RX  0f 00 00 00 0c a3 ff b5 01 a9 f8 0a ff da 00 11 00 22
+[12:35:59.912] PACKET sensors: status=3840, uptime=3235, accel=[-0.0366, 0.2074, -0.994544], gyro=[-2.66, 1.19, 2.38], crc=None
+[12:36:00.027] RX  01
+[12:36:00.028] RX  0f 00 00 00 0c a3 ff b4 01 a7 f8 0a ff db 00 12 00 21
+[12:36:00.031] PACKET sensors: status=3840, uptime=3235, accel=[-0.037088, 0.206424, -0.994544], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:36:00.151] RX  01
+[12:36:00.155] RX  0f 00 00 00 0c a4 ff ba 01 ab f8 05 ff d6 00 1d 00 23
+[12:36:00.158] PACKET sensors: status=3840, uptime=3236, accel=[-0.03416, 0.208376, -0.996984], gyro=[-2.94, 2.03, 2.45], crc=None
+[12:36:00.226] RX  01
+[12:36:00.236] RX  0b 00 00 00 0c a4 ff b3 01 a8 f8 06 ff e2 ff ff 00 1f 02 10 00 00 00 0c a4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 19 9b 33 ff 00 00 00 00 0c a4
+[12:36:00.243] PACKET sensors: status=2816, uptime=3236, accel=[-0.037576, 0.206912, -0.996496], gyro=[-2.1, -0.07, 2.17], crc=None
+[12:36:00.246] PACKET state: status=4096, uptime=3236, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128339867, witness_battery_voltage=51, crc=None
+[12:36:00.247] PACKET heartbeat: status=0, uptime=3236
+[12:36:00.306] RX  01
+[12:36:00.307] RX  0b 00 00 00 0c a4 ff af 01 a6 f8 0f ff d7 00 1c 00 22
+[12:36:00.310] PACKET sensors: status=2816, uptime=3236, accel=[-0.039528, 0.205936, -0.992104], gyro=[-2.87, 1.96, 2.38], crc=None
+[12:36:00.423] RX  01
+[12:36:00.424] RX  0b 00 00 00 0c a4 ff b6 01 aa f8 09 ff e6 ff fe 00 20
+[12:36:00.427] PACKET sensors: status=2816, uptime=3236, accel=[-0.036112, 0.207888, -0.995032], gyro=[-1.82, -0.14, 2.24], crc=None
+[12:36:00.551] RX  01
+[12:36:00.554] RX  0f 00 00 00 0c a4 ff b4 01 a8 f8 08 ff d6 00 17 00 22
+[12:36:00.555] PACKET sensors: status=3840, uptime=3236, accel=[-0.037088, 0.206912, -0.99552], gyro=[-2.94, 1.61, 2.38], crc=None
+[12:36:00.608] RX  01
+[12:36:00.615] RX  0f 00 00 00 0c a4 ff b3 01 a9 f8 09 ff db 00 11 00 21
+[12:36:00.626] PACKET sensors: status=3840, uptime=3236, accel=[-0.037576, 0.2074, -0.995032], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:36:00.723] RX  01
+[12:36:00.724] RX  0f 00 00 00 0c a4 ff b5 01 a8 f8 07 ff db 00 11 00 22
+[12:36:00.725] PACKET sensors: status=3840, uptime=3236, accel=[-0.0366, 0.206912, -0.996008], gyro=[-2.59, 1.19, 2.38], crc=None
+[12:36:00.842] RX  01
+[12:36:00.843] RX  0f 00 00 00 0c a4 ff b5 01 a9 f8 09 ff d9 00 14 00 21
+[12:36:00.844] PACKET sensors: status=3840, uptime=3236, accel=[-0.0366, 0.2074, -0.995032], gyro=[-2.73, 1.4, 2.31], crc=None
+[12:36:00.956] RX  01
+[12:36:00.957] RX  0b 00 00 00 0c a4 ff b3 01 a8 f8 07 ff da 00 11 00 22
+[12:36:00.958] PACKET sensors: status=2816, uptime=3236, accel=[-0.037576, 0.206912, -0.996008], gyro=[-2.66, 1.19, 2.38], crc=None
+[12:36:01.011] RX  01
+[12:36:01.012] RX  0b 00 00 00 0c a4 ff b4 01 a9 f8 07 ff db 00 11 00 21
+[12:36:01.012] PACKET sensors: status=2816, uptime=3236, accel=[-0.037088, 0.2074, -0.996008], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:36:01.132] RX  01
+[12:36:01.133] RX  0b 00 00 00 0c a5 ff b5 01 a9 f8 06 ff da 00 14 00 21
+[12:36:01.134] PACKET sensors: status=2816, uptime=3237, accel=[-0.0366, 0.2074, -0.996496], gyro=[-2.66, 1.4, 2.31], crc=None
+[12:36:01.255] RX  01
+[12:36:01.257] RX  0f 00 00 00 0c a5 ff b4 01 a9 f8 06 ff dc 00 0f 00 21 02 10 00 00 00 0c a5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 03 f6 33 ff 01 00 00 00 0c a5
+[12:36:01.258] PACKET sensors: status=3840, uptime=3237, accel=[-0.037088, 0.2074, -0.996496], gyro=[-2.52, 1.05, 2.31], crc=None
+[12:36:01.259] PACKET state: status=4096, uptime=3237, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128334326, witness_battery_voltage=51, crc=None
+[12:36:01.260] PACKET heartbeat: status=256, uptime=3237
+[12:36:01.313] RX  01
+[12:36:01.316] RX  0f 00 00 00 0c a5 ff b0 01 a8 f8 0a ff da 00 11 00 20
+[12:36:01.317] PACKET sensors: status=3840, uptime=3237, accel=[-0.03904, 0.206912, -0.994544], gyro=[-2.66, 1.19, 2.24], crc=None
+[12:36:01.439] RX  01
+[12:36:01.440] RX  0f 00 00 00 0c a5 ff b0 01 a7 f8 0c ff de 00 0c 00 21
+[12:36:01.443] PACKET sensors: status=3840, uptime=3237, accel=[-0.03904, 0.206424, -0.993568], gyro=[-2.38, 0.84, 2.31], crc=None
+[12:36:01.505] RX  01
+[12:36:01.510] RX  0f 00 00 00 0c a5 ff b6 01 ab f8 03 ff d9 00 16 00 22
+[12:36:01.514] PACKET sensors: status=3840, uptime=3237, accel=[-0.036112, 0.208376, -0.99796], gyro=[-2.73, 1.54, 2.38], crc=None
+[12:36:01.633] RX  01
+[12:36:01.636] RX  0b 00 00 00 0c a5 ff b6 01 a8 f8 09 ff db 00 13 00 22
+[12:36:01.640] PACKET sensors: status=2816, uptime=3237, accel=[-0.036112, 0.206912, -0.995032], gyro=[-2.59, 1.33, 2.38], crc=None
+[12:36:01.864] RX  01
+[12:36:01.870] RX  0b 00 00 00 0c a5 ff b4 01 a7 f8 0a ff db 00 10 00 20
+[12:36:01.888] PACKET sensors: status=2816, uptime=3237, accel=[-0.037088, 0.206424, -0.994544], gyro=[-2.59, 1.12, 2.24], crc=None
+[12:36:01.893] RX  01
+[12:36:01.894] RX  0b 00 00 00 0c a5 ff b4 01 a7 f8 07 ff da 00 13 00 22
+[12:36:01.895] PACKET sensors: status=2816, uptime=3237, accel=[-0.037088, 0.206424, -0.996008], gyro=[-2.66, 1.33, 2.38], crc=None
+[12:36:01.951] RX  01
+[12:36:01.952] RX  0f 00 00 00 0c a5 ff b4 01 aa f8 07 ff da 00 12 00 23
+[12:36:01.953] PACKET sensors: status=3840, uptime=3237, accel=[-0.037088, 0.207888, -0.996008], gyro=[-2.66, 1.26, 2.45], crc=None
+[12:36:02.007] RX  01
+[12:36:02.007] RX  0f 00 00 00 0c a5 ff b5 01 a8 f8 06 ff db 00 11 00 21
+[12:36:02.009] PACKET sensors: status=3840, uptime=3237, accel=[-0.0366, 0.206912, -0.996496], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:36:02.119] RX  01
+[12:36:02.119] RX  0f 00 00 00 0c a6 ff b2 01 a8 f8 08 ff da 00 12 00 21
+[12:36:02.120] PACKET sensors: status=3840, uptime=3238, accel=[-0.038064, 0.206912, -0.99552], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:36:02.231] RX  01
+[12:36:02.231] RX  0f 00 00 00 0c a6 ff b4 01 a8 f8 07 ff da 00 13 00 21 02 10 00 00 00 0c a6 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 ad 61 33 ff 00 00 00 00 0c a6
+[12:36:02.233] PACKET sensors: status=3840, uptime=3238, accel=[-0.037088, 0.206912, -0.996008], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:02.234] PACKET state: status=4096, uptime=3238, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128312161, witness_battery_voltage=51, crc=None
+[12:36:02.234] PACKET heartbeat: status=0, uptime=3238
+[12:36:02.340] RX  01
+[12:36:02.345] RX  0b 00 00 00 0c a6 ff b6 01 a8 f8 05 ff dc 00 10 00 21
+[12:36:02.346] PACKET sensors: status=2816, uptime=3238, accel=[-0.036112, 0.206912, -0.996984], gyro=[-2.52, 1.12, 2.31], crc=None
+[12:36:02.406] RX  01
+[12:36:02.409] RX  0b 00 00 00 0c a6 ff b3 01 a8 f8 0a ff db 00 0f 00 21
+[12:36:02.410] PACKET sensors: status=2816, uptime=3238, accel=[-0.037576, 0.206912, -0.994544], gyro=[-2.59, 1.05, 2.31], crc=None
+[12:36:02.526] RX  01
+[12:36:02.528] RX  0f 00 00 00 0c a6 ff b3 01 a6 f8 07 ff d8 00 18 00 22
+[12:36:02.529] PACKET sensors: status=3840, uptime=3238, accel=[-0.037576, 0.205936, -0.996008], gyro=[-2.8, 1.68, 2.38], crc=None
+[12:36:02.646] RX  01
+[12:36:02.651] RX  0f 00 00 00 0c a6 ff b6 01 a9 f8 02 ff de 00 08 00 1f
+[12:36:02.657] PACKET sensors: status=3840, uptime=3238, accel=[-0.036112, 0.2074, -0.998448], gyro=[-2.38, 0.56, 2.17], crc=None
+[12:36:02.720] RX  01
+[12:36:02.721] RX  0f 00 00 00 0c a6 ff b2 01 a8 f8 0a ff de 00 0a 00 1f
+[12:36:02.722] PACKET sensors: status=3840, uptime=3238, accel=[-0.038064, 0.206912, -0.994544], gyro=[-2.38, 0.7, 2.17], crc=None
+[12:36:02.843] RX  01
+[12:36:02.847] RX  0f 00 00 00 0c a6 ff ae 01 a5 f8 0f ff dd 00 0e 00 20
+[12:36:02.855] PACKET sensors: status=3840, uptime=3238, accel=[-0.040016, 0.205448, -0.992104], gyro=[-2.45, 0.98, 2.24], crc=None
+[12:36:02.920] RX  01
+[12:36:02.923] RX  0f 00 00 00 0c a6 ff b4 01 a9 f8 07 ff d1 00 26 00 24
+[12:36:02.928] PACKET sensors: status=3840, uptime=3238, accel=[-0.037088, 0.2074, -0.996008], gyro=[-3.29, 2.66, 2.52], crc=None
+[12:36:03.047] RX  01
+[12:36:03.052] RX  0b 00 00 00 0c a6 ff b4 01 ab f8 04 ff dc 00 11 00 21
+[12:36:03.056] PACKET sensors: status=2816, uptime=3238, accel=[-0.037088, 0.208376, -0.997472], gyro=[-2.52, 1.19, 2.31], crc=None
+[12:36:03.119] RX  01
+[12:36:03.120] RX  0b 00 00 00 0c a7 ff b7 01 ab f8 03 ff da 00 15 00 22
+[12:36:03.121] PACKET sensors: status=2816, uptime=3239, accel=[-0.035624, 0.208376, -0.99796], gyro=[-2.66, 1.47, 2.38], crc=None
+[12:36:03.237] RX  01
+[12:36:03.239] RX  0f 00 00 00 0c a7 ff b6 01 aa f8 04 ff dc 00 0f 00 21 02 10 00 00 00 0c a7 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 03 f6 33 ff 01 00 00 00 0c a7
+[12:36:03.240] PACKET sensors: status=3840, uptime=3239, accel=[-0.036112, 0.207888, -0.997472], gyro=[-2.52, 1.05, 2.31], crc=None
+[12:36:03.241] PACKET state: status=4096, uptime=3239, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128334326, witness_battery_voltage=51, crc=None
+[12:36:03.242] PACKET heartbeat: status=256, uptime=3239
+[12:36:03.353] RX  01
+[12:36:03.354] RX  0f 00 00 00 0c a7 ff b3 01 a9 f8 09 ff de 00 0a 00 20
+[12:36:03.356] PACKET sensors: status=3840, uptime=3239, accel=[-0.037576, 0.2074, -0.995032], gyro=[-2.38, 0.7, 2.24], crc=None
+[12:36:03.415] RX  01
+[12:36:03.415] RX  0f 00 00 00 0c a7 ff b3 01 a6 f8 0b ff e1 00 07 00 20
+[12:36:03.416] PACKET sensors: status=3840, uptime=3239, accel=[-0.037576, 0.205936, -0.994056], gyro=[-2.17, 0.49, 2.24], crc=None
+[12:36:03.521] RX  01
+[12:36:03.521] RX  0f 00 00 00 0c a7 ff b6 01 a8 f8 03 ff d6 00 1c 00 22
+[12:36:03.522] PACKET sensors: status=3840, uptime=3239, accel=[-0.036112, 0.206912, -0.99796], gyro=[-2.94, 1.96, 2.38], crc=None
+[12:36:03.636] RX  01
+[12:36:03.638] RX  0f 00 00 00 0c a7 ff b3 01 a8 f8 0a ff d8 00 16 00 21
+[12:36:03.641] PACKET sensors: status=3840, uptime=3239, accel=[-0.037576, 0.206912, -0.994544], gyro=[-2.8, 1.54, 2.31], crc=None
+[12:36:03.710] RX  01
+[12:36:03.712] RX  0b 00 00 00 0c a7 ff b2 01 a8 f8 06 ff da 00 13 00 21
+[12:36:03.713] PACKET sensors: status=2816, uptime=3239, accel=[-0.038064, 0.206912, -0.996496], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:03.826] RX  01
+[12:36:03.827] RX  0b 00 00 00 0c a7 ff b2 01 a8 f8 09 ff d9 00 14 00 21
+[12:36:03.829] PACKET sensors: status=2816, uptime=3239, accel=[-0.038064, 0.206912, -0.995032], gyro=[-2.73, 1.4, 2.31], crc=None
+[12:36:03.937] RX  01
+[12:36:03.937] RX  0f 00 00 00 0c a7 ff b5 01 a9 f8 07 ff da 00 12 00 22
+[12:36:03.938] PACKET sensors: status=3840, uptime=3239, accel=[-0.0366, 0.2074, -0.996008], gyro=[-2.66, 1.26, 2.38], crc=None
+[12:36:04.067] RX  01
+[12:36:04.070] RX  0f 00 00 00 0c a7 ff b2 01 a6 f8 07 ff d9 00 15 00 22
+[12:36:04.075] PACKET sensors: status=3840, uptime=3239, accel=[-0.038064, 0.205936, -0.996008], gyro=[-2.73, 1.47, 2.38], crc=None
+[12:36:04.130] RX  01
+[12:36:04.131] RX  0f 00 00 00 0c a8 ff b3 01 a8 f8 05 ff da 00 13 00 21
+[12:36:04.135] PACKET sensors: status=3840, uptime=3240, accel=[-0.037576, 0.206912, -0.996984], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:04.204] RX  01
+[12:36:04.205] RX  0f 00 00 00 0c a8 ff b5 01 a8 f8 05 ff da 00 12 00 21 02 10 00 00 00 0c a8 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 19 9b 33 ff 00 00 00 00 0c a8
+[12:36:04.210] PACKET sensors: status=3840, uptime=3240, accel=[-0.0366, 0.206912, -0.996984], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:36:04.211] PACKET state: status=4096, uptime=3240, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128339867, witness_battery_voltage=51, crc=None
+[12:36:04.212] PACKET heartbeat: status=0, uptime=3240
+[12:36:04.323] RX  01
+[12:36:04.324] RX  0f 00 00 00 0c a8 ff b5 01 a9 f8 07 ff dc 00 10 00 21
+[12:36:04.326] PACKET sensors: status=3840, uptime=3240, accel=[-0.0366, 0.2074, -0.996008], gyro=[-2.52, 1.12, 2.31], crc=None
+[12:36:04.442] RX  01
+[12:36:04.445] RX  0b 00 00 00 0c a8 ff b4 01 a9 f8 09 ff da 00 12 00 22
+[12:36:04.448] PACKET sensors: status=2816, uptime=3240, accel=[-0.037088, 0.2074, -0.995032], gyro=[-2.66, 1.26, 2.38], crc=None
+[12:36:04.512] RX  01
+[12:36:04.513] RX  0b 00 00 00 0c a8 ff b2 01 a8 f8 06 ff da 00 12 00 21
+[12:36:04.516] PACKET sensors: status=2816, uptime=3240, accel=[-0.038064, 0.206912, -0.996496], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:36:04.627] RX  01
+[12:36:04.629] RX  0f 00 00 00 0c a8 ff b0 01 a5 f8 0c ff d5 00 1e 00 23
+[12:36:04.630] PACKET sensors: status=3840, uptime=3240, accel=[-0.03904, 0.205448, -0.993568], gyro=[-3.01, 2.1, 2.45], crc=None
+[12:36:04.739] RX  01
+[12:36:04.740] RX  0f 00 00 00 0c a8 ff ba 01 ab f8 02 ff d8 00 18 00 23
+[12:36:04.742] PACKET sensors: status=3840, uptime=3240, accel=[-0.03416, 0.208376, -0.998448], gyro=[-2.8, 1.68, 2.45], crc=None
+[12:36:04.852] RX  01
+[12:36:04.853] RX  0f 00 00 00 0c a8 ff b3 01 ab f8 09 ff db 00 12 00 21
+[12:36:04.854] PACKET sensors: status=3840, uptime=3240, accel=[-0.037576, 0.208376, -0.995032], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:36:04.906] RX  01
+[12:36:04.910] RX  0f 00 00 00 0c a8 ff b2 01 a7 f8 0b ff dc 00 10 00 20
+[12:36:04.912] PACKET sensors: status=3840, uptime=3240, accel=[-0.038064, 0.206424, -0.994056], gyro=[-2.52, 1.12, 2.24], crc=None
+[12:36:05.026] RX  01
+[12:36:05.029] RX  0f 00 00 00 0c a8 ff b3 01 aa f8 08 ff d8 00 15 00 21
+[12:36:05.030] PACKET sensors: status=3840, uptime=3240, accel=[-0.037576, 0.207888, -0.99552], gyro=[-2.8, 1.47, 2.31], crc=None
+[12:36:05.139] RX  01
+[12:36:05.142] RX  0b 00 00 00 0c a9 ff b2 01 a9 f8 06 ff db 00 13 00 21
+[12:36:05.145] PACKET sensors: status=2816, uptime=3241, accel=[-0.038064, 0.2074, -0.996496], gyro=[-2.59, 1.33, 2.31], crc=None
+[12:36:05.208] RX  01
+[12:36:05.209] RX  0b 00 00 00 0c a9 ff b4 01 a9 f8 04 ff dc 00 10 00 21 02 10 00 00 00 0c a9 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 c3 06 33 ff 01 00 00 00 0c a9
+[12:36:05.222] PACKET sensors: status=2816, uptime=3241, accel=[-0.037088, 0.2074, -0.997472], gyro=[-2.52, 1.12, 2.31], crc=None
+[12:36:05.233] PACKET state: status=4096, uptime=3241, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128317702, witness_battery_voltage=51, crc=None
+[12:36:05.237] PACKET heartbeat: status=256, uptime=3241
+[12:36:05.351] RX  01
+[12:36:05.354] RX  0f 00 00 00 0c a9 ff b4 01 a9 f8 0b ff db 00 11 00 20
+[12:36:05.355] PACKET sensors: status=3840, uptime=3241, accel=[-0.037088, 0.2074, -0.994056], gyro=[-2.59, 1.19, 2.24], crc=None
+[12:36:05.406] RX  01
+[12:36:05.407] RX  0f 00 00 00 0c a9 ff b4 01 a8 f8 07 ff db 00 10 00 22
+[12:36:05.408] PACKET sensors: status=3840, uptime=3241, accel=[-0.037088, 0.206912, -0.996008], gyro=[-2.59, 1.12, 2.38], crc=None
+[12:36:05.517] RX  01
+[12:36:05.524] RX  0f 00 00 00 0c a9 ff b0 01 a7 f8 16 ff d3 00 1f 00 23
+[12:36:05.529] PACKET sensors: status=3840, uptime=3241, accel=[-0.03904, 0.206424, -0.988688], gyro=[-3.15, 2.17, 2.45], crc=None
+[12:36:05.644] RX  01
+[12:36:05.646] RX  0f 00 00 00 0c a9 ff b4 01 a8 f8 0c ff da 00 14 00 22
+[12:36:05.647] PACKET sensors: status=3840, uptime=3241, accel=[-0.037088, 0.206912, -0.993568], gyro=[-2.66, 1.4, 2.38], crc=None
+[12:36:05.702] RX  01
+[12:36:05.703] RX  0b 00 00 00 0c a9 ff b4 01 a9 f8 06 ff d8 00 17 00 22
+[12:36:05.704] PACKET sensors: status=2816, uptime=3241, accel=[-0.037088, 0.2074, -0.996496], gyro=[-2.8, 1.61, 2.38], crc=None
+[12:36:05.814] RX  01
+[12:36:05.815] RX  0b 00 00 00 0c a9 ff b7 01 a8 f8 01 ff da 00 14 00 21
+[12:36:05.816] PACKET sensors: status=2816, uptime=3241, accel=[-0.035624, 0.206912, -0.998936], gyro=[-2.66, 1.4, 2.31], crc=None
+[12:36:05.923] RX  01
+[12:36:05.928] RX  0b 00 00 00 0c a9 ff b5 01 a9 f8 08 ff da 00 13 00 20
+[12:36:05.928] PACKET sensors: status=2816, uptime=3241, accel=[-0.0366, 0.2074, -0.99552], gyro=[-2.66, 1.33, 2.24], crc=None
+[12:36:06.047] RX  01
+[12:36:06.051] RX  0f 00 00 00 0c a9 ff b2 01 a9 f8 08 ff da 00 13 00 22
+[12:36:06.052] PACKET sensors: status=3840, uptime=3241, accel=[-0.038064, 0.2074, -0.99552], gyro=[-2.66, 1.33, 2.38], crc=None
+[12:36:06.105] RX  01
+[12:36:06.106] RX  0f 00 00 00 0c aa ff b4 01 a8 f8 06 ff d8 00 16 00 22
+[12:36:06.112] PACKET sensors: status=3840, uptime=3242, accel=[-0.037088, 0.206912, -0.996496], gyro=[-2.8, 1.54, 2.38], crc=None
+[12:36:06.218] RX  01
+[12:36:06.221] RX  0f 00 00 00 0c aa ff b4 01 a8 f8 04 ff d9 00 13 00 21 02 10 00 00 00 0c aa 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 03 f6 33
+[12:36:06.222] PACKET sensors: status=3840, uptime=3242, accel=[-0.037088, 0.206912, -0.997472], gyro=[-2.73, 1.33, 2.31], crc=None
+[12:36:06.223] PACKET state: status=4096, uptime=3242, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128334326, witness_battery_voltage=51, crc=None
+[12:36:06.224] RX  ff 00 00 00 00 0c aa
+[12:36:06.224] PACKET heartbeat: status=0, uptime=3242
+[12:36:06.335] RX  01
+[12:36:06.340] RX  0f 00 00 00 0c aa ff b4 01 a8 f8 06 ff da 00 13 00 21
+[12:36:06.342] PACKET sensors: status=3840, uptime=3242, accel=[-0.037088, 0.206912, -0.996496], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:06.401] RX  01
+[12:36:06.403] RX  0b 00 00 00 0c aa ff b4 01 a8 f8 0c ff dc 00 10 00 20
+[12:36:06.405] PACKET sensors: status=2816, uptime=3242, accel=[-0.037088, 0.206912, -0.993568], gyro=[-2.52, 1.12, 2.24], crc=None
+[12:36:06.511] RX  01
+[12:36:06.512] RX  0b 00 00 00 0c aa ff b5 01 a9 f8 08 ff da 00 12 00 22
+[12:36:06.513] PACKET sensors: status=2816, uptime=3242, accel=[-0.0366, 0.2074, -0.99552], gyro=[-2.66, 1.26, 2.38], crc=None
+[12:36:06.626] RX  01
+[12:36:06.627] RX  0b 00 00 00 0c aa ff b6 01 a8 f8 07 ff da 00 13 00 21
+[12:36:06.628] PACKET sensors: status=2816, uptime=3242, accel=[-0.036112, 0.206912, -0.996008], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:06.729] RX  01
+[12:36:06.730] RX  0f 00 00 00 0c aa ff b4 01 a8 f8 0a ff db 00 0f 00 21
+[12:36:06.732] PACKET sensors: status=3840, uptime=3242, accel=[-0.037088, 0.206912, -0.994544], gyro=[-2.59, 1.05, 2.31], crc=None
+[12:36:06.843] RX  01
+[12:36:06.844] RX  0f 00 00 00 0c aa ff b7 01 aa f8 07 ff dc 00 10 00 22
+[12:36:06.845] PACKET sensors: status=3840, uptime=3242, accel=[-0.035624, 0.207888, -0.996008], gyro=[-2.52, 1.12, 2.38], crc=None
+[12:36:06.960] RX  01
+[12:36:06.965] RX  0f 00 00 00 0c aa ff b4 01 a9 f8 09 ff d9 00 14 00 22
+[12:36:06.967] PACKET sensors: status=3840, uptime=3242, accel=[-0.037088, 0.2074, -0.995032], gyro=[-2.73, 1.4, 2.38], crc=None
+[12:36:07.019] RX  01
+[12:36:07.022] RX  0f 00 00 00 0c aa ff b3 01 a9 f8 0b ff d7 00 1a 00 22
+[12:36:07.024] PACKET sensors: status=3840, uptime=3242, accel=[-0.037576, 0.2074, -0.994056], gyro=[-2.87, 1.82, 2.38], crc=None
+[12:36:07.137] RX  01
+[12:36:07.139] RX  0b 00 00 00 0c ab ff b6 01 aa f8 04 ff de 00 0d 00 21
+[12:36:07.144] PACKET sensors: status=2816, uptime=3243, accel=[-0.036112, 0.207888, -0.997472], gyro=[-2.38, 0.91, 2.31], crc=None
+[12:36:07.252] RX  01
+[12:36:07.253] RX  0b 00 00 00 0c ab ff b5 01 aa f8 07 ff db 00 13 00 22 02 10 00 00 00 0c ab 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 5a 8b 33 ff 01 00 00 00 0c ab
+[12:36:07.254] PACKET sensors: status=2816, uptime=3243, accel=[-0.0366, 0.207888, -0.996008], gyro=[-2.59, 1.33, 2.38], crc=None
+[12:36:07.254] PACKET state: status=4096, uptime=3243, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128356491, witness_battery_voltage=51, crc=None
+[12:36:07.255] PACKET heartbeat: status=256, uptime=3243
+[12:36:07.310] RX  01
+[12:36:07.311] RX  0b 00 00 00 0c ab ff b5 01 a9 f8 09 ff da 00 13 00 21
+[12:36:07.312] PACKET sensors: status=2816, uptime=3243, accel=[-0.0366, 0.2074, -0.995032], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:07.423] RX  01
+[12:36:07.424] RX  0f 00 00 00 0c ab ff b4 01 a8 f8 09 ff db 00 10 00 21
+[12:36:07.425] PACKET sensors: status=3840, uptime=3243, accel=[-0.037088, 0.206912, -0.995032], gyro=[-2.59, 1.12, 2.31], crc=None
+[12:36:07.532] RX  01
+[12:36:07.533] RX  0f 00 00 00 0c ab ff b2 01 a6 f8 08 ff d9 00 17 00 22
+[12:36:07.537] PACKET sensors: status=3840, uptime=3243, accel=[-0.038064, 0.205936, -0.99552], gyro=[-2.73, 1.61, 2.38], crc=None
+[12:36:07.650] RX  01
+[12:36:07.651] RX  0f 00 00 00 0c ab ff b3 01 a9 f8 08 ff da 00 12 00 21
+[12:36:07.653] PACKET sensors: status=3840, uptime=3243, accel=[-0.037576, 0.2074, -0.99552], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:36:07.710] RX  01
+[12:36:07.711] RX  0f 00 00 00 0c ab ff b4 01 a8 f8 12 ff d7 00 16 00 21
+[12:36:07.713] PACKET sensors: status=3840, uptime=3243, accel=[-0.037088, 0.206912, -0.99064], gyro=[-2.87, 1.54, 2.31], crc=None
+[12:36:07.898] RX  01
+[12:36:07.899] RX  0b 00 00 00 0c ab ff b5 01 a8 f8 0a ff e0 00 07 00 20
+[12:36:07.900] PACKET sensors: status=2816, uptime=3243, accel=[-0.0366, 0.206912, -0.994544], gyro=[-2.24, 0.49, 2.24], crc=None
+[12:36:07.955] RX  01
+[12:36:07.957] RX  0b 00 00 00 0c ab ff b4 01 a7 f8 07 ff d7 00 16 00 22
+[12:36:07.958] PACKET sensors: status=2816, uptime=3243, accel=[-0.037088, 0.206424, -0.996008], gyro=[-2.87, 1.54, 2.38], crc=None
+[12:36:08.009] RX  01
+[12:36:08.010] RX  0b 00 00 00 0c ab ff b5 01 a8 f8 07 ff d7 00 17 00 21
+[12:36:08.011] PACKET sensors: status=2816, uptime=3243, accel=[-0.0366, 0.206912, -0.996008], gyro=[-2.87, 1.61, 2.31], crc=None
+[12:36:08.133] RX  01
+[12:36:08.134] RX  0f 00 00 00 0c ac ff b4 01 a8 f8 07 ff d9 00 11 00 21
+[12:36:08.136] PACKET sensors: status=3840, uptime=3244, accel=[-0.037088, 0.206912, -0.996008], gyro=[-2.73, 1.19, 2.31], crc=None
+[12:36:08.248] RX  01
+[12:36:08.249] RX  0f 00 00 00 0c ac ff b5 01 a9 f8 07 ff db 00 11 00 22 02 10 00 00 00 0c ac 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 d8 ab 33 ff 00 00 00 00 0c ac
+[12:36:08.250] PACKET sensors: status=3840, uptime=3244, accel=[-0.0366, 0.2074, -0.996008], gyro=[-2.59, 1.19, 2.38], crc=None
+[12:36:08.251] PACKET state: status=4096, uptime=3244, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128323243, witness_battery_voltage=51, crc=None
+[12:36:08.252] PACKET heartbeat: status=0, uptime=3244
+[12:36:08.314] RX  01
+[12:36:08.316] RX  0f 00 00 00 0c ac ff b3 01 a9 f8 08 ff da 00 12 00 21
+[12:36:08.317] PACKET sensors: status=3840, uptime=3244, accel=[-0.037576, 0.2074, -0.99552], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:36:08.422] RX  01
+[12:36:08.424] RX  0f 00 00 00 0c ac ff b3 01 a6 f8 09 ff d9 00 13 00 21
+[12:36:08.425] PACKET sensors: status=3840, uptime=3244, accel=[-0.037576, 0.205936, -0.995032], gyro=[-2.73, 1.33, 2.31], crc=None
+[12:36:08.531] RX  01
+[12:36:08.532] RX  0b 00 00 00 0c ac ff b5 01 a8 f8 08 ff db 00 11 00 21
+[12:36:08.536] PACKET sensors: status=2816, uptime=3244, accel=[-0.0366, 0.206912, -0.99552], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:36:08.641] RX  01
+[12:36:08.645] RX  0b 00 00 00 0c ac ff b5 01 a9 f8 08 ff db 00 10 00 21
+[12:36:08.659] PACKET sensors: status=2816, uptime=3244, accel=[-0.0366, 0.2074, -0.99552], gyro=[-2.59, 1.12, 2.31], crc=None
+[12:36:08.731] RX  01
+[12:36:08.731] RX  0b 00 00 00 0c ac ff b6 01 a8 f8 08 ff da 00 12 00 20
+[12:36:08.732] PACKET sensors: status=2816, uptime=3244, accel=[-0.036112, 0.206912, -0.99552], gyro=[-2.66, 1.26, 2.24], crc=None
+[12:36:08.856] RX  01
+[12:36:08.864] RX  0f 00 00 00 0c ac ff b4 01 a7 f8 0a ff da 00 13 00 21
+[12:36:08.874] PACKET sensors: status=3840, uptime=3244, accel=[-0.037088, 0.206424, -0.994544], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:08.937] RX  01
+[12:36:08.938] RX  0f 00 00 00 0c ac ff b2 01 a7 f8 08 ff da 00 15 00 23
+[12:36:08.940] PACKET sensors: status=3840, uptime=3244, accel=[-0.038064, 0.206424, -0.99552], gyro=[-2.66, 1.47, 2.45], crc=None
+[12:36:09.052] RX  01
+[12:36:09.054] RX  0f 00 00 00 0c ac ff b5 01 ab f8 05 ff db 00 10 00 21
+[12:36:09.059] PACKET sensors: status=3840, uptime=3244, accel=[-0.0366, 0.208376, -0.996984], gyro=[-2.59, 1.12, 2.31], crc=None
+[12:36:09.113] RX  01
+[12:36:09.116] RX  0f 00 00 00 0c ad ff b7 01 ab f8 04 ff da 00 14 00 21
+[12:36:09.118] PACKET sensors: status=3840, uptime=3245, accel=[-0.035624, 0.208376, -0.997472], gyro=[-2.66, 1.4, 2.31], crc=None
+[12:36:09.243] RX  01
+[12:36:09.244] RX  0b 00 00 00 0c ad ff b3 01 a9 f8 08 ff dd 00 0d 00 21 02 10 00 00 00 0c ad 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 d8 ab 33 ff 01 00 00 00 0c ad
+[12:36:09.245] PACKET sensors: status=2816, uptime=3245, accel=[-0.037576, 0.2074, -0.99552], gyro=[-2.45, 0.91, 2.31], crc=None
+[12:36:09.246] PACKET state: status=4096, uptime=3245, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128323243, witness_battery_voltage=51, crc=None
+[12:36:09.247] PACKET heartbeat: status=256, uptime=3245
+[12:36:09.355] RX  01
+[12:36:09.357] RX  0b 00 00 00 0c ad ff b3 01 a7 f8 08 ff db 00 10 00 21
+[12:36:09.358] PACKET sensors: status=2816, uptime=3245, accel=[-0.037576, 0.206424, -0.99552], gyro=[-2.59, 1.12, 2.31], crc=None
+[12:36:09.414] RX  01
+[12:36:09.418] RX  0b 00 00 00 0c ad ff b5 01 a8 f8 05 ff dd 00 0e 00 20
+[12:36:09.420] PACKET sensors: status=2816, uptime=3245, accel=[-0.0366, 0.206912, -0.996984], gyro=[-2.45, 0.98, 2.24], crc=None
+[12:36:09.541] RX  01
+[12:36:09.541] RX  0f 00 00 00 0c ad ff b5 01 aa f8 08 ff d9 00 14 00 21
+[12:36:09.542] PACKET sensors: status=3840, uptime=3245, accel=[-0.0366, 0.207888, -0.99552], gyro=[-2.73, 1.4, 2.31], crc=None
+[12:36:09.656] RX  01
+[12:36:09.659] RX  0f 00 00 00 0c ad ff b4 01 a6 f8 11 ff de 00 0a 00 21
+[12:36:09.659] PACKET sensors: status=3840, uptime=3245, accel=[-0.037088, 0.205936, -0.991128], gyro=[-2.38, 0.7, 2.31], crc=None
+[12:36:09.713] RX  01
+[12:36:09.715] RX  0f 00 00 00 0c ad ff b2 01 aa f8 05 ff d8 00 17 00 21
+[12:36:09.716] PACKET sensors: status=3840, uptime=3245, accel=[-0.038064, 0.207888, -0.996984], gyro=[-2.8, 1.61, 2.31], crc=None
+[12:36:09.828] RX  01
+[12:36:09.829] RX  0f 00 00 00 0c ad ff b9 01 a9 f8 05 ff d9 00 14 00 22
+[12:36:09.830] PACKET sensors: status=3840, uptime=3245, accel=[-0.034648, 0.2074, -0.996984], gyro=[-2.73, 1.4, 2.38], crc=None
+[12:36:09.943] RX  01
+[12:36:09.947] RX  0b 00 00 00 0c ad ff b8 01 aa f8 06 ff dd 00 0d 00 20
+[12:36:09.948] PACKET sensors: status=2816, uptime=3245, accel=[-0.035136, 0.207888, -0.996496], gyro=[-2.45, 0.91, 2.24], crc=None
+[12:36:10.003] RX  01
+[12:36:10.005] RX  0b 00 00 00 0c ad ff b4 01 a7 f8 09 ff dc 00 0d 00 21
+[12:36:10.006] PACKET sensors: status=2816, uptime=3245, accel=[-0.037088, 0.206424, -0.995032], gyro=[-2.52, 0.91, 2.31], crc=None
+[12:36:10.118] RX  01
+[12:36:10.119] RX  0b 00 00 00 0c ae ff b1 01 a4 f8 08 ff de 00 09 00 20
+[12:36:10.120] PACKET sensors: status=2816, uptime=3246, accel=[-0.038552, 0.20496, -0.99552], gyro=[-2.38, 0.63, 2.24], crc=None
+[12:36:10.234] RX  01
+[12:36:10.240] RX  0f 00 00 00 0c ae ff b6 01 a8 f8 00 ff d8 00 18 00 22 02 10 00 00 00 0c ae 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 03 f6 33 ff 00 00 00 00 0c ae
+[12:36:10.242] PACKET sensors: status=3840, uptime=3246, accel=[-0.036112, 0.206912, -0.999424], gyro=[-2.8, 1.68, 2.38], crc=None
+[12:36:10.245] PACKET state: status=4096, uptime=3246, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128334326, witness_battery_voltage=51, crc=None
+[12:36:10.245] PACKET heartbeat: status=0, uptime=3246
+[12:36:10.356] RX  01
+[12:36:10.359] RX  0f 00 00 00 0c ae ff b6 01 aa f8 08 ff d9 00 16 00 23
+[12:36:10.360] PACKET sensors: status=3840, uptime=3246, accel=[-0.036112, 0.207888, -0.99552], gyro=[-2.73, 1.54, 2.45], crc=None
+[12:36:10.420] RX  01
+[12:36:10.421] RX  0f 00 00 00 0c ae ff b5 01 ac f8 09 ff d5 00 1e 00 24
+[12:36:10.422] PACKET sensors: status=3840, uptime=3246, accel=[-0.0366, 0.208864, -0.995032], gyro=[-3.01, 2.1, 2.52], crc=None
+[12:36:10.530] RX  01
+[12:36:10.531] RX  0f 00 00 00 0c ae ff ad 01 a5 f8 11 ff d9 00 16 00 23
+[12:36:10.532] PACKET sensors: status=3840, uptime=3246, accel=[-0.040504, 0.205448, -0.991128], gyro=[-2.73, 1.54, 2.45], crc=None
+[12:36:10.647] RX  01
+[12:36:10.648] RX  0b 00 00 00 0c ae ff b6 01 ab f8 08 ff cb 00 32 00 26
+[12:36:10.649] PACKET sensors: status=2816, uptime=3246, accel=[-0.036112, 0.208376, -0.99552], gyro=[-3.71, 3.5, 2.66], crc=None
+[12:36:10.711] RX  01
+[12:36:10.713] RX  0b 00 00 00 0c ae ff b7 01 ab f8 07 ff dd 00 0b 00 21
+[12:36:10.714] PACKET sensors: status=2816, uptime=3246, accel=[-0.035624, 0.208376, -0.996008], gyro=[-2.45, 0.77, 2.31], crc=None
+[12:36:10.829] RX  01
+[12:36:10.829] RX  0b 00 00 00 0c ae ff b4 01 ac f8 03 ff e4 ff ff 00 1e
+[12:36:10.830] PACKET sensors: status=2816, uptime=3246, accel=[-0.037088, 0.208864, -0.99796], gyro=[-1.96, -0.07, 2.1], crc=None
+[12:36:10.942] RX  01
+[12:36:10.943] RX  0f 00 00 00 0c ae ff b5 01 a8 f8 10 ff d8 00 17 00 22
+[12:36:10.944] PACKET sensors: status=3840, uptime=3246, accel=[-0.0366, 0.206912, -0.991616], gyro=[-2.8, 1.61, 2.38], crc=None
+[12:36:11.048] RX  01
+[12:36:11.049] RX  0f 00 00 00 0c ae ff b2 01 ab f8 0b ff d9 00 14 00 22
+[12:36:11.050] PACKET sensors: status=3840, uptime=3246, accel=[-0.038064, 0.208376, -0.994056], gyro=[-2.73, 1.4, 2.38], crc=None
+[12:36:11.105] RX  01
+[12:36:11.105] RX  0f 00 00 00 0c af ff b1 01 a5 f8 09 ff d9 00 16 00 21
+[12:36:11.106] PACKET sensors: status=3840, uptime=3247, accel=[-0.038552, 0.205448, -0.995032], gyro=[-2.73, 1.54, 2.31], crc=None
+[12:36:11.218] RX  01
+[12:36:11.223] RX  0f 00 00 00 0c af ff b8 01 ab f8 04 ff d9 00 14 00 22 02 10 00 00 00 0c af 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 d8 ab 33 ff 01 00 00 00 0c af
+[12:36:11.227] PACKET sensors: status=3840, uptime=3247, accel=[-0.035136, 0.208376, -0.997472], gyro=[-2.73, 1.4, 2.38], crc=None
+[12:36:11.231] PACKET state: status=4096, uptime=3247, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128323243, witness_battery_voltage=51, crc=None
+[12:36:11.232] PACKET heartbeat: status=256, uptime=3247
+[12:36:11.348] RX  01
+[12:36:11.354] RX  0b 00 00 00 0c af ff b5 01 a8 f8 05 ff de 00 0d 00 20
+[12:36:11.356] PACKET sensors: status=2816, uptime=3247, accel=[-0.0366, 0.206912, -0.996984], gyro=[-2.38, 0.91, 2.24], crc=None
+[12:36:11.409] RX  01
+[12:36:11.410] RX  0b 00 00 00 0c af ff b2 01 a7 f8 0e ff d3 00 21 00 24
+[12:36:11.411] PACKET sensors: status=2816, uptime=3247, accel=[-0.038064, 0.206424, -0.992592], gyro=[-3.15, 2.31, 2.52], crc=None
+[12:36:11.527] RX  01
+[12:36:11.528] RX  0b 00 00 00 0c af ff b8 01 aa f8 08 ff e5 ff ff 00 1f
+[12:36:11.528] PACKET sensors: status=2816, uptime=3247, accel=[-0.035136, 0.207888, -0.99552], gyro=[-1.89, -0.07, 2.17], crc=None
+[12:36:11.642] RX  01
+[12:36:11.643] RX  0f 00 00 00 0c af ff b7 01 ad f8 09 ff d8 00 17 00 23
+[12:36:11.644] PACKET sensors: status=3840, uptime=3247, accel=[-0.035624, 0.209352, -0.995032], gyro=[-2.8, 1.61, 2.45], crc=None
+[12:36:11.755] RX  01
+[12:36:11.757] RX  0f 00 00 00 0c af ff af 01 a7 f8 0f ff d9 00 16 00 22
+[12:36:11.758] PACKET sensors: status=3840, uptime=3247, accel=[-0.039528, 0.206424, -0.992104], gyro=[-2.73, 1.54, 2.38], crc=None
+[12:36:11.813] RX  01
+[12:36:11.813] RX  0f 00 00 00 0c af ff b9 01 ab f7 fc ff d9 00 15 00 21
+[12:36:11.814] PACKET sensors: status=3840, uptime=3247, accel=[-0.034648, 0.208376, -1.001376], gyro=[-2.73, 1.47, 2.31], crc=None
+[12:36:11.920] RX  01
+[12:36:11.921] RX  0f 00 00 00 0c af ff b2 01 a8 f8 0e ff dd 00 0c 00 21
+[12:36:11.922] PACKET sensors: status=3840, uptime=3247, accel=[-0.038064, 0.206912, -0.992592], gyro=[-2.45, 0.84, 2.31], crc=None
+[12:36:12.030] RX  01
+[12:36:12.030] RX  0b 00 00 00 0c af ff af 01 a7 f8 04 ff de 00 08 00 1f
+[12:36:12.031] PACKET sensors: status=2816, uptime=3247, accel=[-0.039528, 0.206424, -0.997472], gyro=[-2.38, 0.56, 2.17], crc=None
+[12:36:12.141] RX  01
+[12:36:12.141] RX  0b 00 00 00 0c b0 ff af 01 a6 f8 0f ff d9 00 15 00 21
+[12:36:12.142] PACKET sensors: status=2816, uptime=3248, accel=[-0.039528, 0.205936, -0.992104], gyro=[-2.73, 1.47, 2.31], crc=None
+[12:36:12.249] RX  01
+[12:36:12.250] RX  0b 00 00 00 0c b0 ff a0 01 a5 f8 02 ff d3 00 2b 00 26 02 10 00 00 00 0c b0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 d8 ab 33 ff 00 00 00 00 0c b0
+[12:36:12.251] PACKET sensors: status=2816, uptime=3248, accel=[-0.046848, 0.205448, -0.998448], gyro=[-3.15, 3.01, 2.66], crc=None
+[12:36:12.252] PACKET state: status=4096, uptime=3248, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128323243, witness_battery_voltage=51, crc=None
+[12:36:12.253] PACKET heartbeat: status=0, uptime=3248
+[12:36:12.303] RX  01
+[12:36:12.304] RX  0f 00 00 00 0c b0 ff bb 01 a8 f7 fc ff da 00 10 00 20
+[12:36:12.305] PACKET sensors: status=3840, uptime=3248, accel=[-0.033672, 0.206912, -1.001376], gyro=[-2.66, 1.12, 2.24], crc=None
+[12:36:12.411] RX  01
+[12:36:12.412] RX  0f 00 00 00 0c b0 ff b7 01 aa f8 07 ff e2 00 02 00 20
+[12:36:12.414] PACKET sensors: status=3840, uptime=3248, accel=[-0.035624, 0.207888, -0.996008], gyro=[-2.1, 0.14, 2.24], crc=None
+[12:36:12.526] RX  01
+[12:36:12.528] RX  0f 00 00 00 0c b0 ff b2 01 a7 f8 08 ff dc 00 0f 00 21
+[12:36:12.529] PACKET sensors: status=3840, uptime=3248, accel=[-0.038064, 0.206424, -0.99552], gyro=[-2.52, 1.05, 2.31], crc=None
+[12:36:12.640] RX  01
+[12:36:12.644] RX  0f 00 00 00 0c b0 ff b6 01 a8 f7 fd ff da 00 18 00 22
+[12:36:12.648] PACKET sensors: status=3840, uptime=3248, accel=[-0.036112, 0.206912, -1.000888], gyro=[-2.66, 1.68, 2.38], crc=None
+[12:36:12.703] RX  01
+[12:36:12.710] RX  0b 00 00 00 0c b0 ff b4 01 aa f8 09 ff d8 00 18 00 22
+[12:36:12.724] PACKET sensors: status=2816, uptime=3248, accel=[-0.037088, 0.207888, -0.995032], gyro=[-2.8, 1.68, 2.38], crc=None
+[12:36:12.858] RX  01
+[12:36:12.859] RX  0b 00 00 00 0c b0 ff b5 01 aa f8 09 ff db 00 12 00 21
+[12:36:12.860] PACKET sensors: status=2816, uptime=3248, accel=[-0.0366, 0.207888, -0.995032], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:36:12.918] RX  01
+[12:36:12.919] RX  0b 00 00 00 0c b0 ff ad 01 a8 f8 17 ff d7 00 13 00 20
+[12:36:12.921] PACKET sensors: status=2816, uptime=3248, accel=[-0.040504, 0.206912, -0.9882], gyro=[-2.87, 1.33, 2.24], crc=None
+[12:36:13.039] RX  01
+[12:36:13.040] RX  0f 00 00 00 0c b0 ff b1 01 a8 f8 0c ff e0 00 08 00 21
+[12:36:13.041] PACKET sensors: status=3840, uptime=3248, accel=[-0.038552, 0.206912, -0.993568], gyro=[-2.24, 0.56, 2.31], crc=None
+[12:36:13.153] RX  01
+[12:36:13.156] RX  0f 00 00 00 0c b1 ff b5 01 a9 f8 05 ff d6 00 18 00 23
+[12:36:13.158] PACKET sensors: status=3840, uptime=3249, accel=[-0.0366, 0.2074, -0.996984], gyro=[-2.94, 1.68, 2.45], crc=None
+[12:36:13.218] RX  01
+[12:36:13.220] RX  0f 00 00 00 0c b1 ff b4 01 aa f8 09 ff d9 00 14 00 21 02 10 00 00 00 0c b1 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 03 f6 33 ff 01 00 00 00 0c b1
+[12:36:13.222] PACKET sensors: status=3840, uptime=3249, accel=[-0.037088, 0.207888, -0.995032], gyro=[-2.73, 1.4, 2.31], crc=None
+[12:36:13.223] PACKET state: status=4096, uptime=3249, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128334326, witness_battery_voltage=51, crc=None
+[12:36:13.224] PACKET heartbeat: status=256, uptime=3249
+[12:36:13.340] RX  01
+[12:36:13.344] RX  0f 00 00 00 0c b1 ff b2 01 aa f8 06 ff db 00 10 00 20
+[12:36:13.345] PACKET sensors: status=3840, uptime=3249, accel=[-0.038064, 0.207888, -0.996496], gyro=[-2.59, 1.12, 2.24], crc=None
+[12:36:13.457] RX  01
+[12:36:13.457] RX  0b 00 00 00 0c b1 ff b4 01 a8 f8 0b ff d6 00 19 00 23
+[12:36:13.459] PACKET sensors: status=2816, uptime=3249, accel=[-0.037088, 0.206912, -0.994056], gyro=[-2.94, 1.75, 2.45], crc=None
+[12:36:13.513] RX  01
+[12:36:13.514] RX  0b 00 00 00 0c b1 ff a9 01 a1 f8 03 ff de 00 0c 00 21
+[12:36:13.515] PACKET sensors: status=2816, uptime=3249, accel=[-0.042456, 0.203496, -0.99796], gyro=[-2.38, 0.84, 2.31], crc=None
+[12:36:13.618] RX  01
+[12:36:13.625] RX  0b 00 00 00 0c b1 ff b6 01 a9 f8 06 ff d3 00 1e 00 22
+[12:36:13.627] PACKET sensors: status=2816, uptime=3249, accel=[-0.036112, 0.2074, -0.996496], gyro=[-3.15, 2.1, 2.38], crc=None
+[12:36:13.745] RX  01
+[12:36:13.752] RX  0f 00 00 00 0c b1 ff b1 01 a8 f8 0f ff d6 00 1b 00 23
+[12:36:13.759] PACKET sensors: status=3840, uptime=3249, accel=[-0.038552, 0.206912, -0.992104], gyro=[-2.94, 1.89, 2.45], crc=None
+[12:36:13.826] RX  01
+[12:36:13.845] RX  0f 00 00 00 0c b1 ff b4 01 a8 f8 06 ff de 00 0b 00 20
+[12:36:13.856] PACKET sensors: status=3840, uptime=3249, accel=[-0.037088, 0.206912, -0.996496], gyro=[-2.38, 0.77, 2.24], crc=None
+[12:36:13.912] RX  01
+[12:36:13.912] RX  0f 00 00 00 0c b1 ff b7 01 ab f8 00 ff dc 00 0d 00 20
+[12:36:13.913] PACKET sensors: status=3840, uptime=3249, accel=[-0.035624, 0.208376, -0.999424], gyro=[-2.52, 0.91, 2.24], crc=None
+[12:36:14.030] RX  01
+[12:36:14.031] RX  0f 00 00 00 0c b1 ff af 01 a3 f8 11 ff dd 00 0b 00 1f
+[12:36:14.032] PACKET sensors: status=3840, uptime=3249, accel=[-0.039528, 0.204472, -0.991128], gyro=[-2.45, 0.77, 2.17], crc=None
+[12:36:14.153] RX  01
+[12:36:14.154] RX  0b 00 00 00 0c b2 ff ae 01 a2 f8 1d ff e0 00 01 00 1e
+[12:36:14.155] PACKET sensors: status=2816, uptime=3250, accel=[-0.040016, 0.203984, -0.985272], gyro=[-2.24, 0.07, 2.1], crc=None
+[12:36:14.214] RX  01
+[12:36:14.216] RX  0b 00 00 00 0c b2 ff b2 01 a5 f8 0c ff d5 00 1d 00 23 02 10 00 00 00 0c b2 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 19 9b 33
+[12:36:14.217] PACKET sensors: status=2816, uptime=3250, accel=[-0.038064, 0.205448, -0.993568], gyro=[-3.01, 2.03, 2.45], crc=None
+[12:36:14.218] PACKET state: status=4096, uptime=3250, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128339867, witness_battery_voltage=51, crc=None
+[12:36:14.218] RX  ff 00 00 00 00 0c b2
+[12:36:14.219] PACKET heartbeat: status=0, uptime=3250
+[12:36:14.327] RX  01
+[12:36:14.328] RX  0b 00 00 00 0c b2 ff b6 01 a7 f8 08 ff d7 00 19 00 22
+[12:36:14.329] PACKET sensors: status=2816, uptime=3250, accel=[-0.036112, 0.206424, -0.99552], gyro=[-2.87, 1.75, 2.38], crc=None
+[12:36:14.448] RX  01
+[12:36:14.449] RX  0f 00 00 00 0c b2 ff b4 01 aa f8 08 ff d6 00 19 00 21
+[12:36:14.450] PACKET sensors: status=3840, uptime=3250, accel=[-0.037088, 0.207888, -0.99552], gyro=[-2.94, 1.75, 2.31], crc=None
+[12:36:14.506] RX  01
+[12:36:14.506] RX  0f 00 00 00 0c b2 ff b6 01 aa f8 04 ff de 00 0a 00 21
+[12:36:14.507] PACKET sensors: status=3840, uptime=3250, accel=[-0.036112, 0.207888, -0.997472], gyro=[-2.38, 0.7, 2.31], crc=None
+[12:36:14.610] RX  01
+[12:36:14.611] RX  0f 00 00 00 0c b2 ff b2 01 a6 f8 0a ff db 00 10 00 21
+[12:36:14.612] PACKET sensors: status=3840, uptime=3250, accel=[-0.038064, 0.205936, -0.994544], gyro=[-2.59, 1.12, 2.31], crc=None
+[12:36:14.721] RX  01
+[12:36:14.724] RX  0f 00 00 00 0c b2 ff b4 01 a5 f8 00 ff da 00 13 00 22
+[12:36:14.726] PACKET sensors: status=3840, uptime=3250, accel=[-0.037088, 0.205448, -0.999424], gyro=[-2.66, 1.33, 2.38], crc=None
+[12:36:14.847] RX  01
+[12:36:14.849] RX  0b 00 00 00 0c b2 ff b2 01 a9 f8 08 ff da 00 12 00 21
+[12:36:14.850] PACKET sensors: status=2816, uptime=3250, accel=[-0.038064, 0.2074, -0.99552], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:36:14.905] RX  01
+[12:36:14.906] RX  0b 00 00 00 0c b2 ff b5 01 ae f8 08 ff d3 00 23 00 25
+[12:36:14.907] PACKET sensors: status=2816, uptime=3250, accel=[-0.0366, 0.20984, -0.99552], gyro=[-3.15, 2.45, 2.59], crc=None
+[12:36:15.020] RX  01
+[12:36:15.022] RX  0b 00 00 00 0c b2 ff b3 01 a7 f8 0a ff d5 00 1c 00 23
+[12:36:15.024] PACKET sensors: status=2816, uptime=3250, accel=[-0.037576, 0.206424, -0.994544], gyro=[-3.01, 1.96, 2.45], crc=None
+[12:36:15.140] RX  01
+[12:36:15.141] RX  0f 00 00 00 0c b3 ff b6 01 a6 f8 0c ff dc 00 10 00 22
+[12:36:15.143] PACKET sensors: status=3840, uptime=3251, accel=[-0.036112, 0.205936, -0.993568], gyro=[-2.52, 1.12, 2.38], crc=None
+[12:36:15.256] RX  01
+[12:36:15.257] RX  0f 00 00 00 0c b3 ff b4 01 ad f8 06 ff d6 00 1d 00 22
+[12:36:15.258] PACKET sensors: status=3840, uptime=3251, accel=[-0.037088, 0.209352, -0.996496], gyro=[-2.94, 2.03, 2.38], crc=None
+[12:36:15.259] RX  02 10 00 00 00 0c b3 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 d8 ab 33 ff 01 00 00 00 0c b3
+[12:36:15.259] PACKET state: status=4096, uptime=3251, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128323243, witness_battery_voltage=51, crc=None
+[12:36:15.260] PACKET heartbeat: status=256, uptime=3251
+[12:36:15.318] RX  01
+[12:36:15.320] RX  0f 00 00 00 0c b3 ff bb 01 ad f8 0e ff cc 00 33 00 27
+[12:36:15.321] PACKET sensors: status=3840, uptime=3251, accel=[-0.033672, 0.209352, -0.992592], gyro=[-3.64, 3.57, 2.73], crc=None
+[12:36:15.423] RX  01
+[12:36:15.423] RX  0f 00 00 00 0c b3 ff b7 01 ae f8 0c 00 02 ff bf 00 13
+[12:36:15.425] PACKET sensors: status=3840, uptime=3251, accel=[-0.035624, 0.20984, -0.993568], gyro=[0.14, -4.55, 1.33], crc=None
+[12:36:15.539] RX  01
+[12:36:15.541] RX  0b 00 00 00 0c b3 ff b6 01 a7 f8 0b ff f6 ff d7 00 1a
+[12:36:15.542] PACKET sensors: status=2816, uptime=3251, accel=[-0.036112, 0.206424, -0.994056], gyro=[-0.7, -2.87, 1.82], crc=None
+[12:36:15.644] RX  01
+[12:36:15.649] RX  0b 00 00 00 0c b3 ff c6 01 b3 f8 01 ff d2 00 24 00 25
+[12:36:15.652] PACKET sensors: status=2816, uptime=3251, accel=[-0.028304, 0.21228, -0.998936], gyro=[-3.22, 2.52, 2.59], crc=None
+[12:36:15.703] RX  01
+[12:36:15.703] RX  0b 00 00 00 0c b3 ff bf 01 8a f8 2f ff f2 ff eb 00 20
+[12:36:15.704] PACKET sensors: status=2816, uptime=3251, accel=[-0.03172, 0.192272, -0.976488], gyro=[-0.98, -1.47, 2.24], crc=None
+[12:36:15.818] RX  01
+[12:36:15.819] RX  0f 00 00 00 0c b3 ff cc 01 b9 f8 16 ff d8 00 14 00 20
+[12:36:15.820] PACKET sensors: status=3840, uptime=3251, accel=[-0.025376, 0.215208, -0.988688], gyro=[-2.8, 1.4, 2.24], crc=None
+[12:36:15.935] RX  01
+[12:36:15.936] RX  0f 00 00 00 0c b3 ff c2 01 af f8 0b ff db 00 15 00 25
+[12:36:15.937] PACKET sensors: status=3840, uptime=3251, accel=[-0.030256, 0.210328, -0.994056], gyro=[-2.59, 1.47, 2.59], crc=None
+[12:36:16.054] RX  01
+[12:36:16.058] RX  0f 00 00 00 0c b3 ff c7 01 ac f8 0a ff da 00 11 00 21
+[12:36:16.059] PACKET sensors: status=3840, uptime=3251, accel=[-0.027816, 0.208864, -0.994544], gyro=[-2.66, 1.19, 2.31], crc=None
+[12:36:16.117] RX  01
+[12:36:16.118] RX  0f 00 00 00 0c b4 ff d0 01 bc f7 f2 ff db 00 13 00 21
+[12:36:16.119] PACKET sensors: status=3840, uptime=3252, accel=[-0.023424, 0.216672, -1.006256], gyro=[-2.59, 1.33, 2.31], crc=None
+[12:36:16.235] RX  01
+[12:36:16.236] RX  0b 00 00 00 0c b4 ff b2 01 a6 f8 20 ff dc 00 05 00 19 02 10 00 00 00 0c b4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 c3 06 33 ff 00 00 00 00 0c b4
+[12:36:16.237] PACKET sensors: status=2816, uptime=3252, accel=[-0.038064, 0.205936, -0.983808], gyro=[-2.52, 0.35, 1.75], crc=None
+[12:36:16.240] PACKET state: status=4096, uptime=3252, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128317702, witness_battery_voltage=51, crc=None
+[12:36:16.241] PACKET heartbeat: status=0, uptime=3252
+[12:36:16.302] RX  01
+[12:36:16.303] RX  0b 00 00 00 0c b4 ff ce 01 b6 f7 ff ff d8 00 15 00 22
+[12:36:16.303] PACKET sensors: status=2816, uptime=3252, accel=[-0.0244, 0.213744, -0.999912], gyro=[-2.8, 1.47, 2.38], crc=None
+[12:36:16.426] RX  01
+[12:36:16.427] RX  0b 00 00 00 0c b4 ff ca 01 b2 f8 04 ff d9 00 17 00 23
+[12:36:16.428] PACKET sensors: status=2816, uptime=3252, accel=[-0.026352, 0.211792, -0.997472], gyro=[-2.73, 1.61, 2.45], crc=None
+[12:36:16.535] RX  01
+[12:36:16.537] RX  0f 00 00 00 0c b4 ff c4 01 b7 f8 07 ff da 00 14 00 22
+[12:36:16.538] PACKET sensors: status=3840, uptime=3252, accel=[-0.02928, 0.214232, -0.996008], gyro=[-2.66, 1.4, 2.38], crc=None
+[12:36:16.652] RX  01
+[12:36:16.656] RX  0f 00 00 00 0c b4 ff cd 01 b0 f7 fd ff dc 00 13 00 23
+[12:36:16.660] PACKET sensors: status=3840, uptime=3252, accel=[-0.024888, 0.210816, -1.000888], gyro=[-2.52, 1.33, 2.45], crc=None
+[12:36:16.723] RX  01
+[12:36:16.724] RX  0f 00 00 00 0c b4 ff cd 01 b5 f8 01 ff dd 00 0e 00 1f
+[12:36:16.725] PACKET sensors: status=3840, uptime=3252, accel=[-0.024888, 0.213256, -0.998936], gyro=[-2.45, 0.98, 2.17], crc=None
+[12:36:16.852] RX  01
+[12:36:16.854] RX  0f 00 00 00 0c b4 ff d2 01 b6 f7 fb ff d9 00 1a 00 24
+[12:36:16.855] PACKET sensors: status=3840, uptime=3252, accel=[-0.022448, 0.213744, -1.001864], gyro=[-2.73, 1.82, 2.52], crc=None
+[12:36:16.910] RX  01
+[12:36:16.911] RX  0b 00 00 00 0c b4 ff c5 01 ad f8 0c ff db 00 12 00 22
+[12:36:16.912] PACKET sensors: status=2816, uptime=3252, accel=[-0.028792, 0.209352, -0.993568], gyro=[-2.59, 1.26, 2.38], crc=None
+[12:36:17.027] RX  01
+[12:36:17.028] RX  0b 00 00 00 0c b4 ff c2 01 b1 f8 0f ff db 00 11 00 21
+[12:36:17.031] PACKET sensors: status=2816, uptime=3252, accel=[-0.030256, 0.211304, -0.992104], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:36:17.144] RX  01
+[12:36:17.147] RX  0b 00 00 00 0c b5 ff c5 01 b0 f8 0d ff da 00 12 00 21
+[12:36:17.149] PACKET sensors: status=2816, uptime=3253, accel=[-0.028792, 0.210816, -0.99308], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:36:17.202] RX  01
+[12:36:17.203] RX  0f 00 00 00 0c b5 ff c5 01 ae f8 09 ff da 00 12 00 21 02 10 00 00 00 0c b5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 c3 06 33 ff 01 00 00 00 0c b5
+[12:36:17.204] PACKET sensors: status=3840, uptime=3253, accel=[-0.028792, 0.20984, -0.995032], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:36:17.205] PACKET state: status=4096, uptime=3253, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128317702, witness_battery_voltage=51, crc=None
+[12:36:17.205] PACKET heartbeat: status=256, uptime=3253
+[12:36:17.314] RX  01
+[12:36:17.316] RX  0f 00 00 00 0c b5 ff ca 01 b3 f8 04 ff da 00 13 00 21
+[12:36:17.317] PACKET sensors: status=3840, uptime=3253, accel=[-0.026352, 0.21228, -0.997472], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:17.431] RX  01
+[12:36:17.432] RX  0f 00 00 00 0c b5 ff c3 01 ae f8 0d ff d9 00 11 00 20
+[12:36:17.433] PACKET sensors: status=3840, uptime=3253, accel=[-0.029768, 0.20984, -0.99308], gyro=[-2.73, 1.19, 2.24], crc=None
+[12:36:17.548] RX  01
+[12:36:17.552] RX  0f 00 00 00 0c b5 ff c9 01 b7 f8 04 ff da 00 13 00 21
+[12:36:17.555] PACKET sensors: status=3840, uptime=3253, accel=[-0.02684, 0.214232, -0.997472], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:17.608] RX  01
+[12:36:17.610] RX  0b 00 00 00 0c b5 ff c7 01 ad f8 08 ff db 00 0f 00 20
+[12:36:17.612] PACKET sensors: status=2816, uptime=3253, accel=[-0.027816, 0.209352, -0.99552], gyro=[-2.59, 1.05, 2.24], crc=None
+[12:36:17.727] RX  01
+[12:36:17.729] RX  0b 00 00 00 0c b5 ff cd 01 b8 f8 05 ff db 00 0c 00 1e
+[12:36:17.730] PACKET sensors: status=2816, uptime=3253, accel=[-0.024888, 0.21472, -0.996984], gyro=[-2.59, 0.84, 2.1], crc=None
+[12:36:17.841] RX  01
+[12:36:17.844] RX  0b 00 00 00 0c b5 ff c9 01 b4 f8 05 ff d9 00 16 00 23
+[12:36:17.845] PACKET sensors: status=2816, uptime=3253, accel=[-0.02684, 0.212768, -0.996984], gyro=[-2.73, 1.54, 2.45], crc=None
+[12:36:17.902] RX  01
+[12:36:17.903] RX  0f 00 00 00 0c b5 ff d5 01 b7 f8 04 ff d9 00 10 00 1f
+[12:36:17.904] PACKET sensors: status=3840, uptime=3253, accel=[-0.020984, 0.214232, -0.997472], gyro=[-2.73, 1.12, 2.17], crc=None
+[12:36:18.031] RX  01
+[12:36:18.031] RX  0f 00 00 00 0c b5 ff ca 01 b4 f8 0b ff db 00 12 00 21
+[12:36:18.033] PACKET sensors: status=3840, uptime=3253, accel=[-0.026352, 0.212768, -0.994056], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:36:18.140] RX  01
+[12:36:18.141] RX  0f 00 00 00 0c b6 ff c4 01 b1 f8 12 ff d8 00 17 00 23
+[12:36:18.142] PACKET sensors: status=3840, uptime=3254, accel=[-0.02928, 0.211304, -0.99064], gyro=[-2.8, 1.61, 2.45], crc=None
+[12:36:18.257] RX  01
+[12:36:18.258] RX  0f 00 00 00 0c b6 ff c7 01 b1 f8 0d ff da 00 10 00 20 02 10 00 00 00 0c b6 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 ee 50 33
+[12:36:18.259] PACKET sensors: status=3840, uptime=3254, accel=[-0.027816, 0.211304, -0.99308], gyro=[-2.66, 1.12, 2.24], crc=None
+[12:36:18.260] PACKET state: status=4096, uptime=3254, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128328784, witness_battery_voltage=51, crc=None
+[12:36:18.261] RX  ff 00 00 00 00 0c b6
+[12:36:18.261] PACKET heartbeat: status=0, uptime=3254
+[12:36:18.318] RX  01
+[12:36:18.319] RX  0b 00 00 00 0c b6 ff c5 01 ac f8 08 ff d9 00 13 00 22
+[12:36:18.320] PACKET sensors: status=2816, uptime=3254, accel=[-0.028792, 0.208864, -0.99552], gyro=[-2.73, 1.33, 2.38], crc=None
+[12:36:18.439] RX  01
+[12:36:18.441] RX  0b 00 00 00 0c b6 ff c7 01 b1 f8 10 ff db 00 0f 00 20
+[12:36:18.442] PACKET sensors: status=2816, uptime=3254, accel=[-0.027816, 0.211304, -0.991616], gyro=[-2.59, 1.05, 2.24], crc=None
+[12:36:18.561] RX  01
+[12:36:18.562] RX  0b 00 00 00 0c b6 ff c2 01 b0 f8 0f ff db 00 10 00 1f
+[12:36:18.568] PACKET sensors: status=2816, uptime=3254, accel=[-0.030256, 0.210816, -0.992104], gyro=[-2.59, 1.12, 2.17], crc=None
+[12:36:18.620] RX  01
+[12:36:18.621] RX  0f 00 00 00 0c b6 ff c7 01 b1 f8 0b ff db 00 11 00 21
+[12:36:18.622] PACKET sensors: status=3840, uptime=3254, accel=[-0.027816, 0.211304, -0.994056], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:36:18.741] RX  01
+[12:36:18.741] RX  0f 00 00 00 0c b6 ff c7 01 b1 f8 09 ff da 00 12 00 21
+[12:36:18.742] PACKET sensors: status=3840, uptime=3254, accel=[-0.027816, 0.211304, -0.995032], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:36:18.860] RX  01
+[12:36:18.861] RX  0f 00 00 00 0c b6 ff c4 01 b0 f8 0c ff da 00 13 00 21
+[12:36:18.862] PACKET sensors: status=3840, uptime=3254, accel=[-0.02928, 0.210816, -0.993568], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:18.920] RX  01
+[12:36:18.920] RX  0f 00 00 00 0c b6 ff c6 01 b0 f8 09 ff db 00 12 00 21
+[12:36:18.921] PACKET sensors: status=3840, uptime=3254, accel=[-0.028304, 0.210816, -0.995032], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:36:19.035] RX  01
+[12:36:19.036] RX  0b 00 00 00 0c b6 ff cc 01 b3 f8 0d ff da 00 14 00 23
+[12:36:19.037] PACKET sensors: status=2816, uptime=3254, accel=[-0.025376, 0.21228, -0.99308], gyro=[-2.66, 1.4, 2.45], crc=None
+[12:36:19.148] RX  01
+[12:36:19.150] RX  0b 00 00 00 0c b7 ff c5 01 ae f8 0d ff d9 00 13 00 23
+[12:36:19.151] PACKET sensors: status=2816, uptime=3255, accel=[-0.028792, 0.20984, -0.99308], gyro=[-2.73, 1.33, 2.45], crc=None
+[12:36:19.206] RX  01
+[12:36:19.207] RX  0b 00 00 00 0c b7 ff cb 01 b3 f8 03 ff dc 00 0f 00 20 02 10 00 00 00 0c b7 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 d8 ab 33 ff 01 00 00 00 0c b7
+[12:36:19.209] PACKET sensors: status=2816, uptime=3255, accel=[-0.025864, 0.21228, -0.99796], gyro=[-2.52, 1.05, 2.24], crc=None
+[12:36:19.209] PACKET state: status=4096, uptime=3255, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128323243, witness_battery_voltage=51, crc=None
+[12:36:19.210] PACKET heartbeat: status=256, uptime=3255
+[12:36:19.314] RX  01
+[12:36:19.315] RX  0f 00 00 00 0c b7 ff ca 01 b4 f8 08 ff d9 00 14 00 21
+[12:36:19.316] PACKET sensors: status=3840, uptime=3255, accel=[-0.026352, 0.212768, -0.99552], gyro=[-2.73, 1.4, 2.31], crc=None
+[12:36:19.430] RX  01
+[12:36:19.432] RX  0f 00 00 00 0c b7 ff c8 01 b0 f8 0b ff da 00 13 00 22
+[12:36:19.433] PACKET sensors: status=3840, uptime=3255, accel=[-0.027328, 0.210816, -0.994056], gyro=[-2.66, 1.33, 2.38], crc=None
+[12:36:19.551] RX  01
+[12:36:19.552] RX  0f 00 00 00 0c b7 ff c6 01 b1 f8 0c ff db 00 10 00 20
+[12:36:19.553] PACKET sensors: status=3840, uptime=3255, accel=[-0.028304, 0.211304, -0.993568], gyro=[-2.59, 1.12, 2.24], crc=None
+[12:36:19.610] RX  01
+[12:36:19.612] RX  0f 00 00 00 0c b7 ff bc 01 a7 f8 12 ff da 00 12 00 22
+[12:36:19.613] PACKET sensors: status=3840, uptime=3255, accel=[-0.033184, 0.206424, -0.99064], gyro=[-2.66, 1.26, 2.38], crc=None
+[12:36:19.728] RX  01
+[12:36:19.733] RX  0b 00 00 00 0c b7 ff b5 01 a6 f8 27 ff dc 00 12 00 23
+[12:36:19.739] PACKET sensors: status=2816, uptime=3255, accel=[-0.0366, 0.205936, -0.980392], gyro=[-2.52, 1.26, 2.45], crc=None
+[12:36:19.845] RX  01
+[12:36:19.846] RX  0b 00 00 00 0c b7 ff cb 01 b2 f8 09 ff db 00 11 00 21
+[12:36:19.848] PACKET sensors: status=2816, uptime=3255, accel=[-0.025864, 0.211792, -0.995032], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:36:19.914] RX  01
+[12:36:19.918] RX  0b 00 00 00 0c b7 ff c4 01 b1 f8 0c ff dc 00 0d 00 1f
+[12:36:19.919] PACKET sensors: status=2816, uptime=3255, accel=[-0.02928, 0.211304, -0.993568], gyro=[-2.52, 0.91, 2.17], crc=None
+[12:36:20.036] RX  01
+[12:36:20.037] RX  0f 00 00 00 0c b7 ff ca 01 b4 f8 04 ff da 00 11 00 21
+[12:36:20.038] PACKET sensors: status=3840, uptime=3255, accel=[-0.026352, 0.212768, -0.997472], gyro=[-2.66, 1.19, 2.31], crc=None
+[12:36:20.161] RX  01
+[12:36:20.163] RX  0f 00 00 00 0c b8 ff ce 01 b7 f8 0e ff d9 00 14 00 22
+[12:36:20.166] PACKET sensors: status=3840, uptime=3256, accel=[-0.0244, 0.214232, -0.992592], gyro=[-2.73, 1.4, 2.38], crc=None
+[12:36:20.222] RX  01
+[12:36:20.223] RX  0f 00 00 00 0c b8 ff b7 01 a6 f8 18 ff df 00 09 00 1f 02 10 00 00 00 0c b8 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 03 f6 33
+[12:36:20.224] PACKET sensors: status=3840, uptime=3256, accel=[-0.035624, 0.205936, -0.987712], gyro=[-2.31, 0.63, 2.17], crc=None
+[12:36:20.225] PACKET state: status=4096, uptime=3256, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128334326, witness_battery_voltage=51, crc=None
+[12:36:20.226] RX  ff 00 00 00 00 0c b8
+[12:36:20.226] PACKET heartbeat: status=0, uptime=3256
+[12:36:20.339] RX  01
+[12:36:20.341] RX  0f 00 00 00 0c b8 ff d2 01 bc f8 08 ff d9 00 15 00 1f
+[12:36:20.342] PACKET sensors: status=3840, uptime=3256, accel=[-0.022448, 0.216672, -0.99552], gyro=[-2.73, 1.47, 2.17], crc=None
+[12:36:20.456] RX  01
+[12:36:20.459] RX  0b 00 00 00 0c b8 ff b0 01 a0 f8 32 ff c9 00 37 00 2a
+[12:36:20.460] PACKET sensors: status=2816, uptime=3256, accel=[-0.03904, 0.203008, -0.975024], gyro=[-3.85, 3.85, 2.94], crc=None
+[12:36:20.518] RX  01
+[12:36:20.520] RX  0b 00 00 00 0c b8 ff c3 01 ab f8 0a ff dd 00 07 00 1c
+[12:36:20.522] PACKET sensors: status=2816, uptime=3256, accel=[-0.029768, 0.208376, -0.994544], gyro=[-2.45, 0.49, 1.96], crc=None
+[12:36:20.635] RX  01
+[12:36:20.636] RX  0b 00 00 00 0c b8 ff d0 01 bc f8 00 ff da 00 14 00 21
+[12:36:20.637] PACKET sensors: status=2816, uptime=3256, accel=[-0.023424, 0.216672, -0.999424], gyro=[-2.66, 1.4, 2.31], crc=None
+[12:36:20.748] RX  01
+[12:36:20.750] RX  0f 00 00 00 0c b8 ff bc 01 ad f8 19 ff db 00 09 00 1e
+[12:36:20.751] PACKET sensors: status=3840, uptime=3256, accel=[-0.033184, 0.209352, -0.987224], gyro=[-2.59, 0.63, 2.1], crc=None
+[12:36:20.806] RX  01
+[12:36:20.807] RX  0f 00 00 00 0c b8 ff ce 01 b6 f7 fd ff d8 00 16 00 23
+[12:36:20.809] PACKET sensors: status=3840, uptime=3256, accel=[-0.0244, 0.213744, -1.000888], gyro=[-2.8, 1.54, 2.45], crc=None
+[12:36:20.921] RX  01
+[12:36:20.922] RX  0f 00 00 00 0c b8 ff c5 01 b1 f8 02 ff d8 00 16 00 22
+[12:36:20.923] PACKET sensors: status=3840, uptime=3256, accel=[-0.028792, 0.211304, -0.998448], gyro=[-2.8, 1.54, 2.38], crc=None
+[12:36:21.043] RX  01
+[12:36:21.045] RX  0f 00 00 00 0c b8 ff cd 01 b7 f8 05 ff d8 00 1b 00 25
+[12:36:21.046] PACKET sensors: status=3840, uptime=3256, accel=[-0.024888, 0.214232, -0.996984], gyro=[-2.8, 1.89, 2.59], crc=None
+[12:36:21.151] RX  01
+[12:36:21.153] RX  0b 00 00 00 0c b9 ff c2 01 ac f8 13 ff dc 00 0c 00 21
+[12:36:21.156] PACKET sensors: status=2816, uptime=3257, accel=[-0.030256, 0.208864, -0.990152], gyro=[-2.52, 0.84, 2.31], crc=None
+[12:36:21.213] RX  01
+[12:36:21.216] RX  0b 00 00 00 0c b9 ff c4 01 ae f8 0e ff da 00 11 00 21 02 10 00 00 00 0c b9 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 03 f6 33 ff 01 00 00 00 0c b9
+[12:36:21.218] PACKET sensors: status=2816, uptime=3257, accel=[-0.02928, 0.20984, -0.992592], gyro=[-2.66, 1.19, 2.31], crc=None
+[12:36:21.219] PACKET state: status=4096, uptime=3257, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128334326, witness_battery_voltage=51, crc=None
+[12:36:21.220] PACKET heartbeat: status=256, uptime=3257
+[12:36:21.332] RX  01
+[12:36:21.337] RX  0b 00 00 00 0c b9 ff c6 01 af f8 04 ff db 00 0a 00 1c
+[12:36:21.339] PACKET sensors: status=2816, uptime=3257, accel=[-0.028304, 0.210328, -0.997472], gyro=[-2.59, 0.7, 1.96], crc=None
+[12:36:21.456] RX  01
+[12:36:21.456] RX  0f 00 00 00 0c b9 ff cb 01 b6 f8 07 ff d9 00 13 00 21
+[12:36:21.457] PACKET sensors: status=3840, uptime=3257, accel=[-0.025864, 0.213744, -0.996008], gyro=[-2.73, 1.33, 2.31], crc=None
+[12:36:21.511] RX  01
+[12:36:21.512] RX  0f 00 00 00 0c b9 ff c9 01 b8 f7 ff ff dd 00 10 00 20
+[12:36:21.513] PACKET sensors: status=3840, uptime=3257, accel=[-0.02684, 0.21472, -0.999912], gyro=[-2.45, 1.12, 2.24], crc=None
+[12:36:21.636] RX  01
+[12:36:21.637] RX  0f 00 00 00 0c b9 ff b3 01 a4 f8 1d ff e0 00 0c 00 22
+[12:36:21.638] PACKET sensors: status=3840, uptime=3257, accel=[-0.037576, 0.20496, -0.985272], gyro=[-2.24, 0.84, 2.38], crc=None
+[12:36:21.702] RX  01
+[12:36:21.704] RX  0f 00 00 00 0c b9 ff c9 01 b5 f8 02 ff da 00 14 00 21
+[12:36:21.705] PACKET sensors: status=3840, uptime=3257, accel=[-0.02684, 0.213256, -0.998448], gyro=[-2.66, 1.4, 2.31], crc=None
+[12:36:21.819] RX  01
+[12:36:21.821] RX  0b 00 00 00 0c b9 ff c9 01 b5 f8 0e ff db 00 0f 00 21
+[12:36:21.822] PACKET sensors: status=2816, uptime=3257, accel=[-0.02684, 0.213256, -0.992592], gyro=[-2.59, 1.05, 2.31], crc=None
+[12:36:21.939] RX  01
+[12:36:21.940] RX  0b 00 00 00 0c b9 ff ca 01 b1 f8 06 ff db 00 16 00 22
+[12:36:21.941] PACKET sensors: status=2816, uptime=3257, accel=[-0.026352, 0.211304, -0.996496], gyro=[-2.59, 1.54, 2.38], crc=None
+[12:36:22.051] RX  01
+[12:36:22.052] RX  0b 00 00 00 0c b9 ff c6 01 b2 f8 0b ff db 00 0f 00 1f
+[12:36:22.053] PACKET sensors: status=2816, uptime=3257, accel=[-0.028304, 0.211792, -0.994056], gyro=[-2.59, 1.05, 2.17], crc=None
+[12:36:22.104] RX  01
+[12:36:22.105] RX  0f 00 00 00 0c ba ff c5 01 ae f8 0d ff dc 00 0f 00 1e
+[12:36:22.106] PACKET sensors: status=3840, uptime=3258, accel=[-0.028792, 0.20984, -0.99308], gyro=[-2.52, 1.05, 2.1], crc=None
+[12:36:22.213] RX  01
+[12:36:22.214] RX  0f 00 00 00 0c ba ff d4 01 c0 f8 03 ff db 00 14 00 20 02 10 00 00 00 0c ba 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 d8 ab 33 ff 00 00 00 00 0c ba
+[12:36:22.215] PACKET sensors: status=3840, uptime=3258, accel=[-0.021472, 0.218624, -0.99796], gyro=[-2.59, 1.4, 2.24], crc=None
+[12:36:22.216] PACKET state: status=4096, uptime=3258, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128323243, witness_battery_voltage=51, crc=None
+[12:36:22.217] PACKET heartbeat: status=0, uptime=3258
+[12:36:22.327] RX  01
+[12:36:22.330] RX  0f 00 00 00 0c ba ff d5 01 bb f7 ff ff ce 00 35 00 2a
+[12:36:22.332] PACKET sensors: status=3840, uptime=3258, accel=[-0.020984, 0.216184, -0.999912], gyro=[-3.5, 3.71, 2.94], crc=None
+[12:36:22.454] RX  01
+[12:36:22.455] RX  0f 00 00 00 0c ba ff bf 01 ab f8 0a ff db 00 0f 00 20
+[12:36:22.456] PACKET sensors: status=3840, uptime=3258, accel=[-0.03172, 0.208376, -0.994544], gyro=[-2.59, 1.05, 2.24], crc=None
+[12:36:22.514] RX  01
+[12:36:22.515] RX  0b 00 00 00 0c ba ff cf 01 b3 f8 02 ff d8 00 17 00 22
+[12:36:22.520] PACKET sensors: status=2816, uptime=3258, accel=[-0.023912, 0.21228, -0.998448], gyro=[-2.8, 1.61, 2.38], crc=None
+[12:36:22.631] RX  01
+[12:36:22.633] RX  0b 00 00 00 0c ba ff ce 01 b1 f8 06 ff d9 00 17 00 23
+[12:36:22.634] PACKET sensors: status=2816, uptime=3258, accel=[-0.0244, 0.211304, -0.996496], gyro=[-2.73, 1.61, 2.45], crc=None
+[12:36:22.745] RX  01
+[12:36:22.747] RX  0b 00 00 00 0c ba ff ca 01 b7 f8 10 ff d9 00 0d 00 1d
+[12:36:22.747] PACKET sensors: status=2816, uptime=3258, accel=[-0.026352, 0.214232, -0.991616], gyro=[-2.73, 0.91, 2.03], crc=None
+[12:36:22.802] RX  01
+[12:36:22.803] RX  0f 00 00 00 0c ba ff d0 01 b5 f8 0d ff d8 00 18 00 24
+[12:36:22.805] PACKET sensors: status=3840, uptime=3258, accel=[-0.023424, 0.213256, -0.99308], gyro=[-2.8, 1.68, 2.52], crc=None
+[12:36:22.914] RX  01
+[12:36:22.916] RX  0f 00 00 00 0c ba ff c0 01 ad f8 0d ff da 00 10 00 22
+[12:36:22.916] PACKET sensors: status=3840, uptime=3258, accel=[-0.031232, 0.209352, -0.99308], gyro=[-2.66, 1.12, 2.38], crc=None
+[12:36:23.028] RX  01
+[12:36:23.029] RX  0f 00 00 00 0c ba ff cc 01 b6 f8 07 ff d8 00 15 00 22
+[12:36:23.030] PACKET sensors: status=3840, uptime=3258, accel=[-0.025376, 0.213744, -0.996008], gyro=[-2.8, 1.47, 2.38], crc=None
+[12:36:23.146] RX  01
+[12:36:23.148] RX  0f 00 00 00 0c bb ff c6 01 b2 f8 0b ff da 00 13 00 21
+[12:36:23.149] PACKET sensors: status=3840, uptime=3259, accel=[-0.028304, 0.211792, -0.994056], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:23.210] RX  01
+[12:36:23.211] RX  0b 00 00 00 0c bb ff c5 01 b0 f8 0d ff dd 00 12 00 22 02 10 00 00 00 0c bb 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 03 f6 33 ff 01 00 00 00 0c bb
+[12:36:23.212] PACKET sensors: status=2816, uptime=3259, accel=[-0.028792, 0.210816, -0.99308], gyro=[-2.45, 1.26, 2.38], crc=None
+[12:36:23.212] PACKET state: status=4096, uptime=3259, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128334326, witness_battery_voltage=51, crc=None
+[12:36:23.213] PACKET heartbeat: status=256, uptime=3259
+[12:36:23.324] RX  01
+[12:36:23.325] RX  0b 00 00 00 0c bb ff c6 01 b3 f8 12 ff db 00 13 00 21
+[12:36:23.326] PACKET sensors: status=2816, uptime=3259, accel=[-0.028304, 0.21228, -0.99064], gyro=[-2.59, 1.33, 2.31], crc=None
+[12:36:23.447] RX  01
+[12:36:23.448] RX  0b 00 00 00 0c bb ff c7 01 b1 f8 0a ff db 00 10 00 21
+[12:36:23.450] PACKET sensors: status=2816, uptime=3259, accel=[-0.027816, 0.211304, -0.994544], gyro=[-2.59, 1.12, 2.31], crc=None
+[12:36:23.503] RX  01
+[12:36:23.504] RX  0f 00 00 00 0c bb ff be 01 aa f8 06 ff e6 ff fb 00 1d
+[12:36:23.504] PACKET sensors: status=3840, uptime=3259, accel=[-0.032208, 0.207888, -0.996496], gyro=[-1.82, -0.35, 2.03], crc=None
+[12:36:23.623] RX  01
+[12:36:23.625] RX  0f 00 00 00 0c bb ff d0 01 b8 f8 00 ff d7 00 21 00 28
+[12:36:23.626] PACKET sensors: status=3840, uptime=3259, accel=[-0.023424, 0.21472, -0.999424], gyro=[-2.87, 2.31, 2.8], crc=None
+[12:36:23.745] RX  01
+[12:36:23.747] RX  0f 00 00 00 0c bb ff bb 01 a1 f8 0f ff d8 00 19 00 24
+[12:36:23.748] PACKET sensors: status=3840, uptime=3259, accel=[-0.033672, 0.203496, -0.992104], gyro=[-2.8, 1.75, 2.52], crc=None
+[12:36:23.805] RX  01
+[12:36:23.806] RX  0f 00 00 00 0c bb ff da 01 bd f7 f7 ff d9 00 14 00 20
+[12:36:23.807] PACKET sensors: status=3840, uptime=3259, accel=[-0.018544, 0.21716, -1.003816], gyro=[-2.73, 1.4, 2.24], crc=None
+[12:36:23.915] RX  01
+[12:36:23.916] RX  0b 00 00 00 0c bb ff c4 01 ac f8 07 ff db 00 19 00 28
+[12:36:23.917] PACKET sensors: status=2816, uptime=3259, accel=[-0.02928, 0.208864, -0.996008], gyro=[-2.59, 1.75, 2.8], crc=None
+[12:36:24.031] RX  01
+[12:36:24.032] RX  0b 00 00 00 0c bb ff cc 01 b6 f8 01 ff d9 00 0a 00 1a
+[12:36:24.033] PACKET sensors: status=2816, uptime=3259, accel=[-0.025376, 0.213744, -0.998936], gyro=[-2.73, 0.7, 1.82], crc=None
+[12:36:24.144] RX  01
+[12:36:24.145] RX  0b 00 00 00 0c bc ff d0 01 b6 f8 02 ff d8 00 17 00 23
+[12:36:24.146] PACKET sensors: status=2816, uptime=3260, accel=[-0.023424, 0.213744, -0.998448], gyro=[-2.8, 1.61, 2.45], crc=None
+[12:36:24.203] RX  01
+[12:36:24.204] RX  0f 00 00 00 0c bc ff c7 01 ae f8 09 ff dc 00 0e 00 1e 02 10 00 00 00 0c bc 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 03 f6 33 ff 00 00 00 00 0c bc
+[12:36:24.204] PACKET sensors: status=3840, uptime=3260, accel=[-0.027816, 0.20984, -0.995032], gyro=[-2.52, 0.98, 2.1], crc=None
+[12:36:24.205] PACKET state: status=4096, uptime=3260, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128334326, witness_battery_voltage=51, crc=None
+[12:36:24.205] PACKET heartbeat: status=0, uptime=3260
+[12:36:24.327] RX  01
+[12:36:24.328] RX  0f 00 00 00 0c bc ff c9 01 ae f8 08 ff db 00 12 00 21
+[12:36:24.329] PACKET sensors: status=3840, uptime=3260, accel=[-0.02684, 0.20984, -0.99552], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:36:24.447] RX  01
+[12:36:24.449] RX  0f 00 00 00 0c bc ff cb 01 b3 f8 07 ff d9 00 15 00 22
+[12:36:24.450] PACKET sensors: status=3840, uptime=3260, accel=[-0.025864, 0.21228, -0.996008], gyro=[-2.73, 1.47, 2.38], crc=None
+[12:36:24.506] RX  01
+[12:36:24.508] RX  0f 00 00 00 0c bc ff c7 01 b1 f8 0a ff d8 00 17 00 24
+[12:36:24.509] PACKET sensors: status=3840, uptime=3260, accel=[-0.027816, 0.211304, -0.994544], gyro=[-2.8, 1.61, 2.52], crc=None
+[12:36:24.623] RX  01
+[12:36:24.627] RX  0b 00 00 00 0c bc ff ca 01 b7 f7 fa ff da 00 14 00 23
+[12:36:24.631] PACKET sensors: status=2816, uptime=3260, accel=[-0.026352, 0.214232, -1.002352], gyro=[-2.66, 1.4, 2.45], crc=None
+[12:36:24.755] RX  01
+[12:36:24.761] RX  0b 00 00 00 0c bc ff c3 01 b0 f8 11 ff db 00 13 00 22
+[12:36:24.769] PACKET sensors: status=2816, uptime=3260, accel=[-0.029768, 0.210816, -0.991128], gyro=[-2.59, 1.33, 2.38], crc=None
+[12:36:24.830] RX  01
+[12:36:24.834] RX  0b 00 00 00 0c bc ff c7 01 b2 f8 08 ff dc 00 0d 00 1f
+[12:36:24.835] PACKET sensors: status=2816, uptime=3260, accel=[-0.027816, 0.211792, -0.99552], gyro=[-2.52, 0.91, 2.17], crc=None
+[12:36:24.954] RX  01
+[12:36:24.956] RX  0f 00 00 00 0c bc ff c8 01 b0 f8 06 ff d9 00 14 00 21
+[12:36:24.957] PACKET sensors: status=3840, uptime=3260, accel=[-0.027328, 0.210816, -0.996496], gyro=[-2.73, 1.4, 2.31], crc=None
+[12:36:25.018] RX  01
+[12:36:25.019] RX  0f 00 00 00 0c bc ff c6 01 b1 f8 09 ff d9 00 15 00 23
+[12:36:25.020] PACKET sensors: status=3840, uptime=3260, accel=[-0.028304, 0.211304, -0.995032], gyro=[-2.73, 1.47, 2.45], crc=None
+[12:36:25.142] RX  01
+[12:36:25.143] RX  0f 00 00 00 0c bd ff c5 01 b3 f8 0c ff dc 00 10 00 20
+[12:36:25.144] PACKET sensors: status=3840, uptime=3261, accel=[-0.028792, 0.21228, -0.993568], gyro=[-2.52, 1.12, 2.24], crc=None
+[12:36:25.202] RX  01
+[12:36:25.203] RX  0f 00 00 00 0c bd ff cb 01 b7 f8 01 ff db 00 11 00 21 02 10 00 00 00 0c bd 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 c3 06 33 ff 01 00 00 00 0c bd
+[12:36:25.203] PACKET sensors: status=3840, uptime=3261, accel=[-0.025864, 0.214232, -0.998936], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:36:25.204] PACKET state: status=4096, uptime=3261, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128317702, witness_battery_voltage=51, crc=None
+[12:36:25.204] PACKET heartbeat: status=256, uptime=3261
+[12:36:25.323] RX  01
+[12:36:25.325] RX  0b 00 00 00 0c bd ff c7 01 b1 f8 09 ff d9 00 16 00 23
+[12:36:25.327] PACKET sensors: status=2816, uptime=3261, accel=[-0.027816, 0.211304, -0.995032], gyro=[-2.73, 1.54, 2.45], crc=None
+[12:36:25.438] RX  01
+[12:36:25.439] RX  0b 00 00 00 0c bd ff c7 01 b1 f8 0b ff da 00 14 00 22
+[12:36:25.440] PACKET sensors: status=2816, uptime=3261, accel=[-0.027816, 0.211304, -0.994056], gyro=[-2.66, 1.4, 2.38], crc=None
+[12:36:25.549] RX  01
+[12:36:25.549] RX  0b 00 00 00 0c bd ff c7 01 b3 f8 0a ff da 00 14 00 21
+[12:36:25.550] PACKET sensors: status=2816, uptime=3261, accel=[-0.027816, 0.21228, -0.994544], gyro=[-2.66, 1.4, 2.31], crc=None
+[12:36:25.609] RX  01
+[12:36:25.610] RX  0f 00 00 00 0c bd ff c9 01 b4 f8 0c ff da 00 11 00 20
+[12:36:25.611] PACKET sensors: status=3840, uptime=3261, accel=[-0.02684, 0.212768, -0.993568], gyro=[-2.66, 1.19, 2.24], crc=None
+[12:36:25.721] RX  01
+[12:36:25.722] RX  0f 00 00 00 0c bd ff ad 01 9d f8 21 ff eb ff eb 00 16
+[12:36:25.722] PACKET sensors: status=3840, uptime=3261, accel=[-0.040504, 0.201544, -0.98332], gyro=[-1.47, -1.47, 1.54], crc=None
+[12:36:25.844] RX  01
+[12:36:25.848] RX  0f 00 00 00 0c bd ff d6 01 bf f7 fb ff d8 00 12 00 1f
+[12:36:25.852] PACKET sensors: status=3840, uptime=3261, accel=[-0.020496, 0.218136, -1.001864], gyro=[-2.8, 1.26, 2.17], crc=None
+[12:36:25.911] RX  01
+[12:36:25.912] RX  0f 00 00 00 0c bd ff cf 01 ba f7 fe ff d8 00 1a 00 24
+[12:36:25.914] PACKET sensors: status=3840, uptime=3261, accel=[-0.023912, 0.215696, -1.0004], gyro=[-2.8, 1.82, 2.52], crc=None
+[12:36:26.032] RX  01
+[12:36:26.033] RX  0b 00 00 00 0c bd ff c4 01 b2 f8 12 ff db 00 0b 00 1f
+[12:36:26.034] PACKET sensors: status=2816, uptime=3261, accel=[-0.02928, 0.211792, -0.99064], gyro=[-2.59, 0.77, 2.17], crc=None
+[12:36:26.156] RX  01
+[12:36:26.157] RX  0b 00 00 00 0c be ff cc 01 b0 f8 08 ff d7 00 1c 00 25
+[12:36:26.158] PACKET sensors: status=2816, uptime=3262, accel=[-0.025376, 0.210816, -0.99552], gyro=[-2.87, 1.96, 2.59], crc=None
+[12:36:26.218] RX  01
+[12:36:26.219] RX  0b 00 00 00 0c be ff b4 01 a7 f8 23 ff ea ff f9 00 23 02 10 00 00 00 0c be 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 03 f6 33 ff 00 00 00 00 0c be
+[12:36:26.220] PACKET sensors: status=2816, uptime=3262, accel=[-0.037088, 0.206424, -0.982344], gyro=[-1.54, -0.49, 2.45], crc=None
+[12:36:26.221] PACKET state: status=4096, uptime=3262, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128334326, witness_battery_voltage=51, crc=None
+[12:36:26.221] PACKET heartbeat: status=0, uptime=3262
+[12:36:26.340] RX  01
+[12:36:26.343] RX  0f 00 00 00 0c be ff d3 01 bb f7 fb ff db 00 0e 00 1e
+[12:36:26.344] PACKET sensors: status=3840, uptime=3262, accel=[-0.02196, 0.216184, -1.001864], gyro=[-2.59, 0.98, 2.1], crc=None
+[12:36:26.462] RX  01
+[12:36:26.463] RX  0f 00 00 00 0c be ff cc 01 b5 f8 06 ff d9 00 19 00 24
+[12:36:26.464] PACKET sensors: status=3840, uptime=3262, accel=[-0.025376, 0.213256, -0.996496], gyro=[-2.73, 1.75, 2.52], crc=None
+[12:36:26.526] RX  01
+[12:36:26.528] RX  0f 00 00 00 0c be ff c6 01 af f8 0b ff da 00 13 00 23
+[12:36:26.529] PACKET sensors: status=3840, uptime=3262, accel=[-0.028304, 0.210328, -0.994056], gyro=[-2.66, 1.33, 2.45], crc=None
+[12:36:26.642] RX  01
+[12:36:26.644] RX  0f 00 00 00 0c be ff c6 01 b1 f8 17 ff d4 00 26 00 28
+[12:36:26.646] PACKET sensors: status=3840, uptime=3262, accel=[-0.028304, 0.211304, -0.9882], gyro=[-3.08, 2.66, 2.8], crc=None
+[12:36:26.758] RX  01
+[12:36:26.760] RX  0b 00 00 00 0c be ff c2 01 ae f8 0c ff db 00 0a 00 1e
+[12:36:26.760] PACKET sensors: status=2816, uptime=3262, accel=[-0.030256, 0.20984, -0.993568], gyro=[-2.59, 0.7, 2.1], crc=None
+[12:36:26.819] RX  01
+[12:36:26.821] RX  0b 00 00 00 0c be ff ce 01 b4 f8 06 ff db 00 0f 00 21
+[12:36:26.822] PACKET sensors: status=2816, uptime=3262, accel=[-0.0244, 0.212768, -0.996496], gyro=[-2.59, 1.05, 2.31], crc=None
+[12:36:26.940] RX  01
+[12:36:26.941] RX  0b 00 00 00 0c be ff cb 01 b4 f8 08 ff d9 00 15 00 21
+[12:36:26.942] PACKET sensors: status=2816, uptime=3262, accel=[-0.025864, 0.212768, -0.99552], gyro=[-2.73, 1.47, 2.31], crc=None
+[12:36:27.066] RX  01
+[12:36:27.068] RX  0f 00 00 00 0c be ff b7 01 a7 f8 16 ff ee ff ef 00 20
+[12:36:27.071] PACKET sensors: status=3840, uptime=3262, accel=[-0.035624, 0.206424, -0.988688], gyro=[-1.26, -1.19, 2.24], crc=None
+[12:36:27.126] RX  01
+[12:36:27.127] RX  0f 00 00 00 0c bf ff d1 01 b7 f8 04 ff d8 00 15 00 21
+[12:36:27.135] PACKET sensors: status=3840, uptime=3263, accel=[-0.022936, 0.214232, -0.997472], gyro=[-2.8, 1.47, 2.31], crc=None
+[12:36:27.244] RX  01
+[12:36:27.246] RX  0f 00 00 00 0c bf ff c8 01 b1 f8 08 ff d8 00 17 00 23 02 10 00 00 00 0c bf 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 03 f6 33 ff 01 00 00 00 0c bf
+[12:36:27.247] PACKET sensors: status=3840, uptime=3263, accel=[-0.027328, 0.211304, -0.99552], gyro=[-2.8, 1.61, 2.45], crc=None
+[12:36:27.247] PACKET state: status=4096, uptime=3263, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128334326, witness_battery_voltage=51, crc=None
+[12:36:27.248] PACKET heartbeat: status=256, uptime=3263
+[12:36:27.353] RX  01
+[12:36:27.355] RX  0f 00 00 00 0c bf ff c4 01 b9 f8 30 ff d9 00 0d 00 1e
+[12:36:27.356] PACKET sensors: status=3840, uptime=3263, accel=[-0.02928, 0.215208, -0.976], gyro=[-2.73, 0.91, 2.1], crc=None
+[12:36:27.415] RX  01
+[12:36:27.416] RX  0b 00 00 00 0c bf ff c7 01 b2 f8 09 ff da 00 11 00 22
+[12:36:27.418] PACKET sensors: status=2816, uptime=3263, accel=[-0.027816, 0.211792, -0.995032], gyro=[-2.66, 1.19, 2.38], crc=None
+[12:36:27.531] RX  01
+[12:36:27.533] RX  0b 00 00 00 0c bf ff c4 01 ad f8 07 ff da 00 12 00 20
+[12:36:27.535] PACKET sensors: status=2816, uptime=3263, accel=[-0.02928, 0.209352, -0.996008], gyro=[-2.66, 1.26, 2.24], crc=None
+[12:36:27.654] RX  01
+[12:36:27.655] RX  0b 00 00 00 0c bf ff ca 01 b3 f8 07 ff db 00 11 00 21
+[12:36:27.656] PACKET sensors: status=2816, uptime=3263, accel=[-0.026352, 0.21228, -0.996008], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:36:27.717] RX  01
+[12:36:27.722] RX  0f 00 00 00 0c bf ff c9 01 b2 f8 08 ff d9 00 14 00 21
+[12:36:27.726] PACKET sensors: status=3840, uptime=3263, accel=[-0.02684, 0.211792, -0.99552], gyro=[-2.73, 1.4, 2.31], crc=None
+[12:36:27.839] RX  01
+[12:36:27.839] RX  0f 00 00 00 0c bf ff c7 01 b1 f8 0a ff da 00 12 00 21
+[12:36:27.840] PACKET sensors: status=3840, uptime=3263, accel=[-0.027816, 0.211304, -0.994544], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:36:27.952] RX  01
+[12:36:27.952] RX  0f 00 00 00 0c bf ff c8 01 b1 f8 08 ff da 00 13 00 21
+[12:36:27.953] PACKET sensors: status=3840, uptime=3263, accel=[-0.027328, 0.211304, -0.99552], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:28.007] RX  01
+[12:36:28.009] RX  0f 00 00 00 0c bf ff c8 01 b1 f8 09 ff da 00 13 00 22
+[12:36:28.010] PACKET sensors: status=3840, uptime=3263, accel=[-0.027328, 0.211304, -0.995032], gyro=[-2.66, 1.33, 2.38], crc=None
+[12:36:28.131] RX  01
+[12:36:28.135] RX  0b 00 00 00 0c c0 ff c7 01 b1 f8 09 ff db 00 12 00 21
+[12:36:28.136] PACKET sensors: status=2816, uptime=3264, accel=[-0.027816, 0.211304, -0.995032], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:36:28.255] RX  01
+[12:36:28.256] RX  0b 00 00 00 0c c0 ff c8 01 b2 f8 09 ff d9 00 13 00 21 02 10 00 00 00 0c c0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 ee 50 33 ff 00 00 00 00 0c c0
+[12:36:28.257] PACKET sensors: status=2816, uptime=3264, accel=[-0.027328, 0.211792, -0.995032], gyro=[-2.73, 1.33, 2.31], crc=None
+[12:36:28.258] PACKET state: status=4096, uptime=3264, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128328784, witness_battery_voltage=51, crc=None
+[12:36:28.259] PACKET heartbeat: status=0, uptime=3264
+[12:36:28.314] RX  01
+[12:36:28.316] RX  0b 00 00 00 0c c0 ff c7 01 b2 f8 0b ff db 00 11 00 21
+[12:36:28.318] PACKET sensors: status=2816, uptime=3264, accel=[-0.027816, 0.211792, -0.994056], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:36:28.435] RX  01
+[12:36:28.435] RX  0f 00 00 00 0c c0 ff c8 01 b2 f8 08 ff da 00 12 00 22
+[12:36:28.436] PACKET sensors: status=3840, uptime=3264, accel=[-0.027328, 0.211792, -0.99552], gyro=[-2.66, 1.26, 2.38], crc=None
+[12:36:28.558] RX  01
+[12:36:28.560] RX  0f 00 00 00 0c c0 ff c8 01 b2 f8 0b ff da 00 13 00 21
+[12:36:28.561] PACKET sensors: status=3840, uptime=3264, accel=[-0.027328, 0.211792, -0.994056], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:28.619] RX  01
+[12:36:28.619] RX  0f 00 00 00 0c c0 ff c8 01 b1 f8 0b ff db 00 10 00 21
+[12:36:28.621] PACKET sensors: status=3840, uptime=3264, accel=[-0.027328, 0.211304, -0.994056], gyro=[-2.59, 1.12, 2.31], crc=None
+[12:36:28.744] RX  01
+[12:36:28.746] RX  0f 00 00 00 0c c0 ff c7 01 b0 f8 08 ff da 00 12 00 22
+[12:36:28.752] PACKET sensors: status=3840, uptime=3264, accel=[-0.027816, 0.210816, -0.99552], gyro=[-2.66, 1.26, 2.38], crc=None
+[12:36:28.806] RX  01
+[12:36:28.807] RX  0b 00 00 00 0c c0 ff c8 01 b2 f8 0a ff d9 00 12 00 22
+[12:36:28.808] PACKET sensors: status=2816, uptime=3264, accel=[-0.027328, 0.211792, -0.994544], gyro=[-2.73, 1.26, 2.38], crc=None
+[12:36:28.930] RX  01
+[12:36:28.931] RX  0b 00 00 00 0c c0 ff c9 01 b1 f8 09 ff da 00 14 00 21
+[12:36:28.933] PACKET sensors: status=2816, uptime=3264, accel=[-0.02684, 0.211304, -0.995032], gyro=[-2.66, 1.4, 2.31], crc=None
+[12:36:29.053] RX  01
+[12:36:29.054] RX  0b 00 00 00 0c c0 ff c8 01 b3 f8 08 ff da 00 13 00 22
+[12:36:29.055] PACKET sensors: status=2816, uptime=3264, accel=[-0.027328, 0.21228, -0.99552], gyro=[-2.66, 1.33, 2.38], crc=None
+[12:36:29.118] RX  01
+[12:36:29.120] RX  0f 00 00 00 0c c1 ff c8 01 b0 f8 09 ff da 00 13 00 21
+[12:36:29.121] PACKET sensors: status=3840, uptime=3265, accel=[-0.027328, 0.210816, -0.995032], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:29.242] RX  01
+[12:36:29.243] RX  0f 00 00 00 0c c1 ff c7 01 b3 f8 09 ff da 00 11 00 21 02 10 00 00 00 0c c1 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 03 f6 33 ff 01 00 00 00 0c c1
+[12:36:29.244] PACKET sensors: status=3840, uptime=3265, accel=[-0.027816, 0.21228, -0.995032], gyro=[-2.66, 1.19, 2.31], crc=None
+[12:36:29.244] PACKET state: status=4096, uptime=3265, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128334326, witness_battery_voltage=51, crc=None
+[12:36:29.244] PACKET heartbeat: status=256, uptime=3265
+[12:36:29.304] RX  01
+[12:36:29.305] RX  0f 00 00 00 0c c1 ff c9 01 b2 f8 0a ff da 00 13 00 20
+[12:36:29.307] PACKET sensors: status=3840, uptime=3265, accel=[-0.02684, 0.211792, -0.994544], gyro=[-2.66, 1.33, 2.24], crc=None
+[12:36:29.429] RX  01
+[12:36:29.430] RX  0f 00 00 00 0c c1 ff c7 01 b2 f8 09 ff da 00 12 00 22
+[12:36:29.432] PACKET sensors: status=3840, uptime=3265, accel=[-0.027816, 0.211792, -0.995032], gyro=[-2.66, 1.26, 2.38], crc=None
+[12:36:29.593] RX  01
+[12:36:29.595] RX  0b 00 00 00 0c c1 ff c4 01 af f8 0a ff d9 00 11 00 22
+[12:36:29.596] PACKET sensors: status=2816, uptime=3265, accel=[-0.02928, 0.210328, -0.994544], gyro=[-2.73, 1.19, 2.38], crc=None
+[12:36:29.604] RX  01
+[12:36:29.611] RX  0b 00 00 00 0c c1 ff c7 01 b1 f8 0e ff db 00 13 00 22
+[12:36:29.623] PACKET sensors: status=2816, uptime=3265, accel=[-0.027816, 0.211304, -0.992592], gyro=[-2.59, 1.33, 2.38], crc=None
+[12:36:29.727] RX  01
+[12:36:29.727] RX  0b 00 00 00 0c c1 ff c9 01 b2 f8 0b ff d9 00 15 00 22
+[12:36:29.728] PACKET sensors: status=2816, uptime=3265, accel=[-0.02684, 0.211792, -0.994056], gyro=[-2.73, 1.47, 2.38], crc=None
+[12:36:29.842] RX  01
+[12:36:29.847] RX  0f 00 00 00 0c c1 ff c6 01 b2 f8 0b ff db 00 12 00 21
+[12:36:29.856] PACKET sensors: status=3840, uptime=3265, accel=[-0.028304, 0.211792, -0.994056], gyro=[-2.59, 1.26, 2.31], crc=None
+[12:36:29.914] RX  01
+[12:36:29.917] RX  0f 00 00 00 0c c1 ff c7 01 b0 f8 07 ff db 00 12 00 22
+[12:36:29.936] PACKET sensors: status=3840, uptime=3265, accel=[-0.027816, 0.210816, -0.996008], gyro=[-2.59, 1.26, 2.38], crc=None
+[12:36:30.053] RX  01
+[12:36:30.053] RX  0f 00 00 00 0c c1 ff c9 01 b1 f8 08 ff da 00 13 00 21
+[12:36:30.055] PACKET sensors: status=3840, uptime=3265, accel=[-0.02684, 0.211304, -0.99552], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:30.116] RX  01
+[12:36:30.117] RX  0f 00 00 00 0c c2 ff c6 01 af f8 09 ff dc 00 14 00 22
+[12:36:30.118] PACKET sensors: status=3840, uptime=3266, accel=[-0.028304, 0.210328, -0.995032], gyro=[-2.52, 1.4, 2.38], crc=None
+[12:36:30.240] RX  01
+[12:36:30.243] RX  0b 00 00 00 0c c2 ff ca 01 b4 f8 06 ff da 00 10 00 22 02 10 00 00 00 0c c2 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 ad 61 33 ff 00 00 00 00 0c c2
+[12:36:30.244] PACKET sensors: status=2816, uptime=3266, accel=[-0.026352, 0.212768, -0.996496], gyro=[-2.66, 1.12, 2.38], crc=None
+[12:36:30.245] PACKET state: status=4096, uptime=3266, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128312161, witness_battery_voltage=51, crc=None
+[12:36:30.247] PACKET heartbeat: status=0, uptime=3266
+[12:36:30.364] RX  01
+[12:36:30.369] RX  0b 00 00 00 0c c2 ff c8 01 b1 f8 07 ff da 00 12 00 21
+[12:36:30.370] PACKET sensors: status=2816, uptime=3266, accel=[-0.027328, 0.211304, -0.996008], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:36:30.426] RX  01
+[12:36:30.428] RX  0b 00 00 00 0c c2 ff c7 01 b0 f8 0a ff da 00 13 00 21
+[12:36:30.429] PACKET sensors: status=2816, uptime=3266, accel=[-0.027816, 0.210816, -0.994544], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:30.552] RX  01
+[12:36:30.553] RX  0f 00 00 00 0c c2 ff c7 01 b1 f8 08 ff db 00 11 00 22
+[12:36:30.554] PACKET sensors: status=3840, uptime=3266, accel=[-0.027816, 0.211304, -0.99552], gyro=[-2.59, 1.19, 2.38], crc=None
+[12:36:30.614] RX  01
+[12:36:30.615] RX  0f 00 00 00 0c c2 ff c9 01 b3 f8 09 ff da 00 12 00 22
+[12:36:30.616] PACKET sensors: status=3840, uptime=3266, accel=[-0.02684, 0.21228, -0.995032], gyro=[-2.66, 1.26, 2.38], crc=None
+[12:36:30.731] RX  01
+[12:36:30.737] RX  0f 00 00 00 0c c2 ff c8 01 b1 f8 0a ff da 00 12 00 21
+[12:36:30.747] PACKET sensors: status=3840, uptime=3266, accel=[-0.027328, 0.211304, -0.994544], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:36:30.809] RX  01
+[12:36:30.813] RX  0f 00 00 00 0c c2 ff cb 01 b0 f8 08 ff db 00 13 00 22
+[12:36:30.820] PACKET sensors: status=3840, uptime=3266, accel=[-0.025864, 0.210816, -0.99552], gyro=[-2.59, 1.33, 2.38], crc=None
+[12:36:30.942] RX  01
+[12:36:30.943] RX  0b 00 00 00 0c c2 ff c9 01 b3 f8 08 ff da 00 11 00 22
+[12:36:30.944] PACKET sensors: status=2816, uptime=3266, accel=[-0.02684, 0.21228, -0.99552], gyro=[-2.66, 1.19, 2.38], crc=None
+[12:36:31.003] RX  01
+[12:36:31.004] RX  0b 00 00 00 0c c2 ff c8 01 b5 f8 00 ff db 00 13 00 21
+[12:36:31.005] PACKET sensors: status=2816, uptime=3266, accel=[-0.027328, 0.213256, -0.999424], gyro=[-2.59, 1.33, 2.31], crc=None
+[12:36:31.118] RX  01
+[12:36:31.118] RX  0b 00 00 00 0c c3 ff c9 01 b2 f8 09 ff da 00 13 00 21
+[12:36:31.119] PACKET sensors: status=2816, uptime=3267, accel=[-0.02684, 0.211792, -0.995032], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:31.223] RX  01
+[12:36:31.224] RX  0f 00 00 00 0c c3 ff c6 01 b1 f8 07 ff da 00 12 00 21 02 10 00 00 00 0c c3 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 03 f6 33 ff 01 00 00 00 0c c3
+[12:36:31.225] PACKET sensors: status=3840, uptime=3267, accel=[-0.028304, 0.211304, -0.996008], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:36:31.225] PACKET state: status=4096, uptime=3267, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=1128334326, witness_battery_voltage=51, crc=None
+[12:36:31.226] PACKET heartbeat: status=256, uptime=3267
+[12:36:31.333] RX  01
+[12:36:31.333] RX  0f 00 00 00 0c c3 ff c7 01 b2 f8 06 ff db 00 11 00 20
+[12:36:31.334] PACKET sensors: status=3840, uptime=3267, accel=[-0.027816, 0.211792, -0.996496], gyro=[-2.59, 1.19, 2.24], crc=None
+[12:36:31.450] RX  01
+[12:36:31.451] RX  0f 00 00 00 0c c3 ff c8 01 b1 f8 0a ff da 00 12 00 21
+[12:36:31.451] PACKET sensors: status=3840, uptime=3267, accel=[-0.027328, 0.211304, -0.994544], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:36:31.505] RX  01
+[12:36:31.506] RX  0f 00 00 00 0c c3 ff c6 01 b1 f8 0d ff d9 00 11 00 20
+[12:36:31.506] PACKET sensors: status=3840, uptime=3267, accel=[-0.028304, 0.211304, -0.99308], gyro=[-2.73, 1.19, 2.24], crc=None
+[12:36:31.612] RX  01
+[12:36:31.612] RX  0b 00 00 00 0c c3 ff c8 01 b1 f8 07 ff db 00 11 00 21
+[12:36:31.613] PACKET sensors: status=2816, uptime=3267, accel=[-0.027328, 0.211304, -0.996008], gyro=[-2.59, 1.19, 2.31], crc=None
+[12:36:31.737] RX  01
+[12:36:31.740] RX  0b 00 00 00 0c c3 ff c6 01 b5 f8 03 ff db 00 13 00 21
+[12:36:31.740] PACKET sensors: status=2816, uptime=3267, accel=[-0.028304, 0.213256, -0.99796], gyro=[-2.59, 1.33, 2.31], crc=None
+[12:36:31.847] RX  01
+[12:36:31.850] RX  0b 00 00 00 0c c3 ff c8 01 b2 f8 09 ff da 00 13 00 21
+[12:36:31.850] PACKET sensors: status=2816, uptime=3267, accel=[-0.027328, 0.211792, -0.995032], gyro=[-2.66, 1.33, 2.31], crc=None
+[12:36:31.910] RX  01
+[12:36:31.916] RX  0f 00 00 00 0c c3 ff c7 01 b0 f8 08 ff da 00 12 00 21
+[12:36:31.917] PACKET sensors: status=3840, uptime=3267, accel=[-0.027816, 0.210816, -0.99552], gyro=[-2.66, 1.26, 2.31], crc=None
+[12:36:32.022] RX  01
+[12:36:32.023] RX  0f 00 00 00 0c c3 ff c7 01 af f8 08 ff db 00 13 00 20
+[12:36:32.024] PACKET sensors: status=3840, uptime=3267, accel=[-0.027816, 0.210328, -0.99552], gyro=[-2.59, 1.33, 2.24], crc=None

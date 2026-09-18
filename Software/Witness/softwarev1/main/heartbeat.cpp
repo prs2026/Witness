@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
+#include "comms.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -103,21 +104,25 @@ void Heartbeat::blink_gpio()
 void Heartbeat::queue_heartbeat_packet()
 {
     heartbeat_status_ = !heartbeat_status_;
-    const std::uint32_t uptime_seconds =
-        static_cast<std::uint32_t>(esp_timer_get_time() / 1000000ULL);
+    const std::uint32_t uptime_milliseconds =
+        static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
 
-    const std::uint8_t payload[6] = {
-        static_cast<std::uint8_t>(heartbeat_status_ ? 0x01 : 0x00),
-        0x00,
-        static_cast<std::uint8_t>(uptime_seconds >> 24),
-        static_cast<std::uint8_t>(uptime_seconds >> 16),
-        static_cast<std::uint8_t>(uptime_seconds >> 8),
-        static_cast<std::uint8_t>(uptime_seconds),
-    };
+    std::uint8_t payload[IRIS_PACKET_HEARTBEAT_DATA_LENGTH]{};
+    payload[IRIS_PACKET_HEARTBEAT_STATUS_OFFSET] =
+        static_cast<std::uint8_t>(heartbeat_status_ ? 0x01 : 0x00);
+    payload[IRIS_PACKET_HEARTBEAT_UPTIME_OFFSET] =
+        static_cast<std::uint8_t>(uptime_milliseconds >> 24);
+    payload[IRIS_PACKET_HEARTBEAT_UPTIME_OFFSET + 1U] =
+        static_cast<std::uint8_t>(uptime_milliseconds >> 16);
+    payload[IRIS_PACKET_HEARTBEAT_UPTIME_OFFSET + 2U] =
+        static_cast<std::uint8_t>(uptime_milliseconds >> 8);
+    payload[IRIS_PACKET_HEARTBEAT_UPTIME_OFFSET + 3U] =
+        static_cast<std::uint8_t>(uptime_milliseconds);
 
     // A full forwarding queue drops this heartbeat rather than delaying the
     // GPIO heartbeat task.
-    (void)data_forwarder_.queue_packet(0xFF, payload, sizeof(payload));
+    (void)data_forwarder_.queue_packet(
+        IRIS_PACKET_ID_HEARTBEAT, payload, sizeof(payload));
 }
 
 void Heartbeat::run()

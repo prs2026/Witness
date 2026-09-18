@@ -1,0 +1,597 @@
+[12:38:18.260] RX[COM10]  01
+[12:38:18.261] RX[COM10]  0f 00 00 00 a4 ea ff fd 24 00 14 7e ff 9e e0 ff dc 00 10 00 20
+[12:38:18.262] PACKET[COM10] sensors: status=3840, uptime=42218, accel=[-0.001464, 4.497408, 2.560048], gyro=[-6.86, -555.59, -645.12], crc=4096
+[12:38:18.262] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:18.324] RX[COM10]  01
+[12:38:18.324] RX[COM10]  0f 00 00 00 a5 4e ff fd 49 00 14 a3 ff 9e e0 ff db 00 0f 00 20
+[12:38:18.325] PACKET[COM10] sensors: status=3840, uptime=42318, accel=[-0.001464, 9.119744, 2.578104], gyro=[-6.86, -555.59, -663.04], crc=3840
+[12:38:18.328] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:18.432] RX[COM10]  01
+[12:38:18.434] RX[COM10]  0b 00 00 00 a5 b2 ff fd 49 00 14 c7 ff 9e e0 ff d9 00 15 00 22
+[12:38:18.435] PACKET[COM10] sensors: status=2816, uptime=42418, accel=[-0.001464, 9.119744, 2.595672], gyro=[-6.86, -555.59, -698.88], crc=5376
+[12:38:18.436] BAD_PACKET[COM10] unknown packet ID 0x22; discarded 1 byte
+[12:38:18.542] RX[COM10]  01
+[12:38:18.544] RX[COM10]  0b 00 00 00 a6 16 ff fd 61 00 14 af ff 9e e0 ff da 00 14 00 21
+[12:38:18.545] PACKET[COM10] sensors: status=2816, uptime=42518, accel=[-0.001464, 12.118016, 2.58396], gyro=[-6.86, -555.59, -680.96], crc=5120
+[12:38:18.545] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:18.667] RX[COM10]  01
+[12:38:18.668] RX[COM10]  0b 00 00 00 a6 7a ff fd 3c 00 14 96 ff 9e ed ff da 00 13 00 21
+[12:38:18.668] PACKET[COM10] sensors: status=2816, uptime=42618, accel=[-0.001464, 7.49568, 2.57176], gyro=[-6.86, -322.63, -680.96], crc=4864
+[12:38:18.668] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:18.668] RX[COM21]  03
+[12:38:18.669] RX[COM21]  00 00 00 00 00 00 00 00 00 51 dd 47 00 00 00 34 4e a0
+[12:38:18.669] PACKET[COM21] camera: fc_status=0, fc_uptime=0, status=0, uptime=5365063, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=20128
+[12:38:18.729] RX[COM10]  01
+[12:38:18.730] RX[COM10]  0f 00 00 00 a6 de ff fd 49 00 14 96 ff 9e c8 ff db 00 11 00 21
+[12:38:18.731] PACKET[COM10] sensors: status=3840, uptime=42718, accel=[-0.001464, 9.119744, 2.57176], gyro=[-6.86, -985.67, -663.04], crc=4352
+[12:38:18.731] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:18.853] RX[COM10]  01
+[12:38:18.854] RX[COM10]  0f 00 00 00 a7 42 ff fd 24 00 14 a3 ff 9f 36 ff da 00 11 00 21
+[12:38:18.854] PACKET[COM10] sensors: status=3840, uptime=42818, accel=[-0.001464, 4.497408, 2.578104], gyro=[-6.79, 985.53, -680.96], crc=4352
+[12:38:18.854] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:18.916] RX[COM10]  01
+[12:38:18.916] RX[COM10]  0f 00 00 00 a7 a6 ff fd 0c 00 14 af ff 9f 1d ff d9 00 12 00 20
+[12:38:18.917] PACKET[COM10] sensors: status=3840, uptime=42918, accel=[-0.001464, 1.499136, 2.58396], gyro=[-6.79, 537.53, -698.88], crc=4608
+[12:38:18.918] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:19.041] RX[COM10]  01
+[12:38:19.042] RX[COM10]  0f 00 00 00 a8 0a ff fd 61 00 14 a3 ff 9e ed ff db 00 12 00 20
+[12:38:19.043] PACKET[COM10] sensors: status=3840, uptime=43018, accel=[-0.001464, 12.118016, 2.578104], gyro=[-6.86, -322.63, -663.04], crc=4608
+[12:38:19.043] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:19.168] RX[COM10]  01
+[12:38:19.170] RX[COM10]  0b 00 00 00 a8 6e ff fd 55 00 14 af ff 9e d4 ff d9 00 16 00 23 02 10 00 00 00 a8 6e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 19 9b 13 f0 ff 01 00 00 00 a8 6e
+[12:38:19.170] PACKET[COM10] sensors: status=2816, uptime=43118, accel=[-0.001464, 10.61888, 2.58396], gyro=[-6.86, -770.63, -698.88], crc=5632
+[12:38:19.171] BAD_PACKET[COM10] unknown packet ID 0x23; discarded 1 byte
+[12:38:19.171] PACKET[COM10] state: status=4096, uptime=43118, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=0, witness_battery_voltage=0, crc=0
+[12:38:19.172] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:19.172] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:19.173] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:19.173] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:19.173] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:19.173] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:19.173] BAD_PACKET[COM10] unknown packet ID 0x43; discarded 1 byte
+[12:38:19.173] BAD_PACKET[COM10] unknown packet ID 0x41; discarded 1 byte
+[12:38:19.173] BAD_PACKET[COM10] unknown packet ID 0x19; discarded 1 byte
+[12:38:19.174] BAD_PACKET[COM10] unknown packet ID 0x9b; discarded 1 byte
+[12:38:19.174] BAD_PACKET[COM10] unknown packet ID 0x13; discarded 1 byte
+[12:38:19.174] BAD_PACKET[COM10] unknown packet ID 0xf0; discarded 1 byte
+[12:38:19.174] PACKET[COM10] heartbeat: status=256, uptime=43118
+[12:38:19.233] RX[COM10]  01
+[12:38:19.233] RX[COM10]  0b 00 00 00 a8 d2 ff fd 55 00 14 af ff 9e f9 ff db 00 13 00 21
+[12:38:19.239] PACKET[COM10] sensors: status=2816, uptime=43218, accel=[-0.001464, 10.61888, 2.58396], gyro=[-6.86, -107.59, -663.04], crc=4864
+[12:38:19.239] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:19.358] RX[COM10]  01
+[12:38:19.358] RX[COM10]  0b 00 00 00 a9 36 ff fd 3c 00 14 a3 ff 9e e0 ff db 00 12 00 20
+[12:38:19.359] PACKET[COM10] sensors: status=2816, uptime=43318, accel=[-0.001464, 7.49568, 2.578104], gyro=[-6.86, -555.59, -663.04], crc=4608
+[12:38:19.359] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:19.422] RX[COM10]  01
+[12:38:19.425] RX[COM10]  0f 00 00 00 a9 9a ff fd 55 00 14 af ff 9e d4 ff da 00 13 00 21
+[12:38:19.425] PACKET[COM10] sensors: status=3840, uptime=43418, accel=[-0.001464, 10.61888, 2.58396], gyro=[-6.86, -770.63, -680.96], crc=4864
+[12:38:19.425] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:19.546] RX[COM10]  01
+[12:38:19.548] RX[COM10]  0f 00 00 00 a9 fe ff fd 49 00 14 a3 ff 9e e0 ff db 00 12 00 22
+[12:38:19.548] PACKET[COM10] sensors: status=3840, uptime=43518, accel=[-0.001464, 9.119744, 2.578104], gyro=[-6.86, -555.59, -663.04], crc=4608
+[12:38:19.548] BAD_PACKET[COM10] unknown packet ID 0x22; discarded 1 byte
+[12:38:19.609] RX[COM10]  01
+[12:38:19.610] RX[COM10]  0f 00 00 00 aa 62 ff fd 49 00 14 af ff 9e d4 ff da 00 12 00 21
+[12:38:19.611] PACKET[COM10] sensors: status=3840, uptime=43618, accel=[-0.001464, 9.119744, 2.58396], gyro=[-6.86, -770.63, -680.96], crc=4608
+[12:38:19.611] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:19.671] RX[COM21]  03
+[12:38:19.672] RX[COM21]  00 00 00 00 00 00 00 00 00 51 e1 2f 00 00 00 34 71 3e
+[12:38:19.672] PACKET[COM21] camera: fc_status=0, fc_uptime=0, status=0, uptime=5366063, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=28990
+[12:38:19.734] RX[COM10]  01
+[12:38:19.735] RX[COM10]  0f 00 00 00 aa c6 ff fd 55 00 14 bb ff 9e bc ff da 00 13 00 21
+[12:38:19.736] PACKET[COM10] sensors: status=3840, uptime=43718, accel=[-0.001464, 10.61888, 2.589816], gyro=[-6.86, -1200.71, -680.96], crc=4864
+[12:38:19.737] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:19.859] RX[COM10]  01
+[12:38:19.863] RX[COM10]  0b 00 00 00 ab 2a ff fd 49 00 14 96 ff 9e d4 ff da 00 13 00 22
+[12:38:19.864] PACKET[COM10] sensors: status=2816, uptime=43818, accel=[-0.001464, 9.119744, 2.57176], gyro=[-6.86, -770.63, -680.96], crc=4864
+[12:38:19.864] BAD_PACKET[COM10] unknown packet ID 0x22; discarded 1 byte
+[12:38:19.922] RX[COM10]  01
+[12:38:19.923] RX[COM10]  0b 00 00 00 ab 8e ff fd 86 00 14 a3 ff 9e e0 ff d4 00 1f 00 20
+[12:38:19.923] PACKET[COM10] sensors: status=2816, uptime=43918, accel=[-0.001464, -15.241216, 2.578104], gyro=[-6.86, -555.59, -788.48], crc=7936
+[12:38:19.924] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:20.048] RX[COM10]  01
+[12:38:20.050] RX[COM10]  0b 00 00 00 ab f2 ff fd 61 00 14 c7 ff 9e bc ff d9 00 12 00 20
+[12:38:20.051] PACKET[COM10] sensors: status=2816, uptime=44018, accel=[-0.001464, 12.118016, 2.595672], gyro=[-6.86, -1200.71, -698.88], crc=4608
+[12:38:20.051] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:20.111] RX[COM10]  01
+[12:38:20.112] RX[COM10]  0f 00 00 00 ac 56 ff fd 79 00 14 8a ff 9f 11 ff d7 00 12 00 21 02 10 00 00 00 ac 56 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 2f 40 13 f8 ff 00 00 00 00 ac 56
+[12:38:20.113] PACKET[COM10] sensors: status=3840, uptime=44118, accel=[-0.001464, 15.116288, 2.565904], gyro=[-6.79, 322.49, -734.72], crc=4608
+[12:38:20.113] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:20.114] PACKET[COM10] state: status=4096, uptime=44118, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=0, witness_battery_voltage=0, crc=0
+[12:38:20.115] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:20.115] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:20.115] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:20.116] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:20.116] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:20.117] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:20.117] BAD_PACKET[COM10] unknown packet ID 0x43; discarded 1 byte
+[12:38:20.117] BAD_PACKET[COM10] unknown packet ID 0x41; discarded 1 byte
+[12:38:20.118] BAD_PACKET[COM10] unknown packet ID 0x2f; discarded 1 byte
+[12:38:20.118] BAD_PACKET[COM10] unknown packet ID 0x40; discarded 1 byte
+[12:38:20.118] BAD_PACKET[COM10] unknown packet ID 0x13; discarded 1 byte
+[12:38:20.118] BAD_PACKET[COM10] unknown packet ID 0xf8; discarded 1 byte
+[12:38:20.118] PACKET[COM10] heartbeat: status=0, uptime=44118
+[12:38:20.230] RX[COM10]  01
+[12:38:20.230] RX[COM10]  0f 00 00 00 ac ba ff fd 49 00 14 a3 ff 9e ed ff da 00 11 00 20
+[12:38:20.231] PACKET[COM10] sensors: status=3840, uptime=44218, accel=[-0.001464, 9.119744, 2.578104], gyro=[-6.86, -322.63, -680.96], crc=4352
+[12:38:20.231] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:20.347] RX[COM10]  01
+[12:38:20.348] RX[COM10]  0f 00 00 00 ad 1e ff fd 49 00 14 8a ff 9e c8 ff d9 00 15 00 21
+[12:38:20.348] PACKET[COM10] sensors: status=3840, uptime=44318, accel=[-0.001464, 9.119744, 2.565904], gyro=[-6.86, -985.67, -698.88], crc=5376
+[12:38:20.349] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:20.407] RX[COM10]  01
+[12:38:20.408] RX[COM10]  0f 00 00 00 ad 82 ff fd 30 00 14 af ff 9e b0 ff da 00 12 00 21
+[12:38:20.409] PACKET[COM10] sensors: status=3840, uptime=44418, accel=[-0.001464, 5.996544, 2.58396], gyro=[-6.86, -1415.75, -680.96], crc=4608
+[12:38:20.409] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:20.514] RX[COM10]  01
+[12:38:20.515] RX[COM10]  0b 00 00 00 ad e6 ff fd 79 00 14 e0 ff 9e e0 ff db 00 11 00 20
+[12:38:20.516] PACKET[COM10] sensors: status=2816, uptime=44518, accel=[-0.001464, 15.116288, 2.607872], gyro=[-6.86, -555.59, -663.04], crc=4352
+[12:38:20.517] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:20.641] RX[COM10]  01
+[12:38:20.642] RX[COM10]  0b 00 00 00 ae 4a ff fd cf 00 15 5a ff 9b c7 ff 5d 01 1c 00 42
+[12:38:20.643] PACKET[COM10] sensors: status=2816, uptime=44618, accel=[-0.001464, -6.121472, 2.667408], gyro=[-7.07, -1003.59, 1666.63], crc=7168
+[12:38:20.643] BAD_PACKET[COM10] unknown packet ID 0x42; discarded 1 byte
+[12:38:20.704] RX[COM21]  03
+[12:38:20.705] RX[COM21]  00 00 00 00 00 00 00 00 00 51 e5 17 00 00 00 34 79 5c
+[12:38:20.706] PACKET[COM21] camera: fc_status=0, fc_uptime=0, status=0, uptime=5367063, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=31068
+[12:38:20.706] RX[COM10]  01
+[12:38:20.707] RX[COM10]  0b 00 00 00 ae ae ff fd 49 00 15 04 ff 9d 4e ff c8 00 39 00 28
+[12:38:20.707] PACKET[COM10] sensors: status=2816, uptime=44718, accel=[-0.001464, 9.119744, 2.62544], gyro=[-6.93, 1415.61, -1003.52], crc=14592
+[12:38:20.707] BAD_PACKET[COM10] unknown packet ID 0x28; discarded 1 byte
+[12:38:20.819] RX[COM10]  01
+[12:38:20.820] RX[COM10]  0f 00 00 00 af 12 ff fc 9e 00 14 66 ff 9e 05 ff e3 00 01 00 1e
+[12:38:20.820] PACKET[COM10] sensors: status=3840, uptime=44818, accel=[-0.001952, -12.242944, 2.548336], gyro=[-6.86, 107.45, -519.68], crc=None
+[12:38:20.930] RX[COM10]  01
+[12:38:20.930] RX[COM10]  0f 00 00 00 af 76 ff fc 79 00 14 59 ff 9e 8b ff ed ff ea 00 1b
+[12:38:20.931] PACKET[COM10] sensors: status=30, uptime=17760256, accel=[0.0854, 14.865944, -0.440664], gyro=[1.4, 1612.73, -1746.43], crc=None
+[12:38:21.036] RX[COM10]  01
+[12:38:21.037] PACKET[COM10] heartbeat: status=60927, uptime=3925875457
+[12:38:21.037] RX[COM10]  0f 00 00 00 af da ff fc 18 00 14 04 ff 9e e0 ff db 00 10 00 21
+[12:38:21.038] BAD_PACKET[COM10] unknown packet ID 0x0f; discarded 1 byte
+[12:38:21.038] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.038] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.038] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.038] BAD_PACKET[COM10] unknown packet ID 0xaf; discarded 1 byte
+[12:38:21.038] BAD_PACKET[COM10] unknown packet ID 0xda; discarded 1 byte
+[12:38:21.039] PACKET[COM10] heartbeat: status=64536, uptime=1311999
+[12:38:21.039] BAD_PACKET[COM10] unknown packet ID 0x9e; discarded 1 byte
+[12:38:21.039] BAD_PACKET[COM10] unknown packet ID 0xe0; discarded 1 byte
+[12:38:21.159] RX[COM10]  01
+[12:38:21.163] PACKET[COM10] heartbeat: status=56064, uptime=268443905
+[12:38:21.163] RX[COM10]  0f 00 00 00 b0 3e ff fc 18 00 14 10 ff 9e e0 ff db 00 12 00 21 02 10 00 00 00 b0 3e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 19 9b 13 f8
+[12:38:21.164] BAD_PACKET[COM10] unknown packet ID 0x0f; discarded 1 byte
+[12:38:21.164] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.165] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.165] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.165] BAD_PACKET[COM10] unknown packet ID 0xb0; discarded 1 byte
+[12:38:21.166] BAD_PACKET[COM10] unknown packet ID 0x3e; discarded 1 byte
+[12:38:21.166] PACKET[COM10] heartbeat: status=64536, uptime=1315071
+[12:38:21.166] BAD_PACKET[COM10] unknown packet ID 0x9e; discarded 1 byte
+[12:38:21.166] BAD_PACKET[COM10] unknown packet ID 0xe0; discarded 1 byte
+[12:38:21.166] PACKET[COM10] heartbeat: status=56064, uptime=301998338
+[12:38:21.167] BAD_PACKET[COM10] unknown packet ID 0x10; discarded 1 byte
+[12:38:21.167] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.167] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.167] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.167] BAD_PACKET[COM10] unknown packet ID 0xb0; discarded 1 byte
+[12:38:21.167] BAD_PACKET[COM10] unknown packet ID 0x3e; discarded 1 byte
+[12:38:21.168] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.168] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.168] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.168] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.168] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.169] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.169] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.169] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.169] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.169] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.169] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.169] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.170] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.170] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.170] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.170] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.170] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.170] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.171] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.171] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.171] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.171] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.171] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.171] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.171] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.172] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.172] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.172] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.172] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.172] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.172] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.172] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.173] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.173] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.173] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.173] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.173] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.173] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.174] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.174] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.174] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.174] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.175] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.176] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.176] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.176] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.177] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.177] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.177] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.177] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:21.177] BAD_PACKET[COM10] unknown packet ID 0x43; discarded 1 byte
+[12:38:21.177] BAD_PACKET[COM10] unknown packet ID 0x41; discarded 1 byte
+[12:38:21.177] BAD_PACKET[COM10] unknown packet ID 0x19; discarded 1 byte
+[12:38:21.178] BAD_PACKET[COM10] unknown packet ID 0x9b; discarded 1 byte
+[12:38:21.178] BAD_PACKET[COM10] unknown packet ID 0x13; discarded 1 byte
+[12:38:21.178] BAD_PACKET[COM10] unknown packet ID 0xf8; discarded 1 byte
+[12:38:21.178] RX[COM10]  ff 01 00 00 00 b0 3e
+[12:38:21.179] PACKET[COM10] heartbeat: status=256, uptime=45118
+[12:38:21.236] RX[COM10]  01
+[12:38:21.237] RX[COM10]  0b 00 00 00 b0 a2 ff fc 61 00 14 41 ff 9e b0 ff d8 00 1b 00 22
+[12:38:21.238] PACKET[COM10] sensors: status=2816, uptime=45218, accel=[-0.001952, 12.118016, 2.53028], gyro=[-6.86, -1415.75, -716.8], crc=6912
+[12:38:21.238] BAD_PACKET[COM10] unknown packet ID 0x22; discarded 1 byte
+[12:38:21.360] RX[COM10]  01
+[12:38:21.361] RX[COM10]  0b 00 00 00 b1 06 ff fc 55 00 14 59 ff 9e d4 ff db 00 15 00 22
+[12:38:21.362] PACKET[COM10] sensors: status=2816, uptime=45318, accel=[-0.001952, 10.61888, 2.541992], gyro=[-6.86, -770.63, -663.04], crc=5376
+[12:38:21.363] BAD_PACKET[COM10] unknown packet ID 0x22; discarded 1 byte
+[12:38:21.414] RX[COM10]  01
+[12:38:21.414] RX[COM10]  0b 00 00 00 b1 6a ff fc 92 00 14 4d ff 9e 8b ff db 00 11 00 20
+[12:38:21.415] PACKET[COM10] sensors: status=2816, uptime=45418, accel=[-0.001952, -13.74208, 2.536136], gyro=[-6.86, -2078.79, -663.04], crc=4352
+[12:38:21.415] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:21.521] RX[COM10]  01
+[12:38:21.522] RX[COM10]  0f 00 00 00 b1 ce ff fc 48 00 14 41 ff 9e ed ff db 00 11 00 21
+[12:38:21.522] PACKET[COM10] sensors: status=3840, uptime=45518, accel=[-0.001952, 8.994816, 2.53028], gyro=[-6.86, -322.63, -663.04], crc=4352
+[12:38:21.523] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:21.636] RX[COM10]  01
+[12:38:21.636] RX[COM10]  0f 00 00 00 b2 32 ff fc 0b 00 14 10 ff 9f 1d ff dc 00 0f 00 20
+[12:38:21.637] PACKET[COM10] sensors: status=3840, uptime=45618, accel=[-0.001952, 1.374208, 2.506368], gyro=[-6.79, 537.53, -645.12], crc=3840
+[12:38:21.637] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:21.687] RX[COM21]  03
+[12:38:21.688] RX[COM21]  00 00 00 00 00 00 00 00 00 51 e8 ff 00 00 00 34 0e 3e
+[12:38:21.688] PACKET[COM21] camera: fc_status=0, fc_uptime=0, status=0, uptime=5368063, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=3646
+[12:38:21.750] RX[COM10]  01
+[12:38:21.751] RX[COM10]  0f 00 00 00 b2 96 ff fc 55 00 14 4d ff 9e 97 ff dc 00 10 00 21
+[12:38:21.753] PACKET[COM10] sensors: status=3840, uptime=45718, accel=[-0.001952, 10.61888, 2.536136], gyro=[-6.86, -1863.75, -645.12], crc=4096
+[12:38:21.753] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:21.808] RX[COM10]  01
+[12:38:21.809] RX[COM10]  0f 00 00 00 b2 fa ff fc 48 00 14 41 ff 9e c8 ff d7 00 18 00 22
+[12:38:21.810] PACKET[COM10] sensors: status=3840, uptime=45818, accel=[-0.001952, 8.994816, 2.53028], gyro=[-6.86, -985.67, -734.72], crc=6144
+[12:38:21.810] BAD_PACKET[COM10] unknown packet ID 0x22; discarded 1 byte
+[12:38:21.925] RX[COM10]  01
+[12:38:21.929] RX[COM10]  0b 00 00 00 b3 5e ff fc 3c 00 14 29 ff 9e b0 ff db 00 11 00 21
+[12:38:21.930] PACKET[COM10] sensors: status=2816, uptime=45918, accel=[-0.001952, 7.49568, 2.518568], gyro=[-6.86, -1415.75, -663.04], crc=4352
+[12:38:21.931] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:22.032] RX[COM10]  01
+[12:38:22.032] RX[COM10]  0b 00 00 00 b3 c2 ff fc 48 00 14 41 ff 9e b0 ff d8 00 15 00 21
+[12:38:22.033] PACKET[COM10] sensors: status=2816, uptime=46018, accel=[-0.001952, 8.994816, 2.53028], gyro=[-6.86, -1415.75, -716.8], crc=5376
+[12:38:22.033] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:22.148] RX[COM10]  01
+[12:38:22.148] RX[COM10]  0b 00 00 00 b4 26 ff fc 30 00 14 35 ff 9e c8 ff db 00 10 00 21 02 10 00 00 00 b4 26 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 19 9b 13 f0
+[12:38:22.149] PACKET[COM10] sensors: status=2816, uptime=46118, accel=[-0.001952, 5.996544, 2.524424], gyro=[-6.86, -985.67, -663.04], crc=4096
+[12:38:22.149] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:22.150] PACKET[COM10] state: status=4096, uptime=46118, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=0, witness_battery_voltage=0, crc=0
+[12:38:22.151] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:22.151] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:22.151] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:22.152] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:22.152] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:22.153] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:22.153] BAD_PACKET[COM10] unknown packet ID 0x43; discarded 1 byte
+[12:38:22.153] BAD_PACKET[COM10] unknown packet ID 0x41; discarded 1 byte
+[12:38:22.153] BAD_PACKET[COM10] unknown packet ID 0x19; discarded 1 byte
+[12:38:22.153] BAD_PACKET[COM10] unknown packet ID 0x9b; discarded 1 byte
+[12:38:22.153] BAD_PACKET[COM10] unknown packet ID 0x13; discarded 1 byte
+[12:38:22.154] BAD_PACKET[COM10] unknown packet ID 0xf0; discarded 1 byte
+[12:38:22.154] RX[COM10]  ff 00 00 00 00 b4 26
+[12:38:22.155] PACKET[COM10] heartbeat: status=0, uptime=46118
+[12:38:22.207] RX[COM10]  01
+[12:38:22.210] RX[COM10]  0f 00 00 00 b4 8a ff fc 48 00 14 41 ff 9e c8 ff db 00 0f 00 21
+[12:38:22.210] PACKET[COM10] sensors: status=3840, uptime=46218, accel=[-0.001952, 8.994816, 2.53028], gyro=[-6.86, -985.67, -663.04], crc=3840
+[12:38:22.211] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:22.331] RX[COM10]  01
+[12:38:22.332] RX[COM10]  0f 00 00 00 b4 ee ff fc 24 00 14 10 ff 9e d4 ff da 00 13 00 21
+[12:38:22.333] PACKET[COM10] sensors: status=3840, uptime=46318, accel=[-0.001952, 4.497408, 2.506368], gyro=[-6.86, -770.63, -680.96], crc=4864
+[12:38:22.333] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:22.458] RX[COM10]  01
+[12:38:22.459] RX[COM10]  0f 00 00 00 b5 52 ff fc 30 00 14 29 ff 9e bc ff db 00 11 00 20
+[12:38:22.460] PACKET[COM10] sensors: status=3840, uptime=46418, accel=[-0.001952, 5.996544, 2.518568], gyro=[-6.86, -1200.71, -663.04], crc=4352
+[12:38:22.460] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:22.521] RX[COM10]  01
+[12:38:22.522] RX[COM10]  0f 00 00 00 b5 b6 ff fc 55 00 14 35 ff 9e b0 ff d9 00 14 00 21
+[12:38:22.522] PACKET[COM10] sensors: status=3840, uptime=46518, accel=[-0.001952, 10.61888, 2.524424], gyro=[-6.86, -1415.75, -698.88], crc=5120
+[12:38:22.523] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:22.646] RX[COM10]  01
+[12:38:22.648] RX[COM10]  0b 00 00 00 b6 1a ff fc 3c 00 14 29 ff 9e c8 ff db 00 11 00 22
+[12:38:22.649] PACKET[COM10] sensors: status=2816, uptime=46618, accel=[-0.001952, 7.49568, 2.518568], gyro=[-6.86, -985.67, -663.04], crc=4352
+[12:38:22.649] BAD_PACKET[COM10] unknown packet ID 0x22; discarded 1 byte
+[12:38:22.702] RX[COM21]  03
+[12:38:22.703] RX[COM21]  00 00 00 00 00 00 00 00 00 51 ec e7 00 00 00 34 0e e8
+[12:38:22.703] PACKET[COM21] camera: fc_status=0, fc_uptime=0, status=0, uptime=5369063, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=3816
+[12:38:22.754] RX[COM10]  01
+[12:38:22.754] RX[COM10]  0b 00 00 00 b6 7e ff fc 18 00 14 10 ff 9e e0 ff df 00 09 00 21
+[12:38:22.755] PACKET[COM10] sensors: status=2816, uptime=46718, accel=[-0.001952, 2.998272, 2.506368], gyro=[-6.86, -555.59, -591.36], crc=2304
+[12:38:22.756] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:22.806] RX[COM10]  01
+[12:38:22.807] RX[COM10]  0b 00 00 00 b6 e2 ff fc 3c 00 14 35 ff 9e 8b ff d9 00 16 00 21
+[12:38:22.807] PACKET[COM10] sensors: status=2816, uptime=46818, accel=[-0.001952, 7.49568, 2.524424], gyro=[-6.86, -2078.79, -698.88], crc=5632
+[12:38:22.807] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:22.916] RX[COM10]  01
+[12:38:22.917] RX[COM10]  0f 00 00 00 b7 46 ff fc 48 00 14 29 ff 9e ed ff da 00 15 00 21
+[12:38:22.917] PACKET[COM10] sensors: status=3840, uptime=46918, accel=[-0.001952, 8.994816, 2.518568], gyro=[-6.86, -322.63, -680.96], crc=5376
+[12:38:22.917] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:23.028] RX[COM10]  01
+[12:38:23.028] RX[COM10]  0f 00 00 00 b7 aa ff fc 48 00 14 29 ff 9e b0 ff db 00 11 00 21
+[12:38:23.029] PACKET[COM10] sensors: status=3840, uptime=47018, accel=[-0.001952, 8.994816, 2.518568], gyro=[-6.86, -1415.75, -663.04], crc=4352
+[12:38:23.029] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:23.136] RX[COM10]  01
+[12:38:23.136] RX[COM10]  0f 00 00 00 b8 0e ff fc 3c 00 14 35 ff 9e b0 ff db 00 11 00 21 02 10 00 00 00 b8 0e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 40 c3 06 13 f0 ff 01 00 00 00 b8 0e
+[12:38:23.136] PACKET[COM10] sensors: status=3840, uptime=47118, accel=[-0.001952, 7.49568, 2.524424], gyro=[-6.86, -1415.75, -663.04], crc=4352
+[12:38:23.137] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:23.138] PACKET[COM10] state: status=4096, uptime=47118, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=0, witness_battery_voltage=0, crc=0
+[12:38:23.139] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:23.139] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:23.140] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:23.140] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:23.140] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:23.140] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:23.141] BAD_PACKET[COM10] unknown packet ID 0x43; discarded 1 byte
+[12:38:23.141] BAD_PACKET[COM10] unknown packet ID 0x40; discarded 1 byte
+[12:38:23.141] BAD_PACKET[COM10] unknown packet ID 0xc3; discarded 1 byte
+[12:38:23.141] BAD_PACKET[COM10] unknown packet ID 0x06; discarded 1 byte
+[12:38:23.141] BAD_PACKET[COM10] unknown packet ID 0x13; discarded 1 byte
+[12:38:23.141] BAD_PACKET[COM10] unknown packet ID 0xf0; discarded 1 byte
+[12:38:23.142] PACKET[COM10] heartbeat: status=256, uptime=47118
+[12:38:23.248] RX[COM10]  01
+[12:38:23.249] RX[COM10]  0f 00 00 00 b8 72 ff fc 3c 00 14 1c ff 9e c8 ff db 00 12 00 21
+[12:38:23.249] PACKET[COM10] sensors: status=3840, uptime=47218, accel=[-0.001952, 7.49568, 2.512224], gyro=[-6.86, -985.67, -663.04], crc=4608
+[12:38:23.249] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:23.356] RX[COM10]  01
+[12:38:23.357] RX[COM10]  0b 00 00 00 b8 d6 ff fc 48 00 14 35 ff 9e b0 ff da 00 14 00 23
+[12:38:23.357] PACKET[COM10] sensors: status=2816, uptime=47318, accel=[-0.001952, 8.994816, 2.524424], gyro=[-6.86, -1415.75, -680.96], crc=5120
+[12:38:23.358] BAD_PACKET[COM10] unknown packet ID 0x23; discarded 1 byte
+[12:38:23.417] RX[COM10]  01
+[12:38:23.418] RX[COM10]  0b 00 00 00 b9 3a ff fc 48 00 14 41 ff 9e c8 ff db 00 12 00 21
+[12:38:23.420] PACKET[COM10] sensors: status=2816, uptime=47418, accel=[-0.001952, 8.994816, 2.53028], gyro=[-6.86, -985.67, -663.04], crc=4608
+[12:38:23.420] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:23.541] RX[COM10]  01
+[12:38:23.542] RX[COM10]  0b 00 00 00 b9 9e ff fc 48 00 14 41 ff 9e bc ff da 00 12 00 21
+[12:38:23.543] PACKET[COM10] sensors: status=2816, uptime=47518, accel=[-0.001952, 8.994816, 2.53028], gyro=[-6.86, -1200.71, -680.96], crc=4608
+[12:38:23.543] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:23.664] RX[COM10]  01
+[12:38:23.665] RX[COM10]  0f 00 00 00 ba 02 ff fc 30 00 14 29 ff 9e bc ff db 00 12 00 21
+[12:38:23.665] PACKET[COM10] sensors: status=3840, uptime=47618, accel=[-0.001952, 5.996544, 2.518568], gyro=[-6.86, -1200.71, -663.04], crc=4608
+[12:38:23.666] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:23.666] RX[COM21]  03
+[12:38:23.666] RX[COM21]  00 00 00 00 00 00 00 00 00 51 f0 cf 00 00 00 34 15 16
+[12:38:23.666] PACKET[COM21] camera: fc_status=0, fc_uptime=0, status=0, uptime=5370063, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=5398
+[12:38:23.727] RX[COM10]  01
+[12:38:23.728] RX[COM10]  0f 00 00 00 ba 66 ff fc 3c 00 14 41 ff 9e b0 ff db 00 11 00 21
+[12:38:23.729] PACKET[COM10] sensors: status=3840, uptime=47718, accel=[-0.001952, 7.49568, 2.53028], gyro=[-6.86, -1415.75, -663.04], crc=4352
+[12:38:23.729] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:23.852] RX[COM10]  01
+[12:38:23.854] RX[COM10]  0f 00 00 00 ba ca ff fc 30 00 14 41 ff 9e c8 ff da 00 13 00 22
+[12:38:23.854] PACKET[COM10] sensors: status=3840, uptime=47818, accel=[-0.001952, 5.996544, 2.53028], gyro=[-6.86, -985.67, -680.96], crc=4864
+[12:38:23.855] BAD_PACKET[COM10] unknown packet ID 0x22; discarded 1 byte
+[12:38:23.915] RX[COM10]  01
+[12:38:23.916] RX[COM10]  0f 00 00 00 bb 2e ff fc 48 00 14 29 ff 9e bc ff da 00 11 00 22
+[12:38:23.917] PACKET[COM10] sensors: status=3840, uptime=47918, accel=[-0.001952, 8.994816, 2.518568], gyro=[-6.86, -1200.71, -680.96], crc=4352
+[12:38:23.917] BAD_PACKET[COM10] unknown packet ID 0x22; discarded 1 byte
+[12:38:24.041] RX[COM10]  01
+[12:38:24.041] RX[COM10]  0b 00 00 00 bb 92 ff fc 48 00 14 41 ff 9e bc ff d9 00 12 00 22
+[12:38:24.042] PACKET[COM10] sensors: status=2816, uptime=48018, accel=[-0.001952, 8.994816, 2.53028], gyro=[-6.86, -1200.71, -698.88], crc=4608
+[12:38:24.043] BAD_PACKET[COM10] unknown packet ID 0x22; discarded 1 byte
+[12:38:24.166] RX[COM10]  01
+[12:38:24.167] RX[COM10]  0b 00 00 00 bb f6 ff fc 85 00 14 4d ff 9e 42 ff d6 00 1b 00 21 02 10 00 00 00 bb f6 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 44 e5 13 f8 ff 00 00 00 00 bb f6
+[12:38:24.168] PACKET[COM10] sensors: status=2816, uptime=48118, accel=[-0.001952, -15.366144, 2.536136], gyro=[-6.86, 1200.57, -752.64], crc=6912
+[12:38:24.168] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:24.169] PACKET[COM10] state: status=4096, uptime=48118, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=0, witness_battery_voltage=0, crc=0
+[12:38:24.169] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:24.169] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:24.170] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:24.171] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:24.171] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:24.171] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:24.171] BAD_PACKET[COM10] unknown packet ID 0x43; discarded 1 byte
+[12:38:24.172] BAD_PACKET[COM10] unknown packet ID 0x41; discarded 1 byte
+[12:38:24.172] BAD_PACKET[COM10] unknown packet ID 0x44; discarded 1 byte
+[12:38:24.172] BAD_PACKET[COM10] unknown packet ID 0xe5; discarded 1 byte
+[12:38:24.172] BAD_PACKET[COM10] unknown packet ID 0x13; discarded 1 byte
+[12:38:24.173] BAD_PACKET[COM10] unknown packet ID 0xf8; discarded 1 byte
+[12:38:24.173] PACKET[COM10] heartbeat: status=0, uptime=48118
+[12:38:24.230] RX[COM10]  01
+[12:38:24.230] RX[COM10]  0b 00 00 00 bc 5a ff fc 3c 00 14 35 ff 9f 11 ff d8 00 15 00 21
+[12:38:24.230] PACKET[COM10] sensors: status=2816, uptime=48218, accel=[-0.001952, 7.49568, 2.524424], gyro=[-6.79, 322.49, -716.8], crc=5376
+[12:38:24.230] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:24.342] RX[COM10]  01
+[12:38:24.342] RX[COM10]  0f 00 00 00 bc be ff fc 3c 00 14 1c ff 9e bc ff dc 00 0f 00 20
+[12:38:24.343] PACKET[COM10] sensors: status=3840, uptime=48318, accel=[-0.001952, 7.49568, 2.512224], gyro=[-6.86, -1200.71, -645.12], crc=3840
+[12:38:24.343] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:24.443] RX[COM10]  01
+[12:38:24.444] RX[COM10]  0f 00 00 00 bd 22 ff fc 3c 00 14 1c ff 9e b0 ff d8 00 17 00 22
+[12:38:24.444] PACKET[COM10] sensors: status=3840, uptime=48418, accel=[-0.001952, 7.49568, 2.512224], gyro=[-6.86, -1415.75, -716.8], crc=5888
+[12:38:24.444] BAD_PACKET[COM10] unknown packet ID 0x22; discarded 1 byte
+[12:38:24.548] RX[COM10]  01
+[12:38:24.548] RX[COM10]  0f 00 00 00 bd 86 ff fc 30 00 14 35 ff 9e 97 ff d9 00 15 00 21
+[12:38:24.549] PACKET[COM10] sensors: status=3840, uptime=48518, accel=[-0.001952, 5.996544, 2.524424], gyro=[-6.86, -1863.75, -698.88], crc=5376
+[12:38:24.549] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:24.654] RX[COM10]  01
+[12:38:24.654] RX[COM10]  0f 00 00 00 bd ea ff fc 3c 00 14 41 ff 9e b0 ff dc 00 10 00 20
+[12:38:24.655] PACKET[COM10] sensors: status=3840, uptime=48618, accel=[-0.001952, 7.49568, 2.53028], gyro=[-6.86, -1415.75, -645.12], crc=4096
+[12:38:24.655] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:24.710] RX[COM21]  03
+[12:38:24.711] RX[COM21]  00 00 00 00 00 00 00 00 00 51 f4 b7 00 00 00 34 0c 1c
+[12:38:24.711] PACKET[COM21] camera: fc_status=0, fc_uptime=0, status=0, uptime=5371063, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=3100
+[12:38:24.711] RX[COM10]  01
+[12:38:24.712] RX[COM10]  0b 00 00 00 be 4e ff fc 3c 00 14 1c ff 9e d4 ff dc 00 0e 00 21
+[12:38:24.712] PACKET[COM10] sensors: status=2816, uptime=48718, accel=[-0.001952, 7.49568, 2.512224], gyro=[-6.86, -770.63, -645.12], crc=3584
+[12:38:24.712] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:24.817] RX[COM10]  01
+[12:38:24.817] RX[COM10]  0b 00 00 00 be b2 ff fc 18 00 14 1c ff 9e bc ff d8 00 16 00 21
+[12:38:24.817] PACKET[COM10] sensors: status=2816, uptime=48818, accel=[-0.001952, 2.998272, 2.512224], gyro=[-6.86, -1200.71, -716.8], crc=5632
+[12:38:24.818] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:24.928] RX[COM10]  01
+[12:38:24.929] RX[COM10]  0b 00 00 00 bf 16 ff fc 48 00 14 29 ff 9e a3 ff da 00 14 00 20
+[12:38:24.929] PACKET[COM10] sensors: status=2816, uptime=48918, accel=[-0.001952, 8.994816, 2.518568], gyro=[-6.86, -1648.71, -680.96], crc=5120
+[12:38:24.929] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:25.036] RX[COM10]  01
+[12:38:25.036] RX[COM10]  0f 00 00 00 bf 7a ff fc 30 00 14 35 ff 9e bc ff db 00 12 00 21
+[12:38:25.036] PACKET[COM10] sensors: status=3840, uptime=49018, accel=[-0.001952, 5.996544, 2.524424], gyro=[-6.86, -1200.71, -663.04], crc=4608
+[12:38:25.037] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:25.147] RX[COM10]  01
+[12:38:25.148] RX[COM10]  0f 00 00 00 bf de ff fc 30 00 14 1c ff 9e c8 ff da 00 13 00 21 02 10 00 00 00 bf de 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 2f 40 13 f0
+[12:38:25.151] PACKET[COM10] sensors: status=3840, uptime=49118, accel=[-0.001952, 5.996544, 2.512224], gyro=[-6.86, -985.67, -680.96], crc=4864
+[12:38:25.154] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:25.156] PACKET[COM10] state: status=4096, uptime=49118, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=0, witness_battery_voltage=0, crc=0
+[12:38:25.157] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:25.157] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:25.158] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:25.159] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:25.159] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:25.160] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:25.160] BAD_PACKET[COM10] unknown packet ID 0x43; discarded 1 byte
+[12:38:25.160] BAD_PACKET[COM10] unknown packet ID 0x41; discarded 1 byte
+[12:38:25.160] BAD_PACKET[COM10] unknown packet ID 0x2f; discarded 1 byte
+[12:38:25.160] BAD_PACKET[COM10] unknown packet ID 0x40; discarded 1 byte
+[12:38:25.161] BAD_PACKET[COM10] unknown packet ID 0x13; discarded 1 byte
+[12:38:25.161] BAD_PACKET[COM10] unknown packet ID 0xf0; discarded 1 byte
+[12:38:25.161] RX[COM10]  ff 01 00 00 00 bf de
+[12:38:25.162] PACKET[COM10] heartbeat: status=256, uptime=49118
+[12:38:25.212] RX[COM10]  01
+[12:38:25.212] RX[COM10]  0f 00 00 00 c0 42 ff fc 24 00 14 35 ff 9e d4 ff da 00 15 00 20
+[12:38:25.213] PACKET[COM10] sensors: status=3840, uptime=49218, accel=[-0.001952, 4.497408, 2.524424], gyro=[-6.86, -770.63, -680.96], crc=5376
+[12:38:25.213] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:25.337] RX[COM10]  01
+[12:38:25.337] RX[COM10]  0f 00 00 00 c0 a6 ff fc 48 00 14 1c ff 9e 8b ff db 00 13 00 21
+[12:38:25.338] PACKET[COM10] sensors: status=3840, uptime=49318, accel=[-0.001952, 8.994816, 2.512224], gyro=[-6.86, -2078.79, -663.04], crc=4864
+[12:38:25.338] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:25.460] RX[COM10]  01
+[12:38:25.461] RX[COM10]  0b 00 00 00 c1 0a ff fc 3c 00 14 1c ff 9e b0 ff da 00 13 00 22
+[12:38:25.462] PACKET[COM10] sensors: status=2816, uptime=49418, accel=[-0.001952, 7.49568, 2.512224], gyro=[-6.86, -1415.75, -680.96], crc=4864
+[12:38:25.462] BAD_PACKET[COM10] unknown packet ID 0x22; discarded 1 byte
+[12:38:25.522] RX[COM10]  01
+[12:38:25.523] RX[COM10]  0b 00 00 00 c1 6e ff fc 30 00 14 1c ff 9e a3 ff dc 00 0f 00 20
+[12:38:25.524] PACKET[COM10] sensors: status=2816, uptime=49518, accel=[-0.001952, 5.996544, 2.512224], gyro=[-6.86, -1648.71, -645.12], crc=3840
+[12:38:25.524] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:25.647] RX[COM10]  01
+[12:38:25.649] RX[COM10]  0b 00 00 00 c1 d2 ff fc 3c 00 14 29 ff 9e c8 ff da 00 12 00 20
+[12:38:25.650] PACKET[COM10] sensors: status=2816, uptime=49618, accel=[-0.001952, 7.49568, 2.518568], gyro=[-6.86, -985.67, -680.96], crc=4608
+[12:38:25.650] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:25.710] RX[COM21]  03
+[12:38:25.712] RX[COM21]  00 00 00 00 00 00 00 00 00 51 f8 9f 00 00 00 34 0d 66
+[12:38:25.712] PACKET[COM21] camera: fc_status=0, fc_uptime=0, status=0, uptime=5372063, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=3430
+[12:38:25.713] RX[COM10]  01
+[12:38:25.713] RX[COM10]  0f 00 00 00 c2 36 ff fc 48 00 14 29 ff 9e a3 ff d9 00 14 00 21
+[12:38:25.713] PACKET[COM10] sensors: status=3840, uptime=49718, accel=[-0.001952, 8.994816, 2.518568], gyro=[-6.86, -1648.71, -698.88], crc=5120
+[12:38:25.713] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:25.825] RX[COM10]  01
+[12:38:25.826] RX[COM10]  0f 00 00 00 c2 9a ff fc 30 00 14 35 ff 9e a3 ff da 00 12 00 21
+[12:38:25.826] PACKET[COM10] sensors: status=3840, uptime=49818, accel=[-0.001952, 5.996544, 2.524424], gyro=[-6.86, -1648.71, -680.96], crc=4608
+[12:38:25.826] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:25.934] RX[COM10]  01
+[12:38:25.934] RX[COM10]  0f 00 00 00 c2 fe ff fc 55 00 14 35 ff 9e bc ff da 00 12 00 21
+[12:38:25.935] PACKET[COM10] sensors: status=3840, uptime=49918, accel=[-0.001952, 10.61888, 2.524424], gyro=[-6.86, -1200.71, -680.96], crc=4608
+[12:38:25.935] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:26.043] RX[COM10]  01
+[12:38:26.043] RX[COM10]  0f 00 00 00 c3 62 ff fc 3c 00 14 10 ff 9e b0 ff db 00 12 00 21
+[12:38:26.044] PACKET[COM10] sensors: status=3840, uptime=50018, accel=[-0.001952, 7.49568, 2.506368], gyro=[-6.86, -1415.75, -663.04], crc=4608
+[12:38:26.044] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:26.154] RX[COM10]  01
+[12:38:26.155] RX[COM10]  0b 00 00 00 c3 c6 ff fc 48 00 14 35 ff 9e 97 ff db 00 12 00 21 02 10 00 00 00 c3 c6 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 03 f6 14 00 ff 00 00 00 00 c3 c6
+[12:38:26.155] PACKET[COM10] sensors: status=2816, uptime=50118, accel=[-0.001952, 8.994816, 2.524424], gyro=[-6.86, -1863.75, -663.04], crc=4608
+[12:38:26.156] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:26.156] PACKET[COM10] state: status=4096, uptime=50118, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=0, witness_battery_voltage=0, crc=0
+[12:38:26.157] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:26.157] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:26.157] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:26.158] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:26.158] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:26.158] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:26.158] BAD_PACKET[COM10] unknown packet ID 0x43; discarded 1 byte
+[12:38:26.158] BAD_PACKET[COM10] unknown packet ID 0x41; discarded 1 byte
+[12:38:26.213] RX[COM10]  01
+[12:38:26.214] RX[COM10]  0b 00 00 00 c4 2a ff fc 24 00 14 29 ff 9e 5a ff e4 00 03 00 1f
+[12:38:26.215] PACKET[COM10] camera: fc_status=62996, fc_uptime=16711680, status=0, uptime=3284533515, current_sense=[0, 0, 0], iris_battery_voltage=196, crc=11007
+[12:38:26.215] BAD_PACKET[COM10] unknown packet ID 0xfc; discarded 1 byte
+[12:38:26.215] BAD_PACKET[COM10] unknown packet ID 0x24; discarded 1 byte
+[12:38:26.215] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:26.215] BAD_PACKET[COM10] unknown packet ID 0x14; discarded 1 byte
+[12:38:26.216] BAD_PACKET[COM10] unknown packet ID 0x29; discarded 1 byte
+[12:38:26.216] PACKET[COM10] heartbeat: status=40538, uptime=4293132291
+[12:38:26.216] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:26.216] BAD_PACKET[COM10] unknown packet ID 0x1f; discarded 1 byte
+[12:38:26.338] RX[COM10]  01
+[12:38:26.339] RX[COM10]  0b 00 00 00 c4 8e ff fc 30 00 14 29 ff 9e a3 ff d9 00 15 00 21
+[12:38:26.341] PACKET[COM10] sensors: status=2816, uptime=50318, accel=[-0.001952, 5.996544, 2.518568], gyro=[-6.86, -1648.71, -698.88], crc=5376
+[12:38:26.343] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:26.455] RX[COM10]  01
+[12:38:26.456] RX[COM10]  0f 00 00 00 c4 f2 ff fc 55 00 14 41 ff 9e b0 ff d1 00 21 00 21
+[12:38:26.456] PACKET[COM10] sensors: status=3840, uptime=50418, accel=[-0.001952, 10.61888, 2.53028], gyro=[-6.86, -1415.75, -842.24], crc=8448
+[12:38:26.456] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:26.510] RX[COM10]  01
+[12:38:26.511] RX[COM10]  0f 00 00 00 c5 56 ff fc 3c 00 14 29 ff 9e a3 ff de 00 0b 00 20
+[12:38:26.511] PACKET[COM10] sensors: status=3840, uptime=50518, accel=[-0.001952, 7.49568, 2.518568], gyro=[-6.86, -1648.71, -609.28], crc=2816
+[12:38:26.512] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:26.632] RX[COM10]  01
+[12:38:26.636] RX[COM10]  0f 00 00 00 c5 ba ff fc 55 00 14 35 ff 9e 97 ff dc 00 0f 00 20
+[12:38:26.637] PACKET[COM10] sensors: status=3840, uptime=50618, accel=[-0.001952, 10.61888, 2.524424], gyro=[-6.86, -1863.75, -645.12], crc=3840
+[12:38:26.637] BAD_PACKET[COM10] unknown packet ID 0x20; discarded 1 byte
+[12:38:26.695] RX[COM21]  03
+[12:38:26.697] RX[COM21]  00 00 00 00 00 00 00 00 00 51 fc 87 00 00 00 34 0d b0
+[12:38:26.697] PACKET[COM21] camera: fc_status=0, fc_uptime=0, status=0, uptime=5373063, current_sense=[0, 0, 0], iris_battery_voltage=52, crc=3504
+[12:38:26.758] RX[COM10]  01
+[12:38:26.759] RX[COM10]  0f 00 00 00 c6 1e ff fc 30 00 14 4d ff 9e f9 ff da 00 14 00 22
+[12:38:26.760] PACKET[COM10] sensors: status=3840, uptime=50718, accel=[-0.001952, 5.996544, 2.536136], gyro=[-6.86, -107.59, -680.96], crc=5120
+[12:38:26.760] BAD_PACKET[COM10] unknown packet ID 0x22; discarded 1 byte
+[12:38:26.815] RX[COM10]  01
+[12:38:26.816] RX[COM10]  0b 00 00 00 c6 82 ff fc 3c 00 14 1c ff 9e a3 ff db 00 11 00 22
+[12:38:26.816] PACKET[COM10] sensors: status=2816, uptime=50818, accel=[-0.001952, 7.49568, 2.512224], gyro=[-6.86, -1648.71, -663.04], crc=4352
+[12:38:26.816] BAD_PACKET[COM10] unknown packet ID 0x22; discarded 1 byte
+[12:38:26.921] RX[COM10]  01
+[12:38:26.921] RX[COM10]  0b 00 00 00 c6 e6 ff fc 48 00 14 29 ff 9e a3 ff d0 00 27 00 22
+[12:38:26.922] PACKET[COM10] sensors: status=2816, uptime=50918, accel=[-0.001952, 8.994816, 2.518568], gyro=[-6.86, -1648.71, -860.16], crc=9984
+[12:38:26.922] BAD_PACKET[COM10] unknown packet ID 0x22; discarded 1 byte
+[12:38:27.024] RX[COM10]  01
+[12:38:27.025] RX[COM10]  0b 00 00 00 c7 4a ff fc 48 00 14 29 ff 9e e0 ff de 00 0c 00 21
+[12:38:27.025] PACKET[COM10] sensors: status=2816, uptime=51018, accel=[-0.001952, 8.994816, 2.518568], gyro=[-6.86, -555.59, -609.28], crc=3072
+[12:38:27.025] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:27.127] RX[COM10]  01
+[12:38:27.127] RX[COM10]  0f 00 00 00 c7 ae ff fc 55 00 14 35 ff 9e 8b ff da 00 14 00 21 02 10 00 00 00 c7 ae 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[12:38:27.127] PACKET[COM10] sensors: status=3840, uptime=51118, accel=[-0.001952, 10.61888, 2.524424], gyro=[-6.86, -2078.79, -680.96], crc=5120
+[12:38:27.128] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:27.128] RX[COM10]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 41 03 f6 13 f8 ff 01 00 00 00 c7 ae
+[12:38:27.128] PACKET[COM10] state: status=4096, uptime=51118, orientation=[0, 0, 0, 0], position=[0, 0, 0], velocity=[0, 0, 0], latitude=0, longitude=0, gps_altitude=0, barometric_altitude=0, witness_battery_voltage=0, crc=0
+[12:38:27.128] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:27.128] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:27.129] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:27.129] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:27.129] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:27.129] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:27.129] BAD_PACKET[COM10] unknown packet ID 0x43; discarded 1 byte
+[12:38:27.129] BAD_PACKET[COM10] unknown packet ID 0x41; discarded 1 byte
+[12:38:27.233] RX[COM10]  01
+[12:38:27.233] RX[COM10]  0f 00 00 00 c8 12 ff fc 3c 00 14 1c ff 9e a3 ff d9 00 14 00 21
+[12:38:27.234] PACKET[COM10] camera: fc_status=62995, fc_uptime=4177461504, status=0, uptime=3350069519, current_sense=[0, 0, 0], iris_battery_voltage=200, crc=4863
+[12:38:27.234] BAD_PACKET[COM10] unknown packet ID 0xfc; discarded 1 byte
+[12:38:27.234] BAD_PACKET[COM10] unknown packet ID 0x3c; discarded 1 byte
+[12:38:27.234] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:27.234] BAD_PACKET[COM10] unknown packet ID 0x14; discarded 1 byte
+[12:38:27.234] BAD_PACKET[COM10] unknown packet ID 0x1c; discarded 1 byte
+[12:38:27.235] PACKET[COM10] heartbeat: status=40611, uptime=4292411412
+[12:38:27.235] BAD_PACKET[COM10] unknown packet ID 0x00; discarded 1 byte
+[12:38:27.235] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:27.338] RX[COM10]  01
+[12:38:27.339] RX[COM10]  0f 00 00 00 c8 76 ff fc 30 00 14 29 ff 9e b0 ff da 00 12 00 21
+[12:38:27.339] PACKET[COM10] sensors: status=3840, uptime=51318, accel=[-0.001952, 5.996544, 2.518568], gyro=[-6.86, -1415.75, -680.96], crc=4608
+[12:38:27.339] BAD_PACKET[COM10] unknown packet ID 0x21; discarded 1 byte
+[12:38:27.458] RX[COM10]  01
+[12:38:27.460] RX[COM10]  0f 00 00 00 c8 da ff fc 55 00 14 35 ff 9e c8 ff d1 00 27 00 25
+[12:38:27.461] PACKET[COM10] sensors: status=3840, uptime=51418, accel=[-0.001952, 10.61888, 2.524424], gyro=[-6.86, -985.67, -842.24], crc=9984
+[12:38:27.461] BAD_PACKET[COM10] unknown packet ID 0x25; discarded 1 byte

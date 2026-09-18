@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "comms.h"
 #include "driver/spi_master.h"
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_oneshot.h"
@@ -19,7 +20,7 @@ public:
     // Task configuration. kTaskRateHz must divide evenly into 1000 ms.
     static constexpr UBaseType_t kTaskPriority = 4;
     static constexpr std::uint32_t kTaskRateHz = 100;
-    static constexpr std::uint32_t kPacketRateHz = 1;
+    static constexpr std::uint32_t kPacketRateHz = 10;
     static constexpr std::uint32_t kStatePacketRateHz = 1;
     static constexpr std::uint32_t kBatterySampleRateHz = 10;
     static constexpr std::uint32_t kTaskStackSize = 4096;
@@ -33,8 +34,9 @@ public:
     static constexpr std::uint32_t kBatteryDividerHighOhms = 15'000;
     static constexpr std::uint32_t kBatteryDividerLowOhms = 5'000;
     static constexpr std::uint32_t kBatteryAdcSamples = 16;
-    // The 0x02 LoRa packet allocates one byte to FC battery voltage.
-    static constexpr std::uint32_t kBatteryPacketMillivoltsPerCount = 100;
+    // The canonical 0x02 packet stores FC battery voltage in millivolts.
+    static constexpr std::uint32_t kBatteryPacketMillivoltsPerCount =
+        IRIS_FIELD_BATTERY_VOLTAGE_MILLIVOLTS_PER_COUNT;
 
     // LSM6DSV320X SPI and sampling configuration.
     static constexpr int kSpiClockFrequencyHz = 10'000'000;
@@ -126,13 +128,18 @@ private:
     static constexpr std::uint8_t kStatusHighGAccelReady = 1U << 3;
     static constexpr std::uint8_t kStatusMs5607Ready = 1U << 4;
 
-    static constexpr float kLowGAccelSensitivityMg = 0.488F;
-    static constexpr float kHighGAccelSensitivityMg = 10.417F;
-    static constexpr float kGyroSensitivityMdps = 70.0F;
+    static constexpr float kLowGAccelSensitivityMg =
+        static_cast<float>(IRIS_FIELD_LSM6_LOW_ACCEL_MICRO_G_PER_COUNT) /
+        1000.0F;
+    static constexpr float kHighGAccelSensitivityMg =
+        static_cast<float>(IRIS_FIELD_LSM6_HIGH_ACCEL_MICRO_G_PER_COUNT) /
+        1000.0F;
+    static constexpr float kGyroSensitivityMdps = static_cast<float>(
+        IRIS_FIELD_LSM6_GYRO_MILLIDEGREES_PER_SECOND_PER_COUNT);
 
     static void task_entry(void *context);
     static std::int16_t decode_i16(const std::uint8_t *bytes);
-    static std::uint8_t encode_battery_voltage(std::uint32_t millivolts);
+    static std::uint16_t encode_battery_voltage(std::uint32_t millivolts);
     esp_err_t initialize_spi();
     esp_err_t initialize_battery_adc();
     esp_err_t initialize_lsm6dsv320x();

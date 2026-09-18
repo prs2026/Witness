@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as _dt
+import struct
 import queue
 import threading
 import time
@@ -23,86 +24,52 @@ def signed_number(data: bytes) -> int:
     return int.from_bytes(data, byteorder="big", signed=True)
 
 
-def vector(data: bytes, width: int, count: int) -> list[int]:
-    return [number(data[i:i + width]) for i in range(0, width * count, width)]
+def signed_int24(data: bytes) -> int:
+    value = int.from_bytes(data, byteorder="big", signed=False)
+    return value - (1 << 24) if value & (1 << 23) else value
 
 
-def scaled_vector(data: bytes, width: int, count: int, scale: float, digits: int) -> list[float]:
-    return [round(signed_number(data[i:i + width]) * scale, digits)
-            for i in range(0, width * count, width)]
+def float32(data: bytes) -> float:
+    return struct.unpack(">f", data)[0]
 
 
-# LSM6DSV320X sensitivities from the ST datasheet:
-# low-g accelerometer at +/-16 g: 0.488 mg/LSB = 0.000488 g/LSB
-# gyroscope at +/-2000 dps: 70 mdps/LSB = 0.070 dps/LSB
-ACCEL_G_PER_LSB = 0.000488
+def float_vector(data: bytes, count: int) -> list[float]:
+    return [round(float32(data[i:i + 4]), 6) for i in range(0, count * 4, 4)]
+
+
+# comms.h canonical field scales.
+FILTERED_ACCEL_G_PER_COUNT = 0.000040
 GYRO_DPS_PER_LSB = 0.070
+BATTERY_V_PER_COUNT = 0.001
+CURRENT_A_PER_COUNT = 0.1
+GPS_DEGREES_PER_COUNT = 0.0001
+LSM6_TEMPERATURE_OFFSET_C = 25.0
+LSM6_TEMPERATURE_C_PER_COUNT = 1.0 / 256.0
+MS5607_TEMPERATURE_C_PER_COUNT = 0.01
 
 
-def parse_lora(packet_id: int, payload: bytes):
-    if packet_id == 0x01 and len(payload) in (18, 20):
+def parse_packet(packet_id: int, payload: bytes):
+    if packet_id == 0x01 and len(payload) == 21:
         return {"packet": "sensors", "status": number(payload[0:2]), "uptime": number(payload[2:6]),
-                "accel": scaled_vector(payload[6:12], 2, 3, ACCEL_G_PER_LSB, 6),
-                "gyro": scaled_vector(payload[12:18], 2, 3, GYRO_DPS_PER_LSB, 3),
-                "crc": number(payload[18:20]) if len(payload) == 20 else None}
-    if packet_id == 0x02 and len(payload) in (47, 48, 49, 50):
-        # Field order/offsets per comms.h IRIS_PACKET_STATE_* macros:
-        # status(2) uptime(4) orientation(12) position(9) velocity(6)
-        # latitude(3) longitude(3) gps_altitude(4) barometric_altitude(4) crc(2)
-        # Note: there is no "gps_time" field in this packet.
-        result = {"packet": "state", "status": number(payload[0:2]), "uptime": number(payload[2:6]),
-                "orientation": vector(payload[6:18], 3, 4), "position": vector(payload[18:27], 3, 3),
-                "velocity": vector(payload[27:33], 2, 3), "latitude": number(payload[33:36]),
-                "longitude": number(payload[36:39]), "gps_altitude": number(payload[39:43]),
-                "barometric_altitude": number(payload[43:47])}
-        has_battery = len(payload) in (48, 50)
-        result["witness_battery_voltage"] = number(payload[47:48]) if has_battery else None
-        result["crc"] = number(payload[48:50]) if len(payload) == 50 else (
-            number(payload[47:49]) if len(payload) == 49 else None)
-        return result
-    if packet_id == 0x03 and len(payload) in (15, 16, 17, 18):
+                "filtered_accel": [round(signed_int24(payload[i:i + 3]) * FILTERED_ACCEL_G_PER_COUNT, 6)
+                          for i in (6, 9, 12)],
+                "gyro": [round(signed_number(payload[i:i + 2]) * GYRO_DPS_PER_LSB, 3)
+                         for i in (15, 17, 19)]}
+    if packet_id == 0x02 and len(payload) == 62:
+        return {"packet": "state", "status": number(payload[0:2]), "uptime": number(payload[2:6]),
+                "orientation": float_vector(payload[6:22], 4),
+                "position": float_vector(payload[22:34], 3),
+                "velocity": float_vector(payload[34:46], 3),
+                "latitude": round(signed_int24(payload[46:49]) * GPS_DEGREES_PER_COUNT, 4),
+                "longitude": round(signed_int24(payload[49:52]) * GPS_DEGREES_PER_COUNT, 4),
+                "gps_altitude": round(float32(payload[52:56]), 6),
+                "barometric_altitude": round(float32(payload[56:60]), 6),
+                "witness_battery_voltage": round(number(payload[60:62]) * BATTERY_V_PER_COUNT, 3)}
+    if packet_id == 0x03 and len(payload) == 17:
         result = {"packet": "camera", "fc_status": number(payload[0:2]), "fc_uptime": number(payload[2:6]),
                 "status": number(payload[6:8]), "uptime": number(payload[8:12]),
-                "current_sense": vector(payload[12:15], 1, 3)}
-        has_battery = len(payload) in (16, 18)
-        result["iris_battery_voltage"] = number(payload[15:16]) if has_battery else None
-        result["crc"] = number(payload[16:18]) if len(payload) == 18 else (
-            number(payload[15:17]) if len(payload) == 17 else None)
-        return result
-    if packet_id == 0xFF and len(payload) == 6:
-        return {"packet": "heartbeat", "status": number(payload[0:2]), "uptime": number(payload[2:6])}
-    if packet_id == 0x05 and len(payload) in (8, 10):
-        return {"packet": "command", "status": number(payload[0:2]), "uptime": number(payload[2:6]),
-                "command_value": number(payload[6:8]),
-                "crc": number(payload[8:10]) if len(payload) == 10 else None}
-    return None
-
-
-def parse_can(packet_id: int, payload: bytes):
-    """Decode CAN payloads when a serial bridge prefixes them with packet ID."""
-    if packet_id == 0x01 and len(payload) == 18:
-        return {"packet": "sensors", "status": number(payload[0:2]), "uptime": number(payload[2:6]),
-                "accel": scaled_vector(payload[6:12], 2, 3, ACCEL_G_PER_LSB, 6),
-                "gyro": scaled_vector(payload[12:18], 2, 3, GYRO_DPS_PER_LSB, 3)}
-    if packet_id == 0x02 and len(payload) in (60, 62):
-        # Same field order as the LoRa state packet but with the CAN
-        # (uncompressed) component widths from comms.h. Again, no gps_time.
-        result = {"packet": "state", "status": number(payload[0:2]), "uptime": number(payload[2:6]),
-                "orientation": vector(payload[6:22], 4, 4), "position": vector(payload[22:34], 4, 3),
-                "velocity": vector(payload[34:46], 4, 3), "latitude": number(payload[46:49]),
-                "longitude": number(payload[49:52]), "gps_altitude": number(payload[52:56]),
-                "barometric_altitude": number(payload[56:60])}
-        result["witness_battery_voltage"] = number(payload[60:62]) if len(payload) == 62 else None
-        return result
-    if packet_id == 0x03 and len(payload) in (9, 11):
-        result = {"packet": "camera", "status": number(payload[0:2]),
-                "uptime": number(payload[2:6]), "current_sense": vector(payload[6:9], 1, 3)}
-        # CAN camera layouts in older headers stop at current sense; accept
-        # the newer optional two-byte Iris battery field when present.
-        if len(payload) == 11:
-            result["iris_battery_voltage"] = number(payload[9:11])
-        else:
-            result["iris_battery_voltage"] = None
+                "current_sense": [round(payload[i] * CURRENT_A_PER_COUNT, 1) for i in (12, 13, 14)],
+                "iris_battery_voltage": round(number(payload[15:17]) * BATTERY_V_PER_COUNT, 3)}
         return result
     if packet_id == 0xFF and len(payload) == 6:
         return {"packet": "heartbeat", "status": number(payload[0:2]), "uptime": number(payload[2:6])}
@@ -113,13 +80,12 @@ def parse_can(packet_id: int, payload: bytes):
 
 
 class PacketDecoder:
-    """Decode ID-prefixed serial frames; unknown bytes are discarded."""
-    lengths = {0x01: (20, 18), 0x02: (50, 60), 0x03: (18, 15), 0xFF: (6, 6), 0x05: (10, 8)}
-    no_crc_lengths = {0x01: (18,), 0x02: (48, 47), 0x03: (16, 15), 0xFF: (6,), 0x05: (8,)}
+    """Decode the single ID-prefixed serial protocol from comms.h."""
+    payload_lengths = {0x01: 21, 0x02: 62, 0x03: 17, 0xFF: 6, 0x05: 8}
 
-    def __init__(self, on_lora, on_can, on_error=None):
+    def __init__(self, on_packet, on_error=None):
         self.buffer = bytearray()
-        self.on_lora, self.on_can = on_lora, on_can
+        self.on_packet = on_packet
         self.on_error = on_error or (lambda _message: None)
 
     def feed(self, data: bytes):
@@ -127,53 +93,19 @@ class PacketDecoder:
         while self.buffer:
             try:
                 packet_id = self.buffer[0]
-                if packet_id not in self.lengths:
+                if packet_id not in self.payload_lengths:
                     self.on_error(f"unknown packet ID 0x{packet_id:02x}; discarded 1 byte")
                     del self.buffer[0]
                     continue
 
-                lora_len, can_len = self.lengths[packet_id]
-                no_crc_candidates = self.no_crc_lengths[packet_id]
-                # The observed serial bridge omits application CRC bytes.
-                # Decode that form whenever the following byte is another
-                # packet ID, or when exactly one complete no-CRC frame exists.
-                for no_crc_len in no_crc_candidates:
-                    if len(self.buffer) < 1 + no_crc_len:
-                        continue
-                    following = self.buffer[1 + no_crc_len] if len(self.buffer) > 1 + no_crc_len else None
-                    if following in self.lengths or len(self.buffer) == 1 + no_crc_len:
-                        frame = bytes(self.buffer[1:1 + no_crc_len])
-                        del self.buffer[:1 + no_crc_len]
-                        parsed = parse_lora(packet_id, frame)
-                        if parsed:
-                            self.on_lora(parsed)
-                            can_parsed = parse_can(packet_id, frame)
-                            if can_parsed:
-                                self.on_can(can_parsed)
-                        break
-                else:
-                    no_crc_len = None
-                if no_crc_len is not None:
-                    continue
-
-                # Accept an ID-prefixed CAN state payload for debugging.
-                if packet_id == 0x02 and len(self.buffer) >= 1 + can_len:
-                    frame = bytes(self.buffer[1:1 + can_len])
-                    del self.buffer[:1 + can_len]
-                    parsed = parse_can(packet_id, frame)
-                    if parsed:
-                        self.on_can(parsed)
-                    continue
-                if len(self.buffer) < 1 + lora_len:
+                payload_length = self.payload_lengths[packet_id]
+                if len(self.buffer) < 1 + payload_length:
                     return
-                frame = bytes(self.buffer[1:1 + lora_len])
-                del self.buffer[:1 + lora_len]
-                parsed = parse_lora(packet_id, frame)
+                frame = bytes(self.buffer[1:1 + payload_length])
+                del self.buffer[:1 + payload_length]
+                parsed = parse_packet(packet_id, frame)
                 if parsed:
-                    self.on_lora(parsed)
-                    can_parsed = parse_can(packet_id, frame[:-2]) if packet_id != 0xFF else parse_can(packet_id, frame)
-                    if can_parsed:
-                        self.on_can(can_parsed)
+                    self.on_packet(parsed)
             except Exception as exc:
                 bad = bytes(self.buffer[: min(len(self.buffer), 32)])
                 self.on_error(f"decoder rejected packet: {exc}; buffer={bad.hex(' ')}")
@@ -186,10 +118,10 @@ class SerialMonitor(tk.Tk):
         super().__init__()
         self.title("Horizon Communications Monitor")
         self.geometry("920x720")
-        self.serial = None
+        self.serials = {}
         self.stop_event = threading.Event()
         self.events = queue.Queue()
-        self.log_file = None
+        self.log_files = {}
         self.debug_log_file = None
         self.values = {}
         self.check_vars = {}
@@ -207,9 +139,12 @@ class SerialMonitor(tk.Tk):
     def build_ui(self):
         controls = ttk.Frame(self, padding=8)
         controls.pack(fill="x")
-        ttk.Label(controls, text="Serial port:").pack(side="left")
-        self.port_combo = ttk.Combobox(controls, width=18, state="readonly")
-        self.port_combo.pack(side="left", padx=(6, 4))
+        ttk.Label(controls, text="Port A:").pack(side="left")
+        self.port_a_combo = ttk.Combobox(controls, width=13, state="readonly")
+        self.port_a_combo.pack(side="left", padx=(4, 8))
+        ttk.Label(controls, text="Port B:").pack(side="left")
+        self.port_b_combo = ttk.Combobox(controls, width=13, state="readonly")
+        self.port_b_combo.pack(side="left", padx=(4, 4))
         ttk.Button(controls, text="Refresh", command=self.refresh_ports).pack(side="left")
         ttk.Label(controls, text="Baud:").pack(side="left", padx=(14, 4))
         self.baud_combo = ttk.Combobox(controls, width=9, values=("115200", "57600", "38400", "9600"))
@@ -217,22 +152,20 @@ class SerialMonitor(tk.Tk):
         self.baud_combo.pack(side="left")
         self.connect_button = ttk.Button(controls, text="Connect", command=self.toggle_connection)
         self.connect_button.pack(side="left", padx=(14, 0))
-        self.status_label = ttk.Label(controls, text="Disconnected")
+        self.status_label = ttk.Label(controls, text="Disconnected", width=34, anchor="w")
         self.status_label.pack(side="left", padx=12)
         main_pane = ttk.PanedWindow(self, orient=tk.VERTICAL)
         main_pane.pack(fill="both", expand=True, padx=8, pady=(0, 8))
         notebook = ttk.Notebook(main_pane)
-        self.lora_frame, self.can_frame = ttk.Frame(notebook, padding=8), ttk.Frame(notebook, padding=8)
-        notebook.add(self.lora_frame, text="LoRa telemetry")
-        notebook.add(self.can_frame, text="CAN debug")
+        self.telemetry_frame = ttk.Frame(notebook, padding=8)
+        notebook.add(self.telemetry_frame, text="Telemetry")
         self.graph_frame = ttk.Frame(notebook, padding=8)
         notebook.add(self.graph_frame, text="Graphs")
-        self.make_sections(self.lora_frame, "lora")
-        self.make_sections(self.can_frame, "can")
+        self.make_sections(self.telemetry_frame, "packet")
         graph_controls = ttk.Frame(self.graph_frame)
         graph_controls.pack(fill="x", pady=(0, 5))
         ttk.Button(graph_controls, text="Clear graph history", command=self.clear_history).pack(side="left")
-        ttk.Label(graph_controls, text="Select fields using the checkboxes on the telemetry tabs.").pack(side="left", padx=10)
+        ttk.Label(graph_controls, text="Select fields using the checkboxes on the Telemetry tab.").pack(side="left", padx=10)
         self.graph_canvas = tk.Canvas(self.graph_frame, background="white", height=500,
                                       highlightthickness=1, highlightbackground="#b0b0b0")
         self.graph_canvas.pack(fill="both", expand=True)
@@ -240,7 +173,7 @@ class SerialMonitor(tk.Tk):
 
         console_frame = ttk.LabelFrame(main_pane, text="Console", padding=5)
         self.console = scrolledtext.ScrolledText(
-            console_frame, height=9, wrap="none", state="disabled",
+            console_frame, height=9, wrap="word", state="disabled",
             font=("Consolas", 9)
         )
         self.console.pack(fill="both", expand=True)
@@ -252,41 +185,31 @@ class SerialMonitor(tk.Tk):
         specs = {
             "sensors": [
                 ("status", "Status"), ("uptime", "Uptime"),
-                ("accel", "Accel [g; x, y, z]"), ("gyro", "Gyro [dps; x, y, z]"),
-                ("crc", "CRC"),
+                ("filtered_accel", "Filtered accel [g; x, y, z]"),
+                ("gyro", "Gyro [dps; x, y, z]"),
             ],
         "state": [
                 ("status", "Status"), ("uptime", "Uptime"),
-                ("orientation", "Orientation [w, x, y, z]"),
+                ("orientation", "Orientation [x, y, z, w]"),
                 ("position", "Position [x, y, z]"),
                 ("velocity", "Velocity [x, y, z]"),
                 ("latitude", "Latitude"), ("longitude", "Longitude"),
                 ("gps_altitude", "GPS altitude"),
                 ("barometric_altitude", "Barometric altitude (MS5607)"),
-                ("witness_battery_voltage", "Witness battery voltage"),
-                ("crc", "CRC"),
+                ("witness_battery_voltage", "Witness battery voltage [V]"),
             ],
             "camera": [
                 ("fc_status", "FC status"), ("fc_uptime", "FC uptime"),
                 ("status", "Camera status"), ("uptime", "Camera uptime"),
                 ("current_sense", "Current [ch1, ch2, ch3]"),
-                ("iris_battery_voltage", "Iris battery voltage"), ("crc", "CRC"),
+                ("iris_battery_voltage", "Iris battery voltage [V]"),
             ],
             "heartbeat": [("status", "Status"), ("uptime", "Uptime")],
             "command": [
                 ("status", "Status"), ("uptime", "Uptime"),
-                ("command_value", "Command value"), ("crc", "CRC"),
+                ("command_value", "Command value"),
             ],
         }
-        # CAN has the same logical battery fields when the extended payload
-        # widths from comms.h are used.
-        if prefix == "can":
-            specs["camera"] = [
-                ("status", "Camera status"), ("uptime", "Camera uptime"),
-                ("current_sense", "Current [ch1, ch2, ch3]"),
-                ("iris_battery_voltage", "Iris battery voltage"),
-            ]
-
         for row, (packet, fields) in enumerate(specs.items()):
             section = ttk.LabelFrame(parent, text=packet.capitalize(), padding=6)
             section.grid(row=row // 2, column=row % 2, sticky="nsew", padx=5, pady=5)
@@ -307,7 +230,11 @@ class SerialMonitor(tk.Tk):
                 row_frame.pack(fill="x", anchor="w", pady=(0, 3))
                 ttk.Checkbutton(row_frame, variable=self.check_vars[key]).pack(side="left")
                 ttk.Label(row_frame, text=label + ":").pack(side="left")
-                ttk.Label(section, textvariable=self.values[key]).pack(anchor="w", padx=(30, 0))
+                # Keep sections dimensionally stable as values change; long
+                # vectors and debug values wrap inside this fixed area.
+                ttk.Label(section, textvariable=self.values[key], width=32,
+                          wraplength=275, justify="left", anchor="w").pack(
+                              anchor="w", padx=(30, 0))
 
     def refresh_ports(self):
         try:
@@ -315,52 +242,64 @@ class SerialMonitor(tk.Tk):
             ports = [p.device for p in list_ports.comports()]
         except ImportError:
             ports = []
-        self.port_combo["values"] = ports
-        if ports and not self.port_combo.get():
-            self.port_combo.set(ports[0])
+        for combo in (self.port_a_combo, self.port_b_combo):
+            combo["values"] = ports
+        if ports and not self.port_a_combo.get():
+            self.port_a_combo.set(ports[0])
+        if len(ports) > 1 and not self.port_b_combo.get():
+            self.port_b_combo.set(ports[1])
 
     def toggle_connection(self):
-        self.disconnect() if self.serial is not None else self.connect()
+        self.disconnect() if self.serials else self.connect()
 
     def connect(self):
-        port = self.port_combo.get()
-        if not port:
-            messagebox.showerror("Serial monitor", "Select a serial port first.")
+        ports = [port for port in (self.port_a_combo.get(), self.port_b_combo.get()) if port]
+        if not ports:
+            messagebox.showerror("Serial monitor", "Select at least one serial port first.")
+            return
+        if len(set(ports)) != len(ports):
+            messagebox.showerror("Serial monitor", "Port A and Port B must be different.")
             return
         try:
             import serial
-            self.serial = serial.Serial(port, int(self.baud_combo.get()), timeout=0.2)
         except ImportError:
             messagebox.showerror("Serial monitor", "pyserial is required: pip install pyserial")
             return
-        except Exception as exc:
-            messagebox.showerror("Serial monitor", f"Could not open {port}: {exc}")
-            return
         LOG_DIR.mkdir(parents=True, exist_ok=True)
         stamp = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.log_file = (LOG_DIR / f"serial_{stamp}.bin").open("ab")
         self.debug_log_file = (LOG_DIR / f"debug_{stamp}.log").open("a", encoding="utf-8")
         self.stop_event.clear()
-        threading.Thread(target=self.read_serial, daemon=True).start()
+        try:
+            for port in ports:
+                serial_port = serial.Serial(port, int(self.baud_combo.get()), timeout=0.2)
+                self.serials[port] = serial_port
+                safe_port = "".join(char if char.isalnum() else "_" for char in port)
+                self.log_files[port] = (LOG_DIR / f"serial_{safe_port}_{stamp}.bin").open("ab")
+                threading.Thread(target=self.read_serial, args=(port, serial_port), daemon=True).start()
+        except Exception as exc:
+            self.disconnect()
+            messagebox.showerror("Serial monitor", f"Could not open serial port: {exc}")
+            return
         self.connect_button.configure(text="Disconnect")
-        self.status_label.configure(text=f"Connected; logging {self.log_file.name}")
+        self.status_label.configure(text=f"Connected: {', '.join(ports)}")
 
-    def read_serial(self):
+    def read_serial(self, port_name, serial_port):
         decoder = PacketDecoder(
-            lambda p: self.events.put(("lora", p)),
-            lambda p: self.events.put(("can", p)),
-            lambda message: self.events.put(("decoder_error", message)),
+            lambda p: self.events.put(("packet", (port_name, p))),
+            lambda message: self.events.put(("decoder_error", (port_name, message))),
         )
-        while not self.stop_event.is_set() and self.serial is not None:
+        while not self.stop_event.is_set() and self.serials.get(port_name) is serial_port:
             try:
-                data = self.serial.read(self.serial.in_waiting or 1)
+                data = serial_port.read(serial_port.in_waiting or 1)
                 if data:
-                    self.log_file.write(data)
-                    self.log_file.flush()
-                    self.events.put(("bytes", bytes(data)))
+                    log_file = self.log_files.get(port_name)
+                    if log_file is not None:
+                        log_file.write(data)
+                        log_file.flush()
+                    self.events.put(("bytes", (port_name, bytes(data))))
                     decoder.feed(data)
             except Exception as exc:
-                self.events.put(("error", str(exc)))
+                self.events.put(("error", (port_name, str(exc))))
                 break
 
     def process_events(self):
@@ -368,16 +307,19 @@ class SerialMonitor(tk.Tk):
             try:
                 kind, payload = self.events.get_nowait()
                 if kind == "error":
-                    self.status_label.configure(text=f"Serial error: {payload}")
-                    self.console_write(f"ERROR {payload}")
-                    self.disconnect()
+                    port_name, message = payload
+                    self.status_label.configure(text=f"Serial error on {port_name}: {message}")
+                    self.console_write(f"ERROR[{port_name}] {message}")
                 elif kind == "decoder_error":
-                    self.console_write(f"BAD_PACKET {payload}")
+                    port_name, message = payload
+                    self.console_write(f"BAD_PACKET[{port_name}] {message}")
                 elif kind == "bytes":
-                    self.console_write(f"RX  {payload.hex(' ')}")
+                    port_name, data = payload
+                    self.console_write(f"RX[{port_name}]  {data.hex(' ')}")
                 else:
-                    self.update_values(kind, payload)
-                    self.console_write(f"{kind.upper():4} {self.format_packet(payload)}")
+                    port_name, packet = payload
+                    self.update_values("packet", packet)
+                    self.console_write(f"PACKET[{port_name}] {self.format_packet(packet)}")
             except queue.Empty:
                 break
             except Exception as exc:
@@ -523,15 +465,18 @@ class SerialMonitor(tk.Tk):
 
     def disconnect(self):
         self.stop_event.set()
-        if self.serial is not None:
+        for serial_port in self.serials.values():
             try:
-                self.serial.close()
+                serial_port.close()
             except Exception:
                 pass
-        self.serial = None
-        if self.log_file is not None:
-            self.log_file.close()
-            self.log_file = None
+        self.serials.clear()
+        for log_file in self.log_files.values():
+            try:
+                log_file.close()
+            except Exception:
+                pass
+        self.log_files.clear()
         if self.debug_log_file is not None:
             self.debug_log_file.close()
             self.debug_log_file = None

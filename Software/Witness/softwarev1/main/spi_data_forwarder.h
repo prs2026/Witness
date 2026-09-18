@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "comms.h"
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
@@ -36,6 +37,8 @@ private:
     static constexpr std::size_t kQueueDepth = 16;
     static constexpr std::size_t kMinimumPayloadSize = 6;
     static constexpr std::size_t kMaximumPayloadSize = 64;
+    static_assert(IRIS_PACKET_STATE_DATA_LENGTH <= kMaximumPayloadSize,
+                  "canonical packets must fit the forwarding queue");
 
     struct Packet {
         std::uint8_t packet_id;

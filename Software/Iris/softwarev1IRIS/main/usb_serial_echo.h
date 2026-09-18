@@ -41,7 +41,7 @@ private:
     esp_err_t set_led(bool on);
     void poll_heartbeat(std::int64_t now_us);
     void poll_current_monitor(std::int64_t now_us);
-    void send_current_report(std::int64_t now_us);
+    void send_camera_report(std::int64_t now_us);
     void write_packet(const std::uint8_t *data, std::size_t length);
 
     Mcp23008 &gpio_expander_;

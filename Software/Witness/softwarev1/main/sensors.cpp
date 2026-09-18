@@ -1,5 +1,6 @@
 #include "sensors.h"
 
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -17,8 +18,13 @@ namespace {
 constexpr char kLogTag[] = "sensors";
 
 static_assert(IRIS_PACKET_STATE_BATTERY_VOLTAGE_LENGTH ==
-                  sizeof(std::uint8_t),
-              "0x02 battery encoder requires a one-byte field");
+                  sizeof(std::uint16_t),
+              "0x02 battery encoder requires a two-byte field");
+static_assert(IRIS_PACKET_SENSORS_ACCEL_COMPONENT_LENGTH == 3U,
+              "filtered acceleration encoder requires a three-byte field");
+static_assert(Sensors::kBatteryPacketMillivoltsPerCount ==
+                  IRIS_FIELD_BATTERY_VOLTAGE_MILLIVOLTS_PER_COUNT,
+              "battery telemetry scale must match the comms workbook");
 
 void write_u16_be(std::uint8_t *destination, const std::uint16_t value)
 {
@@ -29,6 +35,32 @@ void write_u16_be(std::uint8_t *destination, const std::uint16_t value)
 void write_i16_be(std::uint8_t *destination, const std::int16_t value)
 {
     write_u16_be(destination, static_cast<std::uint16_t>(value));
+}
+
+void write_i24_be(std::uint8_t *destination, const std::int32_t value)
+{
+    const std::uint32_t bits = static_cast<std::uint32_t>(value);
+    destination[0] = static_cast<std::uint8_t>(bits >> 16);
+    destination[1] = static_cast<std::uint8_t>(bits >> 8);
+    destination[2] = static_cast<std::uint8_t>(bits);
+}
+
+std::int32_t encode_filtered_acceleration(const float acceleration_mg)
+{
+    constexpr std::int32_t kMinimumInt24 = -8'388'608;
+    constexpr std::int32_t kMaximumInt24 = 8'388'607;
+    const float acceleration_micro_g = acceleration_mg * 1000.0F;
+    const long rounded = std::lround(
+        acceleration_micro_g /
+        static_cast<float>(IRIS_FIELD_FILTERED_ACCEL_MICRO_G_PER_COUNT));
+
+    if (rounded < kMinimumInt24) {
+        return kMinimumInt24;
+    }
+    if (rounded > kMaximumInt24) {
+        return kMaximumInt24;
+    }
+    return static_cast<std::int32_t>(rounded);
 }
 
 void write_u32_be(std::uint8_t *destination, const std::uint32_t value)
@@ -413,21 +445,22 @@ esp_err_t Sensors::queue_sensor_packet()
     // matching the existing heartbeat packet convention.
     payload[IRIS_PACKET_SENSORS_STATUS_OFFSET] = status;
 
-    const std::uint32_t uptime_seconds =
-        static_cast<std::uint32_t>(esp_timer_get_time() / 1000000ULL);
+    const std::uint32_t uptime_milliseconds =
+        static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
     write_u32_be(
-        &payload[IRIS_PACKET_SENSORS_UPTIME_OFFSET], uptime_seconds);
+        &payload[IRIS_PACKET_SENSORS_UPTIME_OFFSET], uptime_milliseconds);
 
     // The estimator does not provide filtered acceleration yet, so the packet's
     // filtered-acceleration slots carry the latest low-g raw samples.
     for (std::size_t axis = 0; axis < IRIS_PACKET_VECTOR_COMPONENTS; ++axis) {
-        write_i16_be(
+        write_i24_be(
             &payload[IRIS_PACKET_SENSORS_ACCEL_OFFSET +
-                     axis * IRIS_LORA_FILTERED_ACCEL_COMPONENT_LENGTH],
-            working_sample_.low_g_accel_raw[axis]);
+                     axis * IRIS_PACKET_SENSORS_ACCEL_COMPONENT_LENGTH],
+            encode_filtered_acceleration(
+                working_sample_.low_g_accel_mg[axis]));
         write_i16_be(
             &payload[IRIS_PACKET_SENSORS_GYRO_OFFSET +
-                     axis * IRIS_LORA_GYRO_COMPONENT_LENGTH],
+                     axis * IRIS_PACKET_SENSORS_GYRO_COMPONENT_LENGTH],
             working_sample_.gyro_raw[axis]);
     }
 
@@ -442,28 +475,30 @@ esp_err_t Sensors::queue_state_packet()
         payload[IRIS_PACKET_STATE_STATUS_OFFSET] |= kStatusMs5607Ready;
     }
 
-    const std::uint32_t uptime_seconds =
-        static_cast<std::uint32_t>(esp_timer_get_time() / 1000000ULL);
-    write_u32_be(&payload[IRIS_PACKET_STATE_UPTIME_OFFSET], uptime_seconds);
+    const std::uint32_t uptime_milliseconds =
+        static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
+    write_u32_be(
+        &payload[IRIS_PACKET_STATE_UPTIME_OFFSET], uptime_milliseconds);
     write_float_be(
         &payload[IRIS_PACKET_STATE_BAROMETRIC_ALTITUDE_OFFSET],
         working_sample_.barometric_altitude_meters);
-    payload[IRIS_PACKET_STATE_BATTERY_VOLTAGE_OFFSET] =
-        encode_battery_voltage(working_sample_.battery_voltage_mv);
+    write_u16_be(
+        &payload[IRIS_PACKET_STATE_BATTERY_VOLTAGE_OFFSET],
+        encode_battery_voltage(working_sample_.battery_voltage_mv));
 
     return data_forwarder_.queue_packet(
         IRIS_PACKET_ID_STATE, payload, sizeof(payload));
 }
 
-std::uint8_t Sensors::encode_battery_voltage(const std::uint32_t millivolts)
+std::uint16_t Sensors::encode_battery_voltage(const std::uint32_t millivolts)
 {
     const std::uint32_t rounded_counts =
         (millivolts + (kBatteryPacketMillivoltsPerCount / 2U)) /
         kBatteryPacketMillivoltsPerCount;
     constexpr std::uint32_t kMaximumEncodedVoltage =
-        std::numeric_limits<std::uint8_t>::max();
+        std::numeric_limits<std::uint16_t>::max();
 
-    return static_cast<std::uint8_t>(
+    return static_cast<std::uint16_t>(
         rounded_counts > kMaximumEncodedVoltage
             ? kMaximumEncodedVoltage
             : rounded_counts);

@@ -20,13 +20,19 @@
 namespace {
 
 constexpr char kLogTag[] = "serial_command";
+constexpr std::uint8_t kCurrentMonitorErrorFlag = 0x01U;
+constexpr std::uint8_t kBatteryMonitorErrorFlag = 0x02U;
+constexpr std::uint32_t kMicroampsPerMilliamp = 1000U;
 
-static_assert(IRIS_PACKET_CAMERA_FRAME_LENGTH == 19U);
+static_assert(IRIS_PACKET_CAMERA_FRAME_LENGTH == 18U);
 static_assert(
     IRIS_PACKET_CAMERA_BATTERY_VOLTAGE_OFFSET +
         IRIS_PACKET_CAMERA_BATTERY_VOLTAGE_LENGTH ==
     IRIS_PACKET_CAMERA_DATA_LENGTH);
-static_assert(IRIS_PACKET_CAMERA_BATTERY_VOLTAGE_LENGTH == 1U);
+static_assert(IRIS_PACKET_CAMERA_BATTERY_VOLTAGE_LENGTH == 2U);
+static_assert(IRIS_PACKET_CAMERA_CURRENT_SENSE_COMPONENT_LENGTH == 1U);
+static_assert(IRIS_FIELD_BATTERY_VOLTAGE_MILLIVOLTS_PER_COUNT > 0U);
+static_assert(IRIS_FIELD_CURRENT_MILLIAMPS_PER_COUNT > 0U);
 
 void store_u16_be(std::uint8_t *destination, const std::uint16_t value)
 {
@@ -40,21 +46,6 @@ void store_u32_be(std::uint8_t *destination, const std::uint32_t value)
     destination[1] = static_cast<std::uint8_t>(value >> 16U);
     destination[2] = static_cast<std::uint8_t>(value >> 8U);
     destination[3] = static_cast<std::uint8_t>(value);
-}
-
-std::uint16_t packet_crc16(const std::uint8_t *data, const std::size_t length)
-{
-    std::uint16_t crc = IRIS_PACKET_CRC_INITIAL_VALUE;
-    for (std::size_t index = 0; index < length; ++index) {
-        crc ^= static_cast<std::uint16_t>(data[index]) << 8U;
-        for (unsigned bit = 0; bit < 8; ++bit) {
-            crc = (crc & 0x8000U) != 0
-                ? static_cast<std::uint16_t>((crc << 1U) ^
-                                             IRIS_PACKET_CRC_POLYNOMIAL)
-                : static_cast<std::uint16_t>(crc << 1U);
-        }
-    }
-    return crc;
 }
 
 std::size_t normalize_command(char *command, const std::size_t length)
@@ -385,7 +376,7 @@ void UsbSerialEcho::poll_current_monitor(const std::int64_t now_us)
     }
 
     if (now_us >= next_current_report_us_) {
-        send_current_report(now_us);
+        send_camera_report(now_us);
         peak_current_microamps_.fill(0);
         valid_current_samples_ = 0;
         current_sample_error_ = false;
@@ -395,7 +386,7 @@ void UsbSerialEcho::poll_current_monitor(const std::int64_t now_us)
     }
 }
 
-void UsbSerialEcho::send_current_report(const std::int64_t now_us)
+void UsbSerialEcho::send_camera_report(const std::int64_t now_us)
 {
     std::array<std::uint8_t, IRIS_PACKET_CAMERA_FRAME_LENGTH> packet{};
     packet[0] = IRIS_PACKET_ID_CAMERA;
@@ -405,19 +396,20 @@ void UsbSerialEcho::send_current_report(const std::int64_t now_us)
     store_u16_be(data + IRIS_PACKET_CAMERA_FC_STATUS_OFFSET, 0);
     store_u32_be(data + IRIS_PACKET_CAMERA_FC_UPTIME_OFFSET, 0);
 
-    std::uint16_t status = 0;
+    std::uint8_t status_flags = 0;
     if (current_sample_error_ || valid_current_samples_ == 0) {
-        status |= IRIS_PACKET_CAMERA_STATUS_CURRENT_MONITOR_ERROR;
+        status_flags |= kCurrentMonitorErrorFlag;
     }
     if (!battery_voltage_valid_) {
-        status |= IRIS_PACKET_CAMERA_STATUS_BATTERY_MONITOR_ERROR;
+        status_flags |= kBatteryMonitorErrorFlag;
     }
-    store_u16_be(data + IRIS_PACKET_CAMERA_STATUS_OFFSET, status);
+    data[IRIS_PACKET_CAMERA_STATUS_OFFSET] = status_flags;
+    data[IRIS_PACKET_CAMERA_STATUS_OFFSET + 1U] = 0;
     store_u32_be(data + IRIS_PACKET_CAMERA_UPTIME_OFFSET,
                  static_cast<std::uint32_t>(now_us / 1000));
 
     constexpr std::uint32_t kMicroampsPerCurrentCount =
-        IRIS_LORA_CURRENT_SENSE_MILLIAMPS_PER_COUNT * 1000U;
+        IRIS_FIELD_CURRENT_MILLIAMPS_PER_COUNT * kMicroampsPerMilliamp;
     for (std::size_t channel = 0;
          channel < IRIS_PACKET_CAMERA_CURRENT_CHANNELS;
          ++channel) {
@@ -432,16 +424,16 @@ void UsbSerialEcho::send_current_report(const std::int64_t now_us)
 
     const std::uint32_t rounded_battery_counts =
         (battery_voltage_millivolts_ +
-         IRIS_LORA_BATTERY_VOLTAGE_MILLIVOLTS_PER_COUNT / 2U) /
-        IRIS_LORA_BATTERY_VOLTAGE_MILLIVOLTS_PER_COUNT;
-    data[IRIS_PACKET_CAMERA_BATTERY_VOLTAGE_OFFSET] =
-        static_cast<std::uint8_t>(std::min<std::uint32_t>(
+         IRIS_FIELD_BATTERY_VOLTAGE_MILLIVOLTS_PER_COUNT / 2U) /
+        IRIS_FIELD_BATTERY_VOLTAGE_MILLIVOLTS_PER_COUNT;
+    const std::uint16_t encoded_battery_voltage =
+        static_cast<std::uint16_t>(std::min<std::uint32_t>(
             rounded_battery_counts,
-            std::numeric_limits<std::uint8_t>::max()));
+            std::numeric_limits<std::uint16_t>::max()));
+    store_u16_be(
+        data + IRIS_PACKET_CAMERA_BATTERY_VOLTAGE_OFFSET,
+        encoded_battery_voltage);
 
-    const std::uint16_t crc = packet_crc16(
-        packet.data(), IRIS_PACKET_ID_LENGTH + IRIS_PACKET_CAMERA_DATA_LENGTH);
-    store_u16_be(data + IRIS_PACKET_CAMERA_CRC_OFFSET, crc);
     write_packet(packet.data(), packet.size());
 }
 
