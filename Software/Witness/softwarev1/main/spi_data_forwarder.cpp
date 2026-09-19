@@ -109,19 +109,23 @@ void SpiDataForwarder::spi_task_entry(void *context)
 
 void SpiDataForwarder::send_spi_packet(const Packet &packet)
 {
-    // TODO: Send packet.packet_id followed by packet.payload_length raw payload
-    // bytes through the SPI peripheral. Commands are intentionally consumed by
-    // the SPI task even though hardware transmission is not implemented yet.
+    // TODO: Send packet.packet_id, packet.payload_length raw payload bytes, and
+    // IRIS_PACKET_EOF_VALUE through the SPI peripheral. Commands are consumed
+    // by the SPI task even though hardware transmission is not implemented yet.
     (void)packet;
 }
 
 void SpiDataForwarder::forward_packet(const Packet &packet)
 {
-    std::uint8_t frame[1 + kMaximumPayloadSize];
+    std::uint8_t frame[
+        IRIS_PACKET_ID_LENGTH + kMaximumPayloadSize + IRIS_PACKET_EOF_LENGTH];
     frame[0] = packet.packet_id;
     std::memcpy(&frame[1], packet.payload, packet.payload_length);
+    frame[IRIS_PACKET_ID_LENGTH + packet.payload_length] =
+        IRIS_PACKET_EOF_VALUE;
 
-    const std::size_t frame_length = 1 + packet.payload_length;
+    const std::size_t frame_length =
+        IRIS_PACKET_ID_LENGTH + packet.payload_length + IRIS_PACKET_EOF_LENGTH;
     std::size_t forwarded = 0;
     while (forwarded < frame_length) {
         const int bytes_written = usb_serial_jtag_write_bytes(

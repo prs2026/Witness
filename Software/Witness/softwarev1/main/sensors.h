@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 
@@ -14,6 +15,7 @@
 #include "ms5607.h"
 
 class SpiDataForwarder;
+class WitnessStatus;
 
 class Sensors final {
 public:
@@ -22,6 +24,7 @@ public:
     static constexpr std::uint32_t kTaskRateHz = 100;
     static constexpr std::uint32_t kPacketRateHz = 10;
     static constexpr std::uint32_t kStatePacketRateHz = 1;
+    static constexpr std::uint32_t kDebugPacketRateHz = 10;
     static constexpr std::uint32_t kBatterySampleRateHz = 10;
     static constexpr std::uint32_t kTaskStackSize = 4096;
 
@@ -70,13 +73,16 @@ public:
         bool ms5607_ready = false;
     };
 
-    explicit Sensors(SpiDataForwarder &data_forwarder);
+    Sensors(
+        SpiDataForwarder &data_forwarder,
+        WitnessStatus &witness_status);
 
     Sensors(const Sensors &) = delete;
     Sensors &operator=(const Sensors &) = delete;
 
     esp_err_t start();
     esp_err_t latest_sample(Sample &sample, TickType_t timeout = 0) const;
+    esp_err_t handle_command(std::uint16_t command);
 
 private:
     static_assert(kTaskRateHz > 0 && (1000U % kTaskRateHz) == 0,
@@ -87,6 +93,10 @@ private:
         kStatePacketRateHz > 0 && (1000U % kStatePacketRateHz) == 0,
         "State packet rate must divide evenly into 1000 ms");
     static_assert(
+        kDebugPacketRateHz > 0 &&
+            (kTaskRateHz % kDebugPacketRateHz) == 0,
+        "Debug packet rate must be an integer divisor of the sensor rate");
+    static_assert(
         kBatterySampleRateHz > 0 &&
             (kTaskRateHz % kBatterySampleRateHz) == 0,
         "Battery sample rate must be an integer divisor of the sensor rate");
@@ -96,6 +106,8 @@ private:
         pdMS_TO_TICKS(1000U / kPacketRateHz);
     static constexpr TickType_t kStatePacketPeriod =
         pdMS_TO_TICKS(1000U / kStatePacketRateHz);
+    static constexpr TickType_t kDebugPacketPeriod =
+        pdMS_TO_TICKS(1000U / kDebugPacketRateHz);
     static constexpr std::uint32_t kBatterySampleDivider =
         kTaskRateHz / kBatterySampleRateHz;
     static constexpr spi_host_device_t kSpiHost = SPI3_HOST;
@@ -122,11 +134,12 @@ private:
     static constexpr std::uint8_t kCtrl3Configuration = 0x44; // BDU + IF_INC
     static constexpr std::uint8_t kHighGRegisterOutputEnable = 0x80;
 
+    // LSM6DSV320X STATUS_REG bits. These are sensor-register bits, not the
+    // application-level Witness status byte defined in comms.h.
     static constexpr std::uint8_t kStatusLowGAccelReady = 1U << 0;
     static constexpr std::uint8_t kStatusGyroReady = 1U << 1;
     static constexpr std::uint8_t kStatusTemperatureReady = 1U << 2;
     static constexpr std::uint8_t kStatusHighGAccelReady = 1U << 3;
-    static constexpr std::uint8_t kStatusMs5607Ready = 1U << 4;
 
     static constexpr float kLowGAccelSensitivityMg =
         static_cast<float>(IRIS_FIELD_LSM6_LOW_ACCEL_MICRO_G_PER_COUNT) /
@@ -155,12 +168,14 @@ private:
     esp_err_t fetch_lsm6dsv320x();
     esp_err_t queue_sensor_packet();
     esp_err_t queue_state_packet();
+    esp_err_t queue_debug_packet();
     esp_err_t read_battery_voltage();
     void publish_sample();
     void run();
     void release_resources();
 
     SpiDataForwarder &data_forwarder_;
+    WitnessStatus &witness_status_;
     Ms5607 ms5607_{};
     spi_device_handle_t spi_device_ = nullptr;
     adc_oneshot_unit_handle_t battery_adc_handle_ = nullptr;
@@ -169,6 +184,7 @@ private:
     SemaphoreHandle_t sample_mutex_ = nullptr;
     bool owns_spi_bus_ = false;
     bool sample_available_ = false;
+    std::atomic_bool debug_packet_output_enabled_{false};
     Sample working_sample_{};
     Sample latest_sample_{};
 };

@@ -9,10 +9,13 @@
 #include "freertos/task.h"
 
 class SpiDataForwarder;
+class WitnessStatus;
 
 class Heartbeat final {
 public:
-    explicit Heartbeat(SpiDataForwarder &data_forwarder);
+    Heartbeat(
+        SpiDataForwarder &data_forwarder,
+        WitnessStatus &witness_status);
 
     Heartbeat(const Heartbeat &) = delete;
     Heartbeat &operator=(const Heartbeat &) = delete;
@@ -32,6 +35,7 @@ private:
     void run();
 
     SpiDataForwarder &data_forwarder_;
+    WitnessStatus &witness_status_;
     TaskHandle_t task_handle_ = nullptr;
     std::atomic_bool led_on_{false};
     bool heartbeat_status_ = false;

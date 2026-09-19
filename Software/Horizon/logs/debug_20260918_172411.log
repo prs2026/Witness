@@ -1,0 +1,1328 @@
+[17:24:11.743] RX[TCP_prs2026hitl_7100]  01 0f 00 00 06 a5 0a 00 25 0a 01 0b 00 00 06 a5 71 ff fc 92 00 5a 43 ff de 1e ff d6 00 00 24 0a 01 0b 00 00 06 a5 d5 ff fc 9e 00 5a 37 ff de 1e 00 22 0a 01 0b 00 00 06 a6 39 ff fc 92 00 5a 37
+[17:24:11.744] BAD_PACKET[TCP_prs2026hitl_7100] bad EOF for 0x01: expected 0x0a, got 0xde; resync=discard 1 byte
+[17:24:11.744] BAD_PACKET[TCP_prs2026hitl_7100] bad EOF for 0xff: expected 0x0a, got 0x0b; resync=discard 1 byte
+[17:24:11.744] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 1 byte(s)
+[17:24:11.744] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x06; discarded 1 byte(s)
+[17:24:11.746] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0xa5; discarded 1 byte(s)
+[17:24:11.747] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0xd5; discarded 1 byte(s)
+[17:24:11.747] BAD_PACKET[TCP_prs2026hitl_7100] bad EOF for 0xff: expected 0x0a, got 0xde; resync=discard 1 byte
+[17:24:11.747] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 1 byte(s)
+[17:24:11.747] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x22; discarded 1 byte(s)
+[17:24:11.747] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:24:11.949] RX[TCP_prs2026hitl_7100]  ff de 42 ff d6 00 00 24 0a 00 24 0a 01 0f 00 00 06 a7 01 ff fc 85 00 5a 4f ff de 42 ff d5 00 18 00 22 0a 00 24 0a 02 10 00 00 06 a7 65 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 9e 44 0a ff 00 00 00 06 a7 65 0a 00 25 0a 01 0b 00 00 06 a8 2d ff fc 92 00 5a 43 ff de 4f ff d6 00 00 24 0a 01 0b 00 00 06 a8 91 ff fc 85 00 5a 2a ff de 2a ff d6 00 00 22 0a 01 0b 00 00 06 a8 f5 ff fc 85 00 5a 2a ff de 2a ff d6 00 00 25 0a 00 25 0a 01 0f 00 00 06 a9 bd ff fc 92 00 5a 43 ff de 36 ff d6 00 18 00 21 0a 01 0f 00 00 06 aa 21 ff fc 9e 00 5a 43 ff de 42 ff d6 00 00 24 0a 00 25 0a 01 0b 00 00 06 aa e9 ff fc 9e 00 5a 37 ff de 2a ff d5 00 00 24 0a 01 0b 00 00 06 ab 4d ff fc 9e 00 5a 4f ff de 1e 00 23 0a 02 10 00 00 06 ab 4d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 3f 96 50 0a ff 01 00 00 06 ab 4d 0a 01 0b 00 00 06 ab b1 ff fd e7 00 5c 1f ff da af ff d8 00 00 24 0a ff fc 48 00 59 ed ff df ff d6 00 00 27 0a 01 0f 00 00 06 ac 79 ff fc 61 00 5a 2a ff ff d8 00 19 00 24 0a 00 22 0a 00 24 0a 01 0b 00 00 06 ad a5 ff fc db 00 5a 74 ff de 8c ff d5 00 00 23 0a 5e 41 5e 01 0b 00 00 06 ae 09 ff fc 92 00 5a 43 ff de 1e 00 23 0a 01 0b 00 00 06 ae 6d ff fc 92 00 5a 4f ff dd f9 ff d6 00 14 00 25 0a 01 0f 00 00 06 ae d1 ff fc 85 00 5a 2a ff de 2a ff d6 00 14 00 25 0a 01 0f 00 00 06 af 35 ff fc 92 00 5a 43 ff de 1e ff d5 00 18 00 22 0a 4f 5e 02 10 00 00 06 af 35 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 3f 96 50 0a 40 ff 00 00 00 06 af 35 0a 01 0f 00 00 06 af 99 ff fc 9e 00 5a 1e ff dd e1 ff d6 00 00 24 0a 00 24 0a 01 0b 00 00 06 b0 61 ff fe 6d 00 5a 2a ff de f9 ff c7 00 10 00 24 0a 01 0b 00 00 06 b0 c5 ff fb 3c 00 5a 74 ff ff ca 00 00 22 0a 00 24 0a 40 5e 46 a5 0a 0a ff 57 20 28 35 38 32 34 39 32 29 20 73 65 72 69 61 6c 5f 63 6f 6d 6d 61 6e 64 3a 20 75 6e 6b 6e 6f 77 6e 20 63 6f 6d 6d 61 6e 64 3a 20 5e 20 5e 48 ff de 20 5e 48 48 5e 5e 5e 48 20 5e 48 5e 5e 48 20 5e 4d 41 4e 44 3a 20 43 42 5e 5e 48 48 48 5e 41 5e 48 5e 41 5e 4f 5e 40 5e 40 5e 46 a5 0d 0a fc 9e 5e 40 08 5e 20 08 5e a8 5e 41 08 20 d7 20 d5 40 5e 40 20 59 5e 40 5e 4f 5e 40 20 ff 08 08 5e 5a 4f 0d 0a e1 08 24 0d 0a 5e 5a 5e 40 5e 57 57 20 28 35 38 32 35 30 32 29 20 73 65 72 69 61 6c 5f 63 6f 6d 6d 61 6e 64 3a 20 75 6e 6b 6e 6f 77 6e 20 63 6f 6d 6d 61 6e 64 3a 20 ff fc 9e 5e 40 08 5e 20 08 5e a8 5e 41 08 20 d7 20 d5 40 5e 40 20 59 5e 40 5e 4f 5e 40 20 ff 08 08 5e 5a 4f 0d 0a 57 20 28 35 38 32 35 30 32 29 20 73 65 72 69 61 6c 5f 63 6f 6d 6d 61 6e 64 3a 20 75 6e 6b 6e 6f 77 6e 20 63 6f 6d 6d 61 6e 64 3a 20 e1 08 24 0d 0a 01 0b 00 00 08 e3 45 ff fc 85 00 5a 37 ff de 2a ff d7 00 15 00 24 0a 01 0f 00 00 08 e3 a9 ff fc 85 00 5a 2a ff de 1e ff d5 00 16 00 23 0a
+[17:24:11.956] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=435769, filtered_accel=[-0.03512, 0.9238, -0.34552], gyro=[-2.94, 0.0, 645.82], sensor_trailing_u16=36
+[17:24:11.962] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=435969, filtered_accel=[-0.03564, 0.92476, -0.34552], gyro=[-3.01, 1.68, 2.38]
+[17:24:11.966] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 65 byte(s)
+[17:24:11.970] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=436069
+[17:24:11.974] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 47 byte(s)
+[17:24:11.979] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=436469, filtered_accel=[-0.03564, 0.92328, -0.34648], gyro=[-2.94, 0.0, 663.74], sensor_trailing_u16=37
+[17:24:11.981] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=436669, filtered_accel=[-0.03512, 0.92428, -0.346], gyro=[-2.94, 1.68, 2.31]
+[17:24:11.981] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=436769, filtered_accel=[-0.03464, 0.92428, -0.34552], gyro=[-2.94, 0.0, 645.82], sensor_trailing_u16=37
+[17:24:11.982] BAD_PACKET[TCP_prs2026hitl_7100] bad EOF for 0x01: expected 0x0a, got 0x00; resync=offset 79
+[17:24:11.982] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=437069
+[17:24:11.982] BAD_PACKET[TCP_prs2026hitl_7100] bad EOF for 0x01: expected 0x0a, got 0x48; resync=offset 3
+[17:24:11.983] PACKET[TCP_prs2026hitl_7100] heartbeat: status=57343, uptime=3590324263
+[17:24:11.983] BAD_PACKET[TCP_prs2026hitl_7100] bad EOF for 0x01: expected 0x0a, got 0x00; resync=offset 46
+[17:24:11.984] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=437869, filtered_accel=[-0.03512, 0.92476, -0.34844], gyro=[-2.94, 1.4, 2.59]
+[17:24:11.984] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=437969, filtered_accel=[-0.03564, 0.92328, -0.34648], gyro=[-2.94, 1.4, 2.59]
+[17:24:11.985] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=438069, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-3.01, 1.68, 2.38]
+[17:24:11.985] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x4f; discarded 66 byte(s)
+[17:24:11.986] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=438069
+[17:24:11.986] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=438169, filtered_accel=[-0.03464, 0.9228, -0.3494], gyro=[-2.94, 0.0, 645.82], sensor_trailing_u16=36
+[17:24:11.987] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=438369, filtered_accel=[-0.01612, 0.92328, -0.3382], gyro=[-3.99, 1.12, 2.52]
+[17:24:11.987] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=438469, filtered_accel=[-0.0488, 0.92624, -0.00216], gyro=[0.0, 609.98, 2.52]
+[17:24:11.988] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x40; discarded 132 byte(s)
+[17:24:11.988] PACKET[TCP_prs2026hitl_7100] heartbeat: status=2056, uptime=1582976781
+[17:24:11.989] BAD_PACKET[TCP_prs2026hitl_7100] bad EOF for 0xe1: expected 0x0a, got 0x28; resync=offset 71
+[17:24:11.989] PACKET[TCP_prs2026hitl_7100] heartbeat: status=2056, uptime=1582976781
+[17:24:11.989] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x57; discarded 49 byte(s)
+[17:24:11.990] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=582469, filtered_accel=[-0.03564, 0.9238, -0.34648], gyro=[-2.87, 1.47, 2.52]
+[17:24:11.990] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=582569, filtered_accel=[-0.03564, 0.92328, -0.34696], gyro=[-3.01, 1.54, 2.45]
+[17:24:12.091] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 e4 0d ff fc 92 00 5a 37 ff de 1e ff d6 00 16 00 23 0a
+[17:24:12.092] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=582669, filtered_accel=[-0.03512, 0.9238, -0.34696], gyro=[-2.94, 1.54, 2.45]
+[17:24:12.293] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 e4 71 ff fc 85 00 5a 1e ff de 5b ff d7 00 15 00 24 0a 01 0f 00 00 08 e4 d5 ff fc 92 00 5a 37 ff de 1e ff d6 00 16 00 24 0a
+[17:24:12.294] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=582769, filtered_accel=[-0.03564, 0.9228, -0.34452], gyro=[-2.87, 1.47, 2.52]
+[17:24:12.295] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=582869, filtered_accel=[-0.03512, 0.9238, -0.34696], gyro=[-2.94, 1.54, 2.52]
+[17:24:12.450] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 e5 39 ff fc 85 00 5a 37 ff de 1e ff d6 00 18 00 22 0a 01 0b 00 00 08 e5 9d ff fc 85 00 5a 43 ff de 2a ff d6 00 16 00 24 0a 02 10 00 00 08 e5 9d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 d7 c8 13 44 0a ff 01 00 00 08 e5 9d 0a
+[17:24:12.452] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=582969, filtered_accel=[-0.03564, 0.9238, -0.34696], gyro=[-2.94, 1.68, 2.38]
+[17:24:12.452] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=583069, filtered_accel=[-0.03564, 0.92428, -0.34648], gyro=[-2.94, 1.54, 2.52]
+[17:24:12.454] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=583069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.842896, witness_battery_voltage=4.932
+[17:24:12.455] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=583069
+[17:24:12.659] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 e6 01 ff fc 92 00 5a 43 ff de 05 ff d6 00 14 00 25 0a 01 0f 00 00 08 e6 65 ff fc 92 00 5a 37 ff de 1e ff d6 00 17 00 23 0a
+[17:24:12.660] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=583169, filtered_accel=[-0.03512, 0.92428, -0.34796], gyro=[-2.94, 1.4, 2.59]
+[17:24:12.662] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=583269, filtered_accel=[-0.03512, 0.9238, -0.34696], gyro=[-2.94, 1.61, 2.45]
+[17:24:12.813] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 e6 c9 ff fc 85 00 5a 37 ff de 2a ff d5 00 17 00 22 0a
+[17:24:12.815] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=583369, filtered_accel=[-0.03564, 0.9238, -0.34648], gyro=[-3.01, 1.61, 2.38]
+[17:24:13.067] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 e7 2d ff fc 85 00 5a 37 ff de 12 ff d6 00 15 00 25 0a 01 0f 00 00 08 e7 91 ff fc 92 00 5a 43 ff de 36 ff d8 00 14 00 25 0a 01 0b 00 00 08 e7 f5 ff fc 9e 00 5a 43 ff dd f9 ff d6 00 17 00 22 0a
+[17:24:13.068] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=583469, filtered_accel=[-0.03564, 0.9238, -0.34744], gyro=[-2.94, 1.47, 2.59]
+[17:24:13.069] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=583569, filtered_accel=[-0.03512, 0.92428, -0.346], gyro=[-2.8, 1.4, 2.59]
+[17:24:13.070] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=583669, filtered_accel=[-0.03464, 0.92428, -0.34844], gyro=[-2.94, 1.61, 2.38]
+[17:24:13.222] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 e8 59 ff fc 92 00 5a 43 ff de 12 ff d7 00 15 00 25 0a
+[17:24:13.223] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=583769, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.87, 1.47, 2.59]
+[17:24:13.424] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 e8 bd ff fc 92 00 5a 43 ff de 1e ff d7 00 15 00 25 0a 01 0f 00 00 08 e9 21 ff fc 9e 00 5a 5b ff dd ed ff d5 00 18 00 23 0a 01 0f 00 00 08 e9 85 ff fc 9e 00 5a 37 ff dd d5 ff d6 00 16 00 24 0a 02 10 00 00 08 e9 85 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:13.426] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=583869, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.87, 1.47, 2.59]
+[17:24:13.427] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=583969, filtered_accel=[-0.03464, 0.92524, -0.34892], gyro=[-3.01, 1.68, 2.45]
+[17:24:13.427] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=584069, filtered_accel=[-0.03464, 0.9238, -0.34988], gyro=[-2.94, 1.54, 2.52]
+[17:24:13.579] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 80 85 13 48 0a ff 00 00 00 08 e9 85 0a 01 0f 00 00 08 e9 e9 ff fc 92 00 5a 43 ff de 1e ff d6 00 15 00 25 0a
+[17:24:13.580] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=584069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.502029, witness_battery_voltage=4.936
+[17:24:13.581] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=584069
+[17:24:13.582] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=584169, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.94, 1.47, 2.59]
+[17:24:13.733] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 ea 4d ff fc 85 00 5a 4f ff de 1e ff d6 00 14 00 25 0a 01 0b 00 00 08 ea b1 ff fc 85 00 5a 43 ff de 1e ff d5 00 18 00 22 0a
+[17:24:13.734] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=584269, filtered_accel=[-0.03564, 0.92476, -0.34696], gyro=[-2.94, 1.4, 2.59]
+[17:24:13.735] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=584369, filtered_accel=[-0.03564, 0.92428, -0.34696], gyro=[-3.01, 1.68, 2.38]
+[17:24:13.938] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 eb 15 ff fc 9e 00 5a 43 ff de 12 ff d6 00 15 00 24 0a
+[17:24:13.941] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=584469, filtered_accel=[-0.03464, 0.92428, -0.34744], gyro=[-2.94, 1.47, 2.52]
+[17:24:14.092] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 eb 79 ff fc 92 00 5a 43 ff de 12 ff d6 00 15 00 24 0a 01 0f 00 00 08 eb dd ff fc aa 00 5a 43 ff de 1e ff d5 00 17 00 23 0a
+[17:24:14.093] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=584569, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.94, 1.47, 2.52]
+[17:24:14.094] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=584669, filtered_accel=[-0.03416, 0.92428, -0.34696], gyro=[-3.01, 1.61, 2.45]
+[17:24:14.246] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 ec 41 ff fc 92 00 5a 4f ff de 12 ff d6 00 16 00 24 0a 01 0f 00 00 08 ec a5 ff fc 85 00 5a 4f ff de 2a ff d6 00 16 00 25 0a
+[17:24:14.248] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=584769, filtered_accel=[-0.03512, 0.92476, -0.34744], gyro=[-2.94, 1.54, 2.52]
+[17:24:14.248] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=584869, filtered_accel=[-0.03564, 0.92476, -0.34648], gyro=[-2.94, 1.54, 2.59]
+[17:24:14.399] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 ed 09 ff fc 92 00 5a 37 ff de 12 ff d7 00 14 00 25 0a
+[17:24:14.401] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=584969, filtered_accel=[-0.03512, 0.9238, -0.34744], gyro=[-2.87, 1.4, 2.59]
+[17:24:14.553] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 ed 6d ff fc 85 00 5a 4f ff dd f9 ff d7 00 17 00 22 0a 02 10 00 00 08 ed 6d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 80 85 13 44 0a ff 01 00 00 08 ed 6d 0a 01 0b 00 00 08 ed d1 ff fc 85 00 5a 37 ff de 42 ff d7 00 15 00 24 0a
+[17:24:14.554] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=585069, filtered_accel=[-0.03564, 0.92476, -0.34844], gyro=[-2.87, 1.61, 2.38]
+[17:24:14.555] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=585069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.502029, witness_battery_voltage=4.932
+[17:24:14.556] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=585069
+[17:24:14.557] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=585169, filtered_accel=[-0.03564, 0.9238, -0.34552], gyro=[-2.87, 1.47, 2.52]
+[17:24:14.708] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 ee 35 ff fc 85 00 5a 37 ff de 36 ff d6 00 15 00 24 0a
+[17:24:14.709] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=585269, filtered_accel=[-0.03564, 0.9238, -0.346], gyro=[-2.94, 1.47, 2.52]
+[17:24:14.911] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 ee 99 ff fc 9e 00 5a 5b ff de 36 ff d5 00 17 00 21 0a 01 0f 00 00 08 ee fd ff fc 92 00 5a 43 ff de 36 ff d6 00 16 00 23 0a
+[17:24:14.913] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=585369, filtered_accel=[-0.03464, 0.92524, -0.346], gyro=[-3.01, 1.61, 2.31]
+[17:24:14.914] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=585469, filtered_accel=[-0.03512, 0.92428, -0.346], gyro=[-2.94, 1.54, 2.45]
+[17:24:15.065] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 ef 61 ff fc 9e 00 5a 37 ff de 36 ff d7 00 14 00 25 0a 01 0f 00 00 08 ef c5 ff fc 9e 00 5a 37 ff de 2a ff d6 00 14 00 25 0a
+[17:24:15.068] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=585569, filtered_accel=[-0.03464, 0.9238, -0.346], gyro=[-2.87, 1.4, 2.59]
+[17:24:15.070] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=585669, filtered_accel=[-0.03464, 0.9238, -0.34648], gyro=[-2.94, 1.4, 2.59]
+[17:24:15.421] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 f0 29 ff fc 85 00 5a 12 ff dd f9 ff d6 00 17 00 22 0a 01 0b 00 00 08 f0 8d ff fc 92 00 5a 5b ff de 1e ff d7 00 15 00 24 0a 01 0f 00 00 08 f0 f1 ff fc 92 00 5a 37 ff de 05 ff d6 00 16 00 24 0a
+[17:24:15.422] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=585769, filtered_accel=[-0.03564, 0.92232, -0.34844], gyro=[-2.94, 1.61, 2.38]
+[17:24:15.423] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=585869, filtered_accel=[-0.03512, 0.92524, -0.34696], gyro=[-2.87, 1.47, 2.52]
+[17:24:15.423] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=585969, filtered_accel=[-0.03512, 0.9238, -0.34796], gyro=[-2.94, 1.54, 2.52]
+[17:24:15.504] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 f1 55 ff fc 85 00 5a 43 ff de 42 ff d6 00 17 00 23 0a 02 10 00 00 08 f1 55 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 ab d0 13 50 0a ff 00 00 00 08 f1 55 0a
+[17:24:15.505] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=586069, filtered_accel=[-0.03564, 0.92428, -0.34552], gyro=[-2.94, 1.61, 2.45]
+[17:24:15.506] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=586069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.671143, witness_battery_voltage=4.944
+[17:24:15.507] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=586069
+[17:24:15.688] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 f1 b9 ff fc 85 00 5a 43 ff de 67 ff d6 00 16 00 23 0a 01 0f 00 00 08 f2 1d ff fc 85 00 5a 37 ff de 12 ff d7 00 14 00 25 0a
+[17:24:15.690] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=586169, filtered_accel=[-0.03564, 0.92428, -0.34404], gyro=[-2.94, 1.54, 2.45]
+[17:24:15.691] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=586269, filtered_accel=[-0.03564, 0.9238, -0.34744], gyro=[-2.87, 1.4, 2.59]
+[17:24:15.691] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 f2 81 ff fc 79 00 5a 5b ff dd bc ff d8 00 15 00 24 0a
+[17:24:15.692] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=586369, filtered_accel=[-0.03612, 0.92524, -0.35088], gyro=[-2.8, 1.47, 2.52]
+[17:24:15.795] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 f2 e5 ff fc db 00 5a 5b ff de 5b ff d4 00 16 00 23 0a
+[17:24:15.796] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=586469, filtered_accel=[-0.0322, 0.92524, -0.34452], gyro=[-3.08, 1.54, 2.45]
+[17:24:15.898] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 f3 49 ff fc b6 00 5a 5b ff de 2a ff d4 00 14 00 24 0a
+[17:24:15.901] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=586569, filtered_accel=[-0.03368, 0.92524, -0.34648], gyro=[-3.08, 1.4, 2.52]
+[17:24:16.002] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 f3 ad ff fc 85 00 5a 37 ff de 2a ff d5 00 15 00 24 0a
+[17:24:16.005] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=586669, filtered_accel=[-0.03564, 0.9238, -0.34648], gyro=[-3.01, 1.47, 2.52]
+[17:24:16.108] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 f4 11 ff fc 92 00 5a 37 ff dd c8 ff d5 00 19 00 20 0a
+[17:24:16.109] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=586769, filtered_accel=[-0.03512, 0.9238, -0.3504], gyro=[-3.01, 1.75, 2.24]
+[17:24:16.210] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 f4 75 ff fc 92 00 5a 5b ff de 42 ff d5 00 16 00 23 0a
+[17:24:16.211] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=586869, filtered_accel=[-0.03512, 0.92524, -0.34552], gyro=[-3.01, 1.54, 2.45]
+[17:24:16.262] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 f4 d9 ff fc f3 00 5a 37 ff de 42 ff d5 00 15 00 25 0a
+[17:24:16.262] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=586969, filtered_accel=[-0.03124, 0.9238, -0.34552], gyro=[-3.01, 1.47, 2.59]
+[17:24:16.363] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 f5 3d ff fc f3 00 5a bd ff da af ff dc 00 18 00 29 0a 02 10 00 00 08 f5 3d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:16.364] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=587069, filtered_accel=[-0.03124, 0.92916, -0.38212], gyro=[-2.52, 1.68, 2.87]
+[17:24:16.465] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 03 12 13 48 0a ff 01 00 00 08 f5 3d 0a
+[17:24:16.466] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=587069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.011993, witness_battery_voltage=4.936
+[17:24:16.467] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=587069
+[17:24:16.517] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 f5 a1 ff fc f3 00 5a d5 ff df 1e ff d1 00 15 00 22 0a
+[17:24:16.519] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=587169, filtered_accel=[-0.03124, 0.93012, -0.33672], gyro=[-3.29, 1.47, 2.38]
+[17:24:16.620] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 f6 05 ff fc 9e 00 5a 37 ff de c9 ff d7 00 15 00 23 0a
+[17:24:16.621] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=587269, filtered_accel=[-0.03464, 0.9238, -0.34012], gyro=[-2.87, 1.47, 2.45]
+[17:24:16.722] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 f6 69 ff fc 85 00 5a 37 ff de 12 ff d8 00 15 00 25 0a
+[17:24:16.723] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=587369, filtered_accel=[-0.03564, 0.9238, -0.34744], gyro=[-2.8, 1.47, 2.59]
+[17:24:16.824] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 f6 cd ff fc 79 00 5a 37 ff de 12 ff d6 00 18 00 23 0a
+[17:24:16.825] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=587469, filtered_accel=[-0.03612, 0.9238, -0.34744], gyro=[-2.94, 1.68, 2.45]
+[17:24:16.927] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 f7 31 ff fc 85 00 5a 37 ff de 1e ff d6 00 16 00 23 0a
+[17:24:16.928] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=587569, filtered_accel=[-0.03564, 0.9238, -0.34696], gyro=[-2.94, 1.54, 2.45]
+[17:24:16.981] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 f7 95 ff fc 9e 00 5a 43 ff de 2a ff d6 00 16 00 24 0a
+[17:24:16.983] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=587669, filtered_accel=[-0.03464, 0.92428, -0.34648], gyro=[-2.94, 1.54, 2.52]
+[17:24:17.085] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 f7 f9 ff fc 9e 00 5a 37 ff de 05 ff d7 00 16 00 24 0a
+[17:24:17.086] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=587769, filtered_accel=[-0.03464, 0.9238, -0.34796], gyro=[-2.87, 1.54, 2.52]
+[17:24:17.189] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 f8 5d ff fc 92 00 5a 43 ff de 1e ff d5 00 17 00 23 0a
+[17:24:17.190] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=587869, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-3.01, 1.61, 2.45]
+[17:24:17.295] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 f8 c1 ff fc 92 00 5a 43 ff de 05 ff d6 00 15 00 25 0a
+[17:24:17.297] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=587969, filtered_accel=[-0.03512, 0.92428, -0.34796], gyro=[-2.94, 1.47, 2.59]
+[17:24:17.398] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 f9 25 ff fc 85 00 5a 37 ff de 2a ff d6 00 15 00 24 0a 02 10 00 00 08 f9 25 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:17.399] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=588069, filtered_accel=[-0.03564, 0.9238, -0.34648], gyro=[-2.94, 1.47, 2.52]
+[17:24:17.499] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 d7 c8 13 50 0a ff 00 00 00 08 f9 25 0a
+[17:24:17.501] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=588069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.842896, witness_battery_voltage=4.944
+[17:24:17.502] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=588069
+[17:24:17.553] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 f9 89 ff fc 85 00 5a 43 ff de 2a ff d6 00 18 00 22 0a
+[17:24:17.555] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=588169, filtered_accel=[-0.03564, 0.92428, -0.34648], gyro=[-2.94, 1.68, 2.38]
+[17:24:17.656] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 f9 ed ff fc 85 00 5a 4f ff de 1e ff d7 00 17 00 22 0a
+[17:24:17.657] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=588269, filtered_accel=[-0.03564, 0.92476, -0.34696], gyro=[-2.87, 1.61, 2.38]
+[17:24:17.709] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 fa 51 ff fc 92 00 5a 37 ff de 1e ff d6 00 15 00 24 0a
+[17:24:17.710] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=588369, filtered_accel=[-0.03512, 0.9238, -0.34696], gyro=[-2.94, 1.47, 2.52]
+[17:24:17.811] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 fa b5 ff fc 92 00 5a 43 ff de 1e ff d7 00 15 00 25 0a
+[17:24:17.812] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=588469, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.87, 1.47, 2.59]
+[17:24:17.914] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 fb 19 ff fc 92 00 5a 43 ff de 2a ff d5 00 17 00 22 0a
+[17:24:17.915] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=588569, filtered_accel=[-0.03512, 0.92428, -0.34648], gyro=[-3.01, 1.61, 2.38]
+[17:24:18.016] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 fb 7d ff fc 85 00 5a 43 ff de 12 ff d7 00 15 00 24 0a
+[17:24:18.017] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=588669, filtered_accel=[-0.03564, 0.92428, -0.34744], gyro=[-2.87, 1.47, 2.52]
+[17:24:18.070] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 fb e1 ff fc 92 00 5a 4f ff de 12 ff d7 00 14 00 24 0a
+[17:24:18.071] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=588769, filtered_accel=[-0.03512, 0.92476, -0.34744], gyro=[-2.87, 1.4, 2.52]
+[17:24:18.225] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 fc 45 ff fc 85 00 5a 37 ff de 2a ff d5 00 17 00 22 0a
+[17:24:18.226] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=588869, filtered_accel=[-0.03564, 0.9238, -0.34648], gyro=[-3.01, 1.61, 2.38]
+[17:24:18.328] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 fc a9 ff fc 92 00 5a 43 ff de 1e ff d7 00 16 00 23 0a
+[17:24:18.329] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=588969, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.87, 1.54, 2.45]
+[17:24:18.430] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 fd 0d ff fc 85 00 5a 4f ff de 12 ff d6 00 15 00 24 0a 02 10 00 00 08 fd 0d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 c1 75 13 54 0a ff 01 00 00 08 fd 0d 0a
+[17:24:18.432] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=589069, filtered_accel=[-0.03564, 0.92476, -0.34744], gyro=[-2.94, 1.47, 2.52]
+[17:24:18.433] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=589069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.755692, witness_battery_voltage=4.948
+[17:24:18.433] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=589069
+[17:24:18.484] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 fd 71 ff fc 9e 00 5a 43 ff de 2a ff d6 00 15 00 25 0a
+[17:24:18.486] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=589169, filtered_accel=[-0.03464, 0.92428, -0.34648], gyro=[-2.94, 1.47, 2.59]
+[17:24:18.587] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 fd d5 ff fc 9e 00 5a 4f ff de 2a ff d6 00 17 00 22 0a
+[17:24:18.589] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=589269, filtered_accel=[-0.03464, 0.92476, -0.34648], gyro=[-2.94, 1.61, 2.38]
+[17:24:18.690] RX[TCP_prs2026hitl_7100]  01 0b 00 00 08 fe 39 ff fc 9e 00 5a 37 ff dd ed ff d7 00 16 00 24 0a
+[17:24:18.691] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=589369, filtered_accel=[-0.03464, 0.9238, -0.34892], gyro=[-2.87, 1.54, 2.52]
+[17:24:18.792] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 fe 9d ff fc 92 00 5a 43 ff de 36 ff d7 00 15 00 24 0a
+[17:24:18.793] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=589469, filtered_accel=[-0.03512, 0.92428, -0.346], gyro=[-2.87, 1.47, 2.52]
+[17:24:18.895] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 ff 01 ff fc aa 00 5a 37 ff de 12 ff d5 00 18 00 22 0a
+[17:24:18.896] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=589569, filtered_accel=[-0.03416, 0.9238, -0.34744], gyro=[-3.01, 1.68, 2.38]
+[17:24:18.997] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 ff 65 ff fc 92 00 5a 43 ff de 1e ff d6 00 16 00 24 0a
+[17:24:18.998] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=589669, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.94, 1.54, 2.52]
+[17:24:19.101] RX[TCP_prs2026hitl_7100]  01 0f 00 00 08 ff c9 ff fc 92 00 5a 37 ff de 12 ff d7 00 15 00 24 0a
+[17:24:19.101] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=589769, filtered_accel=[-0.03512, 0.9238, -0.34744], gyro=[-2.87, 1.47, 2.52]
+[17:24:19.202] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 00 2d ff fc 85 00 5a 43 ff de 1e ff d7 00 15 00 25 0a
+[17:24:19.203] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=589869, filtered_accel=[-0.03564, 0.92428, -0.34696], gyro=[-2.87, 1.47, 2.59]
+[17:24:19.254] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 00 91 ff fc 9e 00 5a 43 ff de 2a ff d5 00 17 00 23 0a
+[17:24:19.256] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=589969, filtered_accel=[-0.03464, 0.92428, -0.34648], gyro=[-3.01, 1.61, 2.45]
+[17:24:19.407] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 00 f5 ff fc 9e 00 5a 4f ff de 1e ff d7 00 15 00 24 0a 02 10 00 00 09 00 f5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:19.408] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=590069, filtered_accel=[-0.03464, 0.92476, -0.34696], gyro=[-2.87, 1.47, 2.52]
+[17:24:19.459] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 6a e0 13 50 0a ff 00 00 00 09 00 f5 0a
+[17:24:19.460] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=590069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.41748, witness_battery_voltage=4.944
+[17:24:19.461] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=590069
+[17:24:19.562] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 01 59 ff fc 92 00 5a 4f ff de 2a ff d6 00 15 00 24 0a
+[17:24:19.563] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=590169, filtered_accel=[-0.03512, 0.92476, -0.34648], gyro=[-2.94, 1.47, 2.52]
+[17:24:19.613] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 01 bd ff fc 85 00 5a 37 ff de 42 ff d5 00 18 00 22 0a
+[17:24:19.615] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=590269, filtered_accel=[-0.03564, 0.9238, -0.34552], gyro=[-3.01, 1.68, 2.38]
+[17:24:19.716] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 02 21 ff fc 92 00 5a 43 ff dd f9 ff d6 00 16 00 23 0a
+[17:24:19.717] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=590369, filtered_accel=[-0.03512, 0.92428, -0.34844], gyro=[-2.94, 1.54, 2.45]
+[17:24:19.780] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 02 85 ff fc 92 00 5a 4f ff de 12 ff d7 00 15 00 24 0a
+[17:24:19.781] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=590469, filtered_accel=[-0.03512, 0.92476, -0.34744], gyro=[-2.87, 1.47, 2.52]
+[17:24:19.883] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 02 e9 ff fc 85 00 5a 37 ff de 2a ff d6 00 16 00 24 0a
+[17:24:19.884] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=590569, filtered_accel=[-0.03564, 0.9238, -0.34648], gyro=[-2.94, 1.54, 2.52]
+[17:24:19.986] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 03 4d ff fc 9e 00 5a 43 ff dd f9 ff d5 00 17 00 21 0a
+[17:24:19.988] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=590669, filtered_accel=[-0.03464, 0.92428, -0.34844], gyro=[-3.01, 1.61, 2.31]
+[17:24:20.089] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 03 b1 ff fc 92 00 5a 37 ff de 2a ff d6 00 16 00 24 0a
+[17:24:20.091] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=590769, filtered_accel=[-0.03512, 0.9238, -0.34648], gyro=[-2.94, 1.54, 2.52]
+[17:24:20.192] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 04 15 ff fc 85 00 5a 43 ff de 1e ff d6 00 15 00 24 0a
+[17:24:20.193] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=590869, filtered_accel=[-0.03564, 0.92428, -0.34696], gyro=[-2.94, 1.47, 2.52]
+[17:24:20.294] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 04 79 ff fc 92 00 5a 43 ff de 05 ff d6 00 17 00 21 0a
+[17:24:20.295] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=590969, filtered_accel=[-0.03512, 0.92428, -0.34796], gyro=[-2.94, 1.61, 2.31]
+[17:24:20.395] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 04 dd ff fc 85 00 5a 4f ff de 05 ff d6 00 15 00 24 0a 02 10 00 00 09 04 dd 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:20.396] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=591069, filtered_accel=[-0.03564, 0.92476, -0.34796], gyro=[-2.94, 1.47, 2.52]
+[17:24:20.447] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 80 85 13 50 0a ff 01 00 00 09 04 dd 0a
+[17:24:20.449] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=591069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.502029, witness_battery_voltage=4.944
+[17:24:20.449] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=591069
+[17:24:20.551] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 05 41 ff fc 92 00 5a 4f ff de 1e ff d6 00 15 00 25 0a
+[17:24:20.553] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=591169, filtered_accel=[-0.03512, 0.92476, -0.34696], gyro=[-2.94, 1.47, 2.59]
+[17:24:20.654] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 05 a5 ff fc 85 00 5a 4f ff de 1e ff d7 00 15 00 24 0a
+[17:24:20.655] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=591269, filtered_accel=[-0.03564, 0.92476, -0.34696], gyro=[-2.87, 1.47, 2.52]
+[17:24:20.706] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 06 09 ff fc 92 00 5a 43 ff de 05 ff d5 00 16 00 22 0a
+[17:24:20.707] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=591369, filtered_accel=[-0.03512, 0.92428, -0.34796], gyro=[-3.01, 1.54, 2.38]
+[17:24:20.808] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 06 6d ff fc 92 00 5a 43 ff de 12 ff d7 00 15 00 24 0a
+[17:24:20.810] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=591469, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.87, 1.47, 2.52]
+[17:24:20.912] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 06 d1 ff fc 92 00 5a 4f ff de 12 ff d7 00 15 00 24 0a
+[17:24:20.914] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=591569, filtered_accel=[-0.03512, 0.92476, -0.34744], gyro=[-2.87, 1.47, 2.52]
+[17:24:21.015] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 07 35 ff fc 85 00 5a 37 ff de 05 ff d6 00 17 00 22 0a
+[17:24:21.016] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=591669, filtered_accel=[-0.03564, 0.9238, -0.34796], gyro=[-2.94, 1.61, 2.38]
+[17:24:21.066] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 07 99 ff fc aa 00 5a 37 ff dd a4 ff d7 00 16 00 23 0a
+[17:24:21.069] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=591769, filtered_accel=[-0.03416, 0.9238, -0.35184], gyro=[-2.87, 1.54, 2.45]
+[17:24:21.170] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 07 fd ff fc aa 00 5a 37 ff de 2a ff d7 00 15 00 24 0a
+[17:24:21.171] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=591869, filtered_accel=[-0.03416, 0.9238, -0.34648], gyro=[-2.87, 1.47, 2.52]
+[17:24:21.273] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 08 61 ff fc 9e 00 5a 43 ff de 2a ff d7 00 16 00 24 0a
+[17:24:21.274] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=591969, filtered_accel=[-0.03464, 0.92428, -0.34648], gyro=[-2.87, 1.54, 2.52]
+[17:24:21.376] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 08 c5 ff fc 48 00 5a 37 ff de 05 ff d5 00 17 00 23 0a 02 10 00 00 09 08 c5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:21.377] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=592069, filtered_accel=[-0.03808, 0.9238, -0.34796], gyro=[-3.01, 1.61, 2.45]
+[17:24:21.477] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 ab d0 13 50 0a ff 00 00 00 09 08 c5 0a
+[17:24:21.479] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=592069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.671143, witness_battery_voltage=4.944
+[17:24:21.479] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=592069
+[17:24:21.581] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 09 29 ff fc 79 00 5a 37 ff dd a4 ff d9 00 16 00 24 0a
+[17:24:21.582] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=592169, filtered_accel=[-0.03612, 0.9238, -0.35184], gyro=[-2.73, 1.54, 2.52]
+[17:24:21.683] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 09 8d ff fc 85 00 5a 43 ff dd f9 ff d8 00 16 00 24 0a
+[17:24:21.685] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=592269, filtered_accel=[-0.03564, 0.92428, -0.34844], gyro=[-2.8, 1.54, 2.52]
+[17:24:21.786] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 09 f1 ff fc 79 00 5a 37 ff de 1e ff d5 00 19 00 21 0a
+[17:24:21.788] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=592369, filtered_accel=[-0.03612, 0.9238, -0.34696], gyro=[-3.01, 1.75, 2.31]
+[17:24:21.838] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 0a 55 ff fc 55 00 5a 2a ff dd 05 ff d7 00 17 00 24 0a
+[17:24:21.840] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=592469, filtered_accel=[-0.03756, 0.92328, -0.3582], gyro=[-2.87, 1.61, 2.52]
+[17:24:21.941] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 0a b9 ff fc aa 00 5a 06 ff de 67 ff da 00 16 00 24 0a
+[17:24:21.942] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=592569, filtered_accel=[-0.03416, 0.92184, -0.34404], gyro=[-2.66, 1.54, 2.52]
+[17:24:22.044] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 0b 1d ff fc 85 00 5a 37 ff de 4f ff d5 00 15 00 25 0a
+[17:24:22.046] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=592669, filtered_accel=[-0.03564, 0.9238, -0.345], gyro=[-3.01, 1.47, 2.59]
+[17:24:22.098] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 0b 81 ff fc b6 00 5a 4f ff de 42 ff d5 00 17 00 23 0a
+[17:24:22.099] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=592769, filtered_accel=[-0.03368, 0.92476, -0.34552], gyro=[-3.01, 1.61, 2.45]
+[17:24:22.200] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 0b e5 ff fc 85 00 5a 37 ff de 2a ff d6 00 14 00 24 0a
+[17:24:22.201] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=592869, filtered_accel=[-0.03564, 0.9238, -0.34648], gyro=[-2.94, 1.4, 2.52]
+[17:24:22.302] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 0c 49 ff fc 9e 00 5a 43 ff de 12 ff d6 00 14 00 24 0a
+[17:24:22.303] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=592969, filtered_accel=[-0.03464, 0.92428, -0.34744], gyro=[-2.94, 1.4, 2.52]
+[17:24:22.355] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 0c ad ff fc 92 00 5a 4f ff de 2a ff d6 00 17 00 22 0a 02 10 00 00 09 0c ad 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:22.356] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=593069, filtered_accel=[-0.03512, 0.92476, -0.34648], gyro=[-2.94, 1.61, 2.38]
+[17:24:22.456] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 80 85 13 50 0a ff 01 00 00 09 0c ad 0a
+[17:24:22.459] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=593069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.502029, witness_battery_voltage=4.944
+[17:24:22.459] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=593069
+[17:24:22.561] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 0d 11 ff fc 85 00 5a 2a ff de 1e ff d7 00 16 00 24 0a
+[17:24:22.562] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=593169, filtered_accel=[-0.03564, 0.92328, -0.34696], gyro=[-2.87, 1.54, 2.52]
+[17:24:22.613] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 0d 75 ff fc 9e 00 5a 43 ff de 2a ff d6 00 16 00 25 0a
+[17:24:22.617] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=593269, filtered_accel=[-0.03464, 0.92428, -0.34648], gyro=[-2.94, 1.54, 2.59]
+[17:24:22.717] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 0d d9 ff fc 92 00 5a 37 ff de 2a ff d6 00 16 00 24 0a
+[17:24:22.719] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=593369, filtered_accel=[-0.03512, 0.9238, -0.34648], gyro=[-2.94, 1.54, 2.52]
+[17:24:22.770] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 0e 3d ff fc 92 00 5a 43 ff de 12 ff d7 00 17 00 23 0a
+[17:24:22.771] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=593469, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.87, 1.61, 2.45]
+[17:24:22.872] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 0e a1 ff fc 9e 00 5a 4f ff de 1e ff d7 00 15 00 24 0a
+[17:24:22.874] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=593569, filtered_accel=[-0.03464, 0.92476, -0.34696], gyro=[-2.87, 1.47, 2.52]
+[17:24:22.974] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 0f 05 ff fc 92 00 5a 43 ff de 2a ff d6 00 15 00 24 0a
+[17:24:22.975] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=593669, filtered_accel=[-0.03512, 0.92428, -0.34648], gyro=[-2.94, 1.47, 2.52]
+[17:24:23.076] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 0f 69 ff fc 92 00 5a 37 ff de 2a ff d5 00 18 00 23 0a
+[17:24:23.079] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=593769, filtered_accel=[-0.03512, 0.9238, -0.34648], gyro=[-3.01, 1.68, 2.45]
+[17:24:23.180] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 0f cd ff fc 9e 00 5a 37 ff de 12 ff d7 00 16 00 23 0a
+[17:24:23.182] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=593869, filtered_accel=[-0.03464, 0.9238, -0.34744], gyro=[-2.87, 1.54, 2.45]
+[17:24:23.283] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 10 31 ff fc 85 00 5a 43 ff de 36 ff d6 00 17 00 23 0a
+[17:24:23.284] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=593969, filtered_accel=[-0.03564, 0.92428, -0.346], gyro=[-2.94, 1.61, 2.45]
+[17:24:23.386] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 10 95 ff fc 85 00 5a 43 ff de 1e ff d6 00 16 00 24 0a 02 10 00 00 09 10 95 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:23.388] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=594069, filtered_accel=[-0.03564, 0.92428, -0.34696], gyro=[-2.94, 1.54, 2.52]
+[17:24:23.439] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 ab d0 13 48 0a ff 00 00 00 09 10 95 0a
+[17:24:23.441] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=594069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.671143, witness_battery_voltage=4.936
+[17:24:23.441] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=594069
+[17:24:23.542] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 10 f9 ff fc 92 00 5a 37 ff de 2a ff d6 00 16 00 24 0a
+[17:24:23.544] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=594169, filtered_accel=[-0.03512, 0.9238, -0.34648], gyro=[-2.94, 1.54, 2.52]
+[17:24:23.645] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 11 5d ff fc 92 00 5a 43 ff de 1e ff d7 00 16 00 24 0a
+[17:24:23.647] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=594269, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.87, 1.54, 2.52]
+[17:24:23.697] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 11 c1 ff fc 92 00 5a 37 ff de 12 ff d6 00 15 00 24 0a
+[17:24:23.699] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=594369, filtered_accel=[-0.03512, 0.9238, -0.34744], gyro=[-2.94, 1.47, 2.52]
+[17:24:23.800] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 12 25 ff fc 92 00 5a 37 ff de 12 ff d6 00 18 00 22 0a
+[17:24:23.801] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=594469, filtered_accel=[-0.03512, 0.9238, -0.34744], gyro=[-2.94, 1.68, 2.38]
+[17:24:23.902] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 12 89 ff fc 85 00 5a 43 ff de 1e ff d7 00 16 00 24 0a
+[17:24:23.903] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=594569, filtered_accel=[-0.03564, 0.92428, -0.34696], gyro=[-2.87, 1.54, 2.52]
+[17:24:24.004] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 12 ed ff fc 85 00 5a 4f ff de 12 ff d7 00 14 00 25 0a
+[17:24:24.006] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=594669, filtered_accel=[-0.03564, 0.92476, -0.34744], gyro=[-2.87, 1.4, 2.59]
+[17:24:24.057] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 13 51 ff fc 92 00 5a 37 ff de 1e ff d6 00 17 00 24 0a
+[17:24:24.059] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=594769, filtered_accel=[-0.03512, 0.9238, -0.34696], gyro=[-2.94, 1.61, 2.52]
+[17:24:24.160] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 13 b5 ff fc 85 00 5a 43 ff de 12 ff d7 00 17 00 23 0a
+[17:24:24.161] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=594869, filtered_accel=[-0.03564, 0.92428, -0.34744], gyro=[-2.87, 1.61, 2.45]
+[17:24:24.263] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 14 19 ff fc 92 00 5a 43 ff de 36 ff d7 00 15 00 24 0a
+[17:24:24.264] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=594969, filtered_accel=[-0.03512, 0.92428, -0.346], gyro=[-2.87, 1.47, 2.52]
+[17:24:24.365] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 14 7d ff fc 85 00 5a 43 ff de 12 ff d6 00 15 00 24 0a 02 10 00 00 09 14 7d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:24.366] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=595069, filtered_accel=[-0.03564, 0.92428, -0.34744], gyro=[-2.94, 1.47, 2.52]
+[17:24:24.468] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 d7 c8 13 50 0a ff 01 00 00 09 14 7d 0a
+[17:24:24.470] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=595069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.842896, witness_battery_voltage=4.944
+[17:24:24.471] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=595069
+[17:24:24.572] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 14 e1 ff fc 85 00 5a 37 ff de 12 ff d5 00 18 00 21 0a
+[17:24:24.574] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=595169, filtered_accel=[-0.03564, 0.9238, -0.34744], gyro=[-3.01, 1.68, 2.31]
+[17:24:24.675] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 15 45 ff fc 92 00 5a 4f ff de 1e ff d6 00 16 00 23 0a
+[17:24:24.676] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=595269, filtered_accel=[-0.03512, 0.92476, -0.34696], gyro=[-2.94, 1.54, 2.45]
+[17:24:24.727] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 15 a9 ff fc 9e 00 5a 37 ff de 2a ff d8 00 14 00 25 0a
+[17:24:24.728] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=595369, filtered_accel=[-0.03464, 0.9238, -0.34648], gyro=[-2.8, 1.4, 2.59]
+[17:24:24.829] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 16 0d ff fc 92 00 5a 43 ff de 2a ff d6 00 17 00 24 0a
+[17:24:24.830] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=595469, filtered_accel=[-0.03512, 0.92428, -0.34648], gyro=[-2.94, 1.61, 2.52]
+[17:24:24.931] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 16 71 ff fc 92 00 5a 4f ff de 36 ff d6 00 17 00 22 0a
+[17:24:24.933] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=595569, filtered_accel=[-0.03512, 0.92476, -0.346], gyro=[-2.94, 1.61, 2.38]
+[17:24:24.983] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 16 d5 ff fc 85 00 5a 43 ff de 12 ff d6 00 14 00 25 0a
+[17:24:24.984] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=595669, filtered_accel=[-0.03564, 0.92428, -0.34744], gyro=[-2.94, 1.4, 2.59]
+[17:24:25.085] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 17 39 ff fc 79 00 5a 43 ff de 12 ff d6 00 15 00 25 0a
+[17:24:25.086] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=595769, filtered_accel=[-0.03612, 0.92428, -0.34744], gyro=[-2.94, 1.47, 2.59]
+[17:24:25.187] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 17 9d ff fc 9e 00 5a 43 ff de 12 ff d6 00 17 00 22 0a
+[17:24:25.188] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=595869, filtered_accel=[-0.03464, 0.92428, -0.34744], gyro=[-2.94, 1.61, 2.38]
+[17:24:25.291] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 18 01 ff fc 85 00 5a 43 ff de 05 ff d6 00 15 00 24 0a
+[17:24:25.292] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=595969, filtered_accel=[-0.03564, 0.92428, -0.34796], gyro=[-2.94, 1.47, 2.52]
+[17:24:25.393] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 18 65 ff fc 92 00 5a 67 ff dd ed ff d7 00 15 00 24 0a 02 10 00 00 09 18 65 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:25.395] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=596069, filtered_accel=[-0.03512, 0.92572, -0.34892], gyro=[-2.87, 1.47, 2.52]
+[17:24:25.445] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 96 2b 13 50 0a ff 00 00 00 09 18 65 0a
+[17:24:25.447] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=596069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.586594, witness_battery_voltage=4.944
+[17:24:25.448] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=596069
+[17:24:25.549] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 18 c9 ff fc 85 00 5a 4f ff de 1e ff d5 00 16 00 23 0a
+[17:24:25.550] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=596169, filtered_accel=[-0.03564, 0.92476, -0.34696], gyro=[-3.01, 1.54, 2.45]
+[17:24:25.651] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 19 2d ff fc 9e 00 5a 43 ff de 12 ff d6 00 16 00 23 0a
+[17:24:25.653] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=596269, filtered_accel=[-0.03464, 0.92428, -0.34744], gyro=[-2.94, 1.54, 2.45]
+[17:24:25.703] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 19 91 ff fc 85 00 5a 37 ff de 12 ff d6 00 15 00 24 0a
+[17:24:25.705] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=596369, filtered_accel=[-0.03564, 0.9238, -0.34744], gyro=[-2.94, 1.47, 2.52]
+[17:24:25.806] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 19 f5 ff fc 92 00 5a 2a ff de 12 ff d8 00 16 00 24 0a
+[17:24:25.807] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=596469, filtered_accel=[-0.03512, 0.92328, -0.34744], gyro=[-2.8, 1.54, 2.52]
+[17:24:25.908] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 1a 59 ff fc 3c 00 59 4f ff e0 4f ff da 00 1b 00 27 0a
+[17:24:25.909] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=596569, filtered_accel=[-0.03856, 0.91452, -0.32452], gyro=[-2.66, 1.89, 2.73]
+[17:24:25.960] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 1a bd ff fc 0b 00 59 ed ff de 5b ff d0 00 14 00 26 0a
+[17:24:25.962] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=596669, filtered_accel=[-0.04052, 0.92084, -0.34452], gyro=[-3.36, 1.4, 2.66]
+[17:24:26.063] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 1b 21 ff fc 30 00 59 d5 ff de 2a ff d6 00 14 00 24 0a
+[17:24:26.065] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=596769, filtered_accel=[-0.03904, 0.91988, -0.34648], gyro=[-2.94, 1.4, 2.52]
+[17:24:26.166] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 1b 85 ff fc b6 00 5a 4f ff de 36 ff d8 00 18 00 24 0a
+[17:24:26.168] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=596869, filtered_accel=[-0.03368, 0.92476, -0.346], gyro=[-2.8, 1.68, 2.52]
+[17:24:26.269] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 1b e9 ff fc 85 00 5a 2a ff de 2a ff d8 00 17 00 24 0a
+[17:24:26.271] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=596969, filtered_accel=[-0.03564, 0.92328, -0.34648], gyro=[-2.8, 1.61, 2.52]
+[17:24:26.371] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 1c 4d ff fc 85 00 5a 37 ff de 36 ff d7 00 15 00 24 0a 02 10 00 00 09 1c 4d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:26.373] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=597069, filtered_accel=[-0.03564, 0.9238, -0.346], gyro=[-2.87, 1.47, 2.52]
+[17:24:26.475] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 ab d0 13 50 0a ff 01 00 00 09 1c 4d 0a
+[17:24:26.476] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=597069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.671143, witness_battery_voltage=4.944
+[17:24:26.477] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=597069
+[17:24:26.527] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 1c b1 ff fc 85 00 5a 37 ff de 2a ff d6 00 15 00 25 0a
+[17:24:26.529] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=597169, filtered_accel=[-0.03564, 0.9238, -0.34648], gyro=[-2.94, 1.47, 2.59]
+[17:24:26.631] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 1d 15 ff fc 85 00 5a 37 ff de 2a ff d5 00 18 00 22 0a
+[17:24:26.633] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=597269, filtered_accel=[-0.03564, 0.9238, -0.34648], gyro=[-3.01, 1.68, 2.38]
+[17:24:26.684] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 1d 79 ff fc 85 00 5a 43 ff de 1e ff d6 00 15 00 24 0a
+[17:24:26.685] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=597369, filtered_accel=[-0.03564, 0.92428, -0.34696], gyro=[-2.94, 1.47, 2.52]
+[17:24:26.787] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 1d dd ff fc b6 00 5a 43 ff de 2a ff d6 00 16 00 24 0a
+[17:24:26.788] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=597469, filtered_accel=[-0.03368, 0.92428, -0.34648], gyro=[-2.94, 1.54, 2.52]
+[17:24:26.889] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 1e 41 ff fc 9e 00 5a 43 ff de 36 ff d5 00 16 00 24 0a
+[17:24:26.890] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=597569, filtered_accel=[-0.03464, 0.92428, -0.346], gyro=[-3.01, 1.54, 2.52]
+[17:24:26.991] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 1e a5 ff fc 85 00 5a 43 ff de 12 ff d6 00 17 00 23 0a
+[17:24:26.993] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=597669, filtered_accel=[-0.03564, 0.92428, -0.34744], gyro=[-2.94, 1.61, 2.45]
+[17:24:27.097] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 1f 09 ff fc 92 00 5a 43 ff de 2a ff d7 00 15 00 24 0a
+[17:24:27.099] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=597769, filtered_accel=[-0.03512, 0.92428, -0.34648], gyro=[-2.87, 1.47, 2.52]
+[17:24:27.199] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 1f 6d ff fc 85 00 5a 43 ff de 42 ff d7 00 15 00 24 0a
+[17:24:27.201] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=597869, filtered_accel=[-0.03564, 0.92428, -0.34552], gyro=[-2.87, 1.47, 2.52]
+[17:24:27.302] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 1f d1 ff fc 9e 00 5a 4f ff de 1e ff d6 00 17 00 22 0a
+[17:24:27.303] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=597969, filtered_accel=[-0.03464, 0.92476, -0.34696], gyro=[-2.94, 1.61, 2.38]
+[17:24:27.404] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 20 35 ff fc 85 00 5a 43 ff de 2a ff d6 00 16 00 23 0a 02 10 00 00 09 20 35 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:27.405] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=598069, filtered_accel=[-0.03564, 0.92428, -0.34648], gyro=[-2.94, 1.54, 2.45]
+[17:24:27.456] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 80 85 13 28 0a ff 00 00 00 09 20 35 0a
+[17:24:27.457] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=598069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.502029, witness_battery_voltage=4.904
+[17:24:27.459] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=598069
+[17:24:27.560] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 20 99 ff fc 92 00 5a 4f ff de 2a ff d7 00 15 00 25 0a
+[17:24:27.561] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=598169, filtered_accel=[-0.03512, 0.92476, -0.34648], gyro=[-2.87, 1.47, 2.59]
+[17:24:27.613] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 20 fd ff fc 85 00 5a 2a ff de 1e ff d7 00 17 00 23 0a
+[17:24:27.615] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=598269, filtered_accel=[-0.03564, 0.92328, -0.34696], gyro=[-2.87, 1.61, 2.45]
+[17:24:27.716] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 21 61 ff fc 85 00 5a 4f ff de 12 ff d6 00 16 00 23 0a
+[17:24:27.718] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=598369, filtered_accel=[-0.03564, 0.92476, -0.34744], gyro=[-2.94, 1.54, 2.45]
+[17:24:27.769] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 21 c5 ff fc 79 00 5a 43 ff de 1e ff d7 00 16 00 24 0a
+[17:24:27.771] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=598469, filtered_accel=[-0.03612, 0.92428, -0.34696], gyro=[-2.87, 1.54, 2.52]
+[17:24:27.872] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 22 29 ff fc 85 00 5a 37 ff dd 8b ff d8 00 16 00 25 0a
+[17:24:27.874] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=598569, filtered_accel=[-0.03564, 0.9238, -0.35284], gyro=[-2.8, 1.54, 2.59]
+[17:24:27.975] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 22 8d ff fc 55 00 5a 43 ff dd c8 ff d8 00 18 00 22 0a
+[17:24:27.976] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=598669, filtered_accel=[-0.03756, 0.92428, -0.3504], gyro=[-2.8, 1.68, 2.38]
+[17:24:28.081] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 22 f1 ff fc 79 00 5a 43 ff de 36 ff d7 00 15 00 25 0a
+[17:24:28.082] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=598769, filtered_accel=[-0.03612, 0.92428, -0.346], gyro=[-2.87, 1.47, 2.59]
+[17:24:28.182] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 23 55 ff fc 92 00 5a 4f ff de 2a ff d8 00 15 00 25 0a
+[17:24:28.184] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=598869, filtered_accel=[-0.03512, 0.92476, -0.34648], gyro=[-2.8, 1.47, 2.59]
+[17:24:28.285] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 23 b9 ff fc 9e 00 5a 4f ff de 8c ff d5 00 17 00 22 0a
+[17:24:28.287] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=598969, filtered_accel=[-0.03464, 0.92476, -0.34256], gyro=[-3.01, 1.61, 2.38]
+[17:24:28.389] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 24 1d ff fc 3c 00 5a 37 ff dd ed ff d9 00 16 00 23 0a 02 10 00 00 09 24 1d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:28.391] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=599069, filtered_accel=[-0.03856, 0.9238, -0.34892], gyro=[-2.73, 1.54, 2.45]
+[17:24:28.491] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 96 2b 13 48 0a ff 01 00 00 09 24 1d 0a
+[17:24:28.493] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=599069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.586594, witness_battery_voltage=4.936
+[17:24:28.494] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=599069
+[17:24:28.544] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 24 81 ff fc 85 00 5a 2a ff dd c8 ff d7 00 15 00 24 0a
+[17:24:28.546] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=599169, filtered_accel=[-0.03564, 0.92328, -0.3504], gyro=[-2.87, 1.47, 2.52]
+[17:24:28.697] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 24 e5 ff fc 24 00 59 ed ff e0 4f ff da 00 16 00 24 0a
+[17:24:28.701] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=599269, filtered_accel=[-0.03952, 0.92084, -0.32452], gyro=[-2.66, 1.54, 2.52]
+[17:24:28.803] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 25 49 ff fc 9e 00 5a 4f ff de 73 ff d8 00 17 00 22 0a
+[17:24:28.804] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=599369, filtered_accel=[-0.03464, 0.92476, -0.34356], gyro=[-2.8, 1.61, 2.38]
+[17:24:28.956] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 25 ad ff fc 85 00 5a 2a ff de 2a ff d6 00 15 00 24 0a 01 0f 00 00 09 26 11 ff fc 85 00 5a 43 ff dd f9 ff d5 00 15 00 25 0a
+[17:24:28.957] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=599469, filtered_accel=[-0.03564, 0.92328, -0.34648], gyro=[-2.94, 1.47, 2.52]
+[17:24:28.958] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=599569, filtered_accel=[-0.03564, 0.92428, -0.34844], gyro=[-3.01, 1.47, 2.59]
+[17:24:29.010] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 26 75 ff fc aa 00 5a 5b ff de 42 ff d6 00 16 00 23 0a
+[17:24:29.012] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=599669, filtered_accel=[-0.03416, 0.92524, -0.34552], gyro=[-2.94, 1.54, 2.45]
+[17:24:29.112] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 26 d9 ff fc 79 00 5a 37 ff de 42 ff d5 00 17 00 23 0a
+[17:24:29.114] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=599769, filtered_accel=[-0.03612, 0.9238, -0.34552], gyro=[-3.01, 1.61, 2.45]
+[17:24:29.215] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 27 3d ff fc 92 00 5a 5b ff dd d5 ff d7 00 15 00 25 0a
+[17:24:29.217] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=599869, filtered_accel=[-0.03512, 0.92524, -0.34988], gyro=[-2.87, 1.47, 2.59]
+[17:24:29.318] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 27 a1 ff fc 85 00 5a 37 ff de 67 ff d8 00 15 00 24 0a
+[17:24:29.320] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=599969, filtered_accel=[-0.03564, 0.9238, -0.34404], gyro=[-2.8, 1.47, 2.52]
+[17:24:29.372] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 28 05 ff fc 79 00 5a 43 ff de 1e ff d7 00 18 00 22 0a 02 10 00 00 09 28 05 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 c1 75 13 50 0a ff 00 00 00 09 28 05 0a
+[17:24:29.373] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=600069, filtered_accel=[-0.03612, 0.92428, -0.34696], gyro=[-2.87, 1.68, 2.38]
+[17:24:29.374] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=600069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.755692, witness_battery_voltage=4.944
+[17:24:29.375] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=600069
+[17:24:29.476] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 28 69 ff fc 85 00 5a 37 ff de 42 ff d5 00 15 00 24 0a
+[17:24:29.478] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=600169, filtered_accel=[-0.03564, 0.9238, -0.34552], gyro=[-3.01, 1.47, 2.52]
+[17:24:29.580] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 28 cd ff fc 92 00 5a 2a ff de 4f ff d7 00 15 00 25 0a
+[17:24:29.581] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=600269, filtered_accel=[-0.03512, 0.92328, -0.345], gyro=[-2.87, 1.47, 2.59]
+[17:24:29.683] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 29 31 ff fc 9e 00 5a 43 ff de 1e ff d5 00 16 00 23 0a
+[17:24:29.685] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=600369, filtered_accel=[-0.03464, 0.92428, -0.34696], gyro=[-3.01, 1.54, 2.45]
+[17:24:29.786] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 29 95 ff fc 85 00 5a 43 ff de 1e ff d7 00 16 00 23 0a
+[17:24:29.788] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=600469, filtered_accel=[-0.03564, 0.92428, -0.34696], gyro=[-2.87, 1.54, 2.45]
+[17:24:29.938] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 29 f9 ff fc 85 00 5a 43 ff de 1e ff d7 00 16 00 24 0a
+[17:24:29.941] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=600569, filtered_accel=[-0.03564, 0.92428, -0.34696], gyro=[-2.87, 1.54, 2.52]
+[17:24:29.992] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 2a 5d ff fc 85 00 5a 4f ff de 36 ff d7 00 15 00 25 0a
+[17:24:29.994] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=600669, filtered_accel=[-0.03564, 0.92476, -0.346], gyro=[-2.87, 1.47, 2.59]
+[17:24:30.095] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 2a c1 ff fc 92 00 5a 37 ff de 1e ff d7 00 17 00 22 0a
+[17:24:30.096] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=600769, filtered_accel=[-0.03512, 0.9238, -0.34696], gyro=[-2.87, 1.61, 2.38]
+[17:24:30.197] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 2b 25 ff fc aa 00 5a 43 ff de 42 ff d7 00 16 00 23 0a
+[17:24:30.198] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=600869, filtered_accel=[-0.03416, 0.92428, -0.34552], gyro=[-2.87, 1.54, 2.45]
+[17:24:30.299] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 2b 89 ff fc 85 00 5a 43 ff de 2a ff d7 00 15 00 25 0a
+[17:24:30.301] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=600969, filtered_accel=[-0.03564, 0.92428, -0.34648], gyro=[-2.87, 1.47, 2.59]
+[17:24:30.401] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 2b ed ff fc 9e 00 5a 4f ff de 7f ff d4 00 16 00 23 0a 02 10 00 00 09 2b ed 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:30.403] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=601069, filtered_accel=[-0.03464, 0.92476, -0.34308], gyro=[-3.08, 1.54, 2.45]
+[17:24:30.453] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 96 2b 13 50 0a ff 01 00 00 09 2b ed 0a
+[17:24:30.455] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=601069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.586594, witness_battery_voltage=4.944
+[17:24:30.455] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=601069
+[17:24:30.556] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 2c 51 ff fc 92 00 5a 4f ff de 05 ff d5 00 16 00 23 0a
+[17:24:30.558] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=601169, filtered_accel=[-0.03512, 0.92476, -0.34796], gyro=[-3.01, 1.54, 2.45]
+[17:24:30.659] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 2c b5 ff fc 92 00 5a 37 ff de 36 ff d7 00 14 00 25 0a
+[17:24:30.660] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=601269, filtered_accel=[-0.03512, 0.9238, -0.346], gyro=[-2.87, 1.4, 2.59]
+[17:24:30.711] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 2d 19 ff fc 79 00 5a 37 ff de 05 ff d7 00 15 00 25 0a
+[17:24:30.712] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=601369, filtered_accel=[-0.03612, 0.9238, -0.34796], gyro=[-2.87, 1.47, 2.59]
+[17:24:30.813] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 2d 7d ff fc 92 00 5a 43 ff de 12 ff d6 00 17 00 22 0a
+[17:24:30.815] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=601469, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.94, 1.61, 2.38]
+[17:24:30.916] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 2d e1 ff fc 9e 00 5a 43 ff de 36 ff d6 00 15 00 24 0a
+[17:24:30.917] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=601569, filtered_accel=[-0.03464, 0.92428, -0.346], gyro=[-2.94, 1.47, 2.52]
+[17:24:31.018] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 2e 45 ff fc 92 00 5a 37 ff de 2a ff d7 00 15 00 24 0a
+[17:24:31.019] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=601669, filtered_accel=[-0.03512, 0.9238, -0.34648], gyro=[-2.87, 1.47, 2.52]
+[17:24:31.070] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 2e a9 ff fc 9e 00 5a 37 ff de 1e ff d6 00 17 00 22 0a
+[17:24:31.071] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=601769, filtered_accel=[-0.03464, 0.9238, -0.34696], gyro=[-2.94, 1.61, 2.38]
+[17:24:31.172] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 2f 0d ff fc 6d 00 5a 43 ff de 05 ff d6 00 16 00 23 0a
+[17:24:31.173] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=601869, filtered_accel=[-0.0366, 0.92428, -0.34796], gyro=[-2.94, 1.54, 2.45]
+[17:24:31.274] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 2f 71 ff fc 9e 00 5a 5b ff de 2a ff d6 00 14 00 25 0a
+[17:24:31.276] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=601969, filtered_accel=[-0.03464, 0.92524, -0.34648], gyro=[-2.94, 1.4, 2.59]
+[17:24:31.377] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 2f d5 ff fc 92 00 5a 43 ff de 36 ff d8 00 14 00 25 0a 02 10 00 00 09 2f d5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:31.378] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=602069, filtered_accel=[-0.03512, 0.92428, -0.346], gyro=[-2.8, 1.4, 2.59]
+[17:24:31.479] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 ab d0 13 44 0a ff 00 00 00 09 2f d5 0a
+[17:24:31.480] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=602069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.671143, witness_battery_voltage=4.932
+[17:24:31.481] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=602069
+[17:24:31.532] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 30 39 ff fc 79 00 5a 43 ff de 05 ff d6 00 17 00 22 0a
+[17:24:31.533] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=602169, filtered_accel=[-0.03612, 0.92428, -0.34796], gyro=[-2.94, 1.61, 2.38]
+[17:24:31.635] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 30 9d ff fc aa 00 5a 67 ff dd e1 ff d7 00 15 00 24 0a
+[17:24:31.636] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=602269, filtered_accel=[-0.03416, 0.92572, -0.3494], gyro=[-2.87, 1.47, 2.52]
+[17:24:31.737] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 31 01 ff fc 85 00 5a 2a ff de 8c ff d5 00 15 00 24 0a
+[17:24:31.739] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=602369, filtered_accel=[-0.03564, 0.92328, -0.34256], gyro=[-3.01, 1.47, 2.52]
+[17:24:31.890] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 31 65 ff fc 85 00 5a 43 ff de 2a ff d7 00 17 00 23 0a 01 0b 00 00 09 31 c9 ff fc 9e 00 5a 4f ff de 36 ff d6 00 17 00 23 0a
+[17:24:31.891] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=602469, filtered_accel=[-0.03564, 0.92428, -0.34648], gyro=[-2.87, 1.61, 2.45]
+[17:24:31.892] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=602569, filtered_accel=[-0.03464, 0.92476, -0.346], gyro=[-2.94, 1.61, 2.45]
+[17:24:32.044] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 32 2d ff fc 85 00 5a 37 ff de 1e ff d7 00 15 00 24 0a
+[17:24:32.045] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=602669, filtered_accel=[-0.03564, 0.9238, -0.34696], gyro=[-2.87, 1.47, 2.52]
+[17:24:32.146] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 32 91 ff fc 79 00 5a 43 ff de 36 ff d6 00 15 00 25 0a
+[17:24:32.147] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=602769, filtered_accel=[-0.03612, 0.92428, -0.346], gyro=[-2.94, 1.47, 2.59]
+[17:24:32.298] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 32 f5 ff fc aa 00 5a 4f ff de 12 ff d5 00 18 00 21 0a
+[17:24:32.299] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=602869, filtered_accel=[-0.03416, 0.92476, -0.34744], gyro=[-3.01, 1.68, 2.31]
+[17:24:32.399] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 33 59 ff fc 9e 00 5a 67 ff de c9 ff d5 00 15 00 23 0a 01 0f 00 00 09 33 bd ff fc 92 00 5a 43 ff dd f9 ff d6 00 16 00 24 0a 02 10 00 00 09 33 bd 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 3f 96 13 54 0a ff 01 00 00 09 33 bd 0a
+[17:24:32.400] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=602969, filtered_accel=[-0.03464, 0.92572, -0.34012], gyro=[-3.01, 1.47, 2.45]
+[17:24:32.401] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=603069, filtered_accel=[-0.03512, 0.92428, -0.34844], gyro=[-2.94, 1.54, 2.52]
+[17:24:32.402] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=603069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.248383, witness_battery_voltage=4.948
+[17:24:32.403] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=603069
+[17:24:32.554] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 34 21 ff fc 9e 00 5a 43 ff de 05 ff d6 00 17 00 23 0a
+[17:24:32.556] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=603169, filtered_accel=[-0.03464, 0.92428, -0.34796], gyro=[-2.94, 1.61, 2.45]
+[17:24:32.708] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 34 85 ff fc 92 00 5a 37 ff de 36 ff d6 00 16 00 23 0a
+[17:24:32.710] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=603269, filtered_accel=[-0.03512, 0.9238, -0.346], gyro=[-2.94, 1.54, 2.45]
+[17:24:32.811] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 34 e9 ff fc 79 00 5a 4f ff de 1e ff d6 00 15 00 23 0a 01 0f 00 00 09 35 4d ff fc c2 00 5a 74 ff de 42 ff d7 00 14 00 25 0a
+[17:24:32.812] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=603369, filtered_accel=[-0.03612, 0.92476, -0.34696], gyro=[-2.94, 1.47, 2.45]
+[17:24:32.813] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=603469, filtered_accel=[-0.0332, 0.92624, -0.34552], gyro=[-2.87, 1.4, 2.59]
+[17:24:32.964] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 35 b1 ff fc 79 00 5a 1e ff de 42 ff d5 00 16 00 23 0a
+[17:24:32.966] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=603569, filtered_accel=[-0.03612, 0.9228, -0.34552], gyro=[-3.01, 1.54, 2.45]
+[17:24:33.067] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 36 15 ff fc 55 00 5a 37 ff de 42 ff d6 00 15 00 24 0a
+[17:24:33.069] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=603669, filtered_accel=[-0.03756, 0.9238, -0.34552], gyro=[-2.94, 1.47, 2.52]
+[17:24:33.230] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 36 79 ff fc aa 00 5a 37 ff de 4f ff d7 00 15 00 24 0a 01 0b 00 00 09 36 dd ff fb e7 00 59 fa ff df 98 ff cd 00 15 00 23 0a
+[17:24:33.240] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=603769, filtered_accel=[-0.03416, 0.9238, -0.345], gyro=[-2.87, 1.47, 2.52]
+[17:24:33.248] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=603869, filtered_accel=[-0.04196, 0.92136, -0.33184], gyro=[-3.57, 1.47, 2.45]
+[17:24:33.401] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 37 41 ff fc 79 00 5a 37 ff dd ed ff d8 00 17 00 23 0a
+[17:24:33.402] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=603969, filtered_accel=[-0.03612, 0.9238, -0.34892], gyro=[-2.8, 1.61, 2.45]
+[17:24:33.553] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 37 a5 ff fc 92 00 5a 5b ff de 2a ff d6 00 16 00 24 0a 02 10 00 00 09 37 a5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 c1 75 13 50 0a ff 00 00 00 09 37 a5 0a 01 0f 00 00 09 38 09 ff fc cf 00 5a 98 ff dd 73 ff d9 00 16 00 26 0a
+[17:24:33.555] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=604069, filtered_accel=[-0.03512, 0.92524, -0.34648], gyro=[-2.94, 1.54, 2.52]
+[17:24:33.555] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=604069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.755692, witness_battery_voltage=4.944
+[17:24:33.556] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=604069
+[17:24:33.557] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=604169, filtered_accel=[-0.03268, 0.92768, -0.3538], gyro=[-2.73, 1.54, 2.66]
+[17:24:33.709] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 38 6d ff fc aa 00 5a 43 ff dd bc ff d5 00 17 00 22 0a 01 0f 00 00 09 38 d1 ff fc 9e 00 5a 43 ff de 36 ff d6 00 16 00 24 0a
+[17:24:33.710] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=604269, filtered_accel=[-0.03416, 0.92428, -0.35088], gyro=[-3.01, 1.61, 2.38]
+[17:24:33.711] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=604369, filtered_accel=[-0.03464, 0.92428, -0.346], gyro=[-2.94, 1.54, 2.52]
+[17:24:33.863] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 39 35 ff fc 55 00 5a 12 ff de bc ff d6 00 15 00 24 0a
+[17:24:33.865] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=604469, filtered_accel=[-0.03756, 0.92232, -0.34064], gyro=[-2.94, 1.47, 2.52]
+[17:24:34.066] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 39 99 ff fc 85 00 5a 43 ff de 73 ff d6 00 17 00 23 0a 01 0b 00 00 09 39 fd ff fc 24 00 59 d5 ff de 98 ff d8 00 16 00 22 0a
+[17:24:34.068] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=604569, filtered_accel=[-0.03564, 0.92428, -0.34356], gyro=[-2.94, 1.61, 2.45]
+[17:24:34.069] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=604669, filtered_accel=[-0.03952, 0.91988, -0.34208], gyro=[-2.8, 1.54, 2.38]
+[17:24:34.220] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 3a 61 ff fc 92 00 5a 43 ff de 12 ff d7 00 15 00 25 0a 01 0f 00 00 09 3a c5 ff fc aa 00 5a 5b ff de 12 ff d7 00 15 00 25 0a
+[17:24:34.221] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=604769, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.87, 1.47, 2.59]
+[17:24:34.222] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=604869, filtered_accel=[-0.03416, 0.92524, -0.34744], gyro=[-2.87, 1.47, 2.59]
+[17:24:34.423] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 3b 29 ff fc 9e 00 5a 43 ff de 05 ff d5 00 17 00 23 0a 01 0f 00 00 09 3b 8d ff fc 92 00 5a 43 ff de 36 ff d6 00 16 00 24 0a 02 10 00 00 09 3b 8d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 80 85 13 48 0a ff 01 00 00 09 3b 8d 0a
+[17:24:34.426] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=604969, filtered_accel=[-0.03464, 0.92428, -0.34796], gyro=[-3.01, 1.61, 2.45]
+[17:24:34.432] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=605069, filtered_accel=[-0.03512, 0.92428, -0.346], gyro=[-2.94, 1.54, 2.52]
+[17:24:34.433] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=605069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.502029, witness_battery_voltage=4.936
+[17:24:34.434] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=605069
+[17:24:34.536] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 3b f1 ff fc 92 00 5a 2a ff de 1e ff d6 00 15 00 25 0a
+[17:24:34.540] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=605169, filtered_accel=[-0.03512, 0.92328, -0.34696], gyro=[-2.94, 1.47, 2.59]
+[17:24:34.742] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 3c 55 ff fc 85 00 5a 4f ff de 36 ff d5 00 17 00 23 0a 01 0b 00 00 09 3c b9 ff fc aa 00 5a 5b ff de 1e ff d6 00 17 00 23 0a
+[17:24:34.743] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=605269, filtered_accel=[-0.03564, 0.92476, -0.346], gyro=[-3.01, 1.61, 2.45]
+[17:24:34.745] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=605369, filtered_accel=[-0.03416, 0.92524, -0.34696], gyro=[-2.94, 1.61, 2.45]
+[17:24:34.896] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 3d 1d ff fc 92 00 5a 43 ff de 2a ff d6 00 15 00 25 0a 01 0f 00 00 09 3d 81 ff fc aa 00 5a 4f ff de 2a ff d7 00 15 00 25 0a
+[17:24:34.897] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=605469, filtered_accel=[-0.03512, 0.92428, -0.34648], gyro=[-2.94, 1.47, 2.59]
+[17:24:34.897] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=605569, filtered_accel=[-0.03416, 0.92476, -0.34648], gyro=[-2.87, 1.47, 2.59]
+[17:24:35.048] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 3d e5 ff fc aa 00 5a 4f ff de 36 ff d6 00 17 00 23 0a
+[17:24:35.050] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=605669, filtered_accel=[-0.03416, 0.92476, -0.346], gyro=[-2.94, 1.61, 2.45]
+[17:24:35.251] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 3e 49 ff fc 61 00 5a 1e ff de 05 ff d3 00 13 00 24 0a 01 0f 00 00 09 3e ad ff fc 85 00 5a 37 ff de 05 ff d8 00 15 00 25 0a
+[17:24:35.252] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=605769, filtered_accel=[-0.03708, 0.9228, -0.34796], gyro=[-3.15, 1.33, 2.52]
+[17:24:35.253] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=605869, filtered_accel=[-0.03564, 0.9238, -0.34796], gyro=[-2.8, 1.47, 2.59]
+[17:24:35.404] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 3f 11 ff fc 9e 00 5a 5b ff de 2a ff d6 00 17 00 22 0a 01 0b 00 00 09 3f 75 ff fc 9e 00 5a 4f ff dd ed ff d6 00 16 00 22 0a 02 10 00 00 09 3f 75 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 55 3b 13 54 0a ff 00 00 00 09 3f 75 0a
+[17:24:35.405] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=605969, filtered_accel=[-0.03464, 0.92524, -0.34648], gyro=[-2.94, 1.61, 2.38]
+[17:24:35.406] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=606069, filtered_accel=[-0.03464, 0.92476, -0.34892], gyro=[-2.94, 1.54, 2.38]
+[17:24:35.406] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=606069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.332932, witness_battery_voltage=4.948
+[17:24:35.407] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=606069
+[17:24:35.561] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 3f d9 ff fc 6d 00 5a 43 ff de 42 ff d7 00 16 00 25 0a
+[17:24:35.563] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=606169, filtered_accel=[-0.0366, 0.92428, -0.34552], gyro=[-2.87, 1.54, 2.59]
+[17:24:35.715] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 40 3d ff fc 85 00 5a 43 ff de 1e ff d6 00 15 00 26 0a 01 0f 00 00 09 40 a1 ff fc 85 00 5a 12 ff de 7f ff d9 00 18 00 20 0a
+[17:24:35.717] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=606269, filtered_accel=[-0.03564, 0.92428, -0.34696], gyro=[-2.94, 1.47, 2.66]
+[17:24:35.717] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=606369, filtered_accel=[-0.03564, 0.92232, -0.34308], gyro=[-2.73, 1.68, 2.24]
+[17:24:35.818] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 41 05 ff fc 9e 00 5a 67 ff de 2a ff d5 00 15 00 23 0a
+[17:24:35.820] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=606469, filtered_accel=[-0.03464, 0.92572, -0.34648], gyro=[-3.01, 1.47, 2.45]
+[17:24:35.920] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 41 69 ff fc 9e 00 5a 5b ff de 36 ff d7 00 15 00 25 0a
+[17:24:35.922] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=606569, filtered_accel=[-0.03464, 0.92524, -0.346], gyro=[-2.87, 1.47, 2.59]
+[17:24:35.973] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 41 cd ff fc 9e 00 5a 37 ff de 4f ff d8 00 17 00 21 0a
+[17:24:35.975] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=606669, filtered_accel=[-0.03464, 0.9238, -0.345], gyro=[-2.8, 1.61, 2.31]
+[17:24:36.077] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 42 31 ff fc 92 00 5a 4f ff de 42 ff d6 00 16 00 24 0a
+[17:24:36.078] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=606769, filtered_accel=[-0.03512, 0.92476, -0.34552], gyro=[-2.94, 1.54, 2.52]
+[17:24:36.179] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 42 95 ff fc 92 00 5a 37 ff de 1e ff d5 00 15 00 25 0a
+[17:24:36.182] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=606869, filtered_accel=[-0.03512, 0.9238, -0.34696], gyro=[-3.01, 1.47, 2.59]
+[17:24:36.283] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 42 f9 ff fc 92 00 5a 43 ff de 42 ff d6 00 15 00 25 0a
+[17:24:36.284] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=606969, filtered_accel=[-0.03512, 0.92428, -0.34552], gyro=[-2.94, 1.47, 2.59]
+[17:24:36.385] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 43 5d ff fc 92 00 5a 4f ff dd f9 ff d5 00 17 00 22 0a 02 10 00 00 09 43 5d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:36.386] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=607069, filtered_accel=[-0.03512, 0.92476, -0.34844], gyro=[-3.01, 1.61, 2.38]
+[17:24:36.487] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 29 43 13 50 0a ff 01 00 00 09 43 5d 0a
+[17:24:36.488] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=607069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.161179, witness_battery_voltage=4.944
+[17:24:36.489] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=607069
+[17:24:36.540] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 43 c1 ff fc 79 00 5a 4f ff de 5b ff d7 00 15 00 24 0a
+[17:24:36.541] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=607169, filtered_accel=[-0.03612, 0.92476, -0.34452], gyro=[-2.87, 1.47, 2.52]
+[17:24:36.643] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 44 25 ff fc 85 00 5a 43 ff de 1e ff d7 00 15 00 25 0a
+[17:24:36.644] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=607269, filtered_accel=[-0.03564, 0.92428, -0.34696], gyro=[-2.87, 1.47, 2.59]
+[17:24:36.745] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 44 89 ff fc 79 00 5a 43 ff de 2a ff d5 00 17 00 22 0a
+[17:24:36.746] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=607369, filtered_accel=[-0.03612, 0.92428, -0.34648], gyro=[-3.01, 1.61, 2.38]
+[17:24:36.797] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 44 ed ff fc 92 00 5a 4f ff de 2a ff d6 00 16 00 23 0a
+[17:24:36.798] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=607469, filtered_accel=[-0.03512, 0.92476, -0.34648], gyro=[-2.94, 1.54, 2.45]
+[17:24:36.899] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 45 51 ff fc 85 00 5a 5b ff de 05 ff d7 00 15 00 25 0a
+[17:24:36.903] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=607569, filtered_accel=[-0.03564, 0.92524, -0.34796], gyro=[-2.87, 1.47, 2.59]
+[17:24:36.954] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 45 b5 ff fc 92 00 5a 43 ff dd f9 ff d6 00 16 00 24 0a
+[17:24:36.955] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=607669, filtered_accel=[-0.03512, 0.92428, -0.34844], gyro=[-2.94, 1.54, 2.52]
+[17:24:37.106] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 46 19 ff fc 92 00 5a 4f ff de 1e ff d6 00 17 00 22 0a
+[17:24:37.107] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=607769, filtered_accel=[-0.03512, 0.92476, -0.34696], gyro=[-2.94, 1.61, 2.38]
+[17:24:37.158] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 46 7d ff fc 9e 00 5a 43 ff de 1e ff d7 00 16 00 24 0a
+[17:24:37.159] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=607869, filtered_accel=[-0.03464, 0.92428, -0.34696], gyro=[-2.87, 1.54, 2.52]
+[17:24:37.259] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 46 e1 ff fc aa 00 5a 37 ff de 2a ff d7 00 15 00 25 0a
+[17:24:37.261] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=607969, filtered_accel=[-0.03416, 0.9238, -0.34648], gyro=[-2.87, 1.47, 2.59]
+[17:24:37.361] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 47 45 ff fc 9e 00 5a 43 ff de 2a ff d6 00 16 00 23 0a 02 10 00 00 09 47 45 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:37.363] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=608069, filtered_accel=[-0.03464, 0.92428, -0.34648], gyro=[-2.94, 1.54, 2.45]
+[17:24:37.464] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 ab d0 13 54 0a ff 00 00 00 09 47 45 0a
+[17:24:37.465] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=608069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.671143, witness_battery_voltage=4.948
+[17:24:37.465] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=608069
+[17:24:37.567] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 47 a9 ff fc 92 00 5a 43 ff de 36 ff d5 00 15 00 23 0a
+[17:24:37.568] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=608169, filtered_accel=[-0.03512, 0.92428, -0.346], gyro=[-3.01, 1.47, 2.45]
+[17:24:37.619] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 48 0d ff fc 9e 00 5a 37 ff de 2a ff d7 00 15 00 24 0a
+[17:24:37.620] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=608269, filtered_accel=[-0.03464, 0.9238, -0.34648], gyro=[-2.87, 1.47, 2.52]
+[17:24:37.721] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 48 71 ff fc 85 00 5a 4f ff de 12 ff d7 00 15 00 25 0a
+[17:24:37.722] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=608369, filtered_accel=[-0.03564, 0.92476, -0.34744], gyro=[-2.87, 1.47, 2.59]
+[17:24:37.824] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 48 d5 ff fc 9e 00 5a 43 ff de 1e ff d6 00 17 00 22 0a
+[17:24:37.825] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=608469, filtered_accel=[-0.03464, 0.92428, -0.34696], gyro=[-2.94, 1.61, 2.38]
+[17:24:37.926] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 49 39 ff fc 9e 00 5a 37 ff de 2a ff d5 00 15 00 24 0a
+[17:24:37.929] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=608569, filtered_accel=[-0.03464, 0.9238, -0.34648], gyro=[-3.01, 1.47, 2.52]
+[17:24:38.030] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 49 9d ff fc b6 00 5a 5b ff de 42 ff d5 00 15 00 24 0a
+[17:24:38.031] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=608669, filtered_accel=[-0.03368, 0.92524, -0.34552], gyro=[-3.01, 1.47, 2.52]
+[17:24:38.083] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 4a 01 ff fc 9e 00 5a 12 ff de 12 ff d6 00 18 00 22 0a
+[17:24:38.085] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=608769, filtered_accel=[-0.03464, 0.92232, -0.34744], gyro=[-2.94, 1.68, 2.38]
+[17:24:38.185] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 4a 65 ff fc 6d 00 5a 67 ff de 2a ff d5 00 15 00 24 0a
+[17:24:38.186] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=608869, filtered_accel=[-0.0366, 0.92572, -0.34648], gyro=[-3.01, 1.47, 2.52]
+[17:24:38.286] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 4a c9 ff fc 92 00 5a 43 ff de 05 ff d7 00 15 00 24 0a
+[17:24:38.287] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=608969, filtered_accel=[-0.03512, 0.92428, -0.34796], gyro=[-2.87, 1.47, 2.52]
+[17:24:38.389] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 4b 2d ff fc 79 00 5a 2a ff de 1e ff d6 00 15 00 24 0a 02 10 00 00 09 4b 2d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:38.391] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=609069, filtered_accel=[-0.03612, 0.92328, -0.34696], gyro=[-2.94, 1.47, 2.52]
+[17:24:38.492] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 c1 75 13 50 0a ff 01 00 00 09 4b 2d 0a
+[17:24:38.493] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=609069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.755692, witness_battery_voltage=4.944
+[17:24:38.494] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=609069
+[17:24:38.594] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 4b 91 ff fc 85 00 5a 43 ff dd f9 ff d5 00 17 00 23 0a
+[17:24:38.595] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=609169, filtered_accel=[-0.03564, 0.92428, -0.34844], gyro=[-3.01, 1.61, 2.45]
+[17:24:38.646] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 4b f5 ff fc 79 00 5a 37 ff de 12 ff d7 00 16 00 24 0a
+[17:24:38.648] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=609269, filtered_accel=[-0.03612, 0.9238, -0.34744], gyro=[-2.87, 1.54, 2.52]
+[17:24:38.748] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 4c 59 ff fc 92 00 5a 43 ff de 12 ff d6 00 16 00 23 0a
+[17:24:38.749] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=609369, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.94, 1.54, 2.45]
+[17:24:38.800] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 4c bd ff fc aa 00 5a 2a ff dd f9 ff d7 00 18 00 22 0a
+[17:24:38.801] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=609469, filtered_accel=[-0.03416, 0.92328, -0.34844], gyro=[-2.87, 1.68, 2.38]
+[17:24:38.902] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 4d 21 ff fc 85 00 5a 37 ff de 1e ff d7 00 16 00 23 0a
+[17:24:38.903] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=609569, filtered_accel=[-0.03564, 0.9238, -0.34696], gyro=[-2.87, 1.54, 2.45]
+[17:24:39.005] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 4d 85 ff fc 85 00 5a 37 ff de 36 ff d6 00 14 00 25 0a
+[17:24:39.006] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=609669, filtered_accel=[-0.03564, 0.9238, -0.346], gyro=[-2.94, 1.4, 2.59]
+[17:24:39.107] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 4d e9 ff fc 85 00 5a 37 ff dd f9 ff d7 00 16 00 24 0a
+[17:24:39.109] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=609769, filtered_accel=[-0.03564, 0.9238, -0.34844], gyro=[-2.87, 1.54, 2.52]
+[17:24:39.159] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 4e 4d ff fc 92 00 5a 43 ff de 12 ff d6 00 17 00 22 0a
+[17:24:39.161] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=609869, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.94, 1.61, 2.38]
+[17:24:39.262] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 4e b1 ff fc 24 00 5a c9 ff de 1e ff d7 00 15 00 24 0a
+[17:24:39.263] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=609969, filtered_accel=[-0.03952, 0.92964, -0.34696], gyro=[-2.87, 1.47, 2.52]
+[17:24:39.364] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 4f 15 ff fc 92 00 5a 2a ff de 1e ff d7 00 15 00 24 0a 02 10 00 00 09 4f 15 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:39.366] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=610069, filtered_accel=[-0.03512, 0.92328, -0.34696], gyro=[-2.87, 1.47, 2.52]
+[17:24:39.467] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 96 2b 13 48 0a ff 00 00 00 09 4f 15 0a
+[17:24:39.468] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=610069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.586594, witness_battery_voltage=4.936
+[17:24:39.469] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=610069
+[17:24:39.521] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 4f 79 ff fc b6 00 5a 43 ff de 36 ff d5 00 16 00 22 0a
+[17:24:39.523] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=610169, filtered_accel=[-0.03368, 0.92428, -0.346], gyro=[-3.01, 1.54, 2.38]
+[17:24:39.624] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 4f dd ff fc 9e 00 5a 43 ff de 1e ff d5 00 15 00 23 0a
+[17:24:39.626] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=610269, filtered_accel=[-0.03464, 0.92428, -0.34696], gyro=[-3.01, 1.47, 2.45]
+[17:24:39.728] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 50 41 ff fc 85 00 5a 37 ff dd f9 ff d6 00 15 00 25 0a
+[17:24:39.729] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=610369, filtered_accel=[-0.03564, 0.9238, -0.34844], gyro=[-2.94, 1.47, 2.59]
+[17:24:39.780] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 50 a5 ff fc 92 00 5a 43 ff de 12 ff d7 00 16 00 24 0a
+[17:24:39.781] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=610469, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.87, 1.54, 2.52]
+[17:24:39.882] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 51 09 ff fc aa 00 5a 2a ff de 12 ff d5 00 16 00 22 0a
+[17:24:39.884] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=610569, filtered_accel=[-0.03416, 0.92328, -0.34744], gyro=[-3.01, 1.54, 2.38]
+[17:24:39.985] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 51 6d ff fc 79 00 5a 5b ff de 12 ff d7 00 15 00 24 0a
+[17:24:39.986] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=610669, filtered_accel=[-0.03612, 0.92524, -0.34744], gyro=[-2.87, 1.47, 2.52]
+[17:24:40.087] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 51 d1 ff fc 85 00 5a 2a ff de 2a ff d7 00 15 00 24 0a
+[17:24:40.088] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=610769, filtered_accel=[-0.03564, 0.92328, -0.34648], gyro=[-2.87, 1.47, 2.52]
+[17:24:40.189] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 52 35 ff fc c2 00 5a 2a ff dd ed ff d5 00 17 00 22 0a
+[17:24:40.190] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=610869, filtered_accel=[-0.0332, 0.92328, -0.34892], gyro=[-3.01, 1.61, 2.38]
+[17:24:40.291] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 52 99 ff fc 9e 00 5a 43 ff de 36 ff d5 00 15 00 23 0a
+[17:24:40.293] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=610969, filtered_accel=[-0.03464, 0.92428, -0.346], gyro=[-3.01, 1.47, 2.45]
+[17:24:40.394] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 52 fd ff fc 9e 00 5a 37 ff de 1e ff d6 00 15 00 24 0a 02 10 00 00 09 52 fd 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:40.396] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=611069, filtered_accel=[-0.03464, 0.9238, -0.34696], gyro=[-2.94, 1.47, 2.52]
+[17:24:40.447] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 96 2b 13 50 0a ff 01 00 00 09 52 fd 0a
+[17:24:40.447] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=611069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.586594, witness_battery_voltage=4.944
+[17:24:40.448] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=611069
+[17:24:40.549] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 53 61 ff fc 79 00 5a 43 ff de 1e ff d5 00 16 00 24 0a
+[17:24:40.550] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=611169, filtered_accel=[-0.03612, 0.92428, -0.34696], gyro=[-3.01, 1.54, 2.52]
+[17:24:40.650] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 53 c5 ff fc 92 00 5a 43 ff de 12 ff d6 00 16 00 24 0a
+[17:24:40.652] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=611269, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.94, 1.54, 2.52]
+[17:24:40.703] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 54 29 ff fc 9e 00 5a 43 ff de 12 ff d6 00 15 00 24 0a
+[17:24:40.704] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=611369, filtered_accel=[-0.03464, 0.92428, -0.34744], gyro=[-2.94, 1.47, 2.52]
+[17:24:40.805] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 54 8d ff fc 9e 00 5a 43 ff de 12 ff d6 00 15 00 24 0a
+[17:24:40.806] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=611469, filtered_accel=[-0.03464, 0.92428, -0.34744], gyro=[-2.94, 1.47, 2.52]
+[17:24:40.907] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 54 f1 ff fc 92 00 5a 37 ff de 1e ff d6 00 17 00 22 0a
+[17:24:40.908] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=611569, filtered_accel=[-0.03512, 0.9238, -0.34696], gyro=[-2.94, 1.61, 2.38]
+[17:24:40.959] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 55 55 ff fc 92 00 5a 4f ff de 1e ff d6 00 16 00 24 0a
+[17:24:40.961] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=611669, filtered_accel=[-0.03512, 0.92476, -0.34696], gyro=[-2.94, 1.54, 2.52]
+[17:24:41.062] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 55 b9 ff fc 9e 00 5a 43 ff de 12 ff d6 00 15 00 24 0a
+[17:24:41.063] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=611769, filtered_accel=[-0.03464, 0.92428, -0.34744], gyro=[-2.94, 1.47, 2.52]
+[17:24:41.214] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 56 1d ff fc 92 00 5a 37 ff de 1e ff d6 00 16 00 25 0a
+[17:24:41.215] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=611869, filtered_accel=[-0.03512, 0.9238, -0.34696], gyro=[-2.94, 1.54, 2.59]
+[17:24:41.268] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 56 81 ff fc 9e 00 5a 43 ff de 05 ff d7 00 18 00 22 0a
+[17:24:41.269] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=611969, filtered_accel=[-0.03464, 0.92428, -0.34796], gyro=[-2.87, 1.68, 2.38]
+[17:24:41.421] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 56 e5 ff fc 92 00 5a 43 ff de 1e ff d7 00 15 00 25 0a 02 10 00 00 09 56 e5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 d7 c8 13 50 0a ff 00 00 00 09 56 e5 0a
+[17:24:41.423] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=612069, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.87, 1.47, 2.59]
+[17:24:41.423] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=612069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.842896, witness_battery_voltage=4.944
+[17:24:41.424] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=612069
+[17:24:41.526] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 57 49 ff fc 92 00 5a 43 ff de 05 ff d6 00 16 00 24 0a
+[17:24:41.529] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=612169, filtered_accel=[-0.03512, 0.92428, -0.34796], gyro=[-2.94, 1.54, 2.52]
+[17:24:41.580] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 57 ad ff fc 85 00 5a 67 ff de 12 ff d6 00 18 00 22 0a
+[17:24:41.581] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=612269, filtered_accel=[-0.03564, 0.92572, -0.34744], gyro=[-2.94, 1.68, 2.38]
+[17:24:41.683] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 58 11 ff fc 92 00 5a 37 ff de 05 ff d7 00 16 00 24 0a
+[17:24:41.684] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=612369, filtered_accel=[-0.03512, 0.9238, -0.34796], gyro=[-2.87, 1.54, 2.52]
+[17:24:41.785] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 58 75 ff fc 85 00 5a 5b ff de 05 ff d7 00 15 00 24 0a
+[17:24:41.786] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=612469, filtered_accel=[-0.03564, 0.92524, -0.34796], gyro=[-2.87, 1.47, 2.52]
+[17:24:41.887] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 58 d9 ff fc 92 00 5a 43 ff de 05 ff d6 00 15 00 24 0a
+[17:24:41.889] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=612569, filtered_accel=[-0.03512, 0.92428, -0.34796], gyro=[-2.94, 1.47, 2.52]
+[17:24:41.989] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 59 3d ff fc 92 00 5a 43 ff de 05 ff d6 00 16 00 23 0a
+[17:24:41.991] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=612669, filtered_accel=[-0.03512, 0.92428, -0.34796], gyro=[-2.94, 1.54, 2.45]
+[17:24:42.091] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 59 a1 ff fc 85 00 5a 4f ff de 05 ff d7 00 15 00 24 0a
+[17:24:42.093] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=612769, filtered_accel=[-0.03564, 0.92476, -0.34796], gyro=[-2.87, 1.47, 2.52]
+[17:24:42.193] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 5a 05 ff fc 9e 00 5a 4f ff de 2a ff d7 00 15 00 25 0a
+[17:24:42.198] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=612869, filtered_accel=[-0.03464, 0.92476, -0.34648], gyro=[-2.87, 1.47, 2.59]
+[17:24:42.299] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 5a 69 ff fc 92 00 5a 43 ff de 36 ff d5 00 18 00 22 0a
+[17:24:42.300] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=612969, filtered_accel=[-0.03512, 0.92428, -0.346], gyro=[-3.01, 1.68, 2.38]
+[17:24:42.401] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 5a cd ff fc 92 00 5a 5b ff de 36 ff d6 00 16 00 23 0a 02 10 00 00 09 5a cd 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:42.402] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=613069, filtered_accel=[-0.03512, 0.92524, -0.346], gyro=[-2.94, 1.54, 2.45]
+[17:24:42.454] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 80 85 13 48 0a ff 01 00 00 09 5a cd 0a
+[17:24:42.455] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=613069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.502029, witness_battery_voltage=4.936
+[17:24:42.456] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=613069
+[17:24:42.556] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 5b 31 ff fc 92 00 5a 43 ff de 12 ff d7 00 14 00 25 0a
+[17:24:42.558] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=613169, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.87, 1.4, 2.59]
+[17:24:42.659] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 5b 95 ff fc 92 00 5a 43 ff de 4f ff d6 00 15 00 24 0a
+[17:24:42.662] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=613269, filtered_accel=[-0.03512, 0.92428, -0.345], gyro=[-2.94, 1.47, 2.52]
+[17:24:42.712] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 5b f9 ff fc 92 00 5a 2a ff de 1e ff d6 00 17 00 22 0a
+[17:24:42.714] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=613369, filtered_accel=[-0.03512, 0.92328, -0.34696], gyro=[-2.94, 1.61, 2.38]
+[17:24:42.815] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 5c 5d ff fc aa 00 5a 37 ff de 2a ff d6 00 16 00 25 0a
+[17:24:42.816] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=613469, filtered_accel=[-0.03416, 0.9238, -0.34648], gyro=[-2.94, 1.54, 2.59]
+[17:24:42.916] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 5c c1 ff fc 92 00 5a 4f ff de 1e ff d6 00 15 00 24 0a
+[17:24:42.917] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=613569, filtered_accel=[-0.03512, 0.92476, -0.34696], gyro=[-2.94, 1.47, 2.52]
+[17:24:43.019] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 5d 25 ff fc 85 00 5a 37 ff de 05 ff d6 00 17 00 22 0a
+[17:24:43.021] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=613669, filtered_accel=[-0.03564, 0.9238, -0.34796], gyro=[-2.94, 1.61, 2.38]
+[17:24:43.122] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 5d 89 ff fc 92 00 5a 43 ff de 1e ff d7 00 16 00 23 0a
+[17:24:43.123] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=613769, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.87, 1.54, 2.45]
+[17:24:43.224] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 5d ed ff fc 92 00 5a 43 ff de 05 ff d6 00 16 00 24 0a
+[17:24:43.225] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=613869, filtered_accel=[-0.03512, 0.92428, -0.34796], gyro=[-2.94, 1.54, 2.52]
+[17:24:43.327] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 5e 51 ff fc 9e 00 5a 4f ff de 42 ff d6 00 16 00 23 0a
+[17:24:43.328] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=613969, filtered_accel=[-0.03464, 0.92476, -0.34552], gyro=[-2.94, 1.54, 2.45]
+[17:24:43.428] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 5e b5 ff fc aa 00 5a 4f ff de 1e ff d6 00 17 00 23 0a 02 10 00 00 09 5e b5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 ab d0 13 50 0a ff 00 00 00 09 5e b5 0a
+[17:24:43.430] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=614069, filtered_accel=[-0.03416, 0.92476, -0.34696], gyro=[-2.94, 1.61, 2.45]
+[17:24:43.431] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=614069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.671143, witness_battery_voltage=4.944
+[17:24:43.432] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=614069
+[17:24:43.483] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 5f 19 ff fc c2 00 5a 37 ff de 05 ff d5 00 15 00 25 0a
+[17:24:43.490] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=614169, filtered_accel=[-0.0332, 0.9238, -0.34796], gyro=[-3.01, 1.47, 2.59]
+[17:24:43.596] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 5f 7d ff fc b6 00 5a 4f ff de 36 ff d6 00 14 00 24 0a
+[17:24:43.597] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=614269, filtered_accel=[-0.03368, 0.92476, -0.346], gyro=[-2.94, 1.4, 2.52]
+[17:24:43.698] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 5f e1 ff fc 3c 00 58 7f ff d9 11 ff db 00 1d 00 30 0a
+[17:24:43.700] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=614369, filtered_accel=[-0.03856, 0.9062, -0.39868], gyro=[-2.59, 2.03, 3.36]
+[17:24:43.801] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 60 45 ff fe 7a 00 5c 43 ff db d4 ff c9 00 12 00 24 0a
+[17:24:43.802] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=614469, filtered_accel=[-0.0156, 0.94476, -0.3704], gyro=[-3.85, 1.26, 2.52]
+[17:24:43.903] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 60 a9 ff fd 92 00 5b 74 ff dd 2a ff d4 00 14 00 25 0a
+[17:24:43.905] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=614569, filtered_accel=[-0.02488, 0.93648, -0.35672], gyro=[-3.08, 1.4, 2.59]
+[17:24:44.005] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 61 0d ff fc 79 00 5a 1e ff dd ed ff d7 00 18 00 23 0a
+[17:24:44.008] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=614669, filtered_accel=[-0.03612, 0.9228, -0.34892], gyro=[-2.87, 1.68, 2.45]
+[17:24:44.059] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 61 71 ff fc aa 00 5a 4f ff dd ed ff d7 00 16 00 22 0a
+[17:24:44.061] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=614769, filtered_accel=[-0.03416, 0.92476, -0.34892], gyro=[-2.87, 1.54, 2.38]
+[17:24:44.162] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 61 d5 ff fc cf 00 5a 4f ff de 12 ff d6 00 14 00 24 0a
+[17:24:44.165] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=614869, filtered_accel=[-0.03268, 0.92476, -0.34744], gyro=[-2.94, 1.4, 2.52]
+[17:24:44.267] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 62 39 ff fc b6 00 5a 2a ff de 4f ff d6 00 15 00 24 0a
+[17:24:44.268] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=614969, filtered_accel=[-0.03368, 0.92328, -0.345], gyro=[-2.94, 1.47, 2.52]
+[17:24:44.369] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 62 9d ff fc 92 00 5a 43 ff de 36 ff d5 00 17 00 21 0a 02 10 00 00 09 62 9d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:44.369] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=615069, filtered_accel=[-0.03512, 0.92428, -0.346], gyro=[-3.01, 1.61, 2.31]
+[17:24:44.471] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 ab d0 13 50 0a ff 01 00 00 09 62 9d 0a
+[17:24:44.471] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=615069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.671143, witness_battery_voltage=4.944
+[17:24:44.472] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=615069
+[17:24:44.523] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 63 01 ff fc 79 00 5a 43 ff dd f9 ff d6 00 16 00 24 0a
+[17:24:44.524] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=615169, filtered_accel=[-0.03612, 0.92428, -0.34844], gyro=[-2.94, 1.54, 2.52]
+[17:24:44.625] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 63 65 ff fc 9e 00 5a 43 ff de 1e ff d8 00 15 00 24 0a
+[17:24:44.627] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=615269, filtered_accel=[-0.03464, 0.92428, -0.34696], gyro=[-2.8, 1.47, 2.52]
+[17:24:44.732] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 63 c9 ff fc b6 00 5a 37 ff de 1e ff d6 00 16 00 24 0a
+[17:24:44.733] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=615369, filtered_accel=[-0.03368, 0.9238, -0.34696], gyro=[-2.94, 1.54, 2.52]
+[17:24:44.784] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 64 2d ff fc 85 00 5a 2a ff de 1e ff d6 00 17 00 23 0a
+[17:24:44.786] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=615469, filtered_accel=[-0.03564, 0.92328, -0.34696], gyro=[-2.94, 1.61, 2.45]
+[17:24:44.887] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 64 91 ff fc 85 00 5a 43 ff de 1e ff d5 00 15 00 24 0a
+[17:24:44.889] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=615569, filtered_accel=[-0.03564, 0.92428, -0.34696], gyro=[-3.01, 1.47, 2.52]
+[17:24:44.990] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 64 f5 ff fc b6 00 5a 43 ff de 12 ff d8 00 15 00 25 0a
+[17:24:44.992] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=615669, filtered_accel=[-0.03368, 0.92428, -0.34744], gyro=[-2.8, 1.47, 2.59]
+[17:24:45.093] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 65 59 ff fc 9e 00 5a 37 ff dd d5 ff d7 00 17 00 22 0a
+[17:24:45.094] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=615769, filtered_accel=[-0.03464, 0.9238, -0.34988], gyro=[-2.87, 1.61, 2.38]
+[17:24:45.196] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 65 bd ff fc 55 00 5a 43 ff de 5b ff d7 00 15 00 24 0a
+[17:24:45.197] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=615869, filtered_accel=[-0.03756, 0.92428, -0.34452], gyro=[-2.87, 1.47, 2.52]
+[17:24:45.298] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 66 21 ff fc 48 00 5a 4f ff dd 67 ff d9 00 16 00 25 0a
+[17:24:45.299] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=615969, filtered_accel=[-0.03808, 0.92476, -0.35428], gyro=[-2.73, 1.54, 2.59]
+[17:24:45.400] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 66 85 ff fc 85 00 5a 37 ff de 42 ff d9 00 18 00 23 0a 02 10 00 00 09 66 85 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:45.400] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=616069, filtered_accel=[-0.03564, 0.9238, -0.34552], gyro=[-2.73, 1.68, 2.45]
+[17:24:45.503] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 55 3b 13 50 0a ff 00 00 00 09 66 85 0a
+[17:24:45.504] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=616069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.332932, witness_battery_voltage=4.944
+[17:24:45.505] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=616069
+[17:24:45.606] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 66 e9 ff fc 79 00 5a 2a ff de 05 ff d7 00 18 00 22 0a
+[17:24:45.607] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=616169, filtered_accel=[-0.03612, 0.92328, -0.34796], gyro=[-2.87, 1.68, 2.38]
+[17:24:45.658] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 67 4d ff fc c2 00 5a 74 ff de 12 ff d6 00 17 00 23 0a
+[17:24:45.659] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=616269, filtered_accel=[-0.0332, 0.92624, -0.34744], gyro=[-2.94, 1.61, 2.45]
+[17:24:45.760] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 67 b1 ff fc 85 00 5a 1e ff de 67 ff d8 00 14 00 25 0a
+[17:24:45.761] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=616369, filtered_accel=[-0.03564, 0.9228, -0.34404], gyro=[-2.8, 1.4, 2.59]
+[17:24:45.862] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 68 15 ff fc 9e 00 5a 43 ff de 12 ff d6 00 18 00 22 0a
+[17:24:45.863] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=616469, filtered_accel=[-0.03464, 0.92428, -0.34744], gyro=[-2.94, 1.68, 2.38]
+[17:24:45.964] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 68 79 ff fc 92 00 5a 43 ff de 1e ff d6 00 16 00 24 0a
+[17:24:45.965] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=616569, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.94, 1.54, 2.52]
+[17:24:46.067] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 68 dd ff fc 9e 00 5a 37 ff de 12 ff d6 00 15 00 25 0a
+[17:24:46.069] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=616669, filtered_accel=[-0.03464, 0.9238, -0.34744], gyro=[-2.94, 1.47, 2.59]
+[17:24:46.170] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 69 41 ff fc 9e 00 5a 43 ff dd d5 ff d7 00 16 00 23 0a
+[17:24:46.171] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=616769, filtered_accel=[-0.03464, 0.92428, -0.34988], gyro=[-2.87, 1.54, 2.45]
+[17:24:46.271] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 69 a5 ff fc 9e 00 5a 4f ff de 2a ff d5 00 16 00 23 0a
+[17:24:46.272] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=616869, filtered_accel=[-0.03464, 0.92476, -0.34648], gyro=[-3.01, 1.54, 2.45]
+[17:24:46.374] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 6a 09 ff fc 92 00 5a 37 ff de 36 ff d7 00 16 00 24 0a
+[17:24:46.374] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=616969, filtered_accel=[-0.03512, 0.9238, -0.346], gyro=[-2.87, 1.54, 2.52]
+[17:24:46.425] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 6a 6d ff fc 92 00 5a 43 ff de 2a ff d6 00 14 00 24 0a 02 10 00 00 09 6a 6d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 96 2b 13 50 0a ff 01 00 00 09 6a 6d 0a
+[17:24:46.428] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=617069, filtered_accel=[-0.03512, 0.92428, -0.34648], gyro=[-2.94, 1.4, 2.52]
+[17:24:46.429] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=617069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.586594, witness_battery_voltage=4.944
+[17:24:46.429] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=617069
+[17:24:46.531] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 6a d1 ff fc 79 00 5a 37 ff de 36 ff d6 00 17 00 23 0a
+[17:24:46.535] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=617169, filtered_accel=[-0.03612, 0.9238, -0.346], gyro=[-2.94, 1.61, 2.45]
+[17:24:46.638] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 6b 35 ff fc 85 00 5a 37 ff de 4f ff d7 00 15 00 24 0a
+[17:24:46.640] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=617269, filtered_accel=[-0.03564, 0.9238, -0.345], gyro=[-2.87, 1.47, 2.52]
+[17:24:46.693] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 6b 99 ff fc aa 00 5a 43 ff de 12 ff d7 00 16 00 24 0a
+[17:24:46.695] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=617369, filtered_accel=[-0.03416, 0.92428, -0.34744], gyro=[-2.87, 1.54, 2.52]
+[17:24:46.801] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 6b fd ff fc b6 00 5a 4f ff dd d5 ff d6 00 17 00 23 0a
+[17:24:46.804] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=617469, filtered_accel=[-0.03368, 0.92476, -0.34988], gyro=[-2.94, 1.61, 2.45]
+[17:24:46.908] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 6c 61 ff fc aa 00 5a 43 ff de 2a ff d7 00 17 00 23 0a
+[17:24:46.911] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=617569, filtered_accel=[-0.03416, 0.92428, -0.34648], gyro=[-2.87, 1.61, 2.45]
+[17:24:46.962] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 6c c5 ff fc 48 00 5a 2a ff dd f9 ff d7 00 16 00 24 0a
+[17:24:46.969] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=617669, filtered_accel=[-0.03808, 0.92328, -0.34844], gyro=[-2.87, 1.54, 2.52]
+[17:24:47.075] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 6d 29 ff fc 92 00 5a 4f ff de 12 ff d6 00 16 00 24 0a
+[17:24:47.077] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=617769, filtered_accel=[-0.03512, 0.92476, -0.34744], gyro=[-2.94, 1.54, 2.52]
+[17:24:47.178] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 6d 8d ff fc 85 00 5a 4f ff dd f9 ff d6 00 17 00 23 0a
+[17:24:47.180] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=617869, filtered_accel=[-0.03564, 0.92476, -0.34844], gyro=[-2.94, 1.61, 2.45]
+[17:24:47.281] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 6d f1 ff fc aa 00 5a 5b ff de 2a ff d7 00 15 00 24 0a
+[17:24:47.283] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=617969, filtered_accel=[-0.03416, 0.92524, -0.34648], gyro=[-2.87, 1.47, 2.52]
+[17:24:47.386] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 6e 55 ff fc 92 00 5a 2a ff de 12 ff d6 00 16 00 24 0a 02 10 00 00 09 6e 55 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:47.389] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=618069, filtered_accel=[-0.03512, 0.92328, -0.34744], gyro=[-2.94, 1.54, 2.52]
+[17:24:47.491] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 96 2b 13 50 0a ff 00 00 00 09 6e 55 0a
+[17:24:47.493] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=618069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.586594, witness_battery_voltage=4.944
+[17:24:47.494] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=618069
+[17:24:47.545] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 6e b9 ff fc 85 00 5a 43 ff de 12 ff d6 00 18 00 23 0a
+[17:24:47.548] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=618169, filtered_accel=[-0.03564, 0.92428, -0.34744], gyro=[-2.94, 1.68, 2.45]
+[17:24:47.599] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 6f 1d ff fc 92 00 5a 4f ff de 12 ff d6 00 17 00 22 0a
+[17:24:47.601] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=618269, filtered_accel=[-0.03512, 0.92476, -0.34744], gyro=[-2.94, 1.61, 2.38]
+[17:24:47.702] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 6f 81 ff fc 92 00 5a 43 ff de 12 ff d7 00 15 00 24 0a
+[17:24:47.704] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=618369, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.87, 1.47, 2.52]
+[17:24:47.806] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 6f e5 ff fc 92 00 5a 4f ff de 1e ff d7 00 15 00 25 0a
+[17:24:47.808] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=618469, filtered_accel=[-0.03512, 0.92476, -0.34696], gyro=[-2.87, 1.47, 2.59]
+[17:24:47.909] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 70 49 ff fc 92 00 5a 4f ff de 12 ff d6 00 17 00 22 0a
+[17:24:47.911] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=618569, filtered_accel=[-0.03512, 0.92476, -0.34744], gyro=[-2.94, 1.61, 2.38]
+[17:24:47.963] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 70 ad ff fc b6 00 5a 5b ff de 05 ff d6 00 15 00 25 0a
+[17:24:47.965] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=618669, filtered_accel=[-0.03368, 0.92524, -0.34796], gyro=[-2.94, 1.47, 2.59]
+[17:24:48.066] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 71 11 ff fc 9e 00 5a 37 ff de 12 ff d6 00 15 00 24 0a
+[17:24:48.068] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=618769, filtered_accel=[-0.03464, 0.9238, -0.34744], gyro=[-2.94, 1.47, 2.52]
+[17:24:48.169] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 71 75 ff fc e7 00 5a 1e ff de 98 ff d5 00 16 00 23 0a
+[17:24:48.172] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=618869, filtered_accel=[-0.03172, 0.9228, -0.34208], gyro=[-3.01, 1.54, 2.45]
+[17:24:48.274] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 71 d9 ff fc aa 00 5a 43 ff dd ed ff d6 00 17 00 23 0a
+[17:24:48.277] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=618969, filtered_accel=[-0.03416, 0.92428, -0.34892], gyro=[-2.94, 1.61, 2.45]
+[17:24:48.378] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 72 3d ff fc 85 00 5a 43 ff de 1e ff d6 00 15 00 24 0a 02 10 00 00 09 72 3d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:48.379] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=619069, filtered_accel=[-0.03564, 0.92428, -0.34696], gyro=[-2.94, 1.47, 2.52]
+[17:24:48.480] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 ab d0 13 50 0a ff 01 00 00 09 72 3d 0a
+[17:24:48.482] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=619069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.671143, witness_battery_voltage=4.944
+[17:24:48.483] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=619069
+[17:24:48.584] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 72 a1 ff fc 92 00 5a 43 ff de 1e ff d7 00 15 00 25 0a
+[17:24:48.586] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=619169, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.87, 1.47, 2.59]
+[17:24:48.637] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 73 05 ff fc 92 00 5a 37 ff de 2a ff d6 00 18 00 22 0a
+[17:24:48.639] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=619269, filtered_accel=[-0.03512, 0.9238, -0.34648], gyro=[-2.94, 1.68, 2.38]
+[17:24:48.740] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 73 69 ff fc 92 00 5a 43 ff de 1e ff d7 00 15 00 24 0a
+[17:24:48.744] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=619369, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.87, 1.47, 2.52]
+[17:24:48.795] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 73 cd ff fc 85 00 5a 4f ff de 12 ff d7 00 15 00 25 0a
+[17:24:48.797] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=619469, filtered_accel=[-0.03564, 0.92476, -0.34744], gyro=[-2.87, 1.47, 2.59]
+[17:24:48.898] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 74 31 ff fc 92 00 5a 43 ff de 1e ff d6 00 17 00 23 0a
+[17:24:48.901] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=619569, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.94, 1.61, 2.45]
+[17:24:49.004] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 74 95 ff fc 9e 00 5a 37 ff de 7f ff d4 00 15 00 23 0a
+[17:24:49.006] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=619669, filtered_accel=[-0.03464, 0.9238, -0.34308], gyro=[-3.08, 1.47, 2.45]
+[17:24:49.107] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 74 f9 ff fc aa 00 5a 37 ff dd 1e ff d6 00 15 00 25 0a
+[17:24:49.110] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=619769, filtered_accel=[-0.03416, 0.9238, -0.3572], gyro=[-2.94, 1.47, 2.59]
+[17:24:49.161] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 75 5d ff fc 9e 00 5a 37 ff de 98 ff d6 00 15 00 25 0a
+[17:24:49.162] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=619869, filtered_accel=[-0.03464, 0.9238, -0.34208], gyro=[-2.94, 1.47, 2.59]
+[17:24:49.264] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 75 c1 ff fc 92 00 5a 37 ff de 05 ff d6 00 16 00 23 0a
+[17:24:49.267] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=619969, filtered_accel=[-0.03512, 0.9238, -0.34796], gyro=[-2.94, 1.54, 2.45]
+[17:24:49.369] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 76 25 ff fc 85 00 5a 43 ff de 1e ff d6 00 16 00 24 0a 02 10 00 00 09 76 25 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:49.386] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=620069, filtered_accel=[-0.03564, 0.92428, -0.34696], gyro=[-2.94, 1.54, 2.52]
+[17:24:49.489] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 55 3b 13 50 0a ff 00 00 00 09 76 25 0a
+[17:24:49.491] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=620069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.332932, witness_battery_voltage=4.944
+[17:24:49.492] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=620069
+[17:24:49.543] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 76 89 ff fc 92 00 5a 43 ff de 1e ff d6 00 15 00 25 0a
+[17:24:49.545] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=620169, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.94, 1.47, 2.59]
+[17:24:49.648] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 76 ed ff fc 92 00 5a 43 ff de 2a ff d6 00 17 00 23 0a
+[17:24:49.651] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=620269, filtered_accel=[-0.03512, 0.92428, -0.34648], gyro=[-2.94, 1.61, 2.45]
+[17:24:49.752] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 77 51 ff fc 85 00 5a 43 ff de 05 ff d6 00 16 00 23 0a
+[17:24:49.754] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=620369, filtered_accel=[-0.03564, 0.92428, -0.34796], gyro=[-2.94, 1.54, 2.45]
+[17:24:49.856] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 77 b5 ff fc 9e 00 5a 37 ff de 12 ff d6 00 14 00 24 0a
+[17:24:49.858] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=620469, filtered_accel=[-0.03464, 0.9238, -0.34744], gyro=[-2.94, 1.4, 2.52]
+[17:24:49.909] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 78 19 ff fc 92 00 5a 37 ff de 12 ff d7 00 15 00 25 0a
+[17:24:49.911] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=620569, filtered_accel=[-0.03512, 0.9238, -0.34744], gyro=[-2.87, 1.47, 2.59]
+[17:24:50.012] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 78 7d ff fc aa 00 5a 5b ff dd ed ff d5 00 17 00 22 0a
+[17:24:50.014] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=620669, filtered_accel=[-0.03416, 0.92524, -0.34892], gyro=[-3.01, 1.61, 2.38]
+[17:24:50.116] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 78 e1 ff fc 9e 00 5a 43 ff de 4f ff d6 00 15 00 24 0a
+[17:24:50.119] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=620769, filtered_accel=[-0.03464, 0.92428, -0.345], gyro=[-2.94, 1.47, 2.52]
+[17:24:50.170] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 79 45 ff fc b6 00 5a 37 ff de 36 ff d7 00 16 00 24 0a
+[17:24:50.171] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=620869, filtered_accel=[-0.03368, 0.9238, -0.346], gyro=[-2.87, 1.54, 2.52]
+[17:24:50.272] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 79 a9 ff fc 85 00 5a 4f ff de 36 ff d5 00 17 00 23 0a
+[17:24:50.274] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=620969, filtered_accel=[-0.03564, 0.92476, -0.346], gyro=[-3.01, 1.61, 2.45]
+[17:24:50.376] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 7a 0d ff fc 92 00 5a 37 ff dd c8 ff d7 00 16 00 25 0a 02 10 00 00 09 7a 0d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:50.380] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=621069, filtered_accel=[-0.03512, 0.9238, -0.3504], gyro=[-2.87, 1.54, 2.59]
+[17:24:50.482] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 80 85 13 50 0a ff 01 00 00 09 7a 0d 0a
+[17:24:50.484] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=621069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.502029, witness_battery_voltage=4.944
+[17:24:50.486] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=621069
+[17:24:50.589] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 7a 71 ff fc 9e 00 5a 37 ff dd ed ff d6 00 14 00 25 0a
+[17:24:50.591] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=621169, filtered_accel=[-0.03464, 0.9238, -0.34892], gyro=[-2.94, 1.4, 2.59]
+[17:24:50.643] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 7a d5 ff fc 9e 00 5a 2a ff de 5b ff d7 00 15 00 25 0a
+[17:24:50.645] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=621269, filtered_accel=[-0.03464, 0.92328, -0.34452], gyro=[-2.87, 1.47, 2.59]
+[17:24:50.747] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 7b 39 ff fc 9e 00 5a 43 ff de 1e ff d6 00 18 00 22 0a
+[17:24:50.749] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=621369, filtered_accel=[-0.03464, 0.92428, -0.34696], gyro=[-2.94, 1.68, 2.38]
+[17:24:50.800] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 7b 9d ff fc 85 00 5a 2a ff de 36 ff d6 00 16 00 23 0a
+[17:24:50.802] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=621469, filtered_accel=[-0.03564, 0.92328, -0.346], gyro=[-2.94, 1.54, 2.45]
+[17:24:50.904] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 7c 01 ff fc 9e 00 5a 4f ff de 1e ff d5 00 16 00 24 0a
+[17:24:50.907] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=621569, filtered_accel=[-0.03464, 0.92476, -0.34696], gyro=[-3.01, 1.54, 2.52]
+[17:24:51.008] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 7c 65 ff fc 92 00 5a 43 ff de 2a ff d5 00 17 00 22 0a
+[17:24:51.010] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=621669, filtered_accel=[-0.03512, 0.92428, -0.34648], gyro=[-3.01, 1.61, 2.38]
+[17:24:51.062] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 7c c9 ff fc 92 00 5a 43 ff de 4f ff d5 00 17 00 21 0a
+[17:24:51.063] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=621769, filtered_accel=[-0.03512, 0.92428, -0.345], gyro=[-3.01, 1.61, 2.31]
+[17:24:51.165] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 7d 2d ff fc aa 00 5a 43 ff dd b0 ff d6 00 16 00 25 0a
+[17:24:51.167] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=621869, filtered_accel=[-0.03416, 0.92428, -0.35136], gyro=[-2.94, 1.54, 2.59]
+[17:24:51.268] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 7d 91 ff fc c2 00 5a 43 ff de 98 ff d7 00 15 00 25 0a
+[17:24:51.270] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=621969, filtered_accel=[-0.0332, 0.92428, -0.34208], gyro=[-2.87, 1.47, 2.59]
+[17:24:51.371] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 7d f5 ff fc 92 00 5a 37 ff de 42 ff d6 00 16 00 22 0a 02 10 00 00 09 7d f5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:51.375] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=622069, filtered_accel=[-0.03512, 0.9238, -0.34552], gyro=[-2.94, 1.54, 2.38]
+[17:24:51.477] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 80 85 13 48 0a ff 00 00 00 09 7d f5 0a
+[17:24:51.480] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=622069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.502029, witness_battery_voltage=4.936
+[17:24:51.481] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=622069
+[17:24:51.584] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 7e 59 ff fc 85 00 5a 37 ff de 12 ff d7 00 14 00 26 0a
+[17:24:51.586] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=622169, filtered_accel=[-0.03564, 0.9238, -0.34744], gyro=[-2.87, 1.4, 2.66]
+[17:24:51.688] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 7e bd ff fc 79 00 5a 43 ff de 05 ff d6 00 17 00 21 0a
+[17:24:51.690] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=622269, filtered_accel=[-0.03612, 0.92428, -0.34796], gyro=[-2.94, 1.61, 2.31]
+[17:24:51.792] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 7f 21 ff fc 92 00 5a 37 ff de 2a ff d6 00 16 00 22 0a
+[17:24:51.794] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=622369, filtered_accel=[-0.03512, 0.9238, -0.34648], gyro=[-2.94, 1.54, 2.38]
+[17:24:51.844] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 7f 85 ff fc 9e 00 5a 37 ff de 1e ff d6 00 17 00 23 0a
+[17:24:51.846] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=622469, filtered_accel=[-0.03464, 0.9238, -0.34696], gyro=[-2.94, 1.61, 2.45]
+[17:24:51.947] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 7f e9 ff fc 92 00 5a 43 ff de 12 ff d7 00 14 00 26 0a
+[17:24:51.949] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=622569, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.87, 1.4, 2.66]
+[17:24:52.000] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 80 4d ff fc aa 00 5a 37 ff de 1e ff d7 00 15 00 25 0a
+[17:24:52.002] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=622669, filtered_accel=[-0.03416, 0.9238, -0.34696], gyro=[-2.87, 1.47, 2.59]
+[17:24:52.104] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 80 b1 ff fc 92 00 5a 37 ff de 1e ff d6 00 17 00 22 0a
+[17:24:52.107] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=622769, filtered_accel=[-0.03512, 0.9238, -0.34696], gyro=[-2.94, 1.61, 2.38]
+[17:24:52.207] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 81 15 ff fc 85 00 5a 37 ff de 12 ff d6 00 15 00 24 0a
+[17:24:52.209] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=622869, filtered_accel=[-0.03564, 0.9238, -0.34744], gyro=[-2.94, 1.47, 2.52]
+[17:24:52.310] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 81 79 ff fc 9e 00 5a 4f ff de 1e ff d6 00 15 00 24 0a
+[17:24:52.312] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=622969, filtered_accel=[-0.03464, 0.92476, -0.34696], gyro=[-2.94, 1.47, 2.52]
+[17:24:52.363] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 81 dd ff fc db 00 5a 43 ff de 4f ff d4 00 17 00 23 0a 02 10 00 00 09 81 dd 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:52.369] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=623069, filtered_accel=[-0.0322, 0.92428, -0.345], gyro=[-3.08, 1.61, 2.45]
+[17:24:52.472] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 ab d0 13 44 0a ff 01 00 00 09 81 dd 0a
+[17:24:52.474] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=623069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.671143, witness_battery_voltage=4.932
+[17:24:52.478] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=623069
+[17:24:52.581] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 82 41 ff fc c2 00 5a 80 ff de 12 ff d4 00 16 00 24 0a
+[17:24:52.583] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=623169, filtered_accel=[-0.0332, 0.92672, -0.34744], gyro=[-3.08, 1.54, 2.52]
+[17:24:52.699] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 82 a5 ff fc 79 00 5a 1e ff de 2a ff d6 00 15 00 24 0a
+[17:24:52.700] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=623269, filtered_accel=[-0.03612, 0.9228, -0.34648], gyro=[-2.94, 1.47, 2.52]
+[17:24:52.802] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 83 09 ff fc 92 00 5a 43 ff dd f9 ff d5 00 14 00 25 0a
+[17:24:52.804] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=623369, filtered_accel=[-0.03512, 0.92428, -0.34844], gyro=[-3.01, 1.4, 2.59]
+[17:24:52.855] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 83 6d ff fc 85 00 5a 4f ff de 12 ff d6 00 17 00 22 0a
+[17:24:52.856] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=623469, filtered_accel=[-0.03564, 0.92476, -0.34744], gyro=[-2.94, 1.61, 2.38]
+[17:24:52.958] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 83 d1 ff fc 85 00 5a 4f ff dd f9 ff d6 00 15 00 24 0a
+[17:24:52.960] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=623569, filtered_accel=[-0.03564, 0.92476, -0.34844], gyro=[-2.94, 1.47, 2.52]
+[17:24:53.061] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 84 35 ff fc 9e 00 5a 43 ff dd ed ff d7 00 15 00 24 0a
+[17:24:53.069] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=623669, filtered_accel=[-0.03464, 0.92428, -0.34892], gyro=[-2.87, 1.47, 2.52]
+[17:24:53.122] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 84 99 ff fc 6d 00 5a 2a ff de 2a ff d9 00 18 00 21 0a
+[17:24:53.124] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=623769, filtered_accel=[-0.0366, 0.92328, -0.34648], gyro=[-2.73, 1.68, 2.31]
+[17:24:53.226] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 84 fd ff fc 85 00 5a 43 ff de 1e ff d6 00 16 00 23 0a
+[17:24:53.228] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=623869, filtered_accel=[-0.03564, 0.92428, -0.34696], gyro=[-2.94, 1.54, 2.45]
+[17:24:53.279] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 85 61 ff fc 85 00 5a 43 ff de 1e ff d6 00 14 00 25 0a
+[17:24:53.281] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=623969, filtered_accel=[-0.03564, 0.92428, -0.34696], gyro=[-2.94, 1.4, 2.59]
+[17:24:53.382] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 85 c5 ff fc 3c 00 5a 5b ff de 5b ff d7 00 15 00 25 0a 02 10 00 00 09 85 c5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 80 85 13 48 0a ff 00 00 00 09 85 c5 0a
+[17:24:53.386] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=624069, filtered_accel=[-0.03856, 0.92524, -0.34452], gyro=[-2.87, 1.47, 2.59]
+[17:24:53.387] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=624069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.502029, witness_battery_voltage=4.936
+[17:24:53.388] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=624069
+[17:24:53.491] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 86 29 ff fc 79 00 5a 1e ff de 36 ff d8 00 18 00 21 0a
+[17:24:53.495] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=624169, filtered_accel=[-0.03612, 0.9228, -0.346], gyro=[-2.8, 1.68, 2.31]
+[17:24:53.597] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 86 8d ff fc 79 00 5a 4f ff de 36 ff d7 00 15 00 24 0a
+[17:24:53.599] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=624269, filtered_accel=[-0.03612, 0.92476, -0.346], gyro=[-2.87, 1.47, 2.52]
+[17:24:53.701] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 86 f1 ff fc 9e 00 5a 37 ff de 2a ff d7 00 15 00 24 0a
+[17:24:53.705] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=624369, filtered_accel=[-0.03464, 0.9238, -0.34648], gyro=[-2.87, 1.47, 2.52]
+[17:24:53.759] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 87 55 ff fc 85 00 5a 37 ff de 12 ff d6 00 17 00 22 0a
+[17:24:53.763] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=624469, filtered_accel=[-0.03564, 0.9238, -0.34744], gyro=[-2.94, 1.61, 2.38]
+[17:24:53.865] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 87 b9 ff fc 9e 00 5a 37 ff de 12 ff d6 00 17 00 23 0a
+[17:24:53.892] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=624569, filtered_accel=[-0.03464, 0.9238, -0.34744], gyro=[-2.94, 1.61, 2.45]
+[17:24:53.958] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 88 1d ff fc 92 00 5a 37 ff de 1e ff d7 00 15 00 25 0a
+[17:24:53.969] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=624669, filtered_accel=[-0.03512, 0.9238, -0.34696], gyro=[-2.87, 1.47, 2.59]
+[17:24:54.080] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 88 81 ff fc 9e 00 5a 43 ff de 12 ff d6 00 15 00 25 0a
+[17:24:54.083] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=624769, filtered_accel=[-0.03464, 0.92428, -0.34744], gyro=[-2.94, 1.47, 2.59]
+[17:24:54.185] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 88 e5 ff fc b6 00 5a 37 ff dd bc ff d6 00 18 00 22 0a
+[17:24:54.187] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=624869, filtered_accel=[-0.03368, 0.9238, -0.35088], gyro=[-2.94, 1.68, 2.38]
+[17:24:54.288] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 89 49 ff fc 92 00 5a 37 ff de 42 ff d7 00 14 00 25 0a
+[17:24:54.290] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=624969, filtered_accel=[-0.03512, 0.9238, -0.34552], gyro=[-2.87, 1.4, 2.59]
+[17:24:54.392] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 89 ad ff fc 9e 00 5a 4f ff de 1e ff d6 00 14 00 24 0a 02 10 00 00 09 89 ad 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:54.397] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=625069, filtered_accel=[-0.03464, 0.92476, -0.34696], gyro=[-2.94, 1.4, 2.52]
+[17:24:54.452] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 80 85 13 48 0a ff 01 00 00 09 89 ad 0a
+[17:24:54.454] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=625069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.502029, witness_battery_voltage=4.936
+[17:24:54.455] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=625069
+[17:24:54.558] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 8a 11 ff fc 92 00 5a 37 ff de 36 ff d5 00 17 00 23 0a
+[17:24:54.561] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=625169, filtered_accel=[-0.03512, 0.9238, -0.346], gyro=[-3.01, 1.61, 2.45]
+[17:24:54.663] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 8a 75 ff fc 92 00 5a 43 ff de 12 ff d6 00 17 00 23 0a
+[17:24:54.667] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=625269, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.94, 1.61, 2.45]
+[17:24:54.720] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 8a d9 ff fc c2 00 5a 43 ff de 1e ff d8 00 15 00 24 0a
+[17:24:54.724] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=625369, filtered_accel=[-0.0332, 0.92428, -0.34696], gyro=[-2.8, 1.47, 2.52]
+[17:24:54.825] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 8b 3d ff fc 9e 00 5a 4f ff de 05 ff d6 00 15 00 25 0a
+[17:24:54.827] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=625469, filtered_accel=[-0.03464, 0.92476, -0.34796], gyro=[-2.94, 1.47, 2.59]
+[17:24:54.879] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 8b a1 ff fc c2 00 5a 80 ff de 98 ff d2 00 16 00 22 0a
+[17:24:54.880] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=625569, filtered_accel=[-0.0332, 0.92672, -0.34208], gyro=[-3.22, 1.54, 2.38]
+[17:24:54.982] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 8c 05 ff fc 85 00 5a 43 ff de 05 ff d7 00 15 00 25 0a
+[17:24:54.984] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=625669, filtered_accel=[-0.03564, 0.92428, -0.34796], gyro=[-2.87, 1.47, 2.59]
+[17:24:55.087] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 8c 69 ff fc 92 00 5a 37 ff de 36 ff d7 00 14 00 25 0a
+[17:24:55.095] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=625769, filtered_accel=[-0.03512, 0.9238, -0.346], gyro=[-2.87, 1.4, 2.59]
+[17:24:55.226] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 8c cd ff fc 92 00 5a 37 ff de 12 ff d6 00 17 00 22 0a
+[17:24:55.228] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=625869, filtered_accel=[-0.03512, 0.9238, -0.34744], gyro=[-2.94, 1.61, 2.38]
+[17:24:55.280] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 8d 31 ff fc 55 00 5a 5b ff de 1e ff d7 00 16 00 23 0a
+[17:24:55.282] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=625969, filtered_accel=[-0.03756, 0.92524, -0.34696], gyro=[-2.87, 1.54, 2.45]
+[17:24:55.386] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 8d 95 ff fc 79 00 5a 2a ff dd f9 ff d6 00 15 00 24 0a 02 10 00 00 09 8d 95 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:55.389] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=626069, filtered_accel=[-0.03612, 0.92328, -0.34844], gyro=[-2.94, 1.47, 2.52]
+[17:24:55.492] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 6a e0 13 48 0a ff 00 00 00 09 8d 95 0a
+[17:24:55.495] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=626069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.41748, witness_battery_voltage=4.936
+[17:24:55.497] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=626069
+[17:24:55.548] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 8d f9 ff fc 61 00 5a 37 ff de 67 ff d6 00 16 00 25 0a
+[17:24:55.551] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=626169, filtered_accel=[-0.03708, 0.9238, -0.34404], gyro=[-2.94, 1.54, 2.59]
+[17:24:55.653] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 8e 5d ff fc 55 00 5a 98 ff df 4f ff d6 00 17 00 23 0a
+[17:24:55.657] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=626269, filtered_accel=[-0.03756, 0.92768, -0.33476], gyro=[-2.94, 1.61, 2.45]
+[17:24:55.758] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 8e c1 ff fc db 00 5a 43 ff dd 42 ff d6 00 15 00 24 0a
+[17:24:55.764] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=626369, filtered_accel=[-0.0322, 0.92428, -0.35576], gyro=[-2.94, 1.47, 2.52]
+[17:24:55.815] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 8f 25 ff fc 92 00 5a 4f ff de 05 ff d6 00 15 00 24 0a
+[17:24:55.818] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=626469, filtered_accel=[-0.03512, 0.92476, -0.34796], gyro=[-2.94, 1.47, 2.52]
+[17:24:55.920] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 8f 89 ff fc 9e 00 5a 2a ff de 1e ff d6 00 17 00 21 0a
+[17:24:55.922] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=626569, filtered_accel=[-0.03464, 0.92328, -0.34696], gyro=[-2.94, 1.61, 2.31]
+[17:24:56.023] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 8f ed ff fc 92 00 5a 43 ff de 12 ff d6 00 16 00 24 0a
+[17:24:56.024] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=626669, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.94, 1.54, 2.52]
+[17:24:56.127] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 90 51 ff fc 9e 00 5a 37 ff de 2a ff d6 00 15 00 24 0a
+[17:24:56.129] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=626769, filtered_accel=[-0.03464, 0.9238, -0.34648], gyro=[-2.94, 1.47, 2.52]
+[17:24:56.179] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 90 b5 ff fc 92 00 5a 43 ff de 1e ff d6 00 15 00 25 0a
+[17:24:56.182] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=626869, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.94, 1.47, 2.59]
+[17:24:56.288] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 91 19 ff fc 92 00 5a 37 ff de 1e ff d6 00 17 00 23 0a
+[17:24:56.297] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=626969, filtered_accel=[-0.03512, 0.9238, -0.34696], gyro=[-2.94, 1.61, 2.45]
+[17:24:56.367] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 91 7d ff fc 92 00 5a 37 ff de 2a ff d6 00 15 00 24 0a 02 10 00 00 09 91 7d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:56.377] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=627069, filtered_accel=[-0.03512, 0.9238, -0.34648], gyro=[-2.94, 1.47, 2.52]
+[17:24:56.484] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 6a e0 13 44 0a ff 01 00 00 09 91 7d 0a
+[17:24:56.488] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=627069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.41748, witness_battery_voltage=4.932
+[17:24:56.493] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=627069
+[17:24:56.546] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 91 e1 ff fc 92 00 5a 43 ff de 05 ff d7 00 15 00 25 0a
+[17:24:56.548] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=627169, filtered_accel=[-0.03512, 0.92428, -0.34796], gyro=[-2.87, 1.47, 2.59]
+[17:24:56.650] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 92 45 ff fc 9e 00 5a 43 ff de 12 ff d6 00 18 00 23 0a
+[17:24:56.653] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=627269, filtered_accel=[-0.03464, 0.92428, -0.34744], gyro=[-2.94, 1.68, 2.45]
+[17:24:56.704] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 92 a9 ff fc 79 00 5a 43 ff de 05 ff d6 00 16 00 24 0a
+[17:24:56.708] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=627369, filtered_accel=[-0.03612, 0.92428, -0.34796], gyro=[-2.94, 1.54, 2.52]
+[17:24:56.811] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 93 0d ff fc 85 00 5a 37 ff de 1e ff d6 00 15 00 25 0a
+[17:24:56.813] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=627469, filtered_accel=[-0.03564, 0.9238, -0.34696], gyro=[-2.94, 1.47, 2.59]
+[17:24:56.914] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 93 71 ff fc 9e 00 5a 37 ff de 2a ff d6 00 15 00 26 0a
+[17:24:56.916] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=627569, filtered_accel=[-0.03464, 0.9238, -0.34648], gyro=[-2.94, 1.47, 2.66]
+[17:24:56.967] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 93 d5 ff fc 79 00 5a 37 ff de 1e ff d5 00 17 00 22 0a
+[17:24:56.968] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=627669, filtered_accel=[-0.03612, 0.9238, -0.34696], gyro=[-3.01, 1.61, 2.38]
+[17:24:57.070] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 94 39 ff fc 79 00 5a 43 ff dd f9 ff d7 00 14 00 24 0a
+[17:24:57.072] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=627769, filtered_accel=[-0.03612, 0.92428, -0.34844], gyro=[-2.87, 1.4, 2.52]
+[17:24:57.174] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 94 9d ff fc 79 00 5a 43 ff de 12 ff d7 00 16 00 24 0a
+[17:24:57.175] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=627869, filtered_accel=[-0.03612, 0.92428, -0.34744], gyro=[-2.87, 1.54, 2.52]
+[17:24:57.276] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 95 01 ff fc 92 00 5a 37 ff de 2a ff d6 00 18 00 22 0a
+[17:24:57.279] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=627969, filtered_accel=[-0.03512, 0.9238, -0.34648], gyro=[-2.94, 1.68, 2.38]
+[17:24:57.380] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 95 65 ff fc 85 00 5a 4f ff de 12 ff d6 00 16 00 23 0a 02 10 00 00 09 95 65 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:57.387] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=628069, filtered_accel=[-0.03564, 0.92476, -0.34744], gyro=[-2.94, 1.54, 2.45]
+[17:24:57.443] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 80 85 13 48 0a ff 00 00 00 09 95 65 0a
+[17:24:57.473] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=628069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.502029, witness_battery_voltage=4.936
+[17:24:57.481] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=628069
+[17:24:57.534] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 95 c9 ff fc 85 00 5a 1e ff de 05 ff d8 00 15 00 25 0a
+[17:24:57.536] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=628169, filtered_accel=[-0.03564, 0.9228, -0.34796], gyro=[-2.8, 1.47, 2.59]
+[17:24:57.638] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 96 2d ff fc 9e 00 5a 2a ff de 1e ff d6 00 16 00 25 0a
+[17:24:57.641] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=628269, filtered_accel=[-0.03464, 0.92328, -0.34696], gyro=[-2.94, 1.54, 2.59]
+[17:24:57.693] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 96 91 ff fc 9e 00 5a 5b ff de 36 ff d6 00 17 00 22 0a
+[17:24:57.696] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=628369, filtered_accel=[-0.03464, 0.92524, -0.346], gyro=[-2.94, 1.61, 2.38]
+[17:24:57.798] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 96 f5 ff fc 85 00 5a 67 ff de 7f ff d5 00 15 00 24 0a
+[17:24:57.800] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=628469, filtered_accel=[-0.03564, 0.92572, -0.34308], gyro=[-3.01, 1.47, 2.52]
+[17:24:57.906] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 97 59 ff fc 92 00 5a 43 ff de 1e ff d6 00 14 00 24 0a
+[17:24:57.912] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=628569, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.94, 1.4, 2.52]
+[17:24:57.964] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 97 bd ff fc 92 00 5a 2a ff de 1e ff d6 00 18 00 21 0a
+[17:24:57.968] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=628669, filtered_accel=[-0.03512, 0.92328, -0.34696], gyro=[-2.94, 1.68, 2.31]
+[17:24:58.069] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 98 21 ff fc 9e 00 5a 4f ff de 1e ff d6 00 15 00 24 0a
+[17:24:58.075] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=628769, filtered_accel=[-0.03464, 0.92476, -0.34696], gyro=[-2.94, 1.47, 2.52]
+[17:24:58.226] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 98 85 ff fc 92 00 5a 4f ff de 1e ff d6 00 16 00 23 0a
+[17:24:58.229] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=628869, filtered_accel=[-0.03512, 0.92476, -0.34696], gyro=[-2.94, 1.54, 2.45]
+[17:24:58.281] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 98 e9 ff fc 9e 00 5a 37 ff de 12 ff d6 00 16 00 25 0a
+[17:24:58.284] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=628969, filtered_accel=[-0.03464, 0.9238, -0.34744], gyro=[-2.94, 1.54, 2.59]
+[17:24:58.385] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 99 4d ff fc 92 00 5a 43 ff de 2a ff d6 00 17 00 22 0a 02 10 00 00 09 99 4d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:58.387] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=629069, filtered_accel=[-0.03512, 0.92428, -0.34648], gyro=[-2.94, 1.61, 2.38]
+[17:24:58.438] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 80 85 13 48 0a ff 01 00 00 09 99 4d 0a
+[17:24:58.440] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=629069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.502029, witness_battery_voltage=4.936
+[17:24:58.441] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=629069
+[17:24:58.542] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 99 b1 ff fc 85 00 5a 2a ff de 2a ff d6 00 15 00 25 0a
+[17:24:58.547] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=629169, filtered_accel=[-0.03564, 0.92328, -0.34648], gyro=[-2.94, 1.47, 2.59]
+[17:24:58.598] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 9a 15 ff fc 9e 00 5a 37 ff de 1e ff d7 00 16 00 24 0a
+[17:24:58.601] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=629269, filtered_accel=[-0.03464, 0.9238, -0.34696], gyro=[-2.87, 1.54, 2.52]
+[17:24:58.722] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 9a 79 ff fc 92 00 5a 43 ff de 12 ff d6 00 17 00 22 0a
+[17:24:58.725] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=629369, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.94, 1.61, 2.38]
+[17:24:58.776] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 9a dd ff fc 85 00 5a 43 ff de 2a ff d7 00 16 00 23 0a
+[17:24:58.777] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=629469, filtered_accel=[-0.03564, 0.92428, -0.34648], gyro=[-2.87, 1.54, 2.45]
+[17:24:58.879] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 9b 41 ff fc 9e 00 5a 37 ff de 2a ff d6 00 15 00 25 0a
+[17:24:58.881] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=629569, filtered_accel=[-0.03464, 0.9238, -0.34648], gyro=[-2.94, 1.47, 2.59]
+[17:24:58.983] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 9b a5 ff fc 79 00 5a 37 ff de 2a ff d6 00 15 00 23 0a
+[17:24:58.992] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=629669, filtered_accel=[-0.03612, 0.9238, -0.34648], gyro=[-2.94, 1.47, 2.45]
+[17:24:59.104] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 9c 09 ff fc 9e 00 5a 2a ff de 12 ff d7 00 17 00 23 0a
+[17:24:59.107] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=629769, filtered_accel=[-0.03464, 0.92328, -0.34744], gyro=[-2.87, 1.61, 2.45]
+[17:24:59.167] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 9c 6d ff fc aa 00 5a 37 ff de 05 ff d7 00 15 00 25 0a
+[17:24:59.168] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=629869, filtered_accel=[-0.03416, 0.9238, -0.34796], gyro=[-2.87, 1.47, 2.59]
+[17:24:59.269] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 9c d1 ff fc 92 00 5a 2a ff de 05 ff d6 00 15 00 24 0a
+[17:24:59.271] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=629969, filtered_accel=[-0.03512, 0.92328, -0.34796], gyro=[-2.94, 1.47, 2.52]
+[17:24:59.372] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 9d 35 ff fc 9e 00 5a 43 ff de 12 ff d6 00 18 00 22 0a 02 10 00 00 09 9d 35 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:24:59.374] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=630069, filtered_accel=[-0.03464, 0.92428, -0.34744], gyro=[-2.94, 1.68, 2.38]
+[17:24:59.475] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 96 2b 13 48 0a ff 00 00 00 09 9d 35 0a
+[17:24:59.476] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=630069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.586594, witness_battery_voltage=4.936
+[17:24:59.479] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=630069
+[17:24:59.580] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 9d 99 ff fc 92 00 5a 43 ff de 05 ff d6 00 16 00 25 0a
+[17:24:59.581] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=630169, filtered_accel=[-0.03512, 0.92428, -0.34796], gyro=[-2.94, 1.54, 2.59]
+[17:24:59.682] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 9d fd ff fc 92 00 5a 37 ff de 05 ff d7 00 15 00 25 0a
+[17:24:59.683] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=630269, filtered_accel=[-0.03512, 0.9238, -0.34796], gyro=[-2.87, 1.47, 2.59]
+[17:24:59.735] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 9e 61 ff fc 92 00 5a 37 ff de 1e ff d6 00 16 00 24 0a
+[17:24:59.738] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=630369, filtered_accel=[-0.03512, 0.9238, -0.34696], gyro=[-2.94, 1.54, 2.52]
+[17:24:59.839] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 9e c5 ff fc 92 00 5a 43 ff de 12 ff d6 00 17 00 22 0a
+[17:24:59.842] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=630469, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.94, 1.61, 2.38]
+[17:24:59.943] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 9f 29 ff fc 92 00 5a 43 ff de 1e ff d6 00 16 00 24 0a
+[17:24:59.945] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=630569, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.94, 1.54, 2.52]
+[17:24:59.996] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 9f 8d ff fc 92 00 5a 43 ff de 4f ff d6 00 15 00 24 0a
+[17:25:00.001] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=630669, filtered_accel=[-0.03512, 0.92428, -0.345], gyro=[-2.94, 1.47, 2.52]
+[17:25:00.105] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 9f f1 ff fc 92 00 5a 1e ff de 05 ff d6 00 18 00 22 0a
+[17:25:00.107] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=630769, filtered_accel=[-0.03512, 0.9228, -0.34796], gyro=[-2.94, 1.68, 2.38]
+[17:25:00.211] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 a0 55 ff fc aa 00 5a 37 ff de 12 ff d6 00 16 00 25 0a
+[17:25:00.212] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=630869, filtered_accel=[-0.03416, 0.9238, -0.34744], gyro=[-2.94, 1.54, 2.59]
+[17:25:00.312] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 a0 b9 ff fc 85 00 5a 2a ff de 12 ff d7 00 14 00 25 0a
+[17:25:00.318] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=630969, filtered_accel=[-0.03564, 0.92328, -0.34744], gyro=[-2.87, 1.4, 2.59]
+[17:25:00.421] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 a1 1d ff fc 61 00 5a 4f ff de a4 ff d5 00 16 00 23 0a 02 10 00 00 09 a1 1d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 55 3b 13 54 0a ff 01 00 00 09 a1 1d 0a
+[17:25:00.423] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=631069, filtered_accel=[-0.03708, 0.92476, -0.3416], gyro=[-3.01, 1.54, 2.45]
+[17:25:00.425] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=631069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.332932, witness_battery_voltage=4.948
+[17:25:00.428] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=631069
+[17:25:00.480] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 a1 81 ff fc 92 00 5a 43 ff dd ed ff d6 00 17 00 23 0a
+[17:25:00.481] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=631169, filtered_accel=[-0.03512, 0.92428, -0.34892], gyro=[-2.94, 1.61, 2.45]
+[17:25:00.583] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 a1 e5 ff fc 92 00 5a 37 ff de 12 ff d7 00 16 00 23 0a
+[17:25:00.585] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=631269, filtered_accel=[-0.03512, 0.9238, -0.34744], gyro=[-2.87, 1.54, 2.45]
+[17:25:00.686] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 a2 49 ff fc 79 00 5a 4f ff de 05 ff d7 00 14 00 24 0a
+[17:25:00.687] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=631369, filtered_accel=[-0.03612, 0.92476, -0.34796], gyro=[-2.87, 1.4, 2.52]
+[17:25:00.788] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 a2 ad ff fc 9e 00 5a 4f ff de 42 ff d5 00 18 00 22 0a
+[17:25:00.791] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=631469, filtered_accel=[-0.03464, 0.92476, -0.34552], gyro=[-3.01, 1.68, 2.38]
+[17:25:00.892] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 a3 11 ff fc b6 00 5a 4f ff de 5b ff d5 00 15 00 24 0a
+[17:25:00.895] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=631569, filtered_accel=[-0.03368, 0.92476, -0.34452], gyro=[-3.01, 1.47, 2.52]
+[17:25:01.000] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 a3 75 ff fc 92 00 5a 4f ff de 1e ff d6 00 15 00 25 0a
+[17:25:01.009] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=631669, filtered_accel=[-0.03512, 0.92476, -0.34696], gyro=[-2.94, 1.47, 2.59]
+[17:25:01.078] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 a3 d9 ff fc 9e 00 5a 06 ff de 36 ff d7 00 17 00 23 0a
+[17:25:01.097] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=631769, filtered_accel=[-0.03464, 0.92184, -0.346], gyro=[-2.87, 1.61, 2.45]
+[17:25:01.212] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 a4 3d ff fc 3c 00 59 73 ff df 8c ff d9 00 18 00 22 0a
+[17:25:01.214] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=631869, filtered_accel=[-0.03856, 0.91596, -0.33232], gyro=[-2.73, 1.68, 2.38]
+[17:25:01.267] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 a4 a1 ff fb ce 00 59 36 ff dd e1 ff e1 00 18 00 24 0a
+[17:25:01.269] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=631969, filtered_accel=[-0.04296, 0.91352, -0.3494], gyro=[-2.17, 1.68, 2.52]
+[17:25:01.394] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 a5 05 ff fc 85 00 59 ed ff dd f9 ff d8 00 16 00 25 0a 02 10 00 00 09 a5 05 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:25:01.395] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=632069, filtered_accel=[-0.03564, 0.92084, -0.34844], gyro=[-2.8, 1.54, 2.59]
+[17:25:01.502] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 6a e0 13 48 0a ff 00 00 00 09 a5 05 0a
+[17:25:01.506] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=632069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.41748, witness_battery_voltage=4.936
+[17:25:01.506] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=632069
+[17:25:01.558] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 a5 69 ff fc 92 00 5a 2a ff dd c8 ff d5 00 1a 00 21 0a
+[17:25:01.562] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=632169, filtered_accel=[-0.03512, 0.92328, -0.3504], gyro=[-3.01, 1.82, 2.31]
+[17:25:01.613] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 a5 cd ff fc 85 00 5a 1e ff de 2a ff d7 00 15 00 24 0a
+[17:25:01.616] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=632269, filtered_accel=[-0.03564, 0.9228, -0.34648], gyro=[-2.87, 1.47, 2.52]
+[17:25:01.718] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 a6 31 ff fc 85 00 5a 43 ff de 12 ff d6 00 15 00 24 0a
+[17:25:01.720] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=632369, filtered_accel=[-0.03564, 0.92428, -0.34744], gyro=[-2.94, 1.47, 2.52]
+[17:25:01.822] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 a6 95 ff fc 85 00 5a 37 ff de 42 ff d6 00 16 00 24 0a
+[17:25:01.824] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=632469, filtered_accel=[-0.03564, 0.9238, -0.34552], gyro=[-2.94, 1.54, 2.52]
+[17:25:01.925] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 a6 f9 ff fc 9e 00 5a 43 ff de 2a ff d6 00 16 00 23 0a
+[17:25:01.930] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=632569, filtered_accel=[-0.03464, 0.92428, -0.34648], gyro=[-2.94, 1.54, 2.45]
+[17:25:02.032] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 a7 5d ff fc 92 00 5a 43 ff de 36 ff d7 00 15 00 24 0a
+[17:25:02.034] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=632669, filtered_accel=[-0.03512, 0.92428, -0.346], gyro=[-2.87, 1.47, 2.52]
+[17:25:02.135] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 a7 c1 ff fc 9e 00 5a 37 ff de 36 ff d7 00 15 00 24 0a
+[17:25:02.137] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=632769, filtered_accel=[-0.03464, 0.9238, -0.346], gyro=[-2.87, 1.47, 2.52]
+[17:25:02.238] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 a8 25 ff fc 9e 00 5a 37 ff dd f9 ff d5 00 18 00 22 0a
+[17:25:02.240] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=632869, filtered_accel=[-0.03464, 0.9238, -0.34844], gyro=[-3.01, 1.68, 2.38]
+[17:25:02.315] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 a8 89 ff fc 85 00 5a 37 ff de 1e ff d6 00 16 00 24 0a
+[17:25:02.319] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=632969, filtered_accel=[-0.03564, 0.9238, -0.34696], gyro=[-2.94, 1.54, 2.52]
+[17:25:02.392] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 a8 ed ff fc 9e 00 5a 43 ff de 36 ff d7 00 16 00 24 0a 02 10 00 00 09 a8 ed 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 96 2b 13 48 0a ff 01 00 00 09 a8 ed 0a
+[17:25:02.397] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=633069, filtered_accel=[-0.03464, 0.92428, -0.346], gyro=[-2.87, 1.54, 2.52]
+[17:25:02.401] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=633069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.586594, witness_battery_voltage=4.936
+[17:25:02.404] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=633069
+[17:25:02.495] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 a9 51 ff fc 92 00 5a 43 ff de 1e ff d6 00 16 00 24 0a
+[17:25:02.499] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=633169, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.94, 1.54, 2.52]
+[17:25:02.612] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 a9 b5 ff fc aa 00 5a 2a ff de 2a ff d6 00 16 00 23 0a
+[17:25:02.614] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=633269, filtered_accel=[-0.03416, 0.92328, -0.34648], gyro=[-2.94, 1.54, 2.45]
+[17:25:02.665] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 aa 19 ff fc 92 00 5a 43 ff de 1e ff d7 00 16 00 24 0a
+[17:25:02.666] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=633369, filtered_accel=[-0.03512, 0.92428, -0.34696], gyro=[-2.87, 1.54, 2.52]
+[17:25:02.768] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 aa 7d ff fc 92 00 5a 43 ff de 2a ff d6 00 15 00 24 0a
+[17:25:02.771] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=633469, filtered_accel=[-0.03512, 0.92428, -0.34648], gyro=[-2.94, 1.47, 2.52]
+[17:25:02.873] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 aa e1 ff fc 85 00 5a 37 ff de 67 ff d4 00 16 00 22 0a
+[17:25:02.875] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=633569, filtered_accel=[-0.03564, 0.9238, -0.34404], gyro=[-3.08, 1.54, 2.38]
+[17:25:02.976] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 ab 45 ff fc 79 00 5a 8c ff dc f9 ff d7 00 17 00 25 0a
+[17:25:02.979] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=633669, filtered_accel=[-0.03612, 0.9272, -0.35868], gyro=[-2.87, 1.61, 2.59]
+[17:25:03.131] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 ab a9 ff fc 9e 00 5a 67 ff de c9 ff d6 00 15 00 25 0a
+[17:25:03.134] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=633769, filtered_accel=[-0.03464, 0.92572, -0.34012], gyro=[-2.94, 1.47, 2.59]
+[17:25:03.235] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 ac 0d ff fc c2 00 5a 5b ff dd d5 ff d5 00 17 00 23 0a
+[17:25:03.237] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=633869, filtered_accel=[-0.0332, 0.92524, -0.34988], gyro=[-3.01, 1.61, 2.45]
+[17:25:03.337] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 ac 71 ff fc 9e 00 5a 1e ff dd e1 ff d5 00 16 00 23 0a
+[17:25:03.339] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=633969, filtered_accel=[-0.03464, 0.9228, -0.3494], gyro=[-3.01, 1.54, 2.45]
+[17:25:03.396] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 ac d5 ff fc db 00 5a 5b ff de 7f ff d5 00 15 00 25 0a 02 10 00 00 09 ac d5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 96 2b 13 44 0a ff 00 00 00 09 ac d5 0a
+[17:25:03.407] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=634069, filtered_accel=[-0.0322, 0.92524, -0.34308], gyro=[-3.01, 1.47, 2.59]
+[17:25:03.413] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=634069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.586594, witness_battery_voltage=4.932
+[17:25:03.416] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=634069
+[17:25:03.476] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 ad 39 ff fc aa 00 5a 74 ff de 42 ff d6 00 16 00 25 0a
+[17:25:03.481] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=634169, filtered_accel=[-0.03416, 0.92624, -0.34552], gyro=[-2.94, 1.54, 2.59]
+[17:25:03.591] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 ad 9d ff fc 9e 00 5a 67 ff de 42 ff d5 00 17 00 22 0a
+[17:25:03.593] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=634269, filtered_accel=[-0.03464, 0.92572, -0.34552], gyro=[-3.01, 1.61, 2.38]
+[17:25:03.695] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 ae 01 ff fc 9e 00 5a 5b ff de c9 ff d5 00 15 00 24 0a
+[17:25:03.697] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=634369, filtered_accel=[-0.03464, 0.92524, -0.34012], gyro=[-3.01, 1.47, 2.52]
+[17:25:03.798] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 ae 65 ff fc b6 00 5a 4f ff de 12 ff d5 00 15 00 24 0a
+[17:25:03.801] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=634469, filtered_accel=[-0.03368, 0.92476, -0.34744], gyro=[-3.01, 1.47, 2.52]
+[17:25:03.903] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 ae c9 ff fc 61 00 5a 67 ff de 42 ff d4 00 15 00 23 0a
+[17:25:03.908] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=634569, filtered_accel=[-0.03708, 0.92572, -0.34552], gyro=[-3.08, 1.47, 2.45]
+[17:25:03.964] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 af 2d ff fc 79 00 5a 43 ff dd f9 ff d5 00 16 00 23 0a
+[17:25:03.966] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=634669, filtered_accel=[-0.03612, 0.92428, -0.34844], gyro=[-3.01, 1.54, 2.45]
+[17:25:04.119] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 af 91 ff fc 85 00 5a 43 ff de 12 ff d6 00 16 00 24 0a
+[17:25:04.121] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=634769, filtered_accel=[-0.03564, 0.92428, -0.34744], gyro=[-2.94, 1.54, 2.52]
+[17:25:04.223] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 af f5 ff fc 85 00 5a 43 ff de 67 ff d6 00 15 00 25 0a
+[17:25:04.224] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=634869, filtered_accel=[-0.03564, 0.92428, -0.34404], gyro=[-2.94, 1.47, 2.59]
+[17:25:04.275] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 b0 59 ff fc 9e 00 5a 37 ff de 42 ff d6 00 18 00 22 0a
+[17:25:04.277] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=634969, filtered_accel=[-0.03464, 0.9238, -0.34552], gyro=[-2.94, 1.68, 2.38]
+[17:25:04.378] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 b0 bd ff fc 79 00 5a 43 ff de 05 ff d6 00 16 00 24 0a 02 10 00 00 09 b0 bd 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:25:04.382] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=635069, filtered_accel=[-0.03612, 0.92428, -0.34796], gyro=[-2.94, 1.54, 2.52]
+[17:25:04.484] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 80 85 13 48 0a ff 01 00 00 09 b0 bd 0a
+[17:25:04.487] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=635069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.502029, witness_battery_voltage=4.936
+[17:25:04.488] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=635069
+[17:25:04.589] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 b1 21 ff fc 55 00 5a 37 ff dd ed ff d6 00 15 00 26 0a
+[17:25:04.598] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=635169, filtered_accel=[-0.03756, 0.9238, -0.34892], gyro=[-2.94, 1.47, 2.66]
+[17:25:04.649] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 b1 85 ff fc 85 00 5a 37 ff de 2a ff d7 00 15 00 25 0a
+[17:25:04.652] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=635269, filtered_accel=[-0.03564, 0.9238, -0.34648], gyro=[-2.87, 1.47, 2.59]
+[17:25:04.753] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 b1 e9 ff fc 85 00 5a 2a ff de 98 ff d6 00 16 00 23 0a
+[17:25:04.755] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=635369, filtered_accel=[-0.03564, 0.92328, -0.34208], gyro=[-2.94, 1.54, 2.45]
+[17:25:04.806] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 b2 4d ff fc c2 00 5a 43 ff dd f9 ff d7 00 15 00 25 0a
+[17:25:04.808] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=635469, filtered_accel=[-0.0332, 0.92428, -0.34844], gyro=[-2.87, 1.47, 2.59]
+[17:25:04.909] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 b2 b1 ff fc 85 00 5a 43 ff dd f9 ff d9 00 15 00 25 0a
+[17:25:04.911] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=635569, filtered_accel=[-0.03564, 0.92428, -0.34844], gyro=[-2.73, 1.47, 2.59]
+[17:25:04.962] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 b3 15 ff fc aa 00 5a 37 ff dd ed ff d5 00 18 00 21 0a
+[17:25:04.964] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=635669, filtered_accel=[-0.03416, 0.9238, -0.34892], gyro=[-3.01, 1.68, 2.31]
+[17:25:05.066] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 b3 79 ff fc b6 00 5a 37 ff de 2a ff d6 00 15 00 24 0a
+[17:25:05.068] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=635769, filtered_accel=[-0.03368, 0.9238, -0.34648], gyro=[-2.94, 1.47, 2.52]
+[17:25:05.169] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 b3 dd ff fc 9e 00 5a 5b ff de 05 ff d5 00 15 00 25 0a
+[17:25:05.176] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=635869, filtered_accel=[-0.03464, 0.92524, -0.34796], gyro=[-3.01, 1.47, 2.59]
+[17:25:05.277] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 b4 41 ff fc 79 00 5a 2a ff de 12 ff d5 00 15 00 24 0a
+[17:25:05.279] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=635969, filtered_accel=[-0.03612, 0.92328, -0.34744], gyro=[-3.01, 1.47, 2.52]
+[17:25:05.379] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 b4 a5 ff fc 6d 00 5a 5b ff dd ed ff d7 00 16 00 23 0a 02 10 00 00 09 b4 a5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:25:05.384] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=636069, filtered_accel=[-0.0366, 0.92524, -0.34892], gyro=[-2.87, 1.54, 2.45]
+[17:25:05.436] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 96 2b 13 50 0a ff 00 00 00 09 b4 a5 0a
+[17:25:05.438] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=636069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.586594, witness_battery_voltage=4.944
+[17:25:05.440] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=636069
+[17:25:05.543] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 b5 09 ff fc 9e 00 5a 43 ff de 1e ff d6 00 15 00 25 0a
+[17:25:05.545] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=636169, filtered_accel=[-0.03464, 0.92428, -0.34696], gyro=[-2.94, 1.47, 2.59]
+[17:25:05.647] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 b5 6d ff fc 92 00 5a 43 ff de 42 ff d8 00 16 00 24 0a
+[17:25:05.654] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=636269, filtered_accel=[-0.03512, 0.92428, -0.34552], gyro=[-2.8, 1.54, 2.52]
+[17:25:05.705] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 b5 d1 ff fc 79 00 5a 5b ff de 4f ff d6 00 18 00 22 0a
+[17:25:05.707] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=636369, filtered_accel=[-0.03612, 0.92524, -0.345], gyro=[-2.94, 1.68, 2.38]
+[17:25:05.762] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 b6 35 ff fc 9e 00 5a 37 ff dd ed ff d7 00 16 00 24 0a
+[17:25:05.764] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=636469, filtered_accel=[-0.03464, 0.9238, -0.34892], gyro=[-2.87, 1.54, 2.52]
+[17:25:05.865] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 b6 99 ff fc 92 00 5a 4f ff dd f9 ff d7 00 15 00 24 0a
+[17:25:05.866] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=636569, filtered_accel=[-0.03512, 0.92476, -0.34844], gyro=[-2.87, 1.47, 2.52]
+[17:25:05.967] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 b6 fd ff fc 92 00 5a 4f ff de 1e ff d5 00 16 00 23 0a
+[17:25:05.971] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=636669, filtered_accel=[-0.03512, 0.92476, -0.34696], gyro=[-3.01, 1.54, 2.45]
+[17:25:06.072] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 b7 61 ff fc 85 00 5a 37 ff de 36 ff d6 00 16 00 23 0a
+[17:25:06.074] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=636769, filtered_accel=[-0.03564, 0.9238, -0.346], gyro=[-2.94, 1.54, 2.45]
+[17:25:06.183] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 b7 c5 ff fc b6 00 5a 43 ff dd ed ff d6 00 15 00 24 0a
+[17:25:06.195] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=636869, filtered_accel=[-0.03368, 0.92428, -0.34892], gyro=[-2.94, 1.47, 2.52]
+[17:25:06.271] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 b8 29 ff fc 92 00 5a 43 ff dd f9 ff d7 00 15 00 24 0a
+[17:25:06.275] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=636969, filtered_accel=[-0.03512, 0.92428, -0.34844], gyro=[-2.87, 1.47, 2.52]
+[17:25:06.375] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 b8 8d ff fc 79 00 5a 2a ff de 05 ff d6 00 17 00 22 0a 02 10 00 00 09 b8 8d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:25:06.376] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=637069, filtered_accel=[-0.03612, 0.92328, -0.34796], gyro=[-2.94, 1.61, 2.38]
+[17:25:06.487] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 6a e0 13 48 0a ff 01 00 00 09 b8 8d 0a
+[17:25:06.489] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=637069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.41748, witness_battery_voltage=4.936
+[17:25:06.489] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=637069
+[17:25:06.545] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 b8 f1 ff fc 85 00 5a 37 ff dd f9 ff d6 00 16 00 25 0a
+[17:25:06.546] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=637169, filtered_accel=[-0.03564, 0.9238, -0.34844], gyro=[-2.94, 1.54, 2.59]
+[17:25:06.647] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 b9 55 ff fc 9e 00 5a 43 ff de 2a ff d6 00 14 00 25 0a
+[17:25:06.651] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=637269, filtered_accel=[-0.03464, 0.92428, -0.34648], gyro=[-2.94, 1.4, 2.59]
+[17:25:06.703] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 b9 b9 ff fc 92 00 5a 43 ff de 12 ff d6 00 18 00 23 0a
+[17:25:06.705] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=637369, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.94, 1.68, 2.45]
+[17:25:06.807] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 ba 1d ff fc 92 00 5a 37 ff de 05 ff d6 00 16 00 24 0a
+[17:25:06.809] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=637469, filtered_accel=[-0.03512, 0.9238, -0.34796], gyro=[-2.94, 1.54, 2.52]
+[17:25:06.860] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 ba 81 ff fc 92 00 5a 43 ff de 12 ff d7 00 16 00 25 0a
+[17:25:06.863] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=637569, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-2.87, 1.54, 2.59]
+[17:25:06.964] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 ba e5 ff fc 85 00 5a 37 ff de 12 ff d6 00 15 00 25 0a
+[17:25:06.965] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=637669, filtered_accel=[-0.03564, 0.9238, -0.34744], gyro=[-2.94, 1.47, 2.59]
+[17:25:07.066] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 bb 49 ff fc 85 00 5a 43 ff de 1e ff d6 00 17 00 22 0a
+[17:25:07.067] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=637769, filtered_accel=[-0.03564, 0.92428, -0.34696], gyro=[-2.94, 1.61, 2.38]
+[17:25:07.168] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 bb ad ff fc 9e 00 5a 2a ff de 12 ff d6 00 15 00 25 0a
+[17:25:07.169] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=637869, filtered_accel=[-0.03464, 0.92328, -0.34744], gyro=[-2.94, 1.47, 2.59]
+[17:25:07.269] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 bc 11 ff fc 92 00 5a 37 ff de 05 ff d6 00 15 00 25 0a
+[17:25:07.270] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=637969, filtered_accel=[-0.03512, 0.9238, -0.34796], gyro=[-2.94, 1.47, 2.59]
+[17:25:07.372] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 bc 75 ff fc 79 00 5a 4f ff de 7f ff d4 00 17 00 22 0a 02 10 00 00 09 bc 75 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:25:07.373] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=638069, filtered_accel=[-0.03612, 0.92476, -0.34308], gyro=[-3.08, 1.61, 2.38]
+[17:25:07.474] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 6a e0 13 50 0a ff 00 00 00 09 bc 75 0a
+[17:25:07.476] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=638069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.41748, witness_battery_voltage=4.944
+[17:25:07.477] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=638069
+[17:25:07.528] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 bc d9 ff fc 92 00 5a 43 ff de 12 ff d5 00 16 00 24 0a
+[17:25:07.529] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=638169, filtered_accel=[-0.03512, 0.92428, -0.34744], gyro=[-3.01, 1.54, 2.52]
+[17:25:07.629] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 bd 3d ff fc 92 00 5a 5b ff de 12 ff d6 00 15 00 25 0a
+[17:25:07.631] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=638269, filtered_accel=[-0.03512, 0.92524, -0.34744], gyro=[-2.94, 1.47, 2.59]
+[17:25:07.686] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 bd a1 ff fc 92 00 5a 43 ff dd f9 ff d7 00 14 00 25 0a
+[17:25:07.687] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=638369, filtered_accel=[-0.03512, 0.92428, -0.34844], gyro=[-2.87, 1.4, 2.59]
+[17:25:07.788] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 be 05 ff fc 9e 00 5a 43 ff de 1e ff d5 00 18 00 22 0a
+[17:25:07.789] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=638469, filtered_accel=[-0.03464, 0.92428, -0.34696], gyro=[-3.01, 1.68, 2.38]
+[17:25:07.890] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 be 69 ff fc 85 00 5a 43 ff de 12 ff d7 00 14 00 25 0a
+[17:25:07.891] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=638569, filtered_accel=[-0.03564, 0.92428, -0.34744], gyro=[-2.87, 1.4, 2.59]
+[17:25:07.995] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 be cd ff fc 85 00 5a 2a ff de 12 ff d7 00 15 00 24 0a
+[17:25:07.997] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=638669, filtered_accel=[-0.03564, 0.92328, -0.34744], gyro=[-2.87, 1.47, 2.52]
+[17:25:08.100] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 bf 31 ff fc 79 00 5a 4f ff de 1e ff d6 00 18 00 22 0a
+[17:25:08.101] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=638769, filtered_accel=[-0.03612, 0.92476, -0.34696], gyro=[-2.94, 1.68, 2.38]
+[17:25:08.202] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 bf 95 ff fc 92 00 5a 37 ff de 2a ff d6 00 18 00 21 0a
+[17:25:08.202] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=638869, filtered_accel=[-0.03512, 0.9238, -0.34648], gyro=[-2.94, 1.68, 2.31]
+[17:25:08.303] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 bf f9 ff fc 85 00 5a 4f ff dd e1 ff d7 00 16 00 25 0a
+[17:25:08.304] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=638969, filtered_accel=[-0.03564, 0.92476, -0.3494], gyro=[-2.87, 1.54, 2.59]
+[17:25:08.405] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 c0 5d ff fc aa 00 5a 43 ff dd bc ff d6 00 14 00 25 0a 02 10 00 00 09 c0 5d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:25:08.407] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=639069, filtered_accel=[-0.03416, 0.92428, -0.35088], gyro=[-2.94, 1.4, 2.59]
+[17:25:08.508] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 80 85 13 50 0a ff 01 00 00 09 c0 5d 0a
+[17:25:08.509] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=639069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.502029, witness_battery_voltage=4.944
+[17:25:08.510] PACKET[TCP_prs2026hitl_7100] heartbeat: status=256, uptime=639069
+[17:25:08.561] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 c0 c1 ff fc 85 00 5a 43 ff de 12 ff d6 00 18 00 23 0a
+[17:25:08.563] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=639169, filtered_accel=[-0.03564, 0.92428, -0.34744], gyro=[-2.94, 1.68, 2.45]
+[17:25:08.664] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 c1 25 ff fc aa 00 5a 74 ff de 2a ff d6 00 17 00 23 0a
+[17:25:08.668] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=639269, filtered_accel=[-0.03416, 0.92624, -0.34648], gyro=[-2.94, 1.61, 2.45]
+[17:25:08.769] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 c1 89 ff fd 24 00 5a c9 ff de 4f ff d6 00 14 00 25 0a
+[17:25:08.770] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=639369, filtered_accel=[-0.02928, 0.92964, -0.345], gyro=[-2.94, 1.4, 2.59]
+[17:25:08.822] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 c1 ed ff fc 0b 00 58 f9 ff de b0 ff dd 00 1a 00 22 0a
+[17:25:08.823] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=639469, filtered_accel=[-0.04052, 0.91108, -0.34112], gyro=[-2.45, 1.82, 2.38]
+[17:25:08.924] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 c2 51 ff fb ce 00 59 2a ff df 8c ff dd 00 18 00 22 0a
+[17:25:08.926] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=639569, filtered_accel=[-0.04296, 0.91304, -0.33232], gyro=[-2.45, 1.68, 2.38]
+[17:25:09.027] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 c2 b5 ff fd 18 00 5a e1 ff dd 67 ff d3 00 14 00 24 0a
+[17:25:09.028] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=639669, filtered_accel=[-0.02976, 0.9306, -0.35428], gyro=[-3.15, 1.4, 2.52]
+[17:25:09.079] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 c3 19 ff fd 18 00 5a c9 ff dd 8b ff d4 00 14 00 26 0a
+[17:25:09.080] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=639769, filtered_accel=[-0.02976, 0.92964, -0.35284], gyro=[-3.08, 1.4, 2.66]
+[17:25:09.183] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 c3 7d ff fc 92 00 5a 4f ff dd f9 ff d5 00 18 00 23 0a
+[17:25:09.184] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=639869, filtered_accel=[-0.03512, 0.92476, -0.34844], gyro=[-3.01, 1.68, 2.45]
+[17:25:09.284] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 c3 e1 ff fc 79 00 5a 2a ff de 12 ff d7 00 16 00 25 0a
+[17:25:09.286] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=639969, filtered_accel=[-0.03612, 0.92328, -0.34744], gyro=[-2.87, 1.54, 2.59]
+[17:25:09.387] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 c4 45 ff fc 9e 00 5a 37 ff de 1e ff d7 00 16 00 25 0a 02 10 00 00 09 c4 45 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:25:09.389] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=640069, filtered_accel=[-0.03464, 0.9238, -0.34696], gyro=[-2.87, 1.54, 2.59]
+[17:25:09.441] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 80 85 13 48 0a ff 00 00 00 09 c4 45 0a
+[17:25:09.443] PACKET[TCP_prs2026hitl_7100] state: status=4096, uptime=640069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.502029, witness_battery_voltage=4.936
+[17:25:09.445] PACKET[TCP_prs2026hitl_7100] heartbeat: status=0, uptime=640069
+[17:25:09.545] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 c4 a9 ff fc 92 00 5a 37 ff dd e1 ff d6 00 18 00 23 0a
+[17:25:09.546] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=640169, filtered_accel=[-0.03512, 0.9238, -0.3494], gyro=[-2.94, 1.68, 2.45]
+[17:25:09.647] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 c5 0d ff fc 85 00 5a 67 ff dd f9 ff d6 00 17 00 25 0a
+[17:25:09.649] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=640269, filtered_accel=[-0.03564, 0.92572, -0.34844], gyro=[-2.94, 1.61, 2.59]
+[17:25:09.751] RX[TCP_prs2026hitl_7100]  01 0b 00 00 09 c5 71 ff fc aa 00 5a 74 ff de 12 ff d5 00 15 00 25 0a
+[17:25:09.752] PACKET[TCP_prs2026hitl_7100] sensors: status=2816, uptime=640369, filtered_accel=[-0.03416, 0.92624, -0.34744], gyro=[-3.01, 1.47, 2.59]
+[17:25:09.853] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 c5 d5 ff fd 18 00 5b 06 ff dd f9 ff d1 00 13 00 28 0a
+[17:25:09.855] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=640469, filtered_accel=[-0.02976, 0.93208, -0.34844], gyro=[-3.29, 1.33, 2.8]
+[17:25:09.956] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 c6 39 ff fc 6d 00 5a 2a ff dd 67 ff d5 00 17 00 22 0a
+[17:25:09.957] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=640569, filtered_accel=[-0.0366, 0.92328, -0.35428], gyro=[-3.01, 1.61, 2.38]
+[17:25:10.058] RX[TCP_prs2026hitl_7100]  01 0f 00 00 09 c6 9d ff fc 92 00 5a 5b ff dd e1 ff d8 00 16 00 24 0a
+[17:25:10.060] PACKET[TCP_prs2026hitl_7100] sensors: status=3840, uptime=640669, filtered_accel=[-0.03512, 0.92524, -0.3494], gyro=[-2.8, 1.54, 2.52]

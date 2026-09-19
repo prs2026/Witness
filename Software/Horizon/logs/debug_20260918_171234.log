@@ -1,0 +1,56 @@
+[17:12:34.922] RX[TCP_prs2026hitl_7001]  ff fb 03 ff fd 03 ff fb 01 ff fe 01 ff fd 00 ff fb 00 ff fd 2c
+[17:12:34.923] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0xff: expected 0x0a, got 0xfb; resync=discard 1 byte
+[17:12:34.924] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0xff: expected 0x0a, got 0xfb; resync=discard 1 byte
+[17:12:38.910] RX[TCP_prs2026hitl_7001]  00 00 00 00 00 00 00 00 00 00 23 35 00 00 00 b0 0a 5e 43 f5 5e 40 5e 40 43 5e 40 5e 40 5e 40 5e 40 5e 40 5e 40 5e 40
+[17:12:38.911] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0xff: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:12:38.913] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x00; discarded 1 byte(s)
+[17:12:38.914] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x00; discarded 1 byte(s)
+[17:12:38.914] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x00; discarded 1 byte(s)
+[17:12:38.915] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x00; discarded 1 byte(s)
+[17:12:38.915] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x23; discarded 1 byte(s)
+[17:12:38.915] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x35; discarded 1 byte(s)
+[17:12:38.916] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x00; discarded 1 byte(s)
+[17:12:38.916] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x00; discarded 1 byte(s)
+[17:12:38.917] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x00; discarded 1 byte(s)
+[17:12:38.917] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0xb0; discarded 1 byte(s)
+[17:12:38.917] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:12:38.918] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:12:38.918] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x43; discarded 1 byte(s)
+[17:12:38.919] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0xf5; discarded 1 byte(s)
+[17:12:38.919] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:12:38.919] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x40; discarded 1 byte(s)
+[17:12:38.920] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:12:38.920] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x40; discarded 1 byte(s)
+[17:12:38.921] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x43; discarded 1 byte(s)
+[17:12:38.921] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:12:38.921] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x40; discarded 1 byte(s)
+[17:12:38.922] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:12:38.922] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x40; discarded 1 byte(s)
+[17:12:38.923] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:12:38.923] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x40; discarded 1 byte(s)
+[17:12:38.923] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:12:38.924] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x40; discarded 1 byte(s)
+[17:12:38.924] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:12:38.925] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x40; discarded 1 byte(s)
+[17:12:38.925] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:12:38.925] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x40; discarded 1 byte(s)
+[17:12:38.926] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:12:38.926] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x40; discarded 1 byte(s)
+[17:12:39.128] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 00 27 1d 00 00 00 13 b0 0a
+[17:12:39.128] PACKET[TCP_prs2026hitl_7001] camera: fc_status=0, fc_uptime=0, status=0, uptime=10013, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=5.04
+[17:12:40.085] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 00 2b 05 00 00 00 13 b8 0a
+[17:12:40.086] PACKET[TCP_prs2026hitl_7001] camera: fc_status=0, fc_uptime=0, status=0, uptime=11013, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=5.048
+[17:12:41.091] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 00 2e ed 00 00 00 13 b0 0a
+[17:12:41.092] PACKET[TCP_prs2026hitl_7001] camera: fc_status=0, fc_uptime=0, status=0, uptime=12013, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=5.04
+[17:12:42.101] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 00 32 d5 00 00 00 13 a8 0a
+[17:12:42.102] PACKET[TCP_prs2026hitl_7001] camera: fc_status=0, fc_uptime=0, status=0, uptime=13013, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=5.032
+[17:12:43.107] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 00 36 bd 00 00 00 13 a8 0a
+[17:12:43.108] PACKET[TCP_prs2026hitl_7001] camera: fc_status=0, fc_uptime=0, status=0, uptime=14013, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=5.032
+[17:12:44.112] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 00 3a a5 00 00 00 13 b0 0a
+[17:12:44.113] PACKET[TCP_prs2026hitl_7001] camera: fc_status=0, fc_uptime=0, status=0, uptime=15013, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=5.04
+[17:12:45.120] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 00 3e 8d 00 00 00 13 a8 0a
+[17:12:45.120] PACKET[TCP_prs2026hitl_7001] camera: fc_status=0, fc_uptime=0, status=0, uptime=16013, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=5.032
+[17:12:46.124] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 00 42 75 00 00 00 13 a8 0a
+[17:12:46.125] PACKET[TCP_prs2026hitl_7001] camera: fc_status=0, fc_uptime=0, status=0, uptime=17013, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=5.032
+[17:12:47.080] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 00 46 5d 00 00 00 13 a8 0a
+[17:12:47.081] PACKET[TCP_prs2026hitl_7001] camera: fc_status=0, fc_uptime=0, status=0, uptime=18013, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=5.032

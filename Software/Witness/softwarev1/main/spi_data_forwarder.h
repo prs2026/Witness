@@ -36,8 +36,9 @@ private:
     static constexpr std::uint32_t kTaskStackSize = 3072;
     static constexpr std::size_t kQueueDepth = 16;
     static constexpr std::size_t kMinimumPayloadSize = 6;
-    static constexpr std::size_t kMaximumPayloadSize = 64;
-    static_assert(IRIS_PACKET_STATE_DATA_LENGTH <= kMaximumPayloadSize,
+    static constexpr std::size_t kMaximumPayloadSize =
+        IRIS_PACKET_MAX_DATA_LENGTH;
+    static_assert(IRIS_PACKET_WITNESS_DEBUG_DATA_LENGTH <= kMaximumPayloadSize,
                   "canonical packets must fit the forwarding queue");
 
     struct Packet {

@@ -1,0 +1,81 @@
+[17:10:43.643] RX[TCP_prs2026hitl_7001]  ff fb 03 ff fd 03 ff fb 01 ff fe 01 ff fd 00 ff fb 00 ff fd 2c
+[17:10:43.644] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0xff: expected 0x0a, got 0xfb; resync=discard 1 byte
+[17:10:43.644] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0xff: expected 0x0a, got 0xfb; resync=discard 1 byte
+[17:10:47.726] RX[TCP_prs2026hitl_7001]  00 00 00 00 00 00 00 00 00 01 8e af 00 00 00 32 43 a4 5e 43 5e 40 43 5e 40 5e 40 5e 40
+[17:10:47.726] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0xff: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:10:47.726] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x00; discarded 1 byte(s)
+[17:10:47.728] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x00; discarded 1 byte(s)
+[17:10:47.728] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x00; discarded 1 byte(s)
+[17:10:47.778] RX[TCP_prs2026hitl_7001]  5e 40 43 5e 40 5e 40 5e 40 5e 40 5e 40 5e 40 5e 40 5e 5e
+[17:10:47.779] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x01: expected 0x0a, got 0x40; resync=discard 1 byte
+[17:10:47.779] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x40; discarded 1 byte(s)
+[17:10:47.779] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:10:47.779] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x40; discarded 1 byte(s)
+[17:10:47.779] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:10:47.779] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x40; discarded 1 byte(s)
+[17:10:47.780] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:10:47.780] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x40; discarded 1 byte(s)
+[17:10:47.780] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:10:47.781] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x40; discarded 1 byte(s)
+[17:10:47.781] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:10:47.782] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x40; discarded 1 byte(s)
+[17:10:47.782] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:10:47.782] BAD_PACKET[TCP_prs2026hitl_7001] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:10:48.136] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 59 cf 00 00 00 32 ee 0f
+[17:10:48.137] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0x0f; resync=discard 1 byte
+[17:10:49.092] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 5d b7 00 00 00 32 f7 05
+[17:10:49.093] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0x05; resync=discard 1 byte
+[17:10:50.099] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 61 9f 00 00 00 32 d9 f3
+[17:10:50.100] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0xf3; resync=discard 1 byte
+[17:10:51.105] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 65 87 00 00 00 32 d9 25
+[17:10:51.106] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:10:52.114] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 69 6f 00 00 00 32 eb e7
+[17:10:52.114] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0xe7; resync=discard 1 byte
+[17:10:53.121] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 6d 57 00 00 00 32 e3 85
+[17:10:53.122] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0x85; resync=discard 1 byte
+[17:10:54.080] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 71 3f 00 00 00 32 e9 13
+[17:10:54.080] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0x13; resync=discard 1 byte
+[17:10:55.085] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 75 27 00 00 00 32 e9 c5
+[17:10:55.085] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0xc5; resync=discard 1 byte
+[17:10:56.096] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 79 0f 00 00 00 32 e8 bf
+[17:10:56.096] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0xbf; resync=discard 1 byte
+[17:10:57.105] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 7c f7 00 00 00 32 96 c5
+[17:10:57.105] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0xc5; resync=discard 1 byte
+[17:10:58.112] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 80 df 00 00 00 32 06 03
+[17:10:58.112] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0x03; resync=discard 1 byte
+[17:10:59.120] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 84 c7 00 00 00 32 06 d5
+[17:10:59.120] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0xd5; resync=discard 1 byte
+[17:11:00.080] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 88 af 00 00 00 32 16 c7
+[17:11:00.080] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0xc7; resync=discard 1 byte
+[17:11:01.102] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 8c 97 00 00 00 32 1e a5
+[17:11:01.103] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0xa5; resync=discard 1 byte
+[17:11:02.160] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 90 7f 00 00 00 32 36 e3
+[17:11:02.161] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0xe3; resync=discard 1 byte
+[17:11:03.175] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 94 67 00 00 00 32 36 35
+[17:11:03.176] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0x35; resync=discard 1 byte
+[17:11:04.094] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 98 4f 00 00 00 32 37 4f
+[17:11:04.095] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0x4f; resync=discard 1 byte
+[17:11:05.100] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 9c 37 00 00 00 32 2e 45
+[17:11:05.100] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0x45; resync=discard 1 byte
+[17:11:06.106] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 a0 1f 00 00 00 32 00 b3
+[17:11:06.106] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0xb3; resync=discard 1 byte
+[17:11:07.112] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 a4 07 00 00 00 32 00 65
+[17:11:07.113] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0x65; resync=discard 1 byte
+[17:11:08.071] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 a7 ef 00 00 00 32 f7 a4
+[17:11:08.071] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0xa4; resync=discard 1 byte
+[17:11:09.124] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 ab d7 00 00 00 32 f2 84
+[17:11:09.125] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0x84; resync=discard 1 byte
+[17:11:10.080] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 af bf 00 00 00 32 ef d4
+[17:11:10.081] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0xd4; resync=discard 1 byte
+[17:11:11.086] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 b3 a7 00 00 00 32 f8 c4
+[17:11:11.087] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0xc4; resync=discard 1 byte
+[17:11:12.091] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 b7 8f 00 00 00 32 f4 fc
+[17:11:12.091] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0xfc; resync=discard 1 byte
+[17:11:13.096] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 bb 77 00 00 00 32 c2 64
+[17:11:13.098] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0x64; resync=discard 1 byte
+[17:11:14.102] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 bf 5f 00 00 00 32 ce 5c
+[17:11:14.103] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0x5c; resync=discard 1 byte
+[17:11:15.110] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 c3 47 00 00 00 32 86 54
+[17:11:15.110] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0x54; resync=discard 1 byte
+[17:11:16.117] RX[TCP_prs2026hitl_7001]  03 00 00 00 00 00 00 00 00 00 02 c7 2f 00 00 00 32 9b 04
+[17:11:16.117] BAD_PACKET[TCP_prs2026hitl_7001] bad EOF for 0x03: expected 0x0a, got 0x04; resync=discard 1 byte

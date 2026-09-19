@@ -1,0 +1,727 @@
+[17:06:17.274] RX[TCP_prs2026hitl_7000]  ff fb 03 ff fd 03 ff fb 01 ff fe 01 ff fd 00 ff fb 00 ff fd 2c
+[17:06:17.275] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xfb; resync=discard 1 byte
+[17:06:17.275] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xfb; resync=discard 1 byte
+[17:06:21.294] RX[TCP_prs2026hitl_7000]  a5 00 00 00 00 59 1e ff ff da 8b ff ff d6 00 00 24 0a 00 26 0a 00 26 0a 5e 40 02 10 00 00 01 1d 6d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:21.295] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:21.296] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x1e; discarded 1 byte(s)
+[17:06:21.297] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:21.297] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x24; discarded 1 byte(s)
+[17:06:21.297] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:21.297] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:06:21.297] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x26; discarded 1 byte(s)
+[17:06:21.297] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:21.297] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:06:21.297] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x26; discarded 1 byte(s)
+[17:06:21.298] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:21.298] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte(s)
+[17:06:21.298] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x40; discarded 1 byte(s)
+[17:06:21.399] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 c1 75 48 0a ff ff 01 00 00 01 1d 6d 0a 01 0b 00 00 01 1d d1 00 00 00 00 59 ff ff da 8b 00 23 0a 5e 40 01 0b 00 00 01 1e 35 00 00 0c 00 59 1e ff ff da 97 ff ff d6 00 00 24 0a 00 25 0a 01 0f 00 00 01 1e fd 00 00 18 00 59 06 ff ff da 97 00 23 0a 40 01 0f 00 00 01 1f 61 00 00 0c 00 59 1e ff ff da 97 ff ff d6 00 00 24 0a 01 0f 00 00 01 1f c5 00 00 00 00 59 1e ff ff ff ff d6 00 00 25 0a 08 5e 40 08 08 20 ff ff 40 5e 08 5e 5c a5 5e 40 5e 20 08 20 08 08 20 08 08 20 08 5e 5e 40 4b 08 5e 5e 08 08 40 40 5e 08 5e 48 01 0b 00 00 06 74 39 00 00 0c 00 59 12 ff ff da 72 ff ff d6 00 15 00 24 0a
+[17:06:21.400] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x02: expected 0x0a, got 0xff; resync=offset 4
+[17:06:21.401] PACKET[TCP_prs2026hitl_7000] sensors: status=7533, uptime=167840512, filtered_accel=[0.0114, -123.20768, 0.00356], gyro=[-0.07, -671.23, 2.45]
+[17:06:21.401] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 6 byte(s)
+[17:06:21.403] PACKET[TCP_prs2026hitl_7000] sensors: status=7733, uptime=3072, filtered_accel=[233.62556, -0.38308, -0.00168], gyro=[0.0, 645.82, 2.59]
+[17:06:21.404] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=offset 34
+[17:06:21.405] PACKET[TCP_prs2026hitl_7000] heartbeat: status=65535, uptime=3590324261
+[17:06:21.406] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 42 byte(s)
+[17:06:21.407] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=422969, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2060.73, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:21.457] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 74 9d 00 00 0c 00 59 12 ff ff da 7f ff ff d7 00 16 00 24 0a 02 10 00 00 06 74 9d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 5a 54 13 50 0a ff ff 01 00 00 06 74 9d 0a
+[17:06:21.459] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=423069, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2293.69, -2.87, 1.54], sensor_trailing_u16=36
+[17:06:21.460] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=423069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.352844, witness_battery_voltage=4.944
+[17:06:21.461] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x9d; resync=discard 1 byte
+[17:06:21.563] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 75 01 00 00 18 00 59 1e ff ff da 8b ff ff d8 00 14 00 26 0a
+[17:06:21.564] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=423169, filtered_accel=[0.00096, 0.91256, -0.00152], gyro=[-2078.79, -2.8, 1.4], sensor_trailing_u16=38
+[17:06:21.665] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 75 65 00 00 00 00 59 12 ff ff da 72 ff ff d5 00 18 00 22 0a
+[17:06:21.666] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=423269, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2060.73, -3.01, 1.68], sensor_trailing_u16=34
+[17:06:21.767] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 75 c9 00 00 0c 00 59 1e ff ff da 7f ff ff d7 00 16 00 25 0a
+[17:06:21.768] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=423369, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[2293.69, -2.87, 1.54], sensor_trailing_u16=37
+[17:06:21.869] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 76 2d 00 00 0c 00 59 12 ff ff da 7f ff ff d7 00 15 00 26 0a
+[17:06:21.871] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=423469, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2293.69, -2.87, 1.47], sensor_trailing_u16=38
+[17:06:21.922] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 76 91 00 00 0c 00 59 1e ff ff da 97 ff ff d6 00 18 00 23 0a
+[17:06:21.923] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=423569, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-1863.75, -2.94, 1.68], sensor_trailing_u16=35
+[17:06:22.024] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 76 f5 00 00 0c 00 59 12 ff ff da 8b ff ff d6 00 15 00 24 0a
+[17:06:22.025] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=423669, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:22.075] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 77 59 00 00 0c 00 58 f9 ff ff da 8b ff ff d7 00 14 00 25 0a
+[17:06:22.076] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=423769, filtered_accel=[0.00048, 0.91108, -0.00152], gyro=[-2078.79, -2.87, 1.4], sensor_trailing_u16=37
+[17:06:22.227] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 77 bd 00 00 00 00 59 2a ff ff da 97 ff ff d8 00 15 00 25 0a
+[17:06:22.228] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=423869, filtered_accel=[0.0, 0.91304, -0.00152], gyro=[-1863.75, -2.8, 1.47], sensor_trailing_u16=37
+[17:06:22.328] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 78 21 00 00 00 00 59 06 ff ff da 8b ff ff d6 00 17 00 23 0a
+[17:06:22.329] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=423969, filtered_accel=[0.0, 0.9116, -0.00152], gyro=[-2078.79, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:22.429] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 78 85 00 00 00 00 59 1e ff ff da 97 ff ff d7 00 16 00 25 0a 02 10 00 00 06 78 85 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:22.430] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=424069, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1863.75, -2.87, 1.54], sensor_trailing_u16=37
+[17:06:22.480] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 2e 5d 13 44 0a ff ff 00 00 00 06 78 85 0a
+[17:06:22.481] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=424069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.181107, witness_battery_voltage=4.932
+[17:06:22.482] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x85; resync=discard 1 byte
+[17:06:22.582] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 78 e9 00 00 0c 00 59 12 ff ff da 8b ff ff d7 00 14 00 26 0a
+[17:06:22.583] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=424169, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -2.87, 1.4], sensor_trailing_u16=38
+[17:06:22.684] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 79 4d 00 00 18 00 59 12 ff ff da 7f ff ff d6 00 17 00 22 0a
+[17:06:22.685] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=424269, filtered_accel=[0.00096, 0.91208, -0.00152], gyro=[2293.69, -2.94, 1.61], sensor_trailing_u16=34
+[17:06:22.736] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 79 b1 00 00 00 00 59 1e ff ff da 7f ff ff d6 00 16 00 24 0a
+[17:06:22.737] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=424369, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[2293.69, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:22.838] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 7a 15 00 00 0c 00 59 1e ff ff da 97 ff ff d7 00 14 00 25 0a
+[17:06:22.839] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=424469, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-1863.75, -2.87, 1.4], sensor_trailing_u16=37
+[17:06:22.940] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 7a 79 00 00 0c 00 59 12 ff ff da 97 ff ff d6 00 14 00 25 0a
+[17:06:22.941] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=424569, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.4], sensor_trailing_u16=37
+[17:06:22.992] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 7a dd 00 00 00 00 59 1e ff ff da 97 ff ff d6 00 17 00 23 0a
+[17:06:22.992] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=424669, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1863.75, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:23.094] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 7b 41 00 00 0c 00 59 12 ff ff da a3 ff ff d7 00 15 00 25 0a
+[17:06:23.094] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=424769, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-1648.71, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:23.195] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 7b a5 00 00 00 00 59 1e ff ff da 8b ff ff d6 00 15 00 25 0a
+[17:06:23.196] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=424869, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-2078.79, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:23.297] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 7c 09 ff ff ff ff f4 00 59 1e ff ff da 7f ff ff d6 00 18 00 22 0a
+[17:06:23.297] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:23.297] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:23.398] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 7c 6d 00 00 00 00 59 12 ff ff da 97 ff ff d6 00 16 00 24 0a 02 10 00 00 06 7c 6d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:23.399] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=425069, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:23.500] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 03 12 13 50 0a ff ff 01 00 00 06 7c 6d 0a
+[17:06:23.501] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=425069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.011993, witness_battery_voltage=4.944
+[17:06:23.502] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x6d; resync=discard 1 byte
+[17:06:23.604] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 7c d1 00 00 00 00 59 06 ff ff da 97 ff ff d7 00 15 00 24 0a
+[17:06:23.605] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=425169, filtered_accel=[0.0, 0.9116, -0.00152], gyro=[-1863.75, -2.87, 1.47], sensor_trailing_u16=36
+[17:06:23.656] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 7d 35 00 00 0c 00 59 1e ff ff da 97 ff ff d6 00 16 00 26 0a
+[17:06:23.657] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=425269, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-1863.75, -2.94, 1.54], sensor_trailing_u16=38
+[17:06:23.758] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 7d 99 00 00 0c 00 58 f9 ff ff da 72 ff ff d7 00 17 00 22 0a
+[17:06:23.759] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=425369, filtered_accel=[0.00048, 0.91108, -0.00152], gyro=[2060.73, -2.87, 1.61], sensor_trailing_u16=34
+[17:06:23.810] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 7d fd ff ff ff ff f4 00 59 12 ff ff da 8b ff ff d7 00 14 00 25 0a
+[17:06:23.811] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:23.811] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:23.912] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 7e 61 00 00 0c 00 59 12 ff ff da a3 ff ff d7 00 15 00 24 0a
+[17:06:23.914] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=425569, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-1648.71, -2.87, 1.47], sensor_trailing_u16=36
+[17:06:24.015] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 7e c5 00 00 00 00 59 12 ff ff da 7f ff ff d6 00 18 00 22 0a
+[17:06:24.016] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=425669, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2293.69, -2.94, 1.68], sensor_trailing_u16=34
+[17:06:24.117] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 7f 29 00 00 18 00 59 1e ff ff da 7f ff ff d6 00 16 00 24 0a
+[17:06:24.118] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=425769, filtered_accel=[0.00096, 0.91256, -0.00152], gyro=[2293.69, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:24.219] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 7f 8d 00 00 0c 00 59 06 ff ff da 8b ff ff d6 00 15 00 25 0a
+[17:06:24.221] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=425869, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[-2078.79, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:24.321] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 7f f1 00 00 00 00 59 1e ff ff da a3 ff ff d6 00 15 00 25 0a
+[17:06:24.323] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=425969, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1648.71, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:24.423] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 80 55 00 00 0c 00 59 12 ff ff da 8b ff ff d5 00 17 00 22 0a 02 10 00 00 06 80 55 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:24.425] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=426069, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -3.01, 1.61], sensor_trailing_u16=34
+[17:06:24.475] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 ed 6d 13 50 0a ff ff 00 00 00 06 80 55 0a
+[17:06:24.476] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=426069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.927444, witness_battery_voltage=4.944
+[17:06:24.476] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x55; resync=discard 1 byte
+[17:06:24.628] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 80 b9 00 00 00 00 59 1e ff ff da 8b ff ff d6 00 14 00 25 0a
+[17:06:24.630] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=426169, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-2078.79, -2.94, 1.4], sensor_trailing_u16=37
+[17:06:24.730] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 81 1d 00 00 18 00 59 12 ff ff da 8b ff ff d8 00 16 00 24 0a 01 0b 00 00 06 81 81 00 00 00 00 59 12 ff ff da 97 ff ff d6 00 17 00 22 0a
+[17:06:24.732] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=426269, filtered_accel=[0.00096, 0.91208, -0.00152], gyro=[-2078.79, -2.8, 1.54], sensor_trailing_u16=36
+[17:06:24.733] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=426369, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.61], sensor_trailing_u16=34
+[17:06:24.833] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 81 e5 00 00 0c 00 59 2a ff ff da 8b ff ff d7 00 16 00 24 0a
+[17:06:24.835] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=426469, filtered_accel=[0.00048, 0.91304, -0.00152], gyro=[-2078.79, -2.87, 1.54], sensor_trailing_u16=36
+[17:06:24.935] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 82 49 00 00 25 00 59 12 ff ff da 8b ff ff d6 00 15 00 24 0a
+[17:06:24.936] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=426569, filtered_accel=[0.00148, 0.91208, -0.00152], gyro=[-2078.79, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:24.987] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 82 ad ff ff ff ff e8 00 59 4f ff ff da 97 ff ff d7 00 15 00 25 0a
+[17:06:24.988] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:24.989] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:25.089] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 83 11 00 00 00 00 59 06 ff ff da a3 ff ff d6 00 18 00 22 0a
+[17:06:25.091] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=426769, filtered_accel=[0.0, 0.9116, -0.00152], gyro=[-1648.71, -2.94, 1.68], sensor_trailing_u16=34
+[17:06:25.191] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 83 75 00 00 0c 00 59 12 ff ff da 72 ff ff d6 00 16 00 24 0a
+[17:06:25.192] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=426869, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2060.73, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:25.294] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 83 d9 ff ff ff ff f4 00 59 06 ff ff da 8b ff ff d6 00 15 00 25 0a
+[17:06:25.294] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:25.294] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:25.395] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 84 3d ff ff ff ff f4 00 59 1e ff ff da 8b ff ff d5 00 17 00 22 0a 02 10 00 00 06 84 3d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:25.396] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:25.397] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:25.497] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 18 b7 13 48 0a ff ff 01 00 00 06 84 3d 0a
+[17:06:25.498] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=427069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.096542, witness_battery_voltage=4.936
+[17:06:25.499] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x3d; resync=discard 1 byte
+[17:06:25.601] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 84 a1 ff ff ff ff f4 00 59 12 ff ff da 97 ff ff d6 00 16 00 24 0a
+[17:06:25.602] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:25.602] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:25.653] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 85 05 00 00 0c 00 59 06 ff ff da 8b ff ff d7 00 14 00 24 0a
+[17:06:25.654] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=427269, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[-2078.79, -2.87, 1.4], sensor_trailing_u16=36
+[17:06:25.756] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 85 69 ff ff ff ff db 00 59 2a ff ff da 97 ff ff d6 00 15 00 25 0a
+[17:06:25.756] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:25.757] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:25.859] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 85 cd 00 00 00 00 59 1e ff ff da 8b ff ff d6 00 17 00 23 0a
+[17:06:25.861] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=427469, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-2078.79, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:25.913] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 86 31 00 00 00 00 59 1e ff ff da 7f ff ff d7 00 16 00 24 0a
+[17:06:25.913] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=427569, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[2293.69, -2.87, 1.54], sensor_trailing_u16=36
+[17:06:26.015] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 86 95 00 00 00 00 59 1e ff ff da 8b ff ff d7 00 14 00 26 0a
+[17:06:26.016] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=427669, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-2078.79, -2.87, 1.4], sensor_trailing_u16=38
+[17:06:26.118] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 86 f9 00 00 0c 00 59 12 ff ff da 8b ff ff d5 00 18 00 22 0a
+[17:06:26.118] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=427769, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -3.01, 1.68], sensor_trailing_u16=34
+[17:06:26.219] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 87 5d 00 00 0c 00 59 12 ff ff da 72 ff ff d6 00 15 00 24 0a
+[17:06:26.220] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=427869, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2060.73, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:26.321] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 87 c1 00 00 00 00 59 06 ff ff da 8b ff ff d7 00 15 00 25 0a
+[17:06:26.322] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=427969, filtered_accel=[0.0, 0.9116, -0.00152], gyro=[-2078.79, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:26.422] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 88 25 00 00 0c 00 59 12 ff ff da 7f ff ff d5 00 17 00 24 0a 02 10 00 00 06 88 25 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:26.424] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=428069, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2293.69, -3.01, 1.61], sensor_trailing_u16=36
+[17:06:26.474] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 03 12 13 44 0a ff ff 00 00 00 06 88 25 0a
+[17:06:26.475] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=428069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.011993, witness_battery_voltage=4.932
+[17:06:26.476] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:06:26.578] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 88 89 00 00 00 00 59 12 ff ff da af ff ff d6 00 18 00 22 0a
+[17:06:26.579] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=428169, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1433.67, -2.94, 1.68], sensor_trailing_u16=34
+[17:06:26.629] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 88 ed 00 00 0c 00 59 1e ff ff da a3 ff ff d6 00 15 00 25 0a
+[17:06:26.630] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=428269, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-1648.71, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:26.731] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 89 51 00 00 0c 00 59 1e ff ff da 8b ff ff d7 00 16 00 25 0a
+[17:06:26.733] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=428369, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-2078.79, -2.87, 1.54], sensor_trailing_u16=37
+[17:06:26.783] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 89 b5 00 00 00 00 59 1e ff ff da 7f ff ff d6 00 18 00 22 0a
+[17:06:26.784] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=428469, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[2293.69, -2.94, 1.68], sensor_trailing_u16=34
+[17:06:26.885] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 8a 19 00 00 0c 00 59 06 ff ff da 97 ff ff d6 00 16 00 23 0a
+[17:06:26.886] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=428569, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[-1863.75, -2.94, 1.54], sensor_trailing_u16=35
+[17:06:27.037] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 8a 7d 00 00 00 00 59 12 ff ff da 72 ff ff d6 00 15 00 25 0a
+[17:06:27.038] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=428669, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2060.73, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:27.088] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 8a e1 00 00 0c 00 59 12 ff ff da 97 ff ff d6 00 15 00 24 0a
+[17:06:27.089] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=428769, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:27.190] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 8b 45 00 00 00 00 59 1e ff ff da 8b ff ff d6 00 17 00 22 0a
+[17:06:27.192] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=428869, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-2078.79, -2.94, 1.61], sensor_trailing_u16=34
+[17:06:27.292] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 8b a9 ff ff ff ff f4 00 59 12 ff ff da a3 ff ff d7 00 16 00 24 0a
+[17:06:27.293] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:27.293] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:27.394] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 8c 0d 00 00 00 00 59 12 ff ff da 97 ff ff d7 00 16 00 24 0a 02 10 00 00 06 8c 0d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:27.396] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=429069, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -2.87, 1.54], sensor_trailing_u16=36
+[17:06:27.498] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 18 b7 13 48 0a ff ff 01 00 00 06 8c 0d 0a
+[17:06:27.500] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=429069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.096542, witness_battery_voltage=4.936
+[17:06:27.500] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x0d; resync=discard 1 byte
+[17:06:27.602] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 8c 71 00 00 31 00 59 12 ff ff da 66 ff ff d5 00 17 00 22 0a
+[17:06:27.604] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=429169, filtered_accel=[0.00196, 0.91208, -0.00152], gyro=[1845.69, -3.01, 1.61], sensor_trailing_u16=34
+[17:06:27.654] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 8c d5 ff ff ff ff e8 00 59 12 ff ff da af ff ff d6 00 16 00 24 0a
+[17:06:27.656] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:27.656] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:27.758] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 8d 39 00 00 00 00 59 12 ff ff da a3 ff ff d6 00 14 00 25 0a
+[17:06:27.759] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=429369, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1648.71, -2.94, 1.4], sensor_trailing_u16=37
+[17:06:27.810] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 8d 9d 00 00 0c 00 59 06 ff ff da 8b ff ff d6 00 16 00 25 0a
+[17:06:27.812] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=429469, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[-2078.79, -2.94, 1.54], sensor_trailing_u16=37
+[17:06:27.912] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 8e 01 ff ff ff ff e8 00 59 43 ff ff da 72 ff ff d7 00 16 00 23 0a
+[17:06:27.914] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:27.914] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:28.015] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 8e 65 ff ff ff ff f4 00 59 06 ff ff da 7f ff ff d7 00 16 00 25 0a
+[17:06:28.015] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:28.016] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:28.116] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 8e c9 00 00 18 00 59 12 ff ff da 97 ff ff d7 00 15 00 25 0a
+[17:06:28.118] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=429769, filtered_accel=[0.00096, 0.91208, -0.00152], gyro=[-1863.75, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:28.219] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 8f 2d 00 00 00 00 59 12 ff ff da 97 ff ff d5 00 18 00 22 0a
+[17:06:28.221] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=429869, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -3.01, 1.68], sensor_trailing_u16=34
+[17:06:28.322] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 8f 91 00 00 00 00 59 12 ff ff da 8b ff ff d6 00 15 00 24 0a
+[17:06:28.324] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=429969, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-2078.79, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:28.425] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 8f f5 00 00 0c 00 59 1e ff ff da 72 ff ff d6 00 15 00 25 0a 02 10 00 00 06 8f f5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:28.426] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=430069, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[2060.73, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:28.577] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 2e 5d 13 50 0a ff ff 00 00 00 06 8f f5 0a
+[17:06:28.579] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=430069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.181107, witness_battery_voltage=4.944
+[17:06:28.580] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xf5; resync=discard 1 byte
+[17:06:28.630] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 90 59 00 00 00 00 59 12 ff ff da 7f ff ff d5 00 17 00 24 0a 01 0f 00 00 06 90 bd 00 00 00 00 59 1e ff ff da 7f ff ff d6 00 17 00 23 0a
+[17:06:28.633] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=430169, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2293.69, -3.01, 1.61], sensor_trailing_u16=36
+[17:06:28.635] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=430269, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[2293.69, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:28.686] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 91 21 ff ff ff ff f4 00 59 1e ff ff da 97 ff ff d7 00 15 00 24 0a
+[17:06:28.687] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:28.688] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:28.789] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 91 85 00 00 00 00 59 1e ff ff da 97 ff ff d7 00 15 00 24 0a
+[17:06:28.792] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=430469, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1863.75, -2.87, 1.47], sensor_trailing_u16=36
+[17:06:28.893] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 91 e9 ff ff ff ff e8 00 59 06 ff ff da 8b ff ff d5 00 19 00 20 0a
+[17:06:28.894] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:28.894] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:28.996] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 92 4d 00 00 0c 00 59 12 ff ff da 8b ff ff d7 00 16 00 24 0a
+[17:06:28.998] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=430669, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -2.87, 1.54], sensor_trailing_u16=36
+[17:06:29.099] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 92 b1 00 00 00 00 59 06 ff ff da 8b ff ff d6 00 16 00 25 0a
+[17:06:29.100] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=430769, filtered_accel=[0.0, 0.9116, -0.00152], gyro=[-2078.79, -2.94, 1.54], sensor_trailing_u16=37
+[17:06:29.202] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 93 15 00 00 0c 00 59 1e ff ff da 97 ff ff d6 00 16 00 24 0a
+[17:06:29.204] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=430869, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-1863.75, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:29.305] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 93 79 00 00 00 00 59 06 ff ff da 97 ff ff d6 00 16 00 23 0a
+[17:06:29.311] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=430969, filtered_accel=[0.0, 0.9116, -0.00152], gyro=[-1863.75, -2.94, 1.54], sensor_trailing_u16=35
+[17:06:29.412] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 93 dd 00 00 00 00 59 1e ff ff da 97 ff ff d6 00 15 00 24 0a 02 10 00 00 06 93 dd 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:29.417] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=431069, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:29.517] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 2e 5d 13 48 0a ff ff 01 00 00 06 93 dd 0a
+[17:06:29.520] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=431069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.181107, witness_battery_voltage=4.936
+[17:06:29.520] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xdd; resync=discard 1 byte
+[17:06:29.571] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 94 41 00 00 0c 00 59 1e ff ff da a3 ff ff d6 00 15 00 25 0a
+[17:06:29.573] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=431169, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-1648.71, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:29.674] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 94 a5 00 00 00 00 59 1e ff ff da 8b ff ff d6 00 17 00 23 0a
+[17:06:29.678] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=431269, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-2078.79, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:29.729] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 95 09 00 00 00 00 59 1e ff ff da a3 ff ff d6 00 15 00 25 0a
+[17:06:29.730] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=431369, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1648.71, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:29.831] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 95 6d 00 00 0c 00 59 1e ff ff da a3 ff ff d6 00 14 00 24 0a
+[17:06:29.834] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=431469, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-1648.71, -2.94, 1.4], sensor_trailing_u16=36
+[17:06:29.885] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 95 d1 00 00 0c 00 59 06 ff ff da 97 ff ff d6 00 16 00 24 0a
+[17:06:29.887] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=431569, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[-1863.75, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:29.988] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 96 35 00 00 00 00 59 12 ff ff da 97 ff ff d5 00 17 00 22 0a
+[17:06:29.991] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=431669, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -3.01, 1.61], sensor_trailing_u16=34
+[17:06:30.092] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 96 99 00 00 18 00 59 12 ff ff da 7f ff ff d6 00 16 00 24 0a
+[17:06:30.093] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=431769, filtered_accel=[0.00096, 0.91208, -0.00152], gyro=[2293.69, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:30.194] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 96 fd 00 00 00 00 59 12 ff ff da 8b ff ff d6 00 14 00 24 0a
+[17:06:30.195] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=431869, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-2078.79, -2.94, 1.4], sensor_trailing_u16=36
+[17:06:30.296] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 97 61 00 00 0c 00 59 12 ff ff da 8b ff ff d6 00 17 00 22 0a
+[17:06:30.298] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=431969, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -2.94, 1.61], sensor_trailing_u16=34
+[17:06:30.399] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 97 c5 ff ff ff ff f4 00 59 12 ff ff da 97 ff ff d6 00 15 00 24 0a 02 10 00 00 06 97 c5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:30.404] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:30.404] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:30.505] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 44 02 13 48 0a ff ff 00 00 00 06 97 c5 0a
+[17:06:30.512] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=432069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.265656, witness_battery_voltage=4.936
+[17:06:30.512] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xc5; resync=discard 1 byte
+[17:06:30.563] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 98 29 00 00 0c 00 59 06 ff ff da 97 ff ff d6 00 15 00 25 0a
+[17:06:30.566] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=432169, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:30.718] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 98 8d 00 00 18 00 59 12 ff ff da 8b ff ff d6 00 16 00 23 0a
+[17:06:30.721] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=432269, filtered_accel=[0.00096, 0.91208, -0.00152], gyro=[-2078.79, -2.94, 1.54], sensor_trailing_u16=35
+[17:06:30.771] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 98 f1 00 00 00 00 59 12 ff ff da 97 ff ff d6 00 16 00 23 0a
+[17:06:30.774] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=432369, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.54], sensor_trailing_u16=35
+[17:06:30.874] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 99 55 00 00 00 00 59 12 ff ff da 72 ff ff d7 00 14 00 26 0a
+[17:06:30.876] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=432469, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2060.73, -2.87, 1.4], sensor_trailing_u16=38
+[17:06:30.927] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 99 b9 00 00 00 00 59 1e ff ff da 97 ff ff d7 00 16 00 24 0a
+[17:06:30.929] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=432569, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1863.75, -2.87, 1.54], sensor_trailing_u16=36
+[17:06:31.030] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 9a 1d 00 00 00 00 59 12 ff ff da 97 ff ff d6 00 17 00 22 0a
+[17:06:31.032] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=432669, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.61], sensor_trailing_u16=34
+[17:06:31.083] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 9a 81 00 00 18 00 59 12 ff ff da 97 ff ff d6 00 15 00 25 0a
+[17:06:31.084] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=432769, filtered_accel=[0.00096, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:31.235] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 9a e5 00 00 00 00 59 12 ff ff da 7f ff ff d6 00 14 00 24 0a
+[17:06:31.238] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=432869, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2293.69, -2.94, 1.4], sensor_trailing_u16=36
+[17:06:31.338] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 9b 49 00 00 0c 00 59 1e ff ff da 97 ff ff d6 00 16 00 24 0a
+[17:06:31.340] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=432969, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-1863.75, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:31.391] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 9b ad 00 00 00 00 59 12 ff ff da 8b ff ff d5 00 18 00 21 0a 02 10 00 00 06 9b ad 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:31.393] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=433069, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-2078.79, -3.01, 1.68], sensor_trailing_u16=33
+[17:06:31.494] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 18 b7 13 50 0a ff ff 01 00 00 06 9b ad 0a
+[17:06:31.500] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=433069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.096542, witness_battery_voltage=4.944
+[17:06:31.501] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xad; resync=discard 1 byte
+[17:06:31.552] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 9c 11 ff ff ff ff f4 00 59 06 ff ff da 8b ff ff d7 00 16 00 24 0a
+[17:06:31.553] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:31.554] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:31.655] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 9c 75 00 00 00 00 59 06 ff ff da 97 ff ff d7 00 15 00 24 0a
+[17:06:31.657] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=433269, filtered_accel=[0.0, 0.9116, -0.00152], gyro=[-1863.75, -2.87, 1.47], sensor_trailing_u16=36
+[17:06:31.708] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 9c d9 00 00 00 00 59 1e ff ff da 8b ff ff d5 00 18 00 23 0a
+[17:06:31.715] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=433369, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-2078.79, -3.01, 1.68], sensor_trailing_u16=35
+[17:06:31.817] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 9d 3d 00 00 0c 00 59 06 ff ff da a3 ff ff d7 00 15 00 24 0a
+[17:06:31.821] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=433469, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[-1648.71, -2.87, 1.47], sensor_trailing_u16=36
+[17:06:31.922] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 9d a1 00 00 0c 00 59 06 ff ff da 97 ff ff d7 00 15 00 25 0a
+[17:06:31.925] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=433569, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[-1863.75, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:32.025] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 9e 05 00 00 00 00 59 12 ff ff da 66 ff ff d6 00 16 00 24 0a
+[17:06:32.028] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=433669, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[1845.69, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:32.129] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 9e 69 00 00 18 00 59 1e ff ff da a3 ff ff d6 00 16 00 23 0a
+[17:06:32.133] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=433769, filtered_accel=[0.00096, 0.91256, -0.00152], gyro=[-1648.71, -2.94, 1.54], sensor_trailing_u16=35
+[17:06:32.234] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 9e cd 00 00 0c 00 59 12 ff ff da 8b ff ff d8 00 15 00 24 0a
+[17:06:32.236] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=433869, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -2.8, 1.47], sensor_trailing_u16=36
+[17:06:32.287] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 9f 31 00 00 00 00 59 12 ff ff da 97 ff ff d7 00 15 00 25 0a
+[17:06:32.290] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=433969, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:32.391] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 9f 95 00 00 00 00 59 1e ff ff da a3 ff ff d6 00 18 00 22 0a 02 10 00 00 06 9f 95 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:32.393] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=434069, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1648.71, -2.94, 1.68], sensor_trailing_u16=34
+[17:06:32.494] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 5a 54 13 50 0a ff ff 00 00 00 06 9f 95 0a
+[17:06:32.496] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=434069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.352844, witness_battery_voltage=4.944
+[17:06:32.497] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x95; resync=discard 1 byte
+[17:06:32.548] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 9f f9 00 00 0c 00 59 12 ff ff da 7f ff ff d6 00 16 00 25 0a
+[17:06:32.550] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=434169, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2293.69, -2.94, 1.54], sensor_trailing_u16=37
+[17:06:32.650] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 a0 5d 00 00 00 00 59 06 ff ff da 8b ff ff d7 00 15 00 24 0a
+[17:06:32.654] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=434269, filtered_accel=[0.0, 0.9116, -0.00152], gyro=[-2078.79, -2.87, 1.47], sensor_trailing_u16=36
+[17:06:32.706] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 a0 c1 00 00 0c 00 59 12 ff ff da a3 ff ff d6 00 17 00 24 0a
+[17:06:32.708] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=434369, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-1648.71, -2.94, 1.61], sensor_trailing_u16=36
+[17:06:32.809] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 a1 25 00 00 00 00 59 12 ff ff da 8b ff ff d6 00 17 00 23 0a
+[17:06:32.814] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=434469, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-2078.79, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:32.915] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 a1 89 ff ff ff ff f4 00 59 12 ff ff da 8b ff ff d7 00 15 00 25 0a
+[17:06:32.918] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:32.918] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:33.019] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 a1 ed 00 00 00 00 59 06 ff ff da 97 ff ff d6 00 15 00 24 0a
+[17:06:33.024] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=434669, filtered_accel=[0.0, 0.9116, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:33.126] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 a2 51 00 00 00 00 59 12 ff ff da af ff ff d5 00 18 00 21 0a
+[17:06:33.134] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=434769, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1433.67, -3.01, 1.68], sensor_trailing_u16=33
+[17:06:33.184] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 a2 b5 00 00 0c 00 59 12 ff ff da 97 ff ff d5 00 15 00 24 0a
+[17:06:33.186] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=434869, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-1863.75, -3.01, 1.47], sensor_trailing_u16=36
+[17:06:33.337] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 a3 19 00 00 0c 00 59 1e ff ff da 8b ff ff d7 00 16 00 24 0a
+[17:06:33.339] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=434969, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-2078.79, -2.87, 1.54], sensor_trailing_u16=36
+[17:06:33.390] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 a3 7d 00 00 00 00 59 12 ff ff da 97 ff ff d6 00 17 00 24 0a 02 10 00 00 06 a3 7d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:33.392] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=435069, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.61], sensor_trailing_u16=36
+[17:06:33.492] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 18 b7 13 54 0a ff ff 01 00 00 06 a3 7d 0a
+[17:06:33.496] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=435069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.096542, witness_battery_voltage=4.948
+[17:06:33.496] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x7d; resync=discard 1 byte
+[17:06:33.597] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 a3 e1 00 00 0c 00 59 12 ff ff da 7f ff ff d6 00 17 00 24 0a
+[17:06:33.602] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=435169, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2293.69, -2.94, 1.61], sensor_trailing_u16=36
+[17:06:33.653] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 a4 45 00 00 0c 00 59 06 ff ff da 8b ff ff d7 00 15 00 25 0a
+[17:06:33.655] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=435269, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[-2078.79, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:33.706] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 a4 a9 00 00 18 00 59 06 ff ff da 8b ff ff d6 00 16 00 25 0a
+[17:06:33.709] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=435369, filtered_accel=[0.00096, 0.9116, -0.00152], gyro=[-2078.79, -2.94, 1.54], sensor_trailing_u16=37
+[17:06:33.810] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 a5 0d 00 00 0c 00 59 1e ff ff da 7f ff ff d5 00 17 00 23 0a
+[17:06:33.812] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=435469, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[2293.69, -3.01, 1.61], sensor_trailing_u16=35
+[17:06:33.913] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 a5 71 00 00 0c 00 59 12 ff ff da 97 ff ff d7 00 15 00 24 0a
+[17:06:33.916] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=435569, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-1863.75, -2.87, 1.47], sensor_trailing_u16=36
+[17:06:34.017] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 a5 d5 00 00 0c 00 59 06 ff ff da a3 ff ff d6 00 15 00 24 0a
+[17:06:34.019] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=435669, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[-1648.71, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:34.121] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 a6 39 00 00 00 00 59 06 ff ff da 8b ff ff d7 00 17 00 24 0a
+[17:06:34.124] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=435769, filtered_accel=[0.0, 0.9116, -0.00152], gyro=[-2078.79, -2.87, 1.61], sensor_trailing_u16=36
+[17:06:34.225] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 a6 9d 00 00 0c 00 59 12 ff ff da 7f ff ff d6 00 16 00 23 0a
+[17:06:34.227] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=435869, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2293.69, -2.94, 1.54], sensor_trailing_u16=35
+[17:06:34.328] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 a7 01 00 00 0c 00 59 06 ff ff da af ff ff d6 00 15 00 24 0a
+[17:06:34.330] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=435969, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[-1433.67, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:34.432] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 a7 65 00 00 0c 00 59 1e ff ff da 97 ff ff d7 00 15 00 24 0a 02 10 00 00 06 a7 65 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:34.434] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=436069, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-1863.75, -2.87, 1.47], sensor_trailing_u16=36
+[17:06:34.535] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 18 b7 13 50 0a ff ff 00 00 00 06 a7 65 0a
+[17:06:34.538] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=436069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.096542, witness_battery_voltage=4.944
+[17:06:34.538] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x65; resync=discard 1 byte
+[17:06:34.589] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 a7 c9 00 00 00 00 59 2a ff ff da 8b ff ff d5 00 18 00 22 0a
+[17:06:34.591] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=436169, filtered_accel=[0.0, 0.91304, -0.00152], gyro=[-2078.79, -3.01, 1.68], sensor_trailing_u16=34
+[17:06:34.692] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 a8 2d 00 00 18 00 59 1e ff ff da 66 ff ff d6 00 16 00 24 0a
+[17:06:34.695] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=436269, filtered_accel=[0.00096, 0.91256, -0.00152], gyro=[1845.69, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:34.796] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 a8 91 00 00 0c 00 59 12 ff ff da 97 ff ff d6 00 15 00 24 0a
+[17:06:34.799] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=436369, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:34.900] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 a8 f5 00 00 00 00 59 1e ff ff da 8b ff ff d7 00 17 00 24 0a
+[17:06:34.901] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=436469, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-2078.79, -2.87, 1.61], sensor_trailing_u16=36
+[17:06:34.952] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 a9 59 ff ff ff ff f4 00 59 06 ff ff da 8b ff ff d6 00 16 00 23 0a
+[17:06:34.953] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:34.953] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:35.054] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 a9 bd 00 00 0c 00 59 1e ff ff da 97 ff ff d6 00 15 00 25 0a
+[17:06:35.056] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=436669, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:35.157] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 aa 21 00 00 00 00 59 1e ff ff da 97 ff ff d7 00 15 00 24 0a
+[17:06:35.159] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=436769, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1863.75, -2.87, 1.47], sensor_trailing_u16=36
+[17:06:35.210] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 aa 85 00 00 0c 00 59 1e ff ff da 97 ff ff d6 00 18 00 23 0a
+[17:06:35.213] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=436869, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-1863.75, -2.94, 1.68], sensor_trailing_u16=35
+[17:06:35.313] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 aa e9 00 00 18 00 59 12 ff ff da 97 ff ff d6 00 16 00 23 0a
+[17:06:35.316] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=436969, filtered_accel=[0.00096, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.54], sensor_trailing_u16=35
+[17:06:35.417] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 ab 4d 00 00 0c 00 59 12 ff ff da 8b ff ff d7 00 15 00 25 0a 02 10 00 00 06 ab 4d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:35.419] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=437069, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:35.520] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 03 12 13 54 0a ff ff 01 00 00 06 ab 4d 0a
+[17:06:35.522] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=437069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.011993, witness_battery_voltage=4.948
+[17:06:35.523] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x4d; resync=discard 1 byte
+[17:06:35.573] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 ab b1 00 00 00 00 59 06 ff ff da bc ff ff d6 00 17 00 23 0a
+[17:06:35.576] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=437169, filtered_accel=[0.0, 0.9116, -0.00152], gyro=[-1200.71, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:35.678] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 ac 15 00 00 0c 00 59 1e ff ff da 97 ff ff d6 00 16 00 23 0a
+[17:06:35.681] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=437269, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-1863.75, -2.94, 1.54], sensor_trailing_u16=35
+[17:06:35.732] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 ac 79 00 00 0c 00 59 1e ff ff da 97 ff ff d6 00 15 00 24 0a
+[17:06:35.734] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=437369, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:35.835] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 ac dd 00 00 0c 00 59 12 ff ff da 7f ff ff d7 00 14 00 25 0a
+[17:06:35.838] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=437469, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2293.69, -2.87, 1.4], sensor_trailing_u16=37
+[17:06:35.940] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 ad 41 00 00 0c 00 59 12 ff ff da a3 ff ff d5 00 18 00 23 0a
+[17:06:35.942] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=437569, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-1648.71, -3.01, 1.68], sensor_trailing_u16=35
+[17:06:35.992] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 ad a5 00 00 0c 00 59 12 ff ff da 97 ff ff d6 00 16 00 24 0a
+[17:06:35.994] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=437669, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:36.095] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 ae 09 00 00 00 00 59 1e ff ff da 97 ff ff d7 00 14 00 24 0a
+[17:06:36.099] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=437769, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1863.75, -2.87, 1.4], sensor_trailing_u16=36
+[17:06:36.199] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 ae 6d 00 00 00 00 59 2a ff ff da a3 ff ff d6 00 17 00 23 0a
+[17:06:36.204] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=437869, filtered_accel=[0.0, 0.91304, -0.00152], gyro=[-1648.71, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:36.305] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 ae d1 00 00 00 00 59 2a ff ff da a3 ff ff d6 00 16 00 23 0a
+[17:06:36.308] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=437969, filtered_accel=[0.0, 0.91304, -0.00152], gyro=[-1648.71, -2.94, 1.54], sensor_trailing_u16=35
+[17:06:36.408] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 af 35 00 00 00 00 59 12 ff ff da 7f ff ff d7 00 16 00 24 0a 02 10 00 00 06 af 35 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:36.414] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=438069, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2293.69, -2.87, 1.54], sensor_trailing_u16=36
+[17:06:36.515] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 18 b7 13 50 0a ff ff 00 00 00 06 af 35 0a
+[17:06:36.518] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=438069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.096542, witness_battery_voltage=4.944
+[17:06:36.518] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x35; resync=discard 1 byte
+[17:06:36.620] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 af 99 00 00 00 00 59 36 ff ff da 8b ff ff d6 00 15 00 24 0a
+[17:06:36.623] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=438169, filtered_accel=[0.0, 0.91352, -0.00152], gyro=[-2078.79, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:36.673] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 af fd 00 00 0c 00 59 12 ff ff da 8b ff ff d5 00 18 00 22 0a
+[17:06:36.676] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=438269, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -3.01, 1.68], sensor_trailing_u16=34
+[17:06:36.779] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 b0 61 ff ff ff ff f4 00 59 06 ff ff da 8b ff ff d5 00 15 00 24 0a
+[17:06:36.780] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:36.780] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:36.881] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 b0 c5 00 00 00 00 59 1e ff ff da 8b ff ff d6 00 15 00 25 0a
+[17:06:36.883] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=438469, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-2078.79, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:36.933] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 b1 29 00 00 0c 00 59 12 ff ff da 97 ff ff d6 00 17 00 23 0a
+[17:06:36.935] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=438569, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:37.036] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 b1 8d 00 00 0c 00 59 1e ff ff da 8b ff ff d6 00 16 00 24 0a
+[17:06:37.038] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=438669, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-2078.79, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:37.140] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 b1 f1 00 00 00 00 59 12 ff ff da 97 ff ff d6 00 15 00 25 0a
+[17:06:37.142] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=438769, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:37.192] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 b2 55 ff ff ff ff db 00 59 1e ff ff da af ff ff d7 00 15 00 25 0a
+[17:06:37.192] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:37.193] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:37.293] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 b2 b9 00 00 0c 00 59 12 ff ff da a3 ff ff d5 00 17 00 23 0a
+[17:06:37.296] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=438969, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-1648.71, -3.01, 1.61], sensor_trailing_u16=35
+[17:06:37.397] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 b3 1d ff ff ff ff f4 00 59 12 ff ff da 8b ff ff d6 00 15 00 25 0a 02 10 00 00 06 b3 1d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:37.400] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:37.401] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:37.502] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 03 12 13 50 0a ff ff 01 00 00 06 b3 1d 0a
+[17:06:37.508] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=439069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.011993, witness_battery_voltage=4.944
+[17:06:37.508] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x1d; resync=discard 1 byte
+[17:06:37.609] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 b3 81 00 00 0c 00 59 1e ff ff da 97 ff ff d6 00 15 00 25 0a
+[17:06:37.612] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=439169, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:37.663] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 b3 e5 00 00 00 00 59 1e ff ff da 8b ff ff d6 00 17 00 23 0a
+[17:06:37.666] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=439269, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-2078.79, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:37.766] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 b4 49 00 00 00 00 59 12 ff ff da 97 ff ff d6 00 15 00 24 0a
+[17:06:37.769] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=439369, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:37.870] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 b4 ad 00 00 0c 00 59 1e ff ff da a3 ff ff d7 00 15 00 25 0a
+[17:06:37.874] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=439469, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-1648.71, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:37.925] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 b5 11 00 00 0c 00 59 12 ff ff da 7f ff ff d7 00 15 00 25 0a
+[17:06:37.928] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=439569, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2293.69, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:38.028] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 b5 75 00 00 0c 00 59 06 ff ff da 97 ff ff d6 00 18 00 1f 0a
+[17:06:38.031] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=439669, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[-1863.75, -2.94, 1.68], sensor_trailing_u16=31
+[17:06:38.132] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 b5 d9 00 00 00 00 59 12 ff ff da af ff ff d6 00 15 00 25 0a
+[17:06:38.134] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=439769, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1433.67, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:38.236] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 b6 3d ff ff ff ff f4 00 59 12 ff ff da 97 ff ff d6 00 14 00 25 0a
+[17:06:38.237] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:38.237] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:38.338] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 b6 a1 00 00 18 00 59 06 ff ff da 97 ff ff d5 00 17 00 23 0a
+[17:06:38.340] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=439969, filtered_accel=[0.00096, 0.9116, -0.00152], gyro=[-1863.75, -3.01, 1.61], sensor_trailing_u16=35
+[17:06:38.391] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 b7 05 00 00 00 00 59 12 ff ff da 7f ff ff d6 00 16 00 24 0a 02 10 00 00 06 b7 05 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:38.392] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=440069, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2293.69, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:38.493] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 03 12 13 50 0a ff ff 00 00 00 06 b7 05 0a
+[17:06:38.500] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=440069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.011993, witness_battery_voltage=4.944
+[17:06:38.500] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x05; resync=discard 1 byte
+[17:06:38.601] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 b7 69 00 00 00 00 59 06 ff ff da 8b ff ff d6 00 15 00 25 0a
+[17:06:38.605] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=440169, filtered_accel=[0.0, 0.9116, -0.00152], gyro=[-2078.79, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:38.656] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 b7 cd 00 00 0c 00 59 1e ff ff da 8b ff ff d7 00 16 00 25 0a
+[17:06:38.660] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=440269, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-2078.79, -2.87, 1.54], sensor_trailing_u16=37
+[17:06:38.761] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 b8 31 00 00 0c 00 59 06 ff ff da 97 ff ff d6 00 18 00 22 0a
+[17:06:38.763] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=440369, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[-1863.75, -2.94, 1.68], sensor_trailing_u16=34
+[17:06:38.814] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 b8 95 00 00 0c 00 59 12 ff ff da 8b ff ff d6 00 15 00 25 0a
+[17:06:38.816] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=440469, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:38.917] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 b8 f9 00 00 00 00 59 12 ff ff da 7f ff ff d6 00 16 00 24 0a
+[17:06:38.920] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=440569, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2293.69, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:39.021] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 b9 5d 00 00 18 00 59 2a ff ff da 8b ff ff d5 00 17 00 23 0a
+[17:06:39.024] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=440669, filtered_accel=[0.00096, 0.91304, -0.00152], gyro=[-2078.79, -3.01, 1.61], sensor_trailing_u16=35
+[17:06:39.075] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 b9 c1 00 00 00 00 59 12 ff ff da 7f ff ff d5 00 16 00 24 0a
+[17:06:39.078] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=440769, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2293.69, -3.01, 1.54], sensor_trailing_u16=36
+[17:06:39.229] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 ba 25 00 00 00 00 59 1e ff ff da 97 ff ff d6 00 15 00 26 0a
+[17:06:39.232] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=440869, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=38
+[17:06:39.334] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 ba 89 00 00 0c 00 59 1e ff ff da 8b ff ff d6 00 14 00 25 0a
+[17:06:39.337] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=440969, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-2078.79, -2.94, 1.4], sensor_trailing_u16=37
+[17:06:39.437] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 ba ed 00 00 18 00 59 12 ff ff da 97 ff ff d6 00 17 00 22 0a 02 10 00 00 06 ba ed 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 03 12 13 50 0a ff ff 01 00 00 06 ba ed 0a
+[17:06:39.440] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=441069, filtered_accel=[0.00096, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.61], sensor_trailing_u16=34
+[17:06:39.442] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=441069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.011993, witness_battery_voltage=4.944
+[17:06:39.443] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xed; resync=discard 1 byte
+[17:06:39.546] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 bb 51 00 00 00 00 59 12 ff ff da 8b ff ff d6 00 16 00 25 0a
+[17:06:39.549] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=441169, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-2078.79, -2.94, 1.54], sensor_trailing_u16=37
+[17:06:39.599] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 bb b5 00 00 0c 00 59 12 ff ff da 8b ff ff d7 00 15 00 25 0a
+[17:06:39.602] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=441269, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:39.702] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 bc 19 00 00 0c 00 59 1e ff ff da 8b ff ff d5 00 17 00 22 0a
+[17:06:39.705] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=441369, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-2078.79, -3.01, 1.61], sensor_trailing_u16=34
+[17:06:39.807] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 bc 7d 00 00 0c 00 59 1e ff ff da 97 ff ff d6 00 15 00 24 0a
+[17:06:39.810] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=441469, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:39.911] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 bc e1 00 00 0c 00 59 1e ff ff da 8b ff ff d6 00 16 00 23 0a
+[17:06:39.915] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=441569, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-2078.79, -2.94, 1.54], sensor_trailing_u16=35
+[17:06:40.016] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 bd 45 00 00 00 00 59 2a ff ff da 8b ff ff d7 00 15 00 24 0a
+[17:06:40.019] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=441669, filtered_accel=[0.0, 0.91304, -0.00152], gyro=[-2078.79, -2.87, 1.47], sensor_trailing_u16=36
+[17:06:40.120] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 bd a9 00 00 0c 00 59 06 ff ff da 7f ff ff d6 00 17 00 23 0a
+[17:06:40.122] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=441769, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[2293.69, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:40.225] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 be 0d 00 00 00 00 59 1e ff ff da 8b ff ff d5 00 15 00 24 0a
+[17:06:40.228] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=441869, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-2078.79, -3.01, 1.47], sensor_trailing_u16=36
+[17:06:40.329] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 be 71 00 00 0c 00 59 12 ff ff da 97 ff ff d7 00 14 00 24 0a
+[17:06:40.332] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=441969, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-1863.75, -2.87, 1.4], sensor_trailing_u16=36
+[17:06:40.432] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 be d5 00 00 00 00 59 12 ff ff da 7f ff ff d6 00 17 00 22 0a 02 10 00 00 06 be d5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:40.436] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=442069, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2293.69, -2.94, 1.61], sensor_trailing_u16=34
+[17:06:40.486] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 03 12 13 50 0a ff ff 00 00 00 06 be d5 0a
+[17:06:40.488] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=442069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.011993, witness_battery_voltage=4.944
+[17:06:40.489] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xd5; resync=discard 1 byte
+[17:06:40.591] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 bf 39 00 00 00 00 59 12 ff ff da 7f ff ff d5 00 15 00 24 0a
+[17:06:40.594] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=442169, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2293.69, -3.01, 1.47], sensor_trailing_u16=36
+[17:06:40.645] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 bf 9d 00 00 00 00 59 1e ff ff da a3 ff ff d7 00 14 00 24 0a
+[17:06:40.647] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=442269, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1648.71, -2.87, 1.4], sensor_trailing_u16=36
+[17:06:40.748] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 c0 01 ff ff ff ff f4 00 59 12 ff ff da 97 ff ff d6 00 14 00 25 0a
+[17:06:40.749] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:40.749] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:40.850] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 c0 65 00 00 18 00 59 1e ff ff da 7f ff ff d6 00 17 00 22 0a
+[17:06:40.852] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=442469, filtered_accel=[0.00096, 0.91256, -0.00152], gyro=[2293.69, -2.94, 1.61], sensor_trailing_u16=34
+[17:06:40.903] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 c0 c9 00 00 0c 00 59 1e ff ff da 7f ff ff d7 00 14 00 24 0a
+[17:06:40.905] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=442569, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[2293.69, -2.87, 1.4], sensor_trailing_u16=36
+[17:06:41.007] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 c1 2d 00 00 00 00 59 12 ff ff da 7f ff ff d7 00 14 00 25 0a
+[17:06:41.011] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=442669, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2293.69, -2.87, 1.4], sensor_trailing_u16=37
+[17:06:41.111] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 c1 91 00 00 0c 00 59 12 ff ff da 8b ff ff d6 00 17 00 24 0a
+[17:06:41.114] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=442769, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -2.94, 1.61], sensor_trailing_u16=36
+[17:06:41.215] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 c1 f5 00 00 00 00 59 1e ff ff da 8b ff ff d7 00 15 00 24 0a
+[17:06:41.217] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=442869, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-2078.79, -2.87, 1.47], sensor_trailing_u16=36
+[17:06:41.317] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 c2 59 00 00 0c 00 59 1e ff ff da 8b ff ff d6 00 15 00 24 0a
+[17:06:41.320] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=442969, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-2078.79, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:41.420] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 c2 bd 00 00 00 00 59 2a ff ff da a3 ff ff d7 00 15 00 25 0a 02 10 00 00 06 c2 bd 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:41.423] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=443069, filtered_accel=[0.0, 0.91304, -0.00152], gyro=[-1648.71, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:41.473] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 d7 c8 13 50 0a ff ff 01 00 00 06 c2 bd 0a
+[17:06:41.476] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=443069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.842896, witness_battery_voltage=4.944
+[17:06:41.477] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xbd; resync=discard 1 byte
+[17:06:41.578] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 c3 21 ff ff ff ff f4 00 59 12 ff ff da 97 ff ff d5 00 17 00 23 0a
+[17:06:41.579] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:41.579] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:41.681] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 c3 85 00 00 00 00 59 2a ff ff da 97 ff ff d7 00 14 00 25 0a
+[17:06:41.683] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=443269, filtered_accel=[0.0, 0.91304, -0.00152], gyro=[-1863.75, -2.87, 1.4], sensor_trailing_u16=37
+[17:06:41.785] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 c3 e9 00 00 00 00 59 1e ff ff da 8b ff ff d6 00 15 00 25 0a
+[17:06:41.788] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=443369, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-2078.79, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:41.839] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 c4 4d 00 00 0c 00 59 12 ff ff da 8b ff ff d5 00 18 00 23 0a
+[17:06:41.842] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=443469, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -3.01, 1.68], sensor_trailing_u16=35
+[17:06:41.942] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 c4 b1 00 00 00 00 59 1e ff ff da 7f ff ff d6 00 16 00 24 0a
+[17:06:41.945] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=443569, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[2293.69, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:42.046] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 c5 15 ff ff ff ff f4 00 59 2a ff ff da 97 ff ff d6 00 15 00 25 0a
+[17:06:42.048] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:42.048] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:42.100] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 c5 79 00 00 00 00 59 12 ff ff da 97 ff ff d6 00 14 00 25 0a
+[17:06:42.104] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=443769, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.4], sensor_trailing_u16=37
+[17:06:42.205] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 c5 dd 00 00 0c 00 59 12 ff ff da 8b ff ff d5 00 16 00 22 0a
+[17:06:42.210] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=443869, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -3.01, 1.54], sensor_trailing_u16=34
+[17:06:42.311] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 c6 41 00 00 00 00 59 06 ff ff da 72 ff ff d6 00 15 00 25 0a
+[17:06:42.315] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=443969, filtered_accel=[0.0, 0.9116, -0.00152], gyro=[2060.73, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:42.417] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 c6 a5 00 00 00 00 59 12 ff ff da af ff ff d6 00 16 00 24 0a 02 10 00 00 06 c6 a5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:42.420] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=444069, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1433.67, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:42.470] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 d7 c8 13 54 0a ff ff 00 00 00 06 c6 a5 0a
+[17:06:42.474] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=444069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.842896, witness_battery_voltage=4.948
+[17:06:42.474] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xa5; resync=discard 1 byte
+[17:06:42.575] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 c7 09 00 00 00 00 59 12 ff ff da 97 ff ff d5 00 18 00 23 0a
+[17:06:42.578] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=444169, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -3.01, 1.68], sensor_trailing_u16=35
+[17:06:42.629] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 c7 6d 00 00 0c 00 59 06 ff ff da 7f ff ff d6 00 17 00 24 0a
+[17:06:42.634] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=444269, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[2293.69, -2.94, 1.61], sensor_trailing_u16=36
+[17:06:42.736] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 c7 d1 00 00 0c 00 59 12 ff ff da 8b ff ff d6 00 15 00 25 0a
+[17:06:42.739] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=444369, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:42.840] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 c8 35 00 00 00 00 59 1e ff ff da 97 ff ff d7 00 16 00 24 0a
+[17:06:42.842] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=444469, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1863.75, -2.87, 1.54], sensor_trailing_u16=36
+[17:06:42.893] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 c8 99 ff ff ff ff f4 00 59 2a ff ff da a3 ff ff d6 00 17 00 22 0a
+[17:06:42.894] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:42.895] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:42.996] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 c8 fd 00 00 00 00 59 12 ff ff da 8b ff ff d7 00 15 00 25 0a
+[17:06:42.999] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=444669, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-2078.79, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:43.100] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 c9 61 00 00 00 00 59 12 ff ff da 8b ff ff d6 00 15 00 25 0a
+[17:06:43.103] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=444769, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-2078.79, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:43.204] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 c9 c5 00 00 0c 00 59 06 ff ff da 8b ff ff d5 00 18 00 22 0a
+[17:06:43.207] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=444869, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[-2078.79, -3.01, 1.68], sensor_trailing_u16=34
+[17:06:43.307] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 ca 29 00 00 0c 00 59 12 ff ff da 97 ff ff d6 00 17 00 23 0a
+[17:06:43.310] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=444969, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:43.412] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 ca 8d 00 00 00 00 59 12 ff ff da a3 ff ff d6 00 15 00 24 0a 02 10 00 00 06 ca 8d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:43.417] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=445069, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1648.71, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:43.468] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 18 b7 13 44 0a ff ff 01 00 00 06 ca 8d 0a
+[17:06:43.471] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=445069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.096542, witness_battery_voltage=4.932
+[17:06:43.472] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x8d; resync=discard 1 byte
+[17:06:43.575] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 ca f1 00 00 00 00 59 2a ff ff da 97 ff ff d7 00 15 00 25 0a
+[17:06:43.577] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=445169, filtered_accel=[0.0, 0.91304, -0.00152], gyro=[-1863.75, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:43.628] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 cb 55 00 00 0c 00 59 12 ff ff da 8b ff ff d6 00 17 00 23 0a
+[17:06:43.632] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=445269, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:43.733] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 cb b9 00 00 0c 00 59 12 ff ff da 8b ff ff d7 00 14 00 25 0a
+[17:06:43.736] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=445369, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -2.87, 1.4], sensor_trailing_u16=37
+[17:06:43.787] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 cc 1d 00 00 0c 00 59 12 ff ff da 72 ff ff d6 00 15 00 25 0a
+[17:06:43.790] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=445469, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2060.73, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:43.891] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 cc 81 00 00 00 00 59 12 ff ff da 97 ff ff d6 00 18 00 22 0a
+[17:06:43.894] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=445569, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.68], sensor_trailing_u16=34
+[17:06:43.994] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 cc e5 00 00 18 00 59 12 ff ff da 97 ff ff d6 00 17 00 23 0a
+[17:06:43.997] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=445669, filtered_accel=[0.00096, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:44.099] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 cd 49 00 00 0c 00 59 1e ff ff da 8b ff ff d6 00 14 00 25 0a
+[17:06:44.102] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=445769, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-2078.79, -2.94, 1.4], sensor_trailing_u16=37
+[17:06:44.203] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 cd ad 00 00 00 00 59 06 ff ff da 97 ff ff d6 00 15 00 25 0a
+[17:06:44.205] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=445869, filtered_accel=[0.0, 0.9116, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:44.306] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 ce 11 00 00 0c 00 59 12 ff ff da 97 ff ff d5 00 17 00 23 0a
+[17:06:44.309] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=445969, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-1863.75, -3.01, 1.61], sensor_trailing_u16=35
+[17:06:44.410] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 ce 75 ff ff ff ff f4 00 59 12 ff ff da 8b ff ff d6 00 15 00 26 0a 02 10 00 00 06 ce 75 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:44.410] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:44.411] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:44.513] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 03 12 13 44 0a ff ff 00 00 00 06 ce 75 0a
+[17:06:44.516] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=446069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.011993, witness_battery_voltage=4.932
+[17:06:44.517] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x75; resync=discard 1 byte
+[17:06:44.567] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 ce d9 00 00 00 00 59 12 ff ff da 7f ff ff d6 00 16 00 24 0a
+[17:06:44.570] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=446169, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2293.69, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:44.673] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 cf 3d 00 00 00 00 59 1e ff ff da 72 ff ff d6 00 17 00 23 0a
+[17:06:44.677] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=446269, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[2060.73, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:44.777] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 cf a1 00 00 0c 00 59 1e ff ff da 72 ff ff d6 00 15 00 24 0a
+[17:06:44.780] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=446369, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[2060.73, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:44.831] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 d0 05 00 00 0c 00 59 12 ff ff da 8b ff ff d6 00 15 00 25 0a
+[17:06:44.834] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=446469, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:44.934] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 d0 69 ff ff ff ff f4 00 59 12 ff ff da 7f ff ff d6 00 16 00 25 0a
+[17:06:44.935] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:44.935] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:45.086] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 d0 cd 00 00 18 00 59 12 ff ff da 7f ff ff d6 00 18 00 23 0a
+[17:06:45.089] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=446669, filtered_accel=[0.00096, 0.91208, -0.00152], gyro=[2293.69, -2.94, 1.68], sensor_trailing_u16=35
+[17:06:45.140] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 d1 31 00 00 00 00 58 f9 ff ff da bc ff ff d6 00 15 00 24 0a
+[17:06:45.142] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=446769, filtered_accel=[0.0, 0.91108, -0.00152], gyro=[-1200.71, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:45.244] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 d1 95 00 00 0c 00 59 12 ff ff da 8b ff ff d7 00 15 00 25 0a
+[17:06:45.246] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=446869, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[-2078.79, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:45.347] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 d1 f9 00 00 00 00 59 12 ff ff da 8b ff ff d5 00 17 00 22 0a
+[17:06:45.350] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=446969, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-2078.79, -3.01, 1.61], sensor_trailing_u16=34
+[17:06:45.400] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 d2 5d 00 00 0c 00 59 06 ff ff da 8b ff ff d6 00 16 00 24 0a 02 10 00 00 06 d2 5d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 03 12 13 50 0a ff ff 01 00 00 06 d2 5d 0a
+[17:06:45.403] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=447069, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[-2078.79, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:45.405] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=447069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.011993, witness_battery_voltage=4.944
+[17:06:45.406] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x5d; resync=discard 1 byte
+[17:06:45.507] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 d2 c1 00 00 00 00 59 1e ff ff da 7f ff ff d7 00 15 00 25 0a
+[17:06:45.509] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=447169, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[2293.69, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:45.610] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 d3 25 00 00 00 00 59 12 ff ff da 72 ff ff d7 00 17 00 23 0a
+[17:06:45.614] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=447269, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2060.73, -2.87, 1.61], sensor_trailing_u16=35
+[17:06:45.714] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 d3 89 00 00 0c 00 59 12 ff ff da 7f ff ff d5 00 17 00 23 0a
+[17:06:45.717] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=447369, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2293.69, -3.01, 1.61], sensor_trailing_u16=35
+[17:06:45.819] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 d3 ed 00 00 00 00 59 1e ff ff da 7f ff ff d7 00 15 00 24 0a
+[17:06:45.822] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=447469, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[2293.69, -2.87, 1.47], sensor_trailing_u16=36
+[17:06:45.929] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 d4 51 ff ff ff ff f4 00 59 06 ff ff da 7f ff ff d6 00 16 00 24 0a
+[17:06:45.931] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:45.932] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:46.057] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 d4 b5 00 00 00 00 59 12 ff ff da 8b ff ff d5 00 19 00 21 0a
+[17:06:46.059] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=447669, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-2078.79, -3.01, 1.75], sensor_trailing_u16=33
+[17:06:46.110] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 d5 19 00 00 0c 00 59 12 ff ff da 7f ff ff d6 00 16 00 24 0a
+[17:06:46.112] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=447769, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2293.69, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:46.213] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 d5 7d 00 00 0c 00 59 1e ff ff da 8b ff ff d7 00 15 00 25 0a
+[17:06:46.215] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=447869, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-2078.79, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:46.316] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 d5 e1 00 00 00 00 59 1e ff ff da 7f ff ff d6 00 16 00 25 0a
+[17:06:46.319] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=447969, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[2293.69, -2.94, 1.54], sensor_trailing_u16=37
+[17:06:46.421] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 d6 45 00 00 0c 00 59 12 ff ff da 7f ff ff d6 00 17 00 23 0a 02 10 00 00 06 d6 45 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 d7 c8 13 48 0a ff ff 00 00 00 06 d6 45 0a
+[17:06:46.424] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=448069, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2293.69, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:46.426] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=448069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.842896, witness_battery_voltage=4.936
+[17:06:46.427] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x45; resync=discard 1 byte
+[17:06:46.528] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 d6 a9 00 00 0c 00 59 1e ff ff da 8b ff ff d7 00 15 00 25 0a
+[17:06:46.531] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=448169, filtered_accel=[0.00048, 0.91256, -0.00152], gyro=[-2078.79, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:46.632] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 d7 0d 00 00 0c 00 59 06 ff ff da 7f ff ff d6 00 15 00 24 0a
+[17:06:46.636] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=448269, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[2293.69, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:46.737] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 d7 71 ff ff ff ff f4 00 59 06 ff ff da af ff ff d5 00 18 00 22 0a
+[17:06:46.738] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:46.739] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:46.789] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 d7 d5 00 00 00 00 59 12 ff ff da 8b ff ff d6 00 15 00 24 0a
+[17:06:46.792] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=448469, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-2078.79, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:46.893] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 d8 39 00 00 00 00 59 1e ff ff da a3 ff ff d6 00 15 00 25 0a
+[17:06:46.896] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=448569, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1648.71, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:46.998] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 d8 9d 00 00 0c 00 59 2a ff ff da 97 ff ff d6 00 16 00 24 0a
+[17:06:47.000] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=448669, filtered_accel=[0.00048, 0.91304, -0.00152], gyro=[-1863.75, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:47.102] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 d9 01 00 00 00 00 59 12 ff ff da 7f ff ff d6 00 17 00 23 0a
+[17:06:47.105] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=448769, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2293.69, -2.94, 1.61], sensor_trailing_u16=35
+[17:06:47.205] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 d9 65 00 00 00 00 59 12 ff ff da 72 ff ff d6 00 16 00 25 0a
+[17:06:47.209] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=448869, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[2060.73, -2.94, 1.54], sensor_trailing_u16=37
+[17:06:47.309] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 d9 c9 00 00 00 00 59 12 ff ff da 97 ff ff d6 00 15 00 24 0a
+[17:06:47.313] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=448969, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:47.414] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 da 2d ff ff ff ff f4 00 59 1e ff ff da 8b ff ff d5 00 17 00 22 0a 02 10 00 00 06 da 2d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:47.414] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:47.415] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:47.516] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 53 18 b7 13 54 0a ff ff 01 00 00 06 da 2d 0a
+[17:06:47.519] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=449069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=211.096542, witness_battery_voltage=4.948
+[17:06:47.519] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x2d; resync=discard 1 byte
+[17:06:47.571] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 da 91 00 00 0c 00 59 12 ff ff da 72 ff ff d7 00 16 00 24 0a
+[17:06:47.579] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=449169, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2060.73, -2.87, 1.54], sensor_trailing_u16=36
+[17:06:47.631] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 da f5 00 00 00 00 59 1e ff ff da a3 ff ff d7 00 15 00 25 0a
+[17:06:47.634] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=449269, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1648.71, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:47.735] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 db 59 ff ff ff ff f4 00 59 12 ff ff da 97 ff ff d6 00 16 00 24 0a
+[17:06:47.736] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:47.736] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:47.837] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 db bd ff ff ff ff f4 00 59 06 ff ff da 8b ff ff d6 00 16 00 22 0a
+[17:06:47.838] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:47.839] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:47.889] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 dc 21 00 00 00 00 59 12 ff ff da 97 ff ff d6 00 15 00 25 0a
+[17:06:47.892] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=449569, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:47.993] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 dc 85 00 00 0c 00 59 12 ff ff da 66 ff ff d7 00 15 00 25 0a
+[17:06:47.996] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=449669, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[1845.69, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:48.096] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 dc e9 00 00 18 00 59 1e ff ff da 8b ff ff d6 00 17 00 24 0a
+[17:06:48.100] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=449769, filtered_accel=[0.00096, 0.91256, -0.00152], gyro=[-2078.79, -2.94, 1.61], sensor_trailing_u16=36
+[17:06:48.201] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 dd 4d 00 00 00 00 59 2a ff ff da 97 ff ff d6 00 16 00 24 0a
+[17:06:48.204] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=449869, filtered_accel=[0.0, 0.91304, -0.00152], gyro=[-1863.75, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:48.304] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 dd b1 00 00 00 00 59 12 ff ff da 97 ff ff d7 00 15 00 25 0a
+[17:06:48.307] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=449969, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:48.408] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 de 15 00 00 18 00 59 1e ff ff da 97 ff ff d5 00 17 00 24 0a 02 10 00 00 06 de 15 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:48.411] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=450069, filtered_accel=[0.00096, 0.91256, -0.00152], gyro=[-1863.75, -3.01, 1.61], sensor_trailing_u16=36
+[17:06:48.511] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 ed 6d 13 50 0a ff ff 00 00 00 06 de 15 0a
+[17:06:48.515] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=450069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.927444, witness_battery_voltage=4.944
+[17:06:48.515] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x15; resync=discard 1 byte
+[17:06:48.616] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 de 79 ff ff ff ff f4 00 59 1e ff ff da 8b ff ff d6 00 17 00 23 0a
+[17:06:48.617] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:48.617] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:48.668] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 de dd 00 00 0c 00 59 12 ff ff da 7f ff ff d6 00 15 00 24 0a
+[17:06:48.671] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=450269, filtered_accel=[0.00048, 0.91208, -0.00152], gyro=[2293.69, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:48.772] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 df 41 00 00 00 00 59 1e ff ff da 97 ff ff d6 00 15 00 25 0a
+[17:06:48.778] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=450369, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:48.880] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 df a5 ff ff ff ff f4 00 59 06 ff ff da 8b ff ff d6 00 17 00 22 0a
+[17:06:48.882] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:48.882] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:48.984] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 e0 09 00 00 00 00 59 12 ff ff da 97 ff ff d7 00 16 00 24 0a
+[17:06:48.987] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=450569, filtered_accel=[0.0, 0.91208, -0.00152], gyro=[-1863.75, -2.87, 1.54], sensor_trailing_u16=36
+[17:06:49.038] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 e0 6d 00 00 18 00 59 06 ff ff da 7f ff ff d7 00 15 00 25 0a
+[17:06:49.042] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=450669, filtered_accel=[0.00096, 0.9116, -0.00152], gyro=[2293.69, -2.87, 1.47], sensor_trailing_u16=37
+[17:06:49.144] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 e0 d1 00 00 18 00 59 1e ff ff da 7f ff ff d6 00 16 00 24 0a
+[17:06:49.149] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=450769, filtered_accel=[0.00096, 0.91256, -0.00152], gyro=[2293.69, -2.94, 1.54], sensor_trailing_u16=36
+[17:06:49.250] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 e1 35 00 00 18 00 59 12 ff ff da 97 ff ff d6 00 16 00 23 0a
+[17:06:49.255] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=450869, filtered_accel=[0.00096, 0.91208, -0.00152], gyro=[-1863.75, -2.94, 1.54], sensor_trailing_u16=35
+[17:06:49.305] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 e1 99 00 00 00 00 58 ed ff ff da 5a ff ff d6 00 15 00 25 0a
+[17:06:49.308] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=450969, filtered_accel=[0.0, 0.9106, -0.00152], gyro=[1630.65, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:49.409] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 e1 fd 00 00 00 00 59 1e ff ff da 97 ff ff d6 00 15 00 24 0a 02 10 00 00 06 e1 fd 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:06:49.411] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=451069, filtered_accel=[0.0, 0.91256, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=36
+[17:06:49.512] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 ed 6d 13 50 0a ff ff 01 00 00 06 e1 fd 0a
+[17:06:49.517] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=451069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.927444, witness_battery_voltage=4.944
+[17:06:49.518] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xfd; resync=discard 1 byte
+[17:06:49.568] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 e2 61 00 00 00 00 59 2a ff ff da 8b ff ff d5 00 18 00 22 0a
+[17:06:49.571] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=451169, filtered_accel=[0.0, 0.91304, -0.00152], gyro=[-2078.79, -3.01, 1.68], sensor_trailing_u16=34
+[17:06:49.672] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 e2 c5 00 00 0c 00 59 06 ff ff da 7f ff ff d6 00 15 00 25 0a
+[17:06:49.675] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=451269, filtered_accel=[0.00048, 0.9116, -0.00152], gyro=[2293.69, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:49.778] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 e3 29 00 00 18 00 59 1e ff ff da 97 ff ff d6 00 15 00 25 0a
+[17:06:49.781] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=451369, filtered_accel=[0.00096, 0.91256, -0.00152], gyro=[-1863.75, -2.94, 1.47], sensor_trailing_u16=37
+[17:06:49.882] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 e3 8d ff ff ff ff f4 00 59 12 ff ff da 97 ff ff d6 00 16 00 24 0a
+[17:06:49.883] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:49.884] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:49.934] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 e3 f1 ff ff ff ff e8 00 59 12 ff ff da 8b ff ff d6 00 18 00 23 0a
+[17:06:49.936] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:49.936] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:50.038] RX[TCP_prs2026hitl_7000]  01 0b 00 00 06 e4 55 ff ff ff ff f4 00 59 1e ff ff da 97 ff ff d7 00 15 00 25 0a
+[17:06:50.039] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:50.039] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:50.090] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 e4 b9 ff ff ff ff f4 00 59 1e ff ff da 7f ff ff d6 00 15 00 25 0a
+[17:06:50.091] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:50.091] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:50.193] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 e5 1d ff ff ff ff f4 00 59 12 ff ff da 72 ff ff d6 00 18 00 22 0a
+[17:06:50.195] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:50.195] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:06:50.296] RX[TCP_prs2026hitl_7000]  01 0f 00 00 06 e5 81 ff ff ff ff f4 00 59 2a ff ff da 7f ff ff d6 00 15 00 24 0a
+[17:06:50.297] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:06:50.297] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)

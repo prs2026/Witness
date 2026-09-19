@@ -1,0 +1,937 @@
+[17:15:02.692] RX[TCP_prs2026hitl_7000]  ff fb 03 ff fd 03 ff fb 01 ff fe 01 ff fd 00 ff fb 00 ff fd 2c
+[17:15:02.693] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xfb; resync=discard 1 byte
+[17:15:02.694] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xfb; resync=discard 1 byte
+[17:15:06.731] RX[TCP_prs2026hitl_7000]  c9 ff ff fc 92 00 5a 67 ff ff de b0 ff ff d7 00 00 24 0a 01 0f 00 00 00 00 00 24 0a 02 10 00 00 00 00 2d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:06.732] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x92; resync=discard 1 byte
+[17:15:06.732] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5a; discarded 1 byte(s)
+[17:15:06.733] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x67; discarded 1 byte(s)
+[17:15:06.733] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:15:06.733] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x24; discarded 1 byte(s)
+[17:15:06.734] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:15:06.734] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:15:06.734] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.735] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.735] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.735] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.735] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.736] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.736] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.736] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.737] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.737] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.737] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.738] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.738] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.738] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.738] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.739] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.739] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.739] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.740] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.740] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.740] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.741] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte(s)
+[17:15:06.841] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 e8 53 50 0a ff ff 01 00 00 00 00 2d 0a 01 0b 00 00 00 00 91 ff ff fc 85 00 5a 5b ff ff de b0 ff ff d6 00 00 24 0a 01 0b 00 00 00 00 f5 ff ff fc 79 00 5a 43 ff ff de bc ff ff d6 00 00 23 0a 01 0b 00 00 00 05 59 ff ff fc 9e 00 5a 67 ff ff de bc ff ff d6 00 14 00 24 0a 00 25 0a 01 0f 00 00 00 06 21 ff ff fc 85 00 5a 67 ff ff de 8c ff ff d7 00 18 00 22 0a 01 0f 00 00 00 06 85 ff ff fc 92 00 5a 4f ff ff de 8c ff ff d7 00 00 23 0a 00 24 0a 01 0b 00 00 00 07 4d ff ff fc 92 00 5a 5b ff ff de a4 00 23 0a 01 0b 00 00 00 07 b1 ff ff fc 92 00 5a 5b ff ff de 8c ff ff d7 00 00 23 0a 00 24 0a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 e8 53 44 0a 0a 00 25 0a 01 0f 00 00 00 08 dd ff ff fc 92 00 5a 5b ff ff ff ff d6 00 18 00 21 0a 00 23 0a 00 24 0a 01 0b 00 00 00 0a 09 ff ff fc 92 00 00 23 0a 01 0b 00 00 00 0a 6d ff ff fc 9e 00 5a 5b ff ff de 8c 00 22 0a 01 0b 00 00 00 0a 00 24 0a 5e 41 5e 01 0f 00 00 00 0b 35 ff ff fc 85 00 5a 5b ff ff ff ff d7 00 14 00 24 0a 01 0f 00 00 00 0b 99 ff ff fc 9e 00 00 22 0a 01 0f 00 00 00 0b fd ff ff fc 85 00 5a 4f ff ff ff ff d6 00 00 24 0a 02 10 00 00 00 0b fd 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 bd 09 44 0a ff ff 01 00 00 00 0b fd 0a 00 24 0a 01 0b 00 00 00 0c c5 ff ff fc 92 00 5a 5b ff ff de 73 ff ff d6 00 00 23 0a 01 0b 00 00 00 0a 29 ff ff fc 85 00 5a 5b ff ff de 73 ff ff d7 00 00 22 0a 01 0b 00 00 00 0a 00 24 0a 01 0f 00 00 00 0a f1 ff ff fc 92 00 5a 4f ff ff de 73 ff ff d7 00 00 24 0a 01 0f 00 00 00 0e 55 ff ff fc 79 00 5a 43 ff ff de b0 00 21 0a 43 5e 40 5e 40 5e 40 5e 40 5e 40 5e 40 5e 40 40 08 8c 20 5e 41 08 5e 40 21 08 08 d8 08 5a 43 20 08 5a 20 5e fc ff ff 20 ff ff 5e 40 40 5e 0d 0a 20 57 20 28 33 37 35 31 32 29 20 73 65 72 69 61 6c 5f 63 6f 6d 6d 61 6e 64 3a 20 75 6e 6b 6e 6f 77 6e 20 63 6f 6d 6d 61 6e 64 3a 20 5e 41 5e 43 5e 40 5e 40 5e 40 5e 40 5e 40 5e 40 5e 40 40 08 8c 20 5e 41 08 5e 40 21 08 08 d8 08 5a 43 20 08 5a 20 5e fc ff ff 20 ff ff 5e 40 40 5e 0d 0a 5e ff ff 40 08 08 5e 40 5e 5e 01 0f 00 00 00 92 5d ff ff fc 85 00 5a 43 ff ff de 73 ff ff d8 00 15 00 24 0a
+[17:15:06.844] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 25 byte(s)
+[17:15:06.847] PACKET[TCP_prs2026hitl_7000] heartbeat: status=256, uptime=45
+[17:15:06.850] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=145, filtered_accel=[-0.00016, -322.43352, 241.17244], gyro=[-596.96, -0.07, -752.64], sensor_trailing_u16=36
+[17:15:06.853] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=245, filtered_accel=[-0.00016, 317.19784, 178.25788], gyro=[-596.12, -0.07, -752.64], sensor_trailing_u16=35
+[17:15:06.856] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=offset 22
+[17:15:06.857] PACKET[TCP_prs2026hitl_7000] heartbeat: status=65495, uptime=1572898
+[17:15:06.859] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=1669, filtered_accel=[-0.00016, -288.3548, 209.71516], gyro=[-599.48, -0.07, -734.72], sensor_trailing_u16=35
+[17:15:06.861] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 24 byte(s)
+[17:15:06.863] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=1969, filtered_accel=[-0.00016, -288.3548, 241.17244], gyro=[-599.48, -0.07, -734.72], sensor_trailing_u16=35
+[17:15:06.865] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 79 byte(s)
+[17:15:06.868] PACKET[TCP_prs2026hitl_7000] heartbeat: status=65494, uptime=1572897
+[17:15:06.873] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 13 byte(s)
+[17:15:06.875] PACKET[TCP_prs2026hitl_7000] heartbeat: status=65532, uptime=2449473571
+[17:15:06.878] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=offset 24
+[17:15:06.879] PACKET[TCP_prs2026hitl_7000] heartbeat: status=65495, uptime=1310756
+[17:15:06.879] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0xfc; resync=offset 5
+[17:15:06.880] PACKET[TCP_prs2026hitl_7000] heartbeat: status=65535, uptime=3590324260
+[17:15:06.880] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x02: expected 0x0a, got 0xff; resync=offset 11
+[17:15:06.880] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=3269, filtered_accel=[-0.00016, -288.3548, 241.17244], gyro=[-601.23, -0.07, -752.64], sensor_trailing_u16=35
+[17:15:06.881] PACKET[TCP_prs2026hitl_7000] sensors: status=2816, uptime=2601, filtered_accel=[-0.00016, -322.43352, 241.17244], gyro=[-601.23, -0.07, -734.72], sensor_trailing_u16=34
+[17:15:06.881] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0xff; resync=offset 70
+[17:15:06.882] PACKET[TCP_prs2026hitl_7000] heartbeat: status=65374, uptime=1077960205
+[17:15:06.882] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x20; discarded 87 byte(s)
+[17:15:06.882] PACKET[TCP_prs2026hitl_7000] heartbeat: status=65374, uptime=1077960205
+[17:15:06.883] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 28 byte(s)
+[17:15:06.883] PACKET[TCP_prs2026hitl_7000] heartbeat: status=65496, uptime=1376292
+[17:15:06.883] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 92 c1 ff ff fc 85 00 5a 4f ff ff de 67 ff ff d7 00 18 00 21 0a
+[17:15:06.884] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:06.984] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 93 25 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d6 00 16 00 23 0a
+[17:15:06.985] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:07.086] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 93 89 ff ff fc 92 00 5a 5b ff ff de 67 ff ff d8 00 15 00 24 0a
+[17:15:07.086] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:07.187] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 93 ed ff ff fc 9e 00 5a 4f ff ff de 73 ff ff d8 00 14 00 25 0a
+[17:15:07.188] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:07.289] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 94 51 ff ff fc 79 00 5a 43 ff ff de 7f ff ff d6 00 17 00 22 0a
+[17:15:07.289] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:07.340] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 94 b5 ff ff fc 92 00 5a 5b ff ff de 4f ff ff d7 00 15 00 24 0a 02 10 00 00 00 94 b5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:07.341] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:07.441] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 13 9e 13 48 0a ff ff 00 00 00 00 94 b5 0a
+[17:15:07.442] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=38069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.07663, witness_battery_voltage=4.936
+[17:15:07.442] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xb5; resync=discard 1 byte
+[17:15:07.543] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 95 19 ff ff fc 85 00 5a 5b ff ff de 73 ff ff d8 00 15 00 24 0a
+[17:15:07.544] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:07.595] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 95 7d ff ff fc 85 00 5a 43 ff ff de 73 ff ff d5 00 17 00 21 0a
+[17:15:07.596] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:07.697] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 95 e1 ff ff fc 92 00 5a 4f ff ff de 67 ff ff d8 00 15 00 23 0a
+[17:15:07.697] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:07.798] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 96 45 ff ff fc 92 00 5a 4f ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:07.799] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:07.900] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 96 a9 ff ff fc 85 00 5a 5b ff ff de 4f ff ff d7 00 16 00 24 0a
+[17:15:07.901] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:08.002] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 97 0d ff ff fc 9e 00 5a 67 ff ff de 8c ff ff d7 00 16 00 22 0a
+[17:15:08.003] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:08.053] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 97 71 ff ff fc 92 00 5a 37 ff ff de 67 ff ff d7 00 16 00 24 0a
+[17:15:08.054] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:08.155] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 97 d5 ff ff fc 6d 00 5a 74 ff ff de 4f ff ff d8 00 16 00 24 0a
+[17:15:08.156] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:08.257] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 98 39 ff ff fc 79 00 5a 5b ff ff de 4f ff ff d8 00 16 00 23 0a
+[17:15:08.257] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:08.508] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 98 9d ff ff fc 9e 00 5a 67 ff ff de 5b ff ff d6 00 15 00 24 0a 02 10 00 00 00 98 9d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:08.508] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:08.609] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 29 43 13 50 0a ff ff 01 00 00 00 98 9d 0a 01 0b 00 00 00 99 01 ff ff fc 92 00 5a 5b ff ff de 67 ff ff d8 00 16 00 24 0a 01 0f 00 00 00 99 65 ff ff fc 92 00 5a 4f ff ff de 4f ff ff d7 00 15 00 24 0a
+[17:15:08.611] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=39069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.161179, witness_battery_voltage=4.944
+[17:15:08.611] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x9d; resync=offset 19
+[17:15:08.612] PACKET[TCP_prs2026hitl_7000] heartbeat: status=65496, uptime=1441828
+[17:15:08.613] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:08.714] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 99 c9 ff ff fc 79 00 5a 43 ff ff de 73 ff ff d7 00 17 00 22 0a
+[17:15:08.715] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:08.766] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 9a 2d ff ff fc 92 00 5a 43 ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:08.767] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:08.868] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 9a 91 ff ff fc 92 00 5a 4f ff ff de 5b ff ff d7 00 15 00 23 0a
+[17:15:08.869] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:08.970] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 9a f5 ff ff fc 85 00 5a 4f ff ff de 67 ff ff d6 00 18 00 22 0a
+[17:15:08.971] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:09.072] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 9b 59 ff ff fc 85 00 5a 67 ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:09.072] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:09.173] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 9b bd ff ff fc 85 00 5a 43 ff ff de 73 ff ff d7 00 15 00 24 0a
+[17:15:09.174] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:09.275] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 9c 21 ff ff fc 92 00 5a 43 ff ff de 98 ff ff d7 00 16 00 24 0a
+[17:15:09.276] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:09.377] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 9c 85 ff ff fc 79 00 5a 4f ff ff de 5b ff ff d6 00 16 00 22 0a 02 10 00 00 00 9c 85 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:09.378] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:09.428] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 fd f9 13 50 0a ff ff 00 00 00 00 9c 85 0a
+[17:15:09.430] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=40069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.992081, witness_battery_voltage=4.944
+[17:15:09.430] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x85; resync=discard 1 byte
+[17:15:09.531] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 9c e9 ff ff fc 92 00 5a 67 ff ff de 67 ff ff d6 00 14 00 24 0a
+[17:15:09.532] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:09.633] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 9d 4d ff ff fc 92 00 5a 4f ff ff de 67 ff ff d8 00 11 00 26 0a
+[17:15:09.634] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x26; resync=discard 1 byte
+[17:15:09.684] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 9d b1 ff ff fc 92 00 5a 67 ff ff de 67 ff ff d7 00 18 00 22 0a
+[17:15:09.685] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:09.786] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 9e 15 ff ff fc 92 00 5a 67 ff ff de 73 ff ff d7 00 16 00 24 0a
+[17:15:09.787] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:09.838] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 9e 79 ff ff fc 9e 00 5a 4f ff ff de 73 ff ff d7 00 15 00 24 0a
+[17:15:09.839] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:09.990] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 9e dd ff ff fc 85 00 5a 4f ff ff de 7f ff ff d7 00 14 00 24 0a
+[17:15:09.991] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:10.042] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 9f 41 ff ff fc 85 00 5a 4f ff ff de 67 ff ff d6 00 16 00 22 0a
+[17:15:10.042] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:10.143] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 9f a5 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d7 00 14 00 24 0a
+[17:15:10.143] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:10.244] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 a0 09 ff ff fc 92 00 5a 5b ff ff de 8c ff ff d6 00 15 00 23 0a
+[17:15:10.245] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:10.345] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 a0 6d ff ff fc 92 00 5a 43 ff ff de 8c ff ff d6 00 18 00 21 0a 02 10 00 00 00 a0 6d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:10.346] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:10.447] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 6a e0 13 50 0a ff ff 01 00 00 00 a0 6d 0a
+[17:15:10.448] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=41069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.41748, witness_battery_voltage=4.944
+[17:15:10.448] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x6d; resync=discard 1 byte
+[17:15:10.549] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 a0 d1 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d5 00 15 00 24 0a
+[17:15:10.550] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:10.651] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 a1 35 ff ff fc aa 00 5a 5b ff ff de 42 ff ff d7 00 15 00 25 0a
+[17:15:10.653] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:10.703] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 a1 99 ff ff fc 9e 00 5a 67 ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:10.704] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:10.806] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 a1 fd ff ff fc 92 00 5a 4f ff ff de 73 ff ff d6 00 16 00 22 0a
+[17:15:10.807] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:10.857] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 a2 61 ff ff fc 9e 00 5a 43 ff ff de 73 ff ff d7 00 15 00 24 0a
+[17:15:10.858] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:10.959] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 a2 c5 ff ff fc 79 00 5a 43 ff ff de 67 ff ff d7 00 14 00 23 0a
+[17:15:10.959] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:11.060] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 a3 29 ff ff fc 85 00 5a 4f ff ff de 67 ff ff d6 00 17 00 22 0a
+[17:15:11.061] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:11.161] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 a3 8d ff ff fc 92 00 5a 67 ff ff de 67 ff ff d7 00 16 00 23 0a
+[17:15:11.162] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:11.263] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 a3 f1 ff ff fc 9e 00 5a 4f ff ff de 5b ff ff d7 00 14 00 25 0a
+[17:15:11.264] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:11.365] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 a4 55 ff ff fc 92 00 5a 4f ff ff de 73 ff ff d7 00 16 00 23 0a 02 10 00 00 00 a4 55 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:11.365] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:11.466] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 13 9e 13 48 0a ff ff 00 00 00 00 a4 55 0a
+[17:15:11.467] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=42069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.07663, witness_battery_voltage=4.936
+[17:15:11.467] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x55; resync=discard 1 byte
+[17:15:11.518] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 a4 b9 ff ff fc 92 00 5a 80 ff ff de 5b ff ff d6 00 16 00 22 0a
+[17:15:11.519] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:11.620] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 a5 1d ff ff fc 85 00 5a 4f ff ff de 5b ff ff d6 00 15 00 24 0a
+[17:15:11.621] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:11.722] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 a5 81 ff ff fc 9e 00 5a 4f ff ff de 7f ff ff d7 00 15 00 24 0a
+[17:15:11.723] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:11.824] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 a5 e5 ff ff fc 85 00 5a 67 ff ff de 8c ff ff d6 00 17 00 21 0a
+[17:15:11.826] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:11.926] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 a6 49 ff ff fc 85 00 5a 5b ff ff de 73 ff ff d7 00 15 00 23 0a
+[17:15:11.927] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:11.977] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 a6 ad ff ff fc 79 00 5a 4f ff ff de 5b ff ff d7 00 15 00 23 0a
+[17:15:11.978] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:12.080] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 a7 11 ff ff fc 9e 00 5a 43 ff ff de a4 ff ff d7 00 16 00 23 0a
+[17:15:12.080] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:12.181] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 a7 75 ff ff fc 92 00 5a 67 ff ff de 67 ff ff d6 00 17 00 21 0a
+[17:15:12.182] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:12.282] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 a7 d9 ff ff fc 85 00 5a 5b ff ff de 4f ff ff d7 00 15 00 24 0a
+[17:15:12.283] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:12.383] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 a8 3d ff ff fc 9e 00 5a 43 ff ff de 5b ff ff d7 00 15 00 24 0a 02 10 00 00 00 a8 3d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:12.384] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:12.434] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 d2 ae 13 44 0a ff ff 01 00 00 00 a8 3d 0a
+[17:15:12.435] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=43069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.822968, witness_battery_voltage=4.932
+[17:15:12.436] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x3d; resync=discard 1 byte
+[17:15:12.537] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 a8 a1 ff ff fc 92 00 5a 2a ff ff de 7f ff ff d6 00 18 00 21 0a
+[17:15:12.537] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:12.588] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 a9 05 ff ff fc 85 00 5a 67 ff ff de 2a ff ff d7 00 16 00 23 0a
+[17:15:12.589] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:12.690] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 a9 69 ff ff fc 85 00 5a 5b ff ff de 4f ff ff d8 00 15 00 24 0a
+[17:15:12.691] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:12.792] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 a9 cd ff ff fc 92 00 5a 4f ff ff de 67 ff ff d6 00 16 00 24 0a
+[17:15:12.793] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:12.843] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 aa 31 ff ff fc 79 00 5a 4f ff ff de 67 ff ff d8 00 16 00 23 0a
+[17:15:12.844] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:12.945] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 aa 95 ff ff fc 79 00 5a 67 ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:12.946] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:13.047] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 aa f9 ff ff fc 85 00 5a 5b ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:13.048] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:13.148] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 ab 5d ff ff fc 85 00 5a 4f ff ff de 73 ff ff d6 00 17 00 21 0a
+[17:15:13.149] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:13.250] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 ab c1 ff ff fc 85 00 5a 5b ff ff de 73 ff ff d7 00 15 00 23 0a
+[17:15:13.250] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:13.351] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 ac 25 ff ff fc 85 00 5a 67 ff ff de 73 ff ff d8 00 14 00 24 0a 02 10 00 00 00 ac 25 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:13.353] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:13.454] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 e8 53 13 48 0a ff ff 00 00 00 00 ac 25 0a
+[17:15:13.456] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=44069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.907516, witness_battery_voltage=4.936
+[17:15:13.457] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:13.508] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ac 89 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d7 00 16 00 24 0a
+[17:15:13.509] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:13.610] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ac ed ff ff fc 85 00 5a 4f ff ff de 5b ff ff d6 00 16 00 22 0a
+[17:15:13.611] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:13.712] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ad 51 ff ff fc 92 00 5a 5b ff ff de 67 ff ff d6 00 15 00 24 0a
+[17:15:13.713] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:13.815] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ad b5 ff ff fc 79 00 5a 43 ff ff de 1e ff ff d8 00 16 00 24 0a
+[17:15:13.816] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:13.866] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 ae 19 ff ff fc 9e 00 5a a4 ff ff dd a4 ff ff d4 00 17 00 22 0a
+[17:15:13.867] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:13.968] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 ae 7d ff ff fc 92 00 5a 4f ff ff de 7f ff ff d8 00 16 00 23 0a
+[17:15:13.969] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:14.071] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 ae e1 ff ff fc 92 00 5a 5b ff ff de 73 ff ff d6 00 15 00 24 0a
+[17:15:14.071] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:14.172] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 af 45 ff ff fc 85 00 5a 4f ff ff de 67 ff ff d6 00 15 00 23 0a
+[17:15:14.172] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:14.273] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 af a9 ff ff fc 92 00 5a 43 ff ff de 42 ff ff d7 00 17 00 23 0a
+[17:15:14.274] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:14.375] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 b0 0d ff ff fc aa 00 59 ed ff ff de 4f ff ff d9 00 15 00 22 0a 02 10 00 00 00 b0 0d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:14.375] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:14.476] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 d2 ae 13 50 0a ff ff 01 00 00 00 b0 0d 0a
+[17:15:14.478] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=45069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.822968, witness_battery_voltage=4.944
+[17:15:14.478] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x0d; resync=discard 1 byte
+[17:15:14.529] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 b0 71 ff ff fc cf 00 5a 80 ff ff de 67 ff ff d5 00 13 00 24 0a
+[17:15:14.530] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:14.631] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 b0 d5 ff ff fc 61 00 5a 4f ff ff de 42 ff ff d5 00 17 00 22 0a
+[17:15:14.635] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:14.686] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 b1 39 ff ff fc 85 00 5a 5b ff ff de 4f ff ff d6 00 15 00 24 0a
+[17:15:14.686] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:14.787] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 b1 9d ff ff fc 85 00 5a 5b ff ff de 5b ff ff d7 00 14 00 23 0a
+[17:15:14.788] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:14.889] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 b2 01 ff ff fc 85 00 5a 37 ff ff de 5b ff ff d7 00 16 00 23 0a
+[17:15:14.889] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:14.991] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 b2 65 ff ff fc 85 00 5a 43 ff ff de 4f ff ff d6 00 17 00 22 0a
+[17:15:14.992] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:15.042] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 b2 c9 ff ff fc 85 00 5a 4f ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:15.043] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:15.143] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 b3 2d ff ff fc 85 00 5a 67 ff ff de 7f ff ff d7 00 16 00 24 0a
+[17:15:15.144] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:15.246] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 b3 91 ff ff fc 92 00 5a 4f ff ff de 4f ff ff d6 00 17 00 21 0a
+[17:15:15.247] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:15.348] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 b3 f5 ff ff fc 92 00 5a 67 ff ff de 73 ff ff d6 00 15 00 24 0a 02 10 00 00 00 b3 f5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:15.348] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:15.449] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 13 9e 13 40 0a ff ff 00 00 00 00 b3 f5 0a
+[17:15:15.450] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=46069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.07663, witness_battery_voltage=4.928
+[17:15:15.450] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xf5; resync=discard 1 byte
+[17:15:15.552] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 b4 59 ff ff fc 9e 00 5a 5b ff ff de 4f ff ff d7 00 14 00 25 0a
+[17:15:15.552] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:15.603] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 b4 bd ff ff fc 9e 00 5a 43 ff ff de 7f ff ff d6 00 17 00 23 0a
+[17:15:15.605] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:15.705] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 b5 21 ff ff fc 92 00 5a 43 ff ff de 7f ff ff d6 00 17 00 22 0a
+[17:15:15.706] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:15.757] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 b5 85 ff ff fc 85 00 5a 4f ff ff de 67 ff ff d6 00 14 00 23 0a
+[17:15:15.758] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:15.858] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 b5 e9 ff ff fc 9e 00 5a 5b ff ff de 5b ff ff d8 00 15 00 24 0a
+[17:15:15.860] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:15.960] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 b6 4d ff ff fc 85 00 5a 4f ff ff de 5b ff ff d7 00 17 00 22 0a
+[17:15:15.961] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:16.062] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 b6 b1 ff ff fc 92 00 5a 5b ff ff de 4f ff ff d7 00 15 00 24 0a
+[17:15:16.063] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:16.163] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 b7 15 ff ff fc 85 00 5a 4f ff ff de 4f ff ff d6 00 14 00 23 0a
+[17:15:16.164] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:16.265] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 b7 79 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d7 00 16 00 23 0a
+[17:15:16.265] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:16.366] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 b7 dd ff ff fc 9e 00 5a 4f ff ff de 73 ff ff d7 00 16 00 23 0a 02 10 00 00 00 b7 dd 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:16.367] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:16.468] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 13 9e 13 44 0a ff ff 01 00 00 00 b7 dd 0a
+[17:15:16.469] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=47069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.07663, witness_battery_voltage=4.932
+[17:15:16.469] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xdd; resync=discard 1 byte
+[17:15:16.570] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 b8 41 ff ff fc 85 00 5a 37 ff ff de 67 ff ff d6 00 15 00 25 0a
+[17:15:16.571] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:16.621] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 b8 a5 ff ff fc 85 00 5a 43 ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:16.622] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:16.723] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 b9 09 ff ff fc 9e 00 5a 4f ff ff de 4f ff ff d6 00 18 00 22 0a
+[17:15:16.724] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:16.775] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 b9 6d ff ff fc 85 00 5a 5b ff ff de 42 ff ff d7 00 15 00 23 0a
+[17:15:16.776] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:16.876] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 b9 d1 ff ff fc 92 00 5a 5b ff ff de 42 ff ff d7 00 14 00 24 0a
+[17:15:16.877] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:16.977] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ba 35 ff ff fc 85 00 5a 4f ff ff de 4f ff ff d6 00 15 00 23 0a
+[17:15:16.979] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:17.080] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ba 99 ff ff fc 92 00 5a 4f ff ff de 4f ff ff d7 00 17 00 22 0a
+[17:15:17.081] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:17.181] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ba fd ff ff fc 85 00 5a 4f ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:17.182] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:17.283] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 bb 61 ff ff fc 79 00 5a 4f ff ff de 67 ff ff d6 00 14 00 24 0a
+[17:15:17.284] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:17.385] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 bb c5 ff ff fc 9e 00 5a 4f ff ff de 5b ff ff d6 00 18 00 21 0a 02 10 00 00 00 bb c5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:17.386] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:17.487] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 13 9e 13 48 0a ff ff 00 00 00 00 bb c5 0a
+[17:15:17.488] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=48069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.07663, witness_battery_voltage=4.936
+[17:15:17.489] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xc5; resync=discard 1 byte
+[17:15:17.540] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 bc 29 ff ff fc 92 00 5a 5b ff ff de 67 ff ff d7 00 16 00 24 0a
+[17:15:17.541] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:17.642] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 bc 8d ff ff fc 85 00 5a 4f ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:17.643] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:17.693] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 bc f1 ff ff fc 85 00 5a 5b ff ff de 4f ff ff d6 00 16 00 23 0a
+[17:15:17.696] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:17.797] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 bd 55 ff ff fc 85 00 5a 4f ff ff de 73 ff ff d7 00 16 00 22 0a
+[17:15:17.797] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:17.898] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 bd b9 ff ff fc 92 00 5a 4f ff ff de 4f ff ff d8 00 15 00 24 0a
+[17:15:17.899] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:18.001] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 be 1d ff ff fc 85 00 5a 4f ff ff de 7f ff ff d7 00 14 00 24 0a
+[17:15:18.002] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:18.053] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 be 81 ff ff fc 92 00 5a 5b ff ff de 67 ff ff d5 00 18 00 22 0a
+[17:15:18.054] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:18.154] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 be e5 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:18.155] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:18.255] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 bf 49 ff ff fc 92 00 5a 5b ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:18.256] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:18.357] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 bf ad ff ff fc 9e 00 5a 5b ff ff de 5b ff ff d7 00 16 00 22 0a 02 10 00 00 00 bf ad 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:18.357] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:18.459] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 13 9e 13 48 0a ff ff 01 00 00 00 bf ad 0a
+[17:15:18.460] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=49069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.07663, witness_battery_voltage=4.936
+[17:15:18.460] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xad; resync=discard 1 byte
+[17:15:18.561] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 c0 11 ff ff fc 92 00 5a 4f ff ff de 73 ff ff d6 00 17 00 22 0a
+[17:15:18.562] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:18.663] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 c0 75 ff ff fc 85 00 5a 4f ff ff de 67 ff ff d7 00 14 00 24 0a
+[17:15:18.663] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:18.765] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 c0 d9 ff ff fc 85 00 5a 4f ff ff de 73 ff ff d6 00 15 00 23 0a
+[17:15:18.765] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:18.816] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 c1 3d ff ff fc 85 00 5a 43 ff ff de 5b ff ff d5 00 18 00 21 0a
+[17:15:18.818] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:18.919] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 c1 a1 ff ff fc 79 00 5a 5b ff ff de 7f ff ff d6 00 15 00 23 0a
+[17:15:18.920] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:19.021] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 c2 05 ff ff fc 85 00 5a 5b ff ff de 36 ff ff d8 00 15 00 24 0a
+[17:15:19.022] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:19.072] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 c2 69 ff ff fc 9e 00 5a 4f ff ff de 7f ff ff d7 00 16 00 23 0a
+[17:15:19.073] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:19.174] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 c2 cd ff ff fc 9e 00 5a 4f ff ff de 67 ff ff d6 00 16 00 23 0a
+[17:15:19.174] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:19.276] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 c3 31 ff ff fc 85 00 5a 43 ff ff de 73 ff ff d6 00 15 00 24 0a
+[17:15:19.277] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:19.377] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 c3 95 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d7 00 16 00 24 0a 02 10 00 00 00 c3 95 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 d2 ae 13 44 0a ff ff 00 00 00 00 c3 95 0a
+[17:15:19.378] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=offset 1
+[17:15:19.379] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=50069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.822968, witness_battery_voltage=4.932
+[17:15:19.380] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x95; resync=discard 1 byte
+[17:15:19.481] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 c3 f9 ff ff fc 85 00 5a 5b ff ff de 73 ff ff d6 00 18 00 22 0a
+[17:15:19.482] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:19.583] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 c4 5d ff ff fc 92 00 5a 5b ff ff de 5b ff ff d7 00 15 00 23 0a
+[17:15:19.584] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:19.686] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 c4 c1 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:19.687] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:19.788] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 c5 25 ff ff fc 85 00 5a 5b ff ff de 5b ff ff d6 00 16 00 23 0a
+[17:15:19.789] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:19.890] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 c5 89 ff ff fc 85 00 5a 4f ff ff de 67 ff ff d7 00 16 00 23 0a
+[17:15:19.892] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:19.992] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 c5 ed ff ff fc 92 00 5a 43 ff ff de 5b ff ff d7 00 14 00 25 0a
+[17:15:19.996] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:20.047] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 c6 51 ff ff fc 85 00 5a 43 ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:20.048] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:20.149] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 c6 b5 ff ff fc 92 00 5a 5b ff ff de 42 ff ff d6 00 17 00 21 0a
+[17:15:20.151] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:20.252] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 c7 19 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d7 00 17 00 22 0a
+[17:15:20.253] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:20.353] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 c7 7d ff ff fc 9e 00 5a 4f ff ff df 12 ff ff d7 00 14 00 22 0a 02 10 00 00 00 c7 7d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:20.354] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:20.454] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 d2 ae 13 44 0a ff ff 01 00 00 00 c7 7d 0a
+[17:15:20.455] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=51069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.822968, witness_battery_voltage=4.932
+[17:15:20.456] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x7d; resync=discard 1 byte
+[17:15:20.507] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 c7 e1 ff ff fc b6 00 5a 80 ff ff de e1 ff ff d5 00 16 00 24 0a
+[17:15:20.508] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:20.609] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 c8 45 ff ff fc 92 00 5a 4f ff ff de 42 ff ff d6 00 16 00 23 0a
+[17:15:20.610] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:20.711] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 c8 a9 ff ff fc 92 00 5a 4f ff ff de 42 ff ff d7 00 15 00 24 0a
+[17:15:20.712] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:20.763] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 c9 0d ff ff fc 9e 00 5a 5b ff ff de 7f ff ff d7 00 15 00 24 0a
+[17:15:20.763] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:20.864] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 c9 71 ff ff fc 6d 00 5a 2a ff ff de 2a ff ff d7 00 18 00 22 0a
+[17:15:20.866] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:20.967] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 c9 d5 ff ff fc 92 00 5a 43 ff ff de 4f ff ff d6 00 15 00 24 0a
+[17:15:20.967] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:21.072] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 ca 39 ff ff fc 92 00 5a 4f ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:21.074] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:21.175] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ca 9d ff ff fc 92 00 5a 5b ff ff de 5b ff ff d7 00 17 00 22 0a
+[17:15:21.175] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:21.276] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 cb 01 ff ff fc 92 00 5a 4f ff ff de 5b ff ff d6 00 16 00 23 0a
+[17:15:21.277] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:21.377] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 cb 65 ff ff fc 92 00 5a 67 ff ff de 4f ff ff d7 00 15 00 23 0a 02 10 00 00 00 cb 65 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:21.378] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:21.479] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 13 9e 13 50 0a ff ff 00 00 00 00 cb 65 0a
+[17:15:21.480] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=52069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.07663, witness_battery_voltage=4.944
+[17:15:21.481] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x65; resync=discard 1 byte
+[17:15:21.582] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 cb c9 ff ff fc c2 00 5a 74 ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:21.583] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:21.684] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 cc 2d ff ff fc aa 00 5a 74 ff ff de 4f ff ff d6 00 17 00 22 0a
+[17:15:21.685] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:21.736] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 cc 91 ff ff fc 9e 00 5a 4f ff ff de 7f ff ff d7 00 16 00 23 0a
+[17:15:21.736] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:21.837] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 cc f5 ff ff fc 85 00 5a 67 ff ff de 5b ff ff d7 00 14 00 24 0a
+[17:15:21.839] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:21.940] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 cd 59 ff ff fc 9e 00 5a 4f ff ff de 5b ff ff d6 00 16 00 22 0a
+[17:15:21.940] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:22.041] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 cd bd ff ff fc 92 00 5a 37 ff ff de 5b ff ff d6 00 15 00 23 0a
+[17:15:22.042] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:22.143] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ce 21 ff ff fc 6d 00 5a 4f ff ff de 5b ff ff d8 00 14 00 24 0a
+[17:15:22.143] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:22.244] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ce 85 ff ff fc 85 00 5a 43 ff ff de 42 ff ff d7 00 15 00 24 0a
+[17:15:22.245] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:22.345] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 ce e9 ff ff fc 79 00 5a 4f ff ff de 4f ff ff d6 00 17 00 21 0a
+[17:15:22.347] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:22.447] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 cf 4d ff ff fc 79 00 5a 4f ff ff de 5b ff ff d7 00 15 00 23 0a 02 10 00 00 00 cf 4d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 55 3b 13 50 0a ff ff 01 00 00 00 cf 4d 0a
+[17:15:22.449] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=offset 1
+[17:15:22.450] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=53069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.332932, witness_battery_voltage=4.944
+[17:15:22.450] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x4d; resync=discard 1 byte
+[17:15:22.551] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 cf b1 ff ff fc 92 00 5a 4f ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:22.552] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:22.653] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 d0 15 ff ff fc 85 00 5a 5b ff ff de 5b ff ff d6 00 17 00 22 0a
+[17:15:22.654] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:22.705] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 d0 79 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d7 00 16 00 23 0a
+[17:15:22.706] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:22.807] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 d0 dd ff ff fc 92 00 5a 4f ff ff de 67 ff ff d8 00 14 00 24 0a
+[17:15:22.808] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:22.909] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 d1 41 ff ff fc 9e 00 5a 4f ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:22.911] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:22.962] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 d1 a5 ff ff fc 92 00 5a 5b ff ff de 73 ff ff d7 00 17 00 21 0a
+[17:15:22.963] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:23.064] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 d2 09 ff ff fc 85 00 5a 5b ff ff de 67 ff ff d7 00 15 00 25 0a
+[17:15:23.065] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:23.166] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 d2 6d ff ff fc 85 00 5a 5b ff ff de 5b ff ff d7 00 14 00 24 0a
+[17:15:23.166] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:23.267] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 d2 d1 ff ff fc 92 00 5a 4f ff ff de 73 ff ff d7 00 17 00 20 0a
+[17:15:23.268] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x20; resync=discard 1 byte
+[17:15:23.369] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 d3 35 ff ff fc 92 00 5a 5b ff ff de 5b ff ff d7 00 16 00 23 0a 02 10 00 00 00 d3 35 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:23.370] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:23.471] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 fd f9 13 50 0a ff ff 00 00 00 00 d3 35 0a
+[17:15:23.473] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=54069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.992081, witness_battery_voltage=4.944
+[17:15:23.474] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x35; resync=discard 1 byte
+[17:15:23.576] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 d3 99 ff ff fc 79 00 5a 4f ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:23.576] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:23.628] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 d3 fd ff ff fc 85 00 5a 4f ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:23.629] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:23.729] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 d4 61 ff ff fc 85 00 5a 4f ff ff de 67 ff ff d7 00 17 00 21 0a
+[17:15:23.730] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:23.831] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 d4 c5 ff ff fc 9e 00 5a 5b ff ff de 5b ff ff d7 00 14 00 23 0a
+[17:15:23.831] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:23.933] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 d5 29 ff ff fc 85 00 5a 5b ff ff de 5b ff ff d8 00 15 00 25 0a
+[17:15:23.934] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:24.036] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 d5 8d ff ff fc 85 00 5a 43 ff ff de 5b ff ff d6 00 16 00 22 0a
+[17:15:24.040] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:24.141] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 d5 f1 ff ff fc 85 00 5a 4f ff ff de 4f ff ff d6 00 16 00 23 0a
+[17:15:24.142] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:24.192] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 d6 55 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:24.193] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:24.294] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 d6 b9 ff ff fc 79 00 5a 5b ff ff de 4f ff ff d7 00 15 00 24 0a
+[17:15:24.295] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:24.345] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 d7 1d ff ff fc 85 00 5a 4f ff ff de 67 ff ff d6 00 17 00 21 0a 02 10 00 00 00 d7 1d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 fd f9 13 48 0a ff ff 01 00 00 00 d7 1d 0a
+[17:15:24.346] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=offset 1
+[17:15:24.347] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=55069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.992081, witness_battery_voltage=4.936
+[17:15:24.348] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x1d; resync=discard 1 byte
+[17:15:24.449] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 d7 81 ff ff fc 85 00 5a 43 ff ff de 73 ff ff d6 00 15 00 24 0a
+[17:15:24.450] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:24.551] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 d7 e5 ff ff fc 9e 00 5a 4f ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:24.552] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:24.653] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 d8 49 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d6 00 18 00 20 0a
+[17:15:24.654] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x20; resync=discard 1 byte
+[17:15:24.756] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 d8 ad ff ff fc 9e 00 5a 5b ff ff de 67 ff ff d6 00 16 00 23 0a
+[17:15:24.757] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:24.857] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 d9 11 ff ff fc 85 00 5a 4f ff ff de 73 ff ff d7 00 15 00 24 0a
+[17:15:24.859] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:24.960] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 d9 75 ff ff fc 92 00 5a 5b ff ff de 67 ff ff d7 00 14 00 24 0a
+[17:15:24.962] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:25.063] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 d9 d9 ff ff fc 85 00 5a 4f ff ff de 4f ff ff d6 00 18 00 1f 0a
+[17:15:25.064] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x1f; resync=discard 1 byte
+[17:15:25.165] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 da 3d ff ff fc 92 00 5a 43 ff ff de 67 ff ff d6 00 15 00 24 0a
+[17:15:25.165] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:25.266] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 da a1 ff ff fc 85 00 5a 5b ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:25.267] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:25.368] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 db 05 ff ff fc 92 00 5a 67 ff ff de 5b ff ff d7 00 18 00 22 0a 02 10 00 00 00 db 05 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:25.368] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:25.469] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 fd f9 13 50 0a ff ff 00 00 00 00 db 05 0a
+[17:15:25.470] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=56069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.992081, witness_battery_voltage=4.944
+[17:15:25.470] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x05; resync=discard 1 byte
+[17:15:25.522] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 db 69 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d6 00 15 00 23 0a
+[17:15:25.523] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:25.623] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 db cd ff ff fc 85 00 5a 12 ff ff de 73 ff ff d7 00 15 00 24 0a
+[17:15:25.624] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:25.674] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 dc 31 ff ff fc 85 00 5a 5b ff ff de 36 ff ff d6 00 15 00 24 0a
+[17:15:25.675] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:25.777] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 dc 95 ff ff fc 79 00 5a 5b ff ff de 4f ff ff d6 00 17 00 22 0a
+[17:15:25.777] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:25.878] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 dc f9 ff ff fc 85 00 5a 5b ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:25.878] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:25.980] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 dd 5d ff ff fc 85 00 5a 4f ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:25.981] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:26.082] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 dd c1 ff ff fc 85 00 5a 4f ff ff de 67 ff ff d6 00 17 00 23 0a
+[17:15:26.082] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:26.183] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 de 25 ff ff fc 92 00 5a 5b ff ff de 67 ff ff d6 00 16 00 23 0a
+[17:15:26.183] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:26.284] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 de 89 ff ff fc 85 00 5a 43 ff ff de 5b ff ff d6 00 15 00 24 0a
+[17:15:26.285] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:26.386] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 de ed ff ff fc 85 00 5a 4f ff ff de 42 ff ff d7 00 14 00 25 0a 02 10 00 00 00 de ed 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:26.387] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:26.488] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 13 9e 13 54 0a ff ff 01 00 00 00 de ed 0a
+[17:15:26.489] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=57069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.07663, witness_battery_voltage=4.948
+[17:15:26.490] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xed; resync=discard 1 byte
+[17:15:26.591] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 df 51 ff ff fc 92 00 5a 4f ff ff de 73 ff ff d6 00 18 00 20 0a
+[17:15:26.592] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x20; resync=discard 1 byte
+[17:15:26.642] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 df b5 ff ff fc 85 00 5a 67 ff ff de 5b ff ff d6 00 14 00 23 0a
+[17:15:26.643] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:26.744] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e0 19 ff ff fc 92 00 5a 4f ff ff de 5b ff ff d8 00 15 00 24 0a
+[17:15:26.745] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:26.846] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e0 7d ff ff fc 92 00 5a 67 ff ff de 4f ff ff d6 00 16 00 22 0a
+[17:15:26.847] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:26.948] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e0 e1 ff ff fc 85 00 5a 43 ff ff de 05 ff ff d7 00 16 00 23 0a
+[17:15:26.949] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:27.052] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e1 45 ff ff fc 92 00 5a 43 ff ff de 42 ff ff d8 00 16 00 24 0a
+[17:15:27.052] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:27.104] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e1 a9 ff ff fc 79 00 5a 5b ff ff de 4f ff ff d8 00 15 00 24 0a
+[17:15:27.104] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:27.205] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 e2 0d ff ff fc 85 00 5a 43 ff ff de 4f ff ff d6 00 17 00 23 0a
+[17:15:27.205] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:27.256] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 e2 71 ff ff fc 79 00 5a 4f ff ff de 7f ff ff d7 00 15 00 24 0a
+[17:15:27.256] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:27.357] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e2 d5 ff ff fc 9e 00 5a 4f ff ff de 5b ff ff d7 00 15 00 24 0a 02 10 00 00 00 e2 d5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:27.358] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:27.459] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 e8 53 13 44 0a ff ff 00 00 00 00 e2 d5 0a
+[17:15:27.460] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=58069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.907516, witness_battery_voltage=4.932
+[17:15:27.461] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xd5; resync=discard 1 byte
+[17:15:27.562] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e3 39 ff ff fc 92 00 5a 4f ff ff de 4f ff ff d6 00 17 00 22 0a
+[17:15:27.562] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:27.663] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e3 9d ff ff fc 92 00 5a 4f ff ff de 4f ff ff d7 00 17 00 21 0a
+[17:15:27.664] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:27.765] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e4 01 ff ff fc 85 00 5a 43 ff ff de 73 ff ff d7 00 14 00 24 0a
+[17:15:27.765] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:27.817] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e4 65 ff ff fc 92 00 5a 5b ff ff de 5b ff ff d7 00 14 00 24 0a
+[17:15:27.818] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:27.919] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 e4 c9 ff ff fc 85 00 5a 4f ff ff de 42 ff ff d6 00 17 00 21 0a
+[17:15:27.920] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:28.020] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 e5 2d ff ff fc 92 00 5a 5b ff ff de 42 ff ff d7 00 15 00 23 0a
+[17:15:28.021] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:28.122] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e5 91 ff ff fc 92 00 5a 4f ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:28.122] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:28.173] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e5 f5 ff ff fc 85 00 5a 5b ff ff de 42 ff ff d6 00 16 00 22 0a
+[17:15:28.173] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:28.274] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e6 59 ff ff fc 92 00 5a 5b ff ff de 67 ff ff d6 00 16 00 23 0a
+[17:15:28.275] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:28.376] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e6 bd ff ff fc 92 00 5a 4f ff ff de 67 ff ff d7 00 14 00 24 0a 02 10 00 00 00 e6 bd 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 3f 96 13 50 0a ff ff 01 00 00 00 e6 bd 0a
+[17:15:28.377] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=offset 1
+[17:15:28.378] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=59069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.248383, witness_battery_voltage=4.944
+[17:15:28.378] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xbd; resync=discard 1 byte
+[17:15:28.479] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e7 21 ff ff fc 85 00 5a 5b ff ff de 67 ff ff d6 00 15 00 25 0a
+[17:15:28.480] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:28.582] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 e7 85 ff ff fc 92 00 5a 4f ff ff de 5b ff ff d6 00 17 00 22 0a
+[17:15:28.583] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:28.784] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 e7 e9 ff ff fc 9e 00 5a 67 ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:28.785] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:28.836] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e8 4d ff ff fc 92 00 5a 4f ff ff de 42 ff ff d7 00 15 00 24 0a
+[17:15:28.837] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:28.939] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e8 b1 ff ff fc 9e 00 5a 5b ff ff de 67 ff ff d7 00 16 00 23 0a
+[17:15:28.940] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:28.991] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e9 15 ff ff fc 85 00 5a 5b ff ff de 42 ff ff d6 00 15 00 23 0a
+[17:15:28.992] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:29.093] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e9 79 ff ff fc 92 00 5a 43 ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:29.094] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:29.195] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 e9 dd ff ff fc 85 00 5a 5b ff ff de 5b ff ff d7 00 15 00 25 0a
+[17:15:29.196] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:29.246] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 ea 41 ff ff fc 85 00 5a 4f ff ff de 4f ff ff d6 00 17 00 21 0a
+[17:15:29.247] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:29.347] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 ea a5 ff ff fc 85 00 5a 4f ff ff de 4f ff ff d7 00 15 00 21 0a 02 10 00 00 00 ea a5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:29.348] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:29.449] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 3f 96 13 40 0a ff ff 00 00 00 00 ea a5 0a
+[17:15:29.450] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=60069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.248383, witness_battery_voltage=4.928
+[17:15:29.451] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xa5; resync=discard 1 byte
+[17:15:29.552] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 eb 09 ff ff fc 85 00 5a 5b ff ff de 42 ff ff d7 00 15 00 25 0a
+[17:15:29.553] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:29.654] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 eb 6d ff ff fc 92 00 5a 5b ff ff de 73 ff ff d5 00 17 00 22 0a
+[17:15:29.656] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:29.756] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 eb d1 ff ff fc 85 00 5a 43 ff ff de 5b ff ff d7 00 16 00 22 0a
+[17:15:29.757] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:29.858] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ec 35 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d7 00 14 00 24 0a
+[17:15:29.859] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:29.959] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ec 99 ff ff fc 92 00 5a 4f ff ff de 67 ff ff d7 00 14 00 25 0a
+[17:15:29.960] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:30.061] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 ec fd ff ff fc 85 00 5a 5b ff ff de 5b ff ff d6 00 17 00 22 0a
+[17:15:30.062] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:30.113] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 ed 61 ff ff fc 92 00 5a 4f ff ff de 42 ff ff d7 00 15 00 24 0a
+[17:15:30.114] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:30.214] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ed c5 ff ff fc 92 00 5a 43 ff ff de 67 ff ff d7 00 15 00 23 0a
+[17:15:30.215] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:30.316] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ee 29 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d6 00 17 00 22 0a
+[17:15:30.316] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:30.367] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ee 8d ff ff fc 92 00 5a 37 ff ff de 67 ff ff d6 00 16 00 24 0a 02 10 00 00 00 ee 8d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 13 9e 13 44 0a ff ff 01 00 00 00 ee 8d 0a
+[17:15:30.368] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=offset 1
+[17:15:30.369] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=61069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.07663, witness_battery_voltage=4.932
+[17:15:30.370] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x8d; resync=discard 1 byte
+[17:15:30.471] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ee f1 ff ff fc 92 00 5a 4f ff ff de 67 ff ff d7 00 15 00 23 0a
+[17:15:30.471] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:30.572] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ef 55 ff ff fc 85 00 5a 5b ff ff de 5b ff ff d7 00 16 00 24 0a
+[17:15:30.573] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:30.674] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 ef b9 ff ff fc 85 00 5a 5b ff ff de 5b ff ff d6 00 17 00 22 0a
+[17:15:30.675] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:30.776] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 f0 1d ff ff fc 9e 00 5a 4f ff ff de 5b ff ff d7 00 14 00 24 0a
+[17:15:30.776] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:30.878] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 f0 81 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:30.879] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:30.979] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 f0 e5 ff ff fc 92 00 5a 5b ff ff de 67 ff ff d6 00 17 00 22 0a
+[17:15:30.980] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:31.081] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 f1 49 ff ff fc 85 00 5a 37 ff ff de 5b ff ff d6 00 17 00 22 0a
+[17:15:31.082] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:31.183] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 f1 ad ff ff fc 9e 00 5a 43 ff ff de 5b ff ff d6 00 15 00 23 0a
+[17:15:31.183] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:31.284] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 f2 11 ff ff fc 9e 00 5a 4f ff ff de 4f ff ff d6 00 14 00 25 0a
+[17:15:31.285] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:31.386] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 f2 75 ff ff fc 92 00 5a 43 ff ff de 67 ff ff d6 00 17 00 22 0a 02 10 00 00 00 f2 75 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:31.387] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:31.488] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 13 9e 13 54 0a ff ff 00 00 00 00 f2 75 0a
+[17:15:31.490] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=62069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.07663, witness_battery_voltage=4.948
+[17:15:31.490] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x75; resync=discard 1 byte
+[17:15:31.541] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 f2 d9 ff ff fc 92 00 5a 4f ff ff de 42 ff ff d7 00 16 00 22 0a
+[17:15:31.543] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:31.643] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 f3 3d ff ff fc 85 00 5a 5b ff ff de 5b ff ff d7 00 14 00 24 0a
+[17:15:31.645] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:31.695] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 f3 a1 ff ff fc 79 00 5a 4f ff ff de 36 ff ff d6 00 17 00 22 0a
+[17:15:31.696] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:31.797] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 f4 05 ff ff fc 92 00 5a 43 ff ff de 67 ff ff d6 00 15 00 23 0a
+[17:15:31.798] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:31.899] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 f4 69 ff ff fc 9e 00 5a 5b ff ff de 5b ff ff d7 00 14 00 24 0a
+[17:15:31.900] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:31.951] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 f4 cd ff ff fc 92 00 5a 5b ff ff de 5b ff ff d7 00 16 00 25 0a
+[17:15:31.952] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:32.103] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 f5 31 ff ff fc 92 00 5a 4f ff ff de 4f ff ff d7 00 16 00 22 0a
+[17:15:32.104] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:32.154] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 f5 95 ff ff fc 92 00 5a 4f ff ff de 42 ff ff d7 00 17 00 21 0a
+[17:15:32.155] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:32.256] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 f5 f9 ff ff fc 92 00 5a 5b ff ff de 42 ff ff d7 00 16 00 23 0a
+[17:15:32.256] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:32.357] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 f6 5d ff ff fc 79 00 5a 4f ff ff de 67 ff ff d7 00 16 00 23 0a 02 10 00 00 00 f6 5d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:32.358] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:32.459] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 fd f9 13 44 0a ff ff 01 00 00 00 f6 5d 0a
+[17:15:32.461] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=63069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.992081, witness_battery_voltage=4.932
+[17:15:32.462] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x5d; resync=discard 1 byte
+[17:15:32.512] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 f6 c1 ff ff fc 85 00 5a 43 ff ff de 5b ff ff d6 00 16 00 24 0a
+[17:15:32.513] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:32.614] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 f7 25 ff ff fc 9e 00 5a 4f ff ff de 4f ff ff d6 00 14 00 24 0a
+[17:15:32.615] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:32.716] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 f7 89 ff ff fc 85 00 5a 43 ff ff de 5b ff ff d7 00 15 00 25 0a
+[17:15:32.717] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:32.767] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 f7 ed ff ff fc 85 00 5a 4f ff ff de 73 ff ff d6 00 18 00 21 0a
+[17:15:32.768] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:32.869] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 f8 51 ff ff fc 9e 00 5a 5b ff ff de 5b ff ff d7 00 16 00 24 0a
+[17:15:32.869] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:32.970] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 f8 b5 ff ff fc 92 00 5a 43 ff ff de 4f ff ff d8 00 15 00 25 0a
+[17:15:32.971] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:33.073] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 f9 19 ff ff fc 85 00 5a 4f ff ff de 67 ff ff d6 00 18 00 21 0a
+[17:15:33.074] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:33.176] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 f9 7d ff ff fc 92 00 5a 4f ff ff de 5b ff ff d6 00 16 00 23 0a
+[17:15:33.177] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:33.278] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 f9 e1 ff ff fc 85 00 5a 43 ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:33.279] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:33.379] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 fa 45 ff ff fc 92 00 5a 5b ff ff de 5b ff ff d7 00 15 00 24 0a 02 10 00 00 00 fa 45 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:33.380] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:33.431] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 d2 ae 13 48 0a ff ff 00 00 00 00 fa 45 0a
+[17:15:33.432] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=64069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.822968, witness_battery_voltage=4.936
+[17:15:33.432] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x45; resync=discard 1 byte
+[17:15:33.533] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 fa a9 ff ff fc 79 00 5a 4f ff ff de 67 ff ff d6 00 17 00 23 0a
+[17:15:33.534] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:33.634] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 fb 0d ff ff fc 79 00 5a 4f ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:33.635] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:33.736] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 fb 71 ff ff fc 92 00 5a 4f ff ff de 42 ff ff d7 00 14 00 24 0a
+[17:15:33.736] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:33.837] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 fb d5 ff ff fc 85 00 5a 5b ff ff de 5b ff ff d6 00 18 00 21 0a
+[17:15:33.838] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:33.889] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 fc 39 ff ff fc 85 00 5a 4f ff ff de 4f ff ff d6 00 16 00 24 0a
+[17:15:33.890] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:33.991] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 fc 9d ff ff fc 85 00 5a 4f ff ff de 5b ff ff d7 00 15 00 23 0a
+[17:15:33.992] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:34.092] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 fd 01 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d6 00 15 00 24 0a
+[17:15:34.093] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:34.194] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 fd 65 ff ff fc 92 00 5a 5b ff ff de 4f ff ff d6 00 16 00 22 0a
+[17:15:34.194] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:34.295] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 fd c9 ff ff fc 85 00 5a 4f ff ff de 42 ff ff d7 00 15 00 24 0a
+[17:15:34.295] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:34.496] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 fe 2d ff ff fc 9e 00 5a 4f ff ff de 67 ff ff d7 00 15 00 24 0a 02 10 00 00 00 fe 2d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:34.497] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:34.598] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 e8 53 13 50 0a ff ff 01 00 00 00 fe 2d 0a 01 0f 00 00 00 fe 91 ff ff fc 9e 00 5a 43 ff ff de 7f ff ff d6 00 17 00 22 0a 01 0f 00 00 00 fe f5 ff ff fc 85 00 5a 4f ff ff de 67 ff ff d6 00 16 00 23 0a
+[17:15:34.599] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=65069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.907516, witness_battery_voltage=4.944
+[17:15:34.600] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x2d; resync=offset 19
+[17:15:34.601] PACKET[TCP_prs2026hitl_7000] heartbeat: status=65494, uptime=1507362
+[17:15:34.602] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:34.703] RX[TCP_prs2026hitl_7000]  01 0f 00 00 00 ff ff 59 ff ff fc 92 00 5a 67 ff ff de 5b ff ff d7 00 16 00 24 0a
+[17:15:34.704] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:15:34.705] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:15:34.807] RX[TCP_prs2026hitl_7000]  01 0b 00 00 00 ff ff bd ff ff fc 92 00 5a 5b ff ff de 4f ff ff d7 00 15 00 24 0a
+[17:15:34.808] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[17:15:34.808] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:15:34.909] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 00 21 ff ff fc 85 00 5a 43 ff ff de 4f ff ff d5 00 17 00 22 0a
+[17:15:34.910] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:35.012] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 00 85 ff ff fc 92 00 5a 4f ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:35.013] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:35.063] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 00 e9 ff ff fc 85 00 5a 5b ff ff de 67 ff ff d8 00 15 00 24 0a
+[17:15:35.064] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:35.167] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 01 4d ff ff fc 85 00 5a 4f ff ff de 5b ff ff d6 00 18 00 21 0a
+[17:15:35.167] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:35.269] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 01 b1 ff ff fc 92 00 5a 4f ff ff de 5b ff ff d6 00 15 00 24 0a
+[17:15:35.269] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:35.370] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 02 15 ff ff fc 79 00 5a 4f ff ff de 5b ff ff d7 00 13 00 25 0a 02 10 00 00 01 02 15 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:35.371] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:35.471] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 29 43 13 48 0a ff ff 00 00 00 01 02 15 0a
+[17:15:35.472] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=66069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.161179, witness_battery_voltage=4.936
+[17:15:35.473] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x15; resync=discard 1 byte
+[17:15:35.524] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 02 79 ff ff fc 85 00 5a 4f ff ff de 67 ff ff d6 00 17 00 24 0a
+[17:15:35.524] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:35.625] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 02 dd ff ff fc 92 00 5a 4f ff ff de 42 ff ff d6 00 16 00 23 0a
+[17:15:35.626] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:35.727] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 03 41 ff ff fc 92 00 5a 4f ff ff de 4f ff ff d7 00 15 00 23 0a
+[17:15:35.728] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:35.828] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 03 a5 ff ff fc 92 00 5a 5b ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:35.830] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:35.930] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 04 09 ff ff fc 79 00 5a 37 ff ff de 4f ff ff d7 00 17 00 22 0a
+[17:15:35.931] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:35.981] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 04 6d ff ff fc 85 00 5a 4f ff ff de 67 ff ff d7 00 16 00 23 0a
+[17:15:35.983] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:36.084] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 04 d1 ff ff fc 79 00 5a 43 ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:36.085] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:36.185] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 05 35 ff ff fc aa 00 5a 5b ff ff de 67 ff ff d6 00 16 00 25 0a
+[17:15:36.186] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:36.287] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 05 99 ff ff fc 85 00 5a 5b ff ff de 67 ff ff d6 00 18 00 22 0a
+[17:15:36.290] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:36.391] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 05 fd ff ff fc 85 00 5a 37 ff ff de 67 ff ff d7 00 14 00 24 0a 02 10 00 00 01 05 fd 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:36.391] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:36.442] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 e8 53 13 44 0a ff ff 01 00 00 01 05 fd 0a
+[17:15:36.444] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=67069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.907516, witness_battery_voltage=4.932
+[17:15:36.444] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xfd; resync=discard 1 byte
+[17:15:36.545] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 06 61 ff ff fc 85 00 5a 5b ff ff de 4f ff ff d7 00 15 00 24 0a
+[17:15:36.546] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:36.646] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 06 c5 ff ff fc 92 00 5a 43 ff ff de 42 ff ff d6 00 18 00 22 0a
+[17:15:36.647] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:36.849] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 07 29 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d6 00 16 00 23 0a
+[17:15:36.850] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:37.151] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 07 8d ff ff fc 79 00 5a 4f ff ff de 4f ff ff d6 00 15 00 24 0a 01 0b 00 00 01 07 f1 ff ff fc 9e 00 5a 4f ff ff de 67 ff ff d7 00 15 00 25 0a
+[17:15:37.152] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=offset 19
+[17:15:37.153] PACKET[TCP_prs2026hitl_7000] heartbeat: status=65495, uptime=1376293
+[17:15:37.354] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 08 55 ff ff fc 92 00 5a 4f ff ff de 73 ff ff d6 00 16 00 23 0a 01 0b 00 00 01 08 b9 ff ff fc 92 00 5a 4f ff ff de 4f ff ff d7 00 15 00 24 0a 01 0f 00 00 01 09 1d ff ff fc 92 00 5a 4f ff ff de 73 ff ff d7 00 15 00 24 0a
+[17:15:37.355] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=offset 19
+[17:15:37.356] PACKET[TCP_prs2026hitl_7000] heartbeat: status=65495, uptime=1376292
+[17:15:37.357] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:37.409] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 09 81 ff ff fc 92 00 5a 4f ff ff de 5b ff ff d6 00 16 00 22 0a 01 0f 00 00 01 09 e5 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d7 00 15 00 23 0a 02 10 00 00 01 09 e5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 fd f9 13 40 0a ff ff 00 00 00 01 09 e5 0a
+[17:15:37.410] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=offset 19
+[17:15:37.411] PACKET[TCP_prs2026hitl_7000] heartbeat: status=65495, uptime=1376291
+[17:15:37.412] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=68069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.992081, witness_battery_voltage=4.928
+[17:15:37.413] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xe5; resync=discard 1 byte
+[17:15:37.514] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 0a 49 ff ff fc 92 00 5a 4f ff ff de 4f ff ff d7 00 15 00 24 0a
+[17:15:37.515] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:37.566] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 0a ad ff ff fc 85 00 5a 4f ff ff de 4f ff ff d6 00 15 00 23 0a
+[17:15:37.567] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:37.668] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 0b 11 ff ff fc 79 00 5a 5b ff ff de 67 ff ff d6 00 16 00 23 0a
+[17:15:37.669] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:37.770] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 0b 75 ff ff fc 92 00 5a 5b ff ff de 5b ff ff d8 00 15 00 24 0a
+[17:15:37.771] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:37.873] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 0b d9 ff ff fc 92 00 5a 5b ff ff de 42 ff ff d6 00 15 00 24 0a
+[17:15:37.874] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:37.975] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 0c 3d ff ff fc 92 00 5a 5b ff ff de 5b ff ff d6 00 17 00 22 0a
+[17:15:37.976] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:38.077] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 0c a1 ff ff fc 79 00 5a 5b ff ff de 4f ff ff d6 00 17 00 21 0a
+[17:15:38.077] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:38.178] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 0d 05 ff ff fc 92 00 5a 4f ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:38.178] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:38.279] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 0d 69 ff ff fc 85 00 5a 5b ff ff de 5b ff ff d7 00 16 00 24 0a
+[17:15:38.279] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:38.380] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 0d cd ff ff fc 85 00 5a 43 ff ff de 73 ff ff d7 00 17 00 21 0a 02 10 00 00 01 0d cd 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:38.380] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:38.481] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 29 43 13 44 0a ff ff 01 00 00 01 0d cd 0a
+[17:15:38.482] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=69069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.161179, witness_battery_voltage=4.932
+[17:15:38.482] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xcd; resync=discard 1 byte
+[17:15:38.583] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 0e 31 ff ff fc 92 00 5a 67 ff ff de 4f ff ff d7 00 15 00 25 0a
+[17:15:38.584] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:38.634] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 0e 95 ff ff fc 85 00 5a 43 ff ff de 67 ff ff d7 00 15 00 24 0a
+[17:15:38.636] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:38.737] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 0e f9 ff ff fc 85 00 5a 4f ff ff de 4f ff ff d6 00 17 00 21 0a
+[17:15:38.738] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:38.788] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 0f 5d ff ff fc 9e 00 5a 4f ff ff de 4f ff ff d7 00 16 00 23 0a
+[17:15:38.789] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:38.890] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 0f c1 ff ff fc 85 00 5a 5b ff ff de 4f ff ff d6 00 15 00 24 0a
+[17:15:38.891] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:38.992] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 10 25 ff ff fc 85 00 5a 43 ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:38.993] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:39.094] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 10 89 ff ff fc 61 00 5a 1e ff ff de b0 ff ff d5 00 15 00 22 0a
+[17:15:39.095] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:39.196] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 10 ed ff ff fc 3c 00 5a 43 ff ff dd d5 ff ff db 00 17 00 24 0a
+[17:15:39.196] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:39.297] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 11 51 ff ff fc 61 00 5a 4f ff ff dd c8 ff ff d8 00 16 00 24 0a
+[17:15:39.297] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:39.348] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 11 b5 ff ff fc 92 00 5a 37 ff ff de 42 ff ff d6 00 17 00 21 0a 02 10 00 00 01 11 b5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 fd f9 13 44 0a ff ff 00 00 00 01 11 b5 0a
+[17:15:39.350] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=offset 1
+[17:15:39.351] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=70069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.992081, witness_battery_voltage=4.932
+[17:15:39.351] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xb5; resync=discard 1 byte
+[17:15:39.453] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 12 19 ff ff fc 9e 00 5a 1e ff ff dd d5 ff ff da 00 16 00 24 0a
+[17:15:39.454] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:39.555] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 12 7d ff ff fc 92 00 5a 43 ff ff de 7f ff ff d6 00 15 00 22 0a
+[17:15:39.556] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:39.657] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 12 e1 ff ff fc 92 00 5a 4f ff ff dd c8 ff ff d9 00 16 00 23 0a
+[17:15:39.658] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:39.759] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 13 45 ff ff fc 79 00 5a 2a ff ff de 5b ff ff d8 00 17 00 22 0a
+[17:15:39.760] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:39.861] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 13 a9 ff ff fc 85 00 5a 43 ff ff de 73 ff ff d6 00 14 00 24 0a
+[17:15:39.862] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:39.962] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 14 0d ff ff fc 9e 00 5a 4f ff ff de 5b ff ff d8 00 14 00 24 0a
+[17:15:39.963] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:40.064] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 14 71 ff ff fc 85 00 5a 4f ff ff de 73 ff ff d6 00 17 00 21 0a
+[17:15:40.065] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x21; resync=discard 1 byte
+[17:15:40.166] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 14 d5 ff ff fc 92 00 5a 5b ff ff de 42 ff ff d7 00 15 00 24 0a
+[17:15:40.166] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:40.268] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 15 39 ff ff fc 85 00 5a 5b ff ff de 42 ff ff d7 00 15 00 24 0a
+[17:15:40.269] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:40.370] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 15 9d ff ff fc aa 00 5a 5b ff ff de 4f ff ff d7 00 16 00 23 0a 02 10 00 00 01 15 9d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:40.371] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:40.472] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 13 9e 13 50 0a ff ff 01 00 00 01 15 9d 0a
+[17:15:40.473] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=71069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.07663, witness_battery_voltage=4.944
+[17:15:40.473] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x9d; resync=discard 1 byte
+[17:15:40.524] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 16 01 ff ff fc 92 00 5a 43 ff ff de 67 ff ff d6 00 17 00 23 0a
+[17:15:40.525] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:40.626] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 16 65 ff ff fc 92 00 5a 4f ff ff de 67 ff ff d8 00 16 00 23 0a
+[17:15:40.627] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:40.728] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 16 c9 ff ff fc 92 00 5a 4f ff ff de 4f ff ff d6 00 15 00 24 0a
+[17:15:40.728] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:40.779] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 17 2d ff ff fc 9e 00 5a 4f ff ff de 67 ff ff d6 00 17 00 22 0a
+[17:15:40.781] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:40.882] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 17 91 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d6 00 15 00 23 0a
+[17:15:40.884] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:40.986] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 17 f5 ff ff fc 92 00 5a 43 ff ff de 4f ff ff d7 00 15 00 24 0a
+[17:15:40.987] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:41.089] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 18 59 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d6 00 16 00 23 0a
+[17:15:41.089] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:41.190] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 18 bd ff ff fc 85 00 5a 4f ff ff de 67 ff ff d7 00 17 00 22 0a
+[17:15:41.190] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:41.291] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 19 21 ff ff fc 92 00 5a 5b ff ff de 67 ff ff d8 00 15 00 24 0a
+[17:15:41.291] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:41.393] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 19 85 ff ff fc 85 00 5a 4f ff ff de 4f ff ff d8 00 14 00 24 0a 02 10 00 00 01 19 85 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:41.393] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:41.443] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 e8 53 13 50 0a ff ff 00 00 00 01 19 85 0a
+[17:15:41.444] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=72069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.907516, witness_battery_voltage=4.944
+[17:15:41.445] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x85; resync=discard 1 byte
+[17:15:41.546] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 19 e9 ff ff fc 85 00 5a 4f ff ff de 42 ff ff d5 00 17 00 22 0a
+[17:15:41.546] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:41.648] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 1a 4d ff ff fc 92 00 5a 4f ff ff de 4f ff ff d7 00 15 00 24 0a
+[17:15:41.649] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:41.751] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 1a b1 ff ff fc 92 00 5a 4f ff ff de 67 ff ff d7 00 15 00 25 0a
+[17:15:41.751] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:41.852] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 1b 15 ff ff fc 92 00 5a 43 ff ff de 5b ff ff d6 00 16 00 23 0a
+[17:15:41.853] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:41.954] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 1b 79 ff ff fc 9e 00 5a 43 ff ff de 4f ff ff d6 00 15 00 23 0a
+[17:15:41.955] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:42.006] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 1b dd ff ff fc 9e 00 5a 4f ff ff de 4f ff ff d6 00 15 00 24 0a
+[17:15:42.007] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:42.108] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 1c 41 ff ff fc 9e 00 5a 4f ff ff de 4f ff ff d7 00 14 00 24 0a
+[17:15:42.109] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:42.210] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 1c a5 ff ff fc 79 00 5a 67 ff ff de 4f ff ff d6 00 18 00 22 0a
+[17:15:42.211] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:42.261] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 1d 09 ff ff fc 85 00 5a 4f ff ff de 4f ff ff d7 00 16 00 23 0a
+[17:15:42.262] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:42.363] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 1d 6d ff ff fc 85 00 5a 4f ff ff de 4f ff ff d7 00 14 00 24 0a 02 10 00 00 01 1d 6d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:42.364] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:42.464] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 e8 53 13 50 0a ff ff 01 00 00 01 1d 6d 0a
+[17:15:42.465] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=73069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.907516, witness_battery_voltage=4.944
+[17:15:42.466] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x6d; resync=discard 1 byte
+[17:15:42.516] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 1d d1 ff ff fc 85 00 5a 4f ff ff de 67 ff ff d5 00 17 00 24 0a
+[17:15:42.517] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:42.619] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 1e 35 ff ff fc 85 00 5a 67 ff ff de 5b ff ff d6 00 16 00 22 0a
+[17:15:42.620] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:42.721] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 1e 99 ff ff fc 92 00 5a 4f ff ff de 4f ff ff d7 00 15 00 24 0a
+[17:15:42.721] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:42.822] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 1e fd ff ff fc 92 00 5a 4f ff ff de 4f ff ff d7 00 15 00 24 0a
+[17:15:42.822] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:42.873] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 1f 61 ff ff fc 92 00 5a 5b ff ff de 73 ff ff d6 00 17 00 22 0a
+[17:15:42.873] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:42.974] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 1f c5 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d7 00 16 00 23 0a
+[17:15:42.975] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:43.076] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 20 29 ff ff fc 9e 00 5a 4f ff ff de 5b ff ff d7 00 15 00 24 0a
+[17:15:43.076] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:43.177] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 20 8d ff ff fc b6 00 5a 74 ff ff de 4f ff ff d6 00 17 00 22 0a
+[17:15:43.177] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:43.278] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 20 f1 ff ff fc 79 00 5a 2a ff ff de 8c ff ff d7 00 18 00 20 0a
+[17:15:43.279] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x20; resync=discard 1 byte
+[17:15:43.380] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 21 55 ff ff fc 85 00 5a 4f ff ff de 36 ff ff d7 00 14 00 24 0a 02 10 00 00 01 21 55 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:43.381] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:43.433] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 55 3b 13 50 0a ff ff 00 00 00 01 21 55 0a
+[17:15:43.435] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=74069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.332932, witness_battery_voltage=4.944
+[17:15:43.435] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x55; resync=discard 1 byte
+[17:15:43.537] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 21 b9 ff ff fc 85 00 5a 4f ff ff de 42 ff ff d7 00 14 00 25 0a
+[17:15:43.538] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:43.639] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 22 1d ff ff fc 92 00 5a 43 ff ff de 36 ff ff d6 00 18 00 22 0a
+[17:15:43.640] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:43.740] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 22 81 ff ff fc 85 00 5a 4f ff ff de 5b ff ff d6 00 16 00 24 0a
+[17:15:43.741] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:43.791] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 22 e5 ff ff fc 85 00 5a 4f ff ff de 42 ff ff d7 00 15 00 24 0a
+[17:15:43.792] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:43.893] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 23 49 ff ff fc 9e 00 5a 5b ff ff de 67 ff ff d6 00 17 00 23 0a
+[17:15:43.894] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:43.994] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 23 ad ff ff fc 85 00 5a 5b ff ff de 4f ff ff d6 00 16 00 23 0a
+[17:15:43.995] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:44.046] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 24 11 ff ff fc 92 00 5a 4f ff ff de 67 ff ff d7 00 15 00 23 0a
+[17:15:44.046] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:44.147] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 24 75 ff ff fc 92 00 5a 2a ff ff de 42 ff ff d7 00 16 00 23 0a
+[17:15:44.148] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:44.248] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 24 d9 ff ff fc 85 00 5a 4f ff ff de 73 ff ff d6 00 18 00 22 0a
+[17:15:44.249] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:44.350] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 25 3d ff ff fc 79 00 5a 5b ff ff de 5b ff ff d7 00 14 00 24 0a 02 10 00 00 01 25 3d 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[17:15:44.351] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:44.452] RX[TCP_prs2026hitl_7000]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 29 43 13 48 0a ff ff 01 00 00 01 25 3d 0a
+[17:15:44.454] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=75069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.161179, witness_battery_voltage=4.936
+[17:15:44.455] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x3d; resync=discard 1 byte
+[17:15:44.555] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 25 a1 ff ff fc 85 00 5a 67 ff ff de 5b ff ff d7 00 14 00 24 0a
+[17:15:44.557] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:44.607] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 26 05 ff ff fc 85 00 5a 4f ff ff de 67 ff ff d6 00 16 00 23 0a
+[17:15:44.608] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:44.709] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 26 69 ff ff fc 92 00 5a 5b ff ff de 4f ff ff d7 00 16 00 22 0a
+[17:15:44.710] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:44.811] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 26 cd ff ff fc 9e 00 5a 43 ff ff de 4f ff ff d6 00 14 00 25 0a
+[17:15:44.811] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:44.912] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 27 31 ff ff fc 92 00 5a 5b ff ff de 67 ff ff d7 00 15 00 25 0a
+[17:15:44.913] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:45.016] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 27 95 ff ff fc 92 00 5a 37 ff ff de 4f ff ff d6 00 17 00 22 0a
+[17:15:45.016] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=discard 1 byte
+[17:15:45.118] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 27 f9 ff ff fc 85 00 5a 43 ff ff de 4f ff ff d6 00 15 00 23 0a
+[17:15:45.119] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:45.170] RX[TCP_prs2026hitl_7000]  01 0f 00 00 01 28 5d ff ff fc 92 00 5a 4f ff ff de 73 ff ff d6 00 15 00 24 0a
+[17:15:45.171] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x24; resync=discard 1 byte
+[17:15:45.271] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 28 c1 ff ff fc 85 00 5a 43 ff ff de 67 ff ff d6 00 16 00 23 0a
+[17:15:45.272] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x23; resync=discard 1 byte
+[17:15:45.372] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 29 25 ff ff fc 79 00 5a 67 ff ff de 4f ff ff d7 00 18 00 22 0a 02 10 00 00 01 29 25 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 d2 ae 13 48 0a ff ff 00 00 00 01 29 25 0a
+[17:15:45.373] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x22; resync=offset 1
+[17:15:45.374] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=76069, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=209.822968, witness_battery_voltage=4.936
+[17:15:45.375] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x25; resync=discard 1 byte
+[17:15:45.476] RX[TCP_prs2026hitl_7000]  01 0b 00 00 01 29 89 ff ff fc 85 00 5a 5b ff ff de 67 ff ff d6 00 15 00 25 0a
+[17:15:45.476] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x25; resync=discard 1 byte

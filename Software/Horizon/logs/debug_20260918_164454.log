@@ -1,0 +1,323 @@
+[16:44:54.626] RX[TCP_prs2026hitl_7000]  ff fb 03 ff fd 03 ff fb 01 ff fe 01 ff fd 00 ff fb 00 ff fd 2c
+[16:44:54.627] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xfb; payload=fb 03 ff fd 03 ff
+[16:44:58.672] RX[TCP_prs2026hitl_7000]  00 00 00 00 59 ff ff ff ff d5 00 18 00 22 0a 01 0b 00 00 01 fb 7e 00 00 18 00 58 f9 ff ff ff ff d6 00 00 24 0a 01 0f 00 00 01 fb e2 00 00 00 00 59 06 ff ff da 8b ff ff d7 00 00 24 0a 01 0f 00 00 01 fc 46 00 00
+[16:44:58.672] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0xd5; payload=ff fe 01 ff fd 00 ff fb 00 ff fd 2c 00 00 00 00 59 ff ff ff ff
+[16:44:58.674] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.674] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x18; discarded 1 byte
+[16:44:58.674] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.675] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x22; discarded 1 byte
+[16:44:58.675] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.675] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x01; payload=0b 00 00 01 fb 7e 00 00 18 00 58 f9 ff ff ff ff d6 00 00 24 0a
+[16:44:58.675] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0f; discarded 1 byte
+[16:44:58.675] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.676] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.679] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=fb e2 00 00 00 00 59 06 ff ff da 8b ff ff d7 00 00 24 0a 01 0f
+[16:44:58.679] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.781] RX[TCP_prs2026hitl_7000]  00 00 58 f9 ff ff da 8b 00 22 0a 02 10 00 00 01 fc 46 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 51 fd f9 44 0a ff ff 00 00 00 01 fc 46 0a 01 0f 00 00 01 fc aa 00 00 18 00 59 ff ff da a3 ff ff d6 00 00 24 0a 00 25 0a 00 25 0a 01 0b 00 00 01 fd d6 00 00 00 00 00 22 0a 00 25 0a 01 0f 00 00 01 fe 9e 00 00 0c 00 59 ff ff da 72 ff ff d6 00 00 25 0a 01 0f 00 00 01 ff ff 02 00 00 0c 00 59 1e ff ff da 8b ff ff d5 00 18 00 22 0a 01 0f 00 00 01 ff ff 66 00 00 0c 00 59 12 ff ff da 7f ff ff d6 00 17 00 24 0a 01 0f 00 00 01 ff ff ca 00 00 0c 00 59 12 ff ff da 66 ff ff d7 00 16 00 25 0a 01 0f 00 00 02 00 2e 00 00 25 00 59 06 ff ff da 7f ff ff d6 00 14 00 25 0a 02 10 00 00 02 00 2e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 29 43 13 50 0a 5e 41 5e 4f 5e ff ff 01 00 00 02 00 2e 0a 40 01 0b 00 00 02 00 92 00 00 00 00 59 12 ff ff da a3 ff ff d6 00 17 00 23 0a 5e 01 0b 00 00 02 00 f6 00 00 0c 00 59 1e ff ff da 7f ff ff d6 00 16 00 25 0a 01 0f 00 00 02 01 5a 00 00 18 00 59 06 ff ff da 8b ff ff d6 00 15 00 25 0a 40 5e 41 01 0f 00 00 02 01 be 00 00 00 00 59 12 ff ff da a3 ff ff d6 00 18 00 23 0a f7 01 0f 00 00 02 02 22 ff ff ff ff e8 00 59 12 ff ff da 97 ff ff d6 00 17 00 24 0a 01 0f 00 00 02 02 86 00 00 18 00 59 12 ff ff da 72 ff ff d6 00 15 00 25 0a 01 0f 00 00 02 02 ea 00 00 31 00 58 ed ff ff da 4e ff ff d6 00 15 00 25 0a 01 0b 00 00 02 03 4e 00 00 0c 00 59 06 ff ff da 72 ff ff d6 00 17 00 22 0a 01 0b 00 00 02 03 b2 00 00 25 00 59 12 ff ff da 5a ff ff d7 00 15 00 25 0a 01 0f 00 00 02 04 16 00 00 18 00 59 1e ff ff da 72 ff ff d6 00 16 00 24 0a 5a 5e 5e 41 5e 4b 5e 40 5e 40 5e 41 fb 7e 5e 5e 40 5e 40 5e 5e 40 5e 5e 40 5e 40 5e 5e 40 5e 08 20 08 08 20 08 08 20 08 08 08 20 08 08 20 08 08 20 20 08 08 20 08 08 08 08 20 08 08 20 08 08 d5 41 fe 5e 20 08 20 08 20 5e 5e 41 5e 40 59 ff ff da 40 5e 58 01 0f 00 00 02 b1 86 00 00 18 00 58 f9 ff ff da 97 ff ff d7 00 14 00 26 0a
+[16:44:58.784] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x46; payload=fc 46 00 00 00 00 58 f9 ff ff da 8b 00 22 0a 02 10 00 00 01 fc
+[16:44:58.788] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.797] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.801] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.807] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.808] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.811] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.813] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.816] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.818] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.821] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.824] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.827] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.830] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.831] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.832] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.832] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.833] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.833] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.835] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.835] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.836] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.842] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.844] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.852] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.853] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.854] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.854] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.855] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.855] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.856] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.856] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.857] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.857] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.858] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.858] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.858] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.859] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.859] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.860] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.860] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.861] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.862] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.862] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.864] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.866] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.867] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.869] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.870] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.871] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.871] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.872] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x43; discarded 1 byte
+[16:44:58.873] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x51; discarded 1 byte
+[16:44:58.874] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0xfd; discarded 1 byte
+[16:44:58.875] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0xf9; discarded 1 byte
+[16:44:58.875] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x44; discarded 1 byte
+[16:44:58.876] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.876] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x46; payload=ff 00 00 00 01 fc
+[16:44:58.877] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.878] PACKET[TCP_prs2026hitl_7000] sensors: status=3840, uptime=130218, filtered_accel=[0.00096, 0.92156, -0.3826], gyro=[-0.07, -752.64, 2.52]
+[16:44:58.879] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.880] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x25; discarded 1 byte
+[16:44:58.880] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.881] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.882] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x25; discarded 1 byte
+[16:44:58.882] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.883] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0xfe; payload=0b 00 00 01 fd d6 00 00 00 00 00 22 0a 00 25 0a 01 0f 00 00 01
+[16:44:58.884] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x9e; discarded 1 byte
+[16:44:58.885] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.886] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.887] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0c; discarded 1 byte
+[16:44:58.889] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.890] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x59; discarded 1 byte
+[16:44:58.891] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x00; payload=ff da 72 ff ff d6
+[16:44:58.892] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.893] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x25; discarded 1 byte
+[16:44:58.894] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.897] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x18; payload=0f 00 00 01 ff ff 02 00 00 0c 00 59 1e ff ff da 8b ff ff d5 00
+[16:44:58.898] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.899] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x22; discarded 1 byte
+[16:44:58.900] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.901] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x17; payload=0f 00 00 01 ff ff 66 00 00 0c 00 59 12 ff ff da 7f ff ff d6 00
+[16:44:58.903] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.904] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x24; discarded 1 byte
+[16:44:58.906] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.907] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x16; payload=0f 00 00 01 ff ff ca 00 00 0c 00 59 12 ff ff da 66 ff ff d7 00
+[16:44:58.908] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.909] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x25; discarded 1 byte
+[16:44:58.910] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.911] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0f 00 00 02 00 2e 00 00 25 00 59 06 ff ff da 7f ff ff d6 00 14
+[16:44:58.912] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x25; discarded 1 byte
+[16:44:58.913] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.914] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=131118, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.161179, witness_battery_voltage=4.944
+[16:44:58.916] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.917] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x41; discarded 1 byte
+[16:44:58.919] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.921] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x4f; discarded 1 byte
+[16:44:58.922] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.924] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x2e; payload=ff 01 00 00 02 00
+[16:44:58.925] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.926] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x40; discarded 1 byte
+[16:44:58.927] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0b 00 00 02 00 92 00 00 00 00 59 12 ff ff da a3 ff ff d6 00 17
+[16:44:58.928] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x23; discarded 1 byte
+[16:44:58.928] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.929] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.929] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0b 00 00 02 00 f6 00 00 0c 00 59 1e ff ff da 7f ff ff d6 00 16
+[16:44:58.930] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x25; discarded 1 byte
+[16:44:58.931] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.931] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0f 00 00 02 01 5a 00 00 18 00 59 06 ff ff da 8b ff ff d6 00 15
+[16:44:58.932] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x25; discarded 1 byte
+[16:44:58.932] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.933] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x40; discarded 1 byte
+[16:44:58.933] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.933] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x41; discarded 1 byte
+[16:44:58.934] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0f 00 00 02 01 be 00 00 00 00 59 12 ff ff da a3 ff ff d6 00 18
+[16:44:58.934] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x23; discarded 1 byte
+[16:44:58.935] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.935] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0xf7; discarded 1 byte
+[16:44:58.935] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0f 00 00 02 02 22 ff ff ff ff e8 00 59 12 ff ff da 97 ff ff d6
+[16:44:58.936] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x17; discarded 1 byte
+[16:44:58.936] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.937] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x24; discarded 1 byte
+[16:44:58.937] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.937] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0f 00 00 02 02 86 00 00 18 00 59 12 ff ff da 72 ff ff d6 00 15
+[16:44:58.938] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x25; discarded 1 byte
+[16:44:58.938] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.939] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0f 00 00 02 02 ea 00 00 31 00 58 ed ff ff da 4e ff ff d6 00 15
+[16:44:58.939] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x25; discarded 1 byte
+[16:44:58.939] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.940] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0b 00 00 02 03 4e 00 00 0c 00 59 06 ff ff da 72 ff ff d6 00 17
+[16:44:58.940] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x22; discarded 1 byte
+[16:44:58.941] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.941] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0b 00 00 02 03 b2 00 00 25 00 59 12 ff ff da 5a ff ff d7 00 15
+[16:44:58.942] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x25; discarded 1 byte
+[16:44:58.942] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.943] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0f 00 00 02 04 16 00 00 18 00 59 1e ff ff da 72 ff ff d6 00 16
+[16:44:58.943] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x24; discarded 1 byte
+[16:44:58.944] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:58.944] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5a; discarded 1 byte
+[16:44:58.945] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.945] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.946] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x41; discarded 1 byte
+[16:44:58.946] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.946] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x4b; discarded 1 byte
+[16:44:58.947] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.947] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x40; discarded 1 byte
+[16:44:58.948] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.948] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x40; discarded 1 byte
+[16:44:58.949] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.949] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x41; discarded 1 byte
+[16:44:58.949] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0xfb; discarded 1 byte
+[16:44:58.950] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x7e; discarded 1 byte
+[16:44:58.950] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.951] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.951] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x40; discarded 1 byte
+[16:44:58.951] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.952] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x40; discarded 1 byte
+[16:44:58.952] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.953] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.954] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x40; discarded 1 byte
+[16:44:58.954] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.954] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.955] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x40; discarded 1 byte
+[16:44:58.955] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.956] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x40; discarded 1 byte
+[16:44:58.956] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.957] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.958] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x40; discarded 1 byte
+[16:44:58.959] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.959] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.960] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x20; discarded 1 byte
+[16:44:58.960] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.960] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.961] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x20; discarded 1 byte
+[16:44:58.961] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.962] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.962] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x20; discarded 1 byte
+[16:44:58.962] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.963] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.963] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.964] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x20; discarded 1 byte
+[16:44:58.964] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.964] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.965] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x20; discarded 1 byte
+[16:44:58.965] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.966] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.966] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x20; discarded 1 byte
+[16:44:58.966] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x20; discarded 1 byte
+[16:44:58.967] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.967] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.968] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x20; discarded 1 byte
+[16:44:58.968] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.969] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.969] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.969] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.970] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x20; discarded 1 byte
+[16:44:58.970] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.971] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.971] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x20; discarded 1 byte
+[16:44:58.971] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.972] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.972] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0xd5; discarded 1 byte
+[16:44:58.973] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x41; discarded 1 byte
+[16:44:58.973] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0xfe; discarded 1 byte
+[16:44:58.973] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.974] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x20; discarded 1 byte
+[16:44:58.974] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.975] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x20; discarded 1 byte
+[16:44:58.975] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x08; discarded 1 byte
+[16:44:58.975] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x20; discarded 1 byte
+[16:44:58.976] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.976] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.977] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x41; discarded 1 byte
+[16:44:58.977] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x5e; discarded 1 byte
+[16:44:58.978] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x40; discarded 1 byte
+[16:44:58.978] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x59; discarded 1 byte
+[16:44:58.978] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x0f; payload=ff da 40 5e 58 01
+[16:44:58.979] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.980] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:58.980] RX[TCP_prs2026hitl_7000]  01 0b 00 00 02 b1 ea 00 00 0c 00 59 06 ff ff da 97 ff ff d5 00 18 00 22 0a
+[16:44:58.981] RX[TCP_prs2026hitl_7000]  01 0b 00 00 02 b2 4e 00 00 0c 00 59 06 ff ff da 66 ff ff d7 00 16 00 24 0a
+[16:44:58.981] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x02: expected 0x0a, got 0xff; payload=b1 86 00 00 18 00 58 f9 ff ff da 97 ff ff d7 00 14 00 26 0a 01 0b 00 00 02 b1 ea 00 00 0c 00 59 06 ff ff da 97 ff ff d5 00 18 00 22 0a 01 0b 00 00 02 b2 4e 00 00 0c 00 59 06 ff ff da 66
+[16:44:59.032] RX[TCP_prs2026hitl_7000]  01 0f 00 00 02 b2 b2 00 00 0c 00 59 1e ff ff da 8b ff ff d6 00 15 00 25 0a
+[16:44:59.033] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x01; payload=d7 00 16 00 24 0a
+[16:44:59.033] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0f; discarded 1 byte
+[16:44:59.034] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.035] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.135] RX[TCP_prs2026hitl_7000]  01 0f 00 00 02 b3 16 00 00 00 00 59 1e ff ff da 7f ff ff d5 00 17 00 23 0a
+[16:44:59.237] RX[TCP_prs2026hitl_7000]  01 0f 00 00 02 b3 7a 00 00 18 00 59 12 ff ff da 8b ff ff d6 00 16 00 24 0a
+[16:44:59.237] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x02: expected 0x0a, got 0xff; payload=b2 b2 00 00 0c 00 59 1e ff ff da 8b ff ff d6 00 15 00 25 0a 01 0f 00 00 02 b3 16 00 00 00 00 59 1e ff ff da 7f ff ff d5 00 17 00 23 0a 01 0f 00 00 02 b3 7a 00 00 18 00 59 12 ff ff da 8b
+[16:44:59.339] RX[TCP_prs2026hitl_7000]  01 0f 00 00 02 b3 de 00 00 0c 00 59 12 ff ff da 72 ff ff d6 00 15 00 25 0a 02 10 00 00 02 b3 de 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 29 43 13 54 0a ff ff 01 00 00 02 b3 de 0a
+[16:44:59.340] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0x01; payload=d6 00 16 00 24 0a
+[16:44:59.341] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0f; discarded 1 byte
+[16:44:59.342] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.343] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.344] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x02: expected 0x0a, got 0x00; payload=b3 de 00 00 0c 00 59 12 ff ff da 72 ff ff d6 00 15 00 25 0a 02 10 00 00 02 b3 de 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[16:44:59.345] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.346] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.347] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.348] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.349] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.351] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.352] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.353] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.354] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.354] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.355] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.355] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.356] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.357] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.357] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x43; discarded 1 byte
+[16:44:59.358] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x52; discarded 1 byte
+[16:44:59.358] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x29; discarded 1 byte
+[16:44:59.359] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x43; discarded 1 byte
+[16:44:59.359] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x13; discarded 1 byte
+[16:44:59.360] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x54; discarded 1 byte
+[16:44:59.360] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:59.360] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xde; payload=ff 01 00 00 02 b3
+[16:44:59.361] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:59.411] RX[TCP_prs2026hitl_7000]  01 0f 00 00 02 b4 42 00 00 00 00 59 06 ff ff da 8b ff ff d5 00 15 00 24 0a
+[16:44:59.412] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0f 00 00 02 b4 42 00 00 00 00 59 06 ff ff da 8b ff ff d5 00 15
+[16:44:59.412] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x24; discarded 1 byte
+[16:44:59.413] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:59.514] RX[TCP_prs2026hitl_7000]  01 0b 00 00 02 b4 a6 ff ff ff ff f4 00 59 06 ff ff da 7f ff ff d6 00 17 00 23 0a
+[16:44:59.514] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0b 00 00 02 b4 a6 ff ff ff ff f4 00 59 06 ff ff da 7f ff ff d6
+[16:44:59.515] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x17; discarded 1 byte
+[16:44:59.515] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x00; discarded 1 byte
+[16:44:59.516] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x23; discarded 1 byte
+[16:44:59.516] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:59.618] RX[TCP_prs2026hitl_7000]  01 0b 00 00 02 b5 0a 00 00 0c 00 59 12 ff ff da 8b ff ff d7 00 15 00 25 0a
+[16:44:59.619] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0b 00 00 02 b5 0a 00 00 0c 00 59 12 ff ff da 8b ff ff d7 00 15
+[16:44:59.619] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x25; discarded 1 byte
+[16:44:59.620] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:59.720] RX[TCP_prs2026hitl_7000]  01 0f 00 00 02 b5 6e 00 00 00 00 59 12 ff ff da 97 ff ff d6 00 16 00 24 0a
+[16:44:59.721] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0f 00 00 02 b5 6e 00 00 00 00 59 12 ff ff da 97 ff ff d6 00 16
+[16:44:59.721] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x24; discarded 1 byte
+[16:44:59.722] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:44:59.823] RX[TCP_prs2026hitl_7000]  01 0f 00 00 02 b5 d2 00 00 18 00 59 06 ff ff da 7f ff ff d5 00 18 00 22 0a
+[16:44:59.825] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0f 00 00 02 b5 d2 00 00 18 00 59 06 ff ff da 7f ff ff d5 00 18
+[16:44:59.827] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x22; discarded 1 byte
+[16:44:59.827] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:45:00.029] RX[TCP_prs2026hitl_7000]  01 0f 00 00 02 b6 36 00 00 00 00 59 12 ff ff da 97 ff ff d7 00 16 00 24 0a 01 0f 00 00 02 b6 9a 00 00 0c 00 59 12 ff ff da 72 ff ff d6 00 16 00 25 0a
+[16:45:00.030] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0f 00 00 02 b6 36 00 00 00 00 59 12 ff ff da 97 ff ff d7 00 16
+[16:45:00.030] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x24; discarded 1 byte
+[16:45:00.031] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:45:00.031] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0f 00 00 02 b6 9a 00 00 0c 00 59 12 ff ff da 72 ff ff d6 00 16
+[16:45:00.032] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x25; discarded 1 byte
+[16:45:00.032] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:45:00.233] RX[TCP_prs2026hitl_7000]  01 0f 00 00 02 b6 fe 00 00 0c 00 59 12 ff ff da 7f ff ff d6 00 15 00 25 0a
+[16:45:00.233] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0f 00 00 02 b6 fe 00 00 0c 00 59 12 ff ff da 7f ff ff d6 00 15
+[16:45:00.234] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x25; discarded 1 byte
+[16:45:00.235] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:45:00.285] RX[TCP_prs2026hitl_7000]  01 0b 00 00 02 b7 62 00 00 00 00 59 06 ff ff da 8b ff ff d5 00 18 00 21 0a
+[16:45:00.285] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0b 00 00 02 b7 62 00 00 00 00 59 06 ff ff da 8b ff ff d5 00 18
+[16:45:00.286] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x21; discarded 1 byte
+[16:45:00.286] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:45:00.387] RX[TCP_prs2026hitl_7000]  01 0b 00 00 02 b7 c6 00 00 0c 00 59 12 ff ff da 66 ff ff d7 00 16 00 24 0a 02 10 00 00 02 b7 c6 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 52 13 9e 13 50 0a ff ff 00 00 00 02 b7 c6 0a
+[16:45:00.388] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0b 00 00 02 b7 c6 00 00 0c 00 59 12 ff ff da 66 ff ff d7 00 16
+[16:45:00.389] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x24; discarded 1 byte
+[16:45:00.389] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:45:00.391] PACKET[TCP_prs2026hitl_7000] state: status=4096, uptime=178118, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=210.07663, witness_battery_voltage=4.944
+[16:45:00.392] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0xff: expected 0x0a, got 0xc6; payload=ff 00 00 00 02 b7
+[16:45:00.393] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte
+[16:45:00.496] RX[TCP_prs2026hitl_7000]  01 0f 00 00 02 b8 2a 00 00 00 00 59 12 ff ff da 8b ff ff d6 00 15 00 25 0a
+[16:45:00.497] BAD_PACKET[TCP_prs2026hitl_7000] bad EOF for 0x01: expected 0x0a, got 0x00; payload=0f 00 00 02 b8 2a 00 00 00 00 59 12 ff ff da 8b ff ff d6 00 15
+[16:45:00.499] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x25; discarded 1 byte
+[16:45:00.501] BAD_PACKET[TCP_prs2026hitl_7000] unknown packet ID 0x0a; discarded 1 byte

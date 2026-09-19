@@ -12,6 +12,7 @@
 #include "esp_timer.h"
 #include "hardware_pins.h"
 #include "spi_data_forwarder.h"
+#include "witness_status.h"
 
 namespace {
 
@@ -43,6 +44,13 @@ void write_i24_be(std::uint8_t *destination, const std::int32_t value)
     destination[0] = static_cast<std::uint8_t>(bits >> 16);
     destination[1] = static_cast<std::uint8_t>(bits >> 8);
     destination[2] = static_cast<std::uint8_t>(bits);
+}
+
+void write_u24_be(std::uint8_t *destination, const std::uint32_t value)
+{
+    destination[0] = static_cast<std::uint8_t>(value >> 16);
+    destination[1] = static_cast<std::uint8_t>(value >> 8);
+    destination[2] = static_cast<std::uint8_t>(value);
 }
 
 std::int32_t encode_filtered_acceleration(const float acceleration_mg)
@@ -81,8 +89,11 @@ void write_float_be(std::uint8_t *destination, const float value)
 
 }  // namespace
 
-Sensors::Sensors(SpiDataForwarder &data_forwarder)
-    : data_forwarder_(data_forwarder)
+Sensors::Sensors(
+    SpiDataForwarder &data_forwarder,
+    WitnessStatus &witness_status)
+    : data_forwarder_(data_forwarder),
+      witness_status_(witness_status)
 {
 }
 
@@ -154,6 +165,18 @@ esp_err_t Sensors::latest_sample(Sample &sample, const TickType_t timeout) const
     }
     xSemaphoreGive(sample_mutex_);
     return available ? ESP_OK : ESP_ERR_NOT_FOUND;
+}
+
+esp_err_t Sensors::handle_command(const std::uint16_t command)
+{
+    if (command != IRIS_COMMAND_WITNESS_DEBUG_START) {
+        return ESP_ERR_NOT_SUPPORTED;
+    }
+
+    debug_packet_output_enabled_.store(true);
+    ESP_LOGI(kLogTag, "Witness debug packets enabled at %u Hz",
+             static_cast<unsigned>(kDebugPacketRateHz));
+    return ESP_OK;
 }
 
 std::int16_t Sensors::decode_i16(const std::uint8_t *bytes)
@@ -428,22 +451,7 @@ esp_err_t Sensors::queue_sensor_packet()
 {
     std::uint8_t payload[IRIS_PACKET_SENSORS_DATA_LENGTH]{};
 
-    std::uint8_t status = 0;
-    if (working_sample_.low_g_accel_ready) {
-        status |= kStatusLowGAccelReady;
-    }
-    if (working_sample_.gyro_ready) {
-        status |= kStatusGyroReady;
-    }
-    if (working_sample_.high_g_accel_ready) {
-        status |= kStatusHighGAccelReady;
-    }
-    if (working_sample_.temperature_ready) {
-        status |= kStatusTemperatureReady;
-    }
-    // Status is a two-byte bit field. Keep the active flags in its first byte,
-    // matching the existing heartbeat packet convention.
-    payload[IRIS_PACKET_SENSORS_STATUS_OFFSET] = status;
+    payload[IRIS_PACKET_SENSORS_STATUS_OFFSET] = witness_status_.flags();
 
     const std::uint32_t uptime_milliseconds =
         static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
@@ -471,9 +479,7 @@ esp_err_t Sensors::queue_sensor_packet()
 esp_err_t Sensors::queue_state_packet()
 {
     std::uint8_t payload[IRIS_PACKET_STATE_DATA_LENGTH]{};
-    if (working_sample_.ms5607_ready) {
-        payload[IRIS_PACKET_STATE_STATUS_OFFSET] |= kStatusMs5607Ready;
-    }
+    payload[IRIS_PACKET_STATE_STATUS_OFFSET] = witness_status_.flags();
 
     const std::uint32_t uptime_milliseconds =
         static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
@@ -488,6 +494,96 @@ esp_err_t Sensors::queue_state_packet()
 
     return data_forwarder_.queue_packet(
         IRIS_PACKET_ID_STATE, payload, sizeof(payload));
+}
+
+esp_err_t Sensors::queue_debug_packet()
+{
+    std::uint8_t payload[IRIS_PACKET_WITNESS_DEBUG_DATA_LENGTH]{};
+
+    payload[IRIS_PACKET_WITNESS_DEBUG_STATUS_OFFSET] =
+        witness_status_.flags();
+
+    const std::uint32_t uptime_milliseconds =
+        static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
+    write_u32_be(
+        &payload[IRIS_PACKET_WITNESS_DEBUG_UPTIME_OFFSET],
+        uptime_milliseconds);
+    write_u16_be(
+        &payload[IRIS_PACKET_WITNESS_DEBUG_BATTERY_VOLTAGE_OFFSET],
+        encode_battery_voltage(working_sample_.battery_voltage_mv));
+
+    constexpr std::size_t kFilteredAccelOffsets[] = {
+        IRIS_PACKET_WITNESS_DEBUG_FILTERED_ACCEL_X_OFFSET,
+        IRIS_PACKET_WITNESS_DEBUG_FILTERED_ACCEL_Y_OFFSET,
+        IRIS_PACKET_WITNESS_DEBUG_FILTERED_ACCEL_Z_OFFSET,
+    };
+    constexpr std::size_t kLowAccelOffsets[] = {
+        IRIS_PACKET_WITNESS_DEBUG_LOW_ACCEL_X_OFFSET,
+        IRIS_PACKET_WITNESS_DEBUG_LOW_ACCEL_Y_OFFSET,
+        IRIS_PACKET_WITNESS_DEBUG_LOW_ACCEL_Z_OFFSET,
+    };
+    constexpr std::size_t kHighAccelOffsets[] = {
+        IRIS_PACKET_WITNESS_DEBUG_HIGH_ACCEL_X_OFFSET,
+        IRIS_PACKET_WITNESS_DEBUG_HIGH_ACCEL_Y_OFFSET,
+        IRIS_PACKET_WITNESS_DEBUG_HIGH_ACCEL_Z_OFFSET,
+    };
+    constexpr std::size_t kGyroOffsets[] = {
+        IRIS_PACKET_WITNESS_DEBUG_GYRO_X_OFFSET,
+        IRIS_PACKET_WITNESS_DEBUG_GYRO_Y_OFFSET,
+        IRIS_PACKET_WITNESS_DEBUG_GYRO_Z_OFFSET,
+    };
+
+    for (std::size_t axis = 0; axis < IRIS_PACKET_VECTOR_COMPONENTS; ++axis) {
+        write_i24_be(
+            &payload[kFilteredAccelOffsets[axis]],
+            encode_filtered_acceleration(
+                working_sample_.low_g_accel_mg[axis]));
+        write_i16_be(
+            &payload[kLowAccelOffsets[axis]],
+            working_sample_.low_g_accel_raw[axis]);
+        write_i16_be(
+            &payload[kHighAccelOffsets[axis]],
+            working_sample_.high_g_accel_raw[axis]);
+        write_i16_be(
+            &payload[kGyroOffsets[axis]],
+            working_sample_.gyro_raw[axis]);
+    }
+
+    write_i16_be(
+        &payload[IRIS_PACKET_WITNESS_DEBUG_LSM6_TEMPERATURE_OFFSET],
+        working_sample_.temperature_raw);
+
+    const std::int32_t pressure = working_sample_.pressure_centi_mbar;
+    const std::uint32_t encoded_pressure =
+        pressure <= 0
+            ? 0U
+            : (pressure > 0x00FFFFFF
+                   ? 0x00FFFFFFU
+                   : static_cast<std::uint32_t>(pressure));
+    write_u24_be(
+        &payload[IRIS_PACKET_WITNESS_DEBUG_PRESSURE_OFFSET],
+        encoded_pressure);
+
+    const std::int32_t barometer_temperature =
+        working_sample_.ms5607_temperature_centi_celsius;
+    const std::int16_t encoded_barometer_temperature =
+        barometer_temperature < std::numeric_limits<std::int16_t>::min()
+            ? std::numeric_limits<std::int16_t>::min()
+            : (barometer_temperature >
+                       std::numeric_limits<std::int16_t>::max()
+                   ? std::numeric_limits<std::int16_t>::max()
+                   : static_cast<std::int16_t>(barometer_temperature));
+    write_i16_be(
+        &payload[IRIS_PACKET_WITNESS_DEBUG_MS5607_TEMPERATURE_OFFSET],
+        encoded_barometer_temperature);
+    write_float_be(
+        &payload[IRIS_PACKET_WITNESS_DEBUG_BAROMETRIC_ALTITUDE_OFFSET],
+        working_sample_.barometric_altitude_meters);
+
+    // MCU temperature, estimator outputs, and GPS fields remain zero until
+    // their producers are implemented.
+    return data_forwarder_.queue_packet(
+        IRIS_PACKET_ID_WITNESS_DEBUG, payload, sizeof(payload));
 }
 
 std::uint16_t Sensors::encode_battery_voltage(const std::uint32_t millivolts)
@@ -558,6 +654,7 @@ void Sensors::run()
     TickType_t next_wake_time = xTaskGetTickCount();
     TickType_t last_sensor_packet_time = next_wake_time;
     TickType_t last_state_packet_time = next_wake_time;
+    TickType_t last_debug_packet_time = next_wake_time;
     std::uint32_t consecutive_lsm_errors = 0;
     std::uint32_t consecutive_ms5607_errors = 0;
     std::uint32_t battery_sample_counter = 0;
@@ -565,6 +662,18 @@ void Sensors::run()
 
     for (;;) {
         const esp_err_t lsm_result = fetch_lsm6dsv320x();
+        witness_status_.set(
+            IRIS_WITNESS_STATUS_LOW_G_ACCEL_READY_MASK,
+            working_sample_.low_g_accel_ready);
+        witness_status_.set(
+            IRIS_WITNESS_STATUS_GYRO_READY_MASK,
+            working_sample_.gyro_ready);
+        witness_status_.set(
+            IRIS_WITNESS_STATUS_IMU_TEMPERATURE_READY_MASK,
+            working_sample_.temperature_ready);
+        witness_status_.set(
+            IRIS_WITNESS_STATUS_HIGH_G_ACCEL_READY_MASK,
+            working_sample_.high_g_accel_ready);
         if (lsm_result == ESP_OK) {
             consecutive_lsm_errors = 0;
         } else {
@@ -598,6 +707,9 @@ void Sensors::run()
             working_sample_.barometric_altitude_meters =
                 barometer.altitude_meters;
             working_sample_.ms5607_ready = barometer.valid;
+            witness_status_.set(
+                IRIS_WITNESS_STATUS_BAROMETER_READY_MASK,
+                working_sample_.ms5607_ready);
         }
 
         bool battery_updated = false;
@@ -643,6 +755,16 @@ void Sensors::run()
                          esp_err_to_name(queue_result));
             }
             last_state_packet_time = now;
+        }
+
+        if (debug_packet_output_enabled_.load() &&
+            (now - last_debug_packet_time) >= kDebugPacketPeriod) {
+            const esp_err_t queue_result = queue_debug_packet();
+            if (queue_result != ESP_OK) {
+                ESP_LOGE(kLogTag, "debug packet queue failed: %s",
+                         esp_err_to_name(queue_result));
+            }
+            last_debug_packet_time = now;
         }
 
         vTaskDelayUntil(&next_wake_time, kTaskPeriod);

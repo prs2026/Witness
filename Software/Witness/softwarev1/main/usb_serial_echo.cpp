@@ -9,6 +9,7 @@
 #include "esp_log.h"
 #include "heartbeat.h"
 #include "sdkconfig.h"
+#include "sensors.h"
 #include "spi_data_forwarder.h"
 
 namespace {
@@ -82,8 +83,10 @@ std::size_t normalize_command(char *command, const std::size_t length)
 
 UsbSerialEcho::UsbSerialEcho(
     Heartbeat &heartbeat,
+    Sensors &sensors,
     SpiDataForwarder &spi_interface)
     : heartbeat_(heartbeat),
+      sensors_(sensors),
       spi_interface_(spi_interface)
 {
 }
@@ -186,12 +189,22 @@ void UsbSerialEcho::consume_command_bytes(
 
 void UsbSerialEcho::process_command()
 {
+    if (command_length_ == 1U &&
+        static_cast<std::uint8_t>(command_buffer_[0]) ==
+            IRIS_COMMAND_WITNESS_DEBUG_START) {
+        process_protocol_command(IRIS_COMMAND_WITNESS_DEBUG_START);
+        return;
+    }
+
     if (normalize_command(command_buffer_, command_length_) == 0) {
         return;
     }
 
     if (std::strncmp(command_buffer_, "TX ", 3) == 0) {
         process_tx_command();
+    } else if (std::strcmp(command_buffer_, "E0") == 0 ||
+               std::strcmp(command_buffer_, "0XE0") == 0) {
+        process_protocol_command(IRIS_COMMAND_WITNESS_DEBUG_START);
     } else if (std::strcmp(command_buffer_, "LED 1") == 0 ||
         std::strcmp(command_buffer_, "LED ON") == 0) {
         const esp_err_t result = heartbeat_.set_led(true);
@@ -221,9 +234,19 @@ void UsbSerialEcho::process_command()
     }
 }
 
+void UsbSerialEcho::process_protocol_command(const std::uint16_t command)
+{
+    const esp_err_t result = sensors_.handle_command(command);
+    if (result != ESP_OK) {
+        ESP_LOGW(kLogTag, "command 0x%04X rejected: %s",
+                 static_cast<unsigned>(command), esp_err_to_name(result));
+    }
+}
+
 void UsbSerialEcho::process_tx_command()
 {
-    std::uint8_t bytes[1 + 64];
+    std::uint8_t bytes[
+        IRIS_PACKET_ID_LENGTH + IRIS_PACKET_MAX_DATA_LENGTH];
     std::size_t byte_count = 0;
     const char *cursor = command_buffer_ + 3;
 
@@ -239,8 +262,10 @@ void UsbSerialEcho::process_tx_command()
         ++cursor;
     }
 
-    if (*cursor != '\0' || byte_count < 7) {
-        ESP_LOGW(kLogTag, "TX requires an ID and 6 to 64 payload bytes");
+    if (*cursor != '\0' ||
+        byte_count < IRIS_PACKET_ID_LENGTH + 6U) {
+        ESP_LOGW(kLogTag, "TX requires an ID and 6 to %u payload bytes",
+                 static_cast<unsigned>(IRIS_PACKET_MAX_DATA_LENGTH));
         return;
     }
 

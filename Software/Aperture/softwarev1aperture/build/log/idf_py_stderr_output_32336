@@ -1,0 +1,122 @@
+Command: cmake -G Ninja -B C:\Users\Ejfso\Documents\GitHub\witness\Software\Iris\softwarev1IRIS\build -DPYTHON_DEPS_CHECKED=1 -DPYTHON=C:\Espressif\tools\python\v6.1\venv\Scripts\python.exe -DESP_PLATFORM=1 -DIDF_TARGET=esp32c3 -DCCACHE_ENABLE=False C:\Users\Ejfso\Documents\GitHub\witness\Software\Iris\softwarev1IRIS
+fatal: detected dubious ownership in repository at 'C:/esp/v6.1/esp-idf'
+'C:/esp/v6.1/esp-idf' is owned by:
+	POLARISFW/Ejfso (S-1-5-21-1891524161-411446397-2409941128-1001)
+but the current user is:
+	POLARISFW/CodexSandboxOffline (S-1-5-21-1891524161-411446397-2409941128-1003)
+To add an exception for this directory, call:
+
+	git config --global --add safe.directory C:/esp/v6.1/esp-idf
+NOTE: C:/esp/v6.1/esp-idf/components/bt/host/nimble/Kconfig.in:1428: BT_NIMBLE_MESH_PROVISIONER: 'default 0' is not a valid bool value (only 'y' and 'n' are allowed). Value is treated as 'n'.
+NOTE: C:/esp/v6.1/esp-idf/components/fatfs/Kconfig:240: FATFS_PRINT_LLI: 'default 0' is not a valid bool value (only 'y' and 'n' are allowed). Value is treated as 'n'.
+NOTE: C:/esp/v6.1/esp-idf/components/fatfs/Kconfig:245: FATFS_PRINT_FLOAT: 'default 0' is not a valid bool value (only 'y' and 'n' are allowed). Value is treated as 'n'.
+NOTE: C:/esp/v6.1/esp-idf/components/bt/sdkconfig.rename.esp32c3:4: duplicate rename mapping for CONFIG_BT_NIMBLE_COEX_PHY_CODED_TX_RX_TLIM_EN: previous target CONFIG_BT_LE_COEX_PHY_CODED_TX_RX_TLIM_EN, new target CONFIG_BT_CTRL_COEX_PHY_CODED_TX_RX_TLIM_EN - last mapping is used
+NOTE: C:/esp/v6.1/esp-idf/components/bt/sdkconfig.rename.esp32c3:5: duplicate rename mapping for CONFIG_BT_NIMBLE_COEX_PHY_CODED_TX_RX_TLIM_DIS: previous target CONFIG_BT_LE_COEX_PHY_CODED_TX_RX_TLIM_DIS, new target CONFIG_BT_CTRL_COEX_PHY_CODED_TX_RX_TLIM_DIS - last mapping is used
+Loading defaults file C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/sdkconfig.defaults...
+NOTE: Kconfig parser version: 1
+NOTE: Kconfig defaults policy: use sdkconfig
+NOTE: Status: Finished successfully
+fatal: detected dubious ownership in repository at 'C:/esp/v6.1/esp-idf'
+'C:/esp/v6.1/esp-idf' is owned by:
+	POLARISFW/Ejfso (S-1-5-21-1891524161-411446397-2409941128-1001)
+but the current user is:
+	POLARISFW/CodexSandboxOffline (S-1-5-21-1891524161-411446397-2409941128-1003)
+To add an exception for this directory, call:
+
+	git config --global --add safe.directory C:/esp/v6.1/esp-idf
+fatal: detected dubious ownership in repository at 'C:/esp/v6.1/esp-idf/components/openthread/openthread'
+'C:/esp/v6.1/esp-idf/components/openthread/openthread/.git' is owned by:
+	POLARISFW/Ejfso (S-1-5-21-1891524161-411446397-2409941128-1001)
+but the current user is:
+	POLARISFW/CodexSandboxOffline (S-1-5-21-1891524161-411446397-2409941128-1003)
+To add an exception for this directory, call:
+
+	git config --global --add safe.directory C:/esp/v6.1/esp-idf/components/openthread/openthread
+CMake Warning at C:/esp/v6.1/esp-idf/tools/cmake/component_validation.cmake:106 (message):
+  Private include directory
+  'C:/esp/v6.1/esp-idf/components/esp_wifi/wifi_apps/roaming_app/include'
+  belongs to component esp_wifi but is being used by component
+  wpa_supplicant.  It is recommended to define the component dependency for
+  wpa_supplicant on the component esp_wifi, i.e.  'idf_component_register(...
+  PRIV_REQUIRES esp_wifi)' in the CMakeLists.txt of wpa_supplicant, and
+  specify the included directory as idf_component_register(...
+  PRIV_INCLUDE_DIRS <dir relative to component>) in the CMakeLists.txt of
+  component esp_wifi.
+Call Stack (most recent call first):
+  C:/esp/v6.1/esp-idf/tools/cmake/component_validation.cmake:130 (__component_validation_check_include_dirs)
+  C:/esp/v6.1/esp-idf/CMakeLists.txt:356 (__component_validation_run_checks)
+
+
+CMake Warning at C:/esp/v6.1/esp-idf/tools/cmake/component_validation.cmake:106 (message):
+  Private include directory
+  'C:/esp/v6.1/esp-idf/components/esp_wifi/wifi_apps/roaming_app/src' belongs
+  to component esp_wifi but is being used by component wpa_supplicant.  It is
+  recommended to define the component dependency for wpa_supplicant on the
+  component esp_wifi, i.e.  'idf_component_register(...  PRIV_REQUIRES
+  esp_wifi)' in the CMakeLists.txt of wpa_supplicant, and specify the
+  included directory as idf_component_register(...  PRIV_INCLUDE_DIRS <dir
+  relative to component>) in the CMakeLists.txt of component esp_wifi.
+Call Stack (most recent call first):
+  C:/esp/v6.1/esp-idf/tools/cmake/component_validation.cmake:130 (__component_validation_check_include_dirs)
+  C:/esp/v6.1/esp-idf/CMakeLists.txt:356 (__component_validation_run_checks)
+
+
+CMake Warning at C:/esp/v6.1/esp-idf/tools/cmake/component_validation.cmake:106 (message):
+  Private include directory
+  'C:/esp/v6.1/esp-idf/components/esp_wifi/wifi_apps/include/apps_private'
+  belongs to component esp_wifi but is being used by component
+  wpa_supplicant.  It is recommended to define the component dependency for
+  wpa_supplicant on the component esp_wifi, i.e.  'idf_component_register(...
+  PRIV_REQUIRES esp_wifi)' in the CMakeLists.txt of wpa_supplicant, and
+  specify the included directory as idf_component_register(...
+  PRIV_INCLUDE_DIRS <dir relative to component>) in the CMakeLists.txt of
+  component esp_wifi.
+Call Stack (most recent call first):
+  C:/esp/v6.1/esp-idf/tools/cmake/component_validation.cmake:130 (__component_validation_check_include_dirs)
+  C:/esp/v6.1/esp-idf/CMakeLists.txt:356 (__component_validation_run_checks)
+
+
+CMake Warning at C:/esp/v6.1/esp-idf/tools/cmake/component_validation.cmake:106 (message):
+  Private include directory
+  'C:/esp/v6.1/esp-idf/components/wpa_supplicant/src' belongs to component
+  wpa_supplicant but is being used by component esp_wifi.  It is recommended
+  to define the component dependency for esp_wifi on the component
+  wpa_supplicant, i.e.  'idf_component_register(...  PRIV_REQUIRES
+  wpa_supplicant)' in the CMakeLists.txt of esp_wifi, and specify the
+  included directory as idf_component_register(...  PRIV_INCLUDE_DIRS <dir
+  relative to component>) in the CMakeLists.txt of component wpa_supplicant.
+Call Stack (most recent call first):
+  C:/esp/v6.1/esp-idf/tools/cmake/component_validation.cmake:130 (__component_validation_check_include_dirs)
+  C:/esp/v6.1/esp-idf/CMakeLists.txt:356 (__component_validation_run_checks)
+
+
+CMake Warning at C:/esp/v6.1/esp-idf/tools/cmake/component_validation.cmake:106 (message):
+  Private include directory
+  'C:/esp/v6.1/esp-idf/components/wpa_supplicant/esp_supplicant/src' belongs
+  to component wpa_supplicant but is being used by component esp_wifi.  It is
+  recommended to define the component dependency for esp_wifi on the
+  component wpa_supplicant, i.e.  'idf_component_register(...  PRIV_REQUIRES
+  wpa_supplicant)' in the CMakeLists.txt of esp_wifi, and specify the
+  included directory as idf_component_register(...  PRIV_INCLUDE_DIRS <dir
+  relative to component>) in the CMakeLists.txt of component wpa_supplicant.
+Call Stack (most recent call first):
+  C:/esp/v6.1/esp-idf/tools/cmake/component_validation.cmake:130 (__component_validation_check_include_dirs)
+  C:/esp/v6.1/esp-idf/CMakeLists.txt:356 (__component_validation_run_checks)
+
+
+Traceback (most recent call last):
+  File "C:\esp\v6.1\esp-idf\components\esp_rom\gen_gdbinit.py", line 72, in <module>
+    gdbinit_lines = generate_gdbinit_rom_add_symbols(target)
+  File "C:\esp\v6.1\esp-idf\components\esp_rom\gen_gdbinit.py", line 31, in generate_gdbinit_rom_add_symbols
+    raise OSError(
+        'ESP_ROM_ELF_DIR environment variable is not defined. Please try to run IDF "install" and "export" scripts.'
+    )
+OSError: ESP_ROM_ELF_DIR environment variable is not defined. Please try to run IDF "install" and "export" scripts.
+CMake Warning at C:/esp/v6.1/esp-idf/tools/cmake/gdbinit.cmake:58 (message):
+  Error while generating esp_rom gdbinit
+Call Stack (most recent call first):
+  C:/esp/v6.1/esp-idf/tools/cmake/project.cmake:452 (__generate_gdbinit)
+  C:/esp/v6.1/esp-idf/tools/cmake/project.cmake:1101 (__project_info)
+  CMakeLists.txt:9 (project)
+
+

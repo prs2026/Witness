@@ -8,6 +8,7 @@
 #include "esp_timer.h"
 #include "hardware_pins.h"
 #include "spi_data_forwarder.h"
+#include "witness_status.h"
 
 namespace {
 
@@ -17,8 +18,11 @@ constexpr TickType_t kPulseDuration = pdMS_TO_TICKS(100);
 
 }  // namespace
 
-Heartbeat::Heartbeat(SpiDataForwarder &data_forwarder)
-    : data_forwarder_(data_forwarder)
+Heartbeat::Heartbeat(
+    SpiDataForwarder &data_forwarder,
+    WitnessStatus &witness_status)
+    : data_forwarder_(data_forwarder),
+      witness_status_(witness_status)
 {
 }
 
@@ -104,12 +108,13 @@ void Heartbeat::blink_gpio()
 void Heartbeat::queue_heartbeat_packet()
 {
     heartbeat_status_ = !heartbeat_status_;
+    witness_status_.set(
+        IRIS_WITNESS_STATUS_HEARTBEAT_MASK, heartbeat_status_);
     const std::uint32_t uptime_milliseconds =
         static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
 
     std::uint8_t payload[IRIS_PACKET_HEARTBEAT_DATA_LENGTH]{};
-    payload[IRIS_PACKET_HEARTBEAT_STATUS_OFFSET] =
-        static_cast<std::uint8_t>(heartbeat_status_ ? 0x01 : 0x00);
+    payload[IRIS_PACKET_HEARTBEAT_STATUS_OFFSET] = witness_status_.flags();
     payload[IRIS_PACKET_HEARTBEAT_UPTIME_OFFSET] =
         static_cast<std::uint8_t>(uptime_milliseconds >> 24);
     payload[IRIS_PACKET_HEARTBEAT_UPTIME_OFFSET + 1U] =
