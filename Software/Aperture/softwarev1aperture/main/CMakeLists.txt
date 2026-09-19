@@ -1,4 +1,4 @@
 idf_component_register(
-    SRCS "battery_voltage.cpp" "usb_serial_echo.cpp" "main.cpp"
+    SRCS "ra01.cpp" "main.cpp"
     INCLUDE_DIRS "."
-    PRIV_REQUIRES esp_adc esp_driver_gpio esp_driver_i2c esp_driver_twai esp_driver_usb_serial_jtag esp_timer vfs)
+    PRIV_REQUIRES esp_driver_gpio esp_driver_spi esp_driver_usb_serial_jtag)

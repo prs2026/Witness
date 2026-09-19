@@ -40,15 +40,25 @@
 // byte 0. Byte 1 is reserved and must be transmitted as zero. Flags are active
 // high; this is not a scaled numeric quantity.
 #define IRIS_FIELD_WITNESS_STATUS_LENGTH 2U
+// Byte 0, bit 0: toggles once per heartbeat period.
 #define IRIS_WITNESS_STATUS_HEARTBEAT_MASK (1U << 0)
+// Byte 0, bit 1: a valid LSM6 low-g acceleration sample is available.
 #define IRIS_WITNESS_STATUS_LOW_G_ACCEL_READY_MASK (1U << 1)
+// Byte 0, bit 2: a valid LSM6 gyroscope sample is available.
 #define IRIS_WITNESS_STATUS_GYRO_READY_MASK (1U << 2)
+// Byte 0, bit 3: a valid LSM6 temperature sample is available.
 #define IRIS_WITNESS_STATUS_IMU_TEMPERATURE_READY_MASK (1U << 3)
-// Required fault flag: the W25N01GW failed initialization or startup self-test.
+// Byte 0, bit 4: the W25N01GW failed initialization or startup self-test.
 #define IRIS_WITNESS_STATUS_FLASH_INIT_FAILED_MASK (1U << 4)
+// Byte 0, bit 5: a valid LSM6 high-g acceleration sample is available.
 #define IRIS_WITNESS_STATUS_HIGH_G_ACCEL_READY_MASK (1U << 5)
+// Byte 0, bit 6: a valid MS5607 sample is available.
 #define IRIS_WITNESS_STATUS_BAROMETER_READY_MASK (1U << 6)
+// Byte 0, bit 7: flash initialized, but logging later stopped on an error.
 #define IRIS_WITNESS_STATUS_FLASH_LOG_FAILED_MASK (1U << 7)
+// Status byte 1 (logical bits 8 through 15) is reserved and always zero.
+#define IRIS_WITNESS_STATUS_RESERVED_BYTE_OFFSET 1U
+#define IRIS_WITNESS_STATUS_RESERVED_BYTE_VALUE 0U
 
 // Witness uptime: big-endian uint32, milliseconds since boot. The counter
 // wraps after approximately 49.7 days.

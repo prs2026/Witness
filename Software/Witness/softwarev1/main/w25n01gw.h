@@ -62,6 +62,8 @@ private:
     static constexpr std::uint8_t kStatusWriteEnableLatch = 1U << 1;
     static constexpr std::uint8_t kStatusEraseFailure = 1U << 2;
     static constexpr std::uint8_t kStatusProgramFailure = 1U << 3;
+    static constexpr std::uint8_t kStatusEccMask = 3U << 4;
+    static constexpr std::uint8_t kStatusEccUncorrectable = 1U << 5;
     static constexpr std::uint8_t kConfigurationBufferRead = 1U << 3;
     static constexpr std::uint8_t kConfigurationEccEnable = 1U << 4;
     static constexpr std::uint8_t kBlockProtectionMask = 0x7C;

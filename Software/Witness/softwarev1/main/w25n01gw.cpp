@@ -247,7 +247,15 @@ esp_err_t W25n01gw::load_page_to_cache(const std::uint32_t page)
         static_cast<std::uint8_t>(page),
     };
     esp_err_t result = transmit(device_, tx, nullptr, sizeof(tx));
-    return result == ESP_OK ? wait_until_ready(kReadyTimeoutMs) : result;
+    std::uint8_t status = 0;
+    if (result == ESP_OK) {
+        result = wait_until_ready(kReadyTimeoutMs, &status);
+    }
+    if (result == ESP_OK &&
+        (status & kStatusEccMask) >= kStatusEccUncorrectable) {
+        return ESP_ERR_INVALID_CRC;
+    }
+    return result;
 }
 
 esp_err_t W25n01gw::read_cache(
@@ -372,6 +380,13 @@ esp_err_t W25n01gw::is_bad_block(
         static_cast<std::uint16_t>(kPageDataSize),
         &marker,
         1);
+    if (result == ESP_ERR_INVALID_CRC) {
+        // A factory-bad block can also report uncorrectable ECC while its
+        // marker page is loaded. Treat it as unusable rather than aborting
+        // initialization.
+        bad = true;
+        return ESP_OK;
+    }
     if (result == ESP_OK) {
         bad = marker != 0xFF;
     }

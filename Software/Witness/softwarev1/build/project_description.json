@@ -1870,7 +1870,7 @@
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/build/esp-idf/main/libmain.a",
-            "sources": [ "C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/main/ms5607.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/main/sensors.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/main/spi_data_forwarder.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/main/heartbeat.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/main/main.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/main/usb_serial_echo.cpp" ],
+            "sources": [ "C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/main/flash_logger.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/main/w25n01gw.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/main/ms5607.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/main/sensors.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/main/spi_data_forwarder.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/main/heartbeat.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/main/main.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/main/usb_serial_echo.cpp" ],
             "include_dirs": [ "." ]
         },
         "mbedtls": {
