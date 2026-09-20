@@ -1,0 +1,405 @@
+[13:45:54.789] RX[TCP_prs2026hitl_7100]  00 00 00 00 00 00 00 00 00 00 88 c5 00 00 00 90 0a 5e 43 5e 40 5e 43 40 5e 43 5e 40 5e 40 5e 40 5e 40
+[13:45:54.791] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 1 byte(s)
+[13:45:54.792] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 1 byte(s)
+[13:45:54.792] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 1 byte(s)
+[13:45:54.792] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 1 byte(s)
+[13:45:54.793] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 1 byte(s)
+[13:45:54.793] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 1 byte(s)
+[13:45:54.794] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 1 byte(s)
+[13:45:54.795] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 1 byte(s)
+[13:45:54.795] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 1 byte(s)
+[13:45:54.796] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 1 byte(s)
+[13:45:54.796] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x88; discarded 1 byte(s)
+[13:45:54.797] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0xc5; discarded 1 byte(s)
+[13:45:54.799] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 1 byte(s)
+[13:45:54.799] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 1 byte(s)
+[13:45:54.800] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x00; discarded 1 byte(s)
+[13:45:54.801] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x90; discarded 1 byte(s)
+[13:45:54.802] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x0a; discarded 1 byte(s)
+[13:45:54.802] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:54.803] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x43; discarded 1 byte(s)
+[13:45:54.804] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:54.804] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:54.805] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:54.805] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x43; discarded 1 byte(s)
+[13:45:54.806] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:54.807] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:54.807] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x43; discarded 1 byte(s)
+[13:45:54.808] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:54.808] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:54.809] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:54.809] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:54.810] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:54.810] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:54.811] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:54.811] BAD_PACKET[TCP_prs2026hitl_7100] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:54.812] RX[TCP_prs2026hitl_7101]  00 23 0a 01 76 00 00 00 20 7e 00 01 6e 00 4c 7d ff c4 0c ff da 00 1d 00 0a 00 22 0a 01 76 00 00 00 21 46 00 01 7a 00 4c 71 ff c4 0c ff d9 00 14 00 23 0a 01 7e 00 00 00 21 aa 00 01 7a 00 4c 7d
+[13:45:54.813] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x00; discarded 3 byte(s)
+[13:45:54.816] PACKET[TCP_prs2026hitl_7101] sensors: status=30208, uptime=8318, filtered_accel=[0.01464, 0.78324, -0.61392], gyro=[-2.66, 2.03, 0.7], sensor_trailing_u16=34
+[13:45:54.817] PACKET[TCP_prs2026hitl_7101] sensors: status=30208, uptime=8518, filtered_accel=[0.01512, 0.78276, -0.61392], gyro=[-2.73, 1.4, 2.45]
+[13:45:54.874] RX[TCP_prs2026hitl_7101]  ff c4 25 ff d8 00 00 22 0a 01 7e 00 00 00 22 0e 00 01 56 00 4c 65 ff c4 19 00 1e 0a 5a 40 5e 41 7a 5e 40 4c 95 ff c4 25 ff d9 5e 5e 08 08 40 08 08 4b 4c d8 5e 40 20 08 5e 40 40 40 0a 0a 0a 0a 57 20 28 32 32 39 37 37 32 31 29 20 73 65 72 69 61 6c 5f 63 6f 6d 6d 61 6e 64 3a 20 75 6e 6b 6e 6f 77 6e 20 63 6f 6d 6d 61 6e 64 3a 20 5e 40 5e 08 5e 40 5a 40 5e 41 5a 5e 40 4c 95 ff c4 25 ff d9 5e 5e 08 08 40 08 08 4b 4c d8 5e 40 20 08 5e 40 40 40 0d 0a 5a 5e 6e 08 0a 5e 41 76 5e 40 5e 40 5e 40 20 5e 40 22 0a 5e 41 76 5e 40 59 5e 40 20 5e 57 20 28 32 32 39 37 37 32 31 29 20 73 65 72 69 61 6c 5f 63 6f 6d 6d 61 6e 64 3a 20 75 6e 6b 6e 6f 77 6e 20 63 6f 6d 6d 61 6e 64 3a 20 5a 5e 4e 08 0d 0a 57 20 28 32 32 39 37 37 32 31 29 20 73 65 72 69 61 6c 5f 63 6f 6d 6d 61 6e 64 3a 20 75 6e 6b 6e 6f 77 6e 20 63 6f 6d 6d 61 6e 64 3a 20 5e 41 56 5e 40 5e 40 5e 40 20 5e 40 22 0d 0a
+[13:45:54.883] BAD_PACKET[TCP_prs2026hitl_7101] bad EOF for 0x01: expected 0x0a, got 0x00; resync=discard 1 byte
+[13:45:54.887] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x00; discarded 1 byte(s)
+[13:45:54.893] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x22; discarded 1 byte(s)
+[13:45:54.902] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x0e; discarded 1 byte(s)
+[13:45:54.905] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x00; discarded 1 byte(s)
+[13:45:54.909] BAD_PACKET[TCP_prs2026hitl_7101] bad EOF for 0x01: expected 0x0a, got 0xd9; resync=discard 1 byte
+[13:45:54.913] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:54.921] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x08; discarded 1 byte(s)
+[13:45:54.923] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x08; discarded 1 byte(s)
+[13:45:54.924] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:54.924] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x08; discarded 1 byte(s)
+[13:45:54.926] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x08; discarded 1 byte(s)
+[13:45:54.927] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x4b; discarded 1 byte(s)
+[13:45:54.928] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x4c; discarded 1 byte(s)
+[13:45:54.930] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0xd8; discarded 1 byte(s)
+[13:45:54.934] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:54.935] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:54.943] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:54.946] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x08; discarded 1 byte(s)
+[13:45:54.947] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:54.948] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:54.949] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:54.950] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:54.960] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x0a; discarded 1 byte(s)
+[13:45:54.961] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x0a; discarded 1 byte(s)
+[13:45:54.963] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x0a; discarded 1 byte(s)
+[13:45:54.964] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x0a; discarded 1 byte(s)
+[13:45:54.967] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x57; discarded 1 byte(s)
+[13:45:54.968] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:54.968] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x28; discarded 1 byte(s)
+[13:45:54.969] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x32; discarded 1 byte(s)
+[13:45:54.969] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x32; discarded 1 byte(s)
+[13:45:54.970] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x39; discarded 1 byte(s)
+[13:45:54.971] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x37; discarded 1 byte(s)
+[13:45:54.974] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x37; discarded 1 byte(s)
+[13:45:54.975] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x32; discarded 1 byte(s)
+[13:45:54.976] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x31; discarded 1 byte(s)
+[13:45:54.977] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x29; discarded 1 byte(s)
+[13:45:54.978] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:54.978] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x73; discarded 1 byte(s)
+[13:45:54.981] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x65; discarded 1 byte(s)
+[13:45:54.983] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x72; discarded 1 byte(s)
+[13:45:54.985] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x69; discarded 1 byte(s)
+[13:45:54.986] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x61; discarded 1 byte(s)
+[13:45:54.988] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6c; discarded 1 byte(s)
+[13:45:54.990] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5f; discarded 1 byte(s)
+[13:45:54.990] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x63; discarded 1 byte(s)
+[13:45:54.991] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6f; discarded 1 byte(s)
+[13:45:54.995] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6d; discarded 1 byte(s)
+[13:45:54.997] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6d; discarded 1 byte(s)
+[13:45:54.998] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x61; discarded 1 byte(s)
+[13:45:54.999] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6e; discarded 1 byte(s)
+[13:45:55.000] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x64; discarded 1 byte(s)
+[13:45:55.003] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x3a; discarded 1 byte(s)
+[13:45:55.004] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.004] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x75; discarded 1 byte(s)
+[13:45:55.005] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6e; discarded 1 byte(s)
+[13:45:55.005] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6b; discarded 1 byte(s)
+[13:45:55.006] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6e; discarded 1 byte(s)
+[13:45:55.006] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6f; discarded 1 byte(s)
+[13:45:55.009] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x77; discarded 1 byte(s)
+[13:45:55.010] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6e; discarded 1 byte(s)
+[13:45:55.010] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.011] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x63; discarded 1 byte(s)
+[13:45:55.011] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6f; discarded 1 byte(s)
+[13:45:55.012] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6d; discarded 1 byte(s)
+[13:45:55.013] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6d; discarded 1 byte(s)
+[13:45:55.013] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x61; discarded 1 byte(s)
+[13:45:55.014] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6e; discarded 1 byte(s)
+[13:45:55.015] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x64; discarded 1 byte(s)
+[13:45:55.015] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x3a; discarded 1 byte(s)
+[13:45:55.016] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.016] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.017] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.018] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.018] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x08; discarded 1 byte(s)
+[13:45:55.019] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.019] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.020] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5a; discarded 1 byte(s)
+[13:45:55.020] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.021] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.022] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x41; discarded 1 byte(s)
+[13:45:55.023] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5a; discarded 1 byte(s)
+[13:45:55.023] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.024] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.024] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x4c; discarded 1 byte(s)
+[13:45:55.025] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x95; discarded 1 byte(s)
+[13:45:55.025] BAD_PACKET[TCP_prs2026hitl_7101] bad EOF for 0xff: expected 0x0a, got 0x08; resync=discard 1 byte
+[13:45:55.026] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.026] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x08; discarded 1 byte(s)
+[13:45:55.027] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x08; discarded 1 byte(s)
+[13:45:55.027] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x4b; discarded 1 byte(s)
+[13:45:55.028] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x4c; discarded 1 byte(s)
+[13:45:55.029] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0xd8; discarded 1 byte(s)
+[13:45:55.030] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.030] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.031] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.031] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x08; discarded 1 byte(s)
+[13:45:55.032] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.032] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.033] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.033] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.034] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x0d; discarded 1 byte(s)
+[13:45:55.034] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x0a; discarded 1 byte(s)
+[13:45:55.035] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5a; discarded 1 byte(s)
+[13:45:55.040] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.040] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6e; discarded 1 byte(s)
+[13:45:55.041] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x08; discarded 1 byte(s)
+[13:45:55.041] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x0a; discarded 1 byte(s)
+[13:45:55.042] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.044] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x41; discarded 1 byte(s)
+[13:45:55.044] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x76; discarded 1 byte(s)
+[13:45:55.045] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.048] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.049] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.050] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.052] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.052] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.053] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.053] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.054] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.055] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x22; discarded 1 byte(s)
+[13:45:55.056] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x0a; discarded 1 byte(s)
+[13:45:55.056] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.058] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x41; discarded 1 byte(s)
+[13:45:55.059] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x76; discarded 1 byte(s)
+[13:45:55.059] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.060] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.061] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x59; discarded 1 byte(s)
+[13:45:55.061] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.062] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.063] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.064] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.066] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x57; discarded 1 byte(s)
+[13:45:55.066] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.067] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x28; discarded 1 byte(s)
+[13:45:55.068] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x32; discarded 1 byte(s)
+[13:45:55.068] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x32; discarded 1 byte(s)
+[13:45:55.069] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x39; discarded 1 byte(s)
+[13:45:55.069] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x37; discarded 1 byte(s)
+[13:45:55.070] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x37; discarded 1 byte(s)
+[13:45:55.070] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x32; discarded 1 byte(s)
+[13:45:55.073] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x31; discarded 1 byte(s)
+[13:45:55.074] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x29; discarded 1 byte(s)
+[13:45:55.074] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.075] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x73; discarded 1 byte(s)
+[13:45:55.075] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x65; discarded 1 byte(s)
+[13:45:55.076] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x72; discarded 1 byte(s)
+[13:45:55.076] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x69; discarded 1 byte(s)
+[13:45:55.078] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x61; discarded 1 byte(s)
+[13:45:55.079] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6c; discarded 1 byte(s)
+[13:45:55.081] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5f; discarded 1 byte(s)
+[13:45:55.082] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x63; discarded 1 byte(s)
+[13:45:55.082] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6f; discarded 1 byte(s)
+[13:45:55.083] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6d; discarded 1 byte(s)
+[13:45:55.083] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6d; discarded 1 byte(s)
+[13:45:55.084] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x61; discarded 1 byte(s)
+[13:45:55.084] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6e; discarded 1 byte(s)
+[13:45:55.085] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x64; discarded 1 byte(s)
+[13:45:55.087] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x3a; discarded 1 byte(s)
+[13:45:55.087] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.088] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x75; discarded 1 byte(s)
+[13:45:55.089] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6e; discarded 1 byte(s)
+[13:45:55.089] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6b; discarded 1 byte(s)
+[13:45:55.090] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6e; discarded 1 byte(s)
+[13:45:55.091] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6f; discarded 1 byte(s)
+[13:45:55.091] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x77; discarded 1 byte(s)
+[13:45:55.092] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6e; discarded 1 byte(s)
+[13:45:55.094] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.094] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x63; discarded 1 byte(s)
+[13:45:55.095] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6f; discarded 1 byte(s)
+[13:45:55.096] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6d; discarded 1 byte(s)
+[13:45:55.097] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6d; discarded 1 byte(s)
+[13:45:55.098] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x61; discarded 1 byte(s)
+[13:45:55.099] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6e; discarded 1 byte(s)
+[13:45:55.103] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x64; discarded 1 byte(s)
+[13:45:55.104] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x3a; discarded 1 byte(s)
+[13:45:55.104] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.105] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5a; discarded 1 byte(s)
+[13:45:55.105] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.106] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x4e; discarded 1 byte(s)
+[13:45:55.108] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x08; discarded 1 byte(s)
+[13:45:55.109] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x0d; discarded 1 byte(s)
+[13:45:55.110] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x0a; discarded 1 byte(s)
+[13:45:55.110] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x57; discarded 1 byte(s)
+[13:45:55.111] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.111] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x28; discarded 1 byte(s)
+[13:45:55.112] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x32; discarded 1 byte(s)
+[13:45:55.112] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x32; discarded 1 byte(s)
+[13:45:55.115] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x39; discarded 1 byte(s)
+[13:45:55.116] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x37; discarded 1 byte(s)
+[13:45:55.116] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x37; discarded 1 byte(s)
+[13:45:55.117] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x32; discarded 1 byte(s)
+[13:45:55.117] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x31; discarded 1 byte(s)
+[13:45:55.118] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x29; discarded 1 byte(s)
+[13:45:55.118] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.119] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x73; discarded 1 byte(s)
+[13:45:55.119] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x65; discarded 1 byte(s)
+[13:45:55.121] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x72; discarded 1 byte(s)
+[13:45:55.122] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x69; discarded 1 byte(s)
+[13:45:55.123] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x61; discarded 1 byte(s)
+[13:45:55.123] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6c; discarded 1 byte(s)
+[13:45:55.124] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5f; discarded 1 byte(s)
+[13:45:55.125] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x63; discarded 1 byte(s)
+[13:45:55.125] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6f; discarded 1 byte(s)
+[13:45:55.126] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6d; discarded 1 byte(s)
+[13:45:55.126] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6d; discarded 1 byte(s)
+[13:45:55.127] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x61; discarded 1 byte(s)
+[13:45:55.129] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6e; discarded 1 byte(s)
+[13:45:55.130] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x64; discarded 1 byte(s)
+[13:45:55.131] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x3a; discarded 1 byte(s)
+[13:45:55.132] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.132] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x75; discarded 1 byte(s)
+[13:45:55.133] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6e; discarded 1 byte(s)
+[13:45:55.134] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6b; discarded 1 byte(s)
+[13:45:55.137] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6e; discarded 1 byte(s)
+[13:45:55.138] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6f; discarded 1 byte(s)
+[13:45:55.139] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x77; discarded 1 byte(s)
+[13:45:55.139] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6e; discarded 1 byte(s)
+[13:45:55.140] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.140] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x63; discarded 1 byte(s)
+[13:45:55.141] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6f; discarded 1 byte(s)
+[13:45:55.144] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6d; discarded 1 byte(s)
+[13:45:55.144] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6d; discarded 1 byte(s)
+[13:45:55.145] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x61; discarded 1 byte(s)
+[13:45:55.145] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x6e; discarded 1 byte(s)
+[13:45:55.146] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x64; discarded 1 byte(s)
+[13:45:55.147] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x3a; discarded 1 byte(s)
+[13:45:55.148] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.153] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.155] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x41; discarded 1 byte(s)
+[13:45:55.158] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x56; discarded 1 byte(s)
+[13:45:55.159] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.160] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.160] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.161] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.167] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.167] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.168] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x20; discarded 1 byte(s)
+[13:45:55.168] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x5e; discarded 1 byte(s)
+[13:45:55.171] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x40; discarded 1 byte(s)
+[13:45:55.172] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x22; discarded 1 byte(s)
+[13:45:55.172] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x0d; discarded 1 byte(s)
+[13:45:55.173] BAD_PACKET[TCP_prs2026hitl_7101] unknown packet ID 0x0a; discarded 1 byte(s)
+[13:45:55.173] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 0f 76 00 01 9f 00 4c a2 ff c3 dc ff d6 00 15 00 24 0a
+[13:45:55.174] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2297718, filtered_accel=[0.0166, 0.78472, -0.61584], gyro=[-2.94, 1.47, 2.52]
+[13:45:55.175] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 0f da 00 01 9f 00 4c a2 ff c3 e8 ff d6 00 17 00 22 0a
+[13:45:55.179] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2297818, filtered_accel=[0.0166, 0.78472, -0.61536], gyro=[-2.94, 1.61, 2.38]
+[13:45:55.180] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 10 3e 00 01 93 00 4c a2 ff c3 e8 ff d6 00 16 00 24 0a
+[13:45:55.181] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2297918, filtered_accel=[0.01612, 0.78472, -0.61536], gyro=[-2.94, 1.54, 2.52]
+[13:45:55.182] RX[TCP_prs2026hitl_7100]  03 00 00 00 00 00 00 00 00 00 23 10 9d 00 00 00 13 98 0a
+[13:45:55.187] PACKET[TCP_prs2026hitl_7100] camera: fc_status=0, fc_uptime=0, status=0, uptime=2298013, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=5.016
+[13:45:55.282] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 10 a2 00 01 86 00 4c ae ff c3 e8 ff d7 00 15 00 24 0a
+[13:45:55.289] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2298018, filtered_accel=[0.0156, 0.7852, -0.61536], gyro=[-2.87, 1.47, 2.52]
+[13:45:55.295] RX[TCP_prs2026hitl_7101]  01 77 00 00 23 11 06 00 01 9f 00 4c a2 ff c4 00 ff d5 00 17 00 22 0a 02 77 00 00 23 11 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[13:45:55.298] PACKET[TCP_prs2026hitl_7101] sensors: status=30464, uptime=2298118, filtered_accel=[0.0166, 0.78472, -0.6144], gyro=[-3.01, 1.61, 2.38]
+[13:45:55.382] RX[TCP_prs2026hitl_7101]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 64 f4 a7 13 54 0a ff 76 00 00 23 11 06 0a
+[13:45:55.388] PACKET[TCP_prs2026hitl_7101] state: status=30464, uptime=2298118, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=228.955673, witness_battery_voltage=4.948
+[13:45:55.393] PACKET[TCP_prs2026hitl_7101] heartbeat: status=30208, uptime=2298118
+[13:45:55.462] RX[TCP_prs2026hitl_7101]  01 76 00 00 23 11 6a 00 01 86 00 4c a2 ff c3 dc ff d6 00 15 00 24 0a
+[13:45:55.465] PACKET[TCP_prs2026hitl_7101] sensors: status=30208, uptime=2298218, filtered_accel=[0.0156, 0.78472, -0.61584], gyro=[-2.94, 1.47, 2.52]
+[13:45:55.522] RX[TCP_prs2026hitl_7101]  01 76 00 00 23 11 ce 00 01 93 00 4c ae ff c3 e8 ff d6 00 14 00 24 0a
+[13:45:55.536] PACKET[TCP_prs2026hitl_7101] sensors: status=30208, uptime=2298318, filtered_accel=[0.01612, 0.7852, -0.61536], gyro=[-2.94, 1.4, 2.52]
+[13:45:55.601] RX[TCP_prs2026hitl_7101]  01 7e 00 00 23 12 32 00 01 86 00 4c 95 ff c3 dc ff d6 00 16 00 24 0a
+[13:45:55.603] PACKET[TCP_prs2026hitl_7101] sensors: status=32256, uptime=2298418, filtered_accel=[0.0156, 0.7842, -0.61584], gyro=[-2.94, 1.54, 2.52]
+[13:45:55.944] RX[TCP_prs2026hitl_7101]  01 7e 00 00 23 12 96 00 01 93 00 4c ae ff c3 e8 ff d6 00 17 00 23 0a
+[13:45:55.946] PACKET[TCP_prs2026hitl_7101] sensors: status=32256, uptime=2298518, filtered_accel=[0.01612, 0.7852, -0.61536], gyro=[-2.94, 1.61, 2.45]
+[13:45:55.947] RX[TCP_prs2026hitl_7101]  01 7e 00 00 23 12 fa 00 01 86 00 4c a2 ff c3 e8 ff d7 00 16 00 24 0a
+[13:45:55.949] PACKET[TCP_prs2026hitl_7101] sensors: status=32256, uptime=2298618, filtered_accel=[0.0156, 0.78472, -0.61536], gyro=[-2.87, 1.54, 2.52]
+[13:45:55.950] RX[TCP_prs2026hitl_7101]  01 7e 00 00 23 13 5e 00 01 93 00 4c ae ff c3 dc ff d7 00 15 00 24 0a
+[13:45:55.952] PACKET[TCP_prs2026hitl_7101] sensors: status=32256, uptime=2298718, filtered_accel=[0.01612, 0.7852, -0.61584], gyro=[-2.87, 1.47, 2.52]
+[13:45:56.059] RX[TCP_prs2026hitl_7101]  01 76 00 00 23 13 c2 00 01 9f 00 4c 95 ff c3 dc ff d6 00 17 00 22 0a
+[13:45:56.061] PACKET[TCP_prs2026hitl_7101] sensors: status=30208, uptime=2298818, filtered_accel=[0.0166, 0.7842, -0.61584], gyro=[-2.94, 1.61, 2.38]
+[13:45:56.186] RX[TCP_prs2026hitl_7100]  03 00 00 00 00 00 00 00 00 00 23 14 85 00 00 00 13 94 0a
+[13:45:56.191] PACKET[TCP_prs2026hitl_7100] camera: fc_status=0, fc_uptime=0, status=0, uptime=2299013, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=5.012
+[13:45:56.192] RX[TCP_prs2026hitl_7101]  01 76 00 00 23 14 26 00 01 93 00 4c 95 ff c3 cf ff d5 00 15 00 23 0a
+[13:45:56.193] PACKET[TCP_prs2026hitl_7101] sensors: status=30208, uptime=2298918, filtered_accel=[0.01612, 0.7842, -0.61636], gyro=[-3.01, 1.47, 2.45]
+[13:45:56.278] RX[TCP_prs2026hitl_7101]  01 76 00 00 23 14 8a 00 01 93 00 4c ae ff c3 e8 ff d8 00 15 00 25 0a
+[13:45:56.279] PACKET[TCP_prs2026hitl_7101] sensors: status=30208, uptime=2299018, filtered_accel=[0.01612, 0.7852, -0.61536], gyro=[-2.8, 1.47, 2.59]
+[13:45:56.432] RX[TCP_prs2026hitl_7101]  01 7e 00 00 23 14 ee 00 01 9f 00 4c a2 ff c3 dc ff d6 00 16 00 24 0a 02 7e 00 00 23 14 ee 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[13:45:56.433] PACKET[TCP_prs2026hitl_7101] sensors: status=32256, uptime=2299118, filtered_accel=[0.0166, 0.78472, -0.61584], gyro=[-2.94, 1.54, 2.52]
+[13:45:56.433] RX[TCP_prs2026hitl_7101]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 65 35 97 13 5c 0a ff 7f 00 00 23 14 ee 0a
+[13:45:56.434] PACKET[TCP_prs2026hitl_7101] state: status=32256, uptime=2299118, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=229.209335, witness_battery_voltage=4.956
+[13:45:56.435] PACKET[TCP_prs2026hitl_7101] heartbeat: status=32512, uptime=2299118
+[13:45:56.436] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 15 52 00 01 86 00 4c a2 ff c3 e8 ff d6 00 17 00 22 0a
+[13:45:56.437] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2299218, filtered_accel=[0.0156, 0.78472, -0.61536], gyro=[-2.94, 1.61, 2.38]
+[13:45:56.544] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 15 b6 00 01 93 00 4c ae ff c3 f4 ff d7 00 15 00 24 0a
+[13:45:56.547] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2299318, filtered_accel=[0.01612, 0.7852, -0.61488], gyro=[-2.87, 1.47, 2.52]
+[13:45:56.598] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 16 1a 00 01 86 00 4c ae ff c3 e8 ff d7 00 15 00 24 0a
+[13:45:56.600] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2299418, filtered_accel=[0.0156, 0.7852, -0.61536], gyro=[-2.87, 1.47, 2.52]
+[13:45:56.700] RX[TCP_prs2026hitl_7101]  01 77 00 00 23 16 7e 00 01 93 00 4c ae ff c3 f4 ff d6 00 18 00 22 0a
+[13:45:56.703] PACKET[TCP_prs2026hitl_7101] sensors: status=30464, uptime=2299518, filtered_accel=[0.01612, 0.7852, -0.61488], gyro=[-2.94, 1.68, 2.38]
+[13:45:56.823] RX[TCP_prs2026hitl_7101]  01 77 00 00 23 16 e2 00 01 93 00 4c 95 ff c3 dc ff d6 00 16 00 24 0a
+[13:45:56.826] PACKET[TCP_prs2026hitl_7101] sensors: status=30464, uptime=2299618, filtered_accel=[0.01612, 0.7842, -0.61584], gyro=[-2.94, 1.54, 2.52]
+[13:45:56.929] RX[TCP_prs2026hitl_7101]  01 77 00 00 23 17 46 00 01 93 00 4c ae ff c3 c3 ff d7 00 15 00 24 0a
+[13:45:56.931] PACKET[TCP_prs2026hitl_7101] sensors: status=30464, uptime=2299718, filtered_accel=[0.01612, 0.7852, -0.61684], gyro=[-2.87, 1.47, 2.52]
+[13:45:57.033] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 17 aa 00 01 9f 00 4c ae ff c3 e8 ff d5 00 16 00 24 0a
+[13:45:57.041] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2299818, filtered_accel=[0.0166, 0.7852, -0.61536], gyro=[-3.01, 1.54, 2.52]
+[13:45:57.212] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 18 0e 00 01 93 00 4c ba ff c3 f4 ff d6 00 17 00 22 0a
+[13:45:57.215] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2299918, filtered_accel=[0.01612, 0.78568, -0.61488], gyro=[-2.94, 1.61, 2.38]
+[13:45:57.217] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 18 72 00 01 93 00 4c ae ff c3 dc ff d7 00 14 00 25 0a
+[13:45:57.224] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2300018, filtered_accel=[0.01612, 0.7852, -0.61584], gyro=[-2.87, 1.4, 2.59]
+[13:45:57.230] RX[TCP_prs2026hitl_7100]  03 00 00 00 00 00 00 00 00 00 23 18 6d 00 00 00 13 94 0a
+[13:45:57.232] PACKET[TCP_prs2026hitl_7100] camera: fc_status=0, fc_uptime=0, status=0, uptime=2300013, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=5.012
+[13:45:57.304] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 18 d6 00 01 9f 00 4c ae ff c4 00 ff d6 00 15 00 24 0a 02 7f 00 00 23 18 d6 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[13:45:57.321] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2300118, filtered_accel=[0.0166, 0.7852, -0.6144], gyro=[-2.94, 1.47, 2.52]
+[13:45:57.434] RX[TCP_prs2026hitl_7101]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 64 f4 a7 13 50 0a ff 7e 00 00 23 18 d6 0a
+[13:45:57.438] PACKET[TCP_prs2026hitl_7101] state: status=32512, uptime=2300118, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=228.955673, witness_battery_voltage=4.944
+[13:45:57.441] PACKET[TCP_prs2026hitl_7101] heartbeat: status=32256, uptime=2300118
+[13:45:57.444] RX[TCP_prs2026hitl_7101]  01 76 00 00 23 19 3a 00 01 86 00 4c a2 ff c3 dc ff d5 00 18 00 22 0a
+[13:45:57.447] PACKET[TCP_prs2026hitl_7101] sensors: status=30208, uptime=2300218, filtered_accel=[0.0156, 0.78472, -0.61584], gyro=[-3.01, 1.68, 2.38]
+[13:45:57.498] RX[TCP_prs2026hitl_7101]  01 76 00 00 23 19 9e 00 01 93 00 4c a2 ff c3 e8 ff d6 00 16 00 24 0a
+[13:45:57.500] PACKET[TCP_prs2026hitl_7101] sensors: status=30208, uptime=2300318, filtered_accel=[0.01612, 0.78472, -0.61536], gyro=[-2.94, 1.54, 2.52]
+[13:45:57.601] RX[TCP_prs2026hitl_7101]  01 76 00 00 23 1a 02 00 01 86 00 4c a2 ff c3 dc ff d6 00 15 00 24 0a
+[13:45:57.604] PACKET[TCP_prs2026hitl_7101] sensors: status=30208, uptime=2300418, filtered_accel=[0.0156, 0.78472, -0.61584], gyro=[-2.94, 1.47, 2.52]
+[13:45:57.756] RX[TCP_prs2026hitl_7101]  01 7e 00 00 23 1a 66 00 01 9f 00 4c ae ff c3 e8 ff d6 00 16 00 24 0a
+[13:45:57.758] PACKET[TCP_prs2026hitl_7101] sensors: status=32256, uptime=2300518, filtered_accel=[0.0166, 0.7852, -0.61536], gyro=[-2.94, 1.54, 2.52]
+[13:45:57.818] RX[TCP_prs2026hitl_7101]  01 7e 00 00 23 1a ca 00 01 93 00 4c ae ff c3 f4 ff d6 00 17 00 22 0a
+[13:45:57.820] PACKET[TCP_prs2026hitl_7101] sensors: status=32256, uptime=2300618, filtered_accel=[0.01612, 0.7852, -0.61488], gyro=[-2.94, 1.61, 2.38]
+[13:45:57.937] RX[TCP_prs2026hitl_7101]  01 7e 00 00 23 1b 2e 00 01 9f 00 4c 95 ff c3 e8 ff d6 00 15 00 25 0a
+[13:45:57.939] PACKET[TCP_prs2026hitl_7101] sensors: status=32256, uptime=2300718, filtered_accel=[0.0166, 0.7842, -0.61536], gyro=[-2.94, 1.47, 2.59]
+[13:45:58.042] RX[TCP_prs2026hitl_7101]  01 7e 00 00 23 1b 92 00 01 9f 00 4c 95 ff c3 e8 ff d8 00 15 00 24 0a
+[13:45:58.043] PACKET[TCP_prs2026hitl_7101] sensors: status=32256, uptime=2300818, filtered_accel=[0.0166, 0.7842, -0.61536], gyro=[-2.8, 1.47, 2.52]
+[13:45:58.144] RX[TCP_prs2026hitl_7101]  01 76 00 00 23 1b f6 00 01 93 00 4c a2 ff c3 e8 ff d6 00 17 00 21 0a
+[13:45:58.146] PACKET[TCP_prs2026hitl_7101] sensors: status=30208, uptime=2300918, filtered_accel=[0.01612, 0.78472, -0.61536], gyro=[-2.94, 1.61, 2.31]
+[13:45:58.216] RX[TCP_prs2026hitl_7100]  03 00 00 00 00 00 00 00 00 00 23 1c 55 00 00 00 13 94 0a
+[13:45:58.223] PACKET[TCP_prs2026hitl_7100] camera: fc_status=0, fc_uptime=0, status=0, uptime=2301013, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=5.012
+[13:45:58.237] RX[TCP_prs2026hitl_7101]  01 76 00 00 23 1c 5a 00 01 86 00 4c a2 ff c3 e8 ff d7 00 15 00 24 0a
+[13:45:58.248] PACKET[TCP_prs2026hitl_7101] sensors: status=30208, uptime=2301018, filtered_accel=[0.0156, 0.78472, -0.61536], gyro=[-2.87, 1.47, 2.52]
+[13:45:58.307] RX[TCP_prs2026hitl_7101]  01 76 00 00 23 1c be 00 01 9f 00 4c ae ff c4 00 ff d7 00 15 00 24 0a 02 76 00 00 23 1c be 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[13:45:58.309] PACKET[TCP_prs2026hitl_7101] sensors: status=30208, uptime=2301118, filtered_accel=[0.0166, 0.7852, -0.6144], gyro=[-2.87, 1.47, 2.52]
+[13:45:58.376] RX[TCP_prs2026hitl_7101]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 65 1f f2 13 50 0a ff 77 00 00 23 1c be 0a
+[13:45:58.377] PACKET[TCP_prs2026hitl_7101] state: status=30208, uptime=2301118, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=229.124786, witness_battery_voltage=4.944
+[13:45:58.378] PACKET[TCP_prs2026hitl_7101] heartbeat: status=30464, uptime=2301118
+[13:45:58.433] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 1d 22 00 01 93 00 4c 95 ff c3 cf ff d6 00 16 00 25 0a
+[13:45:58.452] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2301218, filtered_accel=[0.01612, 0.7842, -0.61636], gyro=[-2.94, 1.54, 2.59]
+[13:45:58.511] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 1d 86 00 01 9f 00 4c 95 ff c3 c3 ff d6 00 17 00 22 0a
+[13:45:58.529] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2301318, filtered_accel=[0.0166, 0.7842, -0.61684], gyro=[-2.94, 1.61, 2.38]
+[13:45:58.648] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 1d ea 00 01 86 00 4c a2 ff c3 e8 ff d6 00 15 00 24 0a
+[13:45:58.649] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2301418, filtered_accel=[0.0156, 0.78472, -0.61536], gyro=[-2.94, 1.47, 2.52]
+[13:45:58.751] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 1e 4e 00 01 93 00 4c a2 ff c3 e8 ff d7 00 14 00 24 0a
+[13:45:58.753] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2301518, filtered_accel=[0.01612, 0.78472, -0.61536], gyro=[-2.87, 1.4, 2.52]
+[13:45:58.806] RX[TCP_prs2026hitl_7101]  01 77 00 00 23 1e b2 00 01 86 00 4c a2 ff c3 cf ff d6 00 17 00 22 0a
+[13:45:58.807] PACKET[TCP_prs2026hitl_7101] sensors: status=30464, uptime=2301618, filtered_accel=[0.0156, 0.78472, -0.61636], gyro=[-2.94, 1.61, 2.38]
+[13:45:58.908] RX[TCP_prs2026hitl_7101]  01 77 00 00 23 1f 16 00 01 93 00 4c ae ff c4 00 ff d6 00 16 00 24 0a
+[13:45:58.911] PACKET[TCP_prs2026hitl_7101] sensors: status=30464, uptime=2301718, filtered_accel=[0.01612, 0.7852, -0.6144], gyro=[-2.94, 1.54, 2.52]
+[13:45:59.021] RX[TCP_prs2026hitl_7101]  01 77 00 00 23 1f 7a 00 01 9f 00 4c ae ff c3 f4 ff d7 00 15 00 25 0a
+[13:45:59.023] PACKET[TCP_prs2026hitl_7101] sensors: status=30464, uptime=2301818, filtered_accel=[0.0166, 0.7852, -0.61488], gyro=[-2.87, 1.47, 2.59]
+[13:45:59.175] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 1f de 00 01 86 00 4c 95 ff c3 cf ff d6 00 16 00 24 0a
+[13:45:59.176] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2301918, filtered_accel=[0.0156, 0.7842, -0.61636], gyro=[-2.94, 1.54, 2.52]
+[13:45:59.176] RX[TCP_prs2026hitl_7100]  03 00 00 00 00 00 00 00 00 00 23 20 3d 00 00 00 13 98 0a
+[13:45:59.177] PACKET[TCP_prs2026hitl_7100] camera: fc_status=0, fc_uptime=0, status=0, uptime=2302013, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=5.016
+[13:45:59.230] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 20 42 00 01 9f 00 4c a2 ff c3 c3 ff d6 00 17 00 23 0a
+[13:45:59.231] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2302018, filtered_accel=[0.0166, 0.78472, -0.61684], gyro=[-2.94, 1.61, 2.45]
+[13:45:59.332] RX[TCP_prs2026hitl_7101]  01 7f 00 00 23 20 a6 00 01 86 00 4c 95 ff c3 e8 ff d7 00 15 00 24 0a 02 7f 00 00 23 20 a6 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[13:45:59.334] PACKET[TCP_prs2026hitl_7101] sensors: status=32512, uptime=2302118, filtered_accel=[0.0156, 0.7842, -0.61536], gyro=[-2.87, 1.47, 2.52]
+[13:45:59.386] RX[TCP_prs2026hitl_7101]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 64 f4 a7 13 50 0a ff 7e 00 00 23 20 a6 0a
+[13:45:59.388] PACKET[TCP_prs2026hitl_7101] state: status=32512, uptime=2302118, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=228.955673, witness_battery_voltage=4.944
+[13:45:59.389] PACKET[TCP_prs2026hitl_7101] heartbeat: status=32256, uptime=2302118
+[13:45:59.440] RX[TCP_prs2026hitl_7101]  01 7e 00 00 23 21 0a 00 01 86 00 4c ae ff c3 dc ff d6 00 15 00 25 0a
+[13:45:59.442] PACKET[TCP_prs2026hitl_7101] sensors: status=32256, uptime=2302218, filtered_accel=[0.0156, 0.7852, -0.61584], gyro=[-2.94, 1.47, 2.59]
+[13:45:59.543] RX[TCP_prs2026hitl_7101]  01 76 00 00 23 21 6e 00 01 ab 00 4c ae ff c3 dc ff d6 00 17 00 22 0a
+[13:45:59.548] PACKET[TCP_prs2026hitl_7101] sensors: status=30208, uptime=2302318, filtered_accel=[0.01708, 0.7852, -0.61584], gyro=[-2.94, 1.61, 2.38]
+[13:45:59.631] RX[TCP_prs2026hitl_7101]  01 76 00 00 23 21 d2 00 01 9f 00 4c ba ff c3 e8 ff d6 00 16 00 24 0a
+[13:45:59.636] PACKET[TCP_prs2026hitl_7101] sensors: status=30208, uptime=2302418, filtered_accel=[0.0166, 0.78568, -0.61536], gyro=[-2.94, 1.54, 2.52]
