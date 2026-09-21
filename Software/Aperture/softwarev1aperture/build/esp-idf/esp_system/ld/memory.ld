@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 /**
- *                    ESP32-C3 Linker Script Memory Layout
+ *                    ESP32-S3 Linker Script Memory Layout
  * This file describes the memory layout (memory blocks) by virtual memory addresses.
  * This linker script is passed through the C preprocessor to include configuration options.
  * Please use preprocessor features sparingly!
@@ -44,11 +44,17 @@
  * the location will be moved to 0x3000 instead of 0x2000 because less than
  * half of the current 4 KB block remains (0x2000 - 0x1900 < 2 KB).
  */
-/**
- * physical memory is mapped twice to the virtual address (IRAM and DRAM).
- * `I_D_SRAM_OFFSET` is the offset between the two locations of the same physical memory
+/*
+ * 40370000 <- IRAM/Icache -> 40378000 <- D/IRAM (I) -> 403E0000
+ *                            3FC88000 <- D/IRAM (D) -> 3FCF0000 <- DRAM/DCache -> 3FD00000
+ *
+ * Startup code uses the IRAM from 0x403B9000 to 0x403E0000, which is not available for static
+ * memory, but can only be used after app starts.
+ *
+ * D cache use the memory from high address, so when it's configured to 16K/32K, the region
+ * 0x3FCF000 ~ (3FD00000 - DATA_CACHE_SIZE) should be available. This region is not used as
+ * static memory, leaving to the heap.
  */
-_iram_dram_shared = 1;
 MEMORY
 {
   /**
@@ -57,7 +63,7 @@ MEMORY
    *  are connected to the data port of the CPU and eg allow byte-wise access.
    */
   /* IRAM for PRO CPU. */
-  iram0_0_seg (RX) : org = (0x4037C000 + 0x4000), len = 0x403CE710 - (0x4037C000 - 0x3FC7C000) - (0x3FC7C000 + 0x4000)
+  iram0_0_seg (RX) : org = (0x40370000 + 0x4000), len = (((0x403CB700 - (0x40378000 - 0x3FC88000)) - 0x3FC88000) + 0x8000 - 0x4000)
   /* Flash mapped instruction data */
   iram0_2_seg (RX) : org = 0x42000020, len = 0x800000-0x20
   /**
@@ -71,43 +77,68 @@ MEMORY
    * Shared data RAM, excluding memory reserved for ROM bss/data/stack.
    * Enabling Bluetooth & Trace Memory features in menuconfig will decrease the amount of RAM available.
    */
-  dram0_0_seg (RW) : org = (0x3FC7C000 + 0x4000), len = 0x403CE710 - (0x4037C000 - 0x3FC7C000) - (0x3FC7C000 + 0x4000)
+  dram0_0_seg (RW) : org = (0x3FC88000), len = ((0x403CB700 - (0x40378000 - 0x3FC88000)) - 0x3FC88000)
   /* Flash mapped constant data */
-  drom0_0_seg (R) : org = 0x3C000020, len = 0x800000-0x20
+  drom0_0_seg (R) : org = 0x3C000020, len = 0x2000000-0x20
   /* (See iram0_2_seg for meaning of 0x20 offset in the above.) */
 /**
- *  RTC Memory (LP RAM) Layout for ESP32-C3
- *  Total Size: 8KB (0x2000)
- *  Address Range: 0x50000000 - 0x50002000
+ *  RTC Memory Layout for ESP32-S3
  *
- *  ESP32-C3 has only unified RTC FAST memory (no separate RTC SLOW).
- *  The LP RAM persists over deep sleep and is used for:
- *  - RTC wake stub code and data
- *  - Data that needs to survive deep sleep
- *  - Bootloader retain memory (for reboot counter, OTA info, etc.)
+ *  ESP32-S3 has two separate RTC memory regions:
+ *  1. RTC FAST Memory: 8KB, used for RTC code and data
+ *  2. RTC SLOW Memory: 8KB, used for ULP coprocessor
  *
- *  +-----------------------------+ 0x50002000 (RTC memory end)
- *  | bootloader_data_rtc_mem     |
+ *  ==================== RTC FAST Memory ====================
+ *  Size: 8KB (0x2000)
+ *  Address: 0x600FE000 - 0x60100000 (data and instruction access on same bus)
+ *
+ *  +-----------------------------+ 0x60100000 (RTC FAST memory end)
+ *  |     rtc_reserved_seg        |
+ *  |      (RESERVE_RTC_MEM)      |
+ *  |- - - - - - - - - - - - - - -|
+ *  | bootloader_data_rtc_mem     | s_bootloader_retain_mem
  *  | (ESP_BOOTLOADER_RESERVE_RTC)|
- *  |- - - - - - - - - - - - - - -| rtc_reserved_seg (RESERVE_RTC_MEM)
- *  | rtc_timer_data_in_rtc_mem   |
- *  | (RTC_TIMER_RESERVE_RTC=24B) |
- *  +-----------------------------+ 0x50002000 - RESERVE_RTC_MEM
- *  | .rtc.force_slow             |
- *  | .rtc_noinit (NOLOAD)        |
- *  | .rtc.bss (NOLOAD)           |
- *  | .rtc.data                   | rtc_iram_seg (= rtc_data_seg = rtc_slow_seg)
- *  | .rtc.force_fast             |
+ *  |- - - - - - - - - - - - - - -|
+ *  | rtc_timer_data_in_rtc_mem   | s_rtc_timer_retain_mem (24 bytes)
+ *  | (RTC_TIMER_RESERVE_RTC)     |
+ *  +-----------------------------+ 0x60100000 - RESERVE_RTC_MEM
+ *  |     rtc_iram_seg            |
+ *  |     (= rtc_data_seg)        |
  *  |- - - - - - - - - - - - - - -|
  *  | .rtc.text                   | RTC wake stub code
- *  +-----------------------------+ 0x50000000 (RTC memory start)
+ *  |- - - - - - - - - - - - - - -|
+ *  | .rtc.data / .rtc.rodata     | (when CONFIG_ESP32S3_RTCDATA_IN_FAST_MEM)
+ *  |- - - - - - - - - - - - - - -|
+ *  | .rtc.bss                    |
+ *  +-----------------------------+ 0x600FE000 (RTC FAST memory start)
  *
- *  RESERVE_RTC_MEM = RTC_TIMER_RESERVE_RTC (24B) + ESP_BOOTLOADER_RESERVE_RTC
+ *  ==================== RTC SLOW Memory ====================
+ *  Size: 8KB (0x2000)
+ *  Address: 0x50000000 - 0x50002000
+ *
+ *  +-----------------------------+ 0x50002000 (RTC FAST memory end)
+ *  |      rtc_slow_seg           |
+ *  |- - - - - - - - - - - - - - -|
+ *  | .rtc.data / .rtc.rodata     | (when !CONFIG_ESP32S3_RTCDATA_IN_FAST_MEM)
+ *  |- - - - - - - - - - - - - - -|
+ *  | .rtc.bss                    |
+ *  +-----------------------------+ 0x50000000 + CONFIG_ULP_COPROC_RESERVE_MEM (if ULP enabled)
+ *  | ULP Coprocessor Reserve     | (Optional, CONFIG_ULP_COPROC_RESERVE_MEM)
+ *  | (code + data)               |
+ *  +-----------------------------+ 0x50000000 (RTC FAST memory start)
+ *
+ *  RESERVE_RTC_MEM calculation:
+ *    - RTC_TIMER_RESERVE_RTC = 24 bytes
+ *    - ESP_BOOTLOADER_RESERVE_RTC = ALIGN_UP(CONFIG_BOOTLOADER_RESERVE_RTC_SIZE, 8)
+ *
+ *  Note: RTC FAST memory shares the same address range for both data and
+ *        instruction access. RTC data can be placed in either FAST or SLOW
+ *        memory based on CONFIG_ESP32S3_RTCDATA_IN_FAST_MEM configuration.
  */
   /**
    * RTC fast memory (executable). Persists over deep sleep.
    */
-  rtc_iram_seg(RWX) : org = 0x50000000, len = 0x2000 - (0 + (24) + 0)
+  rtc_iram_seg(RWX) : org = 0x600fe000, len = 0x2000 - (0 + (24) + 0)
   /* We reduced the size of rtc_iram_seg by RESERVE_RTC_MEM value.
      It reserves the amount of RTC fast memory that we use for this memory segment.
      This segment is intended for keeping:
@@ -115,21 +146,30 @@ MEMORY
        - (higher addr) bootloader rtc data (s_bootloader_retain_mem, when a Kconfig option is on).
      The aim of this is to keep data that will not be moved around and have a fixed address.
   */
-  rtc_reserved_seg(RW) : org = 0x50000000 + 0x2000 - (0 + (24) + 0), len = (0 + (24) + 0)
+  rtc_reserved_seg(RW) : org = 0x600fe000 + 0x2000 - (0 + (24) + 0), len = (0 + (24) + 0)
+  /**
+   * RTC slow memory (data accessible). Persists over deep sleep.
+   * Start of RTC slow memory is reserved for ULP co-processor code + data, if enabled.
+   */
+  rtc_slow_seg(RW) : org = 0x50000000 , len = 0x2000
+  /**
+   * `extern_ram_seg` and `drom0_0_seg` share the same bus and the address region.
+   * A dummy section is used to avoid overlap. See `.ext_ram.dummy` in `sections.ld.in`
+   */
+  extern_ram_seg(RWX) : org = 0x3c000020 , len = 0x2000000-0x20
 }
+_diram_i_start = 0x40378000;
+_heap_start = _heap_low_start;
 /* Heap ends at top of dram0_0_seg */
 _heap_end = 0x40000000;
-/**
- *  The lines below define location alias for .rtc.data section
- *  As C3 only has RTC fast memory, this is not configurable like on other targets
- */
-REGION_ALIAS("rtc_text_seg", rtc_iram_seg);
+/* RTC fast memory shares the same range for both data and instructions */
 REGION_ALIAS("rtc_data_seg", rtc_iram_seg );
-REGION_ALIAS("rtc_slow_seg", rtc_iram_seg );
-REGION_ALIAS("rtc_force_fast_seg", rtc_iram_seg);
-REGION_ALIAS("rtc_force_slow_seg", rtc_iram_seg);
-REGION_ALIAS("iram_text_seg", iram0_0_seg);
-REGION_ALIAS("dram_seg", dram0_0_seg);
-  REGION_ALIAS("flash_text_seg", iram0_2_seg);
-  REGION_ALIAS("flash_rodata_seg", drom0_0_seg);
-ALIGN_VECTOR_TABLE = 0x100;
+REGION_ALIAS("rtc_data_location", rtc_slow_seg );
+REGION_ALIAS("default_code_seg", iram0_2_seg);
+REGION_ALIAS("default_rodata_seg", drom0_0_seg);
+/**
+ *  If rodata default segment is placed in `drom0_0_seg`, then flash's first rodata section must
+ *  also be first in the segment.
+ */
+  ASSERT(_flash_rodata_dummy_start == ORIGIN(default_rodata_seg),
+         ".flash_rodata_dummy section must be placed at the beginning of the rodata segment.")

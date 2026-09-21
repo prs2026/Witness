@@ -50,33 +50,33 @@ esp_err_t Ra01::initialize()
     if (initialized_) return ESP_ERR_INVALID_STATE;
 
     gpio_config_t outputs{};
-    outputs.pin_bit_mask = (1ULL << IRIS_PIN_RADIO_CS) |
-                           (1ULL << IRIS_PIN_RADIO_RESET) |
-                           (1ULL << IRIS_PIN_RADIO_RF_ENABLE);
+    outputs.pin_bit_mask = (1ULL << APERTURE_PIN_RADIO_CS) |
+                           (1ULL << APERTURE_PIN_RADIO_RESET) |
+                           (1ULL << APERTURE_PIN_RADIO_RF_ENABLE);
     outputs.mode = GPIO_MODE_OUTPUT;
     outputs.intr_type = GPIO_INTR_DISABLE;
     esp_err_t result = gpio_config(&outputs);
     if (result != ESP_OK) return result;
 
     gpio_config_t inputs{};
-    inputs.pin_bit_mask = (1ULL << IRIS_PIN_RADIO_BUSY) |
-                          (1ULL << IRIS_PIN_RADIO_DIO1);
+    inputs.pin_bit_mask = (1ULL << APERTURE_PIN_RADIO_BUSY) |
+                          (1ULL << APERTURE_PIN_RADIO_DIO1);
     inputs.mode = GPIO_MODE_INPUT;
     inputs.intr_type = GPIO_INTR_DISABLE;
     result = gpio_config(&inputs);
     if (result != ESP_OK) return result;
 
-    gpio_set_level(IRIS_PIN_RADIO_CS, 1);
-    gpio_set_level(IRIS_PIN_RADIO_RF_ENABLE, 1);
-    gpio_set_level(IRIS_PIN_RADIO_RESET, 0);
+    gpio_set_level(APERTURE_PIN_RADIO_CS, 1);
+    gpio_set_level(APERTURE_PIN_RADIO_RF_ENABLE, 1);
+    gpio_set_level(APERTURE_PIN_RADIO_RESET, 0);
     vTaskDelay(pdMS_TO_TICKS(2));
-    gpio_set_level(IRIS_PIN_RADIO_RESET, 1);
+    gpio_set_level(APERTURE_PIN_RADIO_RESET, 1);
     vTaskDelay(pdMS_TO_TICKS(10));
 
     spi_bus_config_t bus{};
-    bus.mosi_io_num = IRIS_PIN_RADIO_SPI_MOSI;
-    bus.miso_io_num = IRIS_PIN_RADIO_SPI_MISO;
-    bus.sclk_io_num = IRIS_PIN_RADIO_SPI_SCK;
+    bus.mosi_io_num = APERTURE_PIN_RADIO_SPI_MOSI;
+    bus.miso_io_num = APERTURE_PIN_RADIO_SPI_MISO;
+    bus.sclk_io_num = APERTURE_PIN_RADIO_SPI_SCK;
     bus.quadwp_io_num = -1;
     bus.quadhd_io_num = -1;
     result = spi_bus_initialize(SPI2_HOST, &bus, SPI_DMA_DISABLED);
@@ -85,7 +85,7 @@ esp_err_t Ra01::initialize()
     spi_device_interface_config_t device{};
     device.clock_speed_hz = kSpiClockHz;
     device.mode = 0;
-    device.spics_io_num = IRIS_PIN_RADIO_CS;
+    device.spics_io_num = APERTURE_PIN_RADIO_CS;
     device.queue_size = 1;
     result = spi_bus_add_device(SPI2_HOST, &device, &spi_device_);
     if (result != ESP_OK) {
@@ -101,7 +101,7 @@ esp_err_t Ra01::initialize()
     if (result != ESP_OK) return result;
 
     const std::uint32_t frequency_word = static_cast<std::uint32_t>(
-        (static_cast<std::uint64_t>(IRIS_RADIO_FREQUENCY_HZ) << 25U) /
+        (static_cast<std::uint64_t>(APERTURE_RADIO_FREQUENCY_HZ) << 25U) /
         32000000ULL);
     std::array<std::uint8_t, 4> frequency{};
     store_u32_be(frequency.data(), frequency_word);
@@ -109,16 +109,16 @@ esp_err_t Ra01::initialize()
     if (result != ESP_OK) return result;
 
     const std::uint8_t modulation[] = {
-        static_cast<std::uint8_t>(IRIS_RADIO_SPREADING_FACTOR),
+        static_cast<std::uint8_t>(APERTURE_RADIO_SPREADING_FACTOR),
         0x04U,  // 125 kHz bandwidth
-        static_cast<std::uint8_t>(IRIS_RADIO_CODING_RATE), 0x00U};
+        static_cast<std::uint8_t>(APERTURE_RADIO_CODING_RATE), 0x00U};
     result = write_command(kSetModulationParams, modulation,
                            sizeof(modulation));
     if (result != ESP_OK) return result;
 
     const std::uint8_t packet_params[] = {
-        static_cast<std::uint8_t>(IRIS_RADIO_PREAMBLE_LENGTH >> 8U),
-        static_cast<std::uint8_t>(IRIS_RADIO_PREAMBLE_LENGTH), 0x00U, 0xFFU,
+        static_cast<std::uint8_t>(APERTURE_RADIO_PREAMBLE_LENGTH >> 8U),
+        static_cast<std::uint8_t>(APERTURE_RADIO_PREAMBLE_LENGTH), 0x00U, 0xFFU,
         0x01U, 0x00U};  // explicit header, CRC on, normal IQ
     result = write_command(kSetPacketParams, packet_params,
                            sizeof(packet_params));
@@ -169,7 +169,13 @@ esp_err_t Ra01::receive(std::uint8_t *data, const std::size_t capacity,
     result = read_command(kGetRxBufferStatus, status, sizeof(status));
     if (result != ESP_OK) return result;
     const std::size_t packet_length = status[0];
-    if (packet_length > capacity) return ESP_ERR_INVALID_SIZE;
+    if (packet_length > capacity) {
+        // Do not leave RxDone asserted: that would make every subsequent
+        // receive call report the same packet forever.
+        const std::uint8_t clear[] = {0x00U, 0xFFU};
+        (void)write_command(kClearIrqStatus, clear, sizeof(clear));
+        return ESP_ERR_INVALID_SIZE;
+    }
 
     result = read_buffer(status[1], data, packet_length);
     const std::uint8_t clear[] = {0x00U, 0xFFU};
@@ -182,7 +188,7 @@ esp_err_t Ra01::wait_until_ready()
 {
     const TickType_t deadline = xTaskGetTickCount() +
                                 pdMS_TO_TICKS(kBusyTimeoutMs);
-    while (gpio_get_level(IRIS_PIN_RADIO_BUSY) != 0) {
+    while (gpio_get_level(APERTURE_PIN_RADIO_BUSY) != 0) {
         if (xTaskGetTickCount() >= deadline) return ESP_ERR_TIMEOUT;
         vTaskDelay(1);
     }
@@ -232,16 +238,19 @@ esp_err_t Ra01::read_buffer(const std::uint8_t offset, std::uint8_t *data,
     if (result != ESP_OK) return result;
     std::array<std::uint8_t, 258> tx{};
     std::array<std::uint8_t, 258> rx{};
-    if (length + 2U > tx.size()) return ESP_ERR_INVALID_SIZE;
+    if (length + 3U > tx.size()) return ESP_ERR_INVALID_SIZE;
     tx[0] = kReadBuffer;
     tx[1] = offset;
+    // SX126x ReadBuffer has an additional NOP byte between the offset and
+    // the returned payload.
+    tx[2] = 0x00U;
     spi_transaction_t transaction{};
-    transaction.length = (length + 2U) * 8U;
+    transaction.length = (length + 3U) * 8U;
     transaction.rxlength = transaction.length;
     transaction.tx_buffer = tx.data();
     transaction.rx_buffer = rx.data();
     result = spi_device_transmit(spi_device_, &transaction);
-    if (result == ESP_OK) std::copy(rx.begin() + 2,
-                                    rx.begin() + 2 + length, data);
+    if (result == ESP_OK) std::copy(rx.begin() + 3,
+                                    rx.begin() + 3 + length, data);
     return result;
 }

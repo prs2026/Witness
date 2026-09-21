@@ -122,9 +122,26 @@ esp_err_t Sensors::start()
     }
 
     result = ms5607_.initialize(kSpiHost);
-    if (result != ESP_OK) {
-        release_resources();
-        return result;
+    if (result == ESP_OK) {
+        ms5607_initialized_ = true;
+    } else {
+        // A missing or unresponsive barometer must not prevent the IMU,
+        // battery monitor, or radio from operating. Retry from the sensor
+        // task at the state-packet rate.
+        ms5607_.release();
+        ESP_LOGE(kLogTag, "MS5607 initialization failed: %s",
+                 esp_err_to_name(result));
+    }
+
+    result = radio_.initialize(kSpiHost);
+    if (result == ESP_OK) {
+        radio_ready_ = true;
+    } else {
+        // Keep the sensor task alive if the optional radio is unavailable.
+        // Initialization is retried at the state-packet rate from run().
+        radio_.release();
+        ESP_LOGE(kLogTag, "RA-01 initialization failed: %s",
+                 esp_err_to_name(result));
     }
 
     result = initialize_battery_adc();
@@ -146,7 +163,7 @@ esp_err_t Sensors::start()
     }
 
     ESP_LOGI(kLogTag,
-             "sensor task ready: LSM6DSV320X and MS5607 on SPI3");
+             "sensor task ready: LSM6DSV320X, MS5607, and RA-01 on SPI3");
     return ESP_OK;
 }
 
@@ -199,11 +216,11 @@ esp_err_t Sensors::initialize_spi()
     bus_config.data5_io_num = -1;
     bus_config.data6_io_num = -1;
     bus_config.data7_io_num = -1;
-    bus_config.max_transfer_sz = kMaximumRegisterTransfer + 1;
+    bus_config.max_transfer_sz = kMaximumSpiTransfer;
     bus_config.flags = SPICOMMON_BUSFLAG_MASTER;
 
     esp_err_t result = spi_bus_initialize(
-        kSpiHost, &bus_config, SPI_DMA_DISABLED);
+        kSpiHost, &bus_config, SPI_DMA_CH_AUTO);
     if (result == ESP_OK) {
         owns_spi_bus_ = true;
     } else if (result != ESP_ERR_INVALID_STATE) {
@@ -492,8 +509,32 @@ esp_err_t Sensors::queue_state_packet()
         &payload[IRIS_PACKET_STATE_BATTERY_VOLTAGE_OFFSET],
         encode_battery_voltage(working_sample_.battery_voltage_mv));
 
-    return data_forwarder_.queue_packet(
+    const esp_err_t queue_result = data_forwarder_.queue_packet(
         IRIS_PACKET_ID_STATE, payload, sizeof(payload));
+
+    esp_err_t radio_result = ESP_ERR_INVALID_STATE;
+    if (!radio_ready_) {
+        radio_result = radio_.initialize(kSpiHost);
+        radio_ready_ = radio_result == ESP_OK;
+        if (!radio_ready_) {
+            radio_.release();
+        }
+    }
+
+    if (radio_ready_) {
+        std::uint8_t frame[IRIS_PACKET_STATE_FRAME_LENGTH]{};
+        frame[0] = IRIS_PACKET_ID_STATE;
+        std::memcpy(&frame[IRIS_PACKET_ID_LENGTH], payload, sizeof(payload));
+        frame[IRIS_PACKET_ID_LENGTH + sizeof(payload)] =
+            IRIS_PACKET_EOF_VALUE;
+        radio_result = radio_.transmit(frame, sizeof(frame));
+        if (radio_result != ESP_OK) {
+            ESP_LOGE(kLogTag, "RA-01 state transmit failed: %s",
+                     esp_err_to_name(radio_result));
+        }
+    }
+
+    return queue_result != ESP_OK ? queue_result : radio_result;
 }
 
 esp_err_t Sensors::queue_debug_packet()
@@ -655,6 +696,7 @@ void Sensors::run()
     TickType_t last_sensor_packet_time = next_wake_time;
     TickType_t last_state_packet_time = next_wake_time;
     TickType_t last_debug_packet_time = next_wake_time;
+    TickType_t last_ms5607_init_attempt = next_wake_time;
     std::uint32_t consecutive_lsm_errors = 0;
     std::uint32_t consecutive_ms5607_errors = 0;
     std::uint32_t battery_sample_counter = 0;
@@ -685,16 +727,35 @@ void Sensors::run()
             }
         }
 
+        const TickType_t now = xTaskGetTickCount();
         bool ms5607_updated = false;
-        const esp_err_t ms5607_result = ms5607_.poll(ms5607_updated);
-        if (ms5607_result == ESP_OK) {
-            consecutive_ms5607_errors = 0;
-        } else {
-            ++consecutive_ms5607_errors;
-            if (consecutive_ms5607_errors == 1 ||
-                (consecutive_ms5607_errors % kTaskRateHz) == 0) {
-                ESP_LOGE(kLogTag, "MS5607 read failed: %s",
-                         esp_err_to_name(ms5607_result));
+        if (!ms5607_initialized_ &&
+            (now - last_ms5607_init_attempt) >= kStatePacketPeriod) {
+            last_ms5607_init_attempt = now;
+            const esp_err_t initialization_result =
+                ms5607_.initialize(kSpiHost);
+            if (initialization_result == ESP_OK) {
+                ms5607_initialized_ = true;
+                consecutive_ms5607_errors = 0;
+                ESP_LOGI(kLogTag, "MS5607 initialization recovered");
+            } else {
+                ms5607_.release();
+                ESP_LOGE(kLogTag, "MS5607 initialization retry failed: %s",
+                         esp_err_to_name(initialization_result));
+            }
+        }
+
+        if (ms5607_initialized_) {
+            const esp_err_t ms5607_result = ms5607_.poll(ms5607_updated);
+            if (ms5607_result == ESP_OK) {
+                consecutive_ms5607_errors = 0;
+            } else {
+                ++consecutive_ms5607_errors;
+                if (consecutive_ms5607_errors == 1 ||
+                    (consecutive_ms5607_errors % kTaskRateHz) == 0) {
+                    ESP_LOGE(kLogTag, "MS5607 read failed: %s",
+                             esp_err_to_name(ms5607_result));
+                }
             }
         }
 
@@ -736,7 +797,6 @@ void Sensors::run()
             publish_sample();
         }
 
-        const TickType_t now = xTaskGetTickCount();
         if (lsm_result == ESP_OK &&
             (now - last_sensor_packet_time) >= kPacketPeriod) {
             const esp_err_t queue_result = queue_sensor_packet();
@@ -747,8 +807,7 @@ void Sensors::run()
             last_sensor_packet_time = now;
         }
 
-        if (working_sample_.ms5607_ready &&
-            (now - last_state_packet_time) >= kStatePacketPeriod) {
+        if ((now - last_state_packet_time) >= kStatePacketPeriod) {
             const esp_err_t queue_result = queue_state_packet();
             if (queue_result != ESP_OK) {
                 ESP_LOGE(kLogTag, "state packet queue failed: %s",
@@ -783,7 +842,10 @@ void Sensors::release_resources()
         adc_oneshot_del_unit(battery_adc_handle_);
         battery_adc_handle_ = nullptr;
     }
+    radio_.release();
+    radio_ready_ = false;
     ms5607_.release();
+    ms5607_initialized_ = false;
     if (spi_device_ != nullptr) {
         spi_bus_remove_device(spi_device_);
         spi_device_ = nullptr;

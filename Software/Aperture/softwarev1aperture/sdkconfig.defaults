@@ -1,16 +1,12 @@
-# The single ESP32-C3 core uses a 100 Hz (10 ms) scheduler tick.
+# Use a 100 Hz (10 ms) scheduler tick.
 CONFIG_FREERTOS_HZ=100
 
-# ESP32-C3FH4 has 4 MB of embedded flash.
-CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+# The ESP32-S3 Feather build uses 2 MB flash.
+CONFIG_ESPTOOLPY_FLASHSIZE_2MB=y
 
 # Do not link Espressif radio binary libraries. Wi-Fi and Bluetooth cannot be
 # initialized in this build, even if accidentally referenced later.
 CONFIG_APP_NO_BLOBS=y
-
-# This ESP32-C3FH4 revision faults when ESP-IDF registers RTC fast memory as
-# a general-purpose TLSF heap. Keep that retention region out of malloc().
-# CONFIG_ESP_SYSTEM_ALLOW_RTC_FAST_MEM_AS_HEAP is not set
 
 # Route the primary diagnostic console through the built-in USB Serial/JTAG port.
 # CONFIG_ESP_CONSOLE_UART_DEFAULT is not set

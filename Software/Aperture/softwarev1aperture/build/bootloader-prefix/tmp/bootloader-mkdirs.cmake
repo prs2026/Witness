@@ -10,18 +10,18 @@ if(NOT EXISTS "C:/esp/v6.1/esp-idf/components/bootloader/subproject")
   file(MAKE_DIRECTORY "C:/esp/v6.1/esp-idf/components/bootloader/subproject")
 endif()
 file(MAKE_DIRECTORY
-  "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/bootloader"
-  "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/bootloader-prefix"
-  "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/bootloader-prefix/tmp"
-  "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/bootloader-prefix/src/bootloader-stamp"
-  "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/bootloader-prefix/src"
-  "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/bootloader-prefix/src/bootloader-stamp"
+  "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/bootloader"
+  "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/bootloader-prefix"
+  "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/bootloader-prefix/tmp"
+  "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/bootloader-prefix/src/bootloader-stamp"
+  "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/bootloader-prefix/src"
+  "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/bootloader-prefix/src/bootloader-stamp"
 )
 
 set(configSubDirs )
 foreach(subDir IN LISTS configSubDirs)
-    file(MAKE_DIRECTORY "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/bootloader-prefix/src/bootloader-stamp/${subDir}")
+    file(MAKE_DIRECTORY "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/bootloader-prefix/src/bootloader-stamp/${subDir}")
 endforeach()
 if(cfgdir)
-  file(MAKE_DIRECTORY "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/bootloader-prefix/src/bootloader-stamp${cfgdir}") # cfgdir has leading slash
+  file(MAKE_DIRECTORY "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/bootloader-prefix/src/bootloader-stamp${cfgdir}") # cfgdir has leading slash
 endif()

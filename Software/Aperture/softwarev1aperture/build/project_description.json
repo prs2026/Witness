@@ -1,32 +1,32 @@
 {
     "version":            "1.3",
     "project_name":       "softwarev1",
-    "project_version":    "84964b4-dirty",
-    "project_path":       "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS",
+    "project_version":    "967c096-dirty",
+    "project_path":       "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture",
     "idf_path":           "C:/esp/v6.1/esp-idf",
-    "build_dir":          "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build",
-    "config_file":        "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/sdkconfig",
-    "config_defaults":    "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/sdkconfig.defaults",
-    "bootloader_elf":     "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/bootloader/bootloader.elf",
+    "build_dir":          "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build",
+    "config_file":        "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/sdkconfig",
+    "config_defaults":    "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/sdkconfig.defaults",
+    "bootloader_elf":     "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/bootloader/bootloader.elf",
     "app_elf":            "softwarev1.elf",
     "app_bin":            "softwarev1.bin",
     "build_type":         "flash_app",
-    "git_revision":       "v6.1.0",
-    "target":             "esp32c3",
+    "git_revision":       "v6.1",
+    "target":             "esp32s3",
     "rev":                "",
-    "min_rev":            "3",
-    "max_rev":            "199",
+    "min_rev":            "0",
+    "max_rev":            "99",
     "phy_data_partition": "",
     "monitor_baud" :      "115200",
-    "monitor_toolprefix": "riscv32-esp-elf-",
-    "c_compiler":         "C:/Espressif/tools/riscv32-esp-elf/esp-15.2.0_20251204/riscv32-esp-elf/bin/riscv32-esp-elf-gcc.exe",
+    "monitor_toolprefix": "xtensa-esp32s3-elf-",
+    "c_compiler":         "C:/Espressif/tools/xtensa-esp-elf/esp-15.2.0_20251204/xtensa-esp-elf/bin/xtensa-esp32s3-elf-gcc.exe",
     "config_environment" : {
-        "COMPONENT_KCONFIGS" : "C:/esp/v6.1/esp-idf/components/efuse/Kconfig;C:/esp/v6.1/esp-idf/components/esp_adc/Kconfig;C:/esp/v6.1/esp-idf/components/esp_common/Kconfig;C:/esp/v6.1/esp-idf/components/esp_driver_dma/Kconfig;C:/esp/v6.1/esp-idf/components/esp_driver_gpio/Kconfig;C:/esp/v6.1/esp-idf/components/esp_driver_i2c/Kconfig;C:/esp/v6.1/esp-idf/components/esp_driver_twai/Kconfig;C:/esp/v6.1/esp-idf/components/esp_driver_uart/Kconfig;C:/esp/v6.1/esp-idf/components/esp_driver_usb_serial_jtag/Kconfig;C:/esp/v6.1/esp-idf/components/esp_hw_support/Kconfig;C:/esp/v6.1/esp-idf/components/esp_libc/Kconfig;C:/esp/v6.1/esp-idf/components/esp_mm/Kconfig;C:/esp/v6.1/esp-idf/components/esp_partition/Kconfig;C:/esp/v6.1/esp-idf/components/esp_pm/Kconfig;C:/esp/v6.1/esp-idf/components/esp_psram/Kconfig;C:/esp/v6.1/esp-idf/components/esp_ringbuf/Kconfig;C:/esp/v6.1/esp-idf/components/esp_rom/Kconfig;C:/esp/v6.1/esp-idf/components/esp_security/Kconfig;C:/esp/v6.1/esp-idf/components/esp_stdio/Kconfig;C:/esp/v6.1/esp-idf/components/esp_system/Kconfig;C:/esp/v6.1/esp-idf/components/esp_timer/Kconfig;C:/esp/v6.1/esp-idf/components/freertos/Kconfig;C:/esp/v6.1/esp-idf/components/hal/Kconfig;C:/esp/v6.1/esp-idf/components/heap/Kconfig;C:/esp/v6.1/esp-idf/components/log/Kconfig;C:/esp/v6.1/esp-idf/components/mbedtls/Kconfig;C:/esp/v6.1/esp-idf/components/pthread/Kconfig;C:/esp/v6.1/esp-idf/components/soc/Kconfig;C:/esp/v6.1/esp-idf/components/spi_flash/Kconfig;C:/esp/v6.1/esp-idf/components/vfs/Kconfig",
+        "COMPONENT_KCONFIGS" : "C:/esp/v6.1/esp-idf/components/efuse/Kconfig;C:/esp/v6.1/esp-idf/components/esp_common/Kconfig;C:/esp/v6.1/esp-idf/components/esp_driver_dma/Kconfig;C:/esp/v6.1/esp-idf/components/esp_driver_gpio/Kconfig;C:/esp/v6.1/esp-idf/components/esp_driver_spi/Kconfig;C:/esp/v6.1/esp-idf/components/esp_driver_usb_serial_jtag/Kconfig;C:/esp/v6.1/esp-idf/components/esp_hw_support/Kconfig;C:/esp/v6.1/esp-idf/components/esp_libc/Kconfig;C:/esp/v6.1/esp-idf/components/esp_mm/Kconfig;C:/esp/v6.1/esp-idf/components/esp_partition/Kconfig;C:/esp/v6.1/esp-idf/components/esp_pm/Kconfig;C:/esp/v6.1/esp-idf/components/esp_psram/Kconfig;C:/esp/v6.1/esp-idf/components/esp_ringbuf/Kconfig;C:/esp/v6.1/esp-idf/components/esp_rom/Kconfig;C:/esp/v6.1/esp-idf/components/esp_security/Kconfig;C:/esp/v6.1/esp-idf/components/esp_stdio/Kconfig;C:/esp/v6.1/esp-idf/components/esp_system/Kconfig;C:/esp/v6.1/esp-idf/components/esp_timer/Kconfig;C:/esp/v6.1/esp-idf/components/freertos/Kconfig;C:/esp/v6.1/esp-idf/components/hal/Kconfig;C:/esp/v6.1/esp-idf/components/heap/Kconfig;C:/esp/v6.1/esp-idf/components/log/Kconfig;C:/esp/v6.1/esp-idf/components/mbedtls/Kconfig;C:/esp/v6.1/esp-idf/components/pthread/Kconfig;C:/esp/v6.1/esp-idf/components/soc/Kconfig;C:/esp/v6.1/esp-idf/components/spi_flash/Kconfig",
         "COMPONENT_KCONFIGS_PROJBUILD" : "C:/esp/v6.1/esp-idf/components/app_update/Kconfig.projbuild;C:/esp/v6.1/esp-idf/components/bootloader/Kconfig.projbuild;C:/esp/v6.1/esp-idf/components/esp_app_format/Kconfig.projbuild;C:/esp/v6.1/esp-idf/components/esp_rom/Kconfig.projbuild;C:/esp/v6.1/esp-idf/components/esptool_py/Kconfig.projbuild;C:/esp/v6.1/esp-idf/components/partition_table/Kconfig.projbuild"
     },
-    "common_component_reqs": [ "cxx", "esp_libc", "freertos", "esp_hw_support", "heap", "log", "soc", "hal", "esp_rom", "esp_common", "esp_system", "esp_stdio", "riscv" ],
-    "build_components" : [ "app_update", "bootloader", "bootloader_support", "cxx", "efuse", "esp_adc", "esp_app_format", "esp_blockdev", "esp_bootloader_format", "esp_common", "esp_driver_dma", "esp_driver_gpio", "esp_driver_i2c", "esp_driver_twai", "esp_driver_uart", "esp_driver_usb_serial_jtag", "esp_hal_ana_conv", "esp_hal_clock", "esp_hal_dma", "esp_hal_gpio", "esp_hal_gpspi", "esp_hal_i2c", "esp_hal_mspi", "esp_hal_pmu", "esp_hal_regi2c", "esp_hal_rtc_timer", "esp_hal_security", "esp_hal_systimer", "esp_hal_timg", "esp_hal_touch_sens", "esp_hal_twai", "esp_hal_uart", "esp_hal_usb", "esp_hal_wdt", "esp_hw_support", "esp_libc", "esp_mm", "esp_partition", "esp_pm", "esp_psram", "esp_ringbuf", "esp_rom", "esp_security", "esp_stdio", "esp_system", "esp_timer", "esp_usb_cdc_rom_console", "esptool_py", "freertos", "hal", "heap", "log", "main", "mbedtls", "partition_table", "pthread", "riscv", "soc", "spi_flash", "vfs", "" ],
-    "build_component_paths" : [ "C:/esp/v6.1/esp-idf/components/app_update", "C:/esp/v6.1/esp-idf/components/bootloader", "C:/esp/v6.1/esp-idf/components/bootloader_support", "C:/esp/v6.1/esp-idf/components/cxx", "C:/esp/v6.1/esp-idf/components/efuse", "C:/esp/v6.1/esp-idf/components/esp_adc", "C:/esp/v6.1/esp-idf/components/esp_app_format", "C:/esp/v6.1/esp-idf/components/esp_blockdev", "C:/esp/v6.1/esp-idf/components/esp_bootloader_format", "C:/esp/v6.1/esp-idf/components/esp_common", "C:/esp/v6.1/esp-idf/components/esp_driver_dma", "C:/esp/v6.1/esp-idf/components/esp_driver_gpio", "C:/esp/v6.1/esp-idf/components/esp_driver_i2c", "C:/esp/v6.1/esp-idf/components/esp_driver_twai", "C:/esp/v6.1/esp-idf/components/esp_driver_uart", "C:/esp/v6.1/esp-idf/components/esp_driver_usb_serial_jtag", "C:/esp/v6.1/esp-idf/components/esp_hal_ana_conv", "C:/esp/v6.1/esp-idf/components/esp_hal_clock", "C:/esp/v6.1/esp-idf/components/esp_hal_dma", "C:/esp/v6.1/esp-idf/components/esp_hal_gpio", "C:/esp/v6.1/esp-idf/components/esp_hal_gpspi", "C:/esp/v6.1/esp-idf/components/esp_hal_i2c", "C:/esp/v6.1/esp-idf/components/esp_hal_mspi", "C:/esp/v6.1/esp-idf/components/esp_hal_pmu", "C:/esp/v6.1/esp-idf/components/esp_hal_regi2c", "C:/esp/v6.1/esp-idf/components/esp_hal_rtc_timer", "C:/esp/v6.1/esp-idf/components/esp_hal_security", "C:/esp/v6.1/esp-idf/components/esp_hal_systimer", "C:/esp/v6.1/esp-idf/components/esp_hal_timg", "C:/esp/v6.1/esp-idf/components/esp_hal_touch_sens", "C:/esp/v6.1/esp-idf/components/esp_hal_twai", "C:/esp/v6.1/esp-idf/components/esp_hal_uart", "C:/esp/v6.1/esp-idf/components/esp_hal_usb", "C:/esp/v6.1/esp-idf/components/esp_hal_wdt", "C:/esp/v6.1/esp-idf/components/esp_hw_support", "C:/esp/v6.1/esp-idf/components/esp_libc", "C:/esp/v6.1/esp-idf/components/esp_mm", "C:/esp/v6.1/esp-idf/components/esp_partition", "C:/esp/v6.1/esp-idf/components/esp_pm", "C:/esp/v6.1/esp-idf/components/esp_psram", "C:/esp/v6.1/esp-idf/components/esp_ringbuf", "C:/esp/v6.1/esp-idf/components/esp_rom", "C:/esp/v6.1/esp-idf/components/esp_security", "C:/esp/v6.1/esp-idf/components/esp_stdio", "C:/esp/v6.1/esp-idf/components/esp_system", "C:/esp/v6.1/esp-idf/components/esp_timer", "C:/esp/v6.1/esp-idf/components/esp_usb_cdc_rom_console", "C:/esp/v6.1/esp-idf/components/esptool_py", "C:/esp/v6.1/esp-idf/components/freertos", "C:/esp/v6.1/esp-idf/components/hal", "C:/esp/v6.1/esp-idf/components/heap", "C:/esp/v6.1/esp-idf/components/log", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/main", "C:/esp/v6.1/esp-idf/components/mbedtls", "C:/esp/v6.1/esp-idf/components/partition_table", "C:/esp/v6.1/esp-idf/components/pthread", "C:/esp/v6.1/esp-idf/components/riscv", "C:/esp/v6.1/esp-idf/components/soc", "C:/esp/v6.1/esp-idf/components/spi_flash", "C:/esp/v6.1/esp-idf/components/vfs", "" ],
+    "common_component_reqs": [ "cxx", "esp_libc", "freertos", "esp_hw_support", "heap", "log", "soc", "hal", "esp_rom", "esp_common", "esp_system", "esp_stdio", "xtensa" ],
+    "build_components" : [ "app_update", "bootloader", "bootloader_support", "cxx", "efuse", "esp_app_format", "esp_blockdev", "esp_bootloader_format", "esp_common", "esp_driver_dma", "esp_driver_gpio", "esp_driver_spi", "esp_driver_usb_serial_jtag", "esp_hal_ana_conv", "esp_hal_clock", "esp_hal_dma", "esp_hal_gpio", "esp_hal_gpspi", "esp_hal_mspi", "esp_hal_pmu", "esp_hal_regi2c", "esp_hal_rtc_timer", "esp_hal_security", "esp_hal_systimer", "esp_hal_timg", "esp_hal_touch_sens", "esp_hal_uart", "esp_hal_usb", "esp_hal_wdt", "esp_hw_support", "esp_libc", "esp_mm", "esp_partition", "esp_pm", "esp_psram", "esp_ringbuf", "esp_rom", "esp_security", "esp_stdio", "esp_system", "esp_timer", "esp_usb_cdc_rom_console", "esptool_py", "freertos", "hal", "heap", "log", "main", "mbedtls", "partition_table", "pthread", "soc", "spi_flash", "xtensa", "" ],
+    "build_component_paths" : [ "C:/esp/v6.1/esp-idf/components/app_update", "C:/esp/v6.1/esp-idf/components/bootloader", "C:/esp/v6.1/esp-idf/components/bootloader_support", "C:/esp/v6.1/esp-idf/components/cxx", "C:/esp/v6.1/esp-idf/components/efuse", "C:/esp/v6.1/esp-idf/components/esp_app_format", "C:/esp/v6.1/esp-idf/components/esp_blockdev", "C:/esp/v6.1/esp-idf/components/esp_bootloader_format", "C:/esp/v6.1/esp-idf/components/esp_common", "C:/esp/v6.1/esp-idf/components/esp_driver_dma", "C:/esp/v6.1/esp-idf/components/esp_driver_gpio", "C:/esp/v6.1/esp-idf/components/esp_driver_spi", "C:/esp/v6.1/esp-idf/components/esp_driver_usb_serial_jtag", "C:/esp/v6.1/esp-idf/components/esp_hal_ana_conv", "C:/esp/v6.1/esp-idf/components/esp_hal_clock", "C:/esp/v6.1/esp-idf/components/esp_hal_dma", "C:/esp/v6.1/esp-idf/components/esp_hal_gpio", "C:/esp/v6.1/esp-idf/components/esp_hal_gpspi", "C:/esp/v6.1/esp-idf/components/esp_hal_mspi", "C:/esp/v6.1/esp-idf/components/esp_hal_pmu", "C:/esp/v6.1/esp-idf/components/esp_hal_regi2c", "C:/esp/v6.1/esp-idf/components/esp_hal_rtc_timer", "C:/esp/v6.1/esp-idf/components/esp_hal_security", "C:/esp/v6.1/esp-idf/components/esp_hal_systimer", "C:/esp/v6.1/esp-idf/components/esp_hal_timg", "C:/esp/v6.1/esp-idf/components/esp_hal_touch_sens", "C:/esp/v6.1/esp-idf/components/esp_hal_uart", "C:/esp/v6.1/esp-idf/components/esp_hal_usb", "C:/esp/v6.1/esp-idf/components/esp_hal_wdt", "C:/esp/v6.1/esp-idf/components/esp_hw_support", "C:/esp/v6.1/esp-idf/components/esp_libc", "C:/esp/v6.1/esp-idf/components/esp_mm", "C:/esp/v6.1/esp-idf/components/esp_partition", "C:/esp/v6.1/esp-idf/components/esp_pm", "C:/esp/v6.1/esp-idf/components/esp_psram", "C:/esp/v6.1/esp-idf/components/esp_ringbuf", "C:/esp/v6.1/esp-idf/components/esp_rom", "C:/esp/v6.1/esp-idf/components/esp_security", "C:/esp/v6.1/esp-idf/components/esp_stdio", "C:/esp/v6.1/esp-idf/components/esp_system", "C:/esp/v6.1/esp-idf/components/esp_timer", "C:/esp/v6.1/esp-idf/components/esp_usb_cdc_rom_console", "C:/esp/v6.1/esp-idf/components/esptool_py", "C:/esp/v6.1/esp-idf/components/freertos", "C:/esp/v6.1/esp-idf/components/hal", "C:/esp/v6.1/esp-idf/components/heap", "C:/esp/v6.1/esp-idf/components/log", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/main", "C:/esp/v6.1/esp-idf/components/mbedtls", "C:/esp/v6.1/esp-idf/components/partition_table", "C:/esp/v6.1/esp-idf/components/pthread", "C:/esp/v6.1/esp-idf/components/soc", "C:/esp/v6.1/esp-idf/components/spi_flash", "C:/esp/v6.1/esp-idf/components/xtensa", "" ],
     "build_component_info" : {
         "app_update": {
             "alias": "idf::app_update",
@@ -39,7 +39,7 @@
             "priv_reqs": [ "esptool_py", "efuse", "spi_flash" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/app_update/libapp_update.a",
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/app_update/libapp_update.a",
             "sources": [ "C:/esp/v6.1/esp-idf/components/app_update/esp_ota_ops.c" ],
             "include_dirs": [ "include" ]
         },
@@ -69,8 +69,8 @@
             "priv_reqs": [ "spi_flash", "mbedtls", "efuse", "heap", "esp_bootloader_format", "esp_app_format", "esptool_py", "esp_hal_wdt", "esp_hal_gpio", "esp_hal_uart", "esp_hal_ana_conv", "esp_hal_rtc_timer", "esp_hal_clock", "esp_hal_security", "esp_security" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/bootloader_support/libbootloader_support.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_common.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_common_loader.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_clock_init.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_mem.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_random.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_efuse.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/flash_encrypt.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/secure_boot.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_random_esp32c3.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/bootloader_flash/src/bootloader_flash.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/bootloader_flash/src/flash_qio_mode.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/bootloader_flash/src/bootloader_flash_config_esp32c3.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_utility.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/flash_partitions.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/esp_image_format.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_sha.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/esp32c3/secure_boot_secure_features.c" ],
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/bootloader_support/libbootloader_support.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_common.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_common_loader.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_clock_init.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_mem.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_random.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_efuse.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/flash_encrypt.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/secure_boot.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_random_esp32s3.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/bootloader_flash/src/bootloader_flash.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/bootloader_flash/src/flash_qio_mode.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/bootloader_flash/src/bootloader_flash_config_esp32s3.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_utility.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/flash_partitions.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/esp_image_format.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/bootloader_sha.c", "C:/esp/v6.1/esp-idf/components/bootloader_support/src/esp32s3/secure_boot_secure_features.c" ],
             "include_dirs": [ "include", "bootloader_flash/include" ]
         },
         "cxx": {
@@ -84,7 +84,7 @@
             "priv_reqs": [ "pthread" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/cxx/libcxx.a",
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/cxx/libcxx.a",
             "sources": [ "C:/esp/v6.1/esp-idf/components/cxx/cxx_exception_stubs.cpp", "C:/esp/v6.1/esp-idf/components/cxx/cxx_guards.cpp", "C:/esp/v6.1/esp-idf/components/cxx/cxx_init.cpp" ],
             "include_dirs": []
         },
@@ -99,24 +99,9 @@
             "priv_reqs": [ "bootloader_support", "soc", "spi_flash", "esp_system", "esp_partition", "esp_app_format", "esp_hal_security" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/efuse/libefuse.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/efuse/esp32c3/esp_efuse_table.c", "C:/esp/v6.1/esp-idf/components/efuse/esp32c3/esp_efuse_fields.c", "C:/esp/v6.1/esp-idf/components/efuse/esp32c3/esp_efuse_rtc_calib.c", "C:/esp/v6.1/esp-idf/components/efuse/esp32c3/esp_efuse_utility.c", "C:/esp/v6.1/esp-idf/components/efuse/src/esp_efuse_api.c", "C:/esp/v6.1/esp-idf/components/efuse/src/esp_efuse_fields.c", "C:/esp/v6.1/esp-idf/components/efuse/src/esp_efuse_utility.c", "C:/esp/v6.1/esp-idf/components/efuse/src/efuse_controller/keys/with_key_purposes/esp_efuse_api_key.c", "C:/esp/v6.1/esp-idf/components/efuse/src/esp_efuse_startup.c" ],
-            "include_dirs": [ "include", "esp32c3/include" ]
-        },
-        "esp_adc": {
-            "alias": "idf::esp_adc",
-            "target": "___idf_esp_adc",
-            "prefix": "idf",
-            "dir": "C:/esp/v6.1/esp-idf/components/esp_adc",
-            "type": "LIBRARY",
-            "lib": "__idf_esp_adc",
-            "reqs": [ "esp_hal_ana_conv" ],
-            "priv_reqs": [ "esp_driver_gpio", "esp_driver_dma", "efuse", "esp_pm", "esp_ringbuf", "esp_mm" ],
-            "managed_reqs": [],
-            "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_adc/libesp_adc.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_adc/adc_oneshot.c", "C:/esp/v6.1/esp-idf/components/esp_adc/adc_common.c", "C:/esp/v6.1/esp-idf/components/esp_adc/adc_cali.c", "C:/esp/v6.1/esp-idf/components/esp_adc/adc_cali_curve_fitting.c", "C:/esp/v6.1/esp-idf/components/esp_adc/adc_continuous.c", "C:/esp/v6.1/esp-idf/components/esp_adc/adc_monitor.c", "C:/esp/v6.1/esp-idf/components/esp_adc/gdma/adc_dma.c", "C:/esp/v6.1/esp-idf/components/esp_adc/adc_filter.c", "C:/esp/v6.1/esp-idf/components/esp_adc/esp32c3/curve_fitting_coefficients.c" ],
-            "include_dirs": [ "include", "interface", "esp32c3/include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/efuse/libefuse.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/efuse/esp32s3/esp_efuse_table.c", "C:/esp/v6.1/esp-idf/components/efuse/esp32s3/esp_efuse_fields.c", "C:/esp/v6.1/esp-idf/components/efuse/esp32s3/esp_efuse_rtc_calib.c", "C:/esp/v6.1/esp-idf/components/efuse/esp32s3/esp_efuse_utility.c", "C:/esp/v6.1/esp-idf/components/efuse/src/esp_efuse_api.c", "C:/esp/v6.1/esp-idf/components/efuse/src/esp_efuse_fields.c", "C:/esp/v6.1/esp-idf/components/efuse/src/esp_efuse_utility.c", "C:/esp/v6.1/esp-idf/components/efuse/src/efuse_controller/keys/with_key_purposes/esp_efuse_api_key.c", "C:/esp/v6.1/esp-idf/components/efuse/src/esp_efuse_startup.c" ],
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_app_format": {
             "alias": "idf::esp_app_format",
@@ -129,7 +114,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_app_format/libesp_app_format.a",
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_app_format/libesp_app_format.a",
             "sources": [ "C:/esp/v6.1/esp-idf/components/esp_app_format/esp_app_desc.c" ],
             "include_dirs": [ "include" ]
         },
@@ -159,7 +144,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_bootloader_format/libesp_bootloader_format.a",
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_bootloader_format/libesp_bootloader_format.a",
             "sources": [ "C:/esp/v6.1/esp-idf/components/esp_bootloader_format/esp_bootloader_desc.c" ],
             "include_dirs": [ "include" ]
         },
@@ -174,7 +159,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_common/libesp_common.a",
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_common/libesp_common.a",
             "sources": [ "C:/esp/v6.1/esp-idf/components/esp_common/src/esp_err_to_name.c" ],
             "include_dirs": [ "include" ]
         },
@@ -189,7 +174,7 @@
             "priv_reqs": [ "esp_mm", "efuse" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_driver_dma/libesp_driver_dma.a",
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_driver_dma/libesp_driver_dma.a",
             "sources": [ "C:/esp/v6.1/esp-idf/components/esp_driver_dma/src/esp_dma_utils.c", "C:/esp/v6.1/esp-idf/components/esp_driver_dma/src/gdma_link.c", "C:/esp/v6.1/esp-idf/components/esp_driver_dma/src/gdma.c", "C:/esp/v6.1/esp-idf/components/esp_driver_dma/src/esp_async_memcpy.c", "C:/esp/v6.1/esp-idf/components/esp_driver_dma/src/async_memcpy_gdma.c" ],
             "include_dirs": [ "include" ]
         },
@@ -204,53 +189,23 @@
             "priv_reqs": [ "esp_pm" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_driver_gpio/libesp_driver_gpio.a",
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_driver_gpio/libesp_driver_gpio.a",
             "sources": [ "C:/esp/v6.1/esp-idf/components/esp_driver_gpio/src/gpio.c", "C:/esp/v6.1/esp-idf/components/esp_driver_gpio/src/gpio_glitch_filter_ops.c", "C:/esp/v6.1/esp-idf/components/esp_driver_gpio/src/rtc_io.c", "C:/esp/v6.1/esp-idf/components/esp_driver_gpio/src/dedic_gpio.c", "C:/esp/v6.1/esp-idf/components/esp_driver_gpio/src/gpio_pin_glitch_filter.c" ],
             "include_dirs": [ "include" ]
         },
-        "esp_driver_i2c": {
-            "alias": "idf::esp_driver_i2c",
-            "target": "___idf_esp_driver_i2c",
+        "esp_driver_spi": {
+            "alias": "idf::esp_driver_spi",
+            "target": "___idf_esp_driver_spi",
             "prefix": "idf",
-            "dir": "C:/esp/v6.1/esp-idf/components/esp_driver_i2c",
+            "dir": "C:/esp/v6.1/esp-idf/components/esp_driver_spi",
             "type": "LIBRARY",
-            "lib": "__idf_esp_driver_i2c",
-            "reqs": [ "esp_hal_i2c" ],
-            "priv_reqs": [ "esp_driver_gpio", "esp_pm", "esp_ringbuf" ],
+            "lib": "__idf_esp_driver_spi",
+            "reqs": [ "esp_pm", "esp_hal_gpspi", "esp_driver_dma" ],
+            "priv_reqs": [ "esp_timer", "esp_mm", "esp_driver_gpio", "spi_flash", "esp_psram" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_driver_i2c/libesp_driver_i2c.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_driver_i2c/i2c_master.c", "C:/esp/v6.1/esp-idf/components/esp_driver_i2c/i2c_common.c", "C:/esp/v6.1/esp-idf/components/esp_driver_i2c/i2c_slave.c" ],
-            "include_dirs": [ "include" ]
-        },
-        "esp_driver_twai": {
-            "alias": "idf::esp_driver_twai",
-            "target": "___idf_esp_driver_twai",
-            "prefix": "idf",
-            "dir": "C:/esp/v6.1/esp-idf/components/esp_driver_twai",
-            "type": "LIBRARY",
-            "lib": "__idf_esp_driver_twai",
-            "reqs": [ "esp_hal_twai" ],
-            "priv_reqs": [ "esp_driver_gpio", "esp_pm", "esp_timer" ],
-            "managed_reqs": [],
-            "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_driver_twai/libesp_driver_twai.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_driver_twai/esp_twai.c", "C:/esp/v6.1/esp-idf/components/esp_driver_twai/esp_twai_onchip.c", "C:/esp/v6.1/esp-idf/components/esp_driver_twai/twai_frame_queue.c" ],
-            "include_dirs": [ "include" ]
-        },
-        "esp_driver_uart": {
-            "alias": "idf::esp_driver_uart",
-            "target": "___idf_esp_driver_uart",
-            "prefix": "idf",
-            "dir": "C:/esp/v6.1/esp-idf/components/esp_driver_uart",
-            "type": "LIBRARY",
-            "lib": "__idf_esp_driver_uart",
-            "reqs": [ "esp_hal_uart" ],
-            "priv_reqs": [ "esp_pm", "esp_driver_gpio", "esp_driver_dma", "esp_ringbuf", "esp_mm", "esp_psram" ],
-            "managed_reqs": [],
-            "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_driver_uart/libesp_driver_uart.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_driver_uart/src/uart.c", "C:/esp/v6.1/esp-idf/components/esp_driver_uart/src/uart_wakeup.c", "C:/esp/v6.1/esp-idf/components/esp_driver_uart/src/uhci.c", "C:/esp/v6.1/esp-idf/components/esp_driver_uart/src/uart_vfs.c" ],
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_driver_spi/libesp_driver_spi.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_driver_spi/src/gpspi/spi_common.c", "C:/esp/v6.1/esp-idf/components/esp_driver_spi/src/gpspi/spi_master.c", "C:/esp/v6.1/esp-idf/components/esp_driver_spi/src/gpspi/spi_slave.c", "C:/esp/v6.1/esp-idf/components/esp_driver_spi/src/gpspi/spi_slave_hd.c" ],
             "include_dirs": [ "include" ]
         },
         "esp_driver_usb_serial_jtag": {
@@ -264,8 +219,8 @@
             "priv_reqs": [ "esp_driver_gpio", "esp_ringbuf", "esp_pm", "esp_timer", "esp_hal_usb" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_driver_usb_serial_jtag/libesp_driver_usb_serial_jtag.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_driver_usb_serial_jtag/src/usb_serial_jtag.c", "C:/esp/v6.1/esp-idf/components/esp_driver_usb_serial_jtag/src/usb_serial_jtag_connection_monitor.c", "C:/esp/v6.1/esp-idf/components/esp_driver_usb_serial_jtag/src/usb_serial_jtag_vfs.c" ],
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_driver_usb_serial_jtag/libesp_driver_usb_serial_jtag.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_driver_usb_serial_jtag/src/usb_serial_jtag.c", "C:/esp/v6.1/esp-idf/components/esp_driver_usb_serial_jtag/src/usb_serial_jtag_connection_monitor.c" ],
             "include_dirs": [ "include" ]
         },
         "esp_hal_ana_conv": {
@@ -279,9 +234,9 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_ana_conv/libesp_hal_ana_conv.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_ana_conv/esp32c3/adc_periph.c", "C:/esp/v6.1/esp-idf/components/esp_hal_ana_conv/adc_hal_common.c", "C:/esp/v6.1/esp-idf/components/esp_hal_ana_conv/adc_oneshot_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_ana_conv/adc_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_ana_conv/temperature_sensor_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_ana_conv/esp32c3/temperature_sensor_periph.c" ],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_hal_ana_conv/libesp_hal_ana_conv.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_ana_conv/esp32s3/adc_periph.c", "C:/esp/v6.1/esp-idf/components/esp_hal_ana_conv/adc_hal_common.c", "C:/esp/v6.1/esp-idf/components/esp_hal_ana_conv/adc_oneshot_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_ana_conv/adc_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_ana_conv/temperature_sensor_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_ana_conv/esp32s3/temperature_sensor_periph.c" ],
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_clock": {
             "alias": "idf::esp_hal_clock",
@@ -294,9 +249,9 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_clock/libesp_hal_clock.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_clock/esp32c3/clk_tree_hal.c" ],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_hal_clock/libesp_hal_clock.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_clock/esp32s3/clk_tree_hal.c" ],
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_dma": {
             "alias": "idf::esp_hal_dma",
@@ -309,9 +264,9 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_dma/libesp_hal_dma.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_dma/gdma_hal_top.c", "C:/esp/v6.1/esp-idf/components/esp_hal_dma/esp32c3/gdma_periph.c", "C:/esp/v6.1/esp-idf/components/esp_hal_dma/gdma_hal_ahb_v1.c" ],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_hal_dma/libesp_hal_dma.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_dma/gdma_hal_top.c", "C:/esp/v6.1/esp-idf/components/esp_hal_dma/esp32s3/gdma_periph.c", "C:/esp/v6.1/esp-idf/components/esp_hal_dma/gdma_hal_ahb_v1.c" ],
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_gpio": {
             "alias": "idf::esp_hal_gpio",
@@ -324,9 +279,9 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_gpio/libesp_hal_gpio.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_gpio/gpio_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpio/esp32c3/dedic_gpio_periph.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpio/sdm_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpio/esp32c3/sdm_periph.c" ],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_hal_gpio/libesp_hal_gpio.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_gpio/gpio_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpio/rtc_io_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpio/esp32s3/rtc_io_periph.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpio/esp32s3/dedic_gpio_periph.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpio/sdm_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpio/esp32s3/sdm_periph.c" ],
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_gpspi": {
             "alias": "idf::esp_hal_gpspi",
@@ -339,24 +294,9 @@
             "priv_reqs": [ "esp_hal_gpio" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_gpspi/libesp_hal_gpspi.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_gpspi/esp32c3/spi_periph.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpspi/spi_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpspi/spi_hal_iram.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpspi/spi_slave_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpspi/spi_slave_hal_iram.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpspi/spi_slave_hd_hal.c" ],
-            "include_dirs": [ "include", "esp32c3/include" ]
-        },
-        "esp_hal_i2c": {
-            "alias": "idf::esp_hal_i2c",
-            "target": "___idf_esp_hal_i2c",
-            "prefix": "idf",
-            "dir": "C:/esp/v6.1/esp-idf/components/esp_hal_i2c",
-            "type": "LIBRARY",
-            "lib": "__idf_esp_hal_i2c",
-            "reqs": [ "soc", "hal" ],
-            "priv_reqs": [],
-            "managed_reqs": [],
-            "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_i2c/libesp_hal_i2c.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_i2c/i2c_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_i2c/i2c_hal_iram.c", "C:/esp/v6.1/esp-idf/components/esp_hal_i2c/esp32c3/i2c_periph.c" ],
-            "include_dirs": [ "esp32c3/include", "include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_hal_gpspi/libesp_hal_gpspi.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_gpspi/esp32s3/spi_periph.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpspi/spi_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpspi/spi_hal_iram.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpspi/spi_slave_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpspi/spi_slave_hal_iram.c", "C:/esp/v6.1/esp-idf/components/esp_hal_gpspi/spi_slave_hd_hal.c" ],
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_mspi": {
             "alias": "idf::esp_hal_mspi",
@@ -369,9 +309,9 @@
             "priv_reqs": [ "esp_hal_gpio" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_mspi/libesp_hal_mspi.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_mspi/spi_flash_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_mspi/spi_flash_hal_iram.c", "C:/esp/v6.1/esp-idf/components/esp_hal_mspi/spi_flash_encrypt_hal_iram.c", "C:/esp/v6.1/esp-idf/components/esp_hal_mspi/spi_flash_hal_gpspi.c", "C:/esp/v6.1/esp-idf/components/esp_hal_mspi/esp32c3/mspi_periph.c" ],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_hal_mspi/libesp_hal_mspi.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_mspi/spi_flash_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_mspi/spi_flash_hal_iram.c", "C:/esp/v6.1/esp-idf/components/esp_hal_mspi/spi_flash_encrypt_hal_iram.c", "C:/esp/v6.1/esp-idf/components/esp_hal_mspi/spi_flash_hal_gpspi.c", "C:/esp/v6.1/esp-idf/components/esp_hal_mspi/esp32s3/mspi_periph.c" ],
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_pmu": {
             "alias": "idf::esp_hal_pmu",
@@ -384,9 +324,9 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_pmu/libesp_hal_pmu.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_pmu/esp32c3/rtc_cntl_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_pmu/brownout_hal.c" ],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_hal_pmu/libesp_hal_pmu.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_pmu/esp32s3/rtc_cntl_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_pmu/brownout_hal.c" ],
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_regi2c": {
             "alias": "idf::esp_hal_regi2c",
@@ -401,7 +341,7 @@
             "managed_priv_reqs": [],
             "file": "",
             "sources": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_rtc_timer": {
             "alias": "idf::esp_hal_rtc_timer",
@@ -416,7 +356,7 @@
             "managed_priv_reqs": [],
             "file": "",
             "sources": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_security": {
             "alias": "idf::esp_hal_security",
@@ -429,9 +369,9 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_security/libesp_hal_security.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_security/mpi_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_security/sha_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_security/aes_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_security/hmac_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_security/ds_hal.c" ],
-            "include_dirs": [ "esp32c3/include", "include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_hal_security/libesp_hal_security.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_security/mpi_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_security/sha_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_security/aes_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_security/hmac_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_security/ds_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_security/mpu_hal.c" ],
+            "include_dirs": [ "esp32s3/include", "include" ]
         },
         "esp_hal_systimer": {
             "alias": "idf::esp_hal_systimer",
@@ -444,9 +384,9 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_systimer/libesp_hal_systimer.a",
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_hal_systimer/libesp_hal_systimer.a",
             "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_systimer/systimer_hal.c" ],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_timg": {
             "alias": "idf::esp_hal_timg",
@@ -459,39 +399,24 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_timg/libesp_hal_timg.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_timg/timer_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_timg/esp32c3/timer_periph.c" ],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_hal_timg/libesp_hal_timg.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_timg/timer_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_timg/esp32s3/timer_periph.c" ],
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_touch_sens": {
             "alias": "idf::esp_hal_touch_sens",
             "target": "___idf_esp_hal_touch_sens",
             "prefix": "idf",
             "dir": "C:/esp/v6.1/esp-idf/components/esp_hal_touch_sens",
-            "type": "CONFIG_ONLY",
+            "type": "LIBRARY",
             "lib": "__idf_esp_hal_touch_sens",
             "reqs": [ "soc", "hal" ],
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "",
-            "sources": [],
-            "include_dirs": [ "include" ]
-        },
-        "esp_hal_twai": {
-            "alias": "idf::esp_hal_twai",
-            "target": "___idf_esp_hal_twai",
-            "prefix": "idf",
-            "dir": "C:/esp/v6.1/esp-idf/components/esp_hal_twai",
-            "type": "LIBRARY",
-            "lib": "__idf_esp_hal_twai",
-            "reqs": [ "soc", "hal" ],
-            "priv_reqs": [],
-            "managed_reqs": [],
-            "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_twai/libesp_hal_twai.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_twai/esp32c3/twai_periph.c", "C:/esp/v6.1/esp-idf/components/esp_hal_twai/twai_hal_v1.c" ],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_hal_touch_sens/libesp_hal_touch_sens.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_touch_sens/esp32s3/touch_sensor_legacy_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_touch_sens/touch_sensor_legacy_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_touch_sens/touch_sens_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_touch_sens/esp32s3/touch_sensor_periph.c" ],
+            "include_dirs": [ "esp32s3/include", "include" ]
         },
         "esp_hal_uart": {
             "alias": "idf::esp_hal_uart",
@@ -504,9 +429,9 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_uart/libesp_hal_uart.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_uart/uart_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_uart/uart_hal_iram.c", "C:/esp/v6.1/esp-idf/components/esp_hal_uart/esp32c3/uart_periph.c", "C:/esp/v6.1/esp-idf/components/esp_hal_uart/uhci_hal.c" ],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_hal_uart/libesp_hal_uart.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_uart/uart_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_uart/uart_hal_iram.c", "C:/esp/v6.1/esp-idf/components/esp_hal_uart/esp32s3/uart_periph.c", "C:/esp/v6.1/esp-idf/components/esp_hal_uart/uhci_hal.c" ],
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_usb": {
             "alias": "idf::esp_hal_usb",
@@ -519,9 +444,9 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_usb/libesp_hal_usb.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_usb/usb_serial_jtag_hal.c" ],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_hal_usb/libesp_hal_usb.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_usb/usb_dwc_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_usb/esp32s3/usb_dwc_periph.c", "C:/esp/v6.1/esp-idf/components/esp_hal_usb/usb_wrap_hal.c", "C:/esp/v6.1/esp-idf/components/esp_hal_usb/usb_serial_jtag_hal.c" ],
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_wdt": {
             "alias": "idf::esp_hal_wdt",
@@ -534,9 +459,9 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hal_wdt/libesp_hal_wdt.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_wdt/esp32c3/mwdt_periph.c", "C:/esp/v6.1/esp-idf/components/esp_hal_wdt/wdt_hal_iram.c", "C:/esp/v6.1/esp-idf/components/esp_hal_wdt/xt_wdt_hal.c" ],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_hal_wdt/libesp_hal_wdt.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hal_wdt/esp32s3/mwdt_periph.c", "C:/esp/v6.1/esp-idf/components/esp_hal_wdt/rom_patch.c", "C:/esp/v6.1/esp-idf/components/esp_hal_wdt/xt_wdt_hal.c" ],
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hw_support": {
             "alias": "idf::esp_hw_support",
@@ -549,9 +474,9 @@
             "priv_reqs": [ "efuse", "spi_flash", "bootloader_support", "esp_hal_wdt", "esp_hal_rtc_timer", "esp_hal_clock", "esp_hal_security", "esp_hal_systimer", "esp_hal_ana_conv", "esp_driver_gpio", "esp_timer", "esp_hal_touch_sens", "esp_pm", "esp_mm", "esp_hal_mspi", "esp_hal_uart" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_hw_support/libesp_hw_support.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hw_support/cpu.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32c3/esp_cpu_intr.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/esp_memory_utils.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32c3/cpu_region_protect.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/esp_clk.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/clk_ctrl_os.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/hw_random.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/intr_alloc.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/mac_addr.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/periph_ctrl.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/revision.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/rtc_module.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/regi2c_ctrl.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/esp_gpio_reserve.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sar_tsens_ctrl.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sar_periph_ctrl_common.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/io_mux.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32c3/io_mux.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32c3/esp_clk_tree.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/spi_bus_lock.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/heap_align_hw.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/clk_utils.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp_clk_tree_common.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/spi_share_hw_ctrl.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/adc_share_hw_ctrl.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_modem.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_cache.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_modes.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_uart.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_console.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_mspi.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_usb.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_gpio.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_event.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32c3/systimer.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/mspi/mspi_timing_tuning/mspi_timing_tuning.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/mspi/mspi_intr/mspi_intr.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_wake_stub.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/esp_clock_output.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/power_supply/brownout.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32c3/rtc_clk_init.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32c3/rtc_clk.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32c3/rtc_init.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32c3/rtc_sleep.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32c3/rtc_time.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32c3/chip_info.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32c3/sar_periph_ctrl.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32c3/adc2_init_cal.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32c3/esp_memprot.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp_memprot_conv.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/lowpower/port/esp32c3/sleep_cpu.c" ],
-            "include_dirs": [ "include", "include/soc", "ldo/include", "debug_probe/include", "etm/include", "mspi/mspi_timing_tuning/include", "mspi/mspi_timing_tuning/tuning_scheme_impl/include", "mspi/mspi_intr/include", "power_supply/include", "modem/include", "include/soc/esp32c3" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_hw_support/libesp_hw_support.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_hw_support/cpu.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32s3/esp_cpu_intr.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/esp_memory_utils.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32s3/cpu_region_protect.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/esp_clk.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/clk_ctrl_os.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/hw_random.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/intr_alloc.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/mac_addr.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/periph_ctrl.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/revision.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/rtc_module.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/regi2c_ctrl.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/esp_gpio_reserve.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sar_tsens_ctrl.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sar_periph_ctrl_common.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/io_mux.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32s3/io_mux.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32s3/esp_clk_tree.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/spi_bus_lock.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/heap_align_hw.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/clk_utils.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/usb_phy/usb_phy.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp_clk_tree_common.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/spi_share_hw_ctrl.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/adc_share_hw_ctrl.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_modem.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_cache.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_modes.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_uart.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_console.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_mspi.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_usb.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_gpio.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_event.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32s3/systimer.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/mspi/mspi_timing_tuning/mspi_timing_tuning.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/mspi/mspi_intr/mspi_intr.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/sleep_wake_stub.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/esp_clock_output.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/power_supply/brownout.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32s3/rtc_clk.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32s3/rtc_clk_init.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32s3/rtc_init.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32s3/rtc_sleep.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32s3/rtc_time.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32s3/chip_info.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32s3/sar_periph_ctrl.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp32s3/esp_memprot.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/port/esp_memprot_conv.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/mspi/mspi_timing_tuning/port/esp32s3/mspi_timing_config.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/mspi/mspi_timing_tuning/port/esp32s3/mspi_timing_by_mspi_delay.c", "C:/esp/v6.1/esp-idf/components/esp_hw_support/lowpower/port/esp32s3/sleep_cpu.c" ],
+            "include_dirs": [ "include", "include/soc", "ldo/include", "debug_probe/include", "etm/include", "mspi/mspi_timing_tuning/include", "mspi/mspi_timing_tuning/tuning_scheme_impl/include", "mspi/mspi_intr/include", "power_supply/include", "modem/include", "include/soc/esp32s3" ]
         },
         "esp_libc": {
             "alias": "idf::esp_libc",
@@ -564,8 +489,8 @@
             "priv_reqs": [ "soc", "spi_flash" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_libc/libesp_libc.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_libc/src/init.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/abort.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/assert.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/heap.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/locks.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/poll.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/pthread.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/random.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/getentropy.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/termios.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/stdatomic.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/time.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/timekeeping.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/sysconf.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/realpath.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/scandir.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/syscalls.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/reent_syscalls.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/port/esp_time_impl.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/port/riscv/memcpy.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/port/riscv/memmove.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/string/memcmp.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/port/riscv/strcpy.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/string/strncpy.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/string/strncmp.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/port/riscv/strcmp.S", "C:/esp/v6.1/esp-idf/components/esp_libc/src/picolibc/picolibc_init.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/picolibc/rand.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/picolibc/open_memstream.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/picolibc/errno.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/picolibc/bufio_setvbuf.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/picolibc/getreent.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/picolibc/fopencookie.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/port/esp_time_impl.c" ],
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_libc/libesp_libc.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_libc/src/init.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/abort.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/assert.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/heap.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/locks.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/poll.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/pthread.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/random.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/getentropy.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/termios.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/stdatomic.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/time.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/timekeeping.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/sysconf.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/realpath.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/scandir.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/syscalls.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/reent_syscalls.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/port/esp_time_impl.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/picolibc/picolibc_init.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/picolibc/rand.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/picolibc/open_memstream.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/picolibc/errno.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/picolibc/bufio_setvbuf.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/picolibc/getreent.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/picolibc/fopencookie.c", "C:/esp/v6.1/esp-idf/components/esp_libc/src/port/esp_time_impl.c" ],
             "include_dirs": [ "platform_include" ]
         },
         "esp_mm": {
@@ -579,8 +504,8 @@
             "priv_reqs": [ "heap", "spi_flash", "esp_hal_dma" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_mm/libesp_mm.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_mm/esp_mmu_map.c", "C:/esp/v6.1/esp-idf/components/esp_mm/port/esp32c3/ext_mem_layout.c", "C:/esp/v6.1/esp-idf/components/esp_mm/esp_cache_msync.c", "C:/esp/v6.1/esp-idf/components/esp_mm/esp_cache_utils.c" ],
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_mm/libesp_mm.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_mm/esp_mmu_map.c", "C:/esp/v6.1/esp-idf/components/esp_mm/port/esp32s3/ext_mem_layout.c", "C:/esp/v6.1/esp-idf/components/esp_mm/esp_cache_msync.c", "C:/esp/v6.1/esp-idf/components/esp_mm/esp_cache_utils.c" ],
             "include_dirs": [ "include" ]
         },
         "esp_partition": {
@@ -594,7 +519,7 @@
             "priv_reqs": [ "esp_system", "spi_flash", "partition_table", "efuse", "bootloader_support", "app_update" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_partition/libesp_partition.a",
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_partition/libesp_partition.a",
             "sources": [ "C:/esp/v6.1/esp-idf/components/esp_partition/partition.c", "C:/esp/v6.1/esp-idf/components/esp_partition/partition_target.c" ],
             "include_dirs": [ "include" ]
         },
@@ -609,7 +534,7 @@
             "priv_reqs": [ "esp_system", "esp_driver_gpio", "esp_timer", "esp_hal_uart" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_pm/libesp_pm.a",
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_pm/libesp_pm.a",
             "sources": [ "C:/esp/v6.1/esp-idf/components/esp_pm/pm_locks.c", "C:/esp/v6.1/esp-idf/components/esp_pm/pm_trace.c", "C:/esp/v6.1/esp-idf/components/esp_pm/pm_impl.c" ],
             "include_dirs": [ "include" ]
         },
@@ -624,9 +549,9 @@
             "priv_reqs": [ "heap", "spi_flash", "esp_mm", "esp_hal_mspi", "esp_hal_gpio" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_psram/libesp_psram.a",
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_psram/libesp_psram.a",
             "sources": [ "C:/esp/v6.1/esp-idf/components/esp_psram/system_layer/esp_psram_mspi.c" ],
-            "include_dirs": [ "include", "device/include" ]
+            "include_dirs": [ "include", "device/include", "xip_impl/include" ]
         },
         "esp_ringbuf": {
             "alias": "idf::esp_ringbuf",
@@ -639,7 +564,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_ringbuf/libesp_ringbuf.a",
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_ringbuf/libesp_ringbuf.a",
             "sources": [ "C:/esp/v6.1/esp-idf/components/esp_ringbuf/ringbuf.c" ],
             "include_dirs": [ "include" ]
         },
@@ -654,9 +579,9 @@
             "priv_reqs": [ "soc", "hal", "esp_hal_uart", "esp_hal_security" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_rom/libesp_rom.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_sys.c", "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_print.c", "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_crc.c", "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_serial_output.c", "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_spiflash.c", "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_efuse.c", "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_gpio.c" ],
-            "include_dirs": [ "include", "esp32c3/include", "esp32c3/include/esp32c3", "esp32c3" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_rom/libesp_rom.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_sys.c", "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_print.c", "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_crc.c", "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_serial_output.c", "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_spiflash.c", "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_efuse.c", "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_gpio.c", "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_longjmp.S", "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_cache_esp32s2_esp32s3.c", "C:/esp/v6.1/esp-idf/components/esp_rom/patches/esp_rom_cache_writeback_esp32s3.S" ],
+            "include_dirs": [ "include", "esp32s3/include", "esp32s3/include/esp32s3", "esp32s3" ]
         },
         "esp_security": {
             "alias": "idf::esp_security",
@@ -669,8 +594,8 @@
             "priv_reqs": [ "esp_hw_support", "hal", "efuse", "esp_system", "esp_timer" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_security/libesp_security.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_security/src/init.c", "C:/esp/v6.1/esp-idf/components/esp_security/src/esp_hmac.c", "C:/esp/v6.1/esp-idf/components/esp_security/src/esp_ds.c", "C:/esp/v6.1/esp-idf/components/esp_security/src/esp_crypto_lock.c", "C:/esp/v6.1/esp-idf/components/esp_security/src/esp_crypto_periph_clk.c", "C:/esp/v6.1/esp-idf/components/esp_security/src/esp32c3/esp_crypto_clk.c" ],
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_security/libesp_security.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_security/src/init.c", "C:/esp/v6.1/esp-idf/components/esp_security/src/esp_hmac.c", "C:/esp/v6.1/esp-idf/components/esp_security/src/esp_ds.c", "C:/esp/v6.1/esp-idf/components/esp_security/src/esp_crypto_lock.c", "C:/esp/v6.1/esp-idf/components/esp_security/src/esp_crypto_periph_clk.c", "C:/esp/v6.1/esp-idf/components/esp_security/src/esp32s3/esp_crypto_clk.c" ],
             "include_dirs": [ "include" ]
         },
         "esp_stdio": {
@@ -684,8 +609,8 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_stdio/libesp_stdio.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_stdio/stdio_port.c", "C:/esp/v6.1/esp-idf/components/esp_stdio/stdio_simple.c", "C:/esp/v6.1/esp-idf/components/esp_stdio/stdio_syscalls_simple.c", "C:/esp/v6.1/esp-idf/components/esp_stdio/stdio_vfs.c" ],
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_stdio/libesp_stdio.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_stdio/stdio_port.c", "C:/esp/v6.1/esp-idf/components/esp_stdio/stdio_simple.c", "C:/esp/v6.1/esp-idf/components/esp_stdio/stdio_syscalls_simple.c" ],
             "include_dirs": [ "include" ]
         },
         "esp_system": {
@@ -699,8 +624,8 @@
             "priv_reqs": [ "spi_flash", "esp_timer", "esp_mm", "esp_hal_mspi", "esp_hal_wdt", "esp_hal_uart", "esp_hal_clock", "esp_hal_dma", "bootloader_support", "esp_pm", "esp_usb_cdc_rom_console" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_system/libesp_system.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_system/esp_err.c", "C:/esp/v6.1/esp-idf/components/esp_system/crosscore_int.c", "C:/esp/v6.1/esp-idf/components/esp_system/esp_ipc.c", "C:/esp/v6.1/esp-idf/components/esp_system/freertos_hooks.c", "C:/esp/v6.1/esp-idf/components/esp_system/panic.c", "C:/esp/v6.1/esp-idf/components/esp_system/esp_system.c", "C:/esp/v6.1/esp-idf/components/esp_system/startup.c", "C:/esp/v6.1/esp-idf/components/esp_system/startup_funcs.c", "C:/esp/v6.1/esp-idf/components/esp_system/system_time.c", "C:/esp/v6.1/esp-idf/components/esp_system/stack_check.c", "C:/esp/v6.1/esp-idf/components/esp_system/ubsan.c", "C:/esp/v6.1/esp-idf/components/esp_system/int_wdt.c", "C:/esp/v6.1/esp-idf/components/esp_system/xt_wdt.c", "C:/esp/v6.1/esp-idf/components/esp_system/task_wdt/task_wdt.c", "C:/esp/v6.1/esp-idf/components/esp_system/task_wdt/task_wdt_impl_timergroup.c", "C:/esp/v6.1/esp-idf/components/esp_system/debug_assist.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/cpu_start.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/panic_handler.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/esp_system_chip.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/image_process.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/arch/riscv/expression_with_stack.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/arch/riscv/panic_arch.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/arch/riscv/debug_helpers.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/arch/riscv/debug_stubs.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/soc/esp32c3/clk.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/soc/esp32c3/reset_reason.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/soc/esp32c3/system_internal.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/soc/esp32c3/cache_err_int.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/soc/esp32c3/apb_backup_dma.c" ],
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_system/libesp_system.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/esp_system/esp_err.c", "C:/esp/v6.1/esp-idf/components/esp_system/crosscore_int.c", "C:/esp/v6.1/esp-idf/components/esp_system/esp_ipc.c", "C:/esp/v6.1/esp-idf/components/esp_system/freertos_hooks.c", "C:/esp/v6.1/esp-idf/components/esp_system/panic.c", "C:/esp/v6.1/esp-idf/components/esp_system/esp_system.c", "C:/esp/v6.1/esp-idf/components/esp_system/startup.c", "C:/esp/v6.1/esp-idf/components/esp_system/startup_funcs.c", "C:/esp/v6.1/esp-idf/components/esp_system/system_time.c", "C:/esp/v6.1/esp-idf/components/esp_system/stack_check.c", "C:/esp/v6.1/esp-idf/components/esp_system/ubsan.c", "C:/esp/v6.1/esp-idf/components/esp_system/int_wdt.c", "C:/esp/v6.1/esp-idf/components/esp_system/xt_wdt.c", "C:/esp/v6.1/esp-idf/components/esp_system/task_wdt/task_wdt.c", "C:/esp/v6.1/esp-idf/components/esp_system/task_wdt/task_wdt_impl_timergroup.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/cpu_start.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/panic_handler.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/esp_system_chip.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/image_process.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/esp_ipc_isr.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/arch/xtensa/esp_ipc_isr_port.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/arch/xtensa/esp_ipc_isr_handler.S", "C:/esp/v6.1/esp-idf/components/esp_system/port/arch/xtensa/esp_ipc_isr_routines.S", "C:/esp/v6.1/esp-idf/components/esp_system/port/arch/xtensa/panic_arch.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/arch/xtensa/panic_handler_asm.S", "C:/esp/v6.1/esp-idf/components/esp_system/port/arch/xtensa/expression_with_stack.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/arch/xtensa/expression_with_stack_asm.S", "C:/esp/v6.1/esp-idf/components/esp_system/port/arch/xtensa/debug_helpers.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/arch/xtensa/debug_helpers_asm.S", "C:/esp/v6.1/esp-idf/components/esp_system/port/arch/xtensa/debug_stubs.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/arch/xtensa/trax.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/soc/esp32s3/highint_hdl.S", "C:/esp/v6.1/esp-idf/components/esp_system/port/soc/esp32s3/clk.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/soc/esp32s3/reset_reason.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/soc/esp32s3/system_internal.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/soc/esp32s3/cache_err_int.c", "C:/esp/v6.1/esp-idf/components/esp_system/port/soc/esp32s3/apb_backup_dma.c" ],
             "include_dirs": [ "include" ]
         },
         "esp_timer": {
@@ -714,7 +639,7 @@
             "priv_reqs": [ "esp_hal_timg", "esp_hal_systimer" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/esp_timer/libesp_timer.a",
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/esp_timer/libesp_timer.a",
             "sources": [ "C:/esp/v6.1/esp-idf/components/esp_timer/src/esp_timer.c", "C:/esp/v6.1/esp-idf/components/esp_timer/src/esp_timer_init.c", "C:/esp/v6.1/esp-idf/components/esp_timer/src/ets_timer_legacy.c", "C:/esp/v6.1/esp-idf/components/esp_timer/src/system_time.c", "C:/esp/v6.1/esp-idf/components/esp_timer/src/esp_timer_impl_common.c", "C:/esp/v6.1/esp-idf/components/esp_timer/src/esp_timer_impl_systimer.c" ],
             "include_dirs": [ "include" ]
         },
@@ -759,9 +684,9 @@
             "priv_reqs": [ "esp_hal_systimer" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/freertos/libfreertos.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/freertos/heap_idf.c", "C:/esp/v6.1/esp-idf/components/freertos/app_startup.c", "C:/esp/v6.1/esp-idf/components/freertos/port_common.c", "C:/esp/v6.1/esp-idf/components/freertos/port_systick.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/list.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/queue.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/tasks.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/timers.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/event_groups.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/stream_buffer.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/portable/riscv/port.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/portable/riscv/portasm.S", "C:/esp/v6.1/esp-idf/components/freertos/esp_additions/idf_additions_event_groups.c", "C:/esp/v6.1/esp-idf/components/freertos/esp_additions/idf_additions.c" ],
-            "include_dirs": [ "config/include", "config/include/freertos", "config/riscv/include", "FreeRTOS-Kernel/include", "FreeRTOS-Kernel/portable/riscv/include", "FreeRTOS-Kernel/portable/riscv/include/freertos", "esp_additions/include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/freertos/libfreertos.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/freertos/heap_idf.c", "C:/esp/v6.1/esp-idf/components/freertos/app_startup.c", "C:/esp/v6.1/esp-idf/components/freertos/port_common.c", "C:/esp/v6.1/esp-idf/components/freertos/port_systick.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/list.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/queue.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/tasks.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/timers.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/event_groups.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/stream_buffer.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/port.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/portasm.S", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/xtensa_init.c", "C:/esp/v6.1/esp-idf/components/freertos/FreeRTOS-Kernel/portable/xtensa/xtensa_overlay_os_hook.c", "C:/esp/v6.1/esp-idf/components/freertos/esp_additions/idf_additions_event_groups.c", "C:/esp/v6.1/esp-idf/components/freertos/esp_additions/idf_additions.c" ],
+            "include_dirs": [ "config/include", "config/include/freertos", "config/xtensa/include", "FreeRTOS-Kernel/include", "FreeRTOS-Kernel/portable/xtensa/include", "FreeRTOS-Kernel/portable/xtensa/include/freertos", "esp_additions/include" ]
         },
         "hal": {
             "alias": "idf::hal",
@@ -774,9 +699,9 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/hal/libhal.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/hal/hal_utils.c", "C:/esp/v6.1/esp-idf/components/hal/efuse_hal.c", "C:/esp/v6.1/esp-idf/components/hal/esp32c3/efuse_hal.c", "C:/esp/v6.1/esp-idf/components/hal/mmu_hal.c", "C:/esp/v6.1/esp-idf/components/hal/cache_hal.c", "C:/esp/v6.1/esp-idf/components/hal/color_hal.c" ],
-            "include_dirs": [ "platform_port/include", "esp32c3/include", "include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/hal/libhal.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/hal/hal_utils.c", "C:/esp/v6.1/esp-idf/components/hal/efuse_hal.c", "C:/esp/v6.1/esp-idf/components/hal/esp32s3/efuse_hal.c", "C:/esp/v6.1/esp-idf/components/hal/mmu_hal.c", "C:/esp/v6.1/esp-idf/components/hal/cache_hal.c", "C:/esp/v6.1/esp-idf/components/hal/color_hal.c" ],
+            "include_dirs": [ "platform_port/include", "esp32s3/include", "include" ]
         },
         "heap": {
             "alias": "idf::heap",
@@ -789,8 +714,8 @@
             "priv_reqs": [ "soc" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/heap/libheap.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/heap/heap_caps_base.c", "C:/esp/v6.1/esp-idf/components/heap/heap_caps.c", "C:/esp/v6.1/esp-idf/components/heap/heap_caps_init.c", "C:/esp/v6.1/esp-idf/components/heap/multi_heap.c", "C:/esp/v6.1/esp-idf/components/heap/tlsf/tlsf.c", "C:/esp/v6.1/esp-idf/components/heap/port/memory_layout_utils.c", "C:/esp/v6.1/esp-idf/components/heap/port/esp32c3/memory_layout.c" ],
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/heap/libheap.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/heap/heap_caps_base.c", "C:/esp/v6.1/esp-idf/components/heap/heap_caps.c", "C:/esp/v6.1/esp-idf/components/heap/heap_caps_init.c", "C:/esp/v6.1/esp-idf/components/heap/multi_heap.c", "C:/esp/v6.1/esp-idf/components/heap/tlsf/tlsf.c", "C:/esp/v6.1/esp-idf/components/heap/port/memory_layout_utils.c", "C:/esp/v6.1/esp-idf/components/heap/port/esp32s3/memory_layout.c" ],
             "include_dirs": [ "include", "tlsf" ]
         },
         "log": {
@@ -804,7 +729,7 @@
             "priv_reqs": [ "hal", "soc", "esp_hw_support" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/log/liblog.a",
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/log/liblog.a",
             "sources": [ "C:/esp/v6.1/esp-idf/components/log/src/os/log_timestamp.c", "C:/esp/v6.1/esp-idf/components/log/src/log_timestamp_common.c", "C:/esp/v6.1/esp-idf/components/log/src/os/log_lock.c", "C:/esp/v6.1/esp-idf/components/log/src/buffer/log_buffers.c", "C:/esp/v6.1/esp-idf/components/log/src/os/util.c", "C:/esp/v6.1/esp-idf/components/log/src/util.c", "C:/esp/v6.1/esp-idf/components/log/src/log_format_text.c", "C:/esp/v6.1/esp-idf/components/log/src/log_print.c", "C:/esp/v6.1/esp-idf/components/log/src/log.c", "C:/esp/v6.1/esp-idf/components/log/src/os/log_write.c", "C:/esp/v6.1/esp-idf/components/log/src/log_level/log_level.c", "C:/esp/v6.1/esp-idf/components/log/src/log_level/tag_log_level/tag_log_level.c", "C:/esp/v6.1/esp-idf/components/log/src/log_level/tag_log_level/linked_list/log_linked_list.c", "C:/esp/v6.1/esp-idf/components/log/src/log_level/tag_log_level/cache/log_binary_heap.c" ],
             "include_dirs": [ "include" ]
         },
@@ -812,15 +737,15 @@
             "alias": "idf::main",
             "target": "___idf_main",
             "prefix": "idf",
-            "dir": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/main",
+            "dir": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/main",
             "type": "LIBRARY",
             "lib": "__idf_main",
             "reqs": [],
-            "priv_reqs": [ "esp_adc", "esp_driver_gpio", "esp_driver_i2c", "esp_driver_twai", "esp_driver_usb_serial_jtag", "esp_timer", "vfs" ],
+            "priv_reqs": [ "esp_driver_gpio", "esp_driver_spi", "esp_driver_usb_serial_jtag" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/main/libmain.a",
-            "sources": [ "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/main/battery_voltage.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/main/mcp23008.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/main/pac1931.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/main/twai_driver.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/main/usb_serial_echo.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/main/main.cpp" ],
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/main/libmain.a",
+            "sources": [ "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/main/ra01.cpp", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/main/main.cpp" ],
             "include_dirs": [ "." ]
         },
         "mbedtls": {
@@ -834,8 +759,8 @@
             "priv_reqs": [ "soc", "esp_hw_support", "esp_pm", "esp_driver_dma" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/mbedtls/libmbedtls.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/mbedtls/port/esp_mem.c", "C:/esp/v6.1/esp-idf/components/mbedtls/port/psa_crypto_storage/esp_psa_key_file.c", "C:/esp/v6.1/esp-idf/components/mbedtls/esp_crt_bundle/esp_crt_bundle.c", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/x509_crt_bundle.S" ],
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/mbedtls/libmbedtls.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/mbedtls/port/esp_mem.c", "C:/esp/v6.1/esp-idf/components/mbedtls/port/psa_crypto_storage/esp_psa_key_file.c", "C:/esp/v6.1/esp-idf/components/mbedtls/esp_crt_bundle/esp_crt_bundle.c", "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/x509_crt_bundle.S" ],
             "include_dirs": [ "port/include", "mbedtls/include", "mbedtls/library", "mbedtls/tf-psa-crypto/core", "mbedtls/tf-psa-crypto/drivers/builtin/src/", "mbedtls/tf-psa-crypto/extras", "esp_crt_bundle/include", "C:/esp/v6.1/esp-idf/components/mbedtls/port/psa_driver/include", "C:/esp/v6.1/esp-idf/components/mbedtls/port/psa_crypto_storage/include" ]
         },
         "partition_table": {
@@ -864,23 +789,8 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/pthread/libpthread.a",
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/pthread/libpthread.a",
             "sources": [ "C:/esp/v6.1/esp-idf/components/pthread/pthread.c", "C:/esp/v6.1/esp-idf/components/pthread/pthread_cond_var.c", "C:/esp/v6.1/esp-idf/components/pthread/pthread_local_storage.c", "C:/esp/v6.1/esp-idf/components/pthread/pthread_rwlock.c", "C:/esp/v6.1/esp-idf/components/pthread/pthread_semaphore.c" ],
-            "include_dirs": [ "include" ]
-        },
-        "riscv": {
-            "alias": "idf::riscv",
-            "target": "___idf_riscv",
-            "prefix": "idf",
-            "dir": "C:/esp/v6.1/esp-idf/components/riscv",
-            "type": "LIBRARY",
-            "lib": "__idf_riscv",
-            "reqs": [],
-            "priv_reqs": [ "soc", "hal" ],
-            "managed_reqs": [],
-            "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/riscv/libriscv.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/riscv/instruction_decode.c", "C:/esp/v6.1/esp-idf/components/riscv/interrupt.c", "C:/esp/v6.1/esp-idf/components/riscv/rv_utils.c", "C:/esp/v6.1/esp-idf/components/riscv/vectors.S", "C:/esp/v6.1/esp-idf/components/riscv/interrupt_intc.c", "C:/esp/v6.1/esp-idf/components/riscv/vectors_intc.S" ],
             "include_dirs": [ "include" ]
         },
         "soc": {
@@ -894,9 +804,9 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/soc/libsoc.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/soc/lldesc.c", "C:/esp/v6.1/esp-idf/components/soc/dport_access_common.c", "C:/esp/v6.1/esp-idf/components/soc/esp32c3/interrupts.c", "C:/esp/v6.1/esp-idf/components/soc/esp32c3/gpio_periph.c", "C:/esp/v6.1/esp-idf/components/soc/esp32c3/mpi_periph.c", "C:/esp/v6.1/esp-idf/components/soc/esp32c3/power_supply_periph.c" ],
-            "include_dirs": [ "include", "esp32c3", "esp32c3/include", "esp32c3/register" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/soc/libsoc.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/soc/lldesc.c", "C:/esp/v6.1/esp-idf/components/soc/dport_access_common.c", "C:/esp/v6.1/esp-idf/components/soc/esp32s3/interrupts.c", "C:/esp/v6.1/esp-idf/components/soc/esp32s3/gpio_periph.c", "C:/esp/v6.1/esp-idf/components/soc/esp32s3/mpi_periph.c", "C:/esp/v6.1/esp-idf/components/soc/esp32s3/power_supply_periph.c" ],
+            "include_dirs": [ "include", "esp32s3", "esp32s3/include", "esp32s3/register" ]
         },
         "spi_flash": {
             "alias": "idf::spi_flash",
@@ -909,24 +819,24 @@
             "priv_reqs": [ "bootloader_support", "soc", "esp_hal_gpio", "esp_driver_gpio", "esp_mm" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/spi_flash/libspi_flash.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/spi_flash/flash_brownout_hook.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_drivers.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_generic.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_issi.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_mxic.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_gd.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_winbond.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_boya.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_mxic_opi.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_th.c", "C:/esp/v6.1/esp-idf/components/spi_flash/memspi_host_driver.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_blockdev.c", "C:/esp/v6.1/esp-idf/components/spi_flash/cache_utils.c", "C:/esp/v6.1/esp-idf/components/spi_flash/flash_mmap.c", "C:/esp/v6.1/esp-idf/components/spi_flash/flash_ops.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_wrap.c", "C:/esp/v6.1/esp-idf/components/spi_flash/esp_flash_api.c", "C:/esp/v6.1/esp-idf/components/spi_flash/esp_flash_spi_init.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_os_func_app.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_os_func_noos.c" ],
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/spi_flash/libspi_flash.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/spi_flash/flash_brownout_hook.c", "C:/esp/v6.1/esp-idf/components/spi_flash/esp32s3/spi_flash_oct_flash_init.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_hpm_enable.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_drivers.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_generic.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_issi.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_mxic.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_gd.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_winbond.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_boya.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_mxic_opi.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_chip_th.c", "C:/esp/v6.1/esp-idf/components/spi_flash/memspi_host_driver.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_blockdev.c", "C:/esp/v6.1/esp-idf/components/spi_flash/cache_utils.c", "C:/esp/v6.1/esp-idf/components/spi_flash/flash_mmap.c", "C:/esp/v6.1/esp-idf/components/spi_flash/flash_ops.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_wrap.c", "C:/esp/v6.1/esp-idf/components/spi_flash/esp_flash_api.c", "C:/esp/v6.1/esp-idf/components/spi_flash/esp_flash_spi_init.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_os_func_app.c", "C:/esp/v6.1/esp-idf/components/spi_flash/spi_flash_os_func_noos.c" ],
             "include_dirs": [ "include" ]
         },
-        "vfs": {
-            "alias": "idf::vfs",
-            "target": "___idf_vfs",
+        "xtensa": {
+            "alias": "idf::xtensa",
+            "target": "___idf_xtensa",
             "prefix": "idf",
-            "dir": "C:/esp/v6.1/esp-idf/components/vfs",
+            "dir": "C:/esp/v6.1/esp-idf/components/xtensa",
             "type": "LIBRARY",
-            "lib": "__idf_vfs",
+            "lib": "__idf_xtensa",
             "reqs": [],
-            "priv_reqs": [ "esp_driver_uart", "esp_driver_usb_serial_jtag", "esp_usb_cdc_rom_console" ],
+            "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/esp-idf/vfs/libvfs.a",
-            "sources": [ "C:/esp/v6.1/esp-idf/components/vfs/vfs.c", "C:/esp/v6.1/esp-idf/components/vfs/vfs_calls.c", "C:/esp/v6.1/esp-idf/components/vfs/vfs_eventfd.c", "C:/esp/v6.1/esp-idf/components/vfs/vfs_semihost.c", "C:/esp/v6.1/esp-idf/components/vfs/nullfs.c" ],
-            "include_dirs": [ "include" ]
+            "file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/esp-idf/xtensa/libxtensa.a",
+            "sources": [ "C:/esp/v6.1/esp-idf/components/xtensa/eri.c", "C:/esp/v6.1/esp-idf/components/xtensa/xt_trax.c", "C:/esp/v6.1/esp-idf/components/xtensa/xtensa_context.S", "C:/esp/v6.1/esp-idf/components/xtensa/xtensa_intr_asm.S", "C:/esp/v6.1/esp-idf/components/xtensa/xtensa_intr.c", "C:/esp/v6.1/esp-idf/components/xtensa/xtensa_vectors.S" ],
+            "include_dirs": [ "esp32s3/include", "include", "deprecated_include" ]
         }
     },
     "all_component_info" : {
@@ -1019,7 +929,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build" ]
+            "include_dirs": [ "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build" ]
         },
         "cxx": {
             "alias": "idf::cxx",
@@ -1058,7 +968,7 @@
             "priv_reqs": [ "bootloader_support", "soc", "spi_flash", "esp_system", "esp_partition", "esp_app_format", "esp_hal_security" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp-tls": {
             "alias": "idf::esp-tls",
@@ -1071,7 +981,7 @@
             "priv_reqs": [ "http_parser", "esp_timer", "lwip" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build", "esp-tls-crypto" ]
+            "include_dirs": [ "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build", "esp-tls-crypto" ]
         },
         "esp_adc": {
             "alias": "idf::esp_adc",
@@ -1084,7 +994,7 @@
             "priv_reqs": [ "esp_driver_gpio", "esp_driver_dma", "efuse", "esp_pm", "esp_ringbuf", "esp_mm" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "interface", "esp32c3/include" ]
+            "include_dirs": [ "include", "interface", "esp32s3/include" ]
         },
         "esp_app_format": {
             "alias": "idf::esp_app_format",
@@ -1630,7 +1540,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_asrc": {
             "alias": "idf::esp_hal_asrc",
@@ -1656,7 +1566,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_clock": {
             "alias": "idf::esp_hal_clock",
@@ -1669,7 +1579,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_cordic": {
             "alias": "idf::esp_hal_cordic",
@@ -1695,7 +1605,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_emac": {
             "alias": "idf::esp_hal_emac",
@@ -1721,7 +1631,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_gpspi": {
             "alias": "idf::esp_hal_gpspi",
@@ -1734,7 +1644,7 @@
             "priv_reqs": [ "esp_hal_gpio" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_i2c": {
             "alias": "idf::esp_hal_i2c",
@@ -1747,7 +1657,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "esp32c3/include", "include" ]
+            "include_dirs": [ "esp32s3/include", "include" ]
         },
         "esp_hal_i2s": {
             "alias": "idf::esp_hal_i2s",
@@ -1760,7 +1670,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_i3c": {
             "alias": "idf::esp_hal_i3c",
@@ -1812,7 +1722,7 @@
             "priv_reqs": [ "esp_hal_i2s" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_ledc": {
             "alias": "idf::esp_hal_ledc",
@@ -1825,7 +1735,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_mcpwm": {
             "alias": "idf::esp_hal_mcpwm",
@@ -1838,7 +1748,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_mspi": {
             "alias": "idf::esp_hal_mspi",
@@ -1851,7 +1761,7 @@
             "priv_reqs": [ "esp_hal_gpio" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_parlio": {
             "alias": "idf::esp_hal_parlio",
@@ -1877,7 +1787,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_pmu": {
             "alias": "idf::esp_hal_pmu",
@@ -1890,7 +1800,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_ppa": {
             "alias": "idf::esp_hal_ppa",
@@ -1916,7 +1826,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_rmt": {
             "alias": "idf::esp_hal_rmt",
@@ -1929,7 +1839,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_rtc_timer": {
             "alias": "idf::esp_hal_rtc_timer",
@@ -1942,7 +1852,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_sd": {
             "alias": "idf::esp_hal_sd",
@@ -1955,7 +1865,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_security": {
             "alias": "idf::esp_hal_security",
@@ -1968,7 +1878,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "esp32c3/include", "include" ]
+            "include_dirs": [ "esp32s3/include", "include" ]
         },
         "esp_hal_systimer": {
             "alias": "idf::esp_hal_systimer",
@@ -1981,7 +1891,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_timg": {
             "alias": "idf::esp_hal_timg",
@@ -1994,7 +1904,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_touch_sens": {
             "alias": "idf::esp_hal_touch_sens",
@@ -2007,7 +1917,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include" ]
+            "include_dirs": [ "esp32s3/include", "include" ]
         },
         "esp_hal_twai": {
             "alias": "idf::esp_hal_twai",
@@ -2020,7 +1930,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_uart": {
             "alias": "idf::esp_hal_uart",
@@ -2033,7 +1943,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_usb": {
             "alias": "idf::esp_hal_usb",
@@ -2046,7 +1956,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hal_wdt": {
             "alias": "idf::esp_hal_wdt",
@@ -2059,7 +1969,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_hid": {
             "alias": "idf::esp_hid",
@@ -2137,7 +2047,7 @@
             "priv_reqs": [ "efuse", "spi_flash", "bootloader_support", "esp_hal_wdt", "esp_hal_rtc_timer", "esp_hal_clock", "esp_hal_security", "esp_hal_systimer", "esp_hal_ana_conv", "esp_driver_gpio", "esp_timer", "esp_hal_touch_sens", "esp_pm", "esp_mm", "esp_hal_mspi", "esp_hal_uart" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "include/soc", "ldo/include", "debug_probe/include", "etm/include", "mspi/mspi_timing_tuning/include", "mspi/mspi_timing_tuning/tuning_scheme_impl/include", "mspi/mspi_intr/include", "power_supply/include", "modem/include", "include/soc/esp32c3" ]
+            "include_dirs": [ "include", "include/soc", "ldo/include", "debug_probe/include", "etm/include", "mspi/mspi_timing_tuning/include", "mspi/mspi_timing_tuning/tuning_scheme_impl/include", "mspi/mspi_intr/include", "power_supply/include", "modem/include", "include/soc/esp32s3" ]
         },
         "esp_lcd": {
             "alias": "idf::esp_lcd",
@@ -2241,7 +2151,7 @@
             "priv_reqs": [ "nvs_flash", "esp_driver_gpio", "esp_hal_ana_conv", "efuse", "esp_timer", "esp_wifi", "esptool_py" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include" ]
+            "include_dirs": [ "include", "esp32s3/include" ]
         },
         "esp_pm": {
             "alias": "idf::esp_pm",
@@ -2267,7 +2177,7 @@
             "priv_reqs": [ "heap", "spi_flash", "esp_mm", "esp_hal_mspi", "esp_hal_gpio" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "device/include" ]
+            "include_dirs": [ "include", "device/include", "xip_impl/include" ]
         },
         "esp_ringbuf": {
             "alias": "idf::esp_ringbuf",
@@ -2293,7 +2203,7 @@
             "priv_reqs": [ "soc", "hal", "esp_hal_uart", "esp_hal_security" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3/include", "esp32c3/include/esp32c3", "esp32c3" ]
+            "include_dirs": [ "include", "esp32s3/include", "esp32s3/include/esp32s3", "esp32s3" ]
         },
         "esp_security": {
             "alias": "idf::esp_security",
@@ -2449,7 +2359,7 @@
             "priv_reqs": [ "esp_hal_systimer" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "config/include", "config/include/freertos", "config/riscv/include", "FreeRTOS-Kernel/include", "FreeRTOS-Kernel/portable/riscv/include", "FreeRTOS-Kernel/portable/riscv/include/freertos", "esp_additions/include" ]
+            "include_dirs": [ "config/include", "config/include/freertos", "config/xtensa/include", "FreeRTOS-Kernel/include", "FreeRTOS-Kernel/portable/xtensa/include", "FreeRTOS-Kernel/portable/xtensa/include/freertos", "esp_additions/include" ]
         },
         "hal": {
             "alias": "idf::hal",
@@ -2462,7 +2372,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "platform_port/include", "esp32c3/include", "include" ]
+            "include_dirs": [ "platform_port/include", "esp32s3/include", "include" ]
         },
         "heap": {
             "alias": "idf::heap",
@@ -2614,11 +2524,11 @@
             "dir": "C:/esp/v6.1/esp-idf/components/perfmon",
             "source": "idf_components",
             "lib": "__idf_perfmon",
-            "reqs": [],
+            "reqs": [ "xtensa" ],
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": []
+            "include_dirs": [ "include" ]
         },
         "protobuf-c": {
             "alias": "idf::protobuf-c",
@@ -2667,7 +2577,7 @@
             "source": "idf_components",
             "lib": "__idf_riscv",
             "reqs": [],
-            "priv_reqs": [ "soc", "hal" ],
+            "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "include_dirs": [ "include" ]
@@ -2709,7 +2619,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "esp32c3", "esp32c3/include", "esp32c3/register" ]
+            "include_dirs": [ "include", "esp32s3", "esp32s3/include", "esp32s3/register" ]
         },
         "spi_flash": {
             "alias": "idf::spi_flash",
@@ -2826,28 +2736,28 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "include", "port/include", "esp_supplicant/include" ]
+            "include_dirs": [ "esp32s3/include", "include", "deprecated_include" ]
         },
         "main": {
             "alias": "idf::main",
             "target": "___idf_main",
             "prefix": "idf",
-            "dir": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/main",
+            "dir": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/main",
             "source": "project_components",
             "lib": "__idf_main",
             "reqs": [],
-            "priv_reqs": [ "esp_adc", "esp_driver_gpio", "esp_driver_i2c", "esp_driver_twai", "esp_driver_usb_serial_jtag", "esp_timer", "vfs" ],
+            "priv_reqs": [ "esp_driver_gpio", "esp_driver_spi", "esp_driver_usb_serial_jtag" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "include_dirs": [ "." ]
         }
     },
     "gdbinit_files": {
-        "01_symbols": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/gdbinit/symbols",
-        "02_prefix_map": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/gdbinit/prefix_map",
-        "03_py_extensions": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/gdbinit/py_extensions",
-        "04_connect": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/gdbinit/connect"
+        "01_symbols": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/gdbinit/symbols",
+        "02_prefix_map": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/gdbinit/prefix_map",
+        "03_py_extensions": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/gdbinit/py_extensions",
+        "04_connect": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/gdbinit/connect"
     },
-    "debug_arguments_openocd": "-f board/esp32c3-builtin.cfg",
-    "hints_file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/build/hints.yml"
+    "debug_arguments_openocd": "-f board/esp32s3-builtin.cfg",
+    "hints_file": "C:/Users/Ejfso/Documents/GitHub/witness/Software/Aperture/softwarev1aperture/build/hints.yml"
 }

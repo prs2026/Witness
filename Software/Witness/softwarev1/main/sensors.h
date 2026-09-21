@@ -13,6 +13,7 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "ms5607.h"
+#include "ra01.h"
 
 class SpiDataForwarder;
 class WitnessStatus;
@@ -112,6 +113,8 @@ private:
         kTaskRateHz / kBatterySampleRateHz;
     static constexpr spi_host_device_t kSpiHost = SPI3_HOST;
     static constexpr std::size_t kMaximumRegisterTransfer = 14;
+    // Accommodates the SX1262 opcode/offset plus its 255-byte packet buffer.
+    static constexpr std::size_t kMaximumSpiTransfer = 258;
     static constexpr std::uint32_t kBootDelayMs = 35;
     static constexpr std::uint32_t kResetDelayMs = 30;
 
@@ -177,6 +180,7 @@ private:
     SpiDataForwarder &data_forwarder_;
     WitnessStatus &witness_status_;
     Ms5607 ms5607_{};
+    Ra01 radio_{};
     spi_device_handle_t spi_device_ = nullptr;
     adc_oneshot_unit_handle_t battery_adc_handle_ = nullptr;
     adc_cali_handle_t battery_adc_calibration_ = nullptr;
@@ -184,6 +188,8 @@ private:
     SemaphoreHandle_t sample_mutex_ = nullptr;
     bool owns_spi_bus_ = false;
     bool sample_available_ = false;
+    bool ms5607_initialized_ = false;
+    bool radio_ready_ = false;
     std::atomic_bool debug_packet_output_enabled_{false};
     Sample working_sample_{};
     Sample latest_sample_{};
