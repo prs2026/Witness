@@ -7,6 +7,7 @@
 #include "driver/usb_serial_jtag.h"
 #include "driver/usb_serial_jtag_vfs.h"
 #include "esp_log.h"
+#include "flash_logger.h"
 #include "heartbeat.h"
 #include "sdkconfig.h"
 #include "sensors.h"
@@ -84,10 +85,13 @@ std::size_t normalize_command(char *command, const std::size_t length)
 UsbSerialEcho::UsbSerialEcho(
     Heartbeat &heartbeat,
     Sensors &sensors,
-    SpiDataForwarder &spi_interface)
+    SpiDataForwarder &spi_interface,
+    FlashLogger &flash_logger)
     : heartbeat_(heartbeat),
       sensors_(sensors),
-      spi_interface_(spi_interface)
+      spi_interface_(spi_interface),
+      flash_logger_(flash_logger),
+      mass_storage_(flash_logger)
 {
 }
 
@@ -181,6 +185,15 @@ void UsbSerialEcho::consume_command_bytes(
 
         if (command_length_ < kCommandBufferSize - 1) {
             command_buffer_[command_length_++] = character;
+            if (command_length_ == 3U &&
+                static_cast<std::uint8_t>(command_buffer_[0]) == IRIS_PACKET_ID_COMMAND &&
+                static_cast<std::uint8_t>(command_buffer_[1]) ==
+                    static_cast<std::uint8_t>(IRIS_COMMAND_MASS_STORAGE_START >> 8) &&
+                static_cast<std::uint8_t>(command_buffer_[2]) ==
+                    static_cast<std::uint8_t>(IRIS_COMMAND_MASS_STORAGE_START)) {
+                start_mass_storage();
+                return;
+            }
         } else {
             command_overflow_ = true;
         }
@@ -232,6 +245,25 @@ void UsbSerialEcho::process_command()
     } else {
         ESP_LOGW(kLogTag, "unknown command: %s", command_buffer_);
     }
+}
+
+void UsbSerialEcho::start_mass_storage()
+{
+    ESP_LOGI(kLogTag, "freezing logs for read-only USB export");
+    const esp_err_t freeze_result = flash_logger_.prepare_mass_storage();
+    if (freeze_result != ESP_OK) {
+        ESP_LOGE(kLogTag, "cannot start mass storage: %s", esp_err_to_name(freeze_result));
+        command_length_ = 0;
+        return;
+    }
+    spi_interface_.set_output_enabled(false);
+    vTaskDelay(pdMS_TO_TICKS(50));
+    flash_logger_.disable_console_output();
+#if CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
+    usb_serial_jtag_vfs_use_nonblocking();
+#endif
+    usb_serial_jtag_driver_uninstall();
+    mass_storage_started_ = mass_storage_.start() == ESP_OK;
 }
 
 void UsbSerialEcho::process_protocol_command(const std::uint16_t command)
@@ -299,6 +331,11 @@ void UsbSerialEcho::run()
                 static_cast<std::size_t>(bytes_read);
             echo_bytes(buffer, bytes_to_echo);
             consume_command_bytes(buffer, bytes_to_echo);
+            if (mass_storage_started_) {
+                task_handle_ = nullptr;
+                vTaskDelete(nullptr);
+                return;
+            }
         }
     }
 }

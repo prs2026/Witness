@@ -6,9 +6,11 @@
 #include "driver/spi_master.h"
 #include "esp_err.h"
 
-class W25n01gw final {
+class W25n01kv final {
 public:
     static constexpr std::size_t kPageDataSize = 2048;
+    // The R variant exposes 64 spare bytes. Its additional 32-byte ECC parity
+    // area is managed internally and is not part of the user column range.
     static constexpr std::size_t kSpareSize = 64;
     static constexpr std::size_t kPageTotalSize =
         kPageDataSize + kSpareSize;
@@ -17,9 +19,9 @@ public:
     static constexpr std::uint32_t kPageCount =
         kPagesPerBlock * kBlockCount;
 
-    W25n01gw() = default;
-    W25n01gw(const W25n01gw &) = delete;
-    W25n01gw &operator=(const W25n01gw &) = delete;
+    W25n01kv() = default;
+    W25n01kv(const W25n01kv &) = delete;
+    W25n01kv &operator=(const W25n01kv &) = delete;
 
     esp_err_t initialize();
     void release();
@@ -63,13 +65,15 @@ private:
     static constexpr std::uint8_t kStatusEraseFailure = 1U << 2;
     static constexpr std::uint8_t kStatusProgramFailure = 1U << 3;
     static constexpr std::uint8_t kStatusEccMask = 3U << 4;
-    static constexpr std::uint8_t kStatusEccUncorrectable = 1U << 5;
+    // ECC=10b is uncorrectable. ECC=11b is corrected data whose bit-flip
+    // count exceeded the configured refresh threshold.
+    static constexpr std::uint8_t kStatusEccUncorrectable = 2U << 4;
     static constexpr std::uint8_t kConfigurationBufferRead = 1U << 3;
     static constexpr std::uint8_t kConfigurationEccEnable = 1U << 4;
     static constexpr std::uint8_t kBlockProtectionMask = 0x7C;
 
     static constexpr std::uint8_t kManufacturerId = 0xEF;
-    static constexpr std::uint8_t kDeviceIdHigh = 0xBA;
+    static constexpr std::uint8_t kDeviceIdHigh = 0xAE;
     static constexpr std::uint8_t kDeviceIdLow = 0x21;
 
     esp_err_t command(std::uint8_t opcode);

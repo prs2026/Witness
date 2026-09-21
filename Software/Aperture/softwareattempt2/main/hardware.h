@@ -16,13 +16,14 @@
 
 // These settings must match the transmitting radio.
 #define IRIS_RADIO_FREQUENCY_HZ 915000000U
-#define IRIS_RADIO_TX_POWER_DBM 0 // SX1262 range: -9 through +22 dBm
+#define IRIS_RADIO_TX_POWER_DBM -2 // SX1262 range: -9 through +22 dBm
 #define IRIS_RADIO_DIO2_RF_SWITCH_ENABLE 1
 // The SX1262 command has no separate polarity bit. Set to 1 to select the
 // opposite DIO2 control state for an RF switch with opposite polarity.
 #define IRIS_RADIO_DIO2_RF_SWITCH_INVERT 0
 // DIO2 is also wired to the MCU, so it may be monitored as an input.
 #define IRIS_RADIO_DIO2_MCU_INPUT 1
+#define IRIS_RADIO_MAX_PACKET_LENGTH 128U
 #define IRIS_RADIO_SPREADING_FACTOR 7U
 #define IRIS_RADIO_BANDWIDTH_HZ 125000U
 #define IRIS_RADIO_CODING_RATE 1U // 4/5

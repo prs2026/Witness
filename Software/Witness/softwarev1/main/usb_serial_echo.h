@@ -7,17 +7,20 @@
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "usb_mass_storage.h"
 
 class Heartbeat;
 class Sensors;
 class SpiDataForwarder;
+class FlashLogger;
 
 class UsbSerialEcho final {
 public:
     UsbSerialEcho(
         Heartbeat &heartbeat,
         Sensors &sensors,
-        SpiDataForwarder &spi_interface);
+        SpiDataForwarder &spi_interface,
+        FlashLogger &flash_logger);
 
     UsbSerialEcho(const UsbSerialEcho &) = delete;
     UsbSerialEcho &operator=(const UsbSerialEcho &) = delete;
@@ -39,15 +42,19 @@ private:
     void process_command();
     void process_protocol_command(std::uint16_t command);
     void process_tx_command();
+    void start_mass_storage();
     void set_camera_state(std::size_t camera_index, bool enabled);
     void run();
 
     Heartbeat &heartbeat_;
     Sensors &sensors_;
     SpiDataForwarder &spi_interface_;
+    FlashLogger &flash_logger_;
+    UsbMassStorage mass_storage_;
     TaskHandle_t task_handle_ = nullptr;
     char command_buffer_[kCommandBufferSize]{};
     std::size_t command_length_ = 0;
     bool command_overflow_ = false;
     bool camera_enabled_[2]{};
+    bool mass_storage_started_ = false;
 };

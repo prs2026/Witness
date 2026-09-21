@@ -14,7 +14,7 @@ extern "C" void app_main(void)
     static Sensors sensors(spi_data_forwarder, witness_status);
     static FlashLogger flash_logger(sensors, witness_status);
     static UsbSerialEcho usb_serial_echo(
-        heartbeat, sensors, spi_data_forwarder);
+        heartbeat, sensors, spi_data_forwarder, flash_logger);
 
     ESP_ERROR_CHECK(spi_data_forwarder.start());
     ESP_ERROR_CHECK(usb_serial_echo.start());

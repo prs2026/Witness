@@ -1,0 +1,30 @@
+I (13326) aperture: Sending heartbeat (8 bytes)
+I (13366) aperture: Heartbeat sent
+E (13776) spi_master: check_trans_valid(1110): txdata transfer > host maximum
+I (14326) aperture: Sending heartbeat (8 bytes)
+I (14366) aperture: Heartbeat sent
+E (14776) spi_master: check_trans_valid(1110): txdata transfer > host maximum
+I (15326) aperture: Sending heartbeat (8 bytes)
+I (15366) aperture: Heartbeat sent
+E (15776) spi_master: check_trans_valid(1110): txdata transfer > host maximum
+I (16326) aperture: Sending heartbeat (8 bytes)
+I (16366) aperture: Heartbeat sent
+E (16776) spi_master: check_trans_valid(1110): txdata transfer > host maximum
+I (17326) aperture: Sending heartbeat (8 bytes)
+I (17366) aperture: Heartbeat sent
+E (17776) spi_master: check_trans_valid(1110): txdata transfer > host maximum
+I (18326) aperture: Sending heartbeat (8 bytes)
+I (18366) aperture: Heartbeat sent
+E (18776) spi_master: check_trans_valid(1110): txdata transfer > host maximum
+I (19326) aperture: Sending heartbeat (8 bytes)
+I (19366) aperture: Heartbeat sent
+E (19776) spi_master: check_trans_valid(1110): txdata transfer > host maximum
+I (20326) aperture: Sending heartbeat (8 bytes)
+I (20366) aperture: Heartbeat sent
+E (20776) spi_master: check_trans_valid(1110): txdata transfer > host maximum
+I (21326) aperture: Sending heartbeat (8 bytes)
+I (21366) aperture: Heartbeat sent
+E (21776) spi_master: check_trans_valid(1110): txdata transfer > host maximum
+I (22326) aperture: Sending heartbeat (8 bytes)
+I (22366) aperture: Heartbeat sent
+E (22776) spi_master: check_trans_valid(1110): txdata transfer > host maximum

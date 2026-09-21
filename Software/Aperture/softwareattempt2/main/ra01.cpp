@@ -279,7 +279,11 @@ esp_err_t Ra01::receive(std::uint8_t *data, const std::size_t capacity,
     result = read_command(kGetRxBufferStatus, status, sizeof(status));
     if (result != ESP_OK) return result;
     const std::size_t packet_length = status[0];
-    if (packet_length > capacity) return ESP_ERR_INVALID_SIZE;
+    if (packet_length > capacity) {
+        const std::uint8_t clear[] = {0x00U, 0xFFU};
+        (void)write_command(kClearIrqStatus, clear, sizeof(clear));
+        return ESP_ERR_INVALID_SIZE;
+    }
 
     result = read_buffer(status[1], data, packet_length);
     const std::uint8_t clear[] = {0x00U, 0xFFU};
@@ -357,21 +361,35 @@ esp_err_t Ra01::read_command(const std::uint8_t command, std::uint8_t *data,
 esp_err_t Ra01::read_buffer(const std::uint8_t offset, std::uint8_t *data,
                             const std::size_t length)
 {
-    esp_err_t result = wait_until_ready();
-    if (result != ESP_OK) return result;
-    std::array<std::uint8_t, 258> tx{};
-    std::array<std::uint8_t, 258> rx{};
-    // ReadBuffer transfers opcode, offset, one mandatory NOP, then payload.
-    if (length + 3U > tx.size()) return ESP_ERR_INVALID_SIZE;
-    tx[0] = kReadBuffer;
-    tx[1] = offset;
-    spi_transaction_t transaction{};
-    transaction.length = (length + 3U) * 8U;
-    transaction.rxlength = transaction.length;
-    transaction.tx_buffer = tx.data();
-    transaction.rx_buffer = rx.data();
-    result = spi_device_transmit(spi_device_, &transaction);
-    if (result == ESP_OK) std::copy(rx.begin() + 3,
-                                    rx.begin() + 3 + length, data);
-    return result;
+    // Leave margin below the ESP32-S3 host's 64-byte no-DMA transfer limit.
+    // ReadBuffer needs three command bytes, so use 60-byte chunks.
+    constexpr std::size_t kMaxPayloadPerTransfer = 60U;
+    std::size_t remaining = length;
+    std::size_t copied = 0;
+
+    while (remaining != 0U) {
+        const std::size_t chunk =
+            std::min(remaining, kMaxPayloadPerTransfer);
+        esp_err_t result = wait_until_ready();
+        if (result != ESP_OK) return result;
+
+        std::array<std::uint8_t, 64> tx{};
+        std::array<std::uint8_t, 64> rx{};
+        tx[0] = kReadBuffer;
+        tx[1] = static_cast<std::uint8_t>(offset + copied);
+
+        spi_transaction_t transaction{};
+        transaction.length = (chunk + 3U) * 8U;
+        transaction.rxlength = transaction.length;
+        transaction.tx_buffer = tx.data();
+        transaction.rx_buffer = rx.data();
+        result = spi_device_transmit(spi_device_, &transaction);
+        if (result != ESP_OK) return result;
+
+        std::copy(rx.begin() + 3, rx.begin() + 3 + chunk,
+                  data + copied);
+        copied += chunk;
+        remaining -= chunk;
+    }
+    return ESP_OK;
 }

@@ -44,7 +44,8 @@ void make_heartbeat(std::uint8_t *packet, const bool heartbeat_state)
 
 extern "C" void app_main(void)
 {
-    static constexpr std::size_t kPacketBufferSize = 255U;
+    static constexpr std::size_t kPacketBufferSize =
+        IRIS_RADIO_MAX_PACKET_LENGTH;
     std::array<std::uint8_t, kPacketBufferSize> packet{};
 
     usb_serial_jtag_driver_config_t usb_config{};
@@ -104,6 +105,10 @@ extern "C" void app_main(void)
                 if (count <= 0) break;
                 written += static_cast<std::size_t>(count);
             }
+        } else if (result != ESP_ERR_NOT_FOUND) {
+            ESP_LOGE(kLogTag, "Receive failed: %s (0x%x)",
+                     esp_err_to_name(result),
+                     static_cast<unsigned>(result));
         }
         vTaskDelay(1);
     }

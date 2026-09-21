@@ -43,6 +43,11 @@ esp_err_t SpiDataForwarder::start()
     return ESP_OK;
 }
 
+void SpiDataForwarder::set_output_enabled(const bool enabled)
+{
+    output_enabled_.store(enabled);
+}
+
 bool SpiDataForwarder::valid_packet(
     const std::uint8_t packet_id,
     const std::uint8_t *payload,
@@ -117,6 +122,9 @@ void SpiDataForwarder::send_spi_packet(const Packet &packet)
 
 void SpiDataForwarder::forward_packet(const Packet &packet)
 {
+    if (!output_enabled_.load()) {
+        return;
+    }
     std::uint8_t frame[
         IRIS_PACKET_ID_LENGTH + kMaximumPayloadSize + IRIS_PACKET_EOF_LENGTH];
     frame[0] = packet.packet_id;
@@ -127,11 +135,11 @@ void SpiDataForwarder::forward_packet(const Packet &packet)
     const std::size_t frame_length =
         IRIS_PACKET_ID_LENGTH + packet.payload_length + IRIS_PACKET_EOF_LENGTH;
     std::size_t forwarded = 0;
-    while (forwarded < frame_length) {
+    while (forwarded < frame_length && output_enabled_.load()) {
         const int bytes_written = usb_serial_jtag_write_bytes(
             frame + forwarded,
             frame_length - forwarded,
-            portMAX_DELAY);
+            pdMS_TO_TICKS(20));
 
         if (bytes_written > 0) {
             forwarded += static_cast<std::size_t>(bytes_written);

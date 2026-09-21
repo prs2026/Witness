@@ -1,0 +1,19 @@
+E (26921) spi_master: check_trans_valid(1110): txdata transfer > host maximum
+I (27311) aperture: Sending heartbeat (8 bytes)
+I (27351) aperture: Heartbeat sent
+E (27921) spi_master: check_trans_valid(1110): txdata transfer > host maximum
+I (28311) aperture: Sending heartbeat (8 bytes)
+I (28351) aperture: Heartbeat sent
+E (28921) spi_master: check_trans_valid(1110): txdata transfer > host maximum
+I (29311) aperture: Sending heartbeat (8 bytes)
+I (29351) aperture: Heartbeat sent
+E (29921) spi_master: check_trans_valid(1110): txdata transfer > host maximum
+I (30311) aperture: Sending heartbeat (8 bytes)
+I (30351) aperture: Heartbeat sent
+E (30921) spi_master: check_trans_valid(1110): txdata transfer > host maximum
+I (31311) aperture: Sending heartbeat (8 bytes)
+I (31351) aperture: Heartbeat sent
+E (31921) spi_master: check_trans_valid(1110): txdata transfer > host maximum
+I (32311) aperture: Sending heartbeat (8 bytes)
+I (32351) aperture: Heartbeat sent
+E (32921) spi_master: check_trans_valid(1110): txdata transfer > host maximum

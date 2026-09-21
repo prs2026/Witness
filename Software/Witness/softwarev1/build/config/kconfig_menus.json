@@ -43108,6 +43108,687 @@
                 "type": "menu"
             },
             {
+                "children": [
+                    {
+                        "children": [],
+                        "depends_on": null,
+                        "help": "Specify verbosity of TinyUSB log output.",
+                        "id": "TINYUSB_DEBUG_LEVEL",
+                        "name": "TINYUSB_DEBUG_LEVEL",
+                        "range": [
+                            0,
+                            3
+                        ],
+                        "title": "TinyUSB log level (0-3)",
+                        "type": "int"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [
+                                    {
+                                        "children": [],
+                                        "depends_on": "<choice TINYUSB_MODE>",
+                                        "help": null,
+                                        "id": "TINYUSB_MODE_SLAVE",
+                                        "name": "TINYUSB_MODE_SLAVE",
+                                        "range": null,
+                                        "title": "Slave/IRQ",
+                                        "type": "bool"
+                                    },
+                                    {
+                                        "children": [],
+                                        "depends_on": "<choice TINYUSB_MODE>",
+                                        "help": null,
+                                        "id": "TINYUSB_MODE_DMA",
+                                        "name": "TINYUSB_MODE_DMA",
+                                        "range": null,
+                                        "title": "Buffer DMA",
+                                        "type": "bool"
+                                    }
+                                ],
+                                "depends_on": null,
+                                "help": "TinyUSB DCD DWC2 Driver supports two modes: Slave mode (based on IRQ) and Buffer DMA mode.",
+                                "id": "component-config-tinyusb-stack-tinyusb-dcd-dcd-mode-C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-10",
+                                "name": "TINYUSB_MODE",
+                                "title": "DCD Mode",
+                                "type": "choice"
+                            }
+                        ],
+                        "depends_on": null,
+                        "id": "component-config-tinyusb-stack-tinyusb-dcd-C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-9",
+                        "title": "TinyUSB DCD",
+                        "type": "menu"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "depends_on": null,
+                                "help": "Register TinyUSB's suspend callback (tud_suspend_cb()) in esp_tinyusb.\n\nWhen enabled, esp_tinyusb provides a strong implementation of\ntud_suspend_cb() and dispatches TINYUSB_EVENT_SUSPENDED via the\nesp_tinyusb device event callback.\n\nWhen disabled, tinyusb provides weak implementation of the tud_suspend_cb(),\nand user can provide it's own strong implementation of the tud_suspend_cb().\n\nNOTE: When this option is enabled, user applications MUST NOT\ndefine tud_suspend_cb() themselves. Defining tud_suspend_cb()\nin the application while this option is enabled will result in\na linker error due to multiple definitions.",
+                                "id": "TINYUSB_SUSPEND_CALLBACK",
+                                "name": "TINYUSB_SUSPEND_CALLBACK",
+                                "range": null,
+                                "title": "Register suspend callback",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": null,
+                                "help": "Register TinyUSB's resume callback (tud_resume_cb()) in esp_tinyusb.\n\nWhen enabled, esp_tinyusb provides a strong implementation of\ntud_resume_cb() and dispatches TINYUSB_EVENT_RESUMED via the\nesp_tinyusb device event callback.\n\nWhen disabled, tinyusb provides weak implementation of the tud_resume_cb(),\nand user can provide it's own strong implementation of the tud_resume_cb().\n\nNOTE: When this option is enabled, user applications MUST NOT\ndefine tud_resume_cb() themselves. Defining tud_resume_cb()\nin the application while this option is enabled will result in\na linker error due to multiple definitions.",
+                                "id": "TINYUSB_RESUME_CALLBACK",
+                                "name": "TINYUSB_RESUME_CALLBACK",
+                                "range": null,
+                                "title": "Register resume callback",
+                                "type": "bool"
+                            }
+                        ],
+                        "depends_on": null,
+                        "id": "component-config-tinyusb-stack-tinyusb-callbacks-C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-23",
+                        "title": "TinyUSB callbacks",
+                        "type": "menu"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "depends_on": null,
+                                "help": null,
+                                "id": "TINYUSB_SOC_PM_USB_WAKEUP_SUPPORTED",
+                                "name": "TINYUSB_SOC_PM_USB_WAKEUP_SUPPORTED",
+                                "range": null,
+                                "title": null,
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": null,
+                                "help": null,
+                                "id": "TINYUSB_SOC_USB_UTMI_PHY_SUPPORTED",
+                                "name": "TINYUSB_SOC_USB_UTMI_PHY_SUPPORTED",
+                                "range": null,
+                                "title": null,
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "SOC_PM_SUPPORT_CPU_PD && SOC_PM_SUPPORT_CNNT_PD && TINYUSB_SOC_PM_USB_WAKEUP_SUPPORTED && TINYUSB_SOC_USB_UTMI_PHY_SUPPORTED && TINYUSB_SUSPEND_CALLBACK && TINYUSB_RESUME_CALLBACK && PM_ENABLE && FREERTOS_USE_TICKLESS_IDLE && ESP_SLEEP_EVENT_CALLBACKS",
+                                "help": "Register light sleep event callbacks to prepare the UTMI PHY for USB wakeup when\nentering light sleep while the USB bus is suspended.\n\nAvailable only on USB HS ports, due to PHY limitation. The USB wakeup source\n(esp_sleep_enable_usb_wakeup()) is enabled automatically during\ntinyusb_driver_install(). The USB connection power domain must be kept on during\nlight sleep.\n\nRequires the TinyUSB suspend and resume callbacks (TINYUSB_SUSPEND_CALLBACK and\nTINYUSB_RESUME_CALLBACK) to be registered inside esp_tinyusb, so the driver is\nnotified about USB suspend/resume. Without them the wakeup state cannot be tracked\nand the feature is not usable.\n\nIndependent of TinyUSB Power Management (PM locks). USB wakeup works whether light\nsleep is entered manually or triggered automatically after the PM lock is released\non USB suspend.",
+                                "id": "TINYUSB_USB_OTG_WAKEUP",
+                                "name": "TINYUSB_USB_OTG_WAKEUP",
+                                "range": null,
+                                "title": "USB Device light sleep wakeup source",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "TINYUSB_SUSPEND_CALLBACK && TINYUSB_RESUME_CALLBACK && PM_ENABLE && FREERTOS_USE_TICKLESS_IDLE",
+                                "help": "Enable TinyUSB power management using ESP-IDF PM locks.\n\nWhen enabled together with `tinyusb_config_t.pm_lock_enable`, esp_tinyusb creates an\nESP_PM_NO_LIGHT_SLEEP lock and releases it while the USB device is suspended, allowing\nautomatic light sleep when automatic light sleep is configured through esp_pm_configure().\n\nRequires the TinyUSB suspend and resume callbacks (TINYUSB_SUSPEND_CALLBACK and\nTINYUSB_RESUME_CALLBACK) to be registered inside esp_tinyusb. The PM lock is released\non USB suspend and re-acquired on USB resume, so without those events the lock would\nnever be released and automatic light sleep would never happen.\n\nIt is recommended to pair this config with the TINYUSB_USB_OTG_WAKEUP config above, so the USB\nperipheral can act as a wakeup source from the light sleep. Without enabling the TINYUSB_USB_OTG_WAKEUP\nthe USB peripheral can NOT act as a light sleep wakeup source.",
+                                "id": "TINYUSB_PM",
+                                "name": "TINYUSB_PM",
+                                "range": null,
+                                "title": "Enable tinyusb Power Management",
+                                "type": "bool"
+                            }
+                        ],
+                        "depends_on": null,
+                        "id": "component-config-tinyusb-stack-power-management-C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-61",
+                        "title": "Power management",
+                        "type": "menu"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "depends_on": null,
+                                "help": "Enable this option, USB device will use Espressif's vendor ID as its VID.\nThis is helpful at product develop stage.",
+                                "id": "TINYUSB_DESC_USE_ESPRESSIF_VID",
+                                "name": "TINYUSB_DESC_USE_ESPRESSIF_VID",
+                                "range": null,
+                                "title": "VID: Use Espressif's vendor ID",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "!TINYUSB_DESC_USE_ESPRESSIF_VID",
+                                "help": "Custom Vendor ID.",
+                                "id": "TINYUSB_DESC_CUSTOM_VID",
+                                "name": "TINYUSB_DESC_CUSTOM_VID",
+                                "range": null,
+                                "title": "VID: Custom vendor ID",
+                                "type": "hex"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": null,
+                                "help": "Default TinyUSB PID assigning uses values 0x4000...0x4007.",
+                                "id": "TINYUSB_DESC_USE_DEFAULT_PID",
+                                "name": "TINYUSB_DESC_USE_DEFAULT_PID",
+                                "range": null,
+                                "title": "PID: Use a default PID assigned to TinyUSB",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "!TINYUSB_DESC_USE_DEFAULT_PID",
+                                "help": "Custom Product ID.",
+                                "id": "TINYUSB_DESC_CUSTOM_PID",
+                                "name": "TINYUSB_DESC_CUSTOM_PID",
+                                "range": null,
+                                "title": "PID: Custom product ID",
+                                "type": "hex"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": null,
+                                "help": "Version of the firmware of the USB device.",
+                                "id": "TINYUSB_DESC_BCD_DEVICE",
+                                "name": "TINYUSB_DESC_BCD_DEVICE",
+                                "range": null,
+                                "title": "bcdDevice",
+                                "type": "hex"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": null,
+                                "help": "Name of the manufacturer of the USB device.",
+                                "id": "TINYUSB_DESC_MANUFACTURER_STRING",
+                                "name": "TINYUSB_DESC_MANUFACTURER_STRING",
+                                "range": null,
+                                "title": "Manufacturer name",
+                                "type": "string"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": null,
+                                "help": "Name of the USB device.",
+                                "id": "TINYUSB_DESC_PRODUCT_STRING",
+                                "name": "TINYUSB_DESC_PRODUCT_STRING",
+                                "range": null,
+                                "title": "Product name",
+                                "type": "string"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": null,
+                                "help": "Serial number of the USB device.",
+                                "id": "TINYUSB_DESC_SERIAL_STRING",
+                                "name": "TINYUSB_DESC_SERIAL_STRING",
+                                "range": null,
+                                "title": "Serial string",
+                                "type": "string"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "TINYUSB_CDC_ENABLED",
+                                "help": "Name of the CDC device.",
+                                "id": "TINYUSB_DESC_CDC_STRING",
+                                "name": "TINYUSB_DESC_CDC_STRING",
+                                "range": null,
+                                "title": "CDC Device String",
+                                "type": "string"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "TINYUSB_MSC_ENABLED",
+                                "help": "Name of the MSC device.",
+                                "id": "TINYUSB_DESC_MSC_STRING",
+                                "name": "TINYUSB_DESC_MSC_STRING",
+                                "range": null,
+                                "title": "MSC Device String",
+                                "type": "string"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "TINYUSB_MTP_ENABLED",
+                                "help": "Name of the MTP device.",
+                                "id": "TINYUSB_DESC_MTP_STRING",
+                                "name": "TINYUSB_DESC_MTP_STRING",
+                                "range": null,
+                                "title": "MTP Device String",
+                                "type": "string"
+                            }
+                        ],
+                        "depends_on": null,
+                        "id": "component-config-tinyusb-stack-descriptor-configuration-C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-143",
+                        "title": "Descriptor configuration",
+                        "type": "menu"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [
+                                    {
+                                        "children": [],
+                                        "depends_on": "TINYUSB_MSC_ENABLED",
+                                        "help": "MSC FIFO size, in bytes.",
+                                        "id": "TINYUSB_MSC_BUFSIZE",
+                                        "name": "TINYUSB_MSC_BUFSIZE",
+                                        "range": [
+                                            64,
+                                            8192
+                                        ],
+                                        "title": "MSC FIFO size",
+                                        "type": "int"
+                                    },
+                                    {
+                                        "children": [],
+                                        "depends_on": "TINYUSB_MSC_ENABLED",
+                                        "help": "MSC Mount Path of storage.",
+                                        "id": "TINYUSB_MSC_MOUNT_PATH",
+                                        "name": "TINYUSB_MSC_MOUNT_PATH",
+                                        "range": null,
+                                        "title": "Mount Path",
+                                        "type": "string"
+                                    }
+                                ],
+                                "depends_on": null,
+                                "help": "Enable TinyUSB MSC feature.",
+                                "id": "TINYUSB_MSC_ENABLED",
+                                "name": "TINYUSB_MSC_ENABLED",
+                                "range": null,
+                                "title": "Enable TinyUSB MSC feature",
+                                "type": "bool"
+                            }
+                        ],
+                        "depends_on": null,
+                        "id": "component-config-tinyusb-stack-mass-storage-class-msc--C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-218",
+                        "title": "Mass Storage Class (MSC)",
+                        "type": "menu"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [
+                                    {
+                                        "children": [],
+                                        "depends_on": "TINYUSB_MTP_ENABLED",
+                                        "help": "MTP bulk endpoint transfer buffer size, in bytes. Larger values improve\nlarge file transfer throughput at the cost of RAM. The minimum size keeps\nvalid ObjectInfo and object property string datasets in one transfer buffer.",
+                                        "id": "TINYUSB_MTP_EP_BUFSIZE",
+                                        "name": "TINYUSB_MTP_EP_BUFSIZE",
+                                        "range": null,
+                                        "title": "MTP endpoint buffer size",
+                                        "type": "int"
+                                    },
+                                    {
+                                        "children": [],
+                                        "depends_on": "TINYUSB_MTP_ENABLED",
+                                        "help": "Maximum number of mounted VFS/FATFS paths that can be registered as MTP storages.",
+                                        "id": "TINYUSB_MTP_MAX_STORAGES",
+                                        "name": "TINYUSB_MTP_MAX_STORAGES",
+                                        "range": null,
+                                        "title": "Maximum MTP storage count",
+                                        "type": "int"
+                                    },
+                                    {
+                                        "children": [],
+                                        "depends_on": "TINYUSB_MTP_ENABLED",
+                                        "help": "Maximum number of file or directory object handles cached by the MTP backend.",
+                                        "id": "TINYUSB_MTP_MAX_OBJECTS",
+                                        "name": "TINYUSB_MTP_MAX_OBJECTS",
+                                        "range": null,
+                                        "title": "Maximum cached MTP object count",
+                                        "type": "int"
+                                    },
+                                    {
+                                        "children": [],
+                                        "depends_on": "TINYUSB_MTP_ENABLED",
+                                        "help": "Enable concise logs for host read, write, edit, delete, rename, and unsupported\nMTP operations. This is intended for manual host compatibility debugging.",
+                                        "id": "TINYUSB_MTP_TRACE_WRITES",
+                                        "name": "TINYUSB_MTP_TRACE_WRITES",
+                                        "range": null,
+                                        "title": "Trace MTP file-transfer operations",
+                                        "type": "bool"
+                                    }
+                                ],
+                                "depends_on": null,
+                                "help": "Enable TinyUSB MTP feature. MTP exposes files through already-mounted\nVFS/FATFS paths and does not take block-device ownership.",
+                                "id": "TINYUSB_MTP_ENABLED",
+                                "name": "TINYUSB_MTP_ENABLED",
+                                "range": null,
+                                "title": "Enable TinyUSB MTP feature",
+                                "type": "bool"
+                            }
+                        ],
+                        "depends_on": null,
+                        "id": "component-config-tinyusb-stack-media-transfer-protocol-mtp--C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-243",
+                        "title": "Media Transfer Protocol (MTP)",
+                        "type": "menu"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [
+                                    {
+                                        "children": [],
+                                        "depends_on": "TINYUSB_CDC_ENABLED",
+                                        "help": "Number of independent serial ports.",
+                                        "id": "TINYUSB_CDC_COUNT",
+                                        "name": "TINYUSB_CDC_COUNT",
+                                        "range": null,
+                                        "title": "CDC Channel Count",
+                                        "type": "int"
+                                    },
+                                    {
+                                        "children": [],
+                                        "depends_on": "TINYUSB_CDC_ENABLED",
+                                        "help": "This buffer size defines maximum data length in bytes that you can receive at once.\nMust be greater or equal to TINYUSB_CDC_EP_BUFSIZE for correct receiving.",
+                                        "id": "TINYUSB_CDC_RX_BUFSIZE",
+                                        "name": "TINYUSB_CDC_RX_BUFSIZE",
+                                        "range": null,
+                                        "title": "CDC FIFO size of RX channel",
+                                        "type": "int"
+                                    },
+                                    {
+                                        "children": [],
+                                        "depends_on": "TINYUSB_CDC_ENABLED",
+                                        "help": "This buffer size defines maximum data length in bytes that you can transmit at once.",
+                                        "id": "TINYUSB_CDC_TX_BUFSIZE",
+                                        "name": "TINYUSB_CDC_TX_BUFSIZE",
+                                        "range": null,
+                                        "title": "CDC FIFO size of TX channel",
+                                        "type": "int"
+                                    },
+                                    {
+                                        "children": [],
+                                        "depends_on": "TINYUSB_CDC_ENABLED",
+                                        "help": "This low layer buffer has the most significant impact on performance. Set to 8192 for best performance.\nSizes above 8192 bytes bring only little performance improvement.",
+                                        "id": "TINYUSB_CDC_EP_BUFSIZE",
+                                        "name": "TINYUSB_CDC_EP_BUFSIZE",
+                                        "range": null,
+                                        "title": "CDC Endpoint buffer size",
+                                        "type": "int"
+                                    }
+                                ],
+                                "depends_on": null,
+                                "help": "Enable TinyUSB CDC feature.",
+                                "id": "TINYUSB_CDC_ENABLED",
+                                "name": "TINYUSB_CDC_ENABLED",
+                                "range": null,
+                                "title": "Enable TinyUSB CDC feature",
+                                "type": "bool"
+                            }
+                        ],
+                        "depends_on": null,
+                        "id": "component-config-tinyusb-stack-communication-device-class-cdc--C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-289",
+                        "title": "Communication Device Class (CDC)",
+                        "type": "menu"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "depends_on": null,
+                                "help": "Setting value greater than 0 will enable TinyUSB MIDI feature.",
+                                "id": "TINYUSB_MIDI_COUNT",
+                                "name": "TINYUSB_MIDI_COUNT",
+                                "range": [
+                                    0,
+                                    2
+                                ],
+                                "title": "TinyUSB MIDI interfaces count",
+                                "type": "int"
+                            }
+                        ],
+                        "depends_on": null,
+                        "id": "component-config-tinyusb-stack-musical-instrument-digital-interface-midi--C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-329",
+                        "title": "Musical Instrument Digital Interface (MIDI)",
+                        "type": "menu"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "depends_on": null,
+                                "help": "Setting value greater than 0 will enable TinyUSB HID feature.",
+                                "id": "TINYUSB_HID_COUNT",
+                                "name": "TINYUSB_HID_COUNT",
+                                "range": [
+                                    0,
+                                    4
+                                ],
+                                "title": "TinyUSB HID interfaces count",
+                                "type": "int"
+                            }
+                        ],
+                        "depends_on": null,
+                        "id": "component-config-tinyusb-stack-human-interface-device-class-hid--C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-338",
+                        "title": "Human Interface Device Class (HID)",
+                        "type": "menu"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [
+                                    {
+                                        "children": [],
+                                        "depends_on": "<choice TINYUSB_DFU_MODE>",
+                                        "help": null,
+                                        "id": "TINYUSB_DFU_MODE_DFU",
+                                        "name": "TINYUSB_DFU_MODE_DFU",
+                                        "range": null,
+                                        "title": "DFU",
+                                        "type": "bool"
+                                    },
+                                    {
+                                        "children": [],
+                                        "depends_on": "<choice TINYUSB_DFU_MODE>",
+                                        "help": null,
+                                        "id": "TINYUSB_DFU_MODE_DFU_RUNTIME",
+                                        "name": "TINYUSB_DFU_MODE_DFU_RUNTIME",
+                                        "range": null,
+                                        "title": "DFU Runtime",
+                                        "type": "bool"
+                                    },
+                                    {
+                                        "children": [],
+                                        "depends_on": "<choice TINYUSB_DFU_MODE>",
+                                        "help": null,
+                                        "id": "TINYUSB_DFU_MODE_NONE",
+                                        "name": "TINYUSB_DFU_MODE_NONE",
+                                        "range": null,
+                                        "title": "None",
+                                        "type": "bool"
+                                    }
+                                ],
+                                "depends_on": null,
+                                "help": "Select which DFU driver you want to use.",
+                                "id": "component-config-tinyusb-stack-device-firmware-upgrade-dfu--dfu-mode-C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-348",
+                                "name": "TINYUSB_DFU_MODE",
+                                "title": "DFU mode",
+                                "type": "choice"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "TINYUSB_DFU_MODE_DFU",
+                                "help": "DFU XFER BUFFSIZE.",
+                                "id": "TINYUSB_DFU_BUFSIZE",
+                                "name": "TINYUSB_DFU_BUFSIZE",
+                                "range": null,
+                                "title": "DFU XFER BUFFSIZE",
+                                "type": "int"
+                            }
+                        ],
+                        "depends_on": null,
+                        "id": "component-config-tinyusb-stack-device-firmware-upgrade-dfu--C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-347",
+                        "title": "Device Firmware Upgrade (DFU)",
+                        "type": "menu"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [
+                                    {
+                                        "children": [],
+                                        "depends_on": "TINYUSB_BTH_ENABLED",
+                                        "help": "BTH ISO ALT COUNT.",
+                                        "id": "TINYUSB_BTH_ISO_ALT_COUNT",
+                                        "name": "TINYUSB_BTH_ISO_ALT_COUNT",
+                                        "range": null,
+                                        "title": "BTH ISO ALT COUNT",
+                                        "type": "int"
+                                    }
+                                ],
+                                "depends_on": null,
+                                "help": "Enable TinyUSB BTH feature.",
+                                "id": "TINYUSB_BTH_ENABLED",
+                                "name": "TINYUSB_BTH_ENABLED",
+                                "range": null,
+                                "title": "Enable TinyUSB BTH feature",
+                                "type": "bool"
+                            }
+                        ],
+                        "depends_on": null,
+                        "id": "component-config-tinyusb-stack-bluetooth-host-class-bth--C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-371",
+                        "title": "Bluetooth Host Class (BTH)",
+                        "type": "menu"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [
+                                    {
+                                        "children": [],
+                                        "depends_on": "<choice TINYUSB_NET_MODE>",
+                                        "help": null,
+                                        "id": "TINYUSB_NET_MODE_ECM_RNDIS",
+                                        "name": "TINYUSB_NET_MODE_ECM_RNDIS",
+                                        "range": null,
+                                        "title": "ECM/RNDIS",
+                                        "type": "bool"
+                                    },
+                                    {
+                                        "children": [],
+                                        "depends_on": "<choice TINYUSB_NET_MODE>",
+                                        "help": null,
+                                        "id": "TINYUSB_NET_MODE_NCM",
+                                        "name": "TINYUSB_NET_MODE_NCM",
+                                        "range": null,
+                                        "title": "NCM",
+                                        "type": "bool"
+                                    },
+                                    {
+                                        "children": [],
+                                        "depends_on": "<choice TINYUSB_NET_MODE>",
+                                        "help": null,
+                                        "id": "TINYUSB_NET_MODE_NONE",
+                                        "name": "TINYUSB_NET_MODE_NONE",
+                                        "range": null,
+                                        "title": "None",
+                                        "type": "bool"
+                                    }
+                                ],
+                                "depends_on": null,
+                                "help": "Select network driver you want to use.",
+                                "id": "component-config-tinyusb-stack-network-driver-ecm-ncm-rndis--network-mode-C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-387",
+                                "name": "TINYUSB_NET_MODE",
+                                "title": "Network mode",
+                                "type": "choice"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "TINYUSB_NET_MODE_NCM",
+                                "help": "Number of NTB buffers for reception side.\nCan be increased to improve performance and stability with the cost of additional RAM requirements.\nHelps to mitigate \"tud_network_can_xmit: request blocked\" warning message when running NCM device.",
+                                "id": "TINYUSB_NCM_OUT_NTB_BUFFS_COUNT",
+                                "name": "TINYUSB_NCM_OUT_NTB_BUFFS_COUNT",
+                                "range": null,
+                                "title": "Number of NCM NTB buffers for reception side",
+                                "type": "int"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "TINYUSB_NET_MODE_NCM",
+                                "help": "Number of NTB buffers for transmission side.\nCan be increased to improve performance and stability with the cost of additional RAM requirements.\nHelps to mitigate \"tud_network_can_xmit: request blocked\" warning message when running NCM device.",
+                                "id": "TINYUSB_NCM_IN_NTB_BUFFS_COUNT",
+                                "name": "TINYUSB_NCM_IN_NTB_BUFFS_COUNT",
+                                "range": null,
+                                "title": "Number of NCM NTB buffers for transmission side",
+                                "type": "int"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "TINYUSB_NET_MODE_NCM",
+                                "help": "Size of NTB buffers on the reception side. The minimum size used by Linux is 2048 bytes.\nNTB buffer size must be significantly larger than the MTU (Maximum Transmission Unit).\nThe typical default MTU size for Ethernet is 1500 bytes, plus an additional packet overhead.\nTo improve performance, the NTB buffer size should be large enough to fit multiple MTU-sized\nframes in a single NTB buffer and it's length should be multiple of 4.",
+                                "id": "TINYUSB_NCM_OUT_NTB_BUFF_MAX_SIZE",
+                                "name": "TINYUSB_NCM_OUT_NTB_BUFF_MAX_SIZE",
+                                "range": null,
+                                "title": "NCM NTB Buffer size for reception size",
+                                "type": "int"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "TINYUSB_NET_MODE_NCM",
+                                "help": "Size of NTB buffers on the transmission side. The minimum size used by Linux is 2048 bytes.\nNTB buffer size must be significantly larger than the MTU (Maximum Transmission Unit).\nThe typical default MTU size for Ethernet is 1500 bytes, plus an additional packet overhead.\nTo improve performance, the NTB buffer size should be large enough to fit multiple MTU-sized\nframes in a single NTB buffer and it's length should be multiple of 4.",
+                                "id": "TINYUSB_NCM_IN_NTB_BUFF_MAX_SIZE",
+                                "name": "TINYUSB_NCM_IN_NTB_BUFF_MAX_SIZE",
+                                "range": null,
+                                "title": "NCM NTB Buffer size for transmission size",
+                                "type": "int"
+                            }
+                        ],
+                        "depends_on": null,
+                        "id": "component-config-tinyusb-stack-network-driver-ecm-ncm-rndis--C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-386",
+                        "title": "Network driver (ECM/NCM/RNDIS)",
+                        "type": "menu"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "depends_on": null,
+                                "help": "Setting value greater than 0 will enable TinyUSB Vendor specific feature.",
+                                "id": "TINYUSB_VENDOR_COUNT",
+                                "name": "TINYUSB_VENDOR_COUNT",
+                                "range": [
+                                    0,
+                                    2
+                                ],
+                                "title": "TinyUSB Vendor specific interfaces count",
+                                "type": "int"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "TINYUSB_VENDOR_COUNT > 0",
+                                "help": "This buffer size defines maximum data length in bytes that you can receive at once.\n\nNote: Unlike other USB classes, the vendor class supports setting buffer sizes to 0\nto disable internal buffering. When disabled, RX data goes directly to tud_vendor_rx_cb(),\nthe tud_vendor_read() function is not available and application must handle data in the callback.",
+                                "id": "TINYUSB_VENDOR_RX_BUFSIZE",
+                                "name": "TINYUSB_VENDOR_RX_BUFSIZE",
+                                "range": null,
+                                "title": "Vendor specific FIFO size of RX channel",
+                                "type": "int"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "TINYUSB_VENDOR_COUNT > 0",
+                                "help": "This buffer size defines maximum data length in bytes that you can transmit at once.\n\nNote: Unlike other USB classes, the vendor class supports setting buffer sizes to 0\nto disable internal buffering. When disabled, tud_vendor_write() bypasses internal software FIFO.",
+                                "id": "TINYUSB_VENDOR_TX_BUFSIZE",
+                                "name": "TINYUSB_VENDOR_TX_BUFSIZE",
+                                "range": null,
+                                "title": "Vendor specific FIFO size of TX channel",
+                                "type": "int"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "TINYUSB_VENDOR_COUNT > 0",
+                                "help": "This low layer buffer has the most significant impact on performance. Set to 8192 for best performance.\nSizes above 8192 bytes bring only little performance improvement.",
+                                "id": "TINYUSB_VENDOR_EPSIZE",
+                                "name": "TINYUSB_VENDOR_EPSIZE",
+                                "range": null,
+                                "title": "Vendor specific Endpoint buffer size",
+                                "type": "int"
+                            }
+                        ],
+                        "depends_on": null,
+                        "id": "component-config-tinyusb-stack-vendor-specific-interface-C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-449",
+                        "title": "Vendor Specific Interface",
+                        "type": "menu"
+                    }
+                ],
+                "depends_on": null,
+                "id": "component-config-tinyusb-stack-C:-Users-Ejfso-Documents-GitHub-witness-Software-Witness-softwarev1-managed_components-espressif__esp_tinyusb-Kconfig-1",
+                "title": "TinyUSB Stack",
+                "type": "menu"
+            },
+            {
                 "children": [],
                 "depends_on": "\"${IDF_BUILD_V2}\"",
                 "id": "component-config-configuration-for-components-not-included-in-the-build-C:-esp-v6.1-esp-idf-Kconfig-828",

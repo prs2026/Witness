@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <atomic>
 
 #include "comms.h"
 #include "esp_err.h"
@@ -17,6 +18,7 @@ public:
     SpiDataForwarder &operator=(const SpiDataForwarder &) = delete;
 
     esp_err_t start();
+    void set_output_enabled(bool enabled);
 
     // Adds an SPI-received packet to the USB forwarding buffer.
     esp_err_t queue_packet(
@@ -62,4 +64,5 @@ private:
     QueueHandle_t command_queue_ = nullptr;
     TaskHandle_t forward_task_handle_ = nullptr;
     TaskHandle_t spi_task_handle_ = nullptr;
+    std::atomic<bool> output_enabled_{true};
 };

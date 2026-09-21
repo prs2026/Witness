@@ -31,6 +31,9 @@
 
 // Enables the 10 Hz Witness Debug packet stream (packet ID 0xE0).
 #define IRIS_COMMAND_WITNESS_DEBUG_START 0xE0U
+// Packet ID 0x05 followed by this big-endian value switches USB to a
+// read-only log-export disk until reset.
+#define IRIS_COMMAND_MASS_STORAGE_START 0x6868U
 
 // ---------------------------------------------------------------------------
 // Canonical field catalog

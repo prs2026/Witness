@@ -1,4 +1,4 @@
-#include "w25n01gw.h"
+#include "w25n01kv.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -11,7 +11,7 @@
 
 namespace {
 
-constexpr char kLogTag[] = "w25n01gw";
+constexpr char kLogTag[] = "w25n01kv";
 
 esp_err_t transmit(
     const spi_device_handle_t device,
@@ -29,7 +29,7 @@ esp_err_t transmit(
 
 }  // namespace
 
-esp_err_t W25n01gw::initialize()
+esp_err_t W25n01kv::initialize()
 {
     if (device_ != nullptr) {
         return ESP_ERR_INVALID_STATE;
@@ -140,12 +140,12 @@ esp_err_t W25n01gw::initialize()
     }
 
     ESP_LOGI(kLogTag,
-             "initialized JEDEC EF BA 21, SR1=0x%02X SR2=0x%02X",
+             "initialized W25N01KV JEDEC EF AE 21, SR1=0x%02X SR2=0x%02X",
              verified_protection, verified_configuration);
     return ESP_OK;
 }
 
-void W25n01gw::release()
+void W25n01kv::release()
 {
     if (device_ != nullptr) {
         spi_bus_remove_device(device_);
@@ -157,7 +157,7 @@ void W25n01gw::release()
     }
 }
 
-esp_err_t W25n01gw::command(const std::uint8_t opcode)
+esp_err_t W25n01kv::command(const std::uint8_t opcode)
 {
     if (device_ == nullptr) {
         return ESP_ERR_INVALID_STATE;
@@ -165,7 +165,7 @@ esp_err_t W25n01gw::command(const std::uint8_t opcode)
     return transmit(device_, &opcode, nullptr, 1);
 }
 
-esp_err_t W25n01gw::get_feature(
+esp_err_t W25n01kv::get_feature(
     const std::uint8_t address,
     std::uint8_t &value)
 {
@@ -181,7 +181,7 @@ esp_err_t W25n01gw::get_feature(
     return result;
 }
 
-esp_err_t W25n01gw::set_feature(
+esp_err_t W25n01kv::set_feature(
     const std::uint8_t address,
     const std::uint8_t value)
 {
@@ -194,7 +194,7 @@ esp_err_t W25n01gw::set_feature(
     return result == ESP_OK ? wait_until_ready(kReadyTimeoutMs) : result;
 }
 
-esp_err_t W25n01gw::write_enable()
+esp_err_t W25n01kv::write_enable()
 {
     esp_err_t result = command(kCommandWriteEnable);
     if (result != ESP_OK) {
@@ -210,7 +210,7 @@ esp_err_t W25n01gw::write_enable()
                : ESP_ERR_INVALID_STATE;
 }
 
-esp_err_t W25n01gw::wait_until_ready(
+esp_err_t W25n01kv::wait_until_ready(
     const std::uint32_t timeout_ms,
     std::uint8_t *final_status)
 {
@@ -235,7 +235,7 @@ esp_err_t W25n01gw::wait_until_ready(
     }
 }
 
-esp_err_t W25n01gw::load_page_to_cache(const std::uint32_t page)
+esp_err_t W25n01kv::load_page_to_cache(const std::uint32_t page)
 {
     if (device_ == nullptr || page >= kPageCount) {
         return ESP_ERR_INVALID_ARG;
@@ -252,13 +252,13 @@ esp_err_t W25n01gw::load_page_to_cache(const std::uint32_t page)
         result = wait_until_ready(kReadyTimeoutMs, &status);
     }
     if (result == ESP_OK &&
-        (status & kStatusEccMask) >= kStatusEccUncorrectable) {
+        (status & kStatusEccMask) == kStatusEccUncorrectable) {
         return ESP_ERR_INVALID_CRC;
     }
     return result;
 }
 
-esp_err_t W25n01gw::read_cache(
+esp_err_t W25n01kv::read_cache(
     const std::uint16_t column,
     std::uint8_t *data,
     const std::size_t length)
@@ -283,7 +283,7 @@ esp_err_t W25n01gw::read_cache(
     return spi_device_polling_transmit(device_, &transaction.base);
 }
 
-esp_err_t W25n01gw::read(
+esp_err_t W25n01kv::read(
     const std::uint32_t page,
     const std::uint16_t column,
     std::uint8_t *data,
@@ -293,7 +293,7 @@ esp_err_t W25n01gw::read(
     return result == ESP_OK ? read_cache(column, data, length) : result;
 }
 
-esp_err_t W25n01gw::program(
+esp_err_t W25n01kv::program(
     const std::uint32_t page,
     const std::uint16_t column,
     const std::uint8_t *data,
@@ -340,7 +340,7 @@ esp_err_t W25n01gw::program(
     return result;
 }
 
-esp_err_t W25n01gw::erase_block(const std::uint32_t block)
+esp_err_t W25n01kv::erase_block(const std::uint32_t block)
 {
     if (device_ == nullptr || block >= kBlockCount) {
         return ESP_ERR_INVALID_ARG;
@@ -367,28 +367,32 @@ esp_err_t W25n01gw::erase_block(const std::uint32_t block)
     return result;
 }
 
-esp_err_t W25n01gw::is_bad_block(
+esp_err_t W25n01kv::is_bad_block(
     const std::uint32_t block,
     bool &bad)
 {
     if (block >= kBlockCount) {
         return ESP_ERR_INVALID_ARG;
     }
-    std::uint8_t marker = 0;
-    const esp_err_t result = read(
-        block * kPagesPerBlock,
-        static_cast<std::uint16_t>(kPageDataSize),
-        &marker,
-        1);
-    if (result == ESP_ERR_INVALID_CRC) {
-        // A factory-bad block can also report uncorrectable ECC while its
-        // marker page is loaded. Treat it as unusable rather than aborting
-        // initialization.
+    const esp_err_t load_result = load_page_to_cache(block * kPagesPerBlock);
+    if (load_result == ESP_ERR_INVALID_CRC) {
+        // A factory-bad block can report uncorrectable ECC while its marker
+        // page is loaded. Treat it as unusable rather than aborting startup.
         bad = true;
         return ESP_OK;
     }
+    if (load_result != ESP_OK) {
+        return load_result;
+    }
+
+    // The factory writes markers to both main byte 0 and spare byte 0. Only
+    // inspect the spare marker here: application records legitimately change
+    // main byte 0, while this driver never programs the spare area.
+    std::uint8_t spare_marker = 0;
+    const esp_err_t result = read_cache(
+        static_cast<std::uint16_t>(kPageDataSize), &spare_marker, 1);
     if (result == ESP_OK) {
-        bad = marker != 0xFF;
+        bad = spare_marker != 0xFF;
     }
     return result;
 }
