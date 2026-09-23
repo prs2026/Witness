@@ -6459,64 +6459,6 @@
                 "children": [
                     {
                         "children": [],
-                        "depends_on": "SOC_TWAI_SUPPORTED",
-                        "help": "Place the TWAI ISR in to IRAM to reduce latency and increase performance",
-                        "id": "TWAI_ISR_IN_IRAM",
-                        "name": "TWAI_ISR_IN_IRAM",
-                        "range": null,
-                        "title": "Place TWAI ISR function in IRAM",
-                        "type": "bool"
-                    },
-                    {
-                        "children": [],
-                        "depends_on": "SOC_TWAI_SUPPORTED",
-                        "help": "Place certain TWAI I/O functions (like twai_transmit) in IRAM to reduce latency",
-                        "id": "TWAI_IO_FUNC_IN_IRAM",
-                        "name": "TWAI_IO_FUNC_IN_IRAM",
-                        "range": null,
-                        "title": "Place TWAI I/O functions in IRAM",
-                        "type": "bool"
-                    },
-                    {
-                        "children": [],
-                        "depends_on": "SOC_TWAI_SUPPORTED",
-                        "help": "Allow TWAI works under Cache disabled (such as when writing to SPI Flash),\nto enabled this config, all callbacks and user_ctx should also place in IRAM",
-                        "id": "TWAI_ISR_CACHE_SAFE",
-                        "name": "TWAI_ISR_CACHE_SAFE",
-                        "range": null,
-                        "title": "Allow TWAI ISR execute when cache disabled",
-                        "type": "bool"
-                    },
-                    {
-                        "children": [],
-                        "depends_on": "SOC_TWAI_SUPPORTED",
-                        "help": "This will ensure the TWAI driver object will not be allocated from a memory region\nwhere its cache can be disabled.",
-                        "id": "TWAI_OBJ_CACHE_SAFE",
-                        "name": "TWAI_OBJ_CACHE_SAFE",
-                        "range": null,
-                        "title": null,
-                        "type": "bool"
-                    },
-                    {
-                        "children": [],
-                        "depends_on": "SOC_TWAI_SUPPORTED",
-                        "help": "If enabled, TWAI driver component will:\n1. ignore the global logging settings\n2. compile all log messages into the binary\n3. set the runtime log level to VERBOSE\nPlease enable this option by caution, as it will increase the binary size.",
-                        "id": "TWAI_ENABLE_DEBUG_LOG",
-                        "name": "TWAI_ENABLE_DEBUG_LOG",
-                        "range": null,
-                        "title": "Force enable debug log",
-                        "type": "bool"
-                    }
-                ],
-                "depends_on": "SOC_TWAI_SUPPORTED",
-                "id": "component-config-esp-driver-twai-configurations-C:-esp-v6.1-esp-idf-components-esp_driver_twai-Kconfig-1",
-                "title": "ESP-Driver:TWAI Configurations",
-                "type": "menu"
-            },
-            {
-                "children": [
-                    {
-                        "children": [],
                         "depends_on": "!RINGBUF_PLACE_ISR_FUNCTIONS_INTO_FLASH",
                         "help": "If this option is not selected, UART interrupt will be disabled for a long time and\nmay cause data lost when doing spi flash operation.",
                         "id": "UART_ISR_IN_IRAM",

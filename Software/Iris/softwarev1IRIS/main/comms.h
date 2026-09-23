@@ -40,6 +40,10 @@
 #define IRIS_STATUS_CURRENT_MONITOR_ERROR_FLAG 0x01U
 #define IRIS_STATUS_BATTERY_MONITOR_ERROR_FLAG 0x02U
 #define IRIS_STATUS_COMMAND_CONTROLLED_FLAG 0x04U
+#define IRIS_STATUS_OUT1_ENABLED_FLAG 0x08U
+#define IRIS_STATUS_OUT2_ENABLED_FLAG 0x10U
+#define IRIS_STATUS_OUT3_ENABLED_FLAG 0x20U
+#define IRIS_STATUS_5V_ENABLED_FLAG 0x40U
 
 // ---------------------------------------------------------------------------
 // Canonical field catalog

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstring>
 
+#include "command_bridge.h"
 #include "driver/usb_serial_jtag.h"
 #include "driver/usb_serial_jtag_vfs.h"
 #include "esp_log.h"
@@ -88,12 +89,14 @@ UsbSerialEcho::UsbSerialEcho(
     Sensors &sensors,
     SpiDataForwarder &spi_interface,
     FlashLogger &flash_logger,
-    FlightStateMachine &flight_state_machine)
+    FlightStateMachine &flight_state_machine,
+    CommandBridge &command_bridge)
     : heartbeat_(heartbeat),
       sensors_(sensors),
       spi_interface_(spi_interface),
       flash_logger_(flash_logger),
       flight_state_machine_(flight_state_machine),
+      command_bridge_(command_bridge),
       mass_storage_(flash_logger)
 {
 }
@@ -167,6 +170,28 @@ void UsbSerialEcho::consume_command_bytes(
     const std::size_t length)
 {
     for (std::size_t index = 0; index < length; ++index) {
+        const std::uint8_t byte = data[index];
+
+        if (binary_command_active_) {
+            if (command_length_ < IRIS_PACKET_COMMAND_FRAME_LENGTH) {
+                command_buffer_[command_length_++] =
+                    static_cast<char>(byte);
+                binary_command_last_byte_time_ = xTaskGetTickCount();
+            }
+
+            if (command_length_ == IRIS_PACKET_COMMAND_FRAME_LENGTH) {
+                finish_binary_command();
+            }
+            continue;
+        }
+
+        if (command_length_ == 0U && byte == IRIS_PACKET_ID_COMMAND) {
+            binary_command_active_ = true;
+            binary_command_last_byte_time_ = xTaskGetTickCount();
+            command_buffer_[command_length_++] = static_cast<char>(byte);
+            continue;
+        }
+
         const char character = static_cast<char>(data[index]);
 
         if (character == '\r' || character == '\n') {
@@ -188,50 +213,77 @@ void UsbSerialEcho::consume_command_bytes(
 
         if (command_length_ < kCommandBufferSize - 1) {
             command_buffer_[command_length_++] = character;
-            if (command_length_ == 3U &&
-                static_cast<std::uint8_t>(command_buffer_[0]) ==
-                    IRIS_PACKET_ID_COMMAND) {
-                const std::uint8_t command =
-                    static_cast<std::uint8_t>(command_buffer_[1]);
-                const std::uint8_t argument =
-                    static_cast<std::uint8_t>(command_buffer_[2]);
-                command_length_ = 0;
-
-                if (command ==
-                        static_cast<std::uint8_t>(
-                            IRIS_COMMAND_MASS_STORAGE_START >> 8) &&
-                    argument ==
-                        static_cast<std::uint8_t>(
-                            IRIS_COMMAND_MASS_STORAGE_START)) {
-                    start_mass_storage();
-                    return;
-                }
-                if (command ==
-                        static_cast<std::uint8_t>(
-                            IRIS_COMMAND_ERASE_LOG_SESSIONS >> 8) &&
-                    argument ==
-                        static_cast<std::uint8_t>(
-                            IRIS_COMMAND_ERASE_LOG_SESSIONS)) {
-                    erase_log_sessions();
-                    continue;
-                }
-                if (command == IRIS_COMMAND_SET_FLIGHT_STATE) {
-                    set_flight_state(argument);
-                    continue;
-                }
-
-                // Preserve an unrecognized three-byte command for the
-                // newline-delimited command parser.
-                command_length_ = 3U;
-            }
         } else {
             command_overflow_ = true;
         }
     }
 }
 
+void UsbSerialEcho::finish_binary_command()
+{
+    std::size_t packet_length = command_length_;
+
+    // CR/LF is a terminal delimiter for compact commands, but byte 9 of a
+    // canonical command is the required 0x0A application EOF and is retained.
+    if (packet_length < IRIS_PACKET_COMMAND_FRAME_LENGTH) {
+        while (packet_length > 1U &&
+               (static_cast<std::uint8_t>(command_buffer_[packet_length - 1U]) ==
+                    '\r' ||
+                static_cast<std::uint8_t>(command_buffer_[packet_length - 1U]) ==
+                    '\n')) {
+            --packet_length;
+        }
+    }
+
+    if (packet_length > 1U) {
+        forward_usb_command(
+            reinterpret_cast<const std::uint8_t *>(command_buffer_),
+            packet_length);
+
+        if (packet_length == 3U) {
+            process_compact_binary_command(
+                static_cast<std::uint8_t>(command_buffer_[1]),
+                static_cast<std::uint8_t>(command_buffer_[2]));
+        }
+    }
+
+    command_length_ = 0;
+    command_overflow_ = false;
+    binary_command_active_ = false;
+}
+
+void UsbSerialEcho::process_compact_binary_command(
+    const std::uint8_t command,
+    const std::uint8_t argument)
+{
+    if (command ==
+            static_cast<std::uint8_t>(
+                IRIS_COMMAND_MASS_STORAGE_START >> 8) &&
+        argument ==
+            static_cast<std::uint8_t>(IRIS_COMMAND_MASS_STORAGE_START)) {
+        start_mass_storage();
+    } else if (command ==
+                   static_cast<std::uint8_t>(
+                       IRIS_COMMAND_ERASE_LOG_SESSIONS >> 8) &&
+               argument == static_cast<std::uint8_t>(
+                               IRIS_COMMAND_ERASE_LOG_SESSIONS)) {
+        erase_log_sessions();
+    } else if (command == IRIS_COMMAND_SET_FLIGHT_STATE) {
+        set_flight_state(argument);
+    }
+}
+
 void UsbSerialEcho::process_command()
 {
+    if (command_length_ > 0U &&
+        static_cast<std::uint8_t>(command_buffer_[0]) ==
+            IRIS_PACKET_ID_COMMAND) {
+        forward_usb_command(
+            reinterpret_cast<const std::uint8_t *>(command_buffer_),
+            command_length_);
+        return;
+    }
+
     if (command_length_ == 1U &&
         static_cast<std::uint8_t>(command_buffer_[0]) ==
             IRIS_COMMAND_WITNESS_DEBUG_START) {
@@ -242,6 +294,8 @@ void UsbSerialEcho::process_command()
     if (normalize_command(command_buffer_, command_length_) == 0) {
         return;
     }
+
+    const bool command_forwarded = forward_text_command_if_present();
 
     if (std::strncmp(command_buffer_, "TX ", 3) == 0) {
         process_tx_command();
@@ -281,9 +335,64 @@ void UsbSerialEcho::process_command()
         set_camera_state(1, true);
     } else if (std::strcmp(command_buffer_, "CAM 2 OFF") == 0) {
         set_camera_state(1, false);
+    } else if (command_forwarded) {
+        // The UART bridge owns generic compact commands and complete
+        // canonical 10-byte command packets that have no local action.
+        return;
     } else {
         ESP_LOGW(kLogTag, "unknown command: %s", command_buffer_);
     }
+}
+
+void UsbSerialEcho::forward_usb_command(
+    const std::uint8_t *const data,
+    const std::size_t length)
+{
+    const esp_err_t result = command_bridge_.submit_usb_command(data, length);
+    if (result != ESP_OK) {
+        ESP_LOGW(
+            kLogTag,
+            "UART command forwarding failed: %s",
+            esp_err_to_name(result));
+    }
+}
+
+bool UsbSerialEcho::forward_text_command_if_present()
+{
+    if (command_buffer_[0] != '0' || command_buffer_[1] != '5' ||
+        (command_buffer_[2] != '\0' && command_buffer_[2] != ' ')) {
+        return false;
+    }
+
+    std::uint8_t bytes[
+        IRIS_PACKET_ID_LENGTH + IRIS_PACKET_MAX_DATA_LENGTH]{};
+    std::size_t byte_count = 0;
+    const char *cursor = command_buffer_;
+    while (*cursor != '\0' && byte_count < sizeof(bytes)) {
+        if (!parse_hex_byte(cursor, bytes[byte_count])) {
+            return false;
+        }
+        ++byte_count;
+    }
+    while (*cursor == ' ') {
+        ++cursor;
+    }
+
+    if (*cursor != '\0' || byte_count == 0U) {
+        return false;
+    }
+
+    if (byte_count == IRIS_PACKET_COMMAND_FRAME_LENGTH &&
+        bytes[IRIS_PACKET_COMMAND_FRAME_LENGTH - 1U] !=
+            IRIS_PACKET_EOF_VALUE) {
+        ESP_LOGW(
+            kLogTag,
+            "10-byte 0x05 packet has invalid EOF 0x%02X; forwarding unchanged",
+            bytes[IRIS_PACKET_COMMAND_FRAME_LENGTH - 1U]);
+    }
+
+    forward_usb_command(bytes, byte_count);
+    return true;
 }
 
 void UsbSerialEcho::start_mass_storage()
@@ -354,8 +463,17 @@ void UsbSerialEcho::process_tx_command()
         ++cursor;
     }
 
-    if (*cursor != '\0' ||
-        byte_count < IRIS_PACKET_ID_LENGTH + 6U) {
+    if (*cursor != '\0' || byte_count == 0U) {
+        ESP_LOGW(kLogTag, "TX requires two-digit hexadecimal bytes");
+        return;
+    }
+
+    if (bytes[0] == IRIS_PACKET_ID_COMMAND) {
+        forward_usb_command(bytes, byte_count);
+        return;
+    }
+
+    if (byte_count < IRIS_PACKET_ID_LENGTH + 6U) {
         ESP_LOGW(kLogTag, "TX requires an ID and 6 to %u payload bytes",
                  static_cast<unsigned>(IRIS_PACKET_MAX_DATA_LENGTH));
         return;
@@ -381,21 +499,30 @@ void UsbSerialEcho::set_camera_state(
 void UsbSerialEcho::run()
 {
     std::uint8_t buffer[kBufferSize];
+    const TickType_t read_timeout =
+        pdMS_TO_TICKS(kBinaryCommandIdleMs) > 0
+            ? pdMS_TO_TICKS(kBinaryCommandIdleMs)
+            : 1;
 
     for (;;) {
         const int bytes_read = usb_serial_jtag_read_bytes(
-            buffer, sizeof(buffer), portMAX_DELAY);
+            buffer, sizeof(buffer), read_timeout);
 
         if (bytes_read > 0) {
             const std::size_t bytes_to_echo =
                 static_cast<std::size_t>(bytes_read);
             echo_bytes(buffer, bytes_to_echo);
             consume_command_bytes(buffer, bytes_to_echo);
-            if (mass_storage_started_) {
-                task_handle_ = nullptr;
-                vTaskDelete(nullptr);
-                return;
-            }
+        } else if (binary_command_active_ &&
+                   (xTaskGetTickCount() - binary_command_last_byte_time_) >=
+                       read_timeout) {
+            finish_binary_command();
+        }
+
+        if (mass_storage_started_) {
+            task_handle_ = nullptr;
+            vTaskDelete(nullptr);
+            return;
         }
     }
 }

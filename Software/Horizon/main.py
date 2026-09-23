@@ -23,6 +23,21 @@ DEFAULT_TCP_1_PORT = "7100"
 DEFAULT_TCP_2_HOST = "prs2026hitl"
 DEFAULT_TCP_2_PORT = "7101"
 
+# Commands currently defined by comms.h. Command packets are sent as:
+# ID (0x05) | status (2) | uptime (4) | command (2) | EOF (0x0A).
+COMMAND_PACKET_ID = 0x05
+COMMAND_PACKET_EOF = 0x0A
+QUICK_COMMANDS = (
+    ("CH1 Off", 0x30),
+    ("CH1 On", 0x31),
+    ("CH2 Off", 0x32),
+    ("CH2 On", 0x33),
+    ("CH3 Off", 0x34),
+    ("CH3 On", 0x35),
+    ("5V Reg Off", 0x50),
+    ("5V Reg On", 0x51),
+)
+
 
 def number(data: bytes) -> int:
     return int.from_bytes(data, byteorder="big", signed=False)
@@ -237,6 +252,9 @@ class SerialMonitor(tk.Tk):
         self.age_labels = {}
         self.section_groups = {}
         self.section_column_counts = {}
+        self.command_history = []
+        self.command_history_index = 0
+        self.command_history_draft = ""
         self.max_history = 300
         self.build_ui()
         self.refresh_ports()
@@ -345,10 +363,26 @@ class SerialMonitor(tk.Tk):
         self.command_entry = ttk.Entry(command_frame)
         self.command_entry.pack(side="left", fill="x", expand=True, padx=5)
         self.command_entry.bind("<Return>", lambda _event: self.send_hex_command())
+        self.command_entry.bind("<Up>", lambda _event: self.recall_command(-1))
+        self.command_entry.bind("<Down>", lambda _event: self.recall_command(1))
         self.send_command_button = ttk.Button(
             command_frame, text="Send", command=self.send_hex_command
         )
         self.send_command_button.pack(side="left")
+        quick_command_frame = ttk.Frame(console_frame, padding=(0, 5, 0, 0))
+        quick_command_frame.pack(fill="x")
+        ttk.Label(quick_command_frame, text="Commands:").pack(side="left")
+        self.quick_command_buttons = []
+        for label, opcode in QUICK_COMMANDS:
+            button = ttk.Button(
+                quick_command_frame,
+                text=label,
+                command=lambda name=label, value=opcode: self.send_quick_command(
+                    name, value
+                ),
+            )
+            button.pack(side="left", padx=(5, 0))
+            self.quick_command_buttons.append(button)
         main_pane.add(notebook, weight=4)
         main_pane.add(console_frame, weight=1)
 
@@ -483,14 +517,33 @@ class SerialMonitor(tk.Tk):
         state = "normal" if targets else "disabled"
         self.command_entry.configure(state=state)
         self.send_command_button.configure(state=state)
+        for button in self.quick_command_buttons:
+            button.configure(state=state)
 
-    def send_hex_command(self):
-        target_name = self.command_port_combo.get()
+    def transmit_command(self, target_name, command, description=None):
         serial_port = self.serials.get(target_name)
         tcp_socket = self.tcp_sockets.get(target_name)
         if serial_port is None and tcp_socket is None:
             self.console_write("TX_ERROR no connected serial/TCP target selected")
-            return
+            return False
+        try:
+            if serial_port is not None:
+                serial_port.write(command)
+            else:
+                tcp_socket.sendall(command)
+            sent_text = command.hex(" ")
+            label = f" {description}:" if description else ""
+            self.console_write(f"TX[{target_name}]{label}  {sent_text}")
+            self.command_history.append(sent_text)
+            self.command_history_index = len(self.command_history)
+            self.command_history_draft = ""
+            return True
+        except Exception as exc:
+            self.console_write(f"TX_ERROR[{target_name}] {exc}")
+            return False
+
+    def send_hex_command(self):
+        target_name = self.command_port_combo.get()
         text = self.command_entry.get().strip().replace(",", " ")
         text = text.replace("0x", "").replace("0X", "")
         if not text:
@@ -501,15 +554,47 @@ class SerialMonitor(tk.Tk):
         except ValueError as exc:
             self.console_write(f"TX_ERROR[{target_name}] invalid hex command: {exc}")
             return
-        try:
-            if serial_port is not None:
-                serial_port.write(command)
-            else:
-                tcp_socket.sendall(command)
-            self.console_write(f"TX[{target_name}]  {command.hex(' ')}")
+        if self.transmit_command(target_name, command):
             self.command_entry.delete(0, "end")
-        except Exception as exc:
-            self.console_write(f"TX_ERROR[{target_name}] {exc}")
+
+    @staticmethod
+    def build_command_packet(opcode):
+        if not 0 <= opcode <= 0xFFFF:
+            raise ValueError("command opcode must fit in 16 bits")
+        return (
+            bytes((COMMAND_PACKET_ID,))
+            + bytes(6)  # Zero status and uptime; the receiver ignores these.
+            + opcode.to_bytes(2, byteorder="big")
+            + bytes((COMMAND_PACKET_EOF,))
+        )
+
+    def send_quick_command(self, name, opcode):
+        packet = self.build_command_packet(opcode)
+        self.transmit_command(self.command_port_combo.get(), packet, name)
+
+    def recall_command(self, direction):
+        """Navigate successfully transmitted commands with Up and Down."""
+        if not self.command_history:
+            return "break"
+
+        history_end = len(self.command_history)
+        if direction < 0:
+            if self.command_history_index == history_end:
+                self.command_history_draft = self.command_entry.get()
+            self.command_history_index = max(0, self.command_history_index - 1)
+        else:
+            self.command_history_index = min(
+                history_end, self.command_history_index + 1
+            )
+
+        if self.command_history_index == history_end:
+            recalled = self.command_history_draft
+        else:
+            recalled = self.command_history[self.command_history_index]
+        self.command_entry.delete(0, "end")
+        self.command_entry.insert(0, recalled)
+        self.command_entry.icursor("end")
+        return "break"
 
     def toggle_connection(self):
         self.disconnect() if (self.serials or self.tcp_sockets) else self.connect()
@@ -666,9 +751,18 @@ class SerialMonitor(tk.Tk):
         self.after(100, self.update_age_indicators)
 
     @staticmethod
-    def format_packet(packet):
+    def format_display_value(field, value):
+        if value is None:
+            return "null"
+        if isinstance(value, int) and (field == "status" or field.endswith("_status")):
+            return f"0b{value:016b}"
+        return str(value)
+
+    @classmethod
+    def format_packet(cls, packet):
         fields = ", ".join(
-            f"{name}={value}" for name, value in packet.items() if name != "packet"
+            f"{name}={cls.format_display_value(name, value)}"
+            for name, value in packet.items() if name != "packet"
         )
         return f"{packet['packet']}: {fields}"
 
@@ -690,7 +784,7 @@ class SerialMonitor(tk.Tk):
             if field != "packet":
                 key = f"{kind}.{packet['packet']}.{field}"
                 if key in self.values:
-                    self.values[key].set("null" if value is None else str(value))
+                    self.values[key].set(self.format_display_value(field, value))
                     if isinstance(value, (int, float, list, tuple)):
                         samples = self.history.setdefault(key, [])
                         samples.append((_dt.datetime.now().timestamp(), value))
@@ -834,6 +928,8 @@ class SerialMonitor(tk.Tk):
             canvas.create_text(left, bottom_plot + 30, anchor="w", text=start_label, fill="#555555")
             canvas.create_text(right, bottom_plot + 30, anchor="e", text=end_label, fill="#555555")
             latest = samples[-1][1] if samples else "--"
+            latest_field = key.rsplit(".", 1)[-1]
+            latest = self.format_display_value(latest_field, latest)
             canvas.create_text(left, top + graph_height - 22, anchor="w",
                                text=f"Latest: {latest}", fill="#222222",
                                width=max(200, right - left))

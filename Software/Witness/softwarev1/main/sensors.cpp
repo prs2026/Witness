@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+
+#include "command_bridge.h"
 #include <limits>
 
 #include "comms.h"
@@ -91,9 +93,11 @@ void write_float_be(std::uint8_t *destination, const float value)
 
 Sensors::Sensors(
     SpiDataForwarder &data_forwarder,
-    WitnessStatus &witness_status)
+    WitnessStatus &witness_status,
+    CommandBridge &command_bridge)
     : data_forwarder_(data_forwarder),
-      witness_status_(witness_status)
+      witness_status_(witness_status),
+      command_bridge_(command_bridge)
 {
 }
 
@@ -690,6 +694,15 @@ void Sensors::task_entry(void *context)
     static_cast<Sensors *>(context)->run();
 }
 
+void Sensors::poll_radio_commands()
+{
+    // TODO: Poll radio_.receive() here, validate a complete 0x05 command, and
+    // pass it to command_bridge_.submit_radio_command(). Keeping this hook in
+    // the Sensors task ensures future RX shares SPI3 with the sensor and radio
+    // transmit work instead of competing from another task.
+    (void)command_bridge_;
+}
+
 void Sensors::run()
 {
     TickType_t next_wake_time = xTaskGetTickCount();
@@ -703,6 +716,8 @@ void Sensors::run()
     std::uint32_t consecutive_battery_errors = 0;
 
     for (;;) {
+        poll_radio_commands();
+
         const esp_err_t lsm_result = fetch_lsm6dsv320x();
         witness_status_.set(
             IRIS_WITNESS_STATUS_LOW_G_ACCEL_READY_MASK,

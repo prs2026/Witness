@@ -22,8 +22,8 @@
 #define HW_PIN_RAD_RF_ENABLE  GPIO_NUM_40
 
 // MCU UART interface.
-#define HW_PIN_MCU_UART_TX    GPIO_NUM_4
-#define HW_PIN_MCU_UART_RX    GPIO_NUM_5
+#define HW_PIN_MCU_UART_TX    GPIO_NUM_5
+#define HW_PIN_MCU_UART_RX    GPIO_NUM_4
 
 // SPI2 interface.
 #define HW_PIN_SPI2_IO3       GPIO_NUM_9

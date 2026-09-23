@@ -94,13 +94,9 @@ $<TARGET_FILE:idf::esp_adc>
 $<TARGET_FILE:idf::esp_hal_i2c>
 $<TARGET_FILE:idf::esp_driver_i2c>
 $<TARGET_FILE:__idf_esp_hal_i2c>
-$<TARGET_FILE:idf::esp_hal_twai>
-$<TARGET_FILE:idf::esp_driver_twai>
-$<TARGET_FILE:__idf_esp_hal_twai>
-$<TARGET_FILE:idf::esp_driver_usb_serial_jtag>
 $<TARGET_FILE:idf::esp_psram>
 $<TARGET_FILE:idf::esp_driver_uart>
+$<TARGET_FILE:idf::esp_driver_usb_serial_jtag>
 $<TARGET_FILE:idf::main>
 $<TARGET_FILE:__idf_esp_adc>
 $<TARGET_FILE:__idf_esp_driver_i2c>
-$<TARGET_FILE:__idf_esp_driver_twai>

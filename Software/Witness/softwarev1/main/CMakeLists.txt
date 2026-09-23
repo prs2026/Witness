@@ -1,4 +1,4 @@
-idf_component_register(SRCS "twai_driver.cpp" "flight_state_machine.cpp" "w25n01kv.cpp" "ra01.cpp" "flash_logger.cpp" "ms5607.cpp" "sensors.cpp" "spi_data_forwarder.cpp" "heartbeat.cpp" "main.cpp" "usb_serial_echo.cpp" "usb_mass_storage.cpp"
+idf_component_register(SRCS "command_bridge.cpp" "uart_driver.cpp" "flight_state_machine.cpp" "w25n01kv.cpp" "ra01.cpp" "flash_logger.cpp" "ms5607.cpp" "sensors.cpp" "spi_data_forwarder.cpp" "heartbeat.cpp" "main.cpp" "usb_serial_echo.cpp" "usb_mass_storage.cpp"
                     INCLUDE_DIRS ".")
 
 # Enable TinyUSB's MSC class without its internal-flash/SD backend; this

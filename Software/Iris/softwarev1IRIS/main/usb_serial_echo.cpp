@@ -370,6 +370,30 @@ void UsbSerialEcho::set_expander_output(
     if (pin == IRIS_MCP23008_PIN_LED_BLUE) {
         blue_led_on_ = enabled;
     }
+
+    std::uint8_t status_flag = 0;
+    switch (pin) {
+        case IRIS_MCP23008_PIN_OUT1_ENABLE:
+            status_flag = IRIS_STATUS_OUT1_ENABLED_FLAG;
+            break;
+        case IRIS_MCP23008_PIN_OUT2_ENABLE:
+            status_flag = IRIS_STATUS_OUT2_ENABLED_FLAG;
+            break;
+        case IRIS_MCP23008_PIN_OUT3_ENABLE:
+            status_flag = IRIS_STATUS_OUT3_ENABLED_FLAG;
+            break;
+        case IRIS_MCP23008_PIN_5V_ENABLE:
+            status_flag = IRIS_STATUS_5V_ENABLED_FLAG;
+            break;
+        default:
+            break;
+    }
+    if (enabled) {
+        iris_status_flags_ |= status_flag;
+    } else {
+        iris_status_flags_ &= static_cast<std::uint8_t>(~status_flag);
+    }
+
     ESP_LOGI(kLogTag, "%s %s", name, enabled ? "ON" : "OFF");
 }
 
@@ -470,40 +494,40 @@ void UsbSerialEcho::poll_debug_report(const std::int64_t now_us)
     } while (next_debug_report_us_ <= now_us);
 }
 
-void UsbSerialEcho::poll_can()
+void UsbSerialEcho::poll_uart1()
 {
-    TwaiDriver::Frame frame{};
-    while (twai_.receive(frame)) {
-        if (frame.extended || frame.remote ||
-            frame.identifier != IRIS_PACKET_ID_COMMAND || frame.length == 0) {
-            continue;
+    std::uint8_t buffer[kBufferSize];
+    int bytes_read = 0;
+    do {
+        bytes_read = uart_read_bytes(
+            IRIS_UART1_PORT, buffer, sizeof(buffer), 0);
+        if (bytes_read > 0) {
+            consume_uart1_bytes(
+                buffer, static_cast<std::size_t>(bytes_read));
         }
+    } while (bytes_read == static_cast<int>(sizeof(buffer)));
+}
 
-        const bool starts_new_packet =
-            frame.data[0] == IRIS_PACKET_ID_COMMAND &&
-            frame.length == IRIS_CAN_FRAME_DATA_LENGTH;
-        if (can_command_length_ == 0 || starts_new_packet) {
-            if (!starts_new_packet) {
+void UsbSerialEcho::consume_uart1_bytes(
+    const std::uint8_t *const data,
+    const std::size_t length)
+{
+    for (std::size_t index = 0; index < length; ++index) {
+        const std::uint8_t byte = data[index];
+        if (uart1_command_length_ == 0) {
+            if (byte != IRIS_PACKET_ID_COMMAND) {
                 continue;
             }
-            can_command_length_ = 0;
-        }
-
-        const std::size_t bytes_remaining =
-            can_command_packet_.size() - can_command_length_;
-        if (frame.length > bytes_remaining) {
-            can_command_length_ = 0;
+            uart1_command_packet_[0] = byte;
+            uart1_command_length_ = 1;
             continue;
         }
 
-        std::copy_n(
-            frame.data.begin(), frame.length,
-            can_command_packet_.begin() + can_command_length_);
-        can_command_length_ += frame.length;
-        if (can_command_length_ == can_command_packet_.size()) {
+        uart1_command_packet_[uart1_command_length_++] = byte;
+        if (uart1_command_length_ == uart1_command_packet_.size()) {
             process_binary_command_packet(
-                can_command_packet_.data(), CommandSource::can);
-            can_command_length_ = 0;
+                uart1_command_packet_.data(), CommandSource::uart1);
+            uart1_command_length_ = 0;
         }
     }
 }
@@ -611,7 +635,7 @@ void UsbSerialEcho::send_command_response(
     if (destination == CommandSource::usb) {
         write_usb_packet(packet.data(), packet.size());
     } else {
-        write_can_packet(packet.data(), packet.size());
+        write_uart1_packet(packet.data(), packet.size());
     }
 }
 
@@ -726,7 +750,7 @@ void UsbSerialEcho::write_packet(
     const std::size_t length)
 {
     write_usb_packet(data, length);
-    write_can_packet(data, length);
+    write_uart1_packet(data, length);
 }
 
 void UsbSerialEcho::write_usb_packet(
@@ -746,7 +770,7 @@ void UsbSerialEcho::write_usb_packet(
     }
 }
 
-void UsbSerialEcho::write_can_packet(
+void UsbSerialEcho::write_uart1_packet(
     const std::uint8_t *const data,
     const std::size_t length)
 {
@@ -754,18 +778,15 @@ void UsbSerialEcho::write_can_packet(
         return;
     }
 
-    // CAN carries ordered, consecutive 8-byte chunks of the complete
-    // application packet. The packet ID is also used as the standard CAN ID.
-    for (std::size_t offset = 0; offset < length;
-         offset += IRIS_CAN_FRAME_DATA_LENGTH) {
-        TwaiDriver::Frame frame{};
-        frame.identifier = data[0];
-        frame.length = static_cast<std::uint8_t>(
-            std::min<std::size_t>(
-                IRIS_CAN_FRAME_DATA_LENGTH, length - offset));
-        std::copy_n(data + offset, frame.length, frame.data.begin());
-        if (twai_.transmit(frame) != ESP_OK) {
+    std::size_t bytes_written_total = 0;
+    while (bytes_written_total < length) {
+        const int bytes_written = uart_write_bytes(
+            IRIS_UART1_PORT,
+            data + bytes_written_total,
+            length - bytes_written_total);
+        if (bytes_written <= 0) {
             return;
         }
+        bytes_written_total += static_cast<std::size_t>(bytes_written);
     }
 }

@@ -17,6 +17,7 @@
 
 class SpiDataForwarder;
 class WitnessStatus;
+class CommandBridge;
 
 class Sensors final {
 public:
@@ -76,7 +77,8 @@ public:
 
     Sensors(
         SpiDataForwarder &data_forwarder,
-        WitnessStatus &witness_status);
+        WitnessStatus &witness_status,
+        CommandBridge &command_bridge);
 
     Sensors(const Sensors &) = delete;
     Sensors &operator=(const Sensors &) = delete;
@@ -173,12 +175,14 @@ private:
     esp_err_t queue_state_packet();
     esp_err_t queue_debug_packet();
     esp_err_t read_battery_voltage();
+    void poll_radio_commands();
     void publish_sample();
     void run();
     void release_resources();
 
     SpiDataForwarder &data_forwarder_;
     WitnessStatus &witness_status_;
+    CommandBridge &command_bridge_;
     Ms5607 ms5607_{};
     Ra01 radio_{};
     spi_device_handle_t spi_device_ = nullptr;
