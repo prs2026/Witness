@@ -15,6 +15,7 @@
 
 class Sensors;
 class WitnessStatus;
+class FlightStateMachine;
 
 // Append-only log store for the raw SPI NAND. A read-only FAT volume is
 // generated from its export table by UsbMassStorage; a desktop OS never writes
@@ -35,7 +36,9 @@ public:
         std::uint8_t type;
     };
 
-    FlashLogger(Sensors &sensors, WitnessStatus &witness_status);
+    FlashLogger(Sensors &sensors,
+                WitnessStatus &witness_status,
+                FlightStateMachine &flight_state_machine);
     FlashLogger(const FlashLogger &) = delete;
     FlashLogger &operator=(const FlashLogger &) = delete;
 
@@ -44,6 +47,9 @@ public:
     // Flushes the current session and permanently freezes logging until reset.
     // This must complete before exposing the read-only USB disk.
     esp_err_t prepare_mass_storage(TickType_t timeout = portMAX_DELAY);
+    // Destructively erases all session blocks, then creates a fresh empty
+    // session. NAND access remains owned by the logger task throughout.
+    esp_err_t erase_all_sessions(TickType_t timeout = portMAX_DELAY);
     std::size_t export_file_count() const;
     const ExportFile &export_file(std::size_t index) const;
     esp_err_t read_export_file(
@@ -98,6 +104,8 @@ private:
     static FlashLogger *log_sink_;
 
     esp_err_t scan_sessions(bool build_export_table);
+    esp_err_t run_startup_self_test();
+    esp_err_t erase_session_blocks();
     esp_err_t create_session();
     esp_err_t append_bytes(Writer &writer,
                            const std::uint8_t *data,
@@ -108,31 +116,50 @@ private:
     esp_err_t scan_file_size(std::uint8_t slot,
                              std::uint8_t type,
                              std::uint32_t &size);
-    esp_err_t read_file_data(const ExportFile &file,
+    esp_err_t read_file_data(std::size_t file_index,
                              std::uint32_t offset,
                              std::uint8_t *destination,
                              std::size_t length);
+    esp_err_t load_export_page(std::size_t file_index,
+                               std::uint32_t page_index,
+                               std::uint32_t logical_offset);
+    void invalidate_export_read_cache();
     void serialize_record(std::uint8_t *destination);
     void install_log_capture();
     void run();
 
     Sensors &sensors_;
     WitnessStatus &witness_status_;
+    FlightStateMachine &flight_state_machine_;
     W25n01kv flash_{};
     TaskHandle_t task_handle_ = nullptr;
     QueueHandle_t text_queue_ = nullptr;
     SemaphoreHandle_t frozen_semaphore_ = nullptr;
+    SemaphoreHandle_t erase_semaphore_ = nullptr;
     vprintf_like_t previous_vprintf_ = nullptr;
     std::atomic<bool> capture_logs_{false};
     std::atomic<bool> console_output_enabled_{true};
     std::atomic<bool> export_requested_{false};
+    std::atomic<bool> erase_requested_{false};
     std::atomic<bool> frozen_{false};
+    esp_err_t erase_result_ = ESP_OK;
     std::uint8_t binary_buffer_[4096]{};
     std::size_t binary_buffer_used_ = 0;
+    std::uint8_t text_buffer_[4096]{};
+    std::size_t text_buffer_used_ = 0;
     Writer binary_writer_{};
     Writer text_writer_{};
     ExportFile export_files_[kMaximumExportFiles]{};
     std::size_t export_file_count_ = 0;
+    // USB hosts read files in small sequential chunks. Retaining the current
+    // NAND page prevents every 512-byte request from rescanning the file from
+    // its beginning, which otherwise eventually causes host-side timeouts.
+    std::uint8_t export_read_page_[W25n01kv::kPageDataSize]{};
+    std::size_t export_read_file_index_ = kMaximumExportFiles;
+    std::uint32_t export_read_page_index_ = 0;
+    std::uint32_t export_read_logical_offset_ = 0;
+    std::uint16_t export_read_payload_length_ = 0;
+    bool export_read_cache_valid_ = false;
     std::uint8_t current_slot_ = 0;
     std::uint32_t current_generation_ = 1;
     std::uint32_t sequence_ = 0;

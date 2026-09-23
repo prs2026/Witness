@@ -1,5 +1,9 @@
 #include "heartbeat.h"
 
+// Set to 0 to disable heartbeat buzzing. GPIO48 is still configured as an
+// output and held low when buzzing is disabled.
+#define HEARTBEAT_BUZZER_ENABLED 0
+
 #include <cstdint>
 
 #include "comms.h"
@@ -14,7 +18,12 @@ namespace {
 
 constexpr char kLogTag[] = "heartbeat";
 constexpr gpio_num_t kHeartbeatGpio = HW_PIN_LED_RED;
+constexpr gpio_num_t kBuzzerGpio = HW_PIN_BUZZER;
 constexpr TickType_t kPulseDuration = pdMS_TO_TICKS(100);
+
+static_assert(
+    HEARTBEAT_BUZZER_ENABLED == 0 || HEARTBEAT_BUZZER_ENABLED == 1,
+    "HEARTBEAT_BUZZER_ENABLED must be 0 or 1");
 
 }  // namespace
 
@@ -48,6 +57,8 @@ esp_err_t Heartbeat::start()
     if (task_created != pdPASS) {
         task_handle_ = nullptr;
         gpio_reset_pin(kHeartbeatGpio);
+        // Do not reset the buzzer pin to a floating input on failure.
+        gpio_set_level(kBuzzerGpio, 0);
         return ESP_ERR_NO_MEM;
     }
 
@@ -70,19 +81,28 @@ void Heartbeat::task_entry(void *context)
 
 esp_err_t Heartbeat::configure_gpio()
 {
+    // Preload the inactive output level before enabling the buzzer GPIO to
+    // avoid an active-high pulse during configuration.
+    esp_err_t result = gpio_set_level(kBuzzerGpio, 0);
+    if (result != ESP_OK) {
+        return result;
+    }
+
     gpio_config_t config{};
-    config.pin_bit_mask = 1ULL << kHeartbeatGpio;
+    config.pin_bit_mask =
+        (1ULL << kHeartbeatGpio) | (1ULL << kBuzzerGpio);
     config.mode = GPIO_MODE_OUTPUT;
     config.pull_up_en = GPIO_PULLUP_DISABLE;
     config.pull_down_en = GPIO_PULLDOWN_DISABLE;
     config.intr_type = GPIO_INTR_DISABLE;
 
-    const esp_err_t result = gpio_config(&config);
+    result = gpio_config(&config);
     if (result != ESP_OK) {
         return result;
     }
 
-    return set_led(false);
+    result = gpio_set_level(kBuzzerGpio, 0);
+    return result == ESP_OK ? set_led(false) : result;
 }
 
 void Heartbeat::blink_gpio()
@@ -95,7 +115,24 @@ void Heartbeat::blink_gpio()
         return;
     }
 
+#if HEARTBEAT_BUZZER_ENABLED
+    result = gpio_set_level(kBuzzerGpio, 1);
+    if (result != ESP_OK) {
+        ESP_LOGE(kLogTag, "failed to pulse buzzer GPIO%d: %s",
+                 static_cast<int>(kBuzzerGpio), esp_err_to_name(result));
+    }
+#else
+    // Reassert the resting state on every heartbeat even when disabled.
+    (void)gpio_set_level(kBuzzerGpio, 0);
+#endif
+
     vTaskDelay(kPulseDuration);
+
+    result = gpio_set_level(kBuzzerGpio, 0);
+    if (result != ESP_OK) {
+        ESP_LOGE(kLogTag, "failed to restore buzzer GPIO%d low: %s",
+                 static_cast<int>(kBuzzerGpio), esp_err_to_name(result));
+    }
 
     // Restore the latest commanded state in case it changed during the pulse.
     result = gpio_set_level(kHeartbeatGpio, led_on_.load());
@@ -114,7 +151,8 @@ void Heartbeat::queue_heartbeat_packet()
         static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
 
     std::uint8_t payload[IRIS_PACKET_HEARTBEAT_DATA_LENGTH]{};
-    payload[IRIS_PACKET_HEARTBEAT_STATUS_OFFSET] = witness_status_.flags();
+    witness_status_.write(
+        &payload[IRIS_PACKET_HEARTBEAT_STATUS_OFFSET]);
     payload[IRIS_PACKET_HEARTBEAT_UPTIME_OFFSET] =
         static_cast<std::uint8_t>(uptime_milliseconds >> 24);
     payload[IRIS_PACKET_HEARTBEAT_UPTIME_OFFSET + 1U] =

@@ -34,14 +34,23 @@
 // Packet ID 0x05 followed by this big-endian value switches USB to a
 // read-only log-export disk until reset.
 #define IRIS_COMMAND_MASS_STORAGE_START 0x6868U
+// Protected destructive command: erase every stored flash log session.
+#define IRIS_COMMAND_ERASE_LOG_SESSIONS 0x6869U
+// Three-byte state command: 0x05, 0x73, then one of these state values.
+#define IRIS_COMMAND_SET_FLIGHT_STATE 0x73U
+#define IRIS_FLIGHT_STATE_PAD_IDLE 0x00U
+#define IRIS_FLIGHT_STATE_BOOST 0x01U
+#define IRIS_FLIGHT_STATE_COAST 0x02U
+#define IRIS_FLIGHT_STATE_DESCENT 0x03U
+#define IRIS_FLIGHT_STATE_LANDED 0x04U
 
 // ---------------------------------------------------------------------------
 // Canonical field catalog
 // ---------------------------------------------------------------------------
 
-// Witness status: two raw flag bytes. The following masks define every bit in
-// byte 0. Byte 1 is reserved and must be transmitted as zero. Flags are active
-// high; this is not a scaled numeric quantity.
+// Witness status: two raw bytes. Byte 0 contains the following active-high
+// flags. Bits 0..2 of byte 1 contain the current flight state; the remaining
+// bits of byte 1 are reserved and must be zero.
 #define IRIS_FIELD_WITNESS_STATUS_LENGTH 2U
 // Byte 0, bit 0: toggles once per heartbeat period.
 #define IRIS_WITNESS_STATUS_HEARTBEAT_MASK (1U << 0)
@@ -59,9 +68,12 @@
 #define IRIS_WITNESS_STATUS_BAROMETER_READY_MASK (1U << 6)
 // Byte 0, bit 7: flash initialized, but logging later stopped on an error.
 #define IRIS_WITNESS_STATUS_FLASH_LOG_FAILED_MASK (1U << 7)
-// Status byte 1 (logical bits 8 through 15) is reserved and always zero.
-#define IRIS_WITNESS_STATUS_RESERVED_BYTE_OFFSET 1U
-#define IRIS_WITNESS_STATUS_RESERVED_BYTE_VALUE 0U
+// Status byte 1, bits 0..2: flight state encoded using IRIS_FLIGHT_STATE_*.
+#define IRIS_WITNESS_STATUS_FLIGHT_STATE_BYTE_OFFSET 1U
+#define IRIS_WITNESS_STATUS_FLIGHT_STATE_SHIFT 0U
+#define IRIS_WITNESS_STATUS_FLIGHT_STATE_MASK 0x07U
+// Status byte 1, bits 3..7: reserved and transmitted as zero.
+#define IRIS_WITNESS_STATUS_RESERVED_MASK 0xF8U
 
 // Witness uptime: big-endian uint32, milliseconds since boot. The counter
 // wraps after approximately 49.7 days.

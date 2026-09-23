@@ -13,6 +13,7 @@ class Heartbeat;
 class Sensors;
 class SpiDataForwarder;
 class FlashLogger;
+class FlightStateMachine;
 
 class UsbSerialEcho final {
 public:
@@ -20,7 +21,8 @@ public:
         Heartbeat &heartbeat,
         Sensors &sensors,
         SpiDataForwarder &spi_interface,
-        FlashLogger &flash_logger);
+        FlashLogger &flash_logger,
+        FlightStateMachine &flight_state_machine);
 
     UsbSerialEcho(const UsbSerialEcho &) = delete;
     UsbSerialEcho &operator=(const UsbSerialEcho &) = delete;
@@ -43,6 +45,8 @@ private:
     void process_protocol_command(std::uint16_t command);
     void process_tx_command();
     void start_mass_storage();
+    void erase_log_sessions();
+    void set_flight_state(std::uint8_t state);
     void set_camera_state(std::size_t camera_index, bool enabled);
     void run();
 
@@ -50,6 +54,7 @@ private:
     Sensors &sensors_;
     SpiDataForwarder &spi_interface_;
     FlashLogger &flash_logger_;
+    FlightStateMachine &flight_state_machine_;
     UsbMassStorage mass_storage_;
     TaskHandle_t task_handle_ = nullptr;
     char command_buffer_[kCommandBufferSize]{};

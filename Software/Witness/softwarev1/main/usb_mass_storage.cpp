@@ -43,7 +43,7 @@ esp_err_t UsbMassStorage::build_index() {
         const std::uint32_t clusters =
             (bytes + kSectorSize * kSectorsPerCluster - 1) /
             (kSectorSize * kSectorsPerCluster);
-        if (next + clusters > 0xFFF0U) return ESP_ERR_NO_MEM;
+        if (next + clusters > 2U + kDataClusters) return ESP_ERR_NO_MEM;
         first_cluster_[i] = clusters ? static_cast<std::uint16_t>(next) : 0;
         cluster_count_[i] = static_cast<std::uint16_t>(clusters);
         next += clusters;

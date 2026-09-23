@@ -19,6 +19,11 @@
 
 #define IRIS_COMMAND_ARGUMENT_LENGTH 0U
 
+#define IRIS_COMMAND_STATUS_FLAG_SET 0x20U
+#define IRIS_COMMAND_STATUS_FLAG_CLEAR 0x21U
+#define IRIS_COMMAND_PING 0x22U
+#define IRIS_COMMAND_PONG 0x23U
+
 #define IRIS_COMMAND_CH1_LOAD_OFF 0x30U
 #define IRIS_COMMAND_CH1_LOAD_ON 0x31U
 #define IRIS_COMMAND_CH2_LOAD_OFF 0x32U
@@ -30,6 +35,11 @@
 #define IRIS_COMMAND_5V_REGULATOR_ON 0x51U
 
 #define IRIS_COMMAND_IRIS_DEBUG_START 0xE1U
+
+// Producer-defined IRIS status-byte flags.
+#define IRIS_STATUS_CURRENT_MONITOR_ERROR_FLAG 0x01U
+#define IRIS_STATUS_BATTERY_MONITOR_ERROR_FLAG 0x02U
+#define IRIS_STATUS_COMMAND_CONTROLLED_FLAG 0x04U
 
 // ---------------------------------------------------------------------------
 // Canonical field catalog

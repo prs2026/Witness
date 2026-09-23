@@ -9,6 +9,7 @@
 
 #include "driver/usb_serial_jtag.h"
 #include "driver/usb_serial_jtag_vfs.h"
+#include "driver/uart.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
@@ -20,8 +21,6 @@
 namespace {
 
 constexpr char kLogTag[] = "serial_command";
-constexpr std::uint8_t kCurrentMonitorErrorFlag = 0x01U;
-constexpr std::uint8_t kBatteryMonitorErrorFlag = 0x02U;
 constexpr std::uint32_t kMicroampsPerMilliamp = 1000U;
 
 static_assert(IRIS_PACKET_CAMERA_FRAME_LENGTH == 19U);
@@ -95,7 +94,8 @@ std::size_t normalize_command(char *command, const std::size_t length)
 UsbSerialEcho::UsbSerialEcho(
     Mcp23008 &gpio_expander,
     Pac1931 &current_monitor)
-    : gpio_expander_(gpio_expander), current_monitor_(current_monitor)
+    : gpio_expander_(gpio_expander),
+      current_monitor_(current_monitor)
 {
 }
 
@@ -117,6 +117,40 @@ esp_err_t UsbSerialEcho::initialize()
         return result;
     }
     result = set_led(false);
+    if (result != ESP_OK) {
+        gpio_reset_pin(kHeartbeatGpio);
+        return result;
+    }
+
+    uart_config_t uart_config{};
+    uart_config.baud_rate = static_cast<int>(IRIS_UART1_BAUD_RATE);
+    uart_config.data_bits = UART_DATA_8_BITS;
+    uart_config.parity = UART_PARITY_DISABLE;
+    uart_config.stop_bits = UART_STOP_BITS_1;
+    uart_config.flow_ctrl = UART_HW_FLOWCTRL_DISABLE;
+    uart_config.source_clk = UART_SCLK_DEFAULT;
+    result = uart_param_config(IRIS_UART1_PORT, &uart_config);
+    if (result != ESP_OK) {
+        gpio_reset_pin(kHeartbeatGpio);
+        return result;
+    }
+    result = uart_set_pin(
+        IRIS_UART1_PORT,
+        IRIS_PIN_UART1_TX,
+        IRIS_PIN_UART1_RX,
+        UART_PIN_NO_CHANGE,
+        UART_PIN_NO_CHANGE);
+    if (result != ESP_OK) {
+        gpio_reset_pin(kHeartbeatGpio);
+        return result;
+    }
+    result = uart_driver_install(
+        IRIS_UART1_PORT,
+        kBufferSize,
+        kBufferSize,
+        0,
+        nullptr,
+        0);
     if (result != ESP_OK) {
         gpio_reset_pin(kHeartbeatGpio);
         return result;
@@ -164,6 +198,7 @@ void UsbSerialEcho::poll()
     }
 
     const std::int64_t now_us = esp_timer_get_time();
+    poll_uart1();
     poll_heartbeat(now_us);
     poll_current_monitor(now_us);
     poll_debug_report(now_us);
@@ -206,7 +241,8 @@ void UsbSerialEcho::consume_command_bytes(
         if (binary_command_length_ > 0) {
             binary_command_packet_[binary_command_length_++] = byte;
             if (binary_command_length_ == binary_command_packet_.size()) {
-                process_binary_command_packet();
+                process_binary_command_packet(
+                    binary_command_packet_.data(), CommandSource::usb);
                 binary_command_length_ = 0;
             }
             continue;
@@ -434,29 +470,81 @@ void UsbSerialEcho::poll_debug_report(const std::int64_t now_us)
     } while (next_debug_report_us_ <= now_us);
 }
 
-void UsbSerialEcho::process_binary_command_packet()
+void UsbSerialEcho::poll_can()
+{
+    TwaiDriver::Frame frame{};
+    while (twai_.receive(frame)) {
+        if (frame.extended || frame.remote ||
+            frame.identifier != IRIS_PACKET_ID_COMMAND || frame.length == 0) {
+            continue;
+        }
+
+        const bool starts_new_packet =
+            frame.data[0] == IRIS_PACKET_ID_COMMAND &&
+            frame.length == IRIS_CAN_FRAME_DATA_LENGTH;
+        if (can_command_length_ == 0 || starts_new_packet) {
+            if (!starts_new_packet) {
+                continue;
+            }
+            can_command_length_ = 0;
+        }
+
+        const std::size_t bytes_remaining =
+            can_command_packet_.size() - can_command_length_;
+        if (frame.length > bytes_remaining) {
+            can_command_length_ = 0;
+            continue;
+        }
+
+        std::copy_n(
+            frame.data.begin(), frame.length,
+            can_command_packet_.begin() + can_command_length_);
+        can_command_length_ += frame.length;
+        if (can_command_length_ == can_command_packet_.size()) {
+            process_binary_command_packet(
+                can_command_packet_.data(), CommandSource::can);
+            can_command_length_ = 0;
+        }
+    }
+}
+
+void UsbSerialEcho::process_binary_command_packet(
+    const std::uint8_t *const packet,
+    const CommandSource source)
 {
     const std::size_t eof_index =
         IRIS_PACKET_ID_LENGTH + IRIS_PACKET_COMMAND_EOF_OFFSET;
-    if (binary_command_packet_[0] != IRIS_PACKET_ID_COMMAND ||
-        binary_command_packet_[eof_index] != IRIS_PACKET_EOF_VALUE) {
+    if (packet[0] != IRIS_PACKET_ID_COMMAND ||
+        packet[eof_index] != IRIS_PACKET_EOF_VALUE) {
         return;
     }
 
     const std::uint8_t *const payload =
-        binary_command_packet_.data() + IRIS_PACKET_ID_LENGTH;
+        packet + IRIS_PACKET_ID_LENGTH;
     const std::uint16_t command = load_u16_be(
         payload + IRIS_PACKET_COMMAND_VALUE_OFFSET);
-    (void)execute_binary_command(command);
+    (void)execute_binary_command(command, source);
 }
 
-bool UsbSerialEcho::execute_binary_command(const std::uint16_t command)
+bool UsbSerialEcho::execute_binary_command(
+    const std::uint16_t command,
+    const CommandSource source)
 {
     std::uint8_t pin = 0;
     const char *name = nullptr;
     bool enabled = false;
 
     switch (command) {
+        case IRIS_COMMAND_STATUS_FLAG_SET:
+            iris_status_flags_ |= IRIS_STATUS_COMMAND_CONTROLLED_FLAG;
+            return true;
+        case IRIS_COMMAND_STATUS_FLAG_CLEAR:
+            iris_status_flags_ &= static_cast<std::uint8_t>(
+                ~IRIS_STATUS_COMMAND_CONTROLLED_FLAG);
+            return true;
+        case IRIS_COMMAND_PING:
+            send_command_response(source, IRIS_COMMAND_PONG);
+            return true;
         case IRIS_COMMAND_CH1_LOAD_OFF:
             pin = IRIS_MCP23008_PIN_OUT1_ENABLE;
             name = "OUT1_EN";
@@ -505,6 +593,28 @@ bool UsbSerialEcho::execute_binary_command(const std::uint16_t command)
     return true;
 }
 
+void UsbSerialEcho::send_command_response(
+    const CommandSource destination,
+    const std::uint16_t command)
+{
+    std::array<std::uint8_t, IRIS_PACKET_COMMAND_FRAME_LENGTH> packet{};
+    packet[0] = IRIS_PACKET_ID_COMMAND;
+    std::uint8_t *const data = packet.data() + IRIS_PACKET_ID_LENGTH;
+    data[IRIS_PACKET_COMMAND_STATUS_OFFSET] = iris_status_flags_;
+    data[IRIS_PACKET_COMMAND_STATUS_OFFSET + 1U] = 0;
+    store_u32_be(
+        data + IRIS_PACKET_COMMAND_UPTIME_OFFSET,
+        static_cast<std::uint32_t>(esp_timer_get_time() / 1000));
+    store_u16_be(data + IRIS_PACKET_COMMAND_VALUE_OFFSET, command);
+    data[IRIS_PACKET_COMMAND_EOF_OFFSET] = IRIS_PACKET_EOF_VALUE;
+
+    if (destination == CommandSource::usb) {
+        write_usb_packet(packet.data(), packet.size());
+    } else {
+        write_can_packet(packet.data(), packet.size());
+    }
+}
+
 void UsbSerialEcho::send_camera_report(const std::int64_t now_us)
 {
     std::array<std::uint8_t, IRIS_PACKET_CAMERA_FRAME_LENGTH> packet{};
@@ -515,12 +625,12 @@ void UsbSerialEcho::send_camera_report(const std::int64_t now_us)
     store_u16_be(data + IRIS_PACKET_CAMERA_FC_STATUS_OFFSET, 0);
     store_u32_be(data + IRIS_PACKET_CAMERA_FC_UPTIME_OFFSET, 0);
 
-    std::uint8_t status_flags = 0;
+    std::uint8_t status_flags = iris_status_flags_;
     if (current_sample_error_ || valid_current_samples_ == 0) {
-        status_flags |= kCurrentMonitorErrorFlag;
+        status_flags |= IRIS_STATUS_CURRENT_MONITOR_ERROR_FLAG;
     }
     if (!battery_voltage_valid_) {
-        status_flags |= kBatteryMonitorErrorFlag;
+        status_flags |= IRIS_STATUS_BATTERY_MONITOR_ERROR_FLAG;
     }
     data[IRIS_PACKET_CAMERA_STATUS_OFFSET] = status_flags;
     data[IRIS_PACKET_CAMERA_STATUS_OFFSET + 1U] = 0;
@@ -563,12 +673,12 @@ void UsbSerialEcho::send_iris_debug_report(const std::int64_t now_us)
     packet[0] = IRIS_PACKET_ID_IRIS_DEBUG;
     std::uint8_t *const data = packet.data() + IRIS_PACKET_ID_LENGTH;
 
-    std::uint8_t status_flags = 0;
+    std::uint8_t status_flags = iris_status_flags_;
     if (!latest_current_valid_) {
-        status_flags |= kCurrentMonitorErrorFlag;
+        status_flags |= IRIS_STATUS_CURRENT_MONITOR_ERROR_FLAG;
     }
     if (!battery_voltage_valid_) {
-        status_flags |= kBatteryMonitorErrorFlag;
+        status_flags |= IRIS_STATUS_BATTERY_MONITOR_ERROR_FLAG;
     }
     data[IRIS_PACKET_IRIS_DEBUG_STATUS_OFFSET] = status_flags;
     data[IRIS_PACKET_IRIS_DEBUG_STATUS_OFFSET + 1U] = 0;
@@ -615,6 +725,14 @@ void UsbSerialEcho::write_packet(
     const std::uint8_t *data,
     const std::size_t length)
 {
+    write_usb_packet(data, length);
+    write_can_packet(data, length);
+}
+
+void UsbSerialEcho::write_usb_packet(
+    const std::uint8_t *data,
+    const std::size_t length)
+{
     std::size_t bytes_written_total = 0;
     while (bytes_written_total < length) {
         const int bytes_written = usb_serial_jtag_write_bytes(
@@ -625,5 +743,29 @@ void UsbSerialEcho::write_packet(
             return;
         }
         bytes_written_total += static_cast<std::size_t>(bytes_written);
+    }
+}
+
+void UsbSerialEcho::write_can_packet(
+    const std::uint8_t *const data,
+    const std::size_t length)
+{
+    if (data == nullptr || length == 0) {
+        return;
+    }
+
+    // CAN carries ordered, consecutive 8-byte chunks of the complete
+    // application packet. The packet ID is also used as the standard CAN ID.
+    for (std::size_t offset = 0; offset < length;
+         offset += IRIS_CAN_FRAME_DATA_LENGTH) {
+        TwaiDriver::Frame frame{};
+        frame.identifier = data[0];
+        frame.length = static_cast<std::uint8_t>(
+            std::min<std::size_t>(
+                IRIS_CAN_FRAME_DATA_LENGTH, length - offset));
+        std::copy_n(data + offset, frame.length, frame.data.begin());
+        if (twai_.transmit(frame) != ESP_OK) {
+            return;
+        }
     }
 }

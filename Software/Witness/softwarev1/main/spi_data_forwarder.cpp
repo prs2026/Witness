@@ -74,7 +74,28 @@ esp_err_t SpiDataForwarder::queue_packet(
     packet.packet_id = packet_id;
     packet.payload_length = static_cast<std::uint8_t>(payload_length);
     std::memcpy(packet.payload, payload, payload_length);
+    packet.raw = false;
 
+    return xQueueSend(forward_queue_, &packet, 0) == pdTRUE
+               ? ESP_OK
+               : ESP_ERR_NO_MEM;
+}
+
+esp_err_t SpiDataForwarder::queue_raw_bytes(
+    const std::uint8_t *data,
+    const std::size_t length)
+{
+    if (forward_queue_ == nullptr) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    if (data == nullptr || length == 0 || length > kMaximumPayloadSize) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    Packet packet{};
+    packet.payload_length = static_cast<std::uint8_t>(length);
+    std::memcpy(packet.payload, data, length);
+    packet.raw = true;
     return xQueueSend(forward_queue_, &packet, 0) == pdTRUE
                ? ESP_OK
                : ESP_ERR_NO_MEM;
@@ -96,6 +117,7 @@ esp_err_t SpiDataForwarder::queuecommand(
     packet.packet_id = packet_id;
     packet.payload_length = static_cast<std::uint8_t>(payload_length);
     std::memcpy(packet.payload, payload, payload_length);
+    packet.raw = false;
 
     return xQueueSend(command_queue_, &packet, 0) == pdTRUE
                ? ESP_OK
@@ -127,13 +149,17 @@ void SpiDataForwarder::forward_packet(const Packet &packet)
     }
     std::uint8_t frame[
         IRIS_PACKET_ID_LENGTH + kMaximumPayloadSize + IRIS_PACKET_EOF_LENGTH];
-    frame[0] = packet.packet_id;
-    std::memcpy(&frame[1], packet.payload, packet.payload_length);
-    frame[IRIS_PACKET_ID_LENGTH + packet.payload_length] =
-        IRIS_PACKET_EOF_VALUE;
-
-    const std::size_t frame_length =
-        IRIS_PACKET_ID_LENGTH + packet.payload_length + IRIS_PACKET_EOF_LENGTH;
+    std::size_t frame_length = packet.payload_length;
+    if (packet.raw) {
+        std::memcpy(frame, packet.payload, packet.payload_length);
+    } else {
+        frame[0] = packet.packet_id;
+        std::memcpy(&frame[1], packet.payload, packet.payload_length);
+        frame[IRIS_PACKET_ID_LENGTH + packet.payload_length] =
+            IRIS_PACKET_EOF_VALUE;
+        frame_length = IRIS_PACKET_ID_LENGTH + packet.payload_length +
+                       IRIS_PACKET_EOF_LENGTH;
+    }
     std::size_t forwarded = 0;
     while (forwarded < frame_length && output_enabled_.load()) {
         const int bytes_written = usb_serial_jtag_write_bytes(

@@ -1,14 +1,18 @@
 #pragma once
 
 #include "driver/gpio.h"
+#include "driver/uart.h"
 
 // Iris ESP32-C3FH4 board pin map.
 // Keep all physical board connections here so application code does not use
 // raw GPIO numbers.
 #define IRIS_PIN_VSENSE GPIO_NUM_0
-#define IRIS_PIN_CAN_TX GPIO_NUM_1
+// The PCB net labels at U5 are reversed: the TCAN1044 TXD input is on the
+// net named CANRX (GPIO3), and its RXD output is on CAN_TX (GPIO1). These
+// definitions describe the TWAI signal direction, not the schematic net name.
+#define IRIS_PIN_CAN_TX GPIO_NUM_3
 #define IRIS_PIN_BUTTON GPIO_NUM_2
-#define IRIS_PIN_CAN_RX GPIO_NUM_3
+#define IRIS_PIN_CAN_RX GPIO_NUM_1
 #define IRIS_PIN_I2C_SDA GPIO_NUM_4
 #define IRIS_PIN_I2C_SCL GPIO_NUM_5
 #define IRIS_PIN_UART1_TX GPIO_NUM_6
@@ -20,6 +24,11 @@
 #define IRIS_PIN_USB_D_PLUS GPIO_NUM_19
 #define IRIS_PIN_UART0_RX GPIO_NUM_20
 #define IRIS_PIN_UART0_TX GPIO_NUM_21
+
+// UART1 is the secondary packet transport. Complete application packets are
+// sent directly as byte streams using the same framing as USB.
+#define IRIS_UART1_PORT UART_NUM_1
+#define IRIS_UART1_BAUD_RATE 115200U
 
 // ESP32-C3 TWAI controller connected to the TCAN1044A-Q1. The transceiver's
 // STB input is strapped low on the board, selecting normal mode.

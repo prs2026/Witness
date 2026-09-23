@@ -26,6 +26,12 @@ public:
         const std::uint8_t *payload,
         std::size_t payload_length);
 
+    // Queues bytes exactly as received from another transport. Unlike an
+    // application packet, no packet ID or EOF byte is added.
+    esp_err_t queue_raw_bytes(
+        const std::uint8_t *data,
+        std::size_t length);
+
     // Queues a packet for a future SPI transmit implementation.
     esp_err_t queuecommand(
         std::uint8_t packet_id,
@@ -47,6 +53,7 @@ private:
         std::uint8_t packet_id;
         std::uint8_t payload_length;
         std::uint8_t payload[kMaximumPayloadSize];
+        bool raw;
     };
 
     static void forward_task_entry(void *context);

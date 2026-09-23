@@ -14,7 +14,9 @@ class Pac1931;
 
 class UsbSerialEcho final {
 public:
-    UsbSerialEcho(Mcp23008 &gpio_expander, Pac1931 &current_monitor);
+    UsbSerialEcho(
+        Mcp23008 &gpio_expander,
+        Pac1931 &current_monitor);
 
     UsbSerialEcho(const UsbSerialEcho &) = delete;
     UsbSerialEcho &operator=(const UsbSerialEcho &) = delete;
@@ -25,6 +27,11 @@ public:
     void poll();
 
 private:
+    enum class CommandSource : std::uint8_t {
+        usb,
+        uart1,
+    };
+
     static constexpr std::size_t kBufferSize = 512;
     static constexpr std::size_t kCommandBufferSize = 256;
     static constexpr gpio_num_t kHeartbeatGpio = IRIS_PIN_LED_RED;
@@ -36,8 +43,15 @@ private:
 
     void echo_bytes(const std::uint8_t *data, std::size_t length);
     void consume_command_bytes(const std::uint8_t *data, std::size_t length);
-    void process_binary_command_packet();
-    bool execute_binary_command(std::uint16_t command);
+    void process_binary_command_packet(
+        const std::uint8_t *packet,
+        CommandSource source);
+    bool execute_binary_command(
+        std::uint16_t command,
+        CommandSource source);
+    void send_command_response(CommandSource destination, std::uint16_t command);
+    void poll_uart1();
+    void consume_uart1_bytes(const std::uint8_t *data, std::size_t length);
     void process_command();
     bool process_set_command();
     void set_expander_output(std::uint8_t pin, const char *name, bool enabled);
@@ -48,6 +62,8 @@ private:
     void send_camera_report(std::int64_t now_us);
     void send_iris_debug_report(std::int64_t now_us);
     void write_packet(const std::uint8_t *data, std::size_t length);
+    void write_usb_packet(const std::uint8_t *data, std::size_t length);
+    void write_uart1_packet(const std::uint8_t *data, std::size_t length);
 
     Mcp23008 &gpio_expander_;
     Pac1931 &current_monitor_;
@@ -58,6 +74,10 @@ private:
     std::array<std::uint8_t, IRIS_PACKET_COMMAND_FRAME_LENGTH>
         binary_command_packet_{};
     std::size_t binary_command_length_ = 0;
+    std::array<std::uint8_t, IRIS_PACKET_COMMAND_FRAME_LENGTH>
+        uart1_command_packet_{};
+    std::size_t uart1_command_length_ = 0;
+    std::uint8_t iris_status_flags_ = 0;
     bool led_on_ = false;
     bool blue_led_on_ = false;
     bool heartbeat_pulse_active_ = false;

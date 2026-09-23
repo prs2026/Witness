@@ -8,6 +8,7 @@
 #include "driver/usb_serial_jtag_vfs.h"
 #include "esp_log.h"
 #include "flash_logger.h"
+#include "flight_state_machine.h"
 #include "heartbeat.h"
 #include "sdkconfig.h"
 #include "sensors.h"
@@ -86,11 +87,13 @@ UsbSerialEcho::UsbSerialEcho(
     Heartbeat &heartbeat,
     Sensors &sensors,
     SpiDataForwarder &spi_interface,
-    FlashLogger &flash_logger)
+    FlashLogger &flash_logger,
+    FlightStateMachine &flight_state_machine)
     : heartbeat_(heartbeat),
       sensors_(sensors),
       spi_interface_(spi_interface),
       flash_logger_(flash_logger),
+      flight_state_machine_(flight_state_machine),
       mass_storage_(flash_logger)
 {
 }
@@ -186,13 +189,40 @@ void UsbSerialEcho::consume_command_bytes(
         if (command_length_ < kCommandBufferSize - 1) {
             command_buffer_[command_length_++] = character;
             if (command_length_ == 3U &&
-                static_cast<std::uint8_t>(command_buffer_[0]) == IRIS_PACKET_ID_COMMAND &&
-                static_cast<std::uint8_t>(command_buffer_[1]) ==
-                    static_cast<std::uint8_t>(IRIS_COMMAND_MASS_STORAGE_START >> 8) &&
-                static_cast<std::uint8_t>(command_buffer_[2]) ==
-                    static_cast<std::uint8_t>(IRIS_COMMAND_MASS_STORAGE_START)) {
-                start_mass_storage();
-                return;
+                static_cast<std::uint8_t>(command_buffer_[0]) ==
+                    IRIS_PACKET_ID_COMMAND) {
+                const std::uint8_t command =
+                    static_cast<std::uint8_t>(command_buffer_[1]);
+                const std::uint8_t argument =
+                    static_cast<std::uint8_t>(command_buffer_[2]);
+                command_length_ = 0;
+
+                if (command ==
+                        static_cast<std::uint8_t>(
+                            IRIS_COMMAND_MASS_STORAGE_START >> 8) &&
+                    argument ==
+                        static_cast<std::uint8_t>(
+                            IRIS_COMMAND_MASS_STORAGE_START)) {
+                    start_mass_storage();
+                    return;
+                }
+                if (command ==
+                        static_cast<std::uint8_t>(
+                            IRIS_COMMAND_ERASE_LOG_SESSIONS >> 8) &&
+                    argument ==
+                        static_cast<std::uint8_t>(
+                            IRIS_COMMAND_ERASE_LOG_SESSIONS)) {
+                    erase_log_sessions();
+                    continue;
+                }
+                if (command == IRIS_COMMAND_SET_FLIGHT_STATE) {
+                    set_flight_state(argument);
+                    continue;
+                }
+
+                // Preserve an unrecognized three-byte command for the
+                // newline-delimited command parser.
+                command_length_ = 3U;
             }
         } else {
             command_overflow_ = true;
@@ -215,6 +245,15 @@ void UsbSerialEcho::process_command()
 
     if (std::strncmp(command_buffer_, "TX ", 3) == 0) {
         process_tx_command();
+    } else if (std::strcmp(command_buffer_, "05 68 68") == 0) {
+        start_mass_storage();
+    } else if (std::strcmp(command_buffer_, "05 68 69") == 0) {
+        erase_log_sessions();
+    } else if (std::strlen(command_buffer_) == 8U &&
+               std::strncmp(command_buffer_, "05 73 0", 7) == 0 &&
+               hex_nibble(command_buffer_[7]) >= 0) {
+        set_flight_state(
+            static_cast<std::uint8_t>(hex_nibble(command_buffer_[7])));
     } else if (std::strcmp(command_buffer_, "E0") == 0 ||
                std::strcmp(command_buffer_, "0XE0") == 0) {
         process_protocol_command(IRIS_COMMAND_WITNESS_DEBUG_START);
@@ -263,7 +302,28 @@ void UsbSerialEcho::start_mass_storage()
     usb_serial_jtag_vfs_use_nonblocking();
 #endif
     usb_serial_jtag_driver_uninstall();
+    vTaskDelay(pdMS_TO_TICKS(250));
     mass_storage_started_ = mass_storage_.start() == ESP_OK;
+}
+
+void UsbSerialEcho::erase_log_sessions()
+{
+    ESP_LOGW(kLogTag, "protected erase command accepted; erasing all log sessions");
+    const esp_err_t result = flash_logger_.erase_all_sessions();
+    if (result == ESP_OK) {
+        ESP_LOGI(kLogTag, "all flash log sessions erased");
+    } else {
+        ESP_LOGE(kLogTag, "log erase failed: %s", esp_err_to_name(result));
+    }
+}
+
+void UsbSerialEcho::set_flight_state(const std::uint8_t state)
+{
+    const esp_err_t result = flight_state_machine_.set_state(state);
+    if (result != ESP_OK) {
+        ESP_LOGW(kLogTag, "flight state 0x%02X rejected: %s",
+                 state, esp_err_to_name(result));
+    }
 }
 
 void UsbSerialEcho::process_protocol_command(const std::uint16_t command)

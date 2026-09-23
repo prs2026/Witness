@@ -26,6 +26,8 @@ private:
     static constexpr std::uint32_t kFatStart = kReservedSectors;
     static constexpr std::uint32_t kRootStart = kFatStart + kFatSectors;
     static constexpr std::uint32_t kDataStart = kRootStart + kRootSectors;
+    static constexpr std::uint32_t kDataClusters =
+        (kSectorCount - kDataStart) / kSectorsPerCluster;
 
     esp_err_t build_index();
     esp_err_t read_sector(std::uint32_t sector, std::uint8_t *data);

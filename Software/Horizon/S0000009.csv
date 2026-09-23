@@ -1,0 +1,3 @@
+packet_index,byte_offset,packet_id,packet_type,frame_length,time_seconds,status,uptime,filtered_accel_x,filtered_accel_y,filtered_accel_z,gyro_x,gyro_y,gyro_z,raw_packet_hex
+0,3046,0xFF,heartbeat,8,4261410.56,30207,4261410560,,,,,,,ff 75 ff fd ff f7 00 0a
+1,12753,0x01,sensors,23,3.476,32925,3476,176.7958,-47.18592,52.26844,1361.99,1845.76,0.07,01 80 9d 00 00 0d 94 43 71 37 ee 00 00 13 f0 57 4c 01 67 00 00 01 0a

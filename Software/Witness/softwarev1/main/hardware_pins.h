@@ -57,8 +57,8 @@
 #define HW_PIN_LSM_INT2       GPIO_NUM_42
 
 // CAN transceiver.
-#define HW_PIN_CAN_TX         GPIO_NUM_36
-#define HW_PIN_CAN_RX         GPIO_NUM_37
+#define HW_PIN_CAN_TX         GPIO_NUM_37
+#define HW_PIN_CAN_RX         GPIO_NUM_36
 
 
 

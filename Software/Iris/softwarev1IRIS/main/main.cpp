@@ -9,7 +9,6 @@
 #include "hardware.h"
 #include "mcp23008.h"
 #include "pac1931.h"
-#include "twai_driver.h"
 #include "usb_serial_echo.h"
 
 extern "C" void app_main(void)
@@ -41,9 +40,6 @@ extern "C" void app_main(void)
                  esp_err_to_name(current_monitor_result));
     }
 
-    TwaiDriver twai;
-    ESP_ERROR_CHECK(twai.initialize());
-
     BatteryVoltage battery_voltage;
     ESP_ERROR_CHECK(battery_voltage.initialize());
     std::int64_t last_battery_read_us = esp_timer_get_time();
@@ -64,7 +60,6 @@ extern "C" void app_main(void)
                 reading_mv, reading_valid);
         }
 
-        (void)twai.poll();
         usb_serial_echo.poll();
         vTaskDelay(1);
     }

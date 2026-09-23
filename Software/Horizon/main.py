@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as _dt
+import json
 import socket
 import struct
 import queue
@@ -10,7 +11,7 @@ import threading
 import time
 from pathlib import Path
 import tkinter as tk
-from tkinter import messagebox, scrolledtext, ttk
+from tkinter import filedialog, messagebox, scrolledtext, ttk
 
 
 ROOT = Path(__file__).resolve().parent
@@ -317,6 +318,12 @@ class SerialMonitor(tk.Tk):
         graph_controls = ttk.Frame(self.graph_frame)
         graph_controls.pack(fill="x", pady=(0, 5))
         ttk.Button(graph_controls, text="Clear graph history", command=self.clear_history).pack(side="left")
+        ttk.Button(graph_controls, text="Save setup", command=self.save_graph_setup).pack(
+            side="left", padx=(8, 0)
+        )
+        ttk.Button(graph_controls, text="Load setup", command=self.load_graph_setup).pack(
+            side="left", padx=(4, 0)
+        )
         ttk.Label(graph_controls, text="Select fields using the checkboxes on the Telemetry tab.").pack(side="left", padx=10)
         self.graph_canvas = tk.Canvas(self.graph_frame, background="white", height=500,
                                       highlightthickness=1, highlightbackground="#b0b0b0")
@@ -693,6 +700,62 @@ class SerialMonitor(tk.Tk):
     def clear_history(self):
         self.history.clear()
         self.draw_graphs()
+
+    def save_graph_setup(self):
+        selected_fields = [
+            key for key, variable in self.check_vars.items() if variable.get()
+        ]
+        filename = filedialog.asksaveasfilename(
+            title="Save graph setup",
+            defaultextension=".json",
+            initialfile="horizon_graph_setup.json",
+            filetypes=(("JSON files", "*.json"), ("All files", "*.*")),
+        )
+        if not filename:
+            return
+        setup = {
+            "format": "horizon-graph-setup",
+            "version": 1,
+            "selected_fields": selected_fields,
+        }
+        try:
+            Path(filename).write_text(json.dumps(setup, indent=2) + "\n", encoding="utf-8")
+            self.console_write(
+                f"GRAPH_SETUP saved {len(selected_fields)} field(s) to {filename}"
+            )
+        except (OSError, TypeError) as exc:
+            messagebox.showerror("Save graph setup", f"Could not save setup:\n{exc}")
+
+    def load_graph_setup(self):
+        filename = filedialog.askopenfilename(
+            title="Load graph setup",
+            filetypes=(("JSON files", "*.json"), ("All files", "*.*")),
+        )
+        if not filename:
+            return
+        try:
+            setup = json.loads(Path(filename).read_text(encoding="utf-8"))
+            if not isinstance(setup, dict):
+                raise ValueError("the top-level JSON value must be an object")
+            selected_fields = setup.get("selected_fields")
+            if not isinstance(selected_fields, list) or not all(
+                    isinstance(key, str) for key in selected_fields):
+                raise ValueError("selected_fields must be a list of field names")
+            selected_set = set(selected_fields)
+            unknown_fields = sorted(selected_set.difference(self.check_vars))
+            for key, variable in self.check_vars.items():
+                variable.set(key in selected_set)
+            self.draw_graphs()
+            self.console_write(
+                f"GRAPH_SETUP loaded {len(selected_set) - len(unknown_fields)} field(s) "
+                f"from {filename}"
+            )
+            if unknown_fields:
+                self.console_write(
+                    "GRAPH_SETUP ignored unknown field(s): " + ", ".join(unknown_fields)
+                )
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            messagebox.showerror("Load graph setup", f"Could not load setup:\n{exc}")
 
     def draw_graphs(self):
         if not hasattr(self, "graph_canvas"):

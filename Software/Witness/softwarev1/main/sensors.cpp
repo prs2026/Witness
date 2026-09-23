@@ -468,7 +468,7 @@ esp_err_t Sensors::queue_sensor_packet()
 {
     std::uint8_t payload[IRIS_PACKET_SENSORS_DATA_LENGTH]{};
 
-    payload[IRIS_PACKET_SENSORS_STATUS_OFFSET] = witness_status_.flags();
+    witness_status_.write(&payload[IRIS_PACKET_SENSORS_STATUS_OFFSET]);
 
     const std::uint32_t uptime_milliseconds =
         static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
@@ -496,7 +496,7 @@ esp_err_t Sensors::queue_sensor_packet()
 esp_err_t Sensors::queue_state_packet()
 {
     std::uint8_t payload[IRIS_PACKET_STATE_DATA_LENGTH]{};
-    payload[IRIS_PACKET_STATE_STATUS_OFFSET] = witness_status_.flags();
+    witness_status_.write(&payload[IRIS_PACKET_STATE_STATUS_OFFSET]);
 
     const std::uint32_t uptime_milliseconds =
         static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
@@ -541,8 +541,8 @@ esp_err_t Sensors::queue_debug_packet()
 {
     std::uint8_t payload[IRIS_PACKET_WITNESS_DEBUG_DATA_LENGTH]{};
 
-    payload[IRIS_PACKET_WITNESS_DEBUG_STATUS_OFFSET] =
-        witness_status_.flags();
+    witness_status_.write(
+        &payload[IRIS_PACKET_WITNESS_DEBUG_STATUS_OFFSET]);
 
     const std::uint32_t uptime_milliseconds =
         static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);

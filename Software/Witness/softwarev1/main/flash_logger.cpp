@@ -6,6 +6,7 @@
 
 #include "comms.h"
 #include "esp_timer.h"
+#include "flight_state_machine.h"
 #include "sensors.h"
 #include "witness_status.h"
 
@@ -34,13 +35,22 @@ void write_float_be(std::uint8_t *p, float v) {
 
 FlashLogger *FlashLogger::log_sink_ = nullptr;
 
-FlashLogger::FlashLogger(Sensors &s, WitnessStatus &w) : sensors_(s), witness_status_(w) {}
+FlashLogger::FlashLogger(Sensors &s,
+                         WitnessStatus &w,
+                         FlightStateMachine &state_machine)
+    : sensors_(s),
+      witness_status_(w),
+      flight_state_machine_(state_machine)
+{
+}
 
 esp_err_t FlashLogger::start() {
     if (task_handle_) return ESP_ERR_INVALID_STATE;
     text_queue_ = xQueueCreate(32, sizeof(LogLine));
     frozen_semaphore_ = xSemaphoreCreateBinary();
-    if (!text_queue_ || !frozen_semaphore_) return ESP_ERR_NO_MEM;
+    erase_semaphore_ = xSemaphoreCreateBinary();
+    if (!text_queue_ || !frozen_semaphore_ || !erase_semaphore_)
+        return ESP_ERR_NO_MEM;
     install_log_capture();
     if (xTaskCreate(task_entry, "flash_logger", kTaskStackSize, this,
                     kTaskPriority, &task_handle_) != pdPASS) {
@@ -79,11 +89,41 @@ int FlashLogger::log_vprintf(const char *format, va_list args) {
 
 void FlashLogger::task_entry(void *context) { static_cast<FlashLogger *>(context)->run(); }
 
+esp_err_t FlashLogger::run_startup_self_test() {
+    std::uint32_t block = W25n01kv::kBlockCount;
+    for (std::uint32_t candidate = W25n01kv::kBlockCount;
+         candidate-- > W25n01kv::kBlockCount - kReservedBlocks;) {
+        bool bad = false;
+        esp_err_t r = flash_.is_bad_block(candidate, bad);
+        if (r != ESP_OK) return r;
+        if (!bad) { block = candidate; break; }
+    }
+    if (block == W25n01kv::kBlockCount) return ESP_ERR_NOT_FOUND;
+
+    std::uint8_t expected[32]{};
+    std::uint8_t actual[32]{};
+    for (std::size_t i = 0; i < sizeof(expected); ++i)
+        expected[i] = static_cast<std::uint8_t>(0xA5U ^ (i * 0x1DU));
+    esp_err_t r = flash_.erase_block(block);
+    const std::uint32_t page = block * W25n01kv::kPagesPerBlock;
+    if (r == ESP_OK) r = flash_.program(page, 0, expected, sizeof(expected));
+    if (r == ESP_OK) r = flash_.read(page, 0, actual, sizeof(actual));
+    if (r != ESP_OK) return r;
+    ESP_LOGI(kLogTag, "startup test block %lu wrote/read:",
+             static_cast<unsigned long>(block));
+    ESP_LOG_BUFFER_HEX_LEVEL(kLogTag, actual, sizeof(actual), ESP_LOG_INFO);
+    return std::memcmp(expected, actual, sizeof(expected)) == 0
+               ? ESP_OK : ESP_ERR_INVALID_RESPONSE;
+}
+
 esp_err_t FlashLogger::scan_sessions(bool build_exports) {
     std::uint32_t newest = 0;
     std::uint8_t newest_slot = 0;
     bool found = false;
-    if (build_exports) export_file_count_ = 0;
+    if (build_exports) {
+        export_file_count_ = 0;
+        invalidate_export_read_cache();
+    }
     for (std::uint8_t slot = 0; slot < kSessionCount; ++slot) {
         std::uint8_t header[9]{};
         const std::uint32_t page = slot * kBlocksPerSession * W25n01kv::kPagesPerBlock;
@@ -125,6 +165,36 @@ esp_err_t FlashLogger::create_session() {
     text_writer_ = {kTextType, base + kBinaryBlocksPerSession,
                     kTextBlocksPerSession, 0, base + kBinaryBlocksPerSession};
     return ESP_OK;
+}
+
+esp_err_t FlashLogger::erase_session_blocks()
+{
+    esp_err_t first_error = ESP_OK;
+    constexpr std::uint32_t kLogBlockCount =
+        kSessionCount * kBlocksPerSession;
+
+    for (std::uint32_t block = 0; block < kLogBlockCount; ++block) {
+        bool bad = false;
+        esp_err_t result = flash_.is_bad_block(block, bad);
+        if (result == ESP_OK && !bad) {
+            result = flash_.erase_block(block);
+        }
+        if (result != ESP_OK && first_error == ESP_OK) {
+            first_error = result;
+        }
+    }
+    if (first_error != ESP_OK) {
+        return first_error;
+    }
+
+    current_slot_ = 0;
+    current_generation_ = 1;
+    sequence_ = 0;
+    binary_buffer_used_ = 0;
+    text_buffer_used_ = 0;
+    export_file_count_ = 0;
+    xQueueReset(text_queue_);
+    return create_session();
 }
 
 esp_err_t FlashLogger::append_bytes(Writer &writer, const std::uint8_t *data, std::size_t length) {
@@ -184,10 +254,18 @@ esp_err_t FlashLogger::flush_binary() {
 esp_err_t FlashLogger::flush_text() {
     LogLine line{};
     while (xQueueReceive(text_queue_, &line, 0) == pdTRUE) {
-        esp_err_t r = append_bytes(text_writer_, reinterpret_cast<const std::uint8_t *>(line.data), line.length);
-        if (r != ESP_OK) return r;
+        if (text_buffer_used_ + line.length > sizeof(text_buffer_)) {
+            esp_err_t r = append_bytes(text_writer_, text_buffer_, text_buffer_used_);
+            if (r != ESP_OK) return r;
+            text_buffer_used_ = 0;
+        }
+        std::memcpy(text_buffer_ + text_buffer_used_, line.data, line.length);
+        text_buffer_used_ += line.length;
     }
-    return ESP_OK;
+    if (!text_buffer_used_) return ESP_OK;
+    const esp_err_t r = append_bytes(text_writer_, text_buffer_, text_buffer_used_);
+    if (r == ESP_OK) text_buffer_used_ = 0;
+    return r;
 }
 
 esp_err_t FlashLogger::scan_file_size(std::uint8_t slot, std::uint8_t type, std::uint32_t &size) {
@@ -207,26 +285,105 @@ esp_err_t FlashLogger::scan_file_size(std::uint8_t slot, std::uint8_t type, std:
     return ESP_OK;
 }
 
-esp_err_t FlashLogger::read_file_data(const ExportFile &f, std::uint32_t offset,
-                                      std::uint8_t *destination, std::size_t length) {
-    const std::uint32_t session_base = f.slot * kBlocksPerSession;
-    const std::uint32_t first_block = session_base + (f.type == kBinaryType ? 0 : kBinaryBlocksPerSession);
-    const std::uint32_t block_count = f.type == kBinaryType ? kBinaryBlocksPerSession : kTextBlocksPerSession;
-    std::uint32_t page_index = f.type == kBinaryType ? 1 : 0;
-    std::uint32_t logical = 0;
-    std::uint8_t page[W25n01kv::kPageDataSize];
-    while (length && page_index < block_count * W25n01kv::kPagesPerBlock) {
-        esp_err_t r = flash_.read(first_block * W25n01kv::kPagesPerBlock + page_index++, 0, page, sizeof(page));
-        if (r != ESP_OK) return r;
-        const std::uint16_t n = read_u16_be(page + 6);
-        if (read_u32_be(page) != kPageMagic || page[4] != f.type || n > kPagePayloadSize) return ESP_ERR_INVALID_RESPONSE;
-        if (offset >= logical + n) { logical += n; continue; }
-        const std::size_t in_page = offset > logical ? offset - logical : 0;
-        const std::size_t take = std::min<std::size_t>(length, n - in_page);
-        std::memcpy(destination, page + kPageHeaderSize + in_page, take);
-        destination += take; length -= take; offset += take; logical += n;
+void FlashLogger::invalidate_export_read_cache()
+{
+    export_read_cache_valid_ = false;
+    export_read_file_index_ = kMaximumExportFiles;
+    export_read_page_index_ = 0;
+    export_read_logical_offset_ = 0;
+    export_read_payload_length_ = 0;
+}
+
+esp_err_t FlashLogger::load_export_page(
+    const std::size_t file_index,
+    const std::uint32_t page_index,
+    const std::uint32_t logical_offset)
+{
+    const ExportFile &file = export_files_[file_index];
+    const std::uint32_t session_base = file.slot * kBlocksPerSession;
+    const std::uint32_t first_block =
+        session_base +
+        (file.type == kBinaryType ? 0 : kBinaryBlocksPerSession);
+    const std::uint32_t block_count =
+        file.type == kBinaryType
+            ? kBinaryBlocksPerSession
+            : kTextBlocksPerSession;
+    if (page_index >= block_count * W25n01kv::kPagesPerBlock) {
+        return ESP_ERR_INVALID_SIZE;
     }
-    return length == 0 ? ESP_OK : ESP_ERR_INVALID_SIZE;
+
+    const esp_err_t result = flash_.read(
+        first_block * W25n01kv::kPagesPerBlock + page_index,
+        0,
+        export_read_page_,
+        sizeof(export_read_page_));
+    if (result != ESP_OK) return result;
+
+    const std::uint16_t payload_length =
+        read_u16_be(export_read_page_ + 6);
+    if (read_u32_be(export_read_page_) != kPageMagic ||
+        export_read_page_[4] != file.type ||
+        export_read_page_[5] != kStoreVersion ||
+        payload_length > kPagePayloadSize) {
+        return ESP_ERR_INVALID_RESPONSE;
+    }
+
+    export_read_file_index_ = file_index;
+    export_read_page_index_ = page_index;
+    export_read_logical_offset_ = logical_offset;
+    export_read_payload_length_ = payload_length;
+    export_read_cache_valid_ = true;
+    return ESP_OK;
+}
+
+esp_err_t FlashLogger::read_file_data(
+    const std::size_t file_index,
+    std::uint32_t offset,
+    std::uint8_t *destination,
+    std::size_t length)
+{
+    const ExportFile &f = export_files_[file_index];
+    const std::uint32_t block_count = f.type == kBinaryType ? kBinaryBlocksPerSession : kTextBlocksPerSession;
+    const std::uint32_t first_page = f.type == kBinaryType ? 1 : 0;
+    const std::uint32_t page_limit =
+        block_count * W25n01kv::kPagesPerBlock;
+    // Rewind only for a non-sequential request that precedes the cached page.
+    if (!export_read_cache_valid_ ||
+        export_read_file_index_ != file_index ||
+        offset < export_read_logical_offset_) {
+        invalidate_export_read_cache();
+        esp_err_t result = load_export_page(file_index, first_page, 0);
+        if (result != ESP_OK) return result;
+    }
+
+    while (length > 0) {
+        const std::uint32_t cached_end =
+            export_read_logical_offset_ + export_read_payload_length_;
+        if (offset >= cached_end) {
+            if (export_read_page_index_ + 1U >= page_limit) {
+                return ESP_ERR_INVALID_SIZE;
+            }
+            const esp_err_t result = load_export_page(
+                file_index,
+                export_read_page_index_ + 1U,
+                cached_end);
+            if (result != ESP_OK) return result;
+            continue;
+        }
+
+        const std::size_t in_page =
+            offset - export_read_logical_offset_;
+        const std::size_t amount = std::min<std::size_t>(
+            length, export_read_payload_length_ - in_page);
+        std::memcpy(
+            destination,
+            export_read_page_ + kPageHeaderSize + in_page,
+            amount);
+        destination += amount;
+        offset += amount;
+        length -= amount;
+    }
+    return ESP_OK;
 }
 
 esp_err_t FlashLogger::prepare_mass_storage(TickType_t timeout) {
@@ -236,16 +393,30 @@ esp_err_t FlashLogger::prepare_mass_storage(TickType_t timeout) {
     return xSemaphoreTake(frozen_semaphore_, timeout) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
+esp_err_t FlashLogger::erase_all_sessions(const TickType_t timeout)
+{
+    if (frozen_.load() || !task_handle_) return ESP_ERR_INVALID_STATE;
+    bool expected = false;
+    if (!erase_requested_.compare_exchange_strong(expected, true)) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    if (xSemaphoreTake(erase_semaphore_, timeout) != pdTRUE) {
+        return ESP_ERR_TIMEOUT;
+    }
+    return erase_result_;
+}
+
 std::size_t FlashLogger::export_file_count() const { return export_file_count_; }
 const FlashLogger::ExportFile &FlashLogger::export_file(std::size_t i) const { return export_files_[i]; }
 esp_err_t FlashLogger::read_export_file(std::size_t i, std::uint32_t o, std::uint8_t *d, std::size_t n) {
     if (!frozen_.load() || i >= export_file_count_ || !d || o + n > export_files_[i].size) return ESP_ERR_INVALID_ARG;
-    return read_file_data(export_files_[i], o, d, n);
+    return read_file_data(i, o, d, n);
 }
 void FlashLogger::disable_console_output() { console_output_enabled_.store(false); }
 
 void FlashLogger::run() {
     esp_err_t r = flash_.initialize();
+    if (r == ESP_OK) r = run_startup_self_test();
     if (r == ESP_OK) r = scan_sessions(false);
     if (r == ESP_OK) r = create_session();
     if (r != ESP_OK) {
@@ -254,12 +425,25 @@ void FlashLogger::run() {
         capture_logs_.store(false); task_handle_ = nullptr; vTaskDelete(nullptr); return;
     }
     witness_status_.set(IRIS_WITNESS_STATUS_FLASH_INIT_FAILED_MASK, false);
+    witness_status_.set(IRIS_WITNESS_STATUS_FLASH_LOG_FAILED_MASK, false);
     ESP_LOGI(kLogTag, "session %lu started in slot %u; flush interval %lu ms",
              static_cast<unsigned long>(current_generation_), current_slot_,
              static_cast<unsigned long>(kFlushIntervalMs));
     TickType_t next = xTaskGetTickCount();
     TickType_t last_flush = next;
     for (;;) {
+        if (erase_requested_.exchange(false)) {
+            capture_logs_.store(false);
+            erase_result_ = erase_session_blocks();
+            capture_logs_.store(erase_result_ == ESP_OK);
+            xSemaphoreGive(erase_semaphore_);
+            if (erase_result_ != ESP_OK) {
+                r = erase_result_;
+            } else {
+                ESP_LOGI(kLogTag, "all stored sessions erased; new session 1 created");
+                last_flush = xTaskGetTickCount();
+            }
+        }
         if (export_requested_.load()) {
             capture_logs_.store(false);
             r = flush_binary(); if (r == ESP_OK) r = flush_text();
@@ -269,7 +453,9 @@ void FlashLogger::run() {
                 for (;;) vTaskDelay(portMAX_DELAY);
             }
         }
-        r = append_sample();
+        if (r == ESP_OK && flight_state_machine_.binary_logging_enabled()) {
+            r = append_sample();
+        }
         const TickType_t now = xTaskGetTickCount();
         if (r == ESP_OK && now - last_flush >= pdMS_TO_TICKS(kFlushIntervalMs)) {
             r = flush_binary(); if (r == ESP_OK) r = flush_text(); last_flush = now;
