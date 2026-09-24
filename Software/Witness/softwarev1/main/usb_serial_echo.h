@@ -48,6 +48,13 @@ private:
     void process_compact_binary_command(
         std::uint8_t command,
         std::uint8_t argument);
+    void process_canonical_binary_command(
+        const std::uint8_t *data,
+        std::size_t length);
+    void process_queued_radio_commands();
+    void process_radio_command(
+        const std::uint8_t *data,
+        std::size_t length);
     void process_command();
     void forward_usb_command(
         const std::uint8_t *data,

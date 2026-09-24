@@ -1,12 +1,13 @@
-"""Convert Horizon raw binary telemetry logs to plotting-friendly CSV files.
+"""Convert Horizon binary telemetry logs to plotting-friendly CSV files.
 
 Usage:
     python converter.py logs/serial_COM3_20260918_120000.bin
     python converter.py input.bin --output output.csv
 
-The binary logs contain raw transport bytes and do not contain host receive
-timestamps.  ``time_seconds`` is therefore derived from the uptime carried by
-each packet.
+The converter auto-detects both raw application-packet streams and the fixed
+48-byte ``WL`` records exported by Witness flash mass storage. Neither format
+contains host receive timestamps, so ``time_seconds`` is derived from device
+uptime.
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ PACKET_NAMES = {
     0xFF: "heartbeat",
     0xE0: "witness_debug",
     0xE1: "iris_debug",
+    0xF0: "ground_station_status",
 }
 
 # The current capture format uses a 23-byte sensor payload.  The 21-byte form
@@ -41,7 +43,14 @@ PAYLOAD_LENGTHS = {
     0xFF: (6,),
     0xE0: (101,),
     0xE1: (12,),
+    0xF0: (11,),
 }
+
+# Flash mass-storage .BIN files use fixed records rather than application
+# packets. See FlashLogger::serialize_record in the Witness firmware.
+FLASH_RECORD_MAGIC = b"WL"
+FLASH_RECORD_VERSION = 1
+FLASH_RECORD_SIZE = 48
 
 FILTERED_ACCEL_G_PER_COUNT = 0.000040
 GYRO_DPS_PER_COUNT = 0.070
@@ -137,6 +146,14 @@ def parse_packet(packet_id: int, payload: bytes) -> dict[str, Any] | None:
             "uptime": unsigned(payload[2:6]),
         }
 
+    if packet_id == 0xF0 and len(payload) == 11:
+        return {
+            "packet": "ground_station_status",
+            "rssi": signed(payload[0:1]),
+            "uptime": unsigned(payload[1:5]),
+            "reserved": list(payload[5:11]),
+        }
+
     if packet_id == 0xE0 and len(payload) == 101:
         return {
             "packet": "witness_debug",
@@ -200,6 +217,23 @@ VECTOR_LABELS = {
     "low_accel": ("x", "y", "z"),
     "high_accel": ("x", "y", "z"),
     "current_sense": ("ch1", "ch2", "ch3"),
+    "reserved": ("0", "1", "2", "3", "4", "5"),
+}
+
+FLIGHT_STATE_NAMES = {
+    0: "Pad idle",
+    1: "Boost",
+    2: "Coast",
+    3: "Descent",
+    4: "Landed",
+}
+
+WITNESS_STATUS_PACKETS = {
+    "sensors",
+    "state",
+    "command",
+    "heartbeat",
+    "witness_debug",
 }
 
 
@@ -225,11 +259,117 @@ def flatten_packet(packet: dict[str, Any]) -> dict[str, Any]:
                 flat[f"{field}_{label}"] = clean_number(component)
         else:
             flat[field] = clean_number(value)
+
+    packet_type = packet.get("packet")
+    status_field = None
+    if packet_type in WITNESS_STATUS_PACKETS:
+        status_field = "status"
+    elif packet_type == "camera":
+        status_field = "fc_status"
+
+    if status_field is not None and isinstance(packet.get(status_field), int):
+        status = packet[status_field]
+        status_byte0 = (status >> 8) & 0xFF
+        status_byte1 = status & 0xFF
+        state = status_byte1 & 0x07
+        flat["status_byte0"] = status_byte0
+        flat["status_byte1"] = status_byte1
+        flat["flight_state"] = state
+        flat["flight_state_name"] = FLIGHT_STATE_NAMES.get(
+            state, f"Reserved ({state})"
+        )
     return flat
 
 
+def is_flash_record_log(data: bytes) -> bool:
+    """Return True when the stream is predominantly aligned 48-byte WL records."""
+    complete_records = len(data) // FLASH_RECORD_SIZE
+    if complete_records == 0:
+        return False
+    sample_count = min(complete_records, 64)
+    valid = 0
+    for index in range(sample_count):
+        offset = index * FLASH_RECORD_SIZE
+        if (data[offset:offset + 2] == FLASH_RECORD_MAGIC
+                and data[offset + 2] == FLASH_RECORD_VERSION):
+            valid += 1
+    return valid >= max(1, math.ceil(sample_count * 0.9))
+
+
+def parse_flash_record(record: bytes) -> dict[str, Any] | None:
+    if (len(record) != FLASH_RECORD_SIZE
+            or record[0:2] != FLASH_RECORD_MAGIC
+            or record[2] != FLASH_RECORD_VERSION):
+        return None
+
+    status = record[3]
+    low_accel_raw = [signed(record[index:index + 2]) for index in (12, 14, 16)]
+    high_accel_raw = [signed(record[index:index + 2]) for index in (18, 20, 22)]
+    gyro_raw = [signed(record[index:index + 2]) for index in (24, 26, 28)]
+    return {
+        "packet": "flash_sample",
+        "record_version": record[2],
+        "status_byte0": status,
+        "heartbeat_phase": int(bool(status & 0x01)),
+        "low_g_valid": int(bool(status & 0x02)),
+        "gyro_valid": int(bool(status & 0x04)),
+        "imu_temperature_valid": int(bool(status & 0x08)),
+        "flash_init_failed": int(bool(status & 0x10)),
+        "high_g_valid": int(bool(status & 0x20)),
+        "barometer_valid": int(bool(status & 0x40)),
+        "logging_failed": int(bool(status & 0x80)),
+        "sequence": unsigned(record[4:8]),
+        "uptime": unsigned(record[8:12]),
+        "low_accel": [value * LSM6_LOW_ACCEL_G_PER_COUNT for value in low_accel_raw],
+        "high_accel": [value * LSM6_HIGH_ACCEL_G_PER_COUNT for value in high_accel_raw],
+        "gyro": [value * GYRO_DPS_PER_COUNT for value in gyro_raw],
+        "lsm6_temperature": (
+            LSM6_TEMPERATURE_OFFSET_C
+            + signed(record[30:32]) * LSM6_TEMPERATURE_C_PER_COUNT
+        ),
+        # The logger stores the driver's centi-mbar value. One centi-mbar is
+        # numerically equal to one pascal.
+        "pressure": unsigned(record[32:36]),
+        "ms5607_temperature": (
+            signed(record[36:40]) * MS5607_TEMPERATURE_C_PER_COUNT
+        ),
+        "barometric_altitude": float32(record[40:44]),
+        "witness_battery_voltage": unsigned(record[44:48]) * BATTERY_V_PER_COUNT,
+    }
+
+
+def decode_flash_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
+    rows: list[dict[str, Any]] = []
+    discarded = len(data) % FLASH_RECORD_SIZE
+    complete_length = len(data) - discarded
+
+    for offset in range(0, complete_length, FLASH_RECORD_SIZE):
+        record = data[offset:offset + FLASH_RECORD_SIZE]
+        packet = parse_flash_record(record)
+        if packet is None:
+            discarded += FLASH_RECORD_SIZE
+            continue
+        uptime_ms = packet["uptime"]
+        row: dict[str, Any] = {
+            "packet_index": len(rows),
+            "byte_offset": offset,
+            "packet_id": "WL",
+            "packet_type": packet["packet"],
+            "frame_length": FLASH_RECORD_SIZE,
+            "time_seconds": uptime_ms / 1000.0,
+        }
+        row.update(flatten_packet(packet))
+        row["raw_packet_hex"] = record.hex(" ")
+        rows.append(row)
+
+    return rows, discarded
+
+
 def decode_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
-    """Scan a possibly noisy byte stream and return all valid fixed-size frames."""
+    """Decode either a flash-record file or a possibly noisy packet stream."""
+    if is_flash_record_log(data):
+        return decode_flash_log(data)
+
     rows: list[dict[str, Any]] = []
     offset = 0
     discarded = 0
@@ -336,6 +476,9 @@ def main() -> int:
 
     try:
         data = input_path.read_bytes()
+        input_format = (
+            "Witness flash records" if is_flash_record_log(data) else "wire packets"
+        )
         rows, discarded = decode_log(data)
         write_csv(rows, output_path)
     except OSError as exc:
@@ -347,7 +490,8 @@ def main() -> int:
         packet_type = str(row["packet_type"])
         counts[packet_type] = counts.get(packet_type, 0) + 1
     summary = ", ".join(f"{name}={count}" for name, count in sorted(counts.items()))
-    print(f"Wrote {len(rows)} packet(s) to {output_path}")
+    print(f"Input format: {input_format}")
+    print(f"Wrote {len(rows)} record(s) to {output_path}")
     if summary:
         print(f"Packets: {summary}")
     print(f"Discarded/unframed bytes: {discarded}")

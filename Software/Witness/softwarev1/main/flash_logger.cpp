@@ -47,14 +47,25 @@ FlashLogger::FlashLogger(Sensors &s,
 esp_err_t FlashLogger::start() {
     if (task_handle_) return ESP_ERR_INVALID_STATE;
     text_queue_ = xQueueCreate(32, sizeof(LogLine));
+    binary_record_queue_ =
+        xQueueCreate(kRecordQueueDepth, sizeof(BinaryRecord));
     frozen_semaphore_ = xSemaphoreCreateBinary();
     erase_semaphore_ = xSemaphoreCreateBinary();
-    if (!text_queue_ || !frozen_semaphore_ || !erase_semaphore_)
+    if (!text_queue_ || !binary_record_queue_ || !frozen_semaphore_ ||
+        !erase_semaphore_)
         return ESP_ERR_NO_MEM;
     install_log_capture();
+    if (xTaskCreate(capture_task_entry, "flash_capture",
+                    kCaptureTaskStackSize, this, kCaptureTaskPriority,
+                    &capture_task_handle_) != pdPASS) {
+        capture_task_handle_ = nullptr; return ESP_ERR_NO_MEM;
+    }
     if (xTaskCreate(task_entry, "flash_logger", kTaskStackSize, this,
                     kTaskPriority, &task_handle_) != pdPASS) {
-        task_handle_ = nullptr; return ESP_ERR_NO_MEM;
+        task_handle_ = nullptr;
+        vTaskDelete(capture_task_handle_);
+        capture_task_handle_ = nullptr;
+        return ESP_ERR_NO_MEM;
     }
     return ESP_OK;
 }
@@ -88,6 +99,7 @@ int FlashLogger::log_vprintf(const char *format, va_list args) {
 }
 
 void FlashLogger::task_entry(void *context) { static_cast<FlashLogger *>(context)->run(); }
+void FlashLogger::capture_task_entry(void *context) { static_cast<FlashLogger *>(context)->run_capture(); }
 
 esp_err_t FlashLogger::run_startup_self_test() {
     std::uint32_t block = W25n01kv::kBlockCount;
@@ -189,11 +201,12 @@ esp_err_t FlashLogger::erase_session_blocks()
 
     current_slot_ = 0;
     current_generation_ = 1;
-    sequence_ = 0;
     binary_buffer_used_ = 0;
     text_buffer_used_ = 0;
     export_file_count_ = 0;
     xQueueReset(text_queue_);
+    xQueueReset(binary_record_queue_);
+    ++prelaunch_reset_generation_;
     return create_session();
 }
 
@@ -236,11 +249,25 @@ void FlashLogger::serialize_record(std::uint8_t *d) {
     write_u32_be(d + 44, sample.battery_voltage_mv);
 }
 
-esp_err_t FlashLogger::append_sample() {
+esp_err_t FlashLogger::append_record(const BinaryRecord &record) {
     if (binary_buffer_used_ + kRecordSize > sizeof(binary_buffer_)) {
         esp_err_t r = flush_binary(); if (r != ESP_OK) return r;
     }
-    serialize_record(binary_buffer_ + binary_buffer_used_); binary_buffer_used_ += kRecordSize;
+    std::memcpy(
+        binary_buffer_ + binary_buffer_used_, record.data, kRecordSize);
+    binary_buffer_used_ += kRecordSize;
+    return ESP_OK;
+}
+
+esp_err_t FlashLogger::drain_binary_records()
+{
+    BinaryRecord record{};
+    while (xQueueReceive(binary_record_queue_, &record, 0) == pdTRUE) {
+        const esp_err_t result = append_record(record);
+        if (result != ESP_OK) {
+            return result;
+        }
+    }
     return ESP_OK;
 }
 
@@ -414,12 +441,84 @@ esp_err_t FlashLogger::read_export_file(std::size_t i, std::uint32_t o, std::uin
 }
 void FlashLogger::disable_console_output() { console_output_enabled_.store(false); }
 
+void FlashLogger::run_capture()
+{
+    TickType_t next = xTaskGetTickCount();
+    std::uint32_t observed_reset_generation =
+        prelaunch_reset_generation_.load();
+
+    for (;;) {
+        vTaskDelayUntil(&next, kLogPeriod);
+
+        const std::uint32_t reset_generation =
+            prelaunch_reset_generation_.load();
+        if (reset_generation != observed_reset_generation) {
+            observed_reset_generation = reset_generation;
+            prelaunch_write_index_ = 0;
+            prelaunch_record_count_ = 0;
+            prelaunch_dump_pending_ = true;
+            sequence_ = 0;
+        }
+
+        if (!capture_binary_records_.load()) {
+            continue;
+        }
+
+        BinaryRecord record{};
+        serialize_record(record.data);
+        const FlightStateMachine::State state = flight_state_machine_.state();
+
+        if (state == FlightStateMachine::State::PadIdle) {
+            prelaunch_records_[prelaunch_write_index_] = record;
+            prelaunch_write_index_ =
+                (prelaunch_write_index_ + 1U) % kPrelaunchRecordCount;
+            prelaunch_record_count_ = std::min(
+                prelaunch_record_count_ + 1U, kPrelaunchRecordCount);
+            prelaunch_dump_pending_ = true;
+            continue;
+        }
+
+        if (!flight_state_machine_.binary_logging_enabled()) {
+            continue;
+        }
+
+        if (prelaunch_dump_pending_) {
+            const std::size_t oldest_record =
+                (prelaunch_write_index_ + kPrelaunchRecordCount -
+                 prelaunch_record_count_) %
+                kPrelaunchRecordCount;
+            for (std::size_t offset = 0; offset < prelaunch_record_count_;
+                 ++offset) {
+                const std::size_t index =
+                    (oldest_record + offset) % kPrelaunchRecordCount;
+                (void)xQueueSend(
+                    binary_record_queue_, &prelaunch_records_[index],
+                    portMAX_DELAY);
+            }
+            ESP_LOGI(
+                kLogTag,
+                "queued %u prelaunch records (%lu ms) for flash",
+                static_cast<unsigned>(prelaunch_record_count_),
+                static_cast<unsigned long>(
+                    prelaunch_record_count_ * 1000U / kLogRateHz));
+            prelaunch_record_count_ = 0;
+            prelaunch_dump_pending_ = false;
+        }
+
+        // The live record is queued after the prelaunch snapshot. The writer
+        // may be programming NAND concurrently, so samples continue to be
+        // captured at 50 Hz while the snapshot drains.
+        (void)xQueueSend(binary_record_queue_, &record, portMAX_DELAY);
+    }
+}
+
 void FlashLogger::run() {
     esp_err_t r = flash_.initialize();
     if (r == ESP_OK) r = run_startup_self_test();
     if (r == ESP_OK) r = scan_sessions(false);
     if (r == ESP_OK) r = create_session();
     if (r != ESP_OK) {
+        capture_binary_records_.store(false);
         witness_status_.set(IRIS_WITNESS_STATUS_FLASH_INIT_FAILED_MASK, true);
         ESP_LOGE(kLogTag, "flash initialization failed: %s", esp_err_to_name(r));
         capture_logs_.store(false); task_handle_ = nullptr; vTaskDelete(nullptr); return;
@@ -433,9 +532,15 @@ void FlashLogger::run() {
     TickType_t last_flush = next;
     for (;;) {
         if (erase_requested_.exchange(false)) {
+            capture_binary_records_.store(false);
+            // Let an in-progress capture finish, then discard both queued and
+            // pre-trigger records as part of the requested full erase.
+            vTaskDelay(kLogPeriod);
+            xQueueReset(binary_record_queue_);
             capture_logs_.store(false);
             erase_result_ = erase_session_blocks();
             capture_logs_.store(erase_result_ == ESP_OK);
+            capture_binary_records_.store(erase_result_ == ESP_OK);
             xSemaphoreGive(erase_semaphore_);
             if (erase_result_ != ESP_OK) {
                 r = erase_result_;
@@ -445,22 +550,29 @@ void FlashLogger::run() {
             }
         }
         if (export_requested_.load()) {
+            capture_binary_records_.store(false);
+            // Drain once to release any producer waiting for queue space, wait
+            // for the capture task to observe the stop flag, then drain again
+            // so the exported file includes every record captured beforehand.
+            r = drain_binary_records();
+            vTaskDelay(kLogPeriod);
+            if (r == ESP_OK) r = drain_binary_records();
             capture_logs_.store(false);
-            r = flush_binary(); if (r == ESP_OK) r = flush_text();
+            if (r == ESP_OK) r = flush_binary();
+            if (r == ESP_OK) r = flush_text();
             if (r == ESP_OK) r = scan_sessions(true);
             if (r == ESP_OK) {
                 frozen_.store(true); xSemaphoreGive(frozen_semaphore_);
                 for (;;) vTaskDelay(portMAX_DELAY);
             }
         }
-        if (r == ESP_OK && flight_state_machine_.binary_logging_enabled()) {
-            r = append_sample();
-        }
+        if (r == ESP_OK) r = drain_binary_records();
         const TickType_t now = xTaskGetTickCount();
         if (r == ESP_OK && now - last_flush >= pdMS_TO_TICKS(kFlushIntervalMs)) {
             r = flush_binary(); if (r == ESP_OK) r = flush_text(); last_flush = now;
         }
         if (r != ESP_OK) {
+            capture_binary_records_.store(false);
             witness_status_.set(IRIS_WITNESS_STATUS_FLASH_LOG_FAILED_MASK, true);
             ESP_LOGE(kLogTag, "flash logging stopped: %s", esp_err_to_name(r));
             capture_logs_.store(false); task_handle_ = nullptr; vTaskDelete(nullptr); return;

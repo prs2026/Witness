@@ -1,5 +1,6 @@
 #include "sensors.h"
 
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -12,6 +13,7 @@
 #include "esp_adc/adc_cali_scheme.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "flight_state_machine.h"
 #include "hardware_pins.h"
 #include "spi_data_forwarder.h"
 #include "witness_status.h"
@@ -19,6 +21,42 @@
 namespace {
 
 constexpr char kLogTag[] = "sensors";
+
+constexpr std::array<std::uint8_t, Sensors::kRadioPacketTypeCount>
+    kRadioPacketIds = {
+        IRIS_PACKET_ID_SENSORS,
+        IRIS_PACKET_ID_STATE,
+        IRIS_PACKET_ID_CAMERA,
+        IRIS_PACKET_ID_COMMAND,
+        IRIS_PACKET_ID_HEARTBEAT,
+        IRIS_PACKET_ID_WITNESS_DEBUG,
+        IRIS_PACKET_ID_IRIS_DEBUG,
+};
+
+constexpr std::array<std::uint32_t, Sensors::kRadioPacketTypeCount>
+    kRadioPacketRatesHz = {
+        Sensors::kRadioSensorPacketRateHz,
+        Sensors::kRadioStatePacketRateHz,
+        Sensors::kRadioCameraPacketRateHz,
+        Sensors::kRadioCommandPacketRateHz,
+        Sensors::kRadioHeartbeatPacketRateHz,
+        Sensors::kRadioWitnessDebugPacketRateHz,
+        Sensors::kRadioIrisDebugPacketRateHz,
+};
+
+constexpr bool valid_radio_rate(const std::uint32_t rate_hz)
+{
+    return rate_hz > 0U && rate_hz <= 1000U &&
+           (1000U % rate_hz) == 0U;
+}
+
+static_assert(valid_radio_rate(Sensors::kRadioSensorPacketRateHz));
+static_assert(valid_radio_rate(Sensors::kRadioStatePacketRateHz));
+static_assert(valid_radio_rate(Sensors::kRadioCameraPacketRateHz));
+static_assert(valid_radio_rate(Sensors::kRadioCommandPacketRateHz));
+static_assert(valid_radio_rate(Sensors::kRadioHeartbeatPacketRateHz));
+static_assert(valid_radio_rate(Sensors::kRadioWitnessDebugPacketRateHz));
+static_assert(valid_radio_rate(Sensors::kRadioIrisDebugPacketRateHz));
 
 static_assert(IRIS_PACKET_STATE_BATTERY_VOLTAGE_LENGTH ==
                   sizeof(std::uint16_t),
@@ -94,10 +132,12 @@ void write_float_be(std::uint8_t *destination, const float value)
 Sensors::Sensors(
     SpiDataForwarder &data_forwarder,
     WitnessStatus &witness_status,
-    CommandBridge &command_bridge)
+    CommandBridge &command_bridge,
+    FlightStateMachine &flight_state_machine)
     : data_forwarder_(data_forwarder),
       witness_status_(witness_status),
-      command_bridge_(command_bridge)
+      command_bridge_(command_bridge),
+      flight_state_machine_(flight_state_machine)
 {
 }
 
@@ -198,6 +238,15 @@ esp_err_t Sensors::handle_command(const std::uint16_t command)
     ESP_LOGI(kLogTag, "Witness debug packets enabled at %u Hz",
              static_cast<unsigned>(kDebugPacketRateHz));
     return ESP_OK;
+}
+
+void Sensors::set_radio_transmission_enabled(const bool enabled)
+{
+    radio_transmission_enabled_.store(enabled);
+    ESP_LOGI(
+        kLogTag,
+        "radio transmission %s",
+        enabled ? "enabled" : "disabled");
 }
 
 std::int16_t Sensors::decode_i16(const std::uint8_t *bytes)
@@ -438,6 +487,7 @@ esp_err_t Sensors::fetch_lsm6dsv320x()
                     static_cast<float>(working_sample_.gyro_raw[axis]) *
                     kGyroSensitivityMdps;
             }
+            has_gyro_sample_ = true;
         }
         if (working_sample_.low_g_accel_ready) {
             for (std::size_t axis = 0; axis < 3; ++axis) {
@@ -447,6 +497,7 @@ esp_err_t Sensors::fetch_lsm6dsv320x()
                     static_cast<float>(working_sample_.low_g_accel_raw[axis]) *
                     kLowGAccelSensitivityMg;
             }
+            has_low_g_accel_sample_ = true;
         }
     }
 
@@ -463,6 +514,7 @@ esp_err_t Sensors::fetch_lsm6dsv320x()
                 static_cast<float>(working_sample_.high_g_accel_raw[axis]) *
                 kHighGAccelSensitivityMg;
         }
+        has_high_g_accel_sample_ = true;
     }
 
     return ESP_OK;
@@ -513,32 +565,8 @@ esp_err_t Sensors::queue_state_packet()
         &payload[IRIS_PACKET_STATE_BATTERY_VOLTAGE_OFFSET],
         encode_battery_voltage(working_sample_.battery_voltage_mv));
 
-    const esp_err_t queue_result = data_forwarder_.queue_packet(
+    return data_forwarder_.queue_packet(
         IRIS_PACKET_ID_STATE, payload, sizeof(payload));
-
-    esp_err_t radio_result = ESP_ERR_INVALID_STATE;
-    if (!radio_ready_) {
-        radio_result = radio_.initialize(kSpiHost);
-        radio_ready_ = radio_result == ESP_OK;
-        if (!radio_ready_) {
-            radio_.release();
-        }
-    }
-
-    if (radio_ready_) {
-        std::uint8_t frame[IRIS_PACKET_STATE_FRAME_LENGTH]{};
-        frame[0] = IRIS_PACKET_ID_STATE;
-        std::memcpy(&frame[IRIS_PACKET_ID_LENGTH], payload, sizeof(payload));
-        frame[IRIS_PACKET_ID_LENGTH + sizeof(payload)] =
-            IRIS_PACKET_EOF_VALUE;
-        radio_result = radio_.transmit(frame, sizeof(frame));
-        if (radio_result != ESP_OK) {
-            ESP_LOGE(kLogTag, "RA-01 state transmit failed: %s",
-                     esp_err_to_name(radio_result));
-        }
-    }
-
-    return queue_result != ESP_OK ? queue_result : radio_result;
 }
 
 esp_err_t Sensors::queue_debug_packet()
@@ -696,11 +724,131 @@ void Sensors::task_entry(void *context)
 
 void Sensors::poll_radio_commands()
 {
-    // TODO: Poll radio_.receive() here, validate a complete 0x05 command, and
-    // pass it to command_bridge_.submit_radio_command(). Keeping this hook in
-    // the Sensors task ensures future RX shares SPI3 with the sensor and radio
-    // transmit work instead of competing from another task.
-    (void)command_bridge_;
+    if (!radio_ready_ || gpio_get_level(HW_PIN_RAD_DIO1) == 0) {
+        return;
+    }
+
+    // SX1262 packets are at most 255 bytes. Reception is polled from this task
+    // so RX, radio TX, and the sensors remain serialized on SPI3.
+    std::array<std::uint8_t, 255> packet{};
+    std::size_t packet_length = 0;
+    const esp_err_t receive_result = radio_.receive(
+        packet.data(), packet.size(), packet_length);
+
+    if (receive_result == ESP_ERR_NOT_FOUND) {
+        return;
+    }
+    if (receive_result == ESP_ERR_INVALID_CRC) {
+        ESP_LOGW(kLogTag, "radio packet rejected: CRC error");
+        return;
+    }
+    if (receive_result != ESP_OK) {
+        ESP_LOGW(
+            kLogTag,
+            "radio receive failed: %s",
+            esp_err_to_name(receive_result));
+        return;
+    }
+    if (packet_length == 0U) {
+        return;
+    }
+
+    ESP_LOGI(
+        kLogTag,
+        "radio RX: %u bytes, packet ID 0x%02X",
+        static_cast<unsigned>(packet_length),
+        packet[0]);
+    ESP_LOG_BUFFER_HEX_LEVEL(
+        kLogTag,
+        packet.data(),
+        packet_length,
+        ESP_LOG_INFO);
+
+    // Mirror complete received packets to USB serial without adding framing.
+    const esp_err_t serial_result = data_forwarder_.queue_raw_bytes(
+        packet.data(), packet_length);
+    if (serial_result != ESP_OK) {
+        ESP_LOGW(
+            kLogTag,
+            "could not forward %u-byte radio packet to USB: %s",
+            static_cast<unsigned>(packet_length),
+            esp_err_to_name(serial_result));
+    }
+
+    if (packet[0] == IRIS_PACKET_ID_COMMAND) {
+        const esp_err_t command_result =
+            command_bridge_.submit_radio_command(
+                packet.data(), packet_length);
+        if (command_result != ESP_OK) {
+            ESP_LOGW(
+                kLogTag,
+                "radio command bridge failed: %s",
+                esp_err_to_name(command_result));
+        }
+    }
+}
+
+void Sensors::service_radio_transmit(const TickType_t now)
+{
+    if (!radio_transmission_enabled_.load()) {
+        return;
+    }
+
+    if (!radio_ready_) {
+        if ((now - last_radio_init_attempt_) <
+            pdMS_TO_TICKS(kRadioInitRetryMs)) {
+            return;
+        }
+        last_radio_init_attempt_ = now;
+        const esp_err_t result = radio_.initialize(kSpiHost);
+        radio_ready_ = result == ESP_OK;
+        if (!radio_ready_) {
+            radio_.release();
+            ESP_LOGW(kLogTag, "RA-01 initialization retry failed: %s",
+                     esp_err_to_name(result));
+            return;
+        }
+        ESP_LOGI(kLogTag, "RA-01 initialization recovered");
+    }
+
+    SpiDataForwarder::RadioPacket packet{};
+    if (data_forwarder_.receive_immediate_radio_packet(packet)) {
+        const esp_err_t result = radio_.transmit(packet.data, packet.length);
+        if (result != ESP_OK) {
+            ESP_LOGE(kLogTag, "immediate radio TX failed: %s",
+                     esp_err_to_name(result));
+        }
+        return;
+    }
+
+    for (std::size_t checked = 0; checked < kRadioPacketTypeCount; ++checked) {
+        const std::size_t index =
+            (next_radio_packet_index_ + checked) % kRadioPacketTypeCount;
+        const std::uint32_t rate_hz = kRadioPacketRatesHz[index];
+        const TickType_t period = pdMS_TO_TICKS(1000U / rate_hz);
+        if ((now - radio_last_sent_[index]) < period) {
+            continue;
+        }
+
+        std::uint32_t generation = 0;
+        if (!data_forwarder_.latest_radio_packet(
+                kRadioPacketIds[index], packet, generation)) {
+            continue;
+        }
+
+        radio_last_sent_[index] = now;
+        next_radio_packet_index_ =
+            (index + 1U) % kRadioPacketTypeCount;
+        const esp_err_t result = radio_.transmit(packet.data, packet.length);
+        if (result != ESP_OK) {
+            ESP_LOGE(
+                kLogTag,
+                "radio TX for packet 0x%02X failed: %s",
+                kRadioPacketIds[index],
+                esp_err_to_name(result));
+        }
+        return;
+    }
 }
 
 void Sensors::run()
@@ -809,6 +957,38 @@ void Sensors::run()
         if (lsm_result == ESP_OK || ms5607_updated || battery_updated) {
             working_sample_.timestamp_us =
                 static_cast<std::uint64_t>(esp_timer_get_time());
+
+            FlightStateMachine::Observation observation{};
+            observation.axial_acceleration_valid =
+                lsm_result == ESP_OK &&
+                (has_high_g_accel_sample_ || has_low_g_accel_sample_);
+            observation.axial_acceleration_g =
+                (has_high_g_accel_sample_
+                     ? working_sample_.high_g_accel_mg[0]
+                     : working_sample_.low_g_accel_mg[0]) /
+                1000.0F;
+            observation.low_g_axial_acceleration_valid =
+                lsm_result == ESP_OK && has_low_g_accel_sample_;
+            observation.low_g_axial_acceleration_g =
+                working_sample_.low_g_accel_mg[0] / 1000.0F;
+            observation.acceleration_valid =
+                lsm_result == ESP_OK && has_low_g_accel_sample_;
+            observation.angular_rate_valid =
+                lsm_result == ESP_OK && has_gyro_sample_;
+            for (std::size_t axis = 0; axis < 3; ++axis) {
+                observation.acceleration_g[axis] =
+                    working_sample_.low_g_accel_mg[axis] / 1000.0F;
+                observation.angular_rate_dps[axis] =
+                    working_sample_.gyro_mdps[axis] / 1000.0F;
+            }
+            observation.barometric_altitude_valid =
+                ms5607_initialized_ && working_sample_.ms5607_ready &&
+                consecutive_ms5607_errors == 0U;
+            observation.barometric_altitude_meters =
+                working_sample_.barometric_altitude_meters;
+            observation.timestamp_us = working_sample_.timestamp_us;
+            flight_state_machine_.update(observation);
+
             publish_sample();
         }
 
@@ -840,6 +1020,8 @@ void Sensors::run()
             }
             last_debug_packet_time = now;
         }
+
+        service_radio_transmit(now);
 
         vTaskDelayUntil(&next_wake_time, kTaskPeriod);
     }

@@ -8,13 +8,17 @@
 
 esp_err_t SpiDataForwarder::start()
 {
-    if (forward_queue_ != nullptr || command_queue_ != nullptr) {
+    if (forward_queue_ != nullptr || command_queue_ != nullptr ||
+        immediate_radio_queue_ != nullptr) {
         return ESP_ERR_INVALID_STATE;
     }
 
     forward_queue_ = xQueueCreate(kQueueDepth, sizeof(Packet));
     command_queue_ = xQueueCreate(kQueueDepth, sizeof(Packet));
-    if (forward_queue_ == nullptr || command_queue_ == nullptr) {
+    immediate_radio_queue_ = xQueueCreate(
+        kImmediateRadioQueueDepth, sizeof(RadioPacket));
+    if (forward_queue_ == nullptr || command_queue_ == nullptr ||
+        immediate_radio_queue_ == nullptr) {
         return ESP_ERR_NO_MEM;
     }
 
@@ -76,9 +80,82 @@ esp_err_t SpiDataForwarder::queue_packet(
     std::memcpy(packet.payload, payload, payload_length);
     packet.raw = false;
 
+    cache_radio_packet(packet_id, payload, payload_length);
+
     return xQueueSend(forward_queue_, &packet, 0) == pdTRUE
                ? ESP_OK
                : ESP_ERR_NO_MEM;
+}
+
+void SpiDataForwarder::cache_radio_packet(
+    const std::uint8_t packet_id,
+    const std::uint8_t *const payload,
+    const std::size_t payload_length)
+{
+    RadioPacket frame{};
+    frame.length = static_cast<std::uint8_t>(
+        IRIS_PACKET_ID_LENGTH + payload_length + IRIS_PACKET_EOF_LENGTH);
+    frame.data[0] = packet_id;
+    std::memcpy(&frame.data[IRIS_PACKET_ID_LENGTH], payload, payload_length);
+    frame.data[IRIS_PACKET_ID_LENGTH + payload_length] =
+        IRIS_PACKET_EOF_VALUE;
+
+    portENTER_CRITICAL(&radio_cache_lock_);
+    for (RadioCacheSlot &slot : radio_cache_) {
+        if (slot.packet_id == packet_id) {
+            slot.packet = frame;
+            ++slot.generation;
+            break;
+        }
+    }
+    portEXIT_CRITICAL(&radio_cache_lock_);
+}
+
+esp_err_t SpiDataForwarder::queue_immediate_radio_packet(
+    const std::uint8_t *const data,
+    const std::size_t length)
+{
+    if constexpr (!kForwardExternalPacketsImmediately) {
+        return ESP_OK;
+    }
+    if (immediate_radio_queue_ == nullptr) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    if (data == nullptr || length == 0U || length > kMaximumFrameLength) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    RadioPacket packet{};
+    packet.length = static_cast<std::uint8_t>(length);
+    std::memcpy(packet.data, data, length);
+    return xQueueSend(immediate_radio_queue_, &packet, 0) == pdTRUE
+               ? ESP_OK
+               : ESP_ERR_NO_MEM;
+}
+
+bool SpiDataForwarder::receive_immediate_radio_packet(RadioPacket &packet)
+{
+    return immediate_radio_queue_ != nullptr &&
+           xQueueReceive(immediate_radio_queue_, &packet, 0) == pdTRUE;
+}
+
+bool SpiDataForwarder::latest_radio_packet(
+    const std::uint8_t packet_id,
+    RadioPacket &packet,
+    std::uint32_t &generation) const
+{
+    bool found = false;
+    portENTER_CRITICAL(&radio_cache_lock_);
+    for (const RadioCacheSlot &slot : radio_cache_) {
+        if (slot.packet_id == packet_id && slot.generation != 0U) {
+            packet = slot.packet;
+            generation = slot.generation;
+            found = true;
+            break;
+        }
+    }
+    portEXIT_CRITICAL(&radio_cache_lock_);
+    return found;
 }
 
 esp_err_t SpiDataForwarder::queue_raw_bytes(
@@ -88,7 +165,7 @@ esp_err_t SpiDataForwarder::queue_raw_bytes(
     if (forward_queue_ == nullptr) {
         return ESP_ERR_INVALID_STATE;
     }
-    if (data == nullptr || length == 0 || length > kMaximumPayloadSize) {
+    if (data == nullptr || length == 0 || length > kMaximumRawLength) {
         return ESP_ERR_INVALID_ARG;
     }
 
@@ -148,7 +225,7 @@ void SpiDataForwarder::forward_packet(const Packet &packet)
         return;
     }
     std::uint8_t frame[
-        IRIS_PACKET_ID_LENGTH + kMaximumPayloadSize + IRIS_PACKET_EOF_LENGTH];
+        kMaximumRawLength];
     std::size_t frame_length = packet.payload_length;
     if (packet.raw) {
         std::memcpy(frame, packet.payload, packet.payload_length);

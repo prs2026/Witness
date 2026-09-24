@@ -16,9 +16,12 @@ extern "C" void app_main(void)
     static FlightStateMachine flight_state_machine(witness_status);
     static Heartbeat heartbeat(spi_data_forwarder, witness_status);
     static UartDriver uart_driver(spi_data_forwarder);
-    static CommandBridge command_bridge(uart_driver);
+    static CommandBridge command_bridge(uart_driver, spi_data_forwarder);
     static Sensors sensors(
-        spi_data_forwarder, witness_status, command_bridge);
+        spi_data_forwarder,
+        witness_status,
+        command_bridge,
+        flight_state_machine);
     static FlashLogger flash_logger(
         sensors, witness_status, flight_state_machine);
     static UsbSerialEcho usb_serial_echo(
@@ -30,6 +33,7 @@ extern "C" void app_main(void)
         command_bridge);
 
     ESP_ERROR_CHECK(spi_data_forwarder.start());
+    ESP_ERROR_CHECK(command_bridge.start());
     ESP_ERROR_CHECK(usb_serial_echo.start());
     // Install the diagnostic log sink before the remaining subsystems start so
     // their initialization output is included in this boot's TXT file.

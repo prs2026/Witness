@@ -18,6 +18,7 @@ public:
     esp_err_t transmit(const std::uint8_t *data, std::size_t length);
     esp_err_t receive(std::uint8_t *data, std::size_t capacity,
                       std::size_t &length);
+    std::int8_t last_packet_rssi_dbm() const { return last_packet_rssi_dbm_; }
 
 private:
     static constexpr std::uint32_t kSpiClockHz = 8000000U;
@@ -35,4 +36,5 @@ private:
 
     spi_device_handle_t spi_device_ = nullptr;
     bool initialized_ = false;
+    std::int8_t last_packet_rssi_dbm_ = -127;
 };

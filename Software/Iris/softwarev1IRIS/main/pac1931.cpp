@@ -74,10 +74,12 @@ esp_err_t Pac1931::read_register16(
 std::uint32_t Pac1931::raw_to_microamps(const std::uint16_t raw)
 {
     // Default unipolar VSENSE range is 0-100 mV over 16 bits.
+    static_assert(IRIS_PAC1931_CURRENT_CALIBRATION_DIVISOR > 0U);
     constexpr std::uint64_t kAdcCounts = 65536ULL;
     constexpr std::uint64_t kMicroampsPerAmp = 1000000ULL;
     constexpr std::uint64_t denominator =
-        kAdcCounts * IRIS_PAC1931_SENSE_RESISTOR_MICROOHMS;
+        kAdcCounts * IRIS_PAC1931_SENSE_RESISTOR_MICROOHMS *
+        IRIS_PAC1931_CURRENT_CALIBRATION_DIVISOR;
     const std::uint64_t numerator =
         static_cast<std::uint64_t>(raw) * kVsenseFullScaleMicrovolts *
         kMicroampsPerAmp;

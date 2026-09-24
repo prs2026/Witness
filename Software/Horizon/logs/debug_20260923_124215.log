@@ -1,0 +1,67 @@
+[12:42:15.799] RX[COM9]  02
+[12:42:15.800] RX[COM9]  e7 00 00 14 f0 44 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 71 d0 20 13 f0 0a
+[12:42:15.802] PACKET[COM9] state: status=0b1110011100000000, uptime=1372228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=241.812988, witness_battery_voltage=5.104
+[12:42:16.795] RX[COM9]  02
+[12:42:16.795] RX[COM9]  ee 00 00 14 f4 2c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 71 d0 20 13 f8 0a
+[12:42:16.798] PACKET[COM9] state: status=0b1110111000000000, uptime=1373228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=241.812988, witness_battery_voltage=5.112
+[12:42:17.812] RX[COM9]  02
+[12:42:17.813] RX[COM9]  e7 00 00 14 f8 14 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 71 e5 c5 13 f0 0a
+[12:42:17.814] PACKET[COM9] state: status=0b1110011100000000, uptime=1374228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=241.897537, witness_battery_voltage=5.104
+[12:42:18.811] RX[COM9]  02
+[12:42:18.813] RX[COM9]  ee 00 00 14 fb fc 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 72 11 bc 13 fc 0a
+[12:42:18.815] PACKET[COM9] state: status=0b1110111000000000, uptime=1375228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=242.069275, witness_battery_voltage=5.116
+[12:42:19.785] RX[COM9]  02
+[12:42:19.787] RX[COM9]  e7 00 00 14 ff e4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 72 27 62 13 f0 0a
+[12:42:19.788] PACKET[COM9] state: status=0b1110011100000000, uptime=1376228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=242.153839, witness_battery_voltage=5.104
+[12:42:20.758] RX[COM9]  02
+[12:42:20.760] RX[COM9]  ee 00 00 15 03 cc 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 72 27 62 13 f8 0a
+[12:42:20.762] PACKET[COM9] state: status=0b1110111000000000, uptime=1377228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=242.153839, witness_battery_voltage=5.112
+[12:42:21.801] RX[COM9]  02
+[12:42:21.802] RX[COM9]  ef 00 00 15 07 b4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 72 3d b4 13 f0 0a
+[12:42:21.803] PACKET[COM9] state: status=0b1110111100000000, uptime=1378228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=242.241028, witness_battery_voltage=5.104
+[12:42:22.778] RX[COM9]  02
+[12:42:22.779] RX[COM9]  ee 00 00 15 0b 9c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 72 3d b4 13 f8 0a
+[12:42:22.780] PACKET[COM9] state: status=0b1110111000000000, uptime=1379228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=242.241028, witness_battery_voltage=5.112
+[12:42:24.791] RX[COM9]  45
+[12:42:24.796] BAD_PACKET[COM9] unknown packet ID 0x45; discarded 1 byte(s)
+[12:42:24.799] RX[COM9]  20 42 4f 44 3a 20 42 72 6f 77 6e 6f 75 74 20 64 65 74 65 63 74 6f 72 20 77 61 73 20 74 72 69 67 67 65 72 65 64 0d 0a
+[12:42:24.802] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[12:42:24.804] BAD_PACKET[COM9] unknown packet ID 0x42; discarded 1 byte(s)
+[12:42:24.807] BAD_PACKET[COM9] unknown packet ID 0x4f; discarded 1 byte(s)
+[12:42:24.812] BAD_PACKET[COM9] unknown packet ID 0x44; discarded 1 byte(s)
+[12:42:24.814] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[12:42:24.816] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[12:42:24.818] BAD_PACKET[COM9] unknown packet ID 0x42; discarded 1 byte(s)
+[12:42:24.819] BAD_PACKET[COM9] unknown packet ID 0x72; discarded 1 byte(s)
+[12:42:24.821] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[12:42:24.822] BAD_PACKET[COM9] unknown packet ID 0x77; discarded 1 byte(s)
+[12:42:24.823] BAD_PACKET[COM9] unknown packet ID 0x6e; discarded 1 byte(s)
+[12:42:24.825] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[12:42:24.826] BAD_PACKET[COM9] unknown packet ID 0x75; discarded 1 byte(s)
+[12:42:24.826] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[12:42:24.827] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[12:42:24.827] BAD_PACKET[COM9] unknown packet ID 0x64; discarded 1 byte(s)
+[12:42:24.827] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[12:42:24.827] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[12:42:24.828] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[12:42:24.828] BAD_PACKET[COM9] unknown packet ID 0x63; discarded 1 byte(s)
+[12:42:24.828] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[12:42:24.828] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[12:42:24.829] BAD_PACKET[COM9] unknown packet ID 0x72; discarded 1 byte(s)
+[12:42:24.829] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[12:42:24.829] BAD_PACKET[COM9] unknown packet ID 0x77; discarded 1 byte(s)
+[12:42:24.829] BAD_PACKET[COM9] unknown packet ID 0x61; discarded 1 byte(s)
+[12:42:24.830] BAD_PACKET[COM9] unknown packet ID 0x73; discarded 1 byte(s)
+[12:42:24.830] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[12:42:24.830] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[12:42:24.830] BAD_PACKET[COM9] unknown packet ID 0x72; discarded 1 byte(s)
+[12:42:24.831] BAD_PACKET[COM9] unknown packet ID 0x69; discarded 1 byte(s)
+[12:42:24.831] BAD_PACKET[COM9] unknown packet ID 0x67; discarded 1 byte(s)
+[12:42:24.831] BAD_PACKET[COM9] unknown packet ID 0x67; discarded 1 byte(s)
+[12:42:24.831] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[12:42:24.832] BAD_PACKET[COM9] unknown packet ID 0x72; discarded 1 byte(s)
+[12:42:24.832] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[12:42:24.832] BAD_PACKET[COM9] unknown packet ID 0x64; discarded 1 byte(s)
+[12:42:24.832] BAD_PACKET[COM9] unknown packet ID 0x0d; discarded 1 byte(s)
+[12:42:24.833] BAD_PACKET[COM9] unknown packet ID 0x0a; discarded 1 byte(s)
+[12:42:24.833] ERROR[COM9] ClearCommError failed (PermissionError(13, 'The device does not recognize the command.', None, 22))

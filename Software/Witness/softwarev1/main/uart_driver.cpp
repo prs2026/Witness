@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "comms.h"
 #include "esp_log.h"
 #include "hardware_pins.h"
 #include "spi_data_forwarder.h"
@@ -13,6 +14,29 @@ namespace {
 
 constexpr char kTag[] = "uart2";
 constexpr std::array<std::uint8_t, 2> kLoopbackRequest = {0x05, 0x22};
+constexpr std::uint32_t kRadioFrameInterByteTimeoutMs = 20;
+
+std::size_t canonical_frame_length(const std::uint8_t packet_id)
+{
+    switch (packet_id) {
+        case IRIS_PACKET_ID_SENSORS:
+            return IRIS_PACKET_SENSORS_FRAME_LENGTH;
+        case IRIS_PACKET_ID_STATE:
+            return IRIS_PACKET_STATE_FRAME_LENGTH;
+        case IRIS_PACKET_ID_CAMERA:
+            return IRIS_PACKET_CAMERA_FRAME_LENGTH;
+        case IRIS_PACKET_ID_COMMAND:
+            return IRIS_PACKET_COMMAND_FRAME_LENGTH;
+        case IRIS_PACKET_ID_HEARTBEAT:
+            return IRIS_PACKET_HEARTBEAT_FRAME_LENGTH;
+        case IRIS_PACKET_ID_WITNESS_DEBUG:
+            return IRIS_PACKET_WITNESS_DEBUG_FRAME_LENGTH;
+        case IRIS_PACKET_ID_IRIS_DEBUG:
+            return IRIS_PACKET_IRIS_DEBUG_FRAME_LENGTH;
+        default:
+            return 0U;
+    }
+}
 
 }  // namespace
 
@@ -173,6 +197,11 @@ void UartDriver::run()
     }
 
     std::array<std::uint8_t, kReadBufferSize> receive_buffer{};
+    std::array<std::uint8_t, SpiDataForwarder::kMaximumFrameLength>
+        radio_frame{};
+    std::size_t radio_frame_length = 0;
+    std::size_t expected_radio_frame_length = 0;
+    TickType_t last_radio_frame_byte_time = 0;
     for (;;) {
         const int bytes_read = uart_read_bytes(
             kPort,
@@ -182,6 +211,7 @@ void UartDriver::run()
 
         if (bytes_read > 0) {
             const std::size_t received = static_cast<std::size_t>(bytes_read);
+            const TickType_t receive_time = xTaskGetTickCount();
             const esp_err_t forward_result =
                 serial_forwarder_.queue_raw_bytes(
                     receive_buffer.data(), received);
@@ -191,6 +221,51 @@ void UartDriver::run()
                     "could not forward %u UART bytes: %s",
                     static_cast<unsigned>(received),
                     esp_err_to_name(forward_result));
+            }
+
+            // UART is a byte stream, so reconstruct complete canonical frames
+            // before handing externally received packets to the radio. USB
+            // still receives the original UART bytes without modification.
+            for (std::size_t index = 0; index < received; ++index) {
+                const std::uint8_t byte = receive_buffer[index];
+                if (radio_frame_length != 0U &&
+                    (receive_time - last_radio_frame_byte_time) >
+                        pdMS_TO_TICKS(kRadioFrameInterByteTimeoutMs)) {
+                    radio_frame_length = 0U;
+                    expected_radio_frame_length = 0U;
+                }
+                if (radio_frame_length == 0U) {
+                    expected_radio_frame_length =
+                        canonical_frame_length(byte);
+                    if (expected_radio_frame_length == 0U) {
+                        continue;
+                    }
+                }
+
+                radio_frame[radio_frame_length++] = byte;
+                last_radio_frame_byte_time = receive_time;
+                if (radio_frame_length < expected_radio_frame_length) {
+                    continue;
+                }
+
+                if (byte == IRIS_PACKET_EOF_VALUE) {
+                    const esp_err_t radio_result =
+                        serial_forwarder_.queue_immediate_radio_packet(
+                            radio_frame.data(), radio_frame_length);
+                    if (radio_result != ESP_OK) {
+                        ESP_LOGW(
+                            kTag,
+                            "could not queue UART packet for radio: %s",
+                            esp_err_to_name(radio_result));
+                    }
+                } else {
+                    ESP_LOGW(
+                        kTag,
+                        "discarded UART packet 0x%02X with invalid EOF",
+                        radio_frame[0]);
+                }
+                radio_frame_length = 0U;
+                expected_radio_frame_length = 0U;
             }
 
             if (waiting_for_loopback_reply) {

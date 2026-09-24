@@ -1,0 +1,100 @@
+[17:45:07.233] RX[COM9]  f0
+[17:45:07.235] RX[COM9]  81 00 00 17 b3 00 00 00 00 00 00 0a
+[17:45:07.235] PACKET[COM9] ground_station_status: rssi=-127, uptime=6067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:08.226] RX[COM9]  f0
+[17:45:08.227] RX[COM9]  81 00 00 1b 9b 00 00 00 00 00 00 0a
+[17:45:08.228] PACKET[COM9] ground_station_status: rssi=-127, uptime=7067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:09.259] RX[COM9]  f0
+[17:45:09.260] RX[COM9]  81 00 00 1f 83 00 00 00 00 00 00 0a
+[17:45:09.260] PACKET[COM9] ground_station_status: rssi=-127, uptime=8067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:10.258] RX[COM9]  f0
+[17:45:10.259] RX[COM9]  81 00 00 23 6b 00 00 00 00 00 00 0a
+[17:45:10.260] PACKET[COM9] ground_station_status: rssi=-127, uptime=9067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:11.278] RX[COM9]  f0
+[17:45:11.278] RX[COM9]  81 00 00 27 53 00 00 00 00 00 00 0a
+[17:45:11.279] PACKET[COM9] ground_station_status: rssi=-127, uptime=10067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:12.235] RX[COM9]  f0
+[17:45:12.236] RX[COM9]  81 00 00 2b 3b 00 00 00 00 00 00 0a
+[17:45:12.237] PACKET[COM9] ground_station_status: rssi=-127, uptime=11067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:13.249] RX[COM9]  f0
+[17:45:13.250] RX[COM9]  81 00 00 2f 23 00 00 00 00 00 00 0a
+[17:45:13.251] PACKET[COM9] ground_station_status: rssi=-127, uptime=12067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:14.236] RX[COM9]  f0
+[17:45:14.237] RX[COM9]  81 00 00 33 0b 00 00 00 00 00 00 0a
+[17:45:14.237] PACKET[COM9] ground_station_status: rssi=-127, uptime=13067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:15.259] RX[COM9]  f0
+[17:45:15.260] RX[COM9]  81 00 00 36 f3 00 00 00 00 00 00 0a
+[17:45:15.261] PACKET[COM9] ground_station_status: rssi=-127, uptime=14067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:16.234] RX[COM9]  f0
+[17:45:16.237] RX[COM9]  81 00 00 3a db 00 00 00 00 00 00 0a
+[17:45:16.237] PACKET[COM9] ground_station_status: rssi=-127, uptime=15067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:17.268] RX[COM9]  f0
+[17:45:17.268] RX[COM9]  81 00 00 3e c3 00 00 00 00 00 00 0a
+[17:45:17.269] PACKET[COM9] ground_station_status: rssi=-127, uptime=16067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:18.257] RX[COM9]  f0
+[17:45:18.258] RX[COM9]  81 00 00 42 ab 00 00 00 00 00 00 0a
+[17:45:18.258] PACKET[COM9] ground_station_status: rssi=-127, uptime=17067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:19.245] RX[COM9]  f0
+[17:45:19.247] RX[COM9]  81 00 00 46 93 00 00 00 00 00 00 0a
+[17:45:19.247] PACKET[COM9] ground_station_status: rssi=-127, uptime=18067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:20.228] RX[COM9]  f0
+[17:45:20.229] RX[COM9]  81 00 00 4a 7b 00 00 00 00 00 00 0a
+[17:45:20.229] PACKET[COM9] ground_station_status: rssi=-127, uptime=19067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:21.267] RX[COM9]  f0
+[17:45:21.268] RX[COM9]  81 00 00 4e 63 00 00 00 00 00 00 0a
+[17:45:21.269] PACKET[COM9] ground_station_status: rssi=-127, uptime=20067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:22.251] RX[COM9]  f0
+[17:45:22.251] RX[COM9]  81 00 00 52 4b 00 00 00 00 00 00 0a
+[17:45:22.252] PACKET[COM9] ground_station_status: rssi=-127, uptime=21067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:23.232] RX[COM9]  f0
+[17:45:23.232] RX[COM9]  81 00 00 56 33 00 00 00 00 00 00 0a
+[17:45:23.233] PACKET[COM9] ground_station_status: rssi=-127, uptime=22067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:24.272] RX[COM9]  f0
+[17:45:24.273] RX[COM9]  81 00 00 5a 1b 00 00 00 00 00 00 0a
+[17:45:24.274] PACKET[COM9] ground_station_status: rssi=-127, uptime=23067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:25.257] RX[COM9]  f0
+[17:45:25.259] RX[COM9]  81 00 00 5e 03 00 00 00 00 00 00 0a
+[17:45:25.259] PACKET[COM9] ground_station_status: rssi=-127, uptime=24067, reserved=[0, 0, 0, 0, 0, 0]
+[17:45:25.432] RX[COM9]  45
+[17:45:25.435] BAD_PACKET[COM9] unknown packet ID 0x45; discarded 1 byte(s)
+[17:45:25.437] RX[COM9]  20 42 4f 44 3a 20 42 72 6f 77 6e 6f 75 74 20 64 65 74 65 63 74 6f 72 20 77 61 73 20 74 72 69 67 67 65 72 65 64 0d 0a
+[17:45:25.439] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[17:45:25.440] BAD_PACKET[COM9] unknown packet ID 0x42; discarded 1 byte(s)
+[17:45:25.442] BAD_PACKET[COM9] unknown packet ID 0x4f; discarded 1 byte(s)
+[17:45:25.444] BAD_PACKET[COM9] unknown packet ID 0x44; discarded 1 byte(s)
+[17:45:25.446] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[17:45:25.447] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[17:45:25.449] BAD_PACKET[COM9] unknown packet ID 0x42; discarded 1 byte(s)
+[17:45:25.450] BAD_PACKET[COM9] unknown packet ID 0x72; discarded 1 byte(s)
+[17:45:25.452] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[17:45:25.452] BAD_PACKET[COM9] unknown packet ID 0x77; discarded 1 byte(s)
+[17:45:25.452] BAD_PACKET[COM9] unknown packet ID 0x6e; discarded 1 byte(s)
+[17:45:25.452] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[17:45:25.453] BAD_PACKET[COM9] unknown packet ID 0x75; discarded 1 byte(s)
+[17:45:25.453] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[17:45:25.453] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[17:45:25.453] BAD_PACKET[COM9] unknown packet ID 0x64; discarded 1 byte(s)
+[17:45:25.454] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[17:45:25.454] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[17:45:25.454] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[17:45:25.454] BAD_PACKET[COM9] unknown packet ID 0x63; discarded 1 byte(s)
+[17:45:25.455] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[17:45:25.455] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[17:45:25.455] BAD_PACKET[COM9] unknown packet ID 0x72; discarded 1 byte(s)
+[17:45:25.455] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[17:45:25.456] BAD_PACKET[COM9] unknown packet ID 0x77; discarded 1 byte(s)
+[17:45:25.456] BAD_PACKET[COM9] unknown packet ID 0x61; discarded 1 byte(s)
+[17:45:25.456] BAD_PACKET[COM9] unknown packet ID 0x73; discarded 1 byte(s)
+[17:45:25.456] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[17:45:25.457] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[17:45:25.457] BAD_PACKET[COM9] unknown packet ID 0x72; discarded 1 byte(s)
+[17:45:25.457] BAD_PACKET[COM9] unknown packet ID 0x69; discarded 1 byte(s)
+[17:45:25.457] BAD_PACKET[COM9] unknown packet ID 0x67; discarded 1 byte(s)
+[17:45:25.458] BAD_PACKET[COM9] unknown packet ID 0x67; discarded 1 byte(s)
+[17:45:25.458] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[17:45:25.458] BAD_PACKET[COM9] unknown packet ID 0x72; discarded 1 byte(s)
+[17:45:25.458] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[17:45:25.459] BAD_PACKET[COM9] unknown packet ID 0x64; discarded 1 byte(s)
+[17:45:25.459] BAD_PACKET[COM9] unknown packet ID 0x0d; discarded 1 byte(s)
+[17:45:25.459] BAD_PACKET[COM9] unknown packet ID 0x0a; discarded 1 byte(s)
+[17:45:25.460] ERROR[COM9] ClearCommError failed (PermissionError(13, 'The device does not recognize the command.', None, 22))

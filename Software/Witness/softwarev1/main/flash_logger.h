@@ -23,9 +23,12 @@ class FlightStateMachine;
 class FlashLogger final {
 public:
     static constexpr UBaseType_t kTaskPriority = 3;
+    static constexpr UBaseType_t kCaptureTaskPriority = 4;
     static constexpr std::uint32_t kLogRateHz = 50;
+    static constexpr std::uint32_t kPrelaunchBufferSeconds = 2;
     static constexpr std::uint32_t kFlushIntervalMs = 1000;
     static constexpr std::uint32_t kTaskStackSize = 7168;
+    static constexpr std::uint32_t kCaptureTaskStackSize = 3072;
     static constexpr std::size_t kMaximumExportFiles = 32;
 
     struct ExportFile {
@@ -63,6 +66,11 @@ private:
     static constexpr TickType_t kLogPeriod =
         pdMS_TO_TICKS(1000U / kLogRateHz);
     static constexpr std::size_t kRecordSize = 48;
+    static constexpr std::size_t kPrelaunchRecordCount =
+        kLogRateHz * kPrelaunchBufferSeconds;
+    // Holds the complete prelaunch dump plus more than three seconds of new
+    // live records while the NAND writer catches up.
+    static constexpr std::size_t kRecordQueueDepth = 256;
     static constexpr std::size_t kPageHeaderSize = 8;
     static constexpr std::size_t kPagePayloadSize =
         W25n01kv::kPageDataSize - kPageHeaderSize;
@@ -85,6 +93,10 @@ private:
         char data[254];
     };
 
+    struct BinaryRecord {
+        std::uint8_t data[kRecordSize];
+    };
+
     struct Writer {
         std::uint8_t type;
         std::uint32_t first_block;
@@ -94,12 +106,15 @@ private:
     };
 
     static_assert(kLogRateHz > 0 && (1000U % kLogRateHz) == 0);
+    static_assert(kPrelaunchRecordCount > 0);
+    static_assert(kRecordQueueDepth > kPrelaunchRecordCount);
     static_assert(kFlushIntervalMs == 500 || kFlushIntervalMs == 1000,
                   "Use a 0.5 s or 1 s NAND flush interval");
     static_assert(kSessionCount * kBlocksPerSession <=
                   W25n01kv::kBlockCount - kReservedBlocks);
 
     static void task_entry(void *context);
+    static void capture_task_entry(void *context);
     static int log_vprintf(const char *format, va_list arguments);
     static FlashLogger *log_sink_;
 
@@ -112,7 +127,8 @@ private:
                            std::size_t length);
     esp_err_t flush_binary();
     esp_err_t flush_text();
-    esp_err_t append_sample();
+    esp_err_t append_record(const BinaryRecord &record);
+    esp_err_t drain_binary_records();
     esp_err_t scan_file_size(std::uint8_t slot,
                              std::uint8_t type,
                              std::uint32_t &size);
@@ -126,6 +142,7 @@ private:
     void invalidate_export_read_cache();
     void serialize_record(std::uint8_t *destination);
     void install_log_capture();
+    void run_capture();
     void run();
 
     Sensors &sensors_;
@@ -133,7 +150,9 @@ private:
     FlightStateMachine &flight_state_machine_;
     W25n01kv flash_{};
     TaskHandle_t task_handle_ = nullptr;
+    TaskHandle_t capture_task_handle_ = nullptr;
     QueueHandle_t text_queue_ = nullptr;
+    QueueHandle_t binary_record_queue_ = nullptr;
     SemaphoreHandle_t frozen_semaphore_ = nullptr;
     SemaphoreHandle_t erase_semaphore_ = nullptr;
     vprintf_like_t previous_vprintf_ = nullptr;
@@ -142,11 +161,17 @@ private:
     std::atomic<bool> export_requested_{false};
     std::atomic<bool> erase_requested_{false};
     std::atomic<bool> frozen_{false};
+    std::atomic<bool> capture_binary_records_{true};
+    std::atomic<std::uint32_t> prelaunch_reset_generation_{0};
     esp_err_t erase_result_ = ESP_OK;
     std::uint8_t binary_buffer_[4096]{};
     std::size_t binary_buffer_used_ = 0;
     std::uint8_t text_buffer_[4096]{};
     std::size_t text_buffer_used_ = 0;
+    BinaryRecord prelaunch_records_[kPrelaunchRecordCount]{};
+    std::size_t prelaunch_write_index_ = 0;
+    std::size_t prelaunch_record_count_ = 0;
+    bool prelaunch_dump_pending_ = true;
     Writer binary_writer_{};
     Writer text_writer_{};
     ExportFile export_files_[kMaximumExportFiles]{};

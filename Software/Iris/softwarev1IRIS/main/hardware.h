@@ -68,4 +68,7 @@
 #define IRIS_PAC1931_I2C_ADDRESS 0x10U
 #define IRIS_PAC1931_CHANNEL_COUNT 3U
 #define IRIS_PAC1931_SENSE_RESISTOR_MICROOHMS 20000U
+// Empirical board calibration: measured currents are five times the applied
+// current when converted using only the nominal 20 milliohm shunt value.
+#define IRIS_PAC1931_CURRENT_CALIBRATION_DIVISOR 5U
 

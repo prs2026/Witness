@@ -1,0 +1,25 @@
+[17:43:52.800] RX[COM9]  f0
+[17:43:52.800] RX[COM9]  81 00 03 57 bb 00 00 00 00 00 00 0a
+[17:43:52.801] PACKET[COM9] ground_station_status: rssi=-127, uptime=219067, reserved=[0, 0, 0, 0, 0, 0]
+[17:43:53.819] RX[COM9]  f0
+[17:43:53.820] RX[COM9]  81 00 03 5b a3 00 00 00 00 00 00 0a
+[17:43:53.820] PACKET[COM9] ground_station_status: rssi=-127, uptime=220067, reserved=[0, 0, 0, 0, 0, 0]
+[17:43:54.799] RX[COM9]  f0
+[17:43:54.799] RX[COM9]  81 00 03 5f 8b 00 00 00 00 00 00 0a
+[17:43:54.800] PACKET[COM9] ground_station_status: rssi=-127, uptime=221067, reserved=[0, 0, 0, 0, 0, 0]
+[17:43:55.789] RX[COM9]  f0
+[17:43:55.790] RX[COM9]  81 00 03 63 73 00 00 00 00 00 00 0a
+[17:43:55.790] PACKET[COM9] ground_station_status: rssi=-127, uptime=222067, reserved=[0, 0, 0, 0, 0, 0]
+[17:43:56.786] RX[COM9]  f0
+[17:43:56.787] RX[COM9]  81 00 03 67 5b 00 00 00 00 00 00 0a
+[17:43:56.787] PACKET[COM9] ground_station_status: rssi=-127, uptime=223067, reserved=[0, 0, 0, 0, 0, 0]
+[17:43:57.778] RX[COM9]  f0
+[17:43:57.779] RX[COM9]  81 00 03 6b 43 00 00 00 00 00 00 0a
+[17:43:57.779] PACKET[COM9] ground_station_status: rssi=-127, uptime=224067, reserved=[0, 0, 0, 0, 0, 0]
+[17:43:58.825] RX[COM9]  f0
+[17:43:58.826] RX[COM9]  81 00 03 6f 2b 00 00 00 00 00 00 0a
+[17:43:58.826] PACKET[COM9] ground_station_status: rssi=-127, uptime=225067, reserved=[0, 0, 0, 0, 0, 0]
+[17:43:59.817] RX[COM9]  f0
+[17:43:59.818] RX[COM9]  81 00 03 73 13 00 00 00 00 00 00 0a
+[17:43:59.818] PACKET[COM9] ground_station_status: rssi=-127, uptime=226067, reserved=[0, 0, 0, 0, 0, 0]
+[17:44:00.711] ERROR[COM9] ClearCommError failed (PermissionError(13, 'The device does not recognize the command.', None, 22))

@@ -1,0 +1,207 @@
+[12:29:39.776] RX[COM9]  02
+[12:29:39.777] RX[COM9]  67 00 00 09 67 24 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 0b 2e 13 e8 0a
+[12:29:39.778] PACKET[COM9] state: status=0b0110011100000000, uptime=616228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.043671, witness_battery_voltage=5.096
+[12:29:40.750] RX[COM9]  02
+[12:29:40.753] RX[COM9]  6e 00 00 09 6b 0c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6c df 37 13 ec 0a
+[12:29:40.756] PACKET[COM9] state: status=0b0110111000000000, uptime=617228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=236.871933, witness_battery_voltage=5.1
+[12:29:41.755] RX[COM9]  02
+[12:29:41.756] RX[COM9]  67 00 00 09 6e f4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6c df 37 13 f0 0a
+[12:29:41.757] PACKET[COM9] state: status=0b0110011100000000, uptime=618228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=236.871933, witness_battery_voltage=5.104
+[12:29:42.734] RX[COM9]  02
+[12:29:42.735] RX[COM9]  6e 00 00 09 72 dc 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 20 d4 13 f8 0a
+[12:29:42.736] PACKET[COM9] state: status=0b0110111000000000, uptime=619228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.128235, witness_battery_voltage=5.112
+[12:29:43.784] RX[COM9]  02
+[12:29:43.785] RX[COM9]  67 00 00 09 76 c4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 4c 1e 13 f0 0a
+[12:29:43.786] PACKET[COM9] state: status=0b0110011100000000, uptime=620228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.297333, witness_battery_voltage=5.104
+[12:29:44.734] RX[COM9]  02
+[12:29:44.735] RX[COM9]  6e 00 00 09 7a ac 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 4c 1e 13 ec 0a
+[12:29:44.737] PACKET[COM9] state: status=0b0110111000000000, uptime=621228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.297333, witness_battery_voltage=5.1
+[12:29:45.760] RX[COM9]  02
+[12:29:45.762] RX[COM9]  6f 00 00 09 7e 94 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 36 79 13 f0 0a
+[12:29:45.763] PACKET[COM9] state: status=0b0110111100000000, uptime=622228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.212784, witness_battery_voltage=5.104
+[12:29:46.767] RX[COM9]  02
+[12:29:46.771] RX[COM9]  66 00 00 09 82 7c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 8d bb 13 f0 0a
+[12:29:46.772] PACKET[COM9] state: status=0b0110011000000000, uptime=623228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.553635, witness_battery_voltage=5.104
+[12:29:47.760] RX[COM9]  02
+[12:29:47.764] RX[COM9]  6f 00 00 09 86 64 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 4c 1e 13 f0 0a
+[12:29:47.766] PACKET[COM9] state: status=0b0110111100000000, uptime=624228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.297333, witness_battery_voltage=5.104
+[12:29:48.780] RX[COM9]  02
+[12:29:48.781] RX[COM9]  66 00 00 09 8a 4c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 4c 1e 13 e8 0a
+[12:29:48.783] PACKET[COM9] state: status=0b0110011000000000, uptime=625228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.297333, witness_battery_voltage=5.096
+[12:29:49.761] RX[COM9]  02
+[12:29:49.762] RX[COM9]  6f 00 00 09 8e 34 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 4c 1e 13 f0 0a
+[12:29:49.764] PACKET[COM9] state: status=0b0110111100000000, uptime=626228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.297333, witness_battery_voltage=5.104
+[12:29:50.740] RX[COM9]  02
+[12:29:50.743] RX[COM9]  66 00 00 09 92 1c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 8d bb 13 ec 0a
+[12:29:50.744] PACKET[COM9] state: status=0b0110011000000000, uptime=627228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.553635, witness_battery_voltage=5.1
+[12:29:51.774] RX[COM9]  02
+[12:29:51.780] RX[COM9]  6f 00 00 09 96 04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 62 71 13 e8 0a
+[12:29:51.782] PACKET[COM9] state: status=0b0110111100000000, uptime=628228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.384537, witness_battery_voltage=5.096
+[12:29:52.759] RX[COM9]  02
+[12:29:52.762] RX[COM9]  66 00 00 09 99 ec 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 78 16 13 f0 0a
+[12:29:52.764] PACKET[COM9] state: status=0b0110011000000000, uptime=629228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.469086, witness_battery_voltage=5.104
+[12:29:53.745] RX[COM9]  02
+[12:29:53.747] RX[COM9]  6f 00 00 09 9d d4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 8d bb 14 00 0a
+[12:29:53.751] PACKET[COM9] state: status=0b0110111100000000, uptime=630228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.553635, witness_battery_voltage=5.12
+[12:29:54.735] RX[COM9]  02
+[12:29:54.739] RX[COM9]  66 00 00 09 a1 bc 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 4c 1e 13 ec 0a
+[12:29:54.741] PACKET[COM9] state: status=0b0110011000000000, uptime=631228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.297333, witness_battery_voltage=5.1
+[12:29:55.776] RX[COM9]  02
+[12:29:55.777] RX[COM9]  6f 00 00 09 a5 a4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 36 79 13 f0 0a
+[12:29:55.779] PACKET[COM9] state: status=0b0110111100000000, uptime=632228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.212784, witness_battery_voltage=5.104
+[12:29:56.767] RX[COM9]  02
+[12:29:56.769] RX[COM9]  6e 00 00 09 a9 8c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 36 79 13 f0 0a
+[12:29:56.771] PACKET[COM9] state: status=0b0110111000000000, uptime=633228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.212784, witness_battery_voltage=5.104
+[12:29:57.754] RX[COM9]  02
+[12:29:57.755] RX[COM9]  67 00 00 09 ad 74 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 4c 1e 13 f8 0a
+[12:29:57.756] PACKET[COM9] state: status=0b0110011100000000, uptime=634228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.297333, witness_battery_voltage=5.112
+[12:29:58.740] RX[COM9]  02
+[12:29:58.741] RX[COM9]  6e 00 00 09 b1 5c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 4c 1e 13 e8 0a
+[12:29:58.744] PACKET[COM9] state: status=0b0110111000000000, uptime=635228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.297333, witness_battery_voltage=5.096
+[12:29:59.761] RX[COM9]  02
+[12:29:59.764] RX[COM9]  67 00 00 09 b5 44 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 62 71 13 f0 0a
+[12:29:59.766] PACKET[COM9] state: status=0b0110011100000000, uptime=636228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.384537, witness_battery_voltage=5.104
+[12:30:00.749] RX[COM9]  02
+[12:30:00.754] RX[COM9]  6e 00 00 09 b9 2c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 62 71 13 f0 0a
+[12:30:00.757] PACKET[COM9] state: status=0b0110111000000000, uptime=637228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.384537, witness_battery_voltage=5.104
+[12:30:01.771] RX[COM9]  02
+[12:30:01.773] RX[COM9]  67 00 00 09 bd 14 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 4c 1e 13 e4 0a
+[12:30:01.776] PACKET[COM9] state: status=0b0110011100000000, uptime=638228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.297333, witness_battery_voltage=5.092
+[12:30:02.772] RX[COM9]  02
+[12:30:02.773] RX[COM9]  6e 00 00 09 c0 fc 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 4c 1e 13 f0 0a
+[12:30:02.775] PACKET[COM9] state: status=0b0110111000000000, uptime=639228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.297333, witness_battery_voltage=5.104
+[12:30:03.743] RX[COM9]  02
+[12:30:03.745] RX[COM9]  67 00 00 09 c4 e4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 36 79 13 ec 0a
+[12:30:03.747] PACKET[COM9] state: status=0b0110011100000000, uptime=640228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.212784, witness_battery_voltage=5.1
+[12:30:04.736] RX[COM9]  02
+[12:30:04.738] RX[COM9]  6e 00 00 09 c8 cc 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 36 79 13 ec 0a
+[12:30:04.740] PACKET[COM9] state: status=0b0110111000000000, uptime=641228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.212784, witness_battery_voltage=5.1
+[12:30:05.774] RX[COM9]  02
+[12:30:05.775] RX[COM9]  67 00 00 09 cc b4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 36 79 13 ec 0a
+[12:30:05.779] PACKET[COM9] state: status=0b0110011100000000, uptime=642228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.212784, witness_battery_voltage=5.1
+[12:30:06.742] RX[COM9]  02
+[12:30:06.744] RX[COM9]  6e 00 00 09 d0 9c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 62 71 13 f0 0a
+[12:30:06.747] PACKET[COM9] state: status=0b0110111000000000, uptime=643228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.384537, witness_battery_voltage=5.104
+[12:30:07.748] RX[COM9]  02
+[12:30:07.750] RX[COM9]  6f 00 00 09 d4 84 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 20 d4 13 f0 0a
+[12:30:07.751] PACKET[COM9] state: status=0b0110111100000000, uptime=644228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.128235, witness_battery_voltage=5.104
+[12:30:08.790] RX[COM9]  02
+[12:30:08.792] RX[COM9]  66 00 00 09 d8 6c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 36 79 13 f0 0a
+[12:30:08.793] PACKET[COM9] state: status=0b0110011000000000, uptime=645228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.212784, witness_battery_voltage=5.104
+[12:30:09.776] RX[COM9]  02
+[12:30:09.779] RX[COM9]  6f 00 00 09 dc 54 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 36 79 13 f0 0a
+[12:30:09.784] PACKET[COM9] state: status=0b0110111100000000, uptime=646228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.212784, witness_battery_voltage=5.104
+[12:30:10.749] RX[COM9]  02
+[12:30:10.752] RX[COM9]  66 00 00 09 e0 3c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 62 71 13 ec 0a
+[12:30:10.756] PACKET[COM9] state: status=0b0110011000000000, uptime=647228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.384537, witness_battery_voltage=5.1
+[12:30:11.752] RX[COM9]  02
+[12:30:11.753] RX[COM9]  6f 00 00 09 e4 24 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 0b 2e 13 f0 0a
+[12:30:11.755] PACKET[COM9] state: status=0b0110111100000000, uptime=648228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.043671, witness_battery_voltage=5.104
+[12:30:12.771] RX[COM9]  02
+[12:30:12.772] RX[COM9]  66 00 00 09 e8 0c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 62 71 13 f0 0a
+[12:30:12.774] PACKET[COM9] state: status=0b0110011000000000, uptime=649228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.384537, witness_battery_voltage=5.104
+[12:30:13.734] RX[COM9]  02
+[12:30:13.736] RX[COM9]  6f 00 00 09 eb f4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 4c 1e 13 f8 0a
+[12:30:13.738] PACKET[COM9] state: status=0b0110111100000000, uptime=650228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.297333, witness_battery_voltage=5.112
+[12:30:14.756] RX[COM9]  02
+[12:30:14.758] RX[COM9]  66 00 00 09 ef dc 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 36 79 13 f0 0a
+[12:30:14.760] PACKET[COM9] state: status=0b0110011000000000, uptime=651228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.212784, witness_battery_voltage=5.104
+[12:30:15.747] RX[COM9]  02
+[12:30:15.749] RX[COM9]  6f 00 00 09 f3 c4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 78 16 13 f0 0a
+[12:30:15.751] PACKET[COM9] state: status=0b0110111100000000, uptime=652228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.469086, witness_battery_voltage=5.104
+[12:30:16.787] RX[COM9]  02
+[12:30:16.791] RX[COM9]  66 00 00 09 f7 ac 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 36 79 13 e8 0a
+[12:30:16.794] PACKET[COM9] state: status=0b0110011000000000, uptime=653228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.212784, witness_battery_voltage=5.096
+[12:30:17.747] RX[COM9]  02
+[12:30:17.748] RX[COM9]  6f 00 00 09 fb 94 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 4c 1e 13 f0 0a
+[12:30:17.750] PACKET[COM9] state: status=0b0110111100000000, uptime=654228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.297333, witness_battery_voltage=5.104
+[12:30:18.783] RX[COM9]  02
+[12:30:18.784] RX[COM9]  6e 00 00 09 ff 7c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 36 79 13 f0 0a
+[12:30:18.786] PACKET[COM9] state: status=0b0110111000000000, uptime=655228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.212784, witness_battery_voltage=5.104
+[12:30:19.768] RX[COM9]  02
+[12:30:19.770] RX[COM9]  6f 00 00 0a 03 64 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 8d bb 13 f0 0a
+[12:30:19.774] PACKET[COM9] state: status=0b0110111100000000, uptime=656228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.553635, witness_battery_voltage=5.104
+[12:30:20.760] RX[COM9]  02
+[12:30:20.762] RX[COM9]  6e 00 00 0a 07 4c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d cf 58 13 ec 0a
+[12:30:20.764] PACKET[COM9] state: status=0b0110111000000000, uptime=657228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.809937, witness_battery_voltage=5.1
+[12:30:21.752] RX[COM9]  02
+[12:30:21.753] RX[COM9]  67 00 00 0a 0b 34 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 8d bb 13 f0 0a
+[12:30:21.755] PACKET[COM9] state: status=0b0110011100000000, uptime=658228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.553635, witness_battery_voltage=5.104
+[12:30:22.736] RX[COM9]  02
+[12:30:22.737] RX[COM9]  6e 00 00 0a 0f 1c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 4c 1e 13 f0 0a
+[12:30:22.740] PACKET[COM9] state: status=0b0110111000000000, uptime=659228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.297333, witness_battery_voltage=5.104
+[12:30:23.779] RX[COM9]  02
+[12:30:23.780] RX[COM9]  67 00 00 0a 13 04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 78 16 13 ec 0a
+[12:30:23.782] PACKET[COM9] state: status=0b0110011100000000, uptime=660228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.469086, witness_battery_voltage=5.1
+[12:30:24.769] RX[COM9]  02
+[12:30:24.770] RX[COM9]  6e 00 00 0a 16 ec 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d b9 b3 13 f0 0a
+[12:30:24.771] PACKET[COM9] state: status=0b0110111000000000, uptime=661228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.725388, witness_battery_voltage=5.104
+[12:30:25.767] RX[COM9]  02
+[12:30:25.769] RX[COM9]  67 00 00 0a 1a d4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 62 71 13 f0 0a
+[12:30:25.772] PACKET[COM9] state: status=0b0110011100000000, uptime=662228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.384537, witness_battery_voltage=5.104
+[12:30:26.788] RX[COM9]  02
+[12:30:26.789] RX[COM9]  6e 00 00 0a 1e bc 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 62 71 13 e8 0a
+[12:30:26.791] PACKET[COM9] state: status=0b0110111000000000, uptime=663228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.384537, witness_battery_voltage=5.096
+[12:30:27.768] RX[COM9]  02
+[12:30:27.769] RX[COM9]  67 00 00 0a 22 a4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 78 16 13 f0 0a
+[12:30:27.770] PACKET[COM9] state: status=0b0110011100000000, uptime=664228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.469086, witness_battery_voltage=5.104
+[12:30:28.790] RX[COM9]  02
+[12:30:28.791] RX[COM9]  6e 00 00 0a 26 8c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 0b 2e 13 ec 0a
+[12:30:28.793] PACKET[COM9] state: status=0b0110111000000000, uptime=665228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.043671, witness_battery_voltage=5.1
+[12:30:29.737] RX[COM9]  02
+[12:30:29.738] RX[COM9]  6f 00 00 0a 2a 74 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 36 79 13 ec 0a
+[12:30:29.740] PACKET[COM9] state: status=0b0110111100000000, uptime=666228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.212784, witness_battery_voltage=5.1
+[12:30:30.787] RX[COM9]  02
+[12:30:30.790] RX[COM9]  6e 00 00 0a 2e 5c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 62 71 13 f0 0a
+[12:30:30.791] PACKET[COM9] state: status=0b0110111000000000, uptime=667228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.384537, witness_battery_voltage=5.104
+[12:30:31.777] RX[COM9]  02
+[12:30:31.782] RX[COM9]  6f 00 00 0a 32 44 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 78 16 13 f0 0a
+[12:30:31.784] PACKET[COM9] state: status=0b0110111100000000, uptime=668228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.469086, witness_battery_voltage=5.104
+[12:30:32.757] RX[COM9]  02
+[12:30:32.759] RX[COM9]  66 00 00 0a 36 2c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d a3 60 13 e4 0a
+[12:30:32.760] PACKET[COM9] state: status=0b0110011000000000, uptime=669228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.638184, witness_battery_voltage=5.092
+[12:30:33.763] RX[COM9]  02
+[12:30:33.765] RX[COM9]  6f 00 00 0a 3a 14 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 4c 1e 13 f0 0a
+[12:30:33.766] PACKET[COM9] state: status=0b0110111100000000, uptime=670228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.297333, witness_battery_voltage=5.104
+[12:30:34.753] RX[COM9]  02
+[12:30:34.757] RX[COM9]  66 00 00 0a 3d fc 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 78 16 13 f8 0a
+[12:30:34.763] PACKET[COM9] state: status=0b0110011000000000, uptime=671228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.469086, witness_battery_voltage=5.112
+[12:30:35.746] RX[COM9]  02
+[12:30:35.749] RX[COM9]  6f 00 00 0a 41 e4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 8d bb 13 f0 0a
+[12:30:35.759] PACKET[COM9] state: status=0b0110111100000000, uptime=672228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.553635, witness_battery_voltage=5.104
+[12:30:36.795] RX[COM9]  02
+[12:30:36.796] RX[COM9]  66 00 00 0a 45 cc 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d b9 b3 13 f8 0a
+[12:30:36.798] PACKET[COM9] state: status=0b0110011000000000, uptime=673228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.725388, witness_battery_voltage=5.112
+[12:30:37.765] RX[COM9]  02
+[12:30:37.767] RX[COM9]  6f 00 00 0a 49 b4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 62 71 13 f0 0a
+[12:30:37.771] PACKET[COM9] state: status=0b0110111100000000, uptime=674228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.384537, witness_battery_voltage=5.104
+[12:30:38.783] RX[COM9]  02
+[12:30:38.785] RX[COM9]  66 00 00 0a 4d 9c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d cf 58 13 ec 0a
+[12:30:38.789] PACKET[COM9] state: status=0b0110011000000000, uptime=675228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.809937, witness_battery_voltage=5.1
+[12:30:39.770] RX[COM9]  02
+[12:30:39.773] RX[COM9]  6f 00 00 0a 51 84 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d a3 60 13 e4 0a
+[12:30:39.776] PACKET[COM9] state: status=0b0110111100000000, uptime=676228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.638184, witness_battery_voltage=5.092
+[12:30:40.787] RX[COM9]  02
+[12:30:40.789] RX[COM9]  6e 00 00 0a 55 6c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d fa a2 13 ec 0a
+[12:30:40.790] PACKET[COM9] state: status=0b0110111000000000, uptime=677228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.979034, witness_battery_voltage=5.1
+[12:30:41.750] RX[COM9]  02
+[12:30:41.752] RX[COM9]  6f 00 00 0a 59 54 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d e4 fd 13 f0 0a
+[12:30:41.755] PACKET[COM9] state: status=0b0110111100000000, uptime=678228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.894485, witness_battery_voltage=5.104
+[12:30:42.778] RX[COM9]  02
+[12:30:42.785] RX[COM9]  6e 00 00 0a 5d 3c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d b9 b3 13 f0 0a
+[12:30:42.788] PACKET[COM9] state: status=0b0110111000000000, uptime=679228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.725388, witness_battery_voltage=5.104
+[12:30:43.756] RX[COM9]  02
+[12:30:43.758] RX[COM9]  67 00 00 0a 61 24 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d cf 58 13 f0 0a
+[12:30:43.759] PACKET[COM9] state: status=0b0110011100000000, uptime=680228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.809937, witness_battery_voltage=5.104
+[12:30:44.744] RX[COM9]  02
+[12:30:44.746] RX[COM9]  6e 00 00 0a 65 0c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 8d bb 13 ec 0a
+[12:30:44.747] PACKET[COM9] state: status=0b0110111000000000, uptime=681228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.553635, witness_battery_voltage=5.1
+[12:30:45.768] RX[COM9]  02
+[12:30:45.771] RX[COM9]  67 00 00 0a 68 f4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 8d bb 13 e8 0a
+[12:30:45.772] PACKET[COM9] state: status=0b0110011100000000, uptime=682228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.553635, witness_battery_voltage=5.096
+[12:30:46.790] RX[COM9]  02
+[12:30:46.791] RX[COM9]  6e 00 00 0a 6c dc 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d 78 16 13 f0 0a
+[12:30:46.794] PACKET[COM9] state: status=0b0110111000000000, uptime=683228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.469086, witness_battery_voltage=5.104
+[12:30:47.753] RX[COM9]  02
+[12:30:47.756] RX[COM9]  67 00 00 0a 70 c4 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 6d a3 60 13 f0 0a
+[12:30:47.759] PACKET[COM9] state: status=0b0110011100000000, uptime=684228, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=237.638184, witness_battery_voltage=5.104

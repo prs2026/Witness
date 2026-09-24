@@ -424,6 +424,24 @@
     IRIS_CAN_FRAME_COUNT(IRIS_PACKET_COMMAND_FRAME_LENGTH)
 
 // ---------------------------------------------------------------------------
+// Ground-station USB status packet (not transmitted over LoRa)
+// ---------------------------------------------------------------------------
+
+#define IRIS_PACKET_ID_GROUND_STATION_STATUS 0xF0U
+#define IRIS_PACKET_GROUND_STATION_STATUS_RSSI_OFFSET 0U
+#define IRIS_PACKET_GROUND_STATION_STATUS_RSSI_LENGTH 1U
+#define IRIS_PACKET_GROUND_STATION_STATUS_UPTIME_OFFSET 1U
+#define IRIS_PACKET_GROUND_STATION_STATUS_UPTIME_LENGTH 4U
+#define IRIS_PACKET_GROUND_STATION_STATUS_RESERVED_OFFSET 5U
+#define IRIS_PACKET_GROUND_STATION_STATUS_RESERVED_LENGTH 6U
+#define IRIS_PACKET_GROUND_STATION_STATUS_DATA_LENGTH 11U
+#define IRIS_PACKET_GROUND_STATION_STATUS_EOF_OFFSET \
+    IRIS_PACKET_GROUND_STATION_STATUS_DATA_LENGTH
+#define IRIS_PACKET_GROUND_STATION_STATUS_FRAME_LENGTH 13U
+
+// RSSI is a signed int8 in dBm. The six reserved bytes are transmitted as 0.
+
+// ---------------------------------------------------------------------------
 // Heartbeat packet (0xFF)
 // ---------------------------------------------------------------------------
 

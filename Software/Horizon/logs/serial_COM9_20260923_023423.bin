@@ -1,0 +1,20 @@
+I (258) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (264) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (271) main_task: Started on CPU0
+I (271) main_task: Calling app_main()
+I (281) ra01: Pins: RESET=12 BUSY=34 RF_EN=3 CS=4
+I (301) ra01: After reset: RESET=0 RF_EN=0 BUSY=0
+I (301) aperture: Radio initialized; transmit power is -2 dBm
+I (301) aperture: Sending heartbeat (8 bytes)
+E BOD: Brownout detector was triggered
+
+
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x3 (RTC_SW_SYS_RST),boot:0x8 (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40376878
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce2820,len:0x14f0
+load:0x403c8700,len:0xde4
+load:0x403cb700,len:0x2f58

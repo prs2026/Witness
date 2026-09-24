@@ -16,27 +16,20 @@ namespace {
 
 constexpr const char *kLogTag = "aperture";
 
-void store_u32_be(std::uint8_t *data, const std::uint32_t value)
+void make_ground_station_status(std::uint8_t *packet,
+                                const std::int8_t rssi_dbm)
 {
-    data[0] = static_cast<std::uint8_t>(value >> 24U);
-    data[1] = static_cast<std::uint8_t>(value >> 16U);
-    data[2] = static_cast<std::uint8_t>(value >> 8U);
-    data[3] = static_cast<std::uint8_t>(value);
-}
-
-void make_heartbeat(std::uint8_t *packet, const bool heartbeat_state)
-{
-    packet[0] = IRIS_PACKET_ID_HEARTBEAT;
-    constexpr std::size_t data_offset = IRIS_PACKET_ID_LENGTH;
-    packet[data_offset + IRIS_PACKET_HEARTBEAT_STATUS_OFFSET] =
-        heartbeat_state ? IRIS_WITNESS_STATUS_HEARTBEAT_MASK : 0U;
-    packet[data_offset + IRIS_PACKET_HEARTBEAT_STATUS_OFFSET + 1U] =
-        IRIS_WITNESS_STATUS_RESERVED_BYTE_VALUE;
+    packet[0] = IRIS_PACKET_ID_GROUND_STATION_STATUS;
+    packet[IRIS_PACKET_GROUND_STATION_STATUS_RSSI_OFFSET + 1U] =
+        static_cast<std::uint8_t>(rssi_dbm);
     const std::uint32_t uptime_ms = static_cast<std::uint32_t>(
         esp_timer_get_time() / 1000LL);
-    store_u32_be(packet + data_offset + IRIS_PACKET_HEARTBEAT_UPTIME_OFFSET,
-                 uptime_ms);
-    packet[data_offset + IRIS_PACKET_HEARTBEAT_EOF_OFFSET] =
+    packet[2] = static_cast<std::uint8_t>(uptime_ms >> 24U);
+    packet[3] = static_cast<std::uint8_t>(uptime_ms >> 16U);
+    packet[4] = static_cast<std::uint8_t>(uptime_ms >> 8U);
+    packet[5] = static_cast<std::uint8_t>(uptime_ms);
+    for (std::size_t index = 6U; index < 12U; ++index) packet[index] = 0U;
+    packet[IRIS_PACKET_GROUND_STATION_STATUS_FRAME_LENGTH - 1U] =
         IRIS_PACKET_EOF_VALUE;
 }
 
@@ -70,27 +63,51 @@ extern "C" void app_main(void)
     ESP_LOGI(kLogTag, "Radio initialized; transmit power is %d dBm",
              IRIS_RADIO_TX_POWER_DBM);
 
-    std::array<std::uint8_t, IRIS_PACKET_HEARTBEAT_FRAME_LENGTH> heartbeat{};
-    TickType_t next_heartbeat = xTaskGetTickCount();
-    bool heartbeat_state = false;
+    std::array<std::uint8_t, IRIS_PACKET_COMMAND_FRAME_LENGTH> command{};
+    std::size_t command_length = 0U;
+    std::array<std::uint8_t,
+               IRIS_PACKET_GROUND_STATION_STATUS_FRAME_LENGTH> status_packet{};
+    TickType_t next_status = xTaskGetTickCount();
 
     for (;;) {
-        const TickType_t now = xTaskGetTickCount();
-        if (now >= next_heartbeat) {
-            make_heartbeat(heartbeat.data(), heartbeat_state);
-            ESP_LOGI(kLogTag, "Sending heartbeat (%u bytes)",
-                     static_cast<unsigned>(heartbeat.size()));
-            const esp_err_t transmit_result =
-                radio.transmit(heartbeat.data(), heartbeat.size());
-            if (transmit_result != ESP_OK) {
-                ESP_LOGE(kLogTag, "Heartbeat send failed: %s (0x%x)",
-                         esp_err_to_name(transmit_result),
-                         static_cast<unsigned>(transmit_result));
-            } else {
-                ESP_LOGI(kLogTag, "Heartbeat sent");
+        if (xTaskGetTickCount() >= next_status) {
+            make_ground_station_status(status_packet.data(),
+                                       radio.last_packet_rssi_dbm());
+            (void)usb_serial_jtag_write_bytes(
+                status_packet.data(), status_packet.size(),
+                pdMS_TO_TICKS(100));
+            next_status += pdMS_TO_TICKS(1000);
+        }
+
+        std::uint8_t usb_input[64]{};
+        const int usb_count = usb_serial_jtag_read_bytes(
+            usb_input, sizeof(usb_input), 0);
+        for (int index = 0; index < usb_count; ++index) {
+            const std::uint8_t byte = usb_input[index];
+
+            // The protocol requires USB input to be echoed byte-for-byte.
+            (void)usb_serial_jtag_write_bytes(&byte, 1U, 0);
+
+            // Resynchronize at the command packet ID. This bridge sends only
+            // complete canonical 0x05 command frames over LoRa.
+            if (command_length == 0U) {
+                if (byte != IRIS_PACKET_ID_COMMAND) continue;
             }
-            heartbeat_state = !heartbeat_state;
-            next_heartbeat += pdMS_TO_TICKS(1000);
+            command[command_length++] = byte;
+
+            if (command_length == command.size()) {
+                if (command.back() == IRIS_PACKET_EOF_VALUE) {
+                    ESP_LOGI(kLogTag, "Sending command to Witness");
+                    const esp_err_t result = radio.transmit(
+                        command.data(), command.size());
+                    if (result != ESP_OK) {
+                        ESP_LOGE(kLogTag, "Command send failed: %s (0x%x)",
+                                 esp_err_to_name(result),
+                                 static_cast<unsigned>(result));
+                    }
+                }
+                command_length = 0U;
+            }
         }
 
         std::size_t packet_length = 0;

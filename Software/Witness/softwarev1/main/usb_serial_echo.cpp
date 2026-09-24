@@ -244,12 +244,36 @@ void UsbSerialEcho::finish_binary_command()
             process_compact_binary_command(
                 static_cast<std::uint8_t>(command_buffer_[1]),
                 static_cast<std::uint8_t>(command_buffer_[2]));
+        } else if (packet_length == IRIS_PACKET_COMMAND_FRAME_LENGTH) {
+            process_canonical_binary_command(
+                reinterpret_cast<const std::uint8_t *>(command_buffer_),
+                packet_length);
         }
     }
 
     command_length_ = 0;
     command_overflow_ = false;
     binary_command_active_ = false;
+}
+
+void UsbSerialEcho::process_canonical_binary_command(
+    const std::uint8_t *const data,
+    const std::size_t length)
+{
+    if (data == nullptr || length != IRIS_PACKET_COMMAND_FRAME_LENGTH ||
+        data[0] != IRIS_PACKET_ID_COMMAND) {
+        return;
+    }
+    if (data[IRIS_PACKET_COMMAND_FRAME_LENGTH - 1U] !=
+        IRIS_PACKET_EOF_VALUE) {
+        ESP_LOGW(kLogTag, "USB command rejected: invalid EOF");
+        return;
+    }
+
+    constexpr std::size_t kCommandFrameOffset =
+        IRIS_PACKET_ID_LENGTH + IRIS_PACKET_COMMAND_VALUE_OFFSET;
+    process_compact_binary_command(
+        data[kCommandFrameOffset], data[kCommandFrameOffset + 1U]);
 }
 
 void UsbSerialEcho::process_compact_binary_command(
@@ -270,6 +294,83 @@ void UsbSerialEcho::process_compact_binary_command(
         erase_log_sessions();
     } else if (command == IRIS_COMMAND_SET_FLIGHT_STATE) {
         set_flight_state(argument);
+    }
+}
+
+void UsbSerialEcho::process_queued_radio_commands()
+{
+    std::uint8_t command[IRIS_PACKET_COMMAND_FRAME_LENGTH]{};
+    std::size_t command_length = 0;
+    while (command_bridge_.receive_radio_command(
+        command, sizeof(command), command_length)) {
+        process_radio_command(command, command_length);
+    }
+}
+
+void UsbSerialEcho::process_radio_command(
+    const std::uint8_t *const data,
+    const std::size_t length)
+{
+    if (data == nullptr || data[0] != IRIS_PACKET_ID_COMMAND) {
+        return;
+    }
+
+    std::uint16_t command = 0;
+    if (length == 3U) {
+        command = static_cast<std::uint16_t>(
+            (static_cast<std::uint16_t>(data[1]) << 8U) | data[2]);
+    } else if (length == IRIS_PACKET_COMMAND_FRAME_LENGTH) {
+        if (data[IRIS_PACKET_COMMAND_FRAME_LENGTH - 1U] !=
+            IRIS_PACKET_EOF_VALUE) {
+            ESP_LOGW(kLogTag, "radio command rejected: invalid EOF");
+            return;
+        }
+        constexpr std::size_t kCommandFrameOffset =
+            IRIS_PACKET_ID_LENGTH + IRIS_PACKET_COMMAND_VALUE_OFFSET;
+        command = static_cast<std::uint16_t>(
+            (static_cast<std::uint16_t>(data[kCommandFrameOffset]) << 8U) |
+            data[kCommandFrameOffset + 1U]);
+    } else {
+        ESP_LOGW(
+            kLogTag,
+            "radio command rejected: unsupported %u-byte format",
+            static_cast<unsigned>(length));
+        return;
+    }
+
+    ESP_LOGI(kLogTag, "acting on radio command 0x%04X", command);
+    switch (command) {
+        case IRIS_COMMAND_WITNESS_DEBUG_START:
+            process_protocol_command(command);
+            break;
+        case IRIS_COMMAND_MASS_STORAGE_START:
+            start_mass_storage();
+            break;
+        case IRIS_COMMAND_ERASE_LOG_SESSIONS:
+            erase_log_sessions();
+            break;
+        case 0x7300U:
+        case 0x7301U:
+        case 0x7302U:
+        case 0x7303U:
+        case 0x7304U:
+            set_flight_state(static_cast<std::uint8_t>(command));
+            break;
+        case IRIS_COMMAND_CH1_LOAD_OFF:
+        case IRIS_COMMAND_CH1_LOAD_ON:
+        case IRIS_COMMAND_CH2_LOAD_OFF:
+        case IRIS_COMMAND_CH2_LOAD_ON:
+        case IRIS_COMMAND_CH3_LOAD_OFF:
+        case IRIS_COMMAND_CH3_LOAD_ON:
+        case IRIS_COMMAND_5V_REGULATOR_OFF:
+        case IRIS_COMMAND_5V_REGULATOR_ON:
+            // These commands are implemented by the UART-connected device.
+            // They were already retransmitted by CommandBridge.
+            break;
+        default:
+            ESP_LOGW(kLogTag, "radio command 0x%04X has no local handler",
+                     command);
+            break;
     }
 }
 
@@ -392,14 +493,21 @@ bool UsbSerialEcho::forward_text_command_if_present()
     }
 
     forward_usb_command(bytes, byte_count);
+    if (byte_count == IRIS_PACKET_COMMAND_FRAME_LENGTH) {
+        process_canonical_binary_command(bytes, byte_count);
+    }
     return true;
 }
 
 void UsbSerialEcho::start_mass_storage()
 {
+    // Stop scheduled and immediate RA-01 transmissions before changing the
+    // USB peripheral into mass-storage mode.
+    sensors_.set_radio_transmission_enabled(false);
     ESP_LOGI(kLogTag, "freezing logs for read-only USB export");
     const esp_err_t freeze_result = flash_logger_.prepare_mass_storage();
     if (freeze_result != ESP_OK) {
+        sensors_.set_radio_transmission_enabled(true);
         ESP_LOGE(kLogTag, "cannot start mass storage: %s", esp_err_to_name(freeze_result));
         command_length_ = 0;
         return;
@@ -428,7 +536,15 @@ void UsbSerialEcho::erase_log_sessions()
 
 void UsbSerialEcho::set_flight_state(const std::uint8_t state)
 {
-    const esp_err_t result = flight_state_machine_.set_state(state);
+    const bool commanded_launch =
+        flight_state_machine_.state() == FlightStateMachine::State::PadIdle &&
+        state == static_cast<std::uint8_t>(FlightStateMachine::State::Boost);
+    if (commanded_launch) {
+        ESP_LOGI(kLogTag, "manual launch trigger accepted");
+    }
+    const esp_err_t result = commanded_launch
+        ? flight_state_machine_.trigger_launch()
+        : flight_state_machine_.set_state(state);
     if (result != ESP_OK) {
         ESP_LOGW(kLogTag, "flight state 0x%02X rejected: %s",
                  state, esp_err_to_name(result));
@@ -518,6 +634,8 @@ void UsbSerialEcho::run()
                        read_timeout) {
             finish_binary_command();
         }
+
+        process_queued_radio_commands();
 
         if (mass_storage_started_) {
             task_handle_ = nullptr;

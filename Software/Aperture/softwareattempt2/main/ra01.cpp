@@ -30,6 +30,7 @@ constexpr std::uint8_t kSetTx = 0x83;
 constexpr std::uint8_t kGetIrqStatus = 0x12;
 constexpr std::uint8_t kClearIrqStatus = 0x02;
 constexpr std::uint8_t kGetRxBufferStatus = 0x13;
+constexpr std::uint8_t kGetPacketStatus = 0x14;
 constexpr std::uint8_t kReadBuffer = 0x1E;
 
 constexpr std::uint16_t kIrqRxDone = 0x0002;
@@ -284,6 +285,15 @@ esp_err_t Ra01::receive(std::uint8_t *data, const std::size_t capacity,
         (void)write_command(kClearIrqStatus, clear, sizeof(clear));
         return ESP_ERR_INVALID_SIZE;
     }
+
+    // GetPacketStatus response for LoRa is:
+    // RFU, Status, RssiPkt, SnrPkt, SignalRssiPkt.
+    std::uint8_t packet_status[3]{};
+    result = read_command(kGetPacketStatus, packet_status,
+                           sizeof(packet_status));
+    if (result != ESP_OK) return result;
+    last_packet_rssi_dbm_ = static_cast<std::int8_t>(
+        -static_cast<std::int8_t>(packet_status[0] / 2U));
 
     result = read_buffer(status[1], data, packet_length);
     const std::uint8_t clear[] = {0x00U, 0xFFU};

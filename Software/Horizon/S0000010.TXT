@@ -1,0 +1,1988 @@
+I (169) w25n01kv: initialized W25N01KV JEDEC EF AE 21, SR1=0x00 SR2=0x19
+I (179) flash_logger: startup test block 1023 wrote/read:
+I (179) flash_logger: a5 b8 9f f2 d1 34 0b 6e 4d a0 87 9a f9 dc 33 16
+I (179) flash_logger: 75 48 af 82 e1 c4 db 3e 1d 70 57 aa 89 ec c3 26
+I (189) flash_logger: session 16 started in slot 15; flush interval 1000 ms
+I (189) uart2: ready at 115200 baud on TX=5 RX=4
+I (189) uart2: sent loopback request: 05 22
+E (259) ms5607: PROM CRC mismatch: stored=2 calculated=3
+E (259) sensors: MS5607 initialization failed: ESP_ERR_INVALID_CRC
+I (309) ra01: Pins: RESET=8 BUSY=39 RF_EN=40 CS=16
+I (329) ra01: After reset: RESET=0 RF_EN=0 BUSY=0
+I (349) sensors: sensor task ready: LSM6DSV320X, MS5607, and RA-01 on SPI3
+I (349) main_task: Returned from app_main()
+W (1189) uart2: no 05 22 loopback reply within 1000 ms
+I (1359) ms5607: ready on SPI3, OSR=4096
+I (1359) sensors: MS5607 initialization recovered
+E (2089) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (2199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (2299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (2349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (2479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (2579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (2679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (2779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (2879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (2979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (3079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (3199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (3299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (3349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (3479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (3579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (3679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (3779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (3879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (3979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (4079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (4199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (4299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (4349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (4479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (4579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (4679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (4779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (4879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (4979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (5079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (5199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (5299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (5349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (5479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (5579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (5679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (5779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (5879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (5979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (6079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (6199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (6299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (6349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (6479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (6579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (6679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (6779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (6879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (6979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (7079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (7199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (7299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (7349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (7479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (7579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (7679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (7779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (7879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (7979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (8079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (8199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (8299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (8349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (8479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (8579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (8679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (8779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (8879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (8979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (9079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (9199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (9299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (9349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (9479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (9579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (9679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (9779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (9879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (9979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (10079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (10199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (10299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (10349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (10479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (10579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (10679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (10779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (10879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (10979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (11079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (11199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (11299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (11349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (11479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (11579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (11679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (11779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (11879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (11979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (12079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (12199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (12299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (12349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (12479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (12579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (12679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (12779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (12879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (12979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (13079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (13199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (13299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (13349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (13479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (13579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (13679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (13779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (13879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (13979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (14079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (14199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (14299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (14349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (14479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (14579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (14679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (14779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (14879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (14979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (15079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (15199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (15299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (15349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (15479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (15579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (15679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (15779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (15879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (15979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (16079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (16199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (16299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (16349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (16479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (16579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (16679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (16779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (16879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (16979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (17079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (17199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (17299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (17349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (17479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (17579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+I (17619) sensors: radio RX: 10 bytes, packet ID 0x05
+I (17619) sensors: 05 00 00 00 00 00 00 73 01 0a
+W (17619) sensors: could not forward 10-byte radio packet to USB: ESP_ERR_NO_MEM
+I (17629) serial_command: acting on radio command 0x7301
+I (17629) serial_command: manual launch trigger accepted
+I (17629) flight_state: pad idle -> boost
+I (17649) flash_logger: queued 100 prelaunch records (2000 ms) for flash
+E (17679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (17779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (17879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (17979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (18079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (18199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (18299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (18349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (18479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (18579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (18679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (18779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (18879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (18979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (19079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (19199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (19299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (19349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (19479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (19579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (19679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (19779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (19879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (19979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (20079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (20169) uart2: could not forward 11 UART bytes: ESP_ERR_NO_MEM
+E (20199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (20299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (20349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (20399) uart2: could not forward 13 UART bytes: ESP_ERR_NO_MEM
+E (20479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (20509) uart2: could not forward 21 UART bytes: ESP_ERR_NO_MEM
+W (20509) uart2: discarded UART packet 0x05 with invalid EOF
+E (20579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (20679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (20779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (20879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (20979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (21079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (21159) uart2: could not forward 14 UART bytes: ESP_ERR_NO_MEM
+E (21199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (21299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (21349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (21379) uart2: could not forward 64 UART bytes: ESP_ERR_NO_MEM
+W (21389) uart2: discarded UART packet 0x01 with invalid EOF
+W (21389) uart2: discarded UART packet 0x03 with invalid EOF
+W (21399) uart2: could not forward 11 UART bytes: ESP_ERR_NO_MEM
+E (21479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (21509) uart2: could not forward 16 UART bytes: ESP_ERR_NO_MEM
+E (21579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (21679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (21779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (21879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (21979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (22079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (22199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+I (22249) flight_state: burnout detected: axial acceleration 0.32 g
+I (22249) flight_state: boost -> coast
+E (22299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (22349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (22479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (22579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (22679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (22779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (22879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (22979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (23079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (23199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (23299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (23349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (23479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (23579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (23679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (23779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (23879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (23979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (24079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (24199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (24299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (24349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (24479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (24579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (24679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (24779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (24879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (24979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (25079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (25199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (25299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (25349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (25479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (25579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (25679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (25779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (25879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (25979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (26079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (26199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (26299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (26349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (26479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (26579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (26679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (26779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (26879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (26979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+I (27069) sensors: radio RX: 10 bytes, packet ID 0x05
+I (27069) sensors: 05 00 00 00 00 00 00 73 03 0a
+W (27069) sensors: could not forward 10-byte radio packet to USB: ESP_ERR_NO_MEM
+E (27079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+I (27089) serial_command: acting on radio command 0x7303
+I (27089) flight_state: coast -> descent
+E (27199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (27299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (27349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (27479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (27579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (27679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (27779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (27879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (27979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (28079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (28199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (28299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (28349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (28479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (28579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (28679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (28779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (28879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (28979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (29079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (29199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (29299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (29349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (29479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (29479) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+W (29539) uart2: could not forward 13 UART bytes: ESP_ERR_NO_MEM
+E (29579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (29679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (29779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (29879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (29979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (30079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (30199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (30299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (30349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (30419) uart2: could not forward 16 UART bytes: ESP_ERR_NO_MEM
+E (30479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (30509) uart2: could not forward 21 UART bytes: ESP_ERR_NO_MEM
+E (30579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (30679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (30779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (30879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (30979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (31079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (31199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (31299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (31349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (31479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (31579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (31679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (31779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (31879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (31979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (32079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (32199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (32299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (32349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (32469) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+E (32479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (32509) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+E (32579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (32679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (32779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (32879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (32979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (33079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (33199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (33299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (33349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (33469) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (33479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (33509) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+E (33579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (33679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (33779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (33879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (33979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (34079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (34199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (34299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (34349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (34469) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (34479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (34509) uart2: could not forward 11 UART bytes: ESP_ERR_NO_MEM
+E (34579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (34679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (34779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (34879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (34979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (35079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (35199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (35299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (35349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (35459) uart2: could not forward 11 UART bytes: ESP_ERR_NO_MEM
+E (35479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (35509) uart2: could not forward 11 UART bytes: ESP_ERR_NO_MEM
+E (35579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (35679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (35779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (35879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (35979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (36079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (36199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (36299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (36349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (36459) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+E (36479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (36509) uart2: could not forward 13 UART bytes: ESP_ERR_NO_MEM
+E (36579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (36679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (36779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (36879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (36979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (37079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (37199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (37299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (37349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (37469) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (37479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (37509) uart2: could not forward 11 UART bytes: ESP_ERR_NO_MEM
+E (37579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (37679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (37779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (37879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (37979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (38079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (38199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (38299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (38349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (38459) uart2: could not forward 12 UART bytes: ESP_ERR_NO_MEM
+E (38479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (38509) uart2: could not forward 13 UART bytes: ESP_ERR_NO_MEM
+E (38579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (38679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (38779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (38879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (38979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (39079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (39199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (39299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (39349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (39449) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (39479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (39509) uart2: could not forward 14 UART bytes: ESP_ERR_NO_MEM
+E (39579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (39679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (39779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (39879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (39979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (40079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (40199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (40299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (40349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (40449) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (40479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (40509) uart2: could not forward 11 UART bytes: ESP_ERR_NO_MEM
+E (40579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (40679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (40779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (40879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (40979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (41079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (41199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (41299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (41349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (41469) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+E (41479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (41509) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+E (41579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (41679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (41779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (41879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (41979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (42079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (42199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (42299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (42349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (42469) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (42479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (42509) uart2: could not forward 17 UART bytes: ESP_ERR_NO_MEM
+E (42579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (42679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (42779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (42879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (42979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (43079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (43199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (43299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (43349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (43459) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+E (43479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (43509) uart2: could not forward 20 UART bytes: ESP_ERR_NO_MEM
+E (43579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (43679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (43779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (43879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (43979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (44079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (44199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (44299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (44349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (44459) uart2: could not forward 18 UART bytes: ESP_ERR_NO_MEM
+E (44479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (44509) uart2: could not forward 44 UART bytes: ESP_ERR_NO_MEM
+E (44579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (44679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (44779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (44879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (44979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (45079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (45199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (45299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (45349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (45459) uart2: could not forward 18 UART bytes: ESP_ERR_NO_MEM
+E (45479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (45509) uart2: could not forward 37 UART bytes: ESP_ERR_NO_MEM
+W (45509) uart2: discarded UART packet 0xFF with invalid EOF
+E (45579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (45679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (45779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (45879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (45979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (46079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (46199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (46299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (46349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (46439) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (46479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (46499) uart2: could not forward 14 UART bytes: ESP_ERR_NO_MEM
+W (46499) uart2: discarded UART packet 0xFF with invalid EOF
+W (46509) uart2: could not forward 2 UART bytes: ESP_ERR_NO_MEM
+E (46579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (46679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (46779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (46879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (46979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (47079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (47199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (47299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (47349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (47469) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (47479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (47509) uart2: could not forward 41 UART bytes: ESP_ERR_NO_MEM
+W (47509) uart2: discarded UART packet 0x05 with invalid EOF
+E (47579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (47679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (47779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (47879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (47979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (48079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (48199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (48299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (48349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (48479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (48579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (48679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (48779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (48879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (48979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (49079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (49199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (49299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (49349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (49479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (49579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (49679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (49779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (49879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (49979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (50079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (50199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (50299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (50349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (50479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (50579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (50679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (50779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (50879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (50979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (51079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (51199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (51299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (51349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (51479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (51579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (51679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (51779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (51879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (51979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (52079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (52199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (52299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (52349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (52479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (52579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (52679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (52779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (52879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (52979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (53079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (53199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (53299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (53349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (53479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (53579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (53679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (53779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (53879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (53979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (54079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (54199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (54299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (54349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (54479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (54579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (54679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (54779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (54879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (54979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (55079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (55199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (55299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (55349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (55479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (55579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (55679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (55779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (55879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (55979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (56079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (56199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (56299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (56349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (56479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (56579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (56679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (56779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (56879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (56979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (57079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (57199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (57299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (57349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (57469) uart2: could not forward 58 UART bytes: ESP_ERR_NO_MEM
+W (57469) uart2: discarded UART packet 0xFF with invalid EOF
+W (57469) uart2: discarded UART packet 0xFF with invalid EOF
+W (57469) uart2: discarded UART packet 0xFF with invalid EOF
+W (57469) uart2: discarded UART packet 0xFF with invalid EOF
+E (57479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (57519) uart2: could not forward 57 UART bytes: ESP_ERR_NO_MEM
+E (57579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (57679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (57779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (57879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (57979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (58079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (58199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (58299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (58349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+E (58479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (58579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (58679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (58779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (58879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (58979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (59079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (59199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (59299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (59349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (59439) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (59479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (59509) uart2: could not forward 19 UART bytes: ESP_ERR_NO_MEM
+W (59519) uart2: could not forward 17 UART bytes: ESP_ERR_NO_MEM
+W (59519) uart2: discarded UART packet 0xFF with invalid EOF
+W (59539) uart2: could not forward 16 UART bytes: ESP_ERR_NO_MEM
+W (59539) uart2: discarded UART packet 0xFF with invalid EOF
+E (59579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (59679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (59779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (59879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (59979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (60079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (60199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (60299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (60349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (60419) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (60479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (60579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (60679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (60779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (60879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (60979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (61079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (61179) uart2: could not forward 17 UART bytes: ESP_ERR_NO_MEM
+E (61199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (61299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (61349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (61399) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (61479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (61509) uart2: could not forward 31 UART bytes: ESP_ERR_NO_MEM
+W (61509) uart2: discarded UART packet 0xFF with invalid EOF
+E (61579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (61679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (61779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (61879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (61979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (62079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (62189) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (62199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (62299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (62349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (62399) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (62479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (62509) uart2: could not forward 25 UART bytes: ESP_ERR_NO_MEM
+E (62579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (62679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (62779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (62879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (62979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (63079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (63189) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (63199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (63299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (63349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (63399) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (63479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (63509) uart2: could not forward 31 UART bytes: ESP_ERR_NO_MEM
+W (63509) uart2: discarded UART packet 0xFF with invalid EOF
+E (63579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (63679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (63779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (63879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (63979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (64079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (64189) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (64199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (64299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (64349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (64399) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (64479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (64499) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+W (64509) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (64579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (64679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (64779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (64879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (64979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (65079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (65189) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (65199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (65299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (65349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (65399) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (65479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (65499) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+W (65509) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (65579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (65679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (65779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (65879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (65979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (66079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (66179) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (66199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (66299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (66349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (66399) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (66479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (66499) uart2: could not forward 64 UART bytes: ESP_ERR_NO_MEM
+W (66509) uart2: discarded UART packet 0xFF with invalid EOF
+W (66509) uart2: discarded UART packet 0xFF with invalid EOF
+W (66519) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+E (66579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (66679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (66779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (66879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (66979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (67079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (67169) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (67199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (67299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (67349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (67389) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (67479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (67509) uart2: could not forward 25 UART bytes: ESP_ERR_NO_MEM
+W (67509) uart2: discarded UART packet 0xFF with invalid EOF
+E (67579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (67679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (67779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (67879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (67979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (68079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (68169) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (68199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (68299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (68349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (68389) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (68479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (68499) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+W (68509) uart2: could not forward 14 UART bytes: ESP_ERR_NO_MEM
+E (68579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (68679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (68779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (68879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (68979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (69079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (69169) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (69199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (69299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (69349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (69389) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (69479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (69499) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+W (69509) uart2: could not forward 15 UART bytes: ESP_ERR_NO_MEM
+E (69579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (69679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (69779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (69879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (69979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (70079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (70169) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (70199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (70299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (70349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (70379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (70479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (70509) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+W (70509) uart2: discarded UART packet 0xFF with invalid EOF
+E (70579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (70679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (70779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (70879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (70979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (71079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (71159) uart2: could not forward 12 UART bytes: ESP_ERR_NO_MEM
+E (71199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (71299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (71349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (71379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (71479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (71509) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (71579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (71679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (71779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (71879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (71979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (72079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (72159) uart2: could not forward 14 UART bytes: ESP_ERR_NO_MEM
+E (72199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (72299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (72349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (72379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (72479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (72509) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (72579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (72679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (72779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (72879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (72979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (73079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (73149) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (73199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (73299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (73349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (73379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (73479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (73509) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (73579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (73679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (73779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (73879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (73979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (74079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (74149) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (74199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (74299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (74349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (74379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (74479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (74509) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+E (74579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (74679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (74779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (74879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (74979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (75079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (75149) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (75199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (75299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (75349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (75379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (75479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (75509) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+E (75579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (75679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (75779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (75879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (75979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (76079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (76169) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (76199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (76299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (76349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (76389) uart2: could not forward 41 UART bytes: ESP_ERR_NO_MEM
+W (76389) uart2: discarded UART packet 0x05 with invalid EOF
+W (76389) uart2: discarded UART packet 0xFF with invalid EOF
+E (76479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (76509) uart2: could not forward 20 UART bytes: ESP_ERR_NO_MEM
+W (76509) uart2: discarded UART packet 0xFF with invalid EOF
+E (76579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (76679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (76779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (76879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (76979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (77079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (77169) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (77199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (77299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (77349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (77389) uart2: could not forward 15 UART bytes: ESP_ERR_NO_MEM
+E (77479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (77509) uart2: could not forward 24 UART bytes: ESP_ERR_NO_MEM
+E (77579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (77679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (77779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (77879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (77979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (78079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (78169) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (78199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (78299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (78349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (78389) uart2: could not forward 13 UART bytes: ESP_ERR_NO_MEM
+E (78479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (78509) uart2: could not forward 24 UART bytes: ESP_ERR_NO_MEM
+W (78509) uart2: discarded UART packet 0xFF with invalid EOF
+E (78579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (78679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (78779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (78879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (78979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (79079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (79169) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (79199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (79299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (79349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (79389) uart2: could not forward 15 UART bytes: ESP_ERR_NO_MEM
+E (79479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (79509) uart2: could not forward 25 UART bytes: ESP_ERR_NO_MEM
+W (79509) uart2: discarded UART packet 0xFF with invalid EOF
+E (79579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (79679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (79779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (79879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (79979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (80079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (80169) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (80199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (80299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (80349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (80389) uart2: could not forward 17 UART bytes: ESP_ERR_NO_MEM
+E (80479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (80509) uart2: could not forward 26 UART bytes: ESP_ERR_NO_MEM
+E (80579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (80679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (80779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (80879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (80979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (81079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (81169) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (81199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (81299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (81349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (81389) uart2: could not forward 16 UART bytes: ESP_ERR_NO_MEM
+E (81479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (81509) uart2: could not forward 23 UART bytes: ESP_ERR_NO_MEM
+E (81579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (81679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (81779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (81879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (81979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (82079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (82169) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (82199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (82299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (82349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (82389) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+E (82479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (82509) uart2: could not forward 21 UART bytes: ESP_ERR_NO_MEM
+W (82509) uart2: discarded UART packet 0x05 with invalid EOF
+E (82579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (82679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (82779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (82879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (82979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (83079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (83169) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (83199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (83299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (83349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (83389) uart2: could not forward 17 UART bytes: ESP_ERR_NO_MEM
+E (83479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (83509) uart2: could not forward 16 UART bytes: ESP_ERR_NO_MEM
+E (83579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (83679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (83779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (83879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (83979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (84079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (84169) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (84199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (84299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (84349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (84389) uart2: could not forward 17 UART bytes: ESP_ERR_NO_MEM
+W (84389) uart2: discarded UART packet 0xFF with invalid EOF
+E (84479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (84509) uart2: could not forward 16 UART bytes: ESP_ERR_NO_MEM
+E (84579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (84679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (84779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (84879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (84979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (85079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (85169) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (85199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (85299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (85349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (85389) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+E (85479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (85509) uart2: could not forward 16 UART bytes: ESP_ERR_NO_MEM
+E (85579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (85679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (85779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (85879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (85979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (86079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (86169) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (86199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (86299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (86349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (86389) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+E (86479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (86509) uart2: could not forward 13 UART bytes: ESP_ERR_NO_MEM
+E (86579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (86679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (86779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (86879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (86979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (87079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (87169) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (87199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (87299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (87349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (87389) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+E (87479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (87509) uart2: could not forward 15 UART bytes: ESP_ERR_NO_MEM
+E (87579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (87679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (87779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (87879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (87979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (88079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (88169) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (88199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (88299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (88349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (88389) uart2: could not forward 12 UART bytes: ESP_ERR_NO_MEM
+E (88479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (88509) uart2: could not forward 14 UART bytes: ESP_ERR_NO_MEM
+W (88509) uart2: discarded UART packet 0xFF with invalid EOF
+E (88579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (88679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (88779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (88879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (88979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (89079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (89169) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (89199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (89299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (89349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (89389) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+E (89479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (89509) uart2: could not forward 14 UART bytes: ESP_ERR_NO_MEM
+E (89579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (89679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (89779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (89879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (89979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (90079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (90169) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (90199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (90299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (90349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (90389) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (90479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (90509) uart2: could not forward 13 UART bytes: ESP_ERR_NO_MEM
+E (90579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (90679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (90779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (90879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (90979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (91079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (91169) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (91199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (91299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (91349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (91389) uart2: could not forward 46 UART bytes: ESP_ERR_NO_MEM
+W (91389) uart2: discarded UART packet 0xFF with invalid EOF
+E (91479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (91509) uart2: could not forward 11 UART bytes: ESP_ERR_NO_MEM
+E (91579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (91679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (91779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (91879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (91979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (92079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (92179) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (92199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (92299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (92349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (92399) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (92479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (92509) uart2: could not forward 12 UART bytes: ESP_ERR_NO_MEM
+E (92579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (92679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (92779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (92879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (92979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (93079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (93159) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (93199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (93299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (93349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (93379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (93479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (93509) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+E (93579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (93679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (93779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (93879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (93979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (94079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (94169) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (94199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (94299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (94349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (94379) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (94479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (94509) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+E (94579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (94679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (94779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (94879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (94979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (95079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (95149) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (95199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (95299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (95349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (95379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (95479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (95509) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+E (95579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (95679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (95779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (95879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (95979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (96079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (96149) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (96199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (96299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (96349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (96379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (96479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (96509) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+E (96579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (96679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (96779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (96879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (96979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (97079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (97149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (97199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (97299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (97349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (97379) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (97479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (97509) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+E (97579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (97679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (97779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (97879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (97979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (98079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (98149) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (98199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (98299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (98349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (98379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (98479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (98509) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (98579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (98679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (98779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (98879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (98979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (99079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (99149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (99199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (99299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (99349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (99379) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (99479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (99509) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (99579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (99679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (99779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (99879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (99979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (100079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (100149) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (100199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (100299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (100349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (100379) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (100479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (100509) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+E (100579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (100679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (100779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (100879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (100979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (101079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (101149) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (101199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (101299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (101349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (101379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (101479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (101509) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (101579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (101679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (101779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (101879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (101979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (102079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (102149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (102199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (102299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (102349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (102379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (102479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (102509) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+E (102579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (102679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (102779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (102879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (102979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (103079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (103149) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (103199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (103299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (103349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (103379) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (103479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (103509) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+W (103509) uart2: discarded UART packet 0xFF with invalid EOF
+E (103579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (103679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (103779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (103879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (103979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (104079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (104149) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (104199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (104299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (104349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (104379) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (104479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (104509) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (104579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (104679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (104779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (104879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (104979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (105079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (105149) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (105199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (105299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (105349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (105379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (105479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (105509) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (105579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (105679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (105779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (105879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (105979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (106079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (106149) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (106199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (106299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (106349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (106379) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (106479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (106509) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+E (106579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (106679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (106779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (106879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (106979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (107079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (107149) uart2: could not forward 2 UART bytes: ESP_ERR_NO_MEM
+E (107199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (107299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (107349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (107379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (107479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (107509) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+W (107509) uart2: discarded UART packet 0xFF with invalid EOF
+E (107579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (107679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (107779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (107879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (107979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (108079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (108149) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (108199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (108299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (108349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (108379) uart2: could not forward 2 UART bytes: ESP_ERR_NO_MEM
+E (108479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (108509) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+E (108579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (108679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (108779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (108879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (108979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (109079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (109149) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (109199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (109299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (109349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (109379) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (109479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (109509) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (109579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (109679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (109779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (109879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (109979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (110079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (110149) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (110199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (110299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (110349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (110379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (110479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (110509) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (110579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (110679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (110779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (110879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (110979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (111079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (111149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (111199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (111299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (111349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (111379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (111479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (111509) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (111579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (111679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (111779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (111879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (111979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (112079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (112149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (112199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (112299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (112349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (112379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (112479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (112509) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (112579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (112679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (112779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (112879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (112979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (113079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (113169) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (113199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (113299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (113349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (113389) uart2: could not forward 2 UART bytes: ESP_ERR_NO_MEM
+E (113479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (113509) uart2: could not forward 25 UART bytes: ESP_ERR_NO_MEM
+E (113579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (113679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (113779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (113879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (113979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (114079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (114169) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (114199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (114299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (114349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (114389) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (114479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (114509) uart2: could not forward 25 UART bytes: ESP_ERR_NO_MEM
+E (114579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (114679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (114779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (114879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (114979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (115079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (115159) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (115199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (115299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (115349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (115389) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (115479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (115509) uart2: could not forward 22 UART bytes: ESP_ERR_NO_MEM
+E (115579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (115679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (115779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (115879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (115979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (116079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (116159) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+E (116199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (116299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (116349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (116389) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (116479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (116509) uart2: could not forward 24 UART bytes: ESP_ERR_NO_MEM
+E (116579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (116679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (116779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (116879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (116979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (117079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (117159) uart2: could not forward 14 UART bytes: ESP_ERR_NO_MEM
+E (117199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (117299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (117349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (117389) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (117479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (117509) uart2: could not forward 24 UART bytes: ESP_ERR_NO_MEM
+E (117579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (117679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (117779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (117879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (117979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (118079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (118159) uart2: could not forward 12 UART bytes: ESP_ERR_NO_MEM
+E (118199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (118299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (118349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (118389) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (118479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (118509) uart2: could not forward 23 UART bytes: ESP_ERR_NO_MEM
+W (118509) uart2: discarded UART packet 0xE1 with invalid EOF
+E (118579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (118679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (118779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (118879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (118979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (119079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (119159) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (119199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (119299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (119349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (119389) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (119479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (119509) uart2: could not forward 26 UART bytes: ESP_ERR_NO_MEM
+W (119509) uart2: discarded UART packet 0xFF with invalid EOF
+E (119579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (119679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (119779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (119879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (119979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (120079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (120159) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+E (120199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (120299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (120349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (120389) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (120479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (120509) uart2: could not forward 15 UART bytes: ESP_ERR_NO_MEM
+W (120509) uart2: discarded UART packet 0xFF with invalid EOF
+E (120579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (120679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (120779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (120879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (120979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (121079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (121159) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (121199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (121299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (121349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (121389) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (121479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (121509) uart2: could not forward 12 UART bytes: ESP_ERR_NO_MEM
+E (121579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (121679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (121779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (121879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (121979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (122079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (122159) uart2: could not forward 8 UART bytes: ESP_ERR_NO_MEM
+E (122199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (122299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (122349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (122389) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (122479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (122509) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (122579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (122679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (122779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (122879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (122979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (123079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (123159) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (123199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (123299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (123349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (123389) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (123479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (123509) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (123579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (123679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (123779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (123879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (123979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (124079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (124159) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (124199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (124299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (124349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (124389) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (124479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (124509) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (124579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (124679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (124779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (124879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (124979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (125079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (125159) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (125199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (125299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (125349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (125389) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (125479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (125509) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (125579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (125679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (125779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (125879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (125979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (126079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (126159) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (126199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (126299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (126349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (126389) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (126479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (126509) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (126579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (126679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (126779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (126879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (126979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (127079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (127159) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (127199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (127299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (127349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (127389) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (127479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (127509) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (127579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (127679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (127779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (127879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (127979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (128079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (128159) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (128199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (128299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (128349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (128389) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (128479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (128509) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (128579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (128679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+I (128689) flight_state: landing detected: accel 1.01 g, gyro 2.17 dps, altitude range 9.88 m
+I (128689) flight_state: descent -> landed
+E (128779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (128879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (128979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (129079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (129159) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (129199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (129299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (129349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (129389) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (129479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (129509) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (129579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (129679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (129779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (129879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (129979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (130079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (130159) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (130199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (130299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (130349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (130389) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (130479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (130509) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (130579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (130679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (130779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (130879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (130979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (131079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (131159) uart2: could not forward 12 UART bytes: ESP_ERR_NO_MEM
+E (131199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (131299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (131349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (131379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (131479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (131509) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (131579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (131679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (131779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (131879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (131979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (132079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (132159) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (132199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (132299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (132349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (132379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (132479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (132509) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (132579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (132679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (132779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (132879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (132979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (133079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (133149) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (133199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (133299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (133349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (133379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (133479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (133509) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (133579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (133679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (133779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (133879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (133979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (134079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (134149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (134199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (134299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (134349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (134379) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (134479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (134509) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (134579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (134679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (134779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (134879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (134979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (135079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (135149) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (135199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (135299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (135349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (135379) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (135479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (135509) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (135579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (135679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (135779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (135879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (135979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (136079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (136149) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (136199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (136299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (136349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (136379) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (136479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (136509) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (136579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (136679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (136779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (136879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (136979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (137079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (137149) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (137199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (137299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (137349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (137379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (137479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (137509) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (137579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (137679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (137779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (137879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (137979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (138079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (138149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (138199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (138299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (138349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (138379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (138479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (138509) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (138579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (138679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (138779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (138879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (138979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (139079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (139149) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (139199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (139299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (139349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (139379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (139479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (139509) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (139579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (139679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (139779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (139879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (139979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (140079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (140149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (140199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (140299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (140349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (140379) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (140479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (140509) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (140579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (140679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (140779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (140879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (140979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (141079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (141149) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (141199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (141299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (141349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (141379) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (141479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (141509) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (141579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (141679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (141779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (141879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (141979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (142079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (142149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (142199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (142299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (142349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (142379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (142479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (142509) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (142579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (142679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (142779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (142879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (142979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (143079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (143149) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (143199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (143299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (143349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (143379) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (143479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (143509) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (143579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (143679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (143779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (143879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (143979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (144079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (144149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (144199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (144299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (144349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (144379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (144479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (144509) uart2: could not forward 10 UART bytes: ESP_ERR_NO_MEM
+E (144579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (144679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (144779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (144879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (144979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (145079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (145149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (145199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (145299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (145349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (145379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (145479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (145509) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (145579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (145679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (145779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (145879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (145979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (146079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (146149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (146199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (146299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (146349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (146379) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (146479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (146509) uart2: could not forward 13 UART bytes: ESP_ERR_NO_MEM
+E (146579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (146679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (146779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (146879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (146979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (147079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (147149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (147199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (147299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (147349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (147379) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (147479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (147509) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (147579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (147679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (147779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (147879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (147979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (148079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (148149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (148199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (148299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (148349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (148379) uart2: could not forward 6 UART bytes: ESP_ERR_NO_MEM
+E (148479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (148509) uart2: could not forward 12 UART bytes: ESP_ERR_NO_MEM
+E (148579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (148679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (148779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (148879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (148979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (149079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (149149) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (149199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (149299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (149349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (149379) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (149479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (149509) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (149579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (149679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (149779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (149879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (149979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (150079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (150149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (150199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (150299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (150349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (150379) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM
+E (150479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (150509) uart2: could not forward 15 UART bytes: ESP_ERR_NO_MEM
+E (150579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (150679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (150779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (150879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (150979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (151079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (151149) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (151199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (151299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (151349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (151379) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (151479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (151509) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (151579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (151679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (151779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (151879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (151979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (152079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (152149) uart2: could not forward 3 UART bytes: ESP_ERR_NO_MEM
+E (152199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (152299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (152349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (152379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (152479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (152509) uart2: could not forward 18 UART bytes: ESP_ERR_NO_MEM
+E (152579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (152679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (152779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (152879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (152979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (153079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (153149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (153199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (153299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (153349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (153379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (153479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (153509) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (153579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (153679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (153779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (153879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (153979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (154079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (154149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (154199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (154299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (154349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (154379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (154479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (154509) uart2: could not forward 18 UART bytes: ESP_ERR_NO_MEM
+W (154509) uart2: discarded UART packet 0xFF with invalid EOF
+E (154579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (154679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (154779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (154879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (154979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (155079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (155149) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (155199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (155299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (155349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (155379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (155479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (155509) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (155579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (155679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (155779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (155879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (155979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (156079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (156149) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (156199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (156299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (156349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (156379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (156479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (156509) uart2: could not forward 16 UART bytes: ESP_ERR_NO_MEM
+E (156579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (156679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (156779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (156879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (156979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (157079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (157149) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (157199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (157299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (157349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (157379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (157479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (157509) uart2: could not forward 4 UART bytes: ESP_ERR_NO_MEM
+E (157579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (157679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (157779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (157879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (157979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (158079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (158159) uart2: could not forward 7 UART bytes: ESP_ERR_NO_MEM
+E (158199) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (158299) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (158349) sensors: state packet queue failed: ESP_ERR_NO_MEM
+W (158379) uart2: could not forward 5 UART bytes: ESP_ERR_NO_MEM
+E (158479) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (158509) uart2: could not forward 29 UART bytes: ESP_ERR_NO_MEM
+W (158509) uart2: discarded UART packet 0xFF with invalid EOF
+E (158579) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (158679) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (158779) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (158879) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (158979) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+E (159079) sensors: sensor packet queue failed: ESP_ERR_NO_MEM
+W (159159) uart2: could not forward 9 UART bytes: ESP_ERR_NO_MEM

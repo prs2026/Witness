@@ -1,0 +1,13 @@
+I (9012) flash_logger: all stored sessions erased; new session 1 created
+I (9012) serial_command: all flash log sessions erased
+I (19682) sensors: radio RX: 10 bytes, packet ID 0x05
+I (19682) sensors: 05 00 00 00 00 00 00 73 01 0a
+I (19692) serial_command: acting on radio command 0x7301
+I (19692) flight_state: pad idle -> boost
+I (19712) flash_logger: queued 100 prelaunch records (2000 ms) for flash
+I (20212) flight_state: burnout detected: axial acceleration 0.04 g
+I (20212) flight_state: boost -> coast
+I (43042) sensors: radio RX: 10 bytes, packet ID 0x05
+I (43042) sensors: 05 00 00 00 00 00 00 73 04 0a
+I (43052) serial_command: acting on radio command 0x7304
+I (43052) flight_state: coast -> landed

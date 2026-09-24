@@ -18,24 +18,66 @@ ROOT = Path(__file__).resolve().parent
 LOG_DIR = ROOT / "logs"
 
 # Default network endpoints shown by the GUI at startup.
-DEFAULT_TCP_1_HOST = "prs2026hitl"
-DEFAULT_TCP_1_PORT = "7100"
-DEFAULT_TCP_2_HOST = "prs2026hitl"
-DEFAULT_TCP_2_PORT = "7101"
+DEFAULT_TCP_1_HOST = ""
+DEFAULT_TCP_1_PORT = ""
+DEFAULT_TCP_2_HOST = ""
+DEFAULT_TCP_2_PORT = ""
+NO_SERIAL_PORT = "(no port)"
 
-# Commands currently defined by comms.h. Command packets are sent as:
+# Commands currently defined by comms.h. Most command packets are sent as:
 # ID (0x05) | status (2) | uptime (4) | command (2) | EOF (0x0A).
+# Mass-storage and log-erasure use their legacy compact three-byte forms.
 COMMAND_PACKET_ID = 0x05
 COMMAND_PACKET_EOF = 0x0A
+COMPACT_COMMAND_PACKETS = {
+    0x6868: bytes((COMMAND_PACKET_ID, 0x68, 0x68)),
+    0x6869: bytes((COMMAND_PACKET_ID, 0x68, 0x69)),
+}
 QUICK_COMMANDS = (
-    ("CH1 Off", 0x30),
-    ("CH1 On", 0x31),
-    ("CH2 Off", 0x32),
-    ("CH2 On", 0x33),
-    ("CH3 Off", 0x34),
-    ("CH3 On", 0x35),
-    ("5V Reg Off", 0x50),
-    ("5V Reg On", 0x51),
+    ("CH1 Off", 0x0030, False),
+    ("CH1 On", 0x0031, False),
+    ("CH2 Off", 0x0032, False),
+    ("CH2 On", 0x0033, False),
+    ("CH3 Off", 0x0034, False),
+    ("CH3 On", 0x0035, False),
+    ("5V Reg Off", 0x0050, False),
+    ("5V Reg On", 0x0051, False),
+    ("Witness Debug 10 Hz", 0x00E0, False),
+    ("USB Mass Storage", 0x6868, False),
+    ("Erase Logs", 0x6869, True),
+    ("State: Pad", 0x7300, False),
+    ("State: Boost", 0x7301, False),
+    ("State: Coast", 0x7302, False),
+    ("State: Descent", 0x7303, False),
+    ("State: Landed", 0x7304, False),
+)
+
+STATUS_FLAG_LABELS = (
+    (0x01, "HB phase"),
+    (0x02, "Low-g"),
+    (0x04, "Gyro"),
+    (0x08, "IMU temp"),
+    (0x10, "Flash init FAIL"),
+    (0x20, "High-g"),
+    (0x40, "Barometer"),
+    (0x80, "Logging FAIL"),
+)
+FLIGHT_STATE_LABELS = (
+    (0x00, "Pad idle"),
+    (0x01, "Boost"),
+    (0x02, "Coast"),
+    (0x03, "Descent"),
+    (0x04, "Landed"),
+)
+CAMERA_STATUS_FLAG_LABELS = (
+    (0x01, "Current error"),
+    (0x02, "Battery invalid"),
+    (0x04, "Command flag"),
+    (0x08, "Output 1"),
+    (0x10, "Output 2"),
+    (0x20, "Output 3"),
+    (0x40, "5V regulator"),
+    (0x80, "Reserved"),
 )
 
 
@@ -105,6 +147,13 @@ def parse_packet(packet_id: int, payload: bytes):
         return result
     if packet_id == 0xFF and len(payload) == 6:
         return {"packet": "heartbeat", "status": number(payload[0:2]), "uptime": number(payload[2:6])}
+    if packet_id == 0xF0 and len(payload) == 11:
+        return {
+            "packet": "ground_station_status",
+            "rssi": signed_number(payload[0:1]),
+            "uptime": number(payload[1:5]),
+            "reserved": list(payload[5:11]),
+        }
     if packet_id == 0x05 and len(payload) == 8:
         return {"packet": "command", "status": number(payload[0:2]), "uptime": number(payload[2:6]),
                 "command_value": number(payload[6:8])}
@@ -150,7 +199,7 @@ class PacketDecoder:
     # payload + EOF.  Keep the 21-byte header-defined form as a fallback so
     # older producers remain readable while the firmware/header are reconciled.
     payload_lengths = {0x01: (23, 21), 0x02: (62,), 0x03: (17,), 0xFF: (6,),
-                       0x05: (8,), 0xE0: (101,), 0xE1: (12,)}
+                       0xF0: (11,), 0x05: (8,), 0xE0: (101,), 0xE1: (12,)}
     eof = 0x0A
 
     def __init__(self, on_packet, on_error=None):
@@ -250,6 +299,7 @@ class SerialMonitor(tk.Tk):
         self.history = {}
         self.last_packet_time = {}
         self.age_labels = {}
+        self.status_indicators = {}
         self.section_groups = {}
         self.section_column_counts = {}
         self.command_history = []
@@ -371,18 +421,27 @@ class SerialMonitor(tk.Tk):
         self.send_command_button.pack(side="left")
         quick_command_frame = ttk.Frame(console_frame, padding=(0, 5, 0, 0))
         quick_command_frame.pack(fill="x")
-        ttk.Label(quick_command_frame, text="Commands:").pack(side="left")
+        ttk.Label(quick_command_frame, text="Commands:").pack(side="left", anchor="n")
+        quick_command_grid = ttk.Frame(quick_command_frame)
+        quick_command_grid.pack(side="left", fill="x", expand=True)
         self.quick_command_buttons = []
-        for label, opcode in QUICK_COMMANDS:
+        command_columns = 4
+        for index, (label, opcode, confirm) in enumerate(QUICK_COMMANDS):
             button = ttk.Button(
-                quick_command_frame,
+                quick_command_grid,
                 text=label,
-                command=lambda name=label, value=opcode: self.send_quick_command(
-                    name, value
+                command=lambda name=label, value=opcode, needs_confirm=confirm:
+                    self.send_quick_command(
+                        name, value, needs_confirm
                 ),
             )
-            button.pack(side="left", padx=(5, 0))
+            button.grid(
+                row=index // command_columns, column=index % command_columns,
+                sticky="ew", padx=(5, 0), pady=(0, 3),
+            )
             self.quick_command_buttons.append(button)
+        for column in range(command_columns):
+            quick_command_grid.columnconfigure(column, weight=1)
         main_pane.add(notebook, weight=4)
         main_pane.add(console_frame, weight=1)
 
@@ -412,6 +471,11 @@ class SerialMonitor(tk.Tk):
                 ("iris_battery_voltage", "Iris battery voltage [V]"),
             ],
             "heartbeat": [("status", "Status"), ("uptime", "Uptime")],
+            "ground_station_status": [
+                ("rssi", "Last valid LoRa RSSI [dBm]"),
+                ("uptime", "Ground-station uptime [ms]"),
+                ("reserved", "Reserved bytes [0..5]"),
+            ],
             "command": [
                 ("status", "Status"), ("uptime", "Uptime"),
                 ("command_value", "Command value"),
@@ -455,12 +519,13 @@ class SerialMonitor(tk.Tk):
                                  relief="sunken", bd=1)
             age_label.pack(side="left", padx=(5, 0))
             self.age_labels[age_key] = age_label
-            for field_index, (field, label) in enumerate(fields, start=1):
+            field_row = 1
+            for field, label in fields:
                 key = f"{prefix}.{packet}.{field}"
                 self.values[key] = tk.StringVar(value="null")
                 self.check_vars[key] = tk.BooleanVar(value=False)
                 row_frame = ttk.Frame(section)
-                row_frame.grid(row=field_index, column=0,
+                row_frame.grid(row=field_row, column=0,
                                sticky="ew", pady=(0, 2))
                 row_frame.columnconfigure(2, weight=1)
                 ttk.Checkbutton(row_frame, variable=self.check_vars[key]).grid(
@@ -473,9 +538,74 @@ class SerialMonitor(tk.Tk):
                 ttk.Label(row_frame, textvariable=self.values[key], width=18,
                           wraplength=135, justify="left", anchor="w").grid(
                               row=0, column=2, sticky="w")
+                field_row += 1
+                if field == "status" or field.endswith("_status"):
+                    self.make_status_decoder(
+                        section, key, field_row,
+                        camera_status=(packet == "camera" and field == "status"),
+                    )
+                    field_row += 1
         self.section_groups[parent] = sections
         parent.bind("<Configure>", lambda _event, frame=parent: self.retile_sections(frame))
         self.retile_sections(parent)
+
+    def make_status_decoder(self, parent, key, row, camera_status=False):
+        decoder = ttk.Frame(parent)
+        decoder.grid(row=row, column=0, sticky="ew", padx=(24, 0), pady=(0, 5))
+
+        ttk.Label(
+            decoder,
+            text="Byte 0: camera flags" if camera_status else "Byte 0: system flags",
+        ).pack(anchor="w")
+        flags_frame = ttk.Frame(decoder)
+        flags_frame.pack(anchor="w")
+        flag_labels = []
+        flag_specs = CAMERA_STATUS_FLAG_LABELS if camera_status else STATUS_FLAG_LABELS
+        for index, (mask, text) in enumerate(flag_specs):
+            label = tk.Label(
+                flags_frame, text=text, width=9, height=2, wraplength=65,
+                background="#f7f7f7", foreground="#777777",
+                relief="solid", borderwidth=1,
+            )
+            label.grid(row=index // 4, column=index % 4, sticky="nsew", padx=1, pady=1)
+            flag_labels.append((mask, label))
+
+        if camera_status:
+            ttk.Label(decoder, text="Byte 1: reserved").pack(anchor="w", pady=(3, 0))
+            self.status_indicators[key] = {
+                "flags": flag_labels,
+                "states": None,
+                "invalid": None,
+                "camera": True,
+            }
+            return
+
+        ttk.Label(decoder, text="Byte 1 bits 2:0: flight state").pack(
+            anchor="w", pady=(3, 0)
+        )
+        states_frame = ttk.Frame(decoder)
+        states_frame.pack(anchor="w")
+        state_labels = {}
+        for index, (state, text) in enumerate(FLIGHT_STATE_LABELS):
+            label = tk.Label(
+                states_frame, text=text, width=9, height=1,
+                background="#f7f7f7", foreground="#777777",
+                relief="solid", borderwidth=1,
+            )
+            label.grid(row=index // 3, column=index % 3, sticky="nsew", padx=1, pady=1)
+            state_labels[state] = label
+        invalid_label = tk.Label(
+            states_frame, text="Invalid", width=9, height=1,
+            background="#f7f7f7", foreground="#777777",
+            relief="solid", borderwidth=1,
+        )
+        invalid_label.grid(row=1, column=2, sticky="nsew", padx=1, pady=1)
+        self.status_indicators[key] = {
+            "flags": flag_labels,
+            "states": state_labels,
+            "invalid": invalid_label,
+            "camera": False,
+        }
 
     def retile_sections(self, parent):
         sections = self.section_groups.get(parent, [])
@@ -501,12 +631,11 @@ class SerialMonitor(tk.Tk):
             ports = [p.device for p in list_ports.comports()]
         except ImportError:
             ports = []
+        choices = [NO_SERIAL_PORT, *ports]
         for combo in (self.port_a_combo, self.port_b_combo):
-            combo["values"] = ports
-        if ports and not self.port_a_combo.get():
-            self.port_a_combo.set(ports[0])
-        if len(ports) > 1 and not self.port_b_combo.get():
-            self.port_b_combo.set(ports[1])
+            current = combo.get()
+            combo["values"] = choices
+            combo.set(current if current in ports else NO_SERIAL_PORT)
         self.refresh_command_targets()
 
     def refresh_command_targets(self):
@@ -568,8 +697,20 @@ class SerialMonitor(tk.Tk):
             + bytes((COMMAND_PACKET_EOF,))
         )
 
-    def send_quick_command(self, name, opcode):
-        packet = self.build_command_packet(opcode)
+    @staticmethod
+    def build_quick_command_packet(opcode):
+        compact_packet = COMPACT_COMMAND_PACKETS.get(opcode)
+        if compact_packet is not None:
+            return compact_packet
+        return SerialMonitor.build_command_packet(opcode)
+
+    def send_quick_command(self, name, opcode, confirm=False):
+        if confirm and not messagebox.askyesno(
+                "Confirm command",
+                "Erase all stored log sessions? This cannot be undone.",
+                icon="warning"):
+            return
+        packet = self.build_quick_command_packet(opcode)
         self.transmit_command(self.command_port_combo.get(), packet, name)
 
     def recall_command(self, direction):
@@ -600,7 +741,10 @@ class SerialMonitor(tk.Tk):
         self.disconnect() if (self.serials or self.tcp_sockets) else self.connect()
 
     def connect(self):
-        ports = [port for port in (self.port_a_combo.get(), self.port_b_combo.get()) if port]
+        ports = [
+            port for port in (self.port_a_combo.get(), self.port_b_combo.get())
+            if port and port != NO_SERIAL_PORT
+        ]
         tcp_endpoints = []
         for index, (host_entry, port_entry) in enumerate(self.tcp_entries, start=1):
             host = host_entry.get().strip()
@@ -758,6 +902,40 @@ class SerialMonitor(tk.Tk):
             return f"0b{value:016b}"
         return str(value)
 
+    def update_status_decoder(self, key, value):
+        indicators = self.status_indicators.get(key)
+        if indicators is None or not isinstance(value, int):
+            return
+
+        system_flags = (value >> 8) & 0xFF
+        flight_state = value & 0x07
+        for mask, label in indicators["flags"]:
+            active = bool(system_flags & mask)
+            error_masks = {0x01, 0x02, 0x80} if indicators["camera"] else {0x10, 0x80}
+            active_color = "#fb6a4a" if mask in error_masks else "#74c476"
+            label.configure(
+                background=active_color if active else "#f7f7f7",
+                foreground="#111111" if active else "#777777",
+                relief="sunken" if active else "solid",
+            )
+
+        if indicators["states"] is None:
+            return
+        for state, label in indicators["states"].items():
+            active = flight_state == state
+            label.configure(
+                background="#6baed6" if active else "#f7f7f7",
+                foreground="#111111" if active else "#777777",
+                relief="sunken" if active else "solid",
+            )
+        invalid = flight_state not in indicators["states"]
+        indicators["invalid"].configure(
+            text=f"Invalid ({flight_state})" if invalid else "Invalid",
+            background="#fb6a4a" if invalid else "#f7f7f7",
+            foreground="#111111" if invalid else "#777777",
+            relief="sunken" if invalid else "solid",
+        )
+
     @classmethod
     def format_packet(cls, packet):
         fields = ", ".join(
@@ -785,6 +963,8 @@ class SerialMonitor(tk.Tk):
                 key = f"{kind}.{packet['packet']}.{field}"
                 if key in self.values:
                     self.values[key].set(self.format_display_value(field, value))
+                    if field == "status" or field.endswith("_status"):
+                        self.update_status_decoder(key, value)
                     if isinstance(value, (int, float, list, tuple)):
                         samples = self.history.setdefault(key, [])
                         samples.append((_dt.datetime.now().timestamp(), value))

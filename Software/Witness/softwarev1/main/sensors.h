@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
@@ -18,6 +19,7 @@
 class SpiDataForwarder;
 class WitnessStatus;
 class CommandBridge;
+class FlightStateMachine;
 
 class Sensors final {
 public:
@@ -29,6 +31,18 @@ public:
     static constexpr std::uint32_t kDebugPacketRateHz = 10;
     static constexpr std::uint32_t kBatterySampleRateHz = 10;
     static constexpr std::uint32_t kTaskStackSize = 4096;
+
+    // Independent LoRa downlink rates. Each transmission uses the most recent
+    // canonical frame generated at the packet's normal producer/USB rate.
+    // Rates must be non-zero integer divisors of 1000 Hz.
+    static constexpr std::uint32_t kRadioSensorPacketRateHz = 1;
+    static constexpr std::uint32_t kRadioStatePacketRateHz = 1;
+    static constexpr std::uint32_t kRadioCameraPacketRateHz = 1;
+    static constexpr std::uint32_t kRadioCommandPacketRateHz = 1;
+    static constexpr std::uint32_t kRadioHeartbeatPacketRateHz = 1;
+    static constexpr std::uint32_t kRadioWitnessDebugPacketRateHz = 1;
+    static constexpr std::uint32_t kRadioIrisDebugPacketRateHz = 1;
+    static constexpr std::size_t kRadioPacketTypeCount = 7;
 
     // GPIO1 uses ADC1 channel 0. The board divider is 15k high / 5k low.
     static constexpr adc_unit_t kBatteryAdcUnit = ADC_UNIT_1;
@@ -78,7 +92,8 @@ public:
     Sensors(
         SpiDataForwarder &data_forwarder,
         WitnessStatus &witness_status,
-        CommandBridge &command_bridge);
+        CommandBridge &command_bridge,
+        FlightStateMachine &flight_state_machine);
 
     Sensors(const Sensors &) = delete;
     Sensors &operator=(const Sensors &) = delete;
@@ -86,6 +101,7 @@ public:
     esp_err_t start();
     esp_err_t latest_sample(Sample &sample, TickType_t timeout = 0) const;
     esp_err_t handle_command(std::uint16_t command);
+    void set_radio_transmission_enabled(bool enabled);
 
 private:
     static_assert(kTaskRateHz > 0 && (1000U % kTaskRateHz) == 0,
@@ -119,6 +135,7 @@ private:
     static constexpr std::size_t kMaximumSpiTransfer = 258;
     static constexpr std::uint32_t kBootDelayMs = 35;
     static constexpr std::uint32_t kResetDelayMs = 30;
+    static constexpr std::uint32_t kRadioInitRetryMs = 1000;
 
     // Main-page registers used by the driver.
     static constexpr std::uint8_t kRegFuncCfgAccess = 0x01;
@@ -176,6 +193,7 @@ private:
     esp_err_t queue_debug_packet();
     esp_err_t read_battery_voltage();
     void poll_radio_commands();
+    void service_radio_transmit(TickType_t now);
     void publish_sample();
     void run();
     void release_resources();
@@ -183,6 +201,7 @@ private:
     SpiDataForwarder &data_forwarder_;
     WitnessStatus &witness_status_;
     CommandBridge &command_bridge_;
+    FlightStateMachine &flight_state_machine_;
     Ms5607 ms5607_{};
     Ra01 radio_{};
     spi_device_handle_t spi_device_ = nullptr;
@@ -192,8 +211,15 @@ private:
     SemaphoreHandle_t sample_mutex_ = nullptr;
     bool owns_spi_bus_ = false;
     bool sample_available_ = false;
+    bool has_low_g_accel_sample_ = false;
+    bool has_high_g_accel_sample_ = false;
+    bool has_gyro_sample_ = false;
     bool ms5607_initialized_ = false;
     bool radio_ready_ = false;
+    TickType_t last_radio_init_attempt_ = 0;
+    std::array<TickType_t, kRadioPacketTypeCount> radio_last_sent_{};
+    std::size_t next_radio_packet_index_ = 0;
+    std::atomic_bool radio_transmission_enabled_{true};
     std::atomic_bool debug_packet_output_enabled_{false};
     Sample working_sample_{};
     Sample latest_sample_{};
