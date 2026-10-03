@@ -1,0 +1,15 @@
+[09:25:32.789] RX[COM9]  03
+[09:25:32.792] RX[COM9]  00 00 00 00 00 00 38 00 00 0e 34 f7 00 00 00 0c 8c 0a
+[09:25:32.798] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0011100000000000, uptime=931063, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=3.212
+[09:25:33.497] RX[COM9]  f0
+[09:25:33.498] RX[COM9]  b3 00 00 04 2b 00 00 00 00 00 00 0a
+[09:25:33.500] PACKET[COM9] ground_station_status: rssi=-77, uptime=1067, reserved=[0, 0, 0, 0, 0, 0]
+[09:25:33.932] RX[COM9]  45
+[09:25:33.933] BAD_PACKET[COM9] unknown packet ID 0x45; discarded 1 byte(s)
+[09:25:33.943] RX[COM9]  20 28 31 36 38 39 29 20 61 70 65 72 74 75 72 65 3a 20 52 65 63 65 69 76 65 20 66 61 69 6c 65 64 3a 20 45 53 50 5f 45 52 52 5f 49 4e 56 41 4c 49 44 5f 43 52 43 20 28 30 78 31 30 39 29 0d 0a ff 2f 00 00 00 04 9a 0a
+[09:25:33.944] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 63 byte(s)
+[09:25:33.948] PACKET[COM9] heartbeat: status=0b0010111100000000, uptime=1178
+[09:25:34.488] RX[COM9]  f0
+[09:25:34.489] RX[COM9]  ac 00 00 08 13 00 00 00 00 00 00 0a
+[09:25:34.491] PACKET[COM9] ground_station_status: rssi=-84, uptime=2067, reserved=[0, 0, 0, 0, 0, 0]
+[09:25:34.615] ERROR[COM9] ClearCommError failed (PermissionError(13, 'The device does not recognize the command.', None, 22))

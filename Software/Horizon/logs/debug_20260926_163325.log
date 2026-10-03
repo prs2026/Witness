@@ -1,0 +1,433 @@
+[16:33:26.136] RX[COM9]  03
+[16:33:26.139] RX[COM9]  00 00 00 00 00 00 10 00 00 00 65 cf 00 00 00 0d 08 0a
+[16:33:26.146] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0001000000000000, uptime=26063, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=3.336
+[16:33:26.205] RX[COM9]  f0
+[16:33:26.206] RX[COM9]  fb 00 00 0b fb 00 00 00 00 00 00 0a
+[16:33:26.210] PACKET[COM9] ground_station_status: rssi=-5, uptime=3067, reserved=[0, 0, 0, 0, 0, 0]
+[16:33:26.362] RX[COM9]  01
+[16:33:26.367] RX[COM9]  67 00 00 00 9b e4 ff e5 8d ff b8 a9 00 3c 3d ff fb 00 02 ff fe 0a
+[16:33:26.385] PACKET[COM9] sensors: status=0b0110011100000000, uptime=39908, filtered_accel=[-0.27084, -0.73052, 0.61684], gyro=[-0.35, 0.14, -0.14]
+[16:33:26.602] RX[COM9]  02
+[16:33:26.605] RX[COM9]  6f 00 00 00 9c f3 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 92 c2 17 0b cc 0a
+[16:33:26.620] PACKET[COM9] state: status=0b0110111100000000, uptime=40179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1174.065308, witness_battery_voltage=3.02
+[16:33:26.622] RX[COM9]  ff
+[16:33:26.624] RX[COM9]  6e 00 00 00 9c f3 0a
+[16:33:26.627] PACKET[COM9] heartbeat: status=0b0110111000000000, uptime=40179
+[16:33:27.155] RX[COM9]  03
+[16:33:27.158] RX[COM9]  00 00 00 00 00 00 10 00 00 00 69 b7 00 00 00 0d 08 0a
+[16:33:27.165] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0001000000000000, uptime=27063, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=3.336
+[16:33:27.222] RX[COM9]  f0
+[16:33:27.223] RX[COM9]  fa 00 00 0f e3 00 00 00 00 00 00 0a
+[16:33:27.230] PACKET[COM9] ground_station_status: rssi=-6, uptime=4067, reserved=[0, 0, 0, 0, 0, 0]
+[16:33:27.351] RX[COM9]  01
+[16:33:27.352] RX[COM9]  6e 00 00 00 9f cc ff e5 75 ff b8 78 00 3c 3d 00 00 00 02 ff fe 0a
+[16:33:27.365] PACKET[COM9] sensors: status=0b0110111000000000, uptime=40908, filtered_accel=[-0.2718, -0.73248, 0.61684], gyro=[0.0, 0.14, -0.14]
+[16:33:27.596] RX[COM9]  02
+[16:33:27.597] RX[COM9]  6e 00 00 00 a0 db 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 92 c5 0d 0b d4 0a
+[16:33:27.605] PACKET[COM9] state: status=0b0110111000000000, uptime=41179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1174.157837, witness_battery_voltage=3.028
+[16:33:27.659] RX[COM9]  ff
+[16:33:27.662] RX[COM9]  6f 00 00 00 a0 db 0a
+[16:33:27.677] PACKET[COM9] heartbeat: status=0b0110111100000000, uptime=41179
+[16:33:28.173] RX[COM9]  03
+[16:33:28.176] RX[COM9]  00 00 00 00 00 00 10 00 00 00 6d 9f 00 00 00 0d 08 0a
+[16:33:28.180] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0001000000000000, uptime=28063, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=3.336
+[16:33:28.231] RX[COM9]  f0
+[16:33:28.232] RX[COM9]  fa 00 00 13 cb 00 00 00 00 00 00 0a
+[16:33:28.234] PACKET[COM9] ground_station_status: rssi=-6, uptime=5067, reserved=[0, 0, 0, 0, 0, 0]
+[16:33:28.336] RX[COM9]  01
+[16:33:28.337] RX[COM9]  67 00 00 00 a3 b4 ff e5 8d ff b8 c1 00 3c 49 ff fd 00 04 ff fe 0a
+[16:33:28.341] PACKET[COM9] sensors: status=0b0110011100000000, uptime=41908, filtered_accel=[-0.27084, -0.72956, 0.61732], gyro=[-0.21, 0.28, -0.14]
+[16:33:28.616] RX[COM9]  02
+[16:33:28.617] RX[COM9]  67 00 00 00 a4 c3 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 92 ce 03 0b d0 0a
+[16:33:28.622] PACKET[COM9] state: status=0b0110011100000000, uptime=42179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1174.437866, witness_battery_voltage=3.024
+[16:33:28.624] RX[COM9]  ff
+[16:33:28.625] RX[COM9]  66 00 00 00 a4 c3 0a
+[16:33:28.631] PACKET[COM9] heartbeat: status=0b0110011000000000, uptime=42179
+[16:33:29.145] RX[COM9]  03
+[16:33:29.146] RX[COM9]  00 00 00 00 00 00 10 00 00 00 71 87 00 00 00 0d 04 0a
+[16:33:29.153] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0001000000000000, uptime=29063, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=3.332
+[16:33:29.204] RX[COM9]  f0
+[16:33:29.205] RX[COM9]  fa 00 00 17 b3 00 00 00 00 00 00 0a
+[16:33:29.208] PACKET[COM9] ground_station_status: rssi=-6, uptime=6067, reserved=[0, 0, 0, 0, 0, 0]
+[16:33:29.366] RX[COM9]  01
+[16:33:29.367] RX[COM9]  6e 00 00 00 a7 9c ff e5 68 ff b8 b5 00 3c 55 ff fc 00 02 ff fe 0a
+[16:33:29.371] PACKET[COM9] sensors: status=0b0110111000000000, uptime=42908, filtered_accel=[-0.27232, -0.73004, 0.6178], gyro=[-0.28, 0.14, -0.14]
+[16:33:29.586] RX[COM9]  02
+[16:33:29.587] RX[COM9]  6e 00 00 00 a8 ab 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 92 c5 0d 0b cc 0a
+[16:33:29.591] PACKET[COM9] state: status=0b0110111000000000, uptime=43179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1174.157837, witness_battery_voltage=3.02
+[16:33:29.650] RX[COM9]  ff
+[16:33:29.651] RX[COM9]  6f 00 00 00 a8 ab 0a
+[16:33:29.654] PACKET[COM9] heartbeat: status=0b0110111100000000, uptime=43179
+[16:33:30.185] RX[COM9]  03
+[16:33:30.187] RX[COM9]  00 00 00 00 00 00 10 00 00 00 75 6f 00 00 00 0d 08 0a
+[16:33:30.191] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0001000000000000, uptime=30063, current_sense=[0.0, 0.0, 0.0], iris_battery_voltage=3.336
+[16:33:30.191] RX[COM9]  f0
+[16:33:30.192] RX[COM9]  fa 00 00 1b 9b 00 00 00 00 00 00 0a
+[16:33:30.194] PACKET[COM9] ground_station_status: rssi=-6, uptime=7067, reserved=[0, 0, 0, 0, 0, 0]
+[16:33:30.362] RX[COM9]  01
+[16:33:30.362] RX[COM9]  67 00 00 00 ab 84 ff e5 75 ff b8 cd 00 3c 55 ff fe 00 03 00 00 0a
+[16:33:30.365] PACKET[COM9] sensors: status=0b0110011100000000, uptime=43908, filtered_accel=[-0.2718, -0.72908, 0.6178], gyro=[-0.14, 0.21, 0.0]
+[16:33:30.580] RX[COM9]  02
+[16:33:30.581] RX[COM9]  67 00 00 00 ac 93 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 92 d4 04 0b cc 0a
+[16:33:30.583] PACKET[COM9] state: status=0b0110011100000000, uptime=44179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1174.625488, witness_battery_voltage=3.02
+[16:33:30.617] TX[COM9] CH1 On:  05 00 00 00 00 00 00 00 31 0a
+[16:33:30.643] RX[COM9]  ff
+[16:33:30.645] RX[COM9]  66 00 00 00 ac 93 0a
+[16:33:30.649] PACKET[COM9] heartbeat: status=0b0110011000000000, uptime=44179
+[16:33:30.650] RX[COM9]  05
+[16:33:30.651] RX[COM9]  00 00 00 00 00 00 00 31 0a
+[16:33:30.653] PACKET[COM9] command: status=0b0000000000000000, uptime=0, command_value=49
+[16:33:30.653] RX[COM9]  49
+[16:33:30.654] BAD_PACKET[COM9] unknown packet ID 0x49; discarded 1 byte(s)
+[16:33:30.654] RX[COM9]  20 28 37 37 35 31 29 20 61 70 65 72 74 75 72 65 3a 20 53 65 6e 64 69 6e 67 20 63 6f 6d 6d 61 6e 64 20 74 6f 20 57 69 74 6e 65 73 73 0d 0a
+[16:33:30.655] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.655] BAD_PACKET[COM9] unknown packet ID 0x28; discarded 1 byte(s)
+[16:33:30.656] BAD_PACKET[COM9] unknown packet ID 0x37; discarded 1 byte(s)
+[16:33:30.656] BAD_PACKET[COM9] unknown packet ID 0x37; discarded 1 byte(s)
+[16:33:30.656] BAD_PACKET[COM9] unknown packet ID 0x35; discarded 1 byte(s)
+[16:33:30.657] BAD_PACKET[COM9] unknown packet ID 0x31; discarded 1 byte(s)
+[16:33:30.658] BAD_PACKET[COM9] unknown packet ID 0x29; discarded 1 byte(s)
+[16:33:30.659] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.659] BAD_PACKET[COM9] unknown packet ID 0x61; discarded 1 byte(s)
+[16:33:30.662] BAD_PACKET[COM9] unknown packet ID 0x70; discarded 1 byte(s)
+[16:33:30.666] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.669] BAD_PACKET[COM9] unknown packet ID 0x72; discarded 1 byte(s)
+[16:33:30.671] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[16:33:30.674] BAD_PACKET[COM9] unknown packet ID 0x75; discarded 1 byte(s)
+[16:33:30.676] BAD_PACKET[COM9] unknown packet ID 0x72; discarded 1 byte(s)
+[16:33:30.679] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.682] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[16:33:30.688] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.690] BAD_PACKET[COM9] unknown packet ID 0x53; discarded 1 byte(s)
+[16:33:30.692] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.693] BAD_PACKET[COM9] unknown packet ID 0x6e; discarded 1 byte(s)
+[16:33:30.694] BAD_PACKET[COM9] unknown packet ID 0x64; discarded 1 byte(s)
+[16:33:30.694] BAD_PACKET[COM9] unknown packet ID 0x69; discarded 1 byte(s)
+[16:33:30.694] BAD_PACKET[COM9] unknown packet ID 0x6e; discarded 1 byte(s)
+[16:33:30.694] BAD_PACKET[COM9] unknown packet ID 0x67; discarded 1 byte(s)
+[16:33:30.695] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.695] BAD_PACKET[COM9] unknown packet ID 0x63; discarded 1 byte(s)
+[16:33:30.695] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[16:33:30.696] BAD_PACKET[COM9] unknown packet ID 0x6d; discarded 1 byte(s)
+[16:33:30.696] BAD_PACKET[COM9] unknown packet ID 0x6d; discarded 1 byte(s)
+[16:33:30.697] BAD_PACKET[COM9] unknown packet ID 0x61; discarded 1 byte(s)
+[16:33:30.698] BAD_PACKET[COM9] unknown packet ID 0x6e; discarded 1 byte(s)
+[16:33:30.698] BAD_PACKET[COM9] unknown packet ID 0x64; discarded 1 byte(s)
+[16:33:30.699] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.699] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[16:33:30.700] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[16:33:30.700] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.701] BAD_PACKET[COM9] unknown packet ID 0x57; discarded 1 byte(s)
+[16:33:30.701] BAD_PACKET[COM9] unknown packet ID 0x69; discarded 1 byte(s)
+[16:33:30.702] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[16:33:30.702] BAD_PACKET[COM9] unknown packet ID 0x6e; discarded 1 byte(s)
+[16:33:30.702] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.703] BAD_PACKET[COM9] unknown packet ID 0x73; discarded 1 byte(s)
+[16:33:30.703] BAD_PACKET[COM9] unknown packet ID 0x73; discarded 1 byte(s)
+[16:33:30.703] BAD_PACKET[COM9] unknown packet ID 0x0d; discarded 1 byte(s)
+[16:33:30.703] BAD_PACKET[COM9] unknown packet ID 0x0a; discarded 1 byte(s)
+[16:33:30.704] RX[COM9]  45
+[16:33:30.704] BAD_PACKET[COM9] unknown packet ID 0x45; discarded 1 byte(s)
+[16:33:30.704] RX[COM9]  20 42 4f 44 3a 20 42 72 6f 77 6e 6f 75 74 20 64 65 74 65 63 74 6f 72 20 77 61 73 20 74 72 69 67 67 65 72 65 64 0d 0a 0d 0a 0d 0a
+[16:33:30.705] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.705] BAD_PACKET[COM9] unknown packet ID 0x42; discarded 1 byte(s)
+[16:33:30.705] BAD_PACKET[COM9] unknown packet ID 0x4f; discarded 1 byte(s)
+[16:33:30.705] BAD_PACKET[COM9] unknown packet ID 0x44; discarded 1 byte(s)
+[16:33:30.706] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[16:33:30.706] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.706] BAD_PACKET[COM9] unknown packet ID 0x42; discarded 1 byte(s)
+[16:33:30.707] BAD_PACKET[COM9] unknown packet ID 0x72; discarded 1 byte(s)
+[16:33:30.707] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[16:33:30.707] BAD_PACKET[COM9] unknown packet ID 0x77; discarded 1 byte(s)
+[16:33:30.708] BAD_PACKET[COM9] unknown packet ID 0x6e; discarded 1 byte(s)
+[16:33:30.708] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[16:33:30.708] BAD_PACKET[COM9] unknown packet ID 0x75; discarded 1 byte(s)
+[16:33:30.708] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[16:33:30.709] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.709] BAD_PACKET[COM9] unknown packet ID 0x64; discarded 1 byte(s)
+[16:33:30.709] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.710] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[16:33:30.710] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.710] BAD_PACKET[COM9] unknown packet ID 0x63; discarded 1 byte(s)
+[16:33:30.710] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[16:33:30.711] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[16:33:30.711] BAD_PACKET[COM9] unknown packet ID 0x72; discarded 1 byte(s)
+[16:33:30.711] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.712] BAD_PACKET[COM9] unknown packet ID 0x77; discarded 1 byte(s)
+[16:33:30.712] BAD_PACKET[COM9] unknown packet ID 0x61; discarded 1 byte(s)
+[16:33:30.713] BAD_PACKET[COM9] unknown packet ID 0x73; discarded 1 byte(s)
+[16:33:30.714] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.714] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[16:33:30.715] BAD_PACKET[COM9] unknown packet ID 0x72; discarded 1 byte(s)
+[16:33:30.715] BAD_PACKET[COM9] unknown packet ID 0x69; discarded 1 byte(s)
+[16:33:30.716] BAD_PACKET[COM9] unknown packet ID 0x67; discarded 1 byte(s)
+[16:33:30.717] BAD_PACKET[COM9] unknown packet ID 0x67; discarded 1 byte(s)
+[16:33:30.718] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.718] BAD_PACKET[COM9] unknown packet ID 0x72; discarded 1 byte(s)
+[16:33:30.719] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.719] BAD_PACKET[COM9] unknown packet ID 0x64; discarded 1 byte(s)
+[16:33:30.720] BAD_PACKET[COM9] unknown packet ID 0x0d; discarded 1 byte(s)
+[16:33:30.720] BAD_PACKET[COM9] unknown packet ID 0x0a; discarded 1 byte(s)
+[16:33:30.721] BAD_PACKET[COM9] unknown packet ID 0x0d; discarded 1 byte(s)
+[16:33:30.722] BAD_PACKET[COM9] unknown packet ID 0x0a; discarded 1 byte(s)
+[16:33:30.722] BAD_PACKET[COM9] unknown packet ID 0x0d; discarded 1 byte(s)
+[16:33:30.723] BAD_PACKET[COM9] unknown packet ID 0x0a; discarded 1 byte(s)
+[16:33:30.723] RX[COM9]  45
+[16:33:30.724] BAD_PACKET[COM9] unknown packet ID 0x45; discarded 1 byte(s)
+[16:33:30.724] RX[COM9]  53 50 2d 52 4f 4d 3a 65 73 70 33 32 73 33 2d 32 30 32 31 30 33 32 37 0d 0a
+[16:33:30.724] BAD_PACKET[COM9] unknown packet ID 0x53; discarded 1 byte(s)
+[16:33:30.724] BAD_PACKET[COM9] unknown packet ID 0x50; discarded 1 byte(s)
+[16:33:30.725] BAD_PACKET[COM9] unknown packet ID 0x2d; discarded 1 byte(s)
+[16:33:30.725] BAD_PACKET[COM9] unknown packet ID 0x52; discarded 1 byte(s)
+[16:33:30.725] BAD_PACKET[COM9] unknown packet ID 0x4f; discarded 1 byte(s)
+[16:33:30.726] BAD_PACKET[COM9] unknown packet ID 0x4d; discarded 1 byte(s)
+[16:33:30.726] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[16:33:30.726] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.727] BAD_PACKET[COM9] unknown packet ID 0x73; discarded 1 byte(s)
+[16:33:30.727] BAD_PACKET[COM9] unknown packet ID 0x70; discarded 1 byte(s)
+[16:33:30.727] BAD_PACKET[COM9] unknown packet ID 0x33; discarded 1 byte(s)
+[16:33:30.727] BAD_PACKET[COM9] unknown packet ID 0x32; discarded 1 byte(s)
+[16:33:30.728] BAD_PACKET[COM9] unknown packet ID 0x73; discarded 1 byte(s)
+[16:33:30.728] BAD_PACKET[COM9] unknown packet ID 0x33; discarded 1 byte(s)
+[16:33:30.728] BAD_PACKET[COM9] unknown packet ID 0x2d; discarded 1 byte(s)
+[16:33:30.729] BAD_PACKET[COM9] unknown packet ID 0x32; discarded 1 byte(s)
+[16:33:30.729] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.730] BAD_PACKET[COM9] unknown packet ID 0x32; discarded 1 byte(s)
+[16:33:30.730] BAD_PACKET[COM9] unknown packet ID 0x31; discarded 1 byte(s)
+[16:33:30.731] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.731] BAD_PACKET[COM9] unknown packet ID 0x33; discarded 1 byte(s)
+[16:33:30.732] BAD_PACKET[COM9] unknown packet ID 0x32; discarded 1 byte(s)
+[16:33:30.732] BAD_PACKET[COM9] unknown packet ID 0x37; discarded 1 byte(s)
+[16:33:30.733] BAD_PACKET[COM9] unknown packet ID 0x0d; discarded 1 byte(s)
+[16:33:30.734] BAD_PACKET[COM9] unknown packet ID 0x0a; discarded 1 byte(s)
+[16:33:30.734] RX[COM9]  42 75 69 6c 64 3a 4d 61 72 20 32 37 20 32 30 32 31 0d 0a
+[16:33:30.735] BAD_PACKET[COM9] unknown packet ID 0x42; discarded 1 byte(s)
+[16:33:30.735] BAD_PACKET[COM9] unknown packet ID 0x75; discarded 1 byte(s)
+[16:33:30.736] BAD_PACKET[COM9] unknown packet ID 0x69; discarded 1 byte(s)
+[16:33:30.737] BAD_PACKET[COM9] unknown packet ID 0x6c; discarded 1 byte(s)
+[16:33:30.738] BAD_PACKET[COM9] unknown packet ID 0x64; discarded 1 byte(s)
+[16:33:30.739] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[16:33:30.741] BAD_PACKET[COM9] unknown packet ID 0x4d; discarded 1 byte(s)
+[16:33:30.742] BAD_PACKET[COM9] unknown packet ID 0x61; discarded 1 byte(s)
+[16:33:30.742] BAD_PACKET[COM9] unknown packet ID 0x72; discarded 1 byte(s)
+[16:33:30.742] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.743] BAD_PACKET[COM9] unknown packet ID 0x32; discarded 1 byte(s)
+[16:33:30.743] BAD_PACKET[COM9] unknown packet ID 0x37; discarded 1 byte(s)
+[16:33:30.743] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.744] BAD_PACKET[COM9] unknown packet ID 0x32; discarded 1 byte(s)
+[16:33:30.744] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.745] BAD_PACKET[COM9] unknown packet ID 0x32; discarded 1 byte(s)
+[16:33:30.745] BAD_PACKET[COM9] unknown packet ID 0x31; discarded 1 byte(s)
+[16:33:30.745] BAD_PACKET[COM9] unknown packet ID 0x0d; discarded 1 byte(s)
+[16:33:30.746] BAD_PACKET[COM9] unknown packet ID 0x0a; discarded 1 byte(s)
+[16:33:30.746] RX[COM9]  72
+[16:33:30.746] BAD_PACKET[COM9] unknown packet ID 0x72; discarded 1 byte(s)
+[16:33:30.747] RX[COM9]  73 74 3a 30 78 33 20 28 52 54 43 5f 53 57 5f 53 59 53 5f 52 53 54 29 2c 62 6f 6f 74 3a 30 78 38 20 28 53 50 49 5f 46 41 53 54 5f 46 4c 41 53 48 5f 42 4f 4f 54 29 0d 0a
+[16:33:30.747] BAD_PACKET[COM9] unknown packet ID 0x73; discarded 1 byte(s)
+[16:33:30.747] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[16:33:30.748] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[16:33:30.748] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.748] BAD_PACKET[COM9] unknown packet ID 0x78; discarded 1 byte(s)
+[16:33:30.749] BAD_PACKET[COM9] unknown packet ID 0x33; discarded 1 byte(s)
+[16:33:30.749] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.749] BAD_PACKET[COM9] unknown packet ID 0x28; discarded 1 byte(s)
+[16:33:30.750] BAD_PACKET[COM9] unknown packet ID 0x52; discarded 1 byte(s)
+[16:33:30.750] BAD_PACKET[COM9] unknown packet ID 0x54; discarded 1 byte(s)
+[16:33:30.750] BAD_PACKET[COM9] unknown packet ID 0x43; discarded 1 byte(s)
+[16:33:30.751] BAD_PACKET[COM9] unknown packet ID 0x5f; discarded 1 byte(s)
+[16:33:30.751] BAD_PACKET[COM9] unknown packet ID 0x53; discarded 1 byte(s)
+[16:33:30.751] BAD_PACKET[COM9] unknown packet ID 0x57; discarded 1 byte(s)
+[16:33:30.752] BAD_PACKET[COM9] unknown packet ID 0x5f; discarded 1 byte(s)
+[16:33:30.752] BAD_PACKET[COM9] unknown packet ID 0x53; discarded 1 byte(s)
+[16:33:30.753] BAD_PACKET[COM9] unknown packet ID 0x59; discarded 1 byte(s)
+[16:33:30.753] BAD_PACKET[COM9] unknown packet ID 0x53; discarded 1 byte(s)
+[16:33:30.753] BAD_PACKET[COM9] unknown packet ID 0x5f; discarded 1 byte(s)
+[16:33:30.754] BAD_PACKET[COM9] unknown packet ID 0x52; discarded 1 byte(s)
+[16:33:30.754] BAD_PACKET[COM9] unknown packet ID 0x53; discarded 1 byte(s)
+[16:33:30.755] BAD_PACKET[COM9] unknown packet ID 0x54; discarded 1 byte(s)
+[16:33:30.755] BAD_PACKET[COM9] unknown packet ID 0x29; discarded 1 byte(s)
+[16:33:30.756] BAD_PACKET[COM9] unknown packet ID 0x2c; discarded 1 byte(s)
+[16:33:30.756] BAD_PACKET[COM9] unknown packet ID 0x62; discarded 1 byte(s)
+[16:33:30.756] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[16:33:30.757] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[16:33:30.757] BAD_PACKET[COM9] unknown packet ID 0x74; discarded 1 byte(s)
+[16:33:30.758] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[16:33:30.758] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.759] BAD_PACKET[COM9] unknown packet ID 0x78; discarded 1 byte(s)
+[16:33:30.759] BAD_PACKET[COM9] unknown packet ID 0x38; discarded 1 byte(s)
+[16:33:30.760] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.760] BAD_PACKET[COM9] unknown packet ID 0x28; discarded 1 byte(s)
+[16:33:30.761] BAD_PACKET[COM9] unknown packet ID 0x53; discarded 1 byte(s)
+[16:33:30.761] BAD_PACKET[COM9] unknown packet ID 0x50; discarded 1 byte(s)
+[16:33:30.762] BAD_PACKET[COM9] unknown packet ID 0x49; discarded 1 byte(s)
+[16:33:30.762] BAD_PACKET[COM9] unknown packet ID 0x5f; discarded 1 byte(s)
+[16:33:30.763] BAD_PACKET[COM9] unknown packet ID 0x46; discarded 1 byte(s)
+[16:33:30.764] BAD_PACKET[COM9] unknown packet ID 0x41; discarded 1 byte(s)
+[16:33:30.764] BAD_PACKET[COM9] unknown packet ID 0x53; discarded 1 byte(s)
+[16:33:30.765] BAD_PACKET[COM9] unknown packet ID 0x54; discarded 1 byte(s)
+[16:33:30.765] BAD_PACKET[COM9] unknown packet ID 0x5f; discarded 1 byte(s)
+[16:33:30.766] BAD_PACKET[COM9] unknown packet ID 0x46; discarded 1 byte(s)
+[16:33:30.766] BAD_PACKET[COM9] unknown packet ID 0x4c; discarded 1 byte(s)
+[16:33:30.767] BAD_PACKET[COM9] unknown packet ID 0x41; discarded 1 byte(s)
+[16:33:30.767] BAD_PACKET[COM9] unknown packet ID 0x53; discarded 1 byte(s)
+[16:33:30.768] BAD_PACKET[COM9] unknown packet ID 0x48; discarded 1 byte(s)
+[16:33:30.768] BAD_PACKET[COM9] unknown packet ID 0x5f; discarded 1 byte(s)
+[16:33:30.769] BAD_PACKET[COM9] unknown packet ID 0x42; discarded 1 byte(s)
+[16:33:30.769] BAD_PACKET[COM9] unknown packet ID 0x4f; discarded 1 byte(s)
+[16:33:30.770] BAD_PACKET[COM9] unknown packet ID 0x4f; discarded 1 byte(s)
+[16:33:30.770] BAD_PACKET[COM9] unknown packet ID 0x54; discarded 1 byte(s)
+[16:33:30.771] BAD_PACKET[COM9] unknown packet ID 0x29; discarded 1 byte(s)
+[16:33:30.771] BAD_PACKET[COM9] unknown packet ID 0x0d; discarded 1 byte(s)
+[16:33:30.772] BAD_PACKET[COM9] unknown packet ID 0x0a; discarded 1 byte(s)
+[16:33:30.772] RX[COM9]  53
+[16:33:30.773] BAD_PACKET[COM9] unknown packet ID 0x53; discarded 1 byte(s)
+[16:33:30.773] RX[COM9]  61 76 65 64 20 50 43 3a 30 78 34 30 33 37 36 38 37 38 0d 0a
+[16:33:30.774] BAD_PACKET[COM9] unknown packet ID 0x61; discarded 1 byte(s)
+[16:33:30.774] BAD_PACKET[COM9] unknown packet ID 0x76; discarded 1 byte(s)
+[16:33:30.775] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.775] BAD_PACKET[COM9] unknown packet ID 0x64; discarded 1 byte(s)
+[16:33:30.776] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.776] BAD_PACKET[COM9] unknown packet ID 0x50; discarded 1 byte(s)
+[16:33:30.777] BAD_PACKET[COM9] unknown packet ID 0x43; discarded 1 byte(s)
+[16:33:30.777] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[16:33:30.778] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.778] BAD_PACKET[COM9] unknown packet ID 0x78; discarded 1 byte(s)
+[16:33:30.779] BAD_PACKET[COM9] unknown packet ID 0x34; discarded 1 byte(s)
+[16:33:30.779] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.780] BAD_PACKET[COM9] unknown packet ID 0x33; discarded 1 byte(s)
+[16:33:30.780] BAD_PACKET[COM9] unknown packet ID 0x37; discarded 1 byte(s)
+[16:33:30.781] BAD_PACKET[COM9] unknown packet ID 0x36; discarded 1 byte(s)
+[16:33:30.781] BAD_PACKET[COM9] unknown packet ID 0x38; discarded 1 byte(s)
+[16:33:30.782] BAD_PACKET[COM9] unknown packet ID 0x37; discarded 1 byte(s)
+[16:33:30.782] BAD_PACKET[COM9] unknown packet ID 0x38; discarded 1 byte(s)
+[16:33:30.783] BAD_PACKET[COM9] unknown packet ID 0x0d; discarded 1 byte(s)
+[16:33:30.783] BAD_PACKET[COM9] unknown packet ID 0x0a; discarded 1 byte(s)
+[16:33:30.784] RX[COM9]  53
+[16:33:30.784] BAD_PACKET[COM9] unknown packet ID 0x53; discarded 1 byte(s)
+[16:33:30.784] RX[COM9]  50 49 57 50 3a 30 78 65 65 0d 0a
+[16:33:30.785] BAD_PACKET[COM9] unknown packet ID 0x50; discarded 1 byte(s)
+[16:33:30.785] BAD_PACKET[COM9] unknown packet ID 0x49; discarded 1 byte(s)
+[16:33:30.786] BAD_PACKET[COM9] unknown packet ID 0x57; discarded 1 byte(s)
+[16:33:30.786] BAD_PACKET[COM9] unknown packet ID 0x50; discarded 1 byte(s)
+[16:33:30.787] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[16:33:30.787] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.787] BAD_PACKET[COM9] unknown packet ID 0x78; discarded 1 byte(s)
+[16:33:30.788] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.788] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.789] BAD_PACKET[COM9] unknown packet ID 0x0d; discarded 1 byte(s)
+[16:33:30.789] BAD_PACKET[COM9] unknown packet ID 0x0a; discarded 1 byte(s)
+[16:33:30.789] RX[COM9]  6d
+[16:33:30.790] BAD_PACKET[COM9] unknown packet ID 0x6d; discarded 1 byte(s)
+[16:33:30.790] RX[COM9]  6f 64 65 3a 44 49 4f 2c 20 63 6c 6f 63 6b 20 64 69 76 3a 31 0d 0a
+[16:33:30.791] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[16:33:30.791] BAD_PACKET[COM9] unknown packet ID 0x64; discarded 1 byte(s)
+[16:33:30.792] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.792] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[16:33:30.792] BAD_PACKET[COM9] unknown packet ID 0x44; discarded 1 byte(s)
+[16:33:30.793] BAD_PACKET[COM9] unknown packet ID 0x49; discarded 1 byte(s)
+[16:33:30.793] BAD_PACKET[COM9] unknown packet ID 0x4f; discarded 1 byte(s)
+[16:33:30.794] BAD_PACKET[COM9] unknown packet ID 0x2c; discarded 1 byte(s)
+[16:33:30.795] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.795] BAD_PACKET[COM9] unknown packet ID 0x63; discarded 1 byte(s)
+[16:33:30.795] BAD_PACKET[COM9] unknown packet ID 0x6c; discarded 1 byte(s)
+[16:33:30.796] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[16:33:30.796] BAD_PACKET[COM9] unknown packet ID 0x63; discarded 1 byte(s)
+[16:33:30.797] BAD_PACKET[COM9] unknown packet ID 0x6b; discarded 1 byte(s)
+[16:33:30.797] BAD_PACKET[COM9] unknown packet ID 0x20; discarded 1 byte(s)
+[16:33:30.798] BAD_PACKET[COM9] unknown packet ID 0x64; discarded 1 byte(s)
+[16:33:30.798] BAD_PACKET[COM9] unknown packet ID 0x69; discarded 1 byte(s)
+[16:33:30.798] BAD_PACKET[COM9] unknown packet ID 0x76; discarded 1 byte(s)
+[16:33:30.799] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[16:33:30.799] BAD_PACKET[COM9] unknown packet ID 0x31; discarded 1 byte(s)
+[16:33:30.800] BAD_PACKET[COM9] unknown packet ID 0x0d; discarded 1 byte(s)
+[16:33:30.800] BAD_PACKET[COM9] unknown packet ID 0x0a; discarded 1 byte(s)
+[16:33:30.800] RX[COM9]  6c
+[16:33:30.801] BAD_PACKET[COM9] unknown packet ID 0x6c; discarded 1 byte(s)
+[16:33:30.801] RX[COM9]  6f 61 64 3a 30 78 33 66 63 65 32 38 32 30 2c 6c 65 6e 3a 30 78 31 34 66 30 0d 0a
+[16:33:30.801] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[16:33:30.802] BAD_PACKET[COM9] unknown packet ID 0x61; discarded 1 byte(s)
+[16:33:30.802] BAD_PACKET[COM9] unknown packet ID 0x64; discarded 1 byte(s)
+[16:33:30.802] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[16:33:30.802] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.803] BAD_PACKET[COM9] unknown packet ID 0x78; discarded 1 byte(s)
+[16:33:30.803] BAD_PACKET[COM9] unknown packet ID 0x33; discarded 1 byte(s)
+[16:33:30.803] BAD_PACKET[COM9] unknown packet ID 0x66; discarded 1 byte(s)
+[16:33:30.804] BAD_PACKET[COM9] unknown packet ID 0x63; discarded 1 byte(s)
+[16:33:30.804] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.804] BAD_PACKET[COM9] unknown packet ID 0x32; discarded 1 byte(s)
+[16:33:30.805] BAD_PACKET[COM9] unknown packet ID 0x38; discarded 1 byte(s)
+[16:33:30.805] BAD_PACKET[COM9] unknown packet ID 0x32; discarded 1 byte(s)
+[16:33:30.805] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.806] BAD_PACKET[COM9] unknown packet ID 0x2c; discarded 1 byte(s)
+[16:33:30.806] BAD_PACKET[COM9] unknown packet ID 0x6c; discarded 1 byte(s)
+[16:33:30.806] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.806] BAD_PACKET[COM9] unknown packet ID 0x6e; discarded 1 byte(s)
+[16:33:30.807] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[16:33:30.807] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.807] BAD_PACKET[COM9] unknown packet ID 0x78; discarded 1 byte(s)
+[16:33:30.808] BAD_PACKET[COM9] unknown packet ID 0x31; discarded 1 byte(s)
+[16:33:30.808] BAD_PACKET[COM9] unknown packet ID 0x34; discarded 1 byte(s)
+[16:33:30.808] BAD_PACKET[COM9] unknown packet ID 0x66; discarded 1 byte(s)
+[16:33:30.808] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.809] BAD_PACKET[COM9] unknown packet ID 0x0d; discarded 1 byte(s)
+[16:33:30.809] BAD_PACKET[COM9] unknown packet ID 0x0a; discarded 1 byte(s)
+[16:33:30.809] RX[COM9]  6c
+[16:33:30.810] BAD_PACKET[COM9] unknown packet ID 0x6c; discarded 1 byte(s)
+[16:33:30.810] RX[COM9]  6f 61 64 3a 30 78 34 30 33 63 38 37 30 30 2c 6c 65 6e 3a 30 78 64 65 34 0d 0a
+[16:33:30.810] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[16:33:30.810] BAD_PACKET[COM9] unknown packet ID 0x61; discarded 1 byte(s)
+[16:33:30.811] BAD_PACKET[COM9] unknown packet ID 0x64; discarded 1 byte(s)
+[16:33:30.811] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[16:33:30.811] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.812] BAD_PACKET[COM9] unknown packet ID 0x78; discarded 1 byte(s)
+[16:33:30.812] BAD_PACKET[COM9] unknown packet ID 0x34; discarded 1 byte(s)
+[16:33:30.812] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.813] BAD_PACKET[COM9] unknown packet ID 0x33; discarded 1 byte(s)
+[16:33:30.813] BAD_PACKET[COM9] unknown packet ID 0x63; discarded 1 byte(s)
+[16:33:30.813] BAD_PACKET[COM9] unknown packet ID 0x38; discarded 1 byte(s)
+[16:33:30.813] BAD_PACKET[COM9] unknown packet ID 0x37; discarded 1 byte(s)
+[16:33:30.814] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.814] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.814] BAD_PACKET[COM9] unknown packet ID 0x2c; discarded 1 byte(s)
+[16:33:30.815] BAD_PACKET[COM9] unknown packet ID 0x6c; discarded 1 byte(s)
+[16:33:30.815] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.815] BAD_PACKET[COM9] unknown packet ID 0x6e; discarded 1 byte(s)
+[16:33:30.815] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[16:33:30.816] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.816] BAD_PACKET[COM9] unknown packet ID 0x78; discarded 1 byte(s)
+[16:33:30.816] BAD_PACKET[COM9] unknown packet ID 0x64; discarded 1 byte(s)
+[16:33:30.817] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.817] BAD_PACKET[COM9] unknown packet ID 0x34; discarded 1 byte(s)
+[16:33:30.817] BAD_PACKET[COM9] unknown packet ID 0x0d; discarded 1 byte(s)
+[16:33:30.818] BAD_PACKET[COM9] unknown packet ID 0x0a; discarded 1 byte(s)
+[16:33:30.818] RX[COM9]  6c
+[16:33:30.818] BAD_PACKET[COM9] unknown packet ID 0x6c; discarded 1 byte(s)
+[16:33:30.818] RX[COM9]  6f 61 64 3a 30 78 34 30 33 63 62 37 30 30 2c 6c 65 6e 3a 30 78 32 66 35 38 0d 0a
+[16:33:30.819] BAD_PACKET[COM9] unknown packet ID 0x6f; discarded 1 byte(s)
+[16:33:30.819] BAD_PACKET[COM9] unknown packet ID 0x61; discarded 1 byte(s)
+[16:33:30.819] BAD_PACKET[COM9] unknown packet ID 0x64; discarded 1 byte(s)
+[16:33:30.820] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[16:33:30.820] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.820] BAD_PACKET[COM9] unknown packet ID 0x78; discarded 1 byte(s)
+[16:33:30.821] BAD_PACKET[COM9] unknown packet ID 0x34; discarded 1 byte(s)
+[16:33:30.821] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.821] BAD_PACKET[COM9] unknown packet ID 0x33; discarded 1 byte(s)
+[16:33:30.822] BAD_PACKET[COM9] unknown packet ID 0x63; discarded 1 byte(s)
+[16:33:30.822] BAD_PACKET[COM9] unknown packet ID 0x62; discarded 1 byte(s)
+[16:33:30.822] BAD_PACKET[COM9] unknown packet ID 0x37; discarded 1 byte(s)
+[16:33:30.822] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.823] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.823] BAD_PACKET[COM9] unknown packet ID 0x2c; discarded 1 byte(s)
+[16:33:30.823] BAD_PACKET[COM9] unknown packet ID 0x6c; discarded 1 byte(s)
+[16:33:30.824] BAD_PACKET[COM9] unknown packet ID 0x65; discarded 1 byte(s)
+[16:33:30.824] BAD_PACKET[COM9] unknown packet ID 0x6e; discarded 1 byte(s)
+[16:33:30.824] BAD_PACKET[COM9] unknown packet ID 0x3a; discarded 1 byte(s)
+[16:33:30.824] BAD_PACKET[COM9] unknown packet ID 0x30; discarded 1 byte(s)
+[16:33:30.825] BAD_PACKET[COM9] unknown packet ID 0x78; discarded 1 byte(s)
+[16:33:30.825] BAD_PACKET[COM9] unknown packet ID 0x32; discarded 1 byte(s)
+[16:33:30.825] BAD_PACKET[COM9] unknown packet ID 0x66; discarded 1 byte(s)
+[16:33:30.826] BAD_PACKET[COM9] unknown packet ID 0x35; discarded 1 byte(s)
+[16:33:30.826] BAD_PACKET[COM9] unknown packet ID 0x38; discarded 1 byte(s)
+[16:33:30.826] BAD_PACKET[COM9] unknown packet ID 0x0d; discarded 1 byte(s)
+[16:33:30.826] BAD_PACKET[COM9] unknown packet ID 0x0a; discarded 1 byte(s)
+[16:33:30.827] ERROR[COM9] ClearCommError failed (PermissionError(13, 'The device does not recognize the command.', None, 22))

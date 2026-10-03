@@ -1,0 +1,256 @@
+[16:34:21.608] RX[COM9]  02
+[16:34:21.610] RX[COM9]  6e 00 00 01 73 cb 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 12 c1 0b cc 0a
+[16:34:21.616] PACKET[COM9] state: status=0b0110111000000000, uptime=95179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1176.58606, witness_battery_voltage=3.02
+[16:34:21.672] RX[COM9]  ff
+[16:34:21.674] RX[COM9]  6f 00 00 01 73 cb 0a
+[16:34:21.696] PACKET[COM9] heartbeat: status=0b0110111100000000, uptime=95179
+[16:34:22.148] RX[COM9]  03
+[16:34:22.152] RX[COM9]  00 00 00 00 00 00 78 00 00 01 40 8f 01 04 00 0b 60 0a
+[16:34:22.159] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=82063, current_sense=[0.1, 0.4, 0.0], iris_battery_voltage=2.912
+[16:34:22.216] RX[COM9]  f0
+[16:34:22.219] RX[COM9]  d0 00 00 13 cb 00 00 00 00 00 00 0a
+[16:34:22.225] PACKET[COM9] ground_station_status: rssi=-48, uptime=5067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:22.339] RX[COM9]  01
+[16:34:22.341] RX[COM9]  67 00 00 01 76 a4 ff e6 fb ff b4 3a 00 37 ff ff fc 00 02 ff fe 0a
+[16:34:22.354] PACKET[COM9] sensors: status=0b0110011100000000, uptime=95908, filtered_accel=[-0.2562, -0.77592, 0.5734], gyro=[-0.28, 0.14, -0.14]
+[16:34:22.572] RX[COM9]  02
+[16:34:22.574] RX[COM9]  67 00 00 01 77 b3 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 24 ae 0b cc 0a
+[16:34:22.577] PACKET[COM9] state: status=0b0110011100000000, uptime=96179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1177.14624, witness_battery_voltage=3.02
+[16:34:22.631] RX[COM9]  ff
+[16:34:22.634] RX[COM9]  66 00 00 01 77 b3 0a
+[16:34:22.638] PACKET[COM9] heartbeat: status=0b0110011000000000, uptime=96179
+[16:34:23.188] RX[COM9]  03
+[16:34:23.190] RX[COM9]  00 00 00 00 00 00 78 00 00 01 44 77 01 04 00 0b ac 0a
+[16:34:23.196] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=83063, current_sense=[0.1, 0.4, 0.0], iris_battery_voltage=2.988
+[16:34:23.255] RX[COM9]  f0
+[16:34:23.258] RX[COM9]  c3 00 00 17 b3 00 00 00 00 00 00 0a
+[16:34:23.262] PACKET[COM9] ground_station_status: rssi=-61, uptime=6067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:23.372] RX[COM9]  01
+[16:34:23.374] RX[COM9]  6e 00 00 01 7a 8c ff e7 07 ff b4 fd 00 38 61 ff f8 ff fd ff fc 0a
+[16:34:23.380] PACKET[COM9] sensors: status=0b0110111000000000, uptime=96908, filtered_accel=[-0.25572, -0.76812, 0.57732], gyro=[-0.56, -0.21, -0.28]
+[16:34:23.600] RX[COM9]  02
+[16:34:23.602] RX[COM9]  6e 00 00 01 7b 9b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 18 c2 0b c8 0a
+[16:34:23.610] PACKET[COM9] state: status=0b0110111000000000, uptime=97179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1176.773682, witness_battery_voltage=3.016
+[16:34:23.674] RX[COM9]  ff
+[16:34:23.676] RX[COM9]  6f 00 00 01 7b 9b 0a
+[16:34:23.686] PACKET[COM9] heartbeat: status=0b0110111100000000, uptime=97179
+[16:34:24.165] RX[COM9]  03
+[16:34:24.166] RX[COM9]  00 00 00 00 00 00 78 00 00 01 48 5f 01 03 00 0b fc 0a
+[16:34:24.169] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=84063, current_sense=[0.1, 0.3, 0.0], iris_battery_voltage=3.068
+[16:34:24.223] RX[COM9]  f0
+[16:34:24.224] RX[COM9]  d0 00 00 1b 9b 00 00 00 00 00 00 0a
+[16:34:24.226] PACKET[COM9] ground_station_status: rssi=-48, uptime=7067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:24.331] RX[COM9]  01
+[16:34:24.332] RX[COM9]  6f 00 00 01 7e 74 ff e8 5d ff b4 09 00 37 aa ff e8 00 03 00 00 0a
+[16:34:24.335] PACKET[COM9] sensors: status=0b0110111100000000, uptime=97908, filtered_accel=[-0.24204, -0.77788, 0.57], gyro=[-1.68, 0.21, 0.0]
+[16:34:24.607] RX[COM9]  02
+[16:34:24.607] RX[COM9]  67 00 00 01 7f 83 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 21 a3 0b cc 0a
+[16:34:24.610] PACKET[COM9] state: status=0b0110011100000000, uptime=98179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1177.051147, witness_battery_voltage=3.02
+[16:34:24.667] RX[COM9]  ff
+[16:34:24.669] RX[COM9]  66 00 00 01 7f 83 0a
+[16:34:24.673] PACKET[COM9] heartbeat: status=0b0110011000000000, uptime=98179
+[16:34:25.149] RX[COM9]  03
+[16:34:25.150] RX[COM9]  00 00 00 00 00 00 78 00 00 01 4c 47 01 03 00 0b d8 0a
+[16:34:25.153] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=85063, current_sense=[0.1, 0.3, 0.0], iris_battery_voltage=3.032
+[16:34:25.259] RX[COM9]  f0
+[16:34:25.261] RX[COM9]  d0 00 00 1f 83 00 00 00 00 00 00 0a
+[16:34:25.264] PACKET[COM9] ground_station_status: rssi=-48, uptime=8067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:25.366] RX[COM9]  01
+[16:34:25.367] RX[COM9]  66 00 00 01 82 5c ff e6 ef ff b4 52 00 37 e7 00 00 00 04 ff ff 0a
+[16:34:25.372] PACKET[COM9] sensors: status=0b0110011000000000, uptime=98908, filtered_accel=[-0.25668, -0.77496, 0.57244], gyro=[0.0, 0.28, -0.07]
+[16:34:25.589] RX[COM9]  02
+[16:34:25.590] RX[COM9]  6e 00 00 01 83 6b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 15 b7 0b cc 0a
+[16:34:25.593] PACKET[COM9] state: status=0b0110111000000000, uptime=99179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1176.678589, witness_battery_voltage=3.02
+[16:34:25.648] RX[COM9]  ff
+[16:34:25.650] RX[COM9]  6f 00 00 01 83 6b 0a
+[16:34:25.654] PACKET[COM9] heartbeat: status=0b0110111100000000, uptime=99179
+[16:34:26.142] RX[COM9]  03
+[16:34:26.142] RX[COM9]  00 00 00 00 00 00 78 00 00 01 50 2f 01 03 00 0b fc 0a
+[16:34:26.146] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=86063, current_sense=[0.1, 0.3, 0.0], iris_battery_voltage=3.068
+[16:34:26.256] RX[COM9]  f0
+[16:34:26.257] RX[COM9]  d3 00 00 23 6b 00 00 00 00 00 00 0a
+[16:34:26.259] PACKET[COM9] ground_station_status: rssi=-45, uptime=9067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:26.365] RX[COM9]  01
+[16:34:26.366] RX[COM9]  6f 00 00 01 86 44 ff e7 ef ff b3 52 00 36 9d ff f8 00 00 ff fe 0a
+[16:34:26.370] PACKET[COM9] sensors: status=0b0110111100000000, uptime=99908, filtered_accel=[-0.24644, -0.7852, 0.55924], gyro=[-0.56, 0.0, -0.14]
+[16:34:26.581] RX[COM9]  02
+[16:34:26.583] RX[COM9]  67 00 00 01 87 53 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 30 9a 0b cc 0a
+[16:34:26.587] PACKET[COM9] state: status=0b0110011100000000, uptime=100179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1177.518799, witness_battery_voltage=3.02
+[16:34:26.640] RX[COM9]  ff
+[16:34:26.641] RX[COM9]  66 00 00 01 87 53 0a
+[16:34:26.644] PACKET[COM9] heartbeat: status=0b0110011000000000, uptime=100179
+[16:34:27.147] RX[COM9]  03
+[16:34:27.149] RX[COM9]  00 00 00 00 00 00 78 00 00 01 54 17 01 04 00 0b 70 0a
+[16:34:27.157] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=87063, current_sense=[0.1, 0.4, 0.0], iris_battery_voltage=2.928
+[16:34:27.268] RX[COM9]  f0
+[16:34:27.271] RX[COM9]  d3 00 00 27 53 00 00 00 00 00 00 0a
+[16:34:27.278] PACKET[COM9] ground_station_status: rssi=-45, uptime=10067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:27.331] RX[COM9]  01
+[16:34:27.333] RX[COM9]  66 00 00 01 8a 2c ff e7 ca ff b3 2e 00 36 85 ff fa 00 02 ff fe 0a
+[16:34:27.338] PACKET[COM9] sensors: status=0b0110011000000000, uptime=100908, filtered_accel=[-0.24792, -0.78664, 0.55828], gyro=[-0.42, 0.14, -0.14]
+[16:34:27.609] RX[COM9]  02
+[16:34:27.612] RX[COM9]  6e 00 00 01 8b 3b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 1b b8 0b cc 0a
+[16:34:27.618] PACKET[COM9] state: status=0b0110111000000000, uptime=101179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1176.866211, witness_battery_voltage=3.02
+[16:34:27.677] RX[COM9]  ff
+[16:34:27.680] RX[COM9]  6f 00 00 01 8b 3b 0a
+[16:34:27.685] PACKET[COM9] heartbeat: status=0b0110111100000000, uptime=101179
+[16:34:28.168] RX[COM9]  03
+[16:34:28.170] RX[COM9]  00 00 00 00 00 00 78 00 00 01 57 ff 01 04 00 0b 34 0a
+[16:34:28.182] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=88063, current_sense=[0.1, 0.4, 0.0], iris_battery_voltage=2.868
+[16:34:28.240] RX[COM9]  f0
+[16:34:28.243] RX[COM9]  d3 00 00 2b 3b 00 00 00 00 00 00 0a
+[16:34:28.248] PACKET[COM9] ground_station_status: rssi=-45, uptime=11067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:28.357] RX[COM9]  01
+[16:34:28.359] RX[COM9]  6f 00 00 01 8e 14 ff e7 69 ff b3 3a 00 36 e6 00 01 00 06 00 00 0a
+[16:34:28.366] PACKET[COM9] sensors: status=0b0110111100000000, uptime=101908, filtered_accel=[-0.2518, -0.78616, 0.56216], gyro=[0.07, 0.42, 0.0]
+[16:34:28.589] RX[COM9]  02
+[16:34:28.591] RX[COM9]  6f 00 00 01 8f 23 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 2d a4 0b cc 0a
+[16:34:28.596] PACKET[COM9] state: status=0b0110111100000000, uptime=102179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1177.42627, witness_battery_voltage=3.02
+[16:34:28.649] RX[COM9]  ff
+[16:34:28.652] RX[COM9]  6e 00 00 01 8f 23 0a
+[16:34:28.659] PACKET[COM9] heartbeat: status=0b0110111000000000, uptime=102179
+[16:34:29.157] RX[COM9]  03
+[16:34:29.159] RX[COM9]  00 00 00 00 00 00 78 00 00 01 5b e7 01 04 00 0b 5c 0a
+[16:34:29.166] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=89063, current_sense=[0.1, 0.4, 0.0], iris_battery_voltage=2.908
+[16:34:29.224] RX[COM9]  f0
+[16:34:29.225] RX[COM9]  d3 00 00 2f 23 00 00 00 00 00 00 0a
+[16:34:29.227] PACKET[COM9] ground_station_status: rssi=-45, uptime=12067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:29.334] RX[COM9]  01
+[16:34:29.336] RX[COM9]  66 00 00 01 91 fc ff e7 5d ff b3 8f 00 36 da ff fe 00 00 ff fe 0a
+[16:34:29.342] PACKET[COM9] sensors: status=0b0110011000000000, uptime=102908, filtered_accel=[-0.25228, -0.78276, 0.56168], gyro=[-0.14, 0.0, -0.14]
+[16:34:29.567] RX[COM9]  02
+[16:34:29.568] RX[COM9]  66 00 00 01 93 0b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 30 9a 0b cc 0a
+[16:34:29.575] PACKET[COM9] state: status=0b0110011000000000, uptime=103179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1177.518799, witness_battery_voltage=3.02
+[16:34:29.640] RX[COM9]  ff
+[16:34:29.642] RX[COM9]  67 00 00 01 93 0b 0a
+[16:34:29.648] PACKET[COM9] heartbeat: status=0b0110011100000000, uptime=103179
+[16:34:30.158] RX[COM9]  03
+[16:34:30.162] RX[COM9]  00 00 00 00 00 00 78 00 00 01 5f cf 01 04 00 0b 38 0a
+[16:34:30.168] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=90063, current_sense=[0.1, 0.4, 0.0], iris_battery_voltage=2.872
+[16:34:30.220] RX[COM9]  f0
+[16:34:30.222] RX[COM9]  ce 00 00 33 0b 00 00 00 00 00 00 0a
+[16:34:30.226] PACKET[COM9] ground_station_status: rssi=-50, uptime=13067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:30.331] RX[COM9]  01
+[16:34:30.333] RX[COM9]  6f 00 00 01 95 e4 ff e6 69 ff b3 77 00 37 79 00 00 00 02 ff fb 0a
+[16:34:30.342] PACKET[COM9] sensors: status=0b0110111100000000, uptime=103908, filtered_accel=[-0.26204, -0.78372, 0.56804], gyro=[0.0, 0.14, -0.35]
+[16:34:30.612] RX[COM9]  02
+[16:34:30.620] RX[COM9]  6f 00 00 01 96 f3 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 2a af 0b cc 0a
+[16:34:30.635] PACKET[COM9] state: status=0b0110111100000000, uptime=104179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1177.333862, witness_battery_voltage=3.02
+[16:34:30.637] RX[COM9]  ff
+[16:34:30.638] RX[COM9]  6e 00 00 01 96 f3 0a
+[16:34:30.646] PACKET[COM9] heartbeat: status=0b0110111000000000, uptime=104179
+[16:34:31.140] RX[COM9]  03
+[16:34:31.142] RX[COM9]  00 00 00 00 00 00 78 00 00 01 63 b7 01 04 00 0b ac 0a
+[16:34:31.153] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=91063, current_sense=[0.1, 0.4, 0.0], iris_battery_voltage=2.988
+[16:34:31.258] RX[COM9]  f0
+[16:34:31.266] RX[COM9]  c5 00 00 36 f3 00 00 00 00 00 00 0a
+[16:34:31.271] PACKET[COM9] ground_station_status: rssi=-59, uptime=14067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:31.327] RX[COM9]  01
+[16:34:31.328] RX[COM9]  66 00 00 01 99 cc ff e7 69 ff b4 77 00 37 c2 ff fb 00 02 ff fe 0a
+[16:34:31.335] PACKET[COM9] sensors: status=0b0110011000000000, uptime=104908, filtered_accel=[-0.2518, -0.77348, 0.57096], gyro=[-0.35, 0.14, -0.14]
+[16:34:31.599] RX[COM9]  02
+[16:34:31.600] RX[COM9]  66 00 00 01 9a db 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 2a af 0b c8 0a
+[16:34:31.610] PACKET[COM9] state: status=0b0110011000000000, uptime=105179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1177.333862, witness_battery_voltage=3.016
+[16:34:31.673] RX[COM9]  ff
+[16:34:31.677] RX[COM9]  67 00 00 01 9a db 0a
+[16:34:31.685] PACKET[COM9] heartbeat: status=0b0110011100000000, uptime=105179
+[16:34:32.161] RX[COM9]  03
+[16:34:32.162] RX[COM9]  00 00 00 00 00 00 78 00 00 01 67 9f 01 04 00 0b 50 0a
+[16:34:32.168] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=92063, current_sense=[0.1, 0.4, 0.0], iris_battery_voltage=2.896
+[16:34:32.230] RX[COM9]  f0
+[16:34:32.231] RX[COM9]  c1 00 00 3a db 00 00 00 00 00 00 0a
+[16:34:32.234] PACKET[COM9] ground_station_status: rssi=-63, uptime=15067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:32.340] RX[COM9]  01
+[16:34:32.343] RX[COM9]  6f 00 00 01 9d b4 ff e7 69 ff b4 22 00 37 54 00 01 00 03 ff fc 0a
+[16:34:32.346] PACKET[COM9] sensors: status=0b0110111100000000, uptime=105908, filtered_accel=[-0.2518, -0.77688, 0.56656], gyro=[0.07, 0.21, -0.28]
+[16:34:32.615] RX[COM9]  02
+[16:34:32.618] RX[COM9]  6f 00 00 01 9e c3 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 27 a4 0b cc 0a
+[16:34:32.630] PACKET[COM9] state: status=0b0110111100000000, uptime=106179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1177.23877, witness_battery_voltage=3.02
+[16:34:32.633] RX[COM9]  ff
+[16:34:32.636] RX[COM9]  6e 00 00 01 9e c3 0a
+[16:34:32.645] PACKET[COM9] heartbeat: status=0b0110111000000000, uptime=106179
+[16:34:33.170] RX[COM9]  03
+[16:34:33.172] RX[COM9]  00 00 00 00 00 00 78 00 00 01 6b 87 01 04 00 0b 50 0a
+[16:34:33.181] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=93063, current_sense=[0.1, 0.4, 0.0], iris_battery_voltage=2.896
+[16:34:33.233] RX[COM9]  f0
+[16:34:33.235] RX[COM9]  c7 00 00 3e c3 00 00 00 00 00 00 0a
+[16:34:33.242] PACKET[COM9] ground_station_status: rssi=-57, uptime=16067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:33.351] RX[COM9]  01
+[16:34:33.354] RX[COM9]  6e 00 00 01 a1 9c ff e7 50 ff b4 3a 00 37 c2 ff fc 00 02 ff fe 0a
+[16:34:33.362] PACKET[COM9] sensors: status=0b0110111000000000, uptime=106908, filtered_accel=[-0.2528, -0.77592, 0.57096], gyro=[-0.28, 0.14, -0.14]
+[16:34:33.582] RX[COM9]  02
+[16:34:33.584] RX[COM9]  66 00 00 01 a2 ab 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 2a af 0b c8 0a
+[16:34:33.598] PACKET[COM9] state: status=0b0110011000000000, uptime=107179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1177.333862, witness_battery_voltage=3.016
+[16:34:33.663] RX[COM9]  ff
+[16:34:33.671] RX[COM9]  67 00 00 01 a2 ab 0a
+[16:34:33.677] PACKET[COM9] heartbeat: status=0b0110011100000000, uptime=107179
+[16:34:34.173] RX[COM9]  03
+[16:34:34.175] RX[COM9]  00 00 00 00 00 00 78 00 00 01 6f 6f 01 04 00 0b 9c 0a
+[16:34:34.184] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=94063, current_sense=[0.1, 0.4, 0.0], iris_battery_voltage=2.972
+[16:34:34.236] RX[COM9]  f0
+[16:34:34.239] RX[COM9]  ce 00 00 42 ab 00 00 00 00 00 00 0a
+[16:34:34.243] PACKET[COM9] ground_station_status: rssi=-50, uptime=17067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:34.356] RX[COM9]  01
+[16:34:34.358] RX[COM9]  67 00 00 01 a5 84 ff e4 99 ff b9 6c 00 3a e7 00 0c ff f7 ff f9 0a
+[16:34:34.365] PACKET[COM9] sensors: status=0b0110011100000000, uptime=107908, filtered_accel=[-0.2806, -0.72272, 0.60316], gyro=[0.84, -0.63, -0.49]
+[16:34:34.580] RX[COM9]  02
+[16:34:34.580] RX[COM9]  6f 00 00 01 a6 93 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 2d a4 0b c4 0a
+[16:34:34.583] PACKET[COM9] state: status=0b0110111100000000, uptime=108179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1177.42627, witness_battery_voltage=3.012
+[16:34:34.646] RX[COM9]  ff
+[16:34:34.649] RX[COM9]  6e 00 00 01 a6 93 0a
+[16:34:34.655] PACKET[COM9] heartbeat: status=0b0110111000000000, uptime=108179
+[16:34:35.162] RX[COM9]  03
+[16:34:35.163] RX[COM9]  00 00 00 00 00 00 78 00 00 01 73 57 01 03 00 0c 3c 0a
+[16:34:35.171] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=95063, current_sense=[0.1, 0.3, 0.0], iris_battery_voltage=3.132
+[16:34:35.225] RX[COM9]  f0
+[16:34:35.230] RX[COM9]  d3 00 00 46 93 00 00 00 00 00 00 0a
+[16:34:35.235] PACKET[COM9] ground_station_status: rssi=-45, uptime=18067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:35.350] RX[COM9]  01
+[16:34:35.352] RX[COM9]  6e 00 00 01 a9 6c ff e6 d6 ff b7 a8 00 3b 92 ff fb 00 01 ff fe 0a
+[16:34:35.359] PACKET[COM9] sensors: status=0b0110111000000000, uptime=108908, filtered_accel=[-0.25768, -0.7408, 0.61], gyro=[-0.35, 0.07, -0.14]
+[16:34:35.584] RX[COM9]  02
+[16:34:35.588] RX[COM9]  66 00 00 01 aa 7b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 24 ae 0b cc 0a
+[16:34:35.602] PACKET[COM9] state: status=0b0110011000000000, uptime=109179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1177.14624, witness_battery_voltage=3.02
+[16:34:35.663] RX[COM9]  ff
+[16:34:35.667] RX[COM9]  67 00 00 01 aa 7b 0a
+[16:34:35.675] PACKET[COM9] heartbeat: status=0b0110011100000000, uptime=109179
+[16:34:36.175] RX[COM9]  03
+[16:34:36.177] RX[COM9]  00 00 00 00 00 00 78 00 00 01 77 3f 01 03 00 0c 38 0a
+[16:34:36.184] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=96063, current_sense=[0.1, 0.3, 0.0], iris_battery_voltage=3.128
+[16:34:36.242] RX[COM9]  f0
+[16:34:36.245] RX[COM9]  d1 00 00 4a 7b 00 00 00 00 00 00 0a
+[16:34:36.252] PACKET[COM9] ground_station_status: rssi=-47, uptime=19067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:36.361] RX[COM9]  01
+[16:34:36.363] RX[COM9]  67 00 00 01 ad 54 ff e6 e3 ff b7 a8 00 3b 92 ff fb 00 02 ff fe 0a
+[16:34:36.370] PACKET[COM9] sensors: status=0b0110011100000000, uptime=109908, filtered_accel=[-0.25716, -0.7408, 0.61], gyro=[-0.35, 0.14, -0.14]
+[16:34:36.595] RX[COM9]  02
+[16:34:36.596] RX[COM9]  6f 00 00 01 ae 63 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 39 90 0b d4 0a
+[16:34:36.603] PACKET[COM9] state: status=0b0110111100000000, uptime=110179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1177.798828, witness_battery_voltage=3.028
+[16:34:36.661] RX[COM9]  ff
+[16:34:36.664] RX[COM9]  6e 00 00 01 ae 63 0a
+[16:34:36.671] PACKET[COM9] heartbeat: status=0b0110111000000000, uptime=110179
+[16:34:37.187] RX[COM9]  03
+[16:34:37.189] RX[COM9]  00 00 00 00 00 00 78 00 00 01 7b 27 01 04 00 0b fc 0a
+[16:34:37.195] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=97063, current_sense=[0.1, 0.4, 0.0], iris_battery_voltage=3.068
+[16:34:37.250] RX[COM9]  f0
+[16:34:37.252] RX[COM9]  d1 00 00 4e 63 00 00 00 00 00 00 0a
+[16:34:37.256] PACKET[COM9] ground_station_status: rssi=-47, uptime=20067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:37.374] RX[COM9]  01
+[16:34:37.376] RX[COM9]  6e 00 00 01 b1 3c ff e6 d6 ff b7 a8 00 3b 9e ff fb 00 01 ff fe 0a
+[16:34:37.383] PACKET[COM9] sensors: status=0b0110111000000000, uptime=110908, filtered_accel=[-0.25768, -0.7408, 0.61048], gyro=[-0.35, 0.07, -0.14]
+[16:34:37.603] RX[COM9]  02
+[16:34:37.604] RX[COM9]  6e 00 00 01 b2 4b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 93 2a af 0b bc 0a
+[16:34:37.610] PACKET[COM9] state: status=0b0110111000000000, uptime=111179, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=1177.333862, witness_battery_voltage=3.004
+[16:34:37.665] RX[COM9]  ff
+[16:34:37.667] RX[COM9]  6f 00 00 01 b2 4b 0a
+[16:34:37.672] PACKET[COM9] heartbeat: status=0b0110111100000000, uptime=111179
+[16:34:38.165] RX[COM9]  03
+[16:34:38.167] RX[COM9]  00 00 00 00 00 00 78 00 00 01 7f 0f 01 04 00 0b 7c 0a
+[16:34:38.175] PACKET[COM9] camera: fc_status=0b0000000000000000, fc_uptime=0, status=0b0111100000000000, uptime=98063, current_sense=[0.1, 0.4, 0.0], iris_battery_voltage=2.94
+[16:34:38.231] RX[COM9]  f0
+[16:34:38.233] RX[COM9]  d0 00 00 52 4b 00 00 00 00 00 00 0a
+[16:34:38.236] PACKET[COM9] ground_station_status: rssi=-48, uptime=21067, reserved=[0, 0, 0, 0, 0, 0]
+[16:34:38.342] RX[COM9]  01
+[16:34:38.344] RX[COM9]  67 00 00 01 b5 24 ff e6 ca ff b7 9c 00 3b 86 ff fc 00 01 ff fe 0a
+[16:34:38.353] PACKET[COM9] sensors: status=0b0110011100000000, uptime=111908, filtered_accel=[-0.25816, -0.74128, 0.60952], gyro=[-0.28, 0.07, -0.14]
+[16:34:38.573] ERROR[COM9] ClearCommError failed (PermissionError(13, 'The device does not recognize the command.', None, 22))
