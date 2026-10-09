@@ -13,6 +13,9 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext, ttk
 
+from featherweight import FEATHERWEIGHT_BAUD, FeatherweightStreamParser
+from aim_tab import AimMqttTab
+
 
 ROOT = Path(__file__).resolve().parent
 LOG_DIR = ROOT / "logs"
@@ -22,6 +25,10 @@ DEFAULT_TCP_1_HOST = ""
 DEFAULT_TCP_1_PORT = ""
 DEFAULT_TCP_2_HOST = ""
 DEFAULT_TCP_2_PORT = ""
+DEFAULT_AIM_MQTT_HOST = "localhost"
+DEFAULT_AIM_MQTT_PORT = 1883
+DEFAULT_AIM_MQTT_UUID = "124"
+DEFAULT_AIM_MQTT_BASE_PATH = "entacore/aim/1234"
 NO_SERIAL_PORT = "(no port)"
 
 # Commands currently defined by comms.h. Most command packets are sent as:
@@ -291,6 +298,16 @@ class SerialMonitor(tk.Tk):
         self.serials = {}
         self.tcp_sockets = {}
         self.stop_event = threading.Event()
+        self.featherweight_serial = None
+        self.featherweight_port_name = None
+        self.featherweight_stop_event = threading.Event()
+        self.featherweight_log_file = None
+        self.featherweight_last_packet_time = None
+        self.featherweight_packet_count = 0
+        self.featherweight_error_count = 0
+        self.featherweight_byte_count = 0
+        self.featherweight_raw_line_count = 0
+        self.featherweight_values = {}
         self.events = queue.Queue()
         self.log_files = {}
         self.debug_log_file = None
@@ -380,6 +397,15 @@ class SerialMonitor(tk.Tk):
             )
         ))
         telemetry_canvas.bind("<Leave>", lambda _event: telemetry_canvas.unbind_all("<MouseWheel>"))
+        self.featherweight_page = ttk.Frame(notebook)
+        notebook.add(self.featherweight_page, text="Featherweight GPS")
+        self.build_featherweight_tab(self.featherweight_page)
+        self.aim_page = AimMqttTab(
+            notebook, log_dir=LOG_DIR,
+            host=DEFAULT_AIM_MQTT_HOST, port=DEFAULT_AIM_MQTT_PORT,
+            client_uuid=DEFAULT_AIM_MQTT_UUID, base_path=DEFAULT_AIM_MQTT_BASE_PATH,
+        )
+        notebook.add(self.aim_page, text="AIM XTRA MQTT")
         self.graph_frame = ttk.Frame(notebook, padding=8)
         notebook.add(self.graph_frame, text="Graphs")
         self.make_sections(self.telemetry_frame, "packet")
@@ -444,6 +470,161 @@ class SerialMonitor(tk.Tk):
             quick_command_grid.columnconfigure(column, weight=1)
         main_pane.add(notebook, weight=4)
         main_pane.add(console_frame, weight=1)
+
+    def build_featherweight_tab(self, parent):
+        controls = ttk.Frame(parent, padding=8)
+        controls.pack(fill="x")
+        ttk.Label(controls, text="Featherweight port:").pack(side="left")
+        self.featherweight_port_combo = ttk.Combobox(
+            controls, width=14, state="readonly"
+        )
+        self.featherweight_port_combo.pack(side="left", padx=(5, 5))
+        ttk.Button(controls, text="Refresh", command=self.refresh_ports).pack(side="left")
+        ttk.Label(
+            controls, text=f"{FEATHERWEIGHT_BAUD} baud, 8-N-1 (read only)"
+        ).pack(side="left", padx=(12, 8))
+        self.featherweight_connect_button = ttk.Button(
+            controls,
+            text="Connect",
+            command=self.toggle_featherweight_connection,
+        )
+        self.featherweight_connect_button.pack(side="left")
+        self.featherweight_connection_status = ttk.Label(
+            controls, text="Disconnected", anchor="w"
+        )
+        self.featherweight_connection_status.pack(
+            side="left", fill="x", expand=True, padx=(10, 0)
+        )
+
+        canvas = tk.Canvas(parent, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(parent, orient="vertical", command=canvas.yview)
+        content = ttk.Frame(canvas, padding=(8, 0, 8, 8))
+        content_window = canvas.create_window((0, 0), window=content, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        content.bind(
+            "<Configure>",
+            lambda _event: canvas.configure(scrollregion=canvas.bbox("all")),
+        )
+        canvas.bind(
+            "<Configure>",
+            lambda event: canvas.itemconfigure(content_window, width=event.width),
+        )
+        canvas.bind(
+            "<Enter>",
+            lambda _event: canvas.bind_all(
+                "<MouseWheel>",
+                lambda event: canvas.yview_scroll(int(-event.delta / 120), "units"),
+            ),
+        )
+        canvas.bind(
+            "<Leave>", lambda _event: canvas.unbind_all("<MouseWheel>")
+        )
+
+        groups = (
+            (
+                "Packet",
+                (
+                    ("packet_type", "Packet type"),
+                    ("timestamp", "Tracker timestamp"),
+                    ("packet_length", "Declared length [bytes]"),
+                    ("radio_crc_status", "Radio CRC status"),
+                    ("text_crc", "Serial text CRC"),
+                    ("bytes_received", "Raw bytes received"),
+                    ("packet_count", "Text packets received"),
+                    ("parse_errors", "Parse/CRC errors"),
+                    ("data_age", "Data age"),
+                ),
+            ),
+            (
+                "Tracker",
+                (
+                    ("unit_type", "GPS unit type"),
+                    ("unit_id", "Tracker/unit ID"),
+                ),
+            ),
+            (
+                "Position",
+                (
+                    ("altitude_ft", "Altitude ASL [ft]"),
+                    ("latitude_deg", "Latitude [deg]"),
+                    ("longitude_deg", "Longitude [deg]"),
+                ),
+            ),
+            (
+                "Motion",
+                (
+                    ("horizontal_velocity_fps", "Horizontal velocity [ft/s]"),
+                    ("heading_deg", "Heading [deg]"),
+                    ("vertical_velocity_fps", "Upward velocity [ft/s]"),
+                ),
+            ),
+            (
+                "GPS fix",
+                (
+                    ("fix_type", "Fix type"),
+                    ("satellites_total", "Total satellites"),
+                    ("satellites_over_24db", "Satellites >24 dB"),
+                    ("satellites_over_32db", "Satellites >32 dB"),
+                    ("satellites_over_40db", "Satellites >40 dB"),
+                ),
+            ),
+            (
+                "Strongest satellites (azimuth_elevation_strength)",
+                tuple((f"satellite_{index}", f"Satellite {index}") for index in range(1, 6)),
+            ),
+        )
+
+        for column in range(2):
+            content.columnconfigure(column, weight=1, uniform="featherweight")
+        for index, (title, fields) in enumerate(groups):
+            group = ttk.LabelFrame(content, text=title, padding=6)
+            group.grid(
+                row=index // 2,
+                column=index % 2,
+                sticky="nsew",
+                padx=4,
+                pady=4,
+            )
+            group.columnconfigure(1, weight=1)
+            for row, (key, label_text) in enumerate(fields):
+                variable = tk.StringVar(value="null")
+                self.featherweight_values[key] = variable
+                ttk.Label(
+                    group,
+                    text=label_text + ":",
+                    width=22,
+                    anchor="w",
+                    wraplength=150,
+                ).grid(row=row, column=0, sticky="w", padx=(0, 5), pady=1)
+                value_label = tk.Label(
+                    group,
+                    textvariable=variable,
+                    width=23,
+                    anchor="w",
+                    justify="left",
+                    wraplength=170,
+                    relief="sunken",
+                    borderwidth=1,
+                    background="#f7f7f7",
+                )
+                value_label.grid(row=row, column=1, sticky="ew", pady=1)
+                if key == "text_crc":
+                    self.featherweight_crc_label = value_label
+                elif key == "data_age":
+                    self.featherweight_age_label = value_label
+
+        raw_frame = ttk.LabelFrame(content, text="Received text packets and diagnostics", padding=5)
+        raw_frame.grid(row=3, column=0, columnspan=2, sticky="nsew", padx=4, pady=4)
+        self.featherweight_raw = scrolledtext.ScrolledText(
+            raw_frame,
+            height=10,
+            wrap="word",
+            state="disabled",
+            font=("Consolas", 9),
+        )
+        self.featherweight_raw.pack(fill="both", expand=True)
 
     def make_sections(self, parent, prefix):
         # Field lists mirror comms.h exactly, in wire order, per packet type.
@@ -632,7 +813,11 @@ class SerialMonitor(tk.Tk):
         except ImportError:
             ports = []
         choices = [NO_SERIAL_PORT, *ports]
-        for combo in (self.port_a_combo, self.port_b_combo):
+        for combo in (
+            self.port_a_combo,
+            self.port_b_combo,
+            self.featherweight_port_combo,
+        ):
             current = combo.get()
             combo["values"] = choices
             combo.set(current if current in ports else NO_SERIAL_PORT)
@@ -737,6 +922,233 @@ class SerialMonitor(tk.Tk):
         self.command_entry.icursor("end")
         return "break"
 
+    def toggle_featherweight_connection(self):
+        if self.featherweight_serial is None:
+            self.connect_featherweight()
+        else:
+            self.disconnect_featherweight()
+
+    def connect_featherweight(self):
+        port_name = self.featherweight_port_combo.get()
+        if not port_name or port_name == NO_SERIAL_PORT:
+            messagebox.showerror(
+                "Featherweight GPS", "Select a Featherweight serial port."
+            )
+            return
+        if port_name in self.serials:
+            messagebox.showerror(
+                "Featherweight GPS",
+                f"{port_name} is already open as a Witness serial input.",
+            )
+            return
+        try:
+            import serial
+        except ImportError:
+            messagebox.showerror(
+                "Featherweight GPS", "pyserial is required: pip install pyserial"
+            )
+            return
+
+        LOG_DIR.mkdir(parents=True, exist_ok=True)
+        stamp = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+        safe_port = "".join(
+            character if character.isalnum() else "_" for character in port_name
+        )
+        serial_port = None
+        try:
+            serial_port = serial.Serial(
+                port=port_name,
+                baudrate=FEATHERWEIGHT_BAUD,
+                bytesize=serial.EIGHTBITS,
+                parity=serial.PARITY_NONE,
+                stopbits=serial.STOPBITS_ONE,
+                timeout=0.2,
+                xonxoff=False,
+                rtscts=False,
+                dsrdtr=False,
+            )
+            log_file = (
+                LOG_DIR / f"featherweight_{safe_port}_{stamp}.bin"
+            ).open("ab")
+        except Exception as exc:
+            if serial_port is not None:
+                try:
+                    serial_port.close()
+                except Exception:
+                    pass
+            messagebox.showerror(
+                "Featherweight GPS", f"Could not open {port_name}:\n{exc}"
+            )
+            return
+
+        self.featherweight_serial = serial_port
+        self.featherweight_port_name = port_name
+        self.featherweight_log_file = log_file
+        self.featherweight_stop_event.clear()
+        self.featherweight_packet_count = 0
+        self.featherweight_error_count = 0
+        self.featherweight_byte_count = 0
+        self.featherweight_last_packet_time = None
+        for variable in self.featherweight_values.values():
+            variable.set("null")
+        self.featherweight_values["packet_count"].set("0")
+        self.featherweight_values["parse_errors"].set("0")
+        self.featherweight_values["bytes_received"].set("0")
+        self.featherweight_values["data_age"].set("--")
+        self.featherweight_crc_label.configure(background="#f7f7f7")
+        self.featherweight_connect_button.configure(text="Disconnect")
+        self.featherweight_port_combo.configure(state="disabled")
+        self.featherweight_connection_status.configure(
+            text=f"Connected: {port_name}"
+        )
+        self.featherweight_write(
+            f"CONNECTED[{port_name}] {FEATHERWEIGHT_BAUD} baud 8-N-1, read only"
+        )
+        threading.Thread(
+            target=self.read_featherweight,
+            args=(port_name, serial_port),
+            daemon=True,
+        ).start()
+
+    def read_featherweight(self, port_name, serial_port):
+        parser = FeatherweightStreamParser(
+            lambda packet: self.events.put(
+                ("featherweight_packet", (port_name, packet))
+            ),
+            lambda message: self.events.put(
+                ("featherweight_parse_error", (port_name, message))
+            ),
+        )
+        while (
+            not self.featherweight_stop_event.is_set()
+            and self.featherweight_serial is serial_port
+        ):
+            try:
+                data = serial_port.read(serial_port.in_waiting or 1)
+                if not data:
+                    continue
+                self.featherweight_byte_count += len(data)
+                if self.featherweight_log_file is not None:
+                    self.featherweight_log_file.write(data)
+                    self.featherweight_log_file.flush()
+                parser.feed(data)
+            except Exception as exc:
+                if not self.featherweight_stop_event.is_set():
+                    self.events.put(
+                        ("featherweight_connection_error", (port_name, str(exc)))
+                    )
+                break
+
+    def disconnect_featherweight(self, status="Disconnected"):
+        self.featherweight_stop_event.set()
+        serial_port = self.featherweight_serial
+        self.featherweight_serial = None
+        if serial_port is not None:
+            try:
+                serial_port.close()
+            except Exception:
+                pass
+        if self.featherweight_log_file is not None:
+            try:
+                self.featherweight_log_file.close()
+            except Exception:
+                pass
+        self.featherweight_log_file = None
+        self.featherweight_port_name = None
+        self.featherweight_connect_button.configure(text="Connect")
+        self.featherweight_port_combo.configure(state="readonly")
+        self.featherweight_connection_status.configure(text=status)
+
+    def featherweight_write(self, line):
+        timestamp = _dt.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        self.featherweight_raw.configure(state="normal")
+        self.featherweight_raw.insert("end", f"[{timestamp}] {line}\n")
+        self.featherweight_raw_line_count += 1
+        if self.featherweight_raw_line_count > 1000:
+            self.featherweight_raw.delete("1.0", "101.0")
+            self.featherweight_raw_line_count -= 100
+        self.featherweight_raw.see("end")
+        self.featherweight_raw.configure(state="disabled")
+
+    @staticmethod
+    def format_featherweight_value(value):
+        if value is None or value == "":
+            return "null"
+        if isinstance(value, float):
+            return f"{value:.10g}"
+        return str(value)
+
+    def update_featherweight_packet(self, port_name, packet):
+        self.featherweight_packet_count += 1
+        self.featherweight_last_packet_time = time.monotonic()
+        self.featherweight_values["packet_count"].set(
+            str(self.featherweight_packet_count)
+        )
+        for key in ("packet_type", "timestamp", "packet_length", "radio_crc_status"):
+            self.featherweight_values[key].set(
+                self.format_featherweight_value(packet.get(key))
+            )
+
+        expected_crc = packet["text_crc_expected"]
+        computed_crc = packet["text_crc_computed"]
+        if packet["text_crc_valid"]:
+            crc_text = f"OK 0x{expected_crc:04X}"
+            crc_background = "#c8e6c9"
+        else:
+            crc_text = f"BAD rx=0x{expected_crc:04X}, calc=0x{computed_crc:04X}"
+            crc_background = "#ff8a80"
+            self.featherweight_error_count += 1
+            self.featherweight_values["parse_errors"].set(
+                str(self.featherweight_error_count)
+            )
+        self.featherweight_values["text_crc"].set(crc_text)
+        self.featherweight_crc_label.configure(background=crc_background)
+
+        if packet.get("packet_type", "").casefold() == "gps_stat":
+            for key in (
+                "unit_type",
+                "unit_id",
+                "altitude_ft",
+                "latitude_deg",
+                "longitude_deg",
+                "horizontal_velocity_fps",
+                "heading_deg",
+                "vertical_velocity_fps",
+                "satellites_total",
+                "satellites_over_24db",
+                "satellites_over_32db",
+                "satellites_over_40db",
+            ):
+                self.featherweight_values[key].set(
+                    self.format_featherweight_value(packet.get(key))
+                )
+            fix_type = packet.get("fix_type")
+            fix_names = {0: "No fix", 2: "2D fix", 3: "3D fix"}
+            fix_text = (
+                f"{fix_type} ({fix_names.get(fix_type, 'reserved/unknown')})"
+                if fix_type is not None
+                else "null"
+            )
+            self.featherweight_values["fix_type"].set(fix_text)
+            satellites = packet.get("satellite_details", [])
+            for index in range(1, 6):
+                value = satellites[index - 1] if index <= len(satellites) else None
+                self.featherweight_values[f"satellite_{index}"].set(
+                    self.format_featherweight_value(value)
+                )
+
+        self.featherweight_write(
+            f"PACKET[{port_name}] {packet['raw']}"
+            + ("" if packet["text_crc_valid"] else "  [TEXT CRC ERROR]")
+        )
+
+    def update_featherweight_error(self, port_name, message):
+        self.featherweight_error_count += 1
+        self.featherweight_values["parse_errors"].set(
+            str(self.featherweight_error_count)
+        )
+        self.featherweight_write(f"PARSE_ERROR[{port_name}] {message}")
+
     def toggle_connection(self):
         self.disconnect() if (self.serials or self.tcp_sockets) else self.connect()
 
@@ -768,6 +1180,12 @@ class SerialMonitor(tk.Tk):
             return
         if len(set(ports)) != len(ports):
             messagebox.showerror("Serial monitor", "Port A and Port B must be different.")
+            return
+        if self.featherweight_port_name in ports:
+            messagebox.showerror(
+                "Serial monitor",
+                f"{self.featherweight_port_name} is already open as the Featherweight GPS input.",
+            )
             return
         try:
             if ports:
@@ -860,6 +1278,23 @@ class SerialMonitor(tk.Tk):
                 elif kind == "bytes":
                     port_name, data = payload
                     self.console_write(f"RX[{port_name}]  {data.hex(' ')}")
+                elif kind == "featherweight_packet":
+                    port_name, packet = payload
+                    if port_name == self.featherweight_port_name:
+                        self.update_featherweight_packet(port_name, packet)
+                elif kind == "featherweight_parse_error":
+                    port_name, message = payload
+                    if port_name == self.featherweight_port_name:
+                        self.update_featherweight_error(port_name, message)
+                elif kind == "featherweight_connection_error":
+                    port_name, message = payload
+                    if port_name == self.featherweight_port_name:
+                        self.featherweight_write(
+                            f"CONNECTION_ERROR[{port_name}] {message}"
+                        )
+                        self.disconnect_featherweight(
+                            status=f"Error on {port_name}: {message}"
+                        )
                 else:
                     port_name, packet = payload
                     self.update_values("packet", packet)
@@ -892,6 +1327,24 @@ class SerialMonitor(tk.Tk):
             else:
                 background = "#ff8a80"
             label.configure(text=f"{age:.1f}s", background=background)
+        if self.featherweight_last_packet_time is None:
+            self.featherweight_values["data_age"].set("--")
+            self.featherweight_age_label.configure(background="#f0f0f0")
+        else:
+            age = max(0.0, now - self.featherweight_last_packet_time)
+            if age < 2.0:
+                background = "#f0f0f0"
+            elif age < 5.0:
+                background = "#fff2a8"
+            elif age < 10.0:
+                background = "#ffd27f"
+            else:
+                background = "#ff8a80"
+            self.featherweight_values["data_age"].set(f"{age:.1f}s")
+            self.featherweight_age_label.configure(background=background)
+        self.featherweight_values["bytes_received"].set(
+            str(self.featherweight_byte_count)
+        )
         self.after(100, self.update_age_indicators)
 
     @staticmethod
@@ -1143,7 +1596,9 @@ class SerialMonitor(tk.Tk):
         self.status_label.configure(text="Disconnected")
 
     def close(self):
+        self.aim_page.close()
         self.disconnect()
+        self.disconnect_featherweight()
         self.destroy()
 
 
