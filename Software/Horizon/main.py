@@ -1,8 +1,15 @@
-"""Witness communications monitor; exports decoded telemetry to Horizon."""
+"""Witness monitor and Horizon telemetry feed.
+
+Offline demo: python main.py --test
+Timed hex replay: python main.py --test-file test_data/example_packets.json
+Use --test-speed 2 for 2x playback and --test-once to disable looping.
+Test bytes pass through PacketDecoder; they are never written to hardware.
+"""
 
 from __future__ import annotations
 
 import datetime as _dt
+import argparse
 import json
 import socket
 import struct
@@ -15,6 +22,7 @@ from tkinter import filedialog, messagebox, scrolledtext, ttk
 
 from ground_settings import WITNESS_FEED_HOST, WITNESS_FEED_PORT
 from witness_link import WitnessPublisher
+from witness_test_source import builtin_scenario, load_scenario, play_scenario, validate_speed
 
 
 ROOT = Path(__file__).resolve().parent
@@ -289,13 +297,24 @@ class PacketDecoder:
 
 
 class SerialMonitor(tk.Tk):
-    def __init__(self):
+    def __init__(self, *, test_mode=False, test_source="", test_speed=1.0, test_loop=True):
         super().__init__()
         self.title("Witness Communications Monitor")
         self.geometry("920x720")
         self.serials = {}
         self.tcp_sockets = {}
         self.stop_event = threading.Event()
+        self.test_active = False
+        self._test_source = None
+        self._test_stop = None
+        self._test_thread = None
+        self._test_token = None
+        self._test_start_id = None
+        self._test_display = False
+        self.test_file = tk.StringVar(value=test_source)
+        self.test_speed = tk.StringVar(value=str(test_speed))
+        self.test_loop = tk.BooleanVar(value=test_loop)
+        self.test_status = tk.StringVar(value="Test source: blank = built-in 60s simulated flight. No hardware writes.")
         self.events = queue.Queue()
         self.log_files = {}
         self.debug_log_file = None
@@ -325,6 +344,8 @@ class SerialMonitor(tk.Tk):
         self.after(100, self.draw_graphs)
         self.after(100, self.update_age_indicators)
         self.protocol("WM_DELETE_WINDOW", self.close)
+        if test_mode:
+            self._test_start_id = self.after(0, self._start_requested_test)
 
     def build_ui(self):
         controls = ttk.Frame(self, padding=8)
@@ -360,6 +381,26 @@ class SerialMonitor(tk.Tk):
             port_entry.insert(0, port_default)
             port_entry.pack(side="left")
             self.tcp_entries.append((host_entry, port_entry))
+        test_controls = ttk.Frame(self, padding=(8, 0, 8, 4))
+        test_controls.pack(fill="x")
+        test_controls.columnconfigure(1, weight=1)
+        ttk.Label(test_controls, text="Test source:").grid(row=0, column=0, padx=(0, 4))
+        self.test_file_entry = ttk.Entry(test_controls, textvariable=self.test_file)
+        self.test_file_entry.grid(row=0, column=1, sticky="ew")
+        self.test_browse_button = ttk.Button(test_controls, text="Browse JSON", command=self.browse_test_source)
+        self.test_browse_button.grid(row=0, column=2, padx=4)
+        ttk.Label(test_controls, text="Speed:").grid(row=0, column=3, padx=(8, 4))
+        self.test_speed_entry = ttk.Entry(test_controls, textvariable=self.test_speed, width=5)
+        self.test_speed_entry.grid(row=0, column=4)
+        self.test_loop_button = ttk.Checkbutton(test_controls, text="Loop", variable=self.test_loop)
+        self.test_loop_button.grid(row=0, column=5, padx=8)
+        self.test_button = ttk.Button(test_controls, text="Start test", command=self.toggle_test)
+        self.test_button.grid(row=0, column=6)
+        self.test_status_label = tk.Label(test_controls, textvariable=self.test_status,
+                                         anchor="w", justify="left", wraplength=800)
+        self.test_status_label.grid(row=1, column=0, columnspan=7, sticky="ew", pady=(3, 0))
+        test_controls.bind("<Configure>", lambda event: self.test_status_label.configure(
+            wraplength=max(120, event.width - 16)))
         ttk.Label(self, textvariable=self.feed_status, wraplength=800).pack(fill="x", padx=8, pady=(0, 5))
         main_pane = ttk.PanedWindow(self, orient=tk.VERTICAL)
         main_pane.pack(fill="both", expand=True, padx=8, pady=(0, 8))
@@ -656,7 +697,7 @@ class SerialMonitor(tk.Tk):
         self.refresh_command_targets()
 
     def refresh_command_targets(self):
-        targets = list(self.serials) + list(self.tcp_sockets)
+        targets = [] if self.test_active else list(self.serials) + list(self.tcp_sockets)
         self.command_port_combo["values"] = targets
         if self.command_port_combo.get() not in targets:
             self.command_port_combo.set(targets[0] if targets else "")
@@ -667,6 +708,9 @@ class SerialMonitor(tk.Tk):
             button.configure(state=state)
 
     def transmit_command(self, target_name, command, description=None):
+        if self.test_active:
+            self.console_write("TX_BLOCKED test mode never sends commands to hardware")
+            return False
         serial_port = self.serials.get(target_name)
         tcp_socket = self.tcp_sockets.get(target_name)
         if serial_port is None and tcp_socket is None:
@@ -757,7 +801,135 @@ class SerialMonitor(tk.Tk):
     def toggle_connection(self):
         self.disconnect() if (self.serials or self.tcp_sockets) else self.connect()
 
+    def _start_requested_test(self):
+        self._test_start_id = None
+        self.start_test()
+
+    def browse_test_source(self):
+        filename = filedialog.askopenfilename(
+            parent=self, title="Timed test packets", filetypes=(("Test source JSON", "*.json"),))
+        if filename:
+            self.test_file.set(filename)
+
+    def toggle_test(self):
+        self.stop_test() if self.test_active else self.start_test()
+
+    def _clear_telemetry(self):
+        for variable in self.values.values():
+            variable.set("null")
+        self.history.clear()
+        self.last_packet_time.clear()
+        for indicators in self.status_indicators.values():
+            labels = [label for _mask, label in indicators["flags"]]
+            if indicators["states"] is not None:
+                labels.extend(indicators["states"].values())
+                labels.append(indicators["invalid"])
+                indicators["invalid"].configure(text="Invalid")
+            for label in labels:
+                label.configure(background="#f7f7f7", foreground="#777777", relief="solid")
+
+    def start_test(self):
+        if self.test_active:
+            return False
+        if self.serials or self.tcp_sockets:
+            messagebox.showerror("Test mode", "Disconnect real serial/TCP inputs before starting a test.", parent=self)
+            return False
+        raw_log = None
+        try:
+            speed = validate_speed(float(self.test_speed.get()))
+            filename = self.test_file.get().strip()
+            scenario = load_scenario(filename) if filename else builtin_scenario()
+            LOG_DIR.mkdir(parents=True, exist_ok=True)
+            stamp = _dt.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            raw_log = (LOG_DIR / f"test_{stamp}.bin").open("xb")
+            self.debug_log_file = (LOG_DIR / f"test_debug_{stamp}.log").open("x", encoding="utf-8")
+        except (OSError, ValueError) as exc:
+            if raw_log is not None:
+                raw_log.close()
+            messagebox.showerror("Test mode", str(exc), parent=self)
+            return False
+        self._clear_telemetry()
+        self._test_display = self.test_active = True
+        self._test_token = token = object()
+        self._test_stop = stop = threading.Event()
+        self._test_source = source = "TEST_" + "".join(
+            char if char.isalnum() or char in "_-" else "_" for char in scenario.name)[:100]
+        self.title("Witness Communications Monitor [TEST DATA]")
+        self.test_status_label.configure(background="#fff2a8")
+        self.test_status.set(f"TEST DATA: {scenario.name} at {speed:g}x; source {source}. No hardware writes.")
+        self.status_label.configure(text="TEST MODE - simulated input")
+        self.test_button.configure(text="Stop test")
+        for widget in (self.test_file_entry, self.test_browse_button, self.test_speed_entry,
+                       self.test_loop_button, self.connect_button):
+            widget.configure(state="disabled")
+        self.refresh_command_targets()
+        self.console_write(f"TEST_START[{source}] {len(scenario.frames)} chunks, "
+                           f"duration={scenario.duration_ms}ms, speed={speed:g}x, "
+                           f"loop={self.test_loop.get()}; raw log={raw_log.name}")
+        self._test_thread = threading.Thread(
+            target=self.read_test, args=(scenario, source, token, stop, raw_log, speed, self.test_loop.get()),
+            name="witness-test-source", daemon=True)
+        self._test_thread.start()
+        return True
+
+    def read_test(self, scenario, source, token, stop, raw_log, speed, loop):
+        def event(kind, payload):
+            self.events.put(("test_event", (token, kind, payload)))
+        decoder = PacketDecoder(
+            lambda packet: self.on_decoded_packet(source, packet, test_token=token),
+            lambda message: event("decoder_error", (source, message)))
+        def receive(data):
+            # Backpressure is safe for an offline source; keep the GUI queue bounded.
+            while self.events.qsize() >= 1000:
+                if stop.wait(0.01):
+                    return
+            if stop.is_set():
+                return
+            raw_log.write(data)
+            raw_log.flush()
+            event("bytes", (source, data))
+            decoder.feed(data)
+        def reset_decoder():
+            if decoder.buffer:
+                event("decoder_error", (source, f"test loop discarded {len(decoder.buffer)} trailing bytes"))
+            decoder.buffer.clear()
+        result = "completed"
+        try:
+            with raw_log:
+                play_scenario(scenario, receive, stop, speed=speed, loop=loop, on_cycle=reset_decoder)
+            if decoder.buffer and not stop.is_set():
+                event("decoder_error", (source, f"test ended with {len(decoder.buffer)} trailing bytes"))
+        except Exception as exc:
+            result = f"failed: {exc}"
+            event("decoder_error", (source, result))
+        finally:
+            event("test_done", result)
+
+    def stop_test(self, result="stopped"):
+        if not self.test_active:
+            return
+        self._test_stop.set()
+        if self._test_thread is not None:
+            self._test_thread.join(timeout=2)
+        self.test_active = False
+        self._test_token = None  # Ignore queued display/completion events from an old run.
+        self._test_thread = None
+        self.test_button.configure(text="Start test")
+        for widget in (self.test_file_entry, self.test_browse_button, self.test_speed_entry,
+                       self.test_loop_button, self.connect_button):
+            widget.configure(state="normal")
+        self.refresh_command_targets()
+        self.status_label.configure(text="TEST MODE - " + result)
+        self.test_status.set(f"TEST {result}: displayed values are simulated. Start test to replay again.")
+        self.console_write(f"TEST_END[{self._test_source}] {result}")
+        if self.debug_log_file is not None:
+            self.debug_log_file.close()
+            self.debug_log_file = None
+
     def connect(self):
+        if self.test_active:
+            messagebox.showerror("Test mode", "Stop the test before connecting real inputs.", parent=self)
+            return
         ports = [
             port for port in (self.port_a_combo.get(), self.port_b_combo.get())
             if port and port != NO_SERIAL_PORT
@@ -786,6 +958,12 @@ class SerialMonitor(tk.Tk):
         if len(set(ports)) != len(ports):
             messagebox.showerror("Serial monitor", "Port A and Port B must be different.")
             return
+        if self._test_display:
+            self._clear_telemetry()
+            self._test_display = False
+            self.test_status.set("Live mode. Test values cleared; source file remains available for replay.")
+            self.test_status_label.configure(background=self.cget("background"))
+            self.title("Witness Communications Monitor")
         try:
             if ports:
                 import serial
@@ -821,13 +999,16 @@ class SerialMonitor(tk.Tk):
         sources = ports + [f"TCP {host}:{port}" for _, host, port in tcp_endpoints]
         self.status_label.configure(text=f"Connected: {', '.join(sources)}")
 
-    def on_decoded_packet(self, source, packet):
+    def on_decoded_packet(self, source, packet, *, test_token=None):
         # Called by input workers: export immediately, independent of GUI backlog.
         try:
             self.publisher.publish(source, packet, received_at=time.time())
         except Exception as exc:
             self.events.put(("decoder_error", (source, f"Horizon feed: {exc}")))
-        self.events.put(("packet", (source, packet)))
+        if test_token is None:
+            self.events.put(("packet", (source, packet)))
+        else:
+            self.events.put(("test_event", (test_token, "packet", (source, packet))))
 
     def read_serial(self, port_name, serial_port):
         decoder = PacketDecoder(
@@ -872,9 +1053,21 @@ class SerialMonitor(tk.Tk):
                 break
 
     def process_events(self):
-        while True:
+        deadline = time.monotonic() + 0.02
+        while time.monotonic() < deadline:
             try:
                 kind, payload = self.events.get_nowait()
+                if kind == "test_event":
+                    token, kind, payload = payload
+                    if token is not self._test_token:
+                        continue
+                    if kind == "test_done":
+                        self.stop_test(result=payload)
+                        continue
+                elif self.test_active:
+                    # Ignore any late events from a previously disconnected live
+                    # input; never mix those values with this test run.
+                    continue
                 if kind == "error":
                     port_name, message = payload
                     self.status_label.configure(text=f"Serial error on {port_name}: {message}")
@@ -1175,10 +1368,30 @@ class SerialMonitor(tk.Tk):
         self.status_label.configure(text="Disconnected")
 
     def close(self):
+        if self._test_start_id is not None:
+            self.after_cancel(self._test_start_id)
+        self.stop_test()
         self.disconnect()
         self.publisher.close()
         self.destroy()
 
 
+def command_line(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--test", action="store_true", help="start the built-in simulated flight (no hardware)")
+    parser.add_argument("--test-file", metavar="JSON", help="start timed hex-packet replay from a JSON file")
+    parser.add_argument("--test-speed", type=float, default=1.0, help="playback multiplier, 0.1 to 10 (default: 1)")
+    parser.add_argument("--test-once", action="store_true", help="stop at end of test instead of looping")
+    args = parser.parse_args(argv)
+    try:
+        validate_speed(args.test_speed)
+    except ValueError as exc:
+        parser.error(str(exc))
+    return args
+
+
 if __name__ == "__main__":
-    SerialMonitor().mainloop()
+    args = command_line()
+    SerialMonitor(test_mode=args.test or args.test_file is not None,
+                  test_source=args.test_file or "", test_speed=args.test_speed,
+                  test_loop=not args.test_once).mainloop()
