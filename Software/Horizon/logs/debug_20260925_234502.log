@@ -1,0 +1,159 @@
+[23:45:03.561] RX[COM6]  f0
+[23:45:03.565] RX[COM6]  81 00 00 de eb 00 00 00 00 00 00 0a
+[23:45:03.567] PACKET[COM6] ground_station_status: rssi=-127, uptime=57067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:04.568] RX[COM6]  f0
+[23:45:04.569] RX[COM6]  81 00 00 e2 d3 00 00 00 00 00 00 0a
+[23:45:04.572] PACKET[COM6] ground_station_status: rssi=-127, uptime=58067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:05.522] RX[COM6]  f0
+[23:45:05.523] RX[COM6]  81 00 00 e6 bb 00 00 00 00 00 00 0a
+[23:45:05.526] PACKET[COM6] ground_station_status: rssi=-127, uptime=59067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:06.525] RX[COM6]  f0
+[23:45:06.533] RX[COM6]  81 00 00 ea a3 00 00 00 00 00 00 0a
+[23:45:06.544] PACKET[COM6] ground_station_status: rssi=-127, uptime=60067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:07.554] RX[COM6]  f0
+[23:45:07.555] RX[COM6]  81 00 00 ee 8b 00 00 00 00 00 00 0a
+[23:45:07.557] PACKET[COM6] ground_station_status: rssi=-127, uptime=61067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:08.531] RX[COM6]  f0
+[23:45:08.533] RX[COM6]  81 00 00 f2 73 00 00 00 00 00 00 0a
+[23:45:08.536] PACKET[COM6] ground_station_status: rssi=-127, uptime=62067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:09.563] RX[COM6]  f0
+[23:45:09.564] RX[COM6]  81 00 00 f6 5b 00 00 00 00 00 00 0a
+[23:45:09.567] PACKET[COM6] ground_station_status: rssi=-127, uptime=63067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:10.524] RX[COM6]  f0
+[23:45:10.526] RX[COM6]  81 00 00 fa 43 00 00 00 00 00 00 0a
+[23:45:10.528] PACKET[COM6] ground_station_status: rssi=-127, uptime=64067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:11.540] RX[COM6]  f0
+[23:45:11.542] RX[COM6]  81 00 00 fe 2b 00 00 00 00 00 00 0a
+[23:45:11.545] PACKET[COM6] ground_station_status: rssi=-127, uptime=65067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:12.518] RX[COM6]  f0
+[23:45:12.520] RX[COM6]  81 00 01 02 13 00 00 00 00 00 00 0a
+[23:45:12.522] PACKET[COM6] ground_station_status: rssi=-127, uptime=66067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:13.531] RX[COM6]  f0
+[23:45:13.534] RX[COM6]  81 00 01 05 fb 00 00 00 00 00 00 0a
+[23:45:13.537] PACKET[COM6] ground_station_status: rssi=-127, uptime=67067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:14.551] RX[COM6]  f0
+[23:45:14.558] RX[COM6]  81 00 01 09 e3 00 00 00 00 00 00 0a
+[23:45:14.568] PACKET[COM6] ground_station_status: rssi=-127, uptime=68067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:15.526] RX[COM6]  f0
+[23:45:15.527] RX[COM6]  81 00 01 0d cb 00 00 00 00 00 00 0a
+[23:45:15.529] PACKET[COM6] ground_station_status: rssi=-127, uptime=69067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:16.535] RX[COM6]  f0
+[23:45:16.537] RX[COM6]  81 00 01 11 b3 00 00 00 00 00 00 0a
+[23:45:16.539] PACKET[COM6] ground_station_status: rssi=-127, uptime=70067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:17.556] RX[COM6]  f0
+[23:45:17.558] RX[COM6]  81 00 01 15 9b 00 00 00 00 00 00 0a
+[23:45:17.561] PACKET[COM6] ground_station_status: rssi=-127, uptime=71067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:18.537] RX[COM6]  f0
+[23:45:18.539] RX[COM6]  81 00 01 19 83 00 00 00 00 00 00 0a
+[23:45:18.545] PACKET[COM6] ground_station_status: rssi=-127, uptime=72067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:19.514] RX[COM6]  f0
+[23:45:19.515] RX[COM6]  81 00 01 1d 6b 00 00 00 00 00 00 0a
+[23:45:19.518] PACKET[COM6] ground_station_status: rssi=-127, uptime=73067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:20.531] RX[COM6]  f0
+[23:45:20.533] RX[COM6]  81 00 01 21 53 00 00 00 00 00 00 0a
+[23:45:20.536] PACKET[COM6] ground_station_status: rssi=-127, uptime=74067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:21.521] RX[COM6]  f0
+[23:45:21.523] RX[COM6]  81 00 01 25 3b 00 00 00 00 00 00 0a
+[23:45:21.525] PACKET[COM6] ground_station_status: rssi=-127, uptime=75067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:22.558] RX[COM6]  f0
+[23:45:22.559] RX[COM6]  81 00 01 29 23 00 00 00 00 00 00 0a
+[23:45:22.562] PACKET[COM6] ground_station_status: rssi=-127, uptime=76067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:23.566] RX[COM6]  f0
+[23:45:23.569] RX[COM6]  81 00 01 2d 0b 00 00 00 00 00 00 0a
+[23:45:23.572] PACKET[COM6] ground_station_status: rssi=-127, uptime=77067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:24.546] RX[COM6]  f0
+[23:45:24.552] RX[COM6]  81 00 01 30 f3 00 00 00 00 00 00 0a
+[23:45:24.554] PACKET[COM6] ground_station_status: rssi=-127, uptime=78067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:25.532] RX[COM6]  f0
+[23:45:25.534] RX[COM6]  81 00 01 34 db 00 00 00 00 00 00 0a
+[23:45:25.537] PACKET[COM6] ground_station_status: rssi=-127, uptime=79067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:26.516] RX[COM6]  f0
+[23:45:26.518] RX[COM6]  81 00 01 38 c3 00 00 00 00 00 00 0a
+[23:45:26.521] PACKET[COM6] ground_station_status: rssi=-127, uptime=80067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:27.557] RX[COM6]  f0
+[23:45:27.559] RX[COM6]  81 00 01 3c ab 00 00 00 00 00 00 0a
+[23:45:27.561] PACKET[COM6] ground_station_status: rssi=-127, uptime=81067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:28.530] RX[COM6]  f0
+[23:45:28.532] RX[COM6]  81 00 01 40 93 00 00 00 00 00 00 0a
+[23:45:28.534] PACKET[COM6] ground_station_status: rssi=-127, uptime=82067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:29.539] RX[COM6]  f0
+[23:45:29.541] RX[COM6]  81 00 01 44 7b 00 00 00 00 00 00 0a
+[23:45:29.543] PACKET[COM6] ground_station_status: rssi=-127, uptime=83067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:30.556] RX[COM6]  f0
+[23:45:30.558] RX[COM6]  81 00 01 48 63 00 00 00 00 00 00 0a
+[23:45:30.561] PACKET[COM6] ground_station_status: rssi=-127, uptime=84067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:31.540] RX[COM6]  f0
+[23:45:31.541] RX[COM6]  81 00 01 4c 4b 00 00 00 00 00 00 0a
+[23:45:31.543] PACKET[COM6] ground_station_status: rssi=-127, uptime=85067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:32.517] RX[COM6]  f0
+[23:45:32.519] RX[COM6]  81 00 01 50 33 00 00 00 00 00 00 0a
+[23:45:32.522] PACKET[COM6] ground_station_status: rssi=-127, uptime=86067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:33.556] RX[COM6]  f0
+[23:45:33.558] RX[COM6]  81 00 01 54 1b 00 00 00 00 00 00 0a
+[23:45:33.560] PACKET[COM6] ground_station_status: rssi=-127, uptime=87067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:34.519] RX[COM6]  f0
+[23:45:34.520] RX[COM6]  81 00 01 58 03 00 00 00 00 00 00 0a
+[23:45:34.523] PACKET[COM6] ground_station_status: rssi=-127, uptime=88067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:35.554] RX[COM6]  f0
+[23:45:35.556] RX[COM6]  81 00 01 5b eb 00 00 00 00 00 00 0a
+[23:45:35.558] PACKET[COM6] ground_station_status: rssi=-127, uptime=89067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:36.532] RX[COM6]  f0
+[23:45:36.534] RX[COM6]  81 00 01 5f d3 00 00 00 00 00 00 0a
+[23:45:36.538] PACKET[COM6] ground_station_status: rssi=-127, uptime=90067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:37.568] RX[COM6]  f0
+[23:45:37.570] RX[COM6]  81 00 01 63 bb 00 00 00 00 00 00 0a
+[23:45:37.572] PACKET[COM6] ground_station_status: rssi=-127, uptime=91067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:38.520] RX[COM6]  f0
+[23:45:38.522] RX[COM6]  81 00 01 67 a3 00 00 00 00 00 00 0a
+[23:45:38.524] PACKET[COM6] ground_station_status: rssi=-127, uptime=92067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:39.527] RX[COM6]  f0
+[23:45:39.531] RX[COM6]  81 00 01 6b 8b 00 00 00 00 00 00 0a
+[23:45:39.536] PACKET[COM6] ground_station_status: rssi=-127, uptime=93067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:40.562] RX[COM6]  f0
+[23:45:40.564] RX[COM6]  81 00 01 6f 73 00 00 00 00 00 00 0a
+[23:45:40.569] PACKET[COM6] ground_station_status: rssi=-127, uptime=94067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:41.525] RX[COM6]  f0
+[23:45:41.528] RX[COM6]  81 00 01 73 5b 00 00 00 00 00 00 0a
+[23:45:41.532] PACKET[COM6] ground_station_status: rssi=-127, uptime=95067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:42.535] RX[COM6]  f0
+[23:45:42.537] RX[COM6]  81 00 01 77 43 00 00 00 00 00 00 0a
+[23:45:42.546] PACKET[COM6] ground_station_status: rssi=-127, uptime=96067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:43.540] RX[COM6]  f0
+[23:45:43.542] RX[COM6]  81 00 01 7b 2b 00 00 00 00 00 00 0a
+[23:45:43.545] PACKET[COM6] ground_station_status: rssi=-127, uptime=97067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:44.522] RX[COM6]  f0
+[23:45:44.524] RX[COM6]  81 00 01 7f 13 00 00 00 00 00 00 0a
+[23:45:44.529] PACKET[COM6] ground_station_status: rssi=-127, uptime=98067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:45.543] RX[COM6]  f0
+[23:45:45.545] RX[COM6]  81 00 01 82 fb 00 00 00 00 00 00 0a
+[23:45:45.548] PACKET[COM6] ground_station_status: rssi=-127, uptime=99067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:46.521] RX[COM6]  f0
+[23:45:46.523] RX[COM6]  81 00 01 86 e3 00 00 00 00 00 00 0a
+[23:45:46.527] PACKET[COM6] ground_station_status: rssi=-127, uptime=100067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:47.564] RX[COM6]  f0
+[23:45:47.567] RX[COM6]  81 00 01 8a cb 00 00 00 00 00 00 0a
+[23:45:47.570] PACKET[COM6] ground_station_status: rssi=-127, uptime=101067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:48.537] RX[COM6]  f0
+[23:45:48.544] RX[COM6]  81 00 01 8e b3 00 00 00 00 00 00 0a
+[23:45:48.552] PACKET[COM6] ground_station_status: rssi=-127, uptime=102067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:49.543] RX[COM6]  f0
+[23:45:49.545] RX[COM6]  81 00 01 92 9b 00 00 00 00 00 00 0a
+[23:45:49.549] PACKET[COM6] ground_station_status: rssi=-127, uptime=103067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:50.538] RX[COM6]  f0
+[23:45:50.545] RX[COM6]  81 00 01 96 83 00 00 00 00 00 00 0a
+[23:45:50.557] PACKET[COM6] ground_station_status: rssi=-127, uptime=104067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:51.524] RX[COM6]  f0
+[23:45:51.526] RX[COM6]  81 00 01 9a 6b 00 00 00 00 00 00 0a
+[23:45:51.529] PACKET[COM6] ground_station_status: rssi=-127, uptime=105067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:52.540] RX[COM6]  f0
+[23:45:52.545] RX[COM6]  81 00 01 9e 53 00 00 00 00 00 00 0a
+[23:45:52.553] PACKET[COM6] ground_station_status: rssi=-127, uptime=106067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:53.524] RX[COM6]  f0
+[23:45:53.528] RX[COM6]  81 00 01 a2 3b 00 00 00 00 00 00 0a
+[23:45:53.532] PACKET[COM6] ground_station_status: rssi=-127, uptime=107067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:54.538] RX[COM6]  f0
+[23:45:54.544] RX[COM6]  81 00 01 a6 23 00 00 00 00 00 00 0a
+[23:45:54.552] PACKET[COM6] ground_station_status: rssi=-127, uptime=108067, reserved=[0, 0, 0, 0, 0, 0]
+[23:45:55.558] RX[COM6]  f0
+[23:45:55.560] RX[COM6]  81 00 01 aa 0b 00 00 00 00 00 00 0a
+[23:45:55.564] PACKET[COM6] ground_station_status: rssi=-127, uptime=109067, reserved=[0, 0, 0, 0, 0, 0]
