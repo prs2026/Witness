@@ -27,6 +27,12 @@ for the next live position. This is not slant range. Witness altitude remains
 pressure-referenced, FW altitude is converted from ft ASL. Set pad does not
 zero altitudes. AIM vertical velocity is unmapped, not guessed.
 
+Featherweight RX_NOMTK supplies tracker_battery_voltage_v and rssi_dbm;
+BATT_BLE supplies battery_voltage_v for the LOCAL serial-connected device
+(normally the ground station). These batteries must not be combined. Zero
+startup voltages remain unavailable. GPS unit type TRK is normalized to
+TRACKER by the parser, with the original token retained as unit_type_raw.
+
 Host receive time (UTC) is the graph clock. Cached values aren't live samples.
 Pause freezes display only; receiving/logging continue. ! marks old/invalid
 graph values; readouts show age. Clear resets history but never logs.

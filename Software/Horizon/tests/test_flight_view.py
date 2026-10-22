@@ -49,7 +49,7 @@ class LayoutTests(unittest.TestCase):
     def test_default_and_strict_validation(self):
         layout = load_layout(DEFAULT_LAYOUT)
         self.assertEqual(len(layout.plots), 6)
-        self.assertEqual(len(layout.readouts), 15)
+        self.assertEqual(len(layout.readouts), 16)
         self.assertEqual({t.input for p in layout.plots for t in p.traces}, {"witness", "aim", "featherweight"})
         for changes in ({"version": True}, {"version": 2}, {"columns": 1.5}, {"columns": 0},
                         {"window_seconds": float("nan")}, {"refresh_ms": 0}, {"max_points": 20001},

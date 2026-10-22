@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Fixed, non-scrolling launch dashboard: overview/state left, six plots center, GPS and power right. W=Witness, A=AIM, F=Featherweight. Unmapped fields explicitly show N/A. AIM altitude/battery remain raw because publisher units are unverified. Horizontal distance is relative to the first valid live position or Set pad; barometric/GPS altitudes are not automatically zeroed. Configure field mappings, conversions and trace units here; see flight_view.py.",
+  "description": "Fixed, non-scrolling launch dashboard: overview/state left, six plots center, GPS and power right. W=Witness, A=AIM, F=Featherweight. Unmapped fields explicitly show N/A. AIM altitude/battery remain raw because publisher units are unverified. Horizontal distance is relative to the first valid live position or Set pad; barometric/GPS altitudes are not automatically zeroed. Configure field mappings, conversions and trace units here; see flight_view.py. Featherweight RX_NOMTK provides tracker battery and RSSI; BATT_BLE is the local serial-connected device battery, kept separate. Zero battery readings are unavailable, not valid voltage measurements.",
   "title": "Horizon Flight View",
   "window_seconds": 120,
   "refresh_ms": 250,
@@ -187,6 +187,13 @@
           ],
           "field": "rssi",
           "color": "#990000"
+        },
+        {
+          "label": "F",
+          "input": "featherweight",
+          "packet": "RX_NOMTK",
+          "field": "rssi_dbm",
+          "color": "#006020"
         }
       ]
     }
@@ -485,20 +492,32 @@
     },
     {
       "group": "power",
-      "title": "Featherweight battery",
+      "title": "FW tracker battery",
       "unit": "V",
       "traces": [
         {
           "label": "F",
           "input": "featherweight",
-          "packet": "GPS_STAT",
-          "field": "(unmapped)",
+          "packet": "RX_NOMTK",
+          "field": "tracker_battery_voltage_v",
           "color": "#006020",
           "match": {
             "unit_type": "TRACKER"
-          },
-          "enabled": false,
-          "note": "Not in GPS_STAT telemetry"
+          }
+        }
+      ]
+    },
+    {
+      "group": "power",
+      "title": "FW local / GS battery",
+      "unit": "V",
+      "traces": [
+        {
+          "label": "F local",
+          "input": "featherweight",
+          "packet": "BATT_BLE",
+          "field": "battery_voltage_v",
+          "color": "#006020"
         }
       ]
     }

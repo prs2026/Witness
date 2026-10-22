@@ -123,8 +123,11 @@ class TelemetryView(ttk.Frame):
             timespec="milliseconds").replace("T", " ").replace("+00:00", "")
         received_mono = record.get("received_mono", time.monotonic() - max(
             0, time.time() - record["received_at"]))
-        invalid = packet.get("text_crc_valid") is False
-        quality = "BAD TEXT CRC" if invalid else "Snapshot" if record.get("replay") else "Live"
+        bad_text = packet.get("text_crc_valid") is False
+        bad_radio = packet.get("radio_crc_status", "CRC_OK") != "CRC_OK"
+        invalid = bad_text or bad_radio
+        quality = ("BAD TEXT CRC" if bad_text else "BAD RADIO CRC" if bad_radio else
+                   "Snapshot" if record.get("replay") else "Live")
         for field, value in fields.items():
             row = self._row(source, packet["packet"], field)
             if row is None:

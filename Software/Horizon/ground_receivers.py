@@ -211,5 +211,7 @@ class FeatherweightReceiver(LoggedReceiver):
         if not packet["text_crc_valid"]:
             self.report(f"TEXT_CRC_ERROR: received {packet['text_crc_expected']:04X}, "
                         f"computed {packet['text_crc_computed']:04X}", error=True)
+        if packet.get("radio_crc_status", "CRC_OK") != "CRC_OK":
+            self.report(f"RADIO_CRC_ERROR: {packet['radio_crc_status']} ({packet['packet_type']})", error=True)
         self.accept({"source": self.port, "received_at": time.time(), "replay": False,
                      "packet": {**packet, "packet": packet["packet_type"]}})

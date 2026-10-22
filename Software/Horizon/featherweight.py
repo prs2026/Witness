@@ -8,6 +8,7 @@ the stream parser ignores everything until the next ``@`` text packet.
 from __future__ import annotations
 
 import re
+import math
 from typing import Any, Callable
 
 
@@ -54,7 +55,10 @@ def _as_int(value: str, field: str) -> int:
 
 def _as_float(value: str, field: str) -> float:
     try:
-        return float(value)
+        number = float(value)
+        if not math.isfinite(number):
+            raise ValueError("nonfinite number")
+        return number
     except ValueError as exc:
         raise FeatherweightParseError(f"invalid {field}: {value!r}") from exc
 
@@ -73,6 +77,9 @@ def _parse_gps_status(payload: list[str], result: dict[str, Any]) -> None:
 
     result["radio_crc_status"] = prefix[0]
     result["unit_type"] = prefix[1] if len(prefix) >= 2 else ""
+    result["unit_type_raw"] = result["unit_type"]
+    result["unit_type"] = {"TRK": "TRACKER", "GS": "BASE", "GS:": "BASE", "FND": "FOUND"}.get(
+        result["unit_type"], result["unit_type"])
     result["unit_id"] = " ".join(prefix[2:]) if len(prefix) >= 3 else ""
 
     try:
@@ -103,6 +110,59 @@ def _parse_gps_status(payload: list[str], result: dict[str, Any]) -> None:
         raise FeatherweightParseError("GPS_STAT ended in the middle of a field") from exc
 
     result["satellite_details"] = payload[satellite_index + 5 :]
+
+
+# Observed text records, checked against Appendix A of the manufacturer's manual:
+# https://www.featherweightaltimeters.com/uploads/1/0/9/5/109510427/gps_tracker_manual_2025feb20b.pdf
+# RX_NOMTK's two RSSI/SNR pairs refer to reception and acknowledgement respectively.
+# BATT_BLE is LOCAL to the serial-connected device, not the remote tracker's battery.
+STATUS_PATTERNS = {
+    "BATT_BLE": (
+        r"(?P<battery_mv>\d+) (?P<ble_status>BLE[+-]) (?P<temperature_c>[+-]?\d+(?:\.\d+)?) degC"),
+    "RX_NOMTK": (
+        r"(?P<radio_crc_status>CRC_\w+) Rx NomTrk (?P<unit_id>.+?) "
+        r"PkRx (?P<packets_received>\d+) PkTx (?P<packets_sent>\d+) "
+        r"RSSI (?P<rssi_dbm>[+-]?\d+) SNR (?P<snr_db>[+-]?\d+) "
+        r"AckRx (?P<ack_received>\d+) AckTx (?P<ack_sent>\d+) "
+        r"RSSI (?P<ack_rssi_dbm>[+-]?\d+) SNR (?P<ack_snr_db>[+-]?\d+) "
+        r"SF (?P<spreading_factor>\d+) frq (?P<frequency_hz>\d+) "
+        r"trk_B_V (?P<tracker_battery_mv>\d+) (?P<temperature_c>[+-]?\d+(?:\.\d+)?) C"),
+    "GS_STAT": (
+        r"(?P<radio_crc_status>CRC_\w+) (?P<unit_id>.+?) "
+        r"PkRx (?P<packets_received>\d+) PkSnt (?P<packets_sent>\d+) p_RSSI (?P<rssi_dbm>[+-]?\d+) "
+        r"AckRx (?P<ack_received>\d+) AckSnt (?P<ack_sent>\d+) a_RSSI (?P<ack_rssi_dbm>[+-]?\d+) "
+        r"(?P<found_unit_id>.+?) FndRx (?P<found_received>\d+) FndSnt (?P<found_sent>\d+) "
+        r"f_RSSI (?P<found_rssi_dbm>[+-]?\d+) SF (?P<spreading_factor>\d+) f (?P<frequency_hz>\d+)"),
+    "TX_STAT": (
+        r"(?:(?P<unit_id>.+?) )?Tx Apid (?P<apid>\d+) Tx dur: (?P<tx_duration_ms>\d+) "
+        r"msec\.? SF\s*(?P<spreading_factor>\d+) Freq (?P<frequency_hz>\d+)"),
+    "RX_TMOUT": r"Rx Timeout :\( SF: (?P<spreading_factor>\d+)",
+}
+STATUS_TEXT_FIELDS = {"unit_id", "found_unit_id", "radio_crc_status", "ble_status"}
+
+
+def _parse_status(packet_type: str, payload: list[str], result: dict[str, Any]) -> None:
+    match = re.fullmatch(STATUS_PATTERNS[packet_type], " ".join(payload))
+    if match is None:
+        raise FeatherweightParseError(f"{packet_type} has incomplete or malformed status fields")
+    for key, value in match.groupdict().items():
+        if value is not None:
+            result[key] = (value if key in STATUS_TEXT_FIELDS else _as_float(value, key)
+                           if key == "temperature_c" else _as_int(value, key))
+    for prefix in ("battery", "tracker_battery"):
+        if prefix + "_mv" in result:
+            mv = result[prefix + "_mv"]
+            # The capture reports tracker voltage as zero during startup. Preserve
+            # that raw value, but don't present it as a usable voltage measurement.
+            result[prefix + "_valid"] = mv > 0
+            result[prefix + "_voltage_v"] = mv / 1000 if mv > 0 else None
+    if packet_type == "BATT_BLE":
+        result["ble_connected"] = result["ble_status"] == "BLE+"
+        result["battery_scope"] = "LOCAL"
+    elif packet_type == "RX_NOMTK":
+        result["unit_type"] = "TRACKER"
+    elif packet_type == "RX_TMOUT":
+        result["receive_timeout"] = True
 
 
 def parse_featherweight_line(line: str) -> dict[str, Any]:
@@ -157,6 +217,8 @@ def parse_featherweight_line(line: str) -> dict[str, Any]:
 
     if packet_type.casefold() == "gps_stat":
         _parse_gps_status(payload, result)
+    elif packet_type.upper() in STATUS_PATTERNS:
+        _parse_status(packet_type.upper(), payload, result)
 
     return result
 

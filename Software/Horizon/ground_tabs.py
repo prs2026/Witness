@@ -29,11 +29,25 @@ WITNESS_FIELDS = {
 }
 FEATHERWEIGHT_FIELDS = {"GPS_STAT": (
     "packet_type", "timestamp", "packet_length", "radio_crc_status", "text_crc_valid",
-    "text_crc_expected", "text_crc_computed", "unit_type", "unit_id", "altitude_ft", "latitude_deg",
+    "text_crc_expected", "text_crc_computed", "unit_type", "unit_type_raw", "unit_id", "altitude_ft", "latitude_deg",
     "longitude_deg", "horizontal_velocity_fps", "heading_deg", "vertical_velocity_fps", "fix_type",
     "satellites_total", "satellites_over_24db", "satellites_over_32db", "satellites_over_40db",
     *(f"satellite_details[{i}]" for i in range(5)),
 )}
+_FW_STATUS_COMMON = ("timestamp", "text_crc_valid", "text_crc_expected", "text_crc_computed")
+FEATHERWEIGHT_FIELDS.update({
+    "BATT_BLE": (*_FW_STATUS_COMMON, "battery_mv", "battery_voltage_v", "battery_valid",
+                 "battery_scope", "ble_status", "ble_connected", "temperature_c"),
+    "RX_NOMTK": (*_FW_STATUS_COMMON, "radio_crc_status", "unit_type", "unit_id", "packets_received",
+                 "packets_sent", "rssi_dbm", "snr_db", "ack_received", "ack_sent", "ack_rssi_dbm",
+                 "ack_snr_db", "spreading_factor", "frequency_hz", "tracker_battery_mv",
+                 "tracker_battery_voltage_v", "tracker_battery_valid", "temperature_c"),
+    "GS_STAT": (*_FW_STATUS_COMMON, "radio_crc_status", "unit_id", "packets_received", "packets_sent",
+                "rssi_dbm", "ack_received", "ack_sent", "ack_rssi_dbm", "found_unit_id",
+                "found_received", "found_sent", "found_rssi_dbm", "spreading_factor", "frequency_hz"),
+    "TX_STAT": (*_FW_STATUS_COMMON, "unit_id", "apid", "tx_duration_ms", "spreading_factor", "frequency_hz"),
+    "RX_TMOUT": (*_FW_STATUS_COMMON, "receive_timeout", "spreading_factor"),
+})
 
 
 class ReceiverTab(ttk.Frame):
@@ -160,7 +174,9 @@ class FeatherweightTab(ReceiverTab):
         self.connect_button.grid(row=0, column=3, padx=12)
         self.note.configure(text=f"{FEATHERWEIGHT_BAUD} baud, 8-N-1, receive only. "
                             "Altitude: ft ASL; velocity: ft/s; coordinates/heading: degrees. "
-                            "Fix: 0 = no fix, 2 = 2D, 3 = 3D. Bad text CRC is shown in red. "
+                            "Fix: 0 = no fix, 2 = 2D, 3 = 3D. Bad text/radio CRC is shown in red. "
+                            "BATT_BLE = local/GS battery; RX_NOMTK = tracker battery. Voltages: V and raw mV; "
+                            "temperature: C; RSSI: dBm; SNR: dB; TX airtime: ms; frequency: Hz. "
                             "Binary FWT chatter without a tracker is ignored; raw bytes are logged.")
         self.refresh_ports()
         self.view.add_source("(no port)")
