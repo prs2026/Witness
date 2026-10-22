@@ -10,3 +10,4 @@ Software/Horizon/__pycache__/ground_settings.cpython-314.pyc
 Software/Horizon/__pycache__/ground_tabs.cpython-314.pyc
 Software/Horizon/__pycache__/telemetry_view.cpython-314.pyc
 Software/Horizon/__pycache__/witness_link.cpython-314.pyc
+*.pyc
