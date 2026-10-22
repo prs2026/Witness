@@ -1,19 +1,38 @@
 """Fixed-viewport dashboard renderer. No scrolling and no content-sized widgets."""
 
 import datetime as dt
+from functools import lru_cache
 import math
 from tkinter import font as tkfont
 
 from flight_data import nice_step, plot_segments
 
-BG = "#0b131e"
-PANEL = "#122030"
-GRID = "#304357"
-TEXT = "#edf3fa"
-MUTED = "#a2b6ca"
-WARN = "#ffd27f"
-BAD = "#ff8a80"
+BG = "#ffffff"
+PANEL = "#ffffff"
+GRID = "#b8b8b8"
+BORDER = "#666666"
+TEXT = "#171717"
+MUTED = "#444444"
+WARN = "#704000"
+BAD = "#990000"
 STATES = ("PAD IDLE", "BOOST", "COAST", "DESCENT", "LANDED")
+
+
+@lru_cache(maxsize=256)
+def readable_color(color):
+    """Darken pale custom/legacy colors to at least 7:1 against white.
+
+    Apply only while rendering: saved JSON colors are not rewritten. Preserve
+    the requested hue where possible and use the same color for text and lines.
+    """
+    rgb = [int(color[i:i + 2], 16) for i in (1, 3, 5)]
+    while True:
+        channels = [v / 255 for v in rgb]
+        linear = [v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4 for v in channels]
+        luminance = sum(v * weight for v, weight in zip(linear, (.2126, .7152, .0722)))
+        if 1.05 / (luminance + .05) >= 7:
+            return "#" + "".join(f"{v:02x}" for v in rgb)
+        rgb = [int(v * .9) for v in rgb]
 
 
 def value_text(trace, history):
@@ -68,13 +87,14 @@ class DashboardRenderer:
             text += "..."
         anchor = {"left": "w", "right": "e", "center": "center"}[align]
         x = x0 + 2 if align == "left" else x1 - 2 if align == "right" else (x0 + x1) / 2
-        item = self.canvas.create_text(x, (y0 + y1) / 2, text=text, font=font, fill=color, anchor=anchor)
+        item = self.canvas.create_text(x, (y0 + y1) / 2, text=text, font=font,
+                                       fill=readable_color(color), anchor=anchor)
         self.text_boxes.append((item, box))
         return item
 
     def panel(self, name, box):
         self.panel_bounds[name] = box
-        self.canvas.create_rectangle(*box, fill=PANEL, outline=GRID, width=1)
+        self.canvas.create_rectangle(*box, fill=PANEL, outline=BORDER, width=1)
 
     def draw(self, layout, histories, end, wall_offset, *, width=None, height=None):
         c = self.canvas
@@ -226,14 +246,15 @@ class DashboardRenderer:
             self.text((tx - 27, bottom + 3, tx + 27, y1 - 3), label, 9, MUTED, align="center")
         clipped = False
         for trace, points in zip(plot.traces, visible):
+            color = readable_color(trace.color)
             clipped |= any(v is not None and not low <= v <= high for _, v in points)
             for segment in plot_segments(points, start, end, right - left, layout.gap_seconds):
                 coords = [coordinate for stamp, value in segment for coordinate in (xm(stamp), ym(value))]
                 if len(coords) >= 4:
-                    self.canvas.create_line(*coords, fill=trace.color, width=2)
+                    self.canvas.create_line(*coords, fill=color, width=2)
                 elif coords:
                     x, y = coords
-                    self.canvas.create_oval(x - 1, y - 1, x + 1, y + 1, fill=trace.color, outline="")
+                    self.canvas.create_oval(x - 1, y - 1, x + 1, y + 1, fill=color, outline="")
         if not values or clipped:
             self.text((left + 3, top + 3, right - 3, min(top + 22, bottom)),
                       "OUT OF RANGE" if clipped else "NO LIVE SAMPLES", 11, BAD if clipped else MUTED,

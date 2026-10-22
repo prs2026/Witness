@@ -16,7 +16,7 @@ import time
 from telemetry_view import flatten_fields
 
 DEFAULT_LAYOUT = Path(__file__).resolve().parent / "flight_view_default.json"
-COLORS = ("#5cc8ff", "#ffb454", "#77dd99", "#e89cff", "#ff738a", "#e6e66a")
+COLORS = ("#004b80", "#803900", "#006020", "#5b267d", "#990000", "#555000")
 
 
 def _number(value, name, low, high):

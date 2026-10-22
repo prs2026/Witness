@@ -31,6 +31,8 @@ Host receive time (UTC) is the graph clock. Cached values aren't live samples.
 Pause freezes display only; receiving/logging continue. ! marks old/invalid
 graph values; readouts show age. Clear resets history but never logs.
 F11 toggles fullscreen; Escape exits fullscreen. No extra dependencies.
+White panels and dark text are used throughout the dashboard. Pale custom or
+legacy trace colors are darkened for readability without changing saved JSON.
 """
 
 import json
@@ -40,7 +42,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 from flight_data import DEFAULT_LAYOUT, FlightData, load_layout, validate_layout
-from flight_render import BG, DashboardRenderer
+from flight_render import BG, TEXT, DashboardRenderer
 
 
 class FlightView(ttk.Frame):
@@ -70,7 +72,8 @@ class FlightView(ttk.Frame):
         ttk.Button(toolbar, text="Clear plots", command=self.clear, width=11).pack(side="left", padx=4)
         ttk.Button(toolbar, text="Set pad", command=self.set_pad, width=10).pack(side="left", padx=4)
         ttk.Button(toolbar, text="Fullscreen (F11)", command=self.toggle_fullscreen, width=18).pack(side="right")
-        self.banner = tk.Label(self, anchor="w", font=("Segoe UI", 11, "bold"), height=1, width=1, padx=8, pady=4)
+        self.banner = tk.Label(self, anchor="w", foreground=TEXT, font=("Segoe UI", 11, "bold"),
+                               height=1, width=1, padx=8, pady=4)
         self.banner.grid(row=1, column=0, sticky="ew", pady=(0, 4))
         self.canvas = tk.Canvas(self, background=BG, highlightthickness=0, width=1, height=1)
         self.canvas.grid(row=2, column=0, sticky="nsew")

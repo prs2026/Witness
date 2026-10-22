@@ -20,14 +20,14 @@
             "witness_debug"
           ],
           "field": "barometric_altitude",
-          "color": "#edf3fa"
+          "color": "#171717"
         },
         {
           "label": "F GPS",
           "input": "featherweight",
           "packet": "GPS_STAT",
           "field": "altitude_ft",
-          "color": "#70df9b",
+          "color": "#006020",
           "match": {
             "unit_type": "TRACKER"
           },
@@ -47,7 +47,7 @@
             "witness_debug"
           ],
           "field": "filtered_accel[0]",
-          "color": "#5cc8ff"
+          "color": "#004b80"
         },
         {
           "label": "Y",
@@ -57,7 +57,7 @@
             "witness_debug"
           ],
           "field": "filtered_accel[1]",
-          "color": "#ffb454"
+          "color": "#803900"
         },
         {
           "label": "Z",
@@ -67,7 +67,7 @@
             "witness_debug"
           ],
           "field": "filtered_accel[2]",
-          "color": "#77dd99"
+          "color": "#006020"
         }
       ]
     },
@@ -83,7 +83,7 @@
             "witness_debug"
           ],
           "field": "gyro[0]",
-          "color": "#5cc8ff"
+          "color": "#004b80"
         },
         {
           "label": "Y",
@@ -93,7 +93,7 @@
             "witness_debug"
           ],
           "field": "gyro[1]",
-          "color": "#ffb454"
+          "color": "#803900"
         },
         {
           "label": "Z",
@@ -103,7 +103,7 @@
             "witness_debug"
           ],
           "field": "gyro[2]",
-          "color": "#77dd99"
+          "color": "#006020"
         }
       ]
     },
@@ -119,14 +119,14 @@
             "witness_debug"
           ],
           "field": "velocity[2]",
-          "color": "#edf3fa"
+          "color": "#171717"
         },
         {
           "label": "F",
           "input": "featherweight",
           "packet": "GPS_STAT",
           "field": "vertical_velocity_fps",
-          "color": "#70df9b",
+          "color": "#006020",
           "match": {
             "unit_type": "TRACKER"
           },
@@ -146,21 +146,21 @@
             "witness_debug"
           ],
           "field": "_derived.horizontal_distance_m",
-          "color": "#edf3fa"
+          "color": "#171717"
         },
         {
           "label": "A",
           "input": "aim",
           "packet": "gnss_payload/v1",
           "field": "_derived.horizontal_distance_m",
-          "color": "#ff7979"
+          "color": "#990000"
         },
         {
           "label": "F",
           "input": "featherweight",
           "packet": "GPS_STAT",
           "field": "_derived.horizontal_distance_m",
-          "color": "#70df9b",
+          "color": "#006020",
           "match": {
             "unit_type": "TRACKER"
           }
@@ -176,7 +176,7 @@
           "input": "witness",
           "packet": "ground_station_status",
           "field": "rssi",
-          "color": "#edf3fa"
+          "color": "#171717"
         },
         {
           "label": "A",
@@ -186,7 +186,7 @@
             "received_packet_signal_quality_payload/v1"
           ],
           "field": "rssi",
-          "color": "#ff7979"
+          "color": "#990000"
         }
       ]
     }
@@ -205,14 +205,14 @@
             "witness_debug"
           ],
           "field": "barometric_altitude",
-          "color": "#edf3fa"
+          "color": "#171717"
         },
         {
           "label": "A",
           "input": "aim",
           "packet": "gnss_payload/v1",
           "field": "gnss_coordinate.altitude",
-          "color": "#ff7979",
+          "color": "#990000",
           "unit": "raw"
         },
         {
@@ -220,7 +220,7 @@
           "input": "featherweight",
           "packet": "GPS_STAT",
           "field": "altitude_ft",
-          "color": "#70df9b",
+          "color": "#006020",
           "match": {
             "unit_type": "TRACKER"
           },
@@ -241,14 +241,14 @@
             "witness_debug"
           ],
           "field": "velocity[2]",
-          "color": "#edf3fa"
+          "color": "#171717"
         },
         {
           "label": "A",
           "input": "aim",
           "packet": "(unmapped)",
           "field": "(unmapped)",
-          "color": "#ff7979",
+          "color": "#990000",
           "enabled": false,
           "note": "Not exposed by current AIM schema"
         },
@@ -257,7 +257,7 @@
           "input": "featherweight",
           "packet": "GPS_STAT",
           "field": "vertical_velocity_fps",
-          "color": "#70df9b",
+          "color": "#006020",
           "match": {
             "unit_type": "TRACKER"
           },
@@ -278,21 +278,21 @@
             "witness_debug"
           ],
           "field": "_derived.horizontal_distance_m",
-          "color": "#edf3fa"
+          "color": "#171717"
         },
         {
           "label": "A",
           "input": "aim",
           "packet": "gnss_payload/v1",
           "field": "_derived.horizontal_distance_m",
-          "color": "#ff7979"
+          "color": "#990000"
         },
         {
           "label": "F",
           "input": "featherweight",
           "packet": "GPS_STAT",
           "field": "_derived.horizontal_distance_m",
-          "color": "#70df9b",
+          "color": "#006020",
           "match": {
             "unit_type": "TRACKER"
           }
@@ -314,7 +314,7 @@
             "heartbeat"
           ],
           "field": "status.flight_state",
-          "color": "#edf3fa",
+          "color": "#171717",
           "format": "state"
         }
       ]
@@ -332,7 +332,7 @@
             "witness_debug"
           ],
           "field": "(unmapped)",
-          "color": "#edf3fa",
+          "color": "#171717",
           "enabled": false,
           "note": "Not in Witness telemetry"
         }
@@ -348,7 +348,7 @@
           "input": "aim",
           "packet": "gnss_payload/v1",
           "field": "satellites_used",
-          "color": "#ff7979"
+          "color": "#990000"
         }
       ]
     },
@@ -362,7 +362,7 @@
           "input": "featherweight",
           "packet": "GPS_STAT",
           "field": "satellites_total",
-          "color": "#70df9b",
+          "color": "#006020",
           "match": {
             "unit_type": "TRACKER"
           }
@@ -379,7 +379,7 @@
           "input": "featherweight",
           "packet": "GPS_STAT",
           "field": "fix_type",
-          "color": "#70df9b",
+          "color": "#006020",
           "match": {
             "unit_type": "TRACKER"
           },
@@ -400,7 +400,7 @@
             "witness_debug"
           ],
           "field": "witness_battery_voltage",
-          "color": "#edf3fa"
+          "color": "#171717"
         }
       ]
     },
@@ -417,7 +417,7 @@
             "iris_debug"
           ],
           "field": "iris_battery_voltage",
-          "color": "#edf3fa"
+          "color": "#171717"
         }
       ]
     },
@@ -431,7 +431,7 @@
           "input": "aim",
           "packet": "computer_battery_payload/v1",
           "field": "voltage",
-          "color": "#ff7979"
+          "color": "#990000"
         }
       ]
     },
@@ -445,7 +445,7 @@
           "input": "aim",
           "packet": "ejection_battery_payload/v1",
           "field": "voltage",
-          "color": "#ff7979"
+          "color": "#990000"
         }
       ]
     },
@@ -459,7 +459,7 @@
           "input": "aim",
           "packet": "(unmapped)",
           "field": "(unmapped)",
-          "color": "#ff7979",
+          "color": "#990000",
           "format": "continuity",
           "enabled": false,
           "note": "Topic / field not mapped"
@@ -476,7 +476,7 @@
           "input": "aim",
           "packet": "(unmapped)",
           "field": "(unmapped)",
-          "color": "#ff7979",
+          "color": "#990000",
           "format": "continuity",
           "enabled": false,
           "note": "Topic / field not mapped"
@@ -493,7 +493,7 @@
           "input": "featherweight",
           "packet": "GPS_STAT",
           "field": "(unmapped)",
-          "color": "#70df9b",
+          "color": "#006020",
           "match": {
             "unit_type": "TRACKER"
           },

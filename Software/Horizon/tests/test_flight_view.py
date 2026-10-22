@@ -12,6 +12,13 @@ from unittest.mock import patch
 from aim_mqtt import AimMqttReceiver, AimSettings
 from flight_data import DEFAULT_LAYOUT, FlightData, load_layout, nice_step, plot_segments, validate_layout
 from ground_receivers import LoggedReceiver
+from flight_render import BG, PANEL, TEXT, MUTED, WARN, BAD, readable_color
+
+
+def contrast_on_white(color):
+    channels = [int(color[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+    linear = [v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4 for v in channels]
+    return 1.05 / (.05 + sum(v * w for v, w in zip(linear, (.2126, .7152, .0722))))
 
 
 def document(**changes):
@@ -20,6 +27,25 @@ def document(**changes):
 
 
 class LayoutTests(unittest.TestCase):
+    def test_light_palette_and_legacy_color_readability(self):
+        self.assertEqual(BG, "#ffffff")
+        self.assertEqual(PANEL, "#ffffff")
+        layout = load_layout(DEFAULT_LAYOUT)
+        colors = [TEXT, MUTED, WARN, BAD] + [t.color for row in layout.rows for t in row.traces]
+        colors += [t.color for row in validate_layout(document()).rows for t in row.traces]
+        for color in colors:
+            with self.subTest(color=color):
+                self.assertGreaterEqual(contrast_on_white(color), 7)
+                self.assertEqual(readable_color(color), color)
+        for color in ("#ffffff", "#edf3fa", "#ff7979", "#70df9b", "#5cc8ff", "#ffb454", "#77dd99"):
+            with self.subTest(legacy=color):
+                self.assertGreaterEqual(contrast_on_white(readable_color(color)), 7)
+        doc = document()
+        doc["plots"][0]["traces"][0]["color"] = "#ffffff"
+        custom = validate_layout(doc)
+        readable_color(custom.plots[0].traces[0].color)
+        self.assertEqual(custom.document["plots"][0]["traces"][0]["color"], "#ffffff")
+
     def test_default_and_strict_validation(self):
         layout = load_layout(DEFAULT_LAYOUT)
         self.assertEqual(len(layout.plots), 6)
@@ -277,6 +303,7 @@ class FlightGuiTests(unittest.TestCase):
                         self.assertLessEqual(x1, width)
                         self.assertLessEqual(y1, height)
                     for item, box in flight.renderer.text_boxes:
+                        self.assertGreaterEqual(contrast_on_white(flight.canvas.itemcget(item, "fill")), 7)
                         bbox = flight.canvas.bbox(item)
                         self.assertGreaterEqual(bbox[0], box[0] - 2)
                         self.assertGreaterEqual(bbox[1], box[1] - 2)
