@@ -1,0 +1,69 @@
+"""Horizon Unified Ground Station. Run with: python horizon.py.
+
+Witness arrives from the running main.py application, Featherweight directly
+from its COM port, and AIM from the broker used by the vendor AIM BASE app.
+All three inputs are receive-only and have independent connection lifecycles.
+
+Usage:
+    python -m pip install -r requirements.txt
+    python main.py       # Witness ports, decoder, commands, graphs and raw logs
+    python horizon.py    # Run in a second terminal; auto-connects to Witness
+
+Restart an already-running main.py once after upgrading to enable its feed.
+Either app can subsequently start first. Defaults are in ground_settings.py;
+the Witness feed uses 127.0.0.1:8766, not either of Witness's raw TCP inputs.
+Select the Featherweight COM port here (not in main.py). For AIM, leave the
+vendor AIM BASE application and its MQTT broker running, then click Connect.
+Horizon does not open the AIM USB device. Logs go in logs/: Witness JSONL,
+Featherweight raw BIN plus diagnostic/packet JSONL, and AIM MQTT JSONL.
+"""
+
+from pathlib import Path
+import tkinter as tk
+from tkinter import ttk
+
+from aim_tab import AimMqttTab
+from ground_tabs import FeatherweightTab, WitnessTab
+from ground_settings import (
+    DEFAULT_AIM_MQTT_HOST, DEFAULT_AIM_MQTT_PORT,
+    DEFAULT_AIM_MQTT_UUID, DEFAULT_AIM_MQTT_BASE_PATH,
+)
+
+LOG_DIR = Path(__file__).resolve().parent / "logs"
+
+
+class HorizonGroundStation(tk.Tk):
+    def __init__(self, *, log_dir=LOG_DIR, auto_connect=True):
+        super().__init__()
+        self.title("Horizon Unified Ground Station")
+        self.geometry("1100x780")
+        self.minsize(650, 440)
+        ttk.Label(self, text="Horizon Unified Ground Station", font=("Segoe UI", 15, "bold"),
+                  padding=(12, 8)).pack(anchor="w")
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(fill="both", expand=True, padx=8, pady=(0, 8))
+        self.witness = WitnessTab(self.notebook, log_dir=log_dir)
+        self.featherweight = FeatherweightTab(self.notebook, log_dir=log_dir)
+        self.aim = AimMqttTab(self.notebook, log_dir=log_dir, host=DEFAULT_AIM_MQTT_HOST,
+                              port=DEFAULT_AIM_MQTT_PORT, client_uuid=DEFAULT_AIM_MQTT_UUID,
+                              base_path=DEFAULT_AIM_MQTT_BASE_PATH)
+        for tab, title in ((self.witness, "Witness"), (self.featherweight, "Featherweight GPS"),
+                           (self.aim, "AIM XTRA MQTT")):
+            self.notebook.add(tab, text=title)
+        self._connect_id = self.after(0, self._auto_connect) if auto_connect else None
+        self.protocol("WM_DELETE_WINDOW", self.close)
+
+    def _auto_connect(self):
+        self._connect_id = None
+        self.witness.connect()
+
+    def close(self):
+        if self._connect_id is not None:
+            self.after_cancel(self._connect_id)
+        for tab in (self.witness, self.featherweight, self.aim):
+            tab.close()
+        self.destroy()
+
+
+if __name__ == "__main__":
+    HorizonGroundStation().mainloop()
