@@ -15,7 +15,7 @@ from witness_link import MAX_LINE_BYTES, decode_record, json_safe
 class LoggedReceiver:
     """Log every input record, but coalesce bounded latest-packet GUI updates."""
 
-    def __init__(self, log_dir, prefix):
+    def __init__(self, log_dir, prefix, *, on_record=None):
         self.log_dir = Path(log_dir)
         self.prefix = prefix
         self.log_path = self.raw_path = None
@@ -27,6 +27,7 @@ class LoggedReceiver:
         self._diagnostics = deque(maxlen=200)
         self.status = "Disconnected"
         self.messages = self.bytes_received = self.errors = 0
+        self.on_record = on_record
 
     def start(self):
         if self._thread is not None:
@@ -72,6 +73,13 @@ class LoggedReceiver:
         # not appear fresh merely because Horizon just connected.
         record = dict(record, received_mono=time.monotonic() - max(
             0, time.time() - record["received_at"]))
+        # History consumers receive EVERY sample, before latest-value coalescing.
+        # They run on this worker and must not touch Tk or block on rendering.
+        if self.on_record is not None:
+            try:
+                self.on_record(record)
+            except Exception as exc:
+                self.report(f"FLIGHT_VIEW_ERROR: {exc}", error=True)
         with self._lock:
             self.messages += 1
             self._latest[key] = record
@@ -113,8 +121,8 @@ class LoggedReceiver:
 
 
 class WitnessReceiver(LoggedReceiver):
-    def __init__(self, host, port, log_dir):
-        super().__init__(log_dir, "horizon_witness")
+    def __init__(self, host, port, log_dir, *, on_record=None):
+        super().__init__(log_dir, "horizon_witness", on_record=on_record)
         # Keep the unauthenticated bridge on the local machine only.
         if host not in ("localhost", "127.0.0.1"):
             raise ValueError("Witness feed host must be localhost or 127.0.0.1")
@@ -167,8 +175,8 @@ class WitnessReceiver(LoggedReceiver):
 
 
 class FeatherweightReceiver(LoggedReceiver):
-    def __init__(self, port, log_dir, *, serial_factory=None):
-        super().__init__(log_dir, "horizon_featherweight")
+    def __init__(self, port, log_dir, *, serial_factory=None, on_record=None):
+        super().__init__(log_dir, "horizon_featherweight", on_record=on_record)
         if not port or port == "(no port)":
             raise ValueError("Select a Featherweight serial port")
         if serial_factory is None:

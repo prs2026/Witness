@@ -174,6 +174,13 @@ class TestModeGuiTests(unittest.TestCase):
                 row_key = (source, "state", "witness_battery_voltage")
                 pump_until(lambda: row_key in view._rows and view.tree.set(view._rows[row_key], "value") == "4.09")
                 self.assertEqual(app.values["packet.state.witness_battery_voltage"].get(), "4.09")
+                flight = unified.flight.data.snapshot()
+                self.assertEqual(flight[0][0].source, source)
+                self.assertEqual(len(flight[0][0].points), 10)  # State + equivalent debug samples.
+                self.assertEqual(len(flight[1][0].points), 10)  # Sensors + equivalent debug samples.
+                self.assertEqual(flight[0][0].latest, 0)  # Landed in the final replay frame.
+                unified.flight.redraw()
+                self.assertIn("TEST DATA", unified.flight.banner.cget("text"))
                 self.assertIn("simulated", app.test_status.get())
                 self.assertEqual(app.serials, {})
                 self.assertEqual(app.tcp_sockets, {})

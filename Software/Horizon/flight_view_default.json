@@ -1,0 +1,506 @@
+{
+  "version": 1,
+  "description": "Fixed, non-scrolling launch dashboard: overview/state left, six plots center, GPS and power right. W=Witness, A=AIM, F=Featherweight. Unmapped fields explicitly show N/A. AIM altitude/battery remain raw because publisher units are unverified. Horizontal distance is relative to the first valid live position or Set pad; barometric/GPS altitudes are not automatically zeroed. Configure field mappings, conversions and trace units here; see flight_view.py.",
+  "title": "Horizon Flight View",
+  "window_seconds": 120,
+  "refresh_ms": 250,
+  "columns": 2,
+  "max_points": 6000,
+  "gap_seconds": 3,
+  "plots": [
+    {
+      "title": "Altitude",
+      "unit": "m",
+      "traces": [
+        {
+          "label": "W baro",
+          "input": "witness",
+          "packet": [
+            "state",
+            "witness_debug"
+          ],
+          "field": "barometric_altitude",
+          "color": "#edf3fa"
+        },
+        {
+          "label": "F GPS",
+          "input": "featherweight",
+          "packet": "GPS_STAT",
+          "field": "altitude_ft",
+          "color": "#70df9b",
+          "match": {
+            "unit_type": "TRACKER"
+          },
+          "scale": 0.3048
+        }
+      ]
+    },
+    {
+      "title": "Acceleration",
+      "unit": "g",
+      "traces": [
+        {
+          "label": "X",
+          "input": "witness",
+          "packet": [
+            "sensors",
+            "witness_debug"
+          ],
+          "field": "filtered_accel[0]",
+          "color": "#5cc8ff"
+        },
+        {
+          "label": "Y",
+          "input": "witness",
+          "packet": [
+            "sensors",
+            "witness_debug"
+          ],
+          "field": "filtered_accel[1]",
+          "color": "#ffb454"
+        },
+        {
+          "label": "Z",
+          "input": "witness",
+          "packet": [
+            "sensors",
+            "witness_debug"
+          ],
+          "field": "filtered_accel[2]",
+          "color": "#77dd99"
+        }
+      ]
+    },
+    {
+      "title": "Gyro",
+      "unit": "deg/s",
+      "traces": [
+        {
+          "label": "X",
+          "input": "witness",
+          "packet": [
+            "sensors",
+            "witness_debug"
+          ],
+          "field": "gyro[0]",
+          "color": "#5cc8ff"
+        },
+        {
+          "label": "Y",
+          "input": "witness",
+          "packet": [
+            "sensors",
+            "witness_debug"
+          ],
+          "field": "gyro[1]",
+          "color": "#ffb454"
+        },
+        {
+          "label": "Z",
+          "input": "witness",
+          "packet": [
+            "sensors",
+            "witness_debug"
+          ],
+          "field": "gyro[2]",
+          "color": "#77dd99"
+        }
+      ]
+    },
+    {
+      "title": "Vertical velocity",
+      "unit": "m/s",
+      "traces": [
+        {
+          "label": "W",
+          "input": "witness",
+          "packet": [
+            "state",
+            "witness_debug"
+          ],
+          "field": "velocity[2]",
+          "color": "#edf3fa"
+        },
+        {
+          "label": "F",
+          "input": "featherweight",
+          "packet": "GPS_STAT",
+          "field": "vertical_velocity_fps",
+          "color": "#70df9b",
+          "match": {
+            "unit_type": "TRACKER"
+          },
+          "scale": 0.3048
+        }
+      ]
+    },
+    {
+      "title": "Horizontal distance",
+      "unit": "m",
+      "traces": [
+        {
+          "label": "W",
+          "input": "witness",
+          "packet": [
+            "state",
+            "witness_debug"
+          ],
+          "field": "_derived.horizontal_distance_m",
+          "color": "#edf3fa"
+        },
+        {
+          "label": "A",
+          "input": "aim",
+          "packet": "gnss_payload/v1",
+          "field": "_derived.horizontal_distance_m",
+          "color": "#ff7979"
+        },
+        {
+          "label": "F",
+          "input": "featherweight",
+          "packet": "GPS_STAT",
+          "field": "_derived.horizontal_distance_m",
+          "color": "#70df9b",
+          "match": {
+            "unit_type": "TRACKER"
+          }
+        }
+      ]
+    },
+    {
+      "title": "RSSI",
+      "unit": "reported",
+      "traces": [
+        {
+          "label": "W",
+          "input": "witness",
+          "packet": "ground_station_status",
+          "field": "rssi",
+          "color": "#edf3fa"
+        },
+        {
+          "label": "A",
+          "input": "aim",
+          "packet": [
+            "rssi_payload/v1",
+            "received_packet_signal_quality_payload/v1"
+          ],
+          "field": "rssi",
+          "color": "#ff7979"
+        }
+      ]
+    }
+  ],
+  "readouts": [
+    {
+      "group": "flight",
+      "title": "Altitude",
+      "unit": "m",
+      "traces": [
+        {
+          "label": "W",
+          "input": "witness",
+          "packet": [
+            "state",
+            "witness_debug"
+          ],
+          "field": "barometric_altitude",
+          "color": "#edf3fa"
+        },
+        {
+          "label": "A",
+          "input": "aim",
+          "packet": "gnss_payload/v1",
+          "field": "gnss_coordinate.altitude",
+          "color": "#ff7979",
+          "unit": "raw"
+        },
+        {
+          "label": "F",
+          "input": "featherweight",
+          "packet": "GPS_STAT",
+          "field": "altitude_ft",
+          "color": "#70df9b",
+          "match": {
+            "unit_type": "TRACKER"
+          },
+          "scale": 0.3048
+        }
+      ]
+    },
+    {
+      "group": "flight",
+      "title": "Vertical velocity",
+      "unit": "m/s",
+      "traces": [
+        {
+          "label": "W",
+          "input": "witness",
+          "packet": [
+            "state",
+            "witness_debug"
+          ],
+          "field": "velocity[2]",
+          "color": "#edf3fa"
+        },
+        {
+          "label": "A",
+          "input": "aim",
+          "packet": "(unmapped)",
+          "field": "(unmapped)",
+          "color": "#ff7979",
+          "enabled": false,
+          "note": "Not exposed by current AIM schema"
+        },
+        {
+          "label": "F",
+          "input": "featherweight",
+          "packet": "GPS_STAT",
+          "field": "vertical_velocity_fps",
+          "color": "#70df9b",
+          "match": {
+            "unit_type": "TRACKER"
+          },
+          "scale": 0.3048
+        }
+      ]
+    },
+    {
+      "group": "flight",
+      "title": "Horizontal distance",
+      "unit": "m",
+      "traces": [
+        {
+          "label": "W",
+          "input": "witness",
+          "packet": [
+            "state",
+            "witness_debug"
+          ],
+          "field": "_derived.horizontal_distance_m",
+          "color": "#edf3fa"
+        },
+        {
+          "label": "A",
+          "input": "aim",
+          "packet": "gnss_payload/v1",
+          "field": "_derived.horizontal_distance_m",
+          "color": "#ff7979"
+        },
+        {
+          "label": "F",
+          "input": "featherweight",
+          "packet": "GPS_STAT",
+          "field": "_derived.horizontal_distance_m",
+          "color": "#70df9b",
+          "match": {
+            "unit_type": "TRACKER"
+          }
+        }
+      ]
+    },
+    {
+      "group": "state",
+      "title": "Witness flight state",
+      "unit": "state",
+      "traces": [
+        {
+          "label": "W",
+          "input": "witness",
+          "packet": [
+            "state",
+            "witness_debug",
+            "sensors",
+            "heartbeat"
+          ],
+          "field": "status.flight_state",
+          "color": "#edf3fa",
+          "format": "state"
+        }
+      ]
+    },
+    {
+      "group": "gps",
+      "title": "Witness GPS satellites",
+      "unit": "sats",
+      "traces": [
+        {
+          "label": "W",
+          "input": "witness",
+          "packet": [
+            "state",
+            "witness_debug"
+          ],
+          "field": "(unmapped)",
+          "color": "#edf3fa",
+          "enabled": false,
+          "note": "Not in Witness telemetry"
+        }
+      ]
+    },
+    {
+      "group": "gps",
+      "title": "AIM GPS satellites",
+      "unit": "sats",
+      "traces": [
+        {
+          "label": "A",
+          "input": "aim",
+          "packet": "gnss_payload/v1",
+          "field": "satellites_used",
+          "color": "#ff7979"
+        }
+      ]
+    },
+    {
+      "group": "gps",
+      "title": "Featherweight satellites",
+      "unit": "sats",
+      "traces": [
+        {
+          "label": "F",
+          "input": "featherweight",
+          "packet": "GPS_STAT",
+          "field": "satellites_total",
+          "color": "#70df9b",
+          "match": {
+            "unit_type": "TRACKER"
+          }
+        }
+      ]
+    },
+    {
+      "group": "gps",
+      "title": "Featherweight fix",
+      "unit": "mode",
+      "traces": [
+        {
+          "label": "F",
+          "input": "featherweight",
+          "packet": "GPS_STAT",
+          "field": "fix_type",
+          "color": "#70df9b",
+          "match": {
+            "unit_type": "TRACKER"
+          },
+          "note": "0=no fix, 2=2D, 3=3D"
+        }
+      ]
+    },
+    {
+      "group": "power",
+      "title": "Witness battery",
+      "unit": "V",
+      "traces": [
+        {
+          "label": "W",
+          "input": "witness",
+          "packet": [
+            "state",
+            "witness_debug"
+          ],
+          "field": "witness_battery_voltage",
+          "color": "#edf3fa"
+        }
+      ]
+    },
+    {
+      "group": "power",
+      "title": "IRIS battery",
+      "unit": "V",
+      "traces": [
+        {
+          "label": "W",
+          "input": "witness",
+          "packet": [
+            "camera",
+            "iris_debug"
+          ],
+          "field": "iris_battery_voltage",
+          "color": "#edf3fa"
+        }
+      ]
+    },
+    {
+      "group": "power",
+      "title": "AIM computer battery",
+      "unit": "raw",
+      "traces": [
+        {
+          "label": "A",
+          "input": "aim",
+          "packet": "computer_battery_payload/v1",
+          "field": "voltage",
+          "color": "#ff7979"
+        }
+      ]
+    },
+    {
+      "group": "power",
+      "title": "AIM ejection battery",
+      "unit": "raw",
+      "traces": [
+        {
+          "label": "A",
+          "input": "aim",
+          "packet": "ejection_battery_payload/v1",
+          "field": "voltage",
+          "color": "#ff7979"
+        }
+      ]
+    },
+    {
+      "group": "power",
+      "title": "AIM continuity 1",
+      "unit": "state",
+      "traces": [
+        {
+          "label": "A",
+          "input": "aim",
+          "packet": "(unmapped)",
+          "field": "(unmapped)",
+          "color": "#ff7979",
+          "format": "continuity",
+          "enabled": false,
+          "note": "Topic / field not mapped"
+        }
+      ]
+    },
+    {
+      "group": "power",
+      "title": "AIM continuity 2",
+      "unit": "state",
+      "traces": [
+        {
+          "label": "A",
+          "input": "aim",
+          "packet": "(unmapped)",
+          "field": "(unmapped)",
+          "color": "#ff7979",
+          "format": "continuity",
+          "enabled": false,
+          "note": "Topic / field not mapped"
+        }
+      ]
+    },
+    {
+      "group": "power",
+      "title": "Featherweight battery",
+      "unit": "V",
+      "traces": [
+        {
+          "label": "F",
+          "input": "featherweight",
+          "packet": "GPS_STAT",
+          "field": "(unmapped)",
+          "color": "#70df9b",
+          "match": {
+            "unit_type": "TRACKER"
+          },
+          "enabled": false,
+          "note": "Not in GPS_STAT telemetry"
+        }
+      ]
+    }
+  ]
+}

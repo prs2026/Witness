@@ -1,0 +1,856 @@
+[20:45:11.990] TEST_START[TEST_example_packets] 35 chunks, duration=6000ms, speed=1x, loop=True; raw log=C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\logs\test_20261021_204511_976645.bin
+[20:45:12.207] RX[TEST_example_packets]  01 6e 00 00 00 00 00 00 00 00 00 03 e8 00 61 a8 00 00 ff e3 00 07 0a
+[20:45:12.211] PACKET[TEST_example_packets] sensors: status=0b0110111000000000, uptime=0, filtered_accel=[0.0, 0.04, 1.0], gyro=[0.0, -2.03, 0.49]
+[20:45:12.212] RX[TEST_example_packets]  02 6e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 20 ee 25 b0 42 c8 00 00 00 00 00 00 10 68 0a
+[20:45:12.217] PACKET[TEST_example_packets] state: status=0b0110111000000000, uptime=0, orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0, longitude=-117.0, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.2
+[20:45:12.219] RX[TEST_example_packets]  03 6e 00 00 00 00 00 78 00 00 00 00 00 05 08 0c 1e 78 0a
+[20:45:12.228] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000000, fc_uptime=0, status=0b0111100000000000, uptime=0, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.8
+[20:45:12.282] RX[TEST_example_packets]  ff 6e 00 00 00 00 00 0a
+[20:45:12.288] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000000, uptime=0
+[20:45:12.290] RX[TEST_example_packets]  f0 bf 00 00 00 00 00 00 00 00 00 00 0a
+[20:45:12.294] PACKET[TEST_example_packets] ground_station_status: rssi=-65, uptime=0, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:12.297] RX[TEST_example_packets]  e0 6e 00 00 00 00 00 1e 10 68 00 00 00 00 03 e8 00 61 a8 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 00 00 00 52 08 01 02 00 00 00 00 04 00 60 00 00 ff e3 00 07 01 8b cd 08 66 00 00 00 00 05 30 20 ee 25 b0 6a cd 74 80 42 c8 00 00 0a
+[20:45:12.304] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000000, uptime=0, mcu_temperature=30, witness_battery_voltage=4.2, filtered_accel=[0.0, 0.04, 1.0], orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[0.0, 0.040016, 0.999912], lsm6_temperature=27.0, high_accel=[0.0, 0.041668, 1.000032], gyro=[0.0, -2.03, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0, longitude=-117.0, gps_time=1791849600, gps_altitude=100.0
+[20:45:12.361] RX[TEST_example_packets]  e1 78 00 00 00 00 00 1d 1e 78 05 08 0c 0a
+[20:45:12.365] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=0, mcu_temperature=29, iris_battery_voltage=7.8, current_sense=[0.5, 0.8, 1.2]
+[20:45:13.022] RX[TEST_example_packets]  01 6f 01 00 00 1b 58 00 03 35 00 02 f2 01 50 ea 00 1c ff ea 00 07 0a
+[20:45:13.026] PACKET[TEST_example_packets] sensors: status=0b0110111100000001, uptime=7000, filtered_accel=[0.03284, 0.03016, 3.45], gyro=[1.96, -1.54, 0.49]
+[20:45:13.031] RX[TEST_example_packets]  02 6f 01 00 00 1b 58 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 05 30 21 ee 25 b1 43 14 00 00 42 40 00 00 10 5a 0a
+[20:45:13.039] PACKET[TEST_example_packets] state: status=0b0110111100000001, uptime=7000, orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], latitude=34.0001, longitude=-116.9999, gps_altitude=148.0, barometric_altitude=48.0, witness_battery_voltage=4.186
+[20:45:13.041] RX[TEST_example_packets]  03 6f 01 00 00 1b 58 78 00 00 00 1b 58 06 08 0c 1e 63 0a
+[20:45:13.149] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000001, fc_uptime=7000, status=0b0111100000000000, uptime=7000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.779
+[20:45:13.151] RX[TEST_example_packets]  ff 6f 01 00 00 1b 58 0a
+[20:45:13.154] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000001, uptime=7000
+[20:45:13.156] RX[TEST_example_packets]  f0 b5 00 00 1b 58 00 00 00 00 00 00 0a
+[20:45:13.159] PACKET[TEST_example_packets] ground_station_status: rssi=-75, uptime=7000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:13.161] RX[TEST_example_packets]  e0 6f 01 00 00 1b 58 1f 10 5a 00 03 35 00 02 f2 01 50 ea 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 00 43 00 3e 1b 9e 02 00 00 03 00 03 01 4b 00 1c ff ea 00 07 01 89 8c 08 66 42 40 00 00 05 30 21 ee 25 b1 6a cd 74 87 43 14 00 00 0a
+[20:45:13.249] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000001, uptime=7000, mcu_temperature=31, witness_battery_voltage=4.186, filtered_accel=[0.03284, 0.03016, 3.45], orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], low_accel=[0.032696, 0.030256, 3.45016], lsm6_temperature=27.0, high_accel=[0.031251, 0.031251, 3.448027], gyro=[1.96, -1.54, 0.49], pressure=100748, ms5607_temperature=21.5, barometric_altitude=48.0, latitude=34.0001, longitude=-116.9999, gps_time=1791849607, gps_altitude=148.0
+[20:45:13.257] RX[TEST_example_packets]  e1 78 00 00 00 1b 58 1d 1e 63 06 08 0c 0a
+[20:45:13.399] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=7000, mcu_temperature=29, iris_battery_voltage=7.779, current_sense=[0.6, 0.8, 1.2]
+[20:45:14.023] RX[TEST_example_packets]  01 6f 02 00 00 3a 98 00 03 2d ff fd 08 00 04 e2 00 1c 00 16 00 07 0a
+[20:45:14.027] PACKET[TEST_example_packets] sensors: status=0b0110111100000010, uptime=15000, filtered_accel=[0.03252, -0.0304, 0.05], gyro=[1.96, 1.54, 0.49]
+[20:45:14.030] RX[TEST_example_packets]  02 6f 02 00 00 3a 98 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 05 30 22 ee 25 b2 44 54 80 00 44 3b 80 00 10 4a 0a
+[20:45:14.037] PACKET[TEST_example_packets] state: status=0b0110111100000010, uptime=15000, orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], latitude=34.0002, longitude=-116.9998, gps_altitude=850.0, barometric_altitude=750.0, witness_battery_voltage=4.17
+[20:45:14.039] RX[TEST_example_packets]  03 6f 02 00 00 3a 98 78 00 00 00 3a 98 05 08 0c 1e 4b 0a
+[20:45:14.045] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000010, fc_uptime=15000, status=0b0111100000000000, uptime=15000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.755
+[20:45:14.103] RX[TEST_example_packets]  ff 6f 02 00 00 3a 98 0a
+[20:45:14.112] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000010, uptime=15000
+[20:45:14.118] RX[TEST_example_packets]  f0 be 00 00 3a 98 00 00 00 00 00 00 0a
+[20:45:14.178] PACKET[TEST_example_packets] ground_station_status: rssi=-66, uptime=15000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:14.181] RX[TEST_example_packets]  e0 6f 02 00 00 3a 98 20 10 4a 00 03 2d ff fd 08 00 04 e2 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 00 43 ff c2 00 66 02 00 00 03 ff fd 00 05 00 1c 00 16 00 07 01 69 fe 08 66 44 3b 80 00 05 30 22 ee 25 b2 6a cd 74 8f 44 54 80 00 0a
+[20:45:14.188] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000010, uptime=15000, mcu_temperature=32, witness_battery_voltage=4.17, filtered_accel=[0.03252, -0.0304, 0.05], orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], low_accel=[0.032696, -0.030256, 0.049776], lsm6_temperature=27.0, high_accel=[0.031251, -0.031251, 0.052085], gyro=[1.96, 1.54, 0.49], pressure=92670, ms5607_temperature=21.5, barometric_altitude=750.0, latitude=34.0002, longitude=-116.9998, gps_time=1791849615, gps_altitude=850.0
+[20:45:14.190] RX[TEST_example_packets]  e1 78 00 00 00 3a 98 1d 1e 4b 05 08 0c 0a
+[20:45:14.193] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=15000, mcu_temperature=29, iris_battery_voltage=7.755, current_sense=[0.5, 0.8, 1.2]
+[20:45:15.006] RX[TEST_example_packets]  01 6e 03 00 00 75 30 ff fb 2d 00 00 9a 00 6b 6c ff d6 ff fc 00 07 0a
+[20:45:15.012] PACKET[TEST_example_packets] sensors: status=0b0110111000000011, uptime=30000, filtered_accel=[-0.0494, 0.00616, 1.1], gyro=[-2.94, -0.28, 0.49]
+[20:45:15.018] RX[TEST_example_packets]  02 6e 03 00 00 75 30 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 05 30 23 ee 25 b3 44 2f 00 00 44 16 00 00 10 2c 0a
+[20:45:15.023] PACKET[TEST_example_packets] state: status=0b0110111000000011, uptime=30000, orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], latitude=34.0003, longitude=-116.9997, gps_altitude=700.0, barometric_altitude=600.0, witness_battery_voltage=4.14
+[20:45:15.025] RX[TEST_example_packets]  03 6e 03 00 00 75 30 78 00 00 00 75 30 05 08 0c 1e 1e 0a
+[20:45:15.082] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000011, fc_uptime=30000, status=0b0111100000000000, uptime=30000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.71
+[20:45:15.085] RX[TEST_example_packets]  ff 6e 03 00 00 75 30 0a
+[20:45:15.088] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000011, uptime=30000
+[20:45:15.090] RX[TEST_example_packets]  f0 c2 00 00 75 30 00 00 00 00 00 00 0a
+[20:45:15.092] PACKET[TEST_example_packets] ground_station_status: rssi=-62, uptime=30000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:15.094] RX[TEST_example_packets]  e0 6e 03 00 00 75 30 21 10 2c ff fb 2d 00 00 9a 00 6b 6c 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 ff 9b 00 0d 08 ce 02 00 ff fb 00 01 00 6a ff d6 ff fc 00 07 01 70 84 08 66 44 16 00 00 05 30 23 ee 25 b3 6a cd 74 9e 44 2f 00 00 0a
+[20:45:15.102] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000011, uptime=30000, mcu_temperature=33, witness_battery_voltage=4.14, filtered_accel=[-0.0494, 0.00616, 1.1], orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], low_accel=[-0.049288, 0.006344, 1.099952], lsm6_temperature=27.0, high_accel=[-0.052085, 0.010417, 1.104202], gyro=[-2.94, -0.28, 0.49], pressure=94340, ms5607_temperature=21.5, barometric_altitude=600.0, latitude=34.0003, longitude=-116.9997, gps_time=1791849630, gps_altitude=700.0
+[20:45:15.242] RX[TEST_example_packets]  e1 78 00 00 00 75 30 1d 1e 1e 05 08 0c 0a
+[20:45:15.251] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=30000, mcu_temperature=29, iris_battery_voltage=7.71, current_sense=[0.5, 0.8, 1.2]
+[20:45:16.019] RX[TEST_example_packets]  01 6f 04 00 00 d6 d8 ff fb 1e 00 00 16 00 61 a8 ff d5 ff ff 00 07 0a
+[20:45:16.027] PACKET[TEST_example_packets] sensors: status=0b0110111100000100, uptime=55000, filtered_accel=[-0.05, 0.00088, 1.0], gyro=[-3.01, -0.07, 0.49]
+[20:45:16.032] RX[TEST_example_packets]  02 6f 04 00 00 d6 d8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 25 ee 25 b6 42 c8 00 00 00 00 00 00 0f fa 0a
+[20:45:16.036] PACKET[TEST_example_packets] state: status=0b0110111100000100, uptime=55000, orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0005, longitude=-116.9994, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.09
+[20:45:16.037] RX[TEST_example_packets]  03 6f 04 00 00 d6 d8 78 00 00 00 d6 d8 06 08 0c 1d d3 0a
+[20:45:16.040] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000100, fc_uptime=55000, status=0b0111100000000000, uptime=55000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.635
+[20:45:16.097] RX[TEST_example_packets]  ff 6f 04 00 00 d6 d8 0a
+[20:45:16.100] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000100, uptime=55000
+[20:45:16.101] RX[TEST_example_packets]  f0 c9 00 00 d6 d8 00 00 00 00 00 00 0a
+[20:45:16.103] PACKET[TEST_example_packets] ground_station_status: rssi=-55, uptime=55000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:16.104] RX[TEST_example_packets]  e0 6f 04 00 00 d6 d8 24 0f fa ff fb 1e 00 00 16 00 61 a8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 ff 9a 00 02 08 01 02 00 ff fb 00 00 00 60 ff d5 ff ff 00 07 01 8b cd 08 66 00 00 00 00 05 30 25 ee 25 b6 6a cd 74 b7 42 c8 00 00 0a
+[20:45:16.108] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000100, uptime=55000, mcu_temperature=36, witness_battery_voltage=4.09, filtered_accel=[-0.05, 0.00088, 1.0], orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[-0.049776, 0.000976, 0.999912], lsm6_temperature=27.0, high_accel=[-0.052085, 0.0, 1.000032], gyro=[-3.01, -0.07, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0005, longitude=-116.9994, gps_time=1791849655, gps_altitude=100.0
+[20:45:16.111] RX[TEST_example_packets]  e1 78 00 00 00 d6 d8 1d 1d d3 06 08 0c 0a
+[20:45:16.116] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=55000, mcu_temperature=29, iris_battery_voltage=7.635, current_sense=[0.6, 0.8, 1.2]
+[20:45:18.053] RX[TEST_example_packets]  01 6e 00 00 00 00 00 00 00 00 00 03 e8 00 61 a8 00 00 ff e3 00 07 0a
+[20:45:18.057] PACKET[TEST_example_packets] sensors: status=0b0110111000000000, uptime=0, filtered_accel=[0.0, 0.04, 1.0], gyro=[0.0, -2.03, 0.49]
+[20:45:18.059] RX[TEST_example_packets]  02 6e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 20 ee 25 b0 42 c8 00 00 00 00 00 00 10 68 0a
+[20:45:18.062] PACKET[TEST_example_packets] state: status=0b0110111000000000, uptime=0, orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0, longitude=-117.0, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.2
+[20:45:18.064] RX[TEST_example_packets]  03 6e 00 00 00 00 00 78 00 00 00 00 00 05 08 0c 1e 78 0a
+[20:45:18.070] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000000, fc_uptime=0, status=0b0111100000000000, uptime=0, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.8
+[20:45:18.071] RX[TEST_example_packets]  ff 6e 00 00 00 00 00 0a
+[20:45:18.075] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000000, uptime=0
+[20:45:18.131] RX[TEST_example_packets]  f0 bf 00 00 00 00 00 00 00 00 00 00 0a
+[20:45:18.132] PACKET[TEST_example_packets] ground_station_status: rssi=-65, uptime=0, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:18.133] RX[TEST_example_packets]  e0 6e 00 00 00 00 00 1e 10 68 00 00 00 00 03 e8 00 61 a8 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 00 00 00 52 08 01 02 00 00 00 00 04 00 60 00 00 ff e3 00 07 01 8b cd 08 66 00 00 00 00 05 30 20 ee 25 b0 6a cd 74 80 42 c8 00 00 0a
+[20:45:18.136] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000000, uptime=0, mcu_temperature=30, witness_battery_voltage=4.2, filtered_accel=[0.0, 0.04, 1.0], orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[0.0, 0.040016, 0.999912], lsm6_temperature=27.0, high_accel=[0.0, 0.041668, 1.000032], gyro=[0.0, -2.03, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0, longitude=-117.0, gps_time=1791849600, gps_altitude=100.0
+[20:45:18.139] RX[TEST_example_packets]  e1 78 00 00 00 00 00 1d 1e 78 05 08 0c 0a
+[20:45:18.141] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=0, mcu_temperature=29, iris_battery_voltage=7.8, current_sense=[0.5, 0.8, 1.2]
+[20:45:19.014] RX[TEST_example_packets]  01 6f 01 00 00 1b 58 00 03 35 00 02 f2 01 50 ea 00 1c ff ea 00 07 0a
+[20:45:19.018] PACKET[TEST_example_packets] sensors: status=0b0110111100000001, uptime=7000, filtered_accel=[0.03284, 0.03016, 3.45], gyro=[1.96, -1.54, 0.49]
+[20:45:19.021] RX[TEST_example_packets]  02 6f 01 00 00 1b 58 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 05 30 21 ee 25 b1 43 14 00 00 42 40 00 00 10 5a 0a
+[20:45:19.025] PACKET[TEST_example_packets] state: status=0b0110111100000001, uptime=7000, orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], latitude=34.0001, longitude=-116.9999, gps_altitude=148.0, barometric_altitude=48.0, witness_battery_voltage=4.186
+[20:45:19.027] RX[TEST_example_packets]  03 6f 01 00 00 1b 58 78 00 00 00 1b 58 06 08 0c 1e 63 0a
+[20:45:19.031] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000001, fc_uptime=7000, status=0b0111100000000000, uptime=7000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.779
+[20:45:19.033] RX[TEST_example_packets]  ff 6f 01 00 00 1b 58 0a
+[20:45:19.120] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000001, uptime=7000
+[20:45:19.123] RX[TEST_example_packets]  f0 b5 00 00 1b 58 00 00 00 00 00 00 0a
+[20:45:19.127] PACKET[TEST_example_packets] ground_station_status: rssi=-75, uptime=7000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:19.131] RX[TEST_example_packets]  e0 6f 01 00 00 1b 58 1f 10 5a 00 03 35 00 02 f2 01 50 ea 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 00 43 00 3e 1b 9e 02 00 00 03 00 03 01 4b 00 1c ff ea 00 07 01 89 8c 08 66 42 40 00 00 05 30 21 ee 25 b1 6a cd 74 87 43 14 00 00 0a
+[20:45:19.212] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000001, uptime=7000, mcu_temperature=31, witness_battery_voltage=4.186, filtered_accel=[0.03284, 0.03016, 3.45], orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], low_accel=[0.032696, 0.030256, 3.45016], lsm6_temperature=27.0, high_accel=[0.031251, 0.031251, 3.448027], gyro=[1.96, -1.54, 0.49], pressure=100748, ms5607_temperature=21.5, barometric_altitude=48.0, latitude=34.0001, longitude=-116.9999, gps_time=1791849607, gps_altitude=148.0
+[20:45:19.215] RX[TEST_example_packets]  e1 78 00 00 00 1b 58 1d 1e 63 06 08 0c 0a
+[20:45:19.221] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=7000, mcu_temperature=29, iris_battery_voltage=7.779, current_sense=[0.6, 0.8, 1.2]
+[20:45:20.006] RX[TEST_example_packets]  01 6f 02 00 00 3a 98 00 03 2d ff fd 08 00 04 e2 00 1c 00 16 00 07 0a
+[20:45:20.011] PACKET[TEST_example_packets] sensors: status=0b0110111100000010, uptime=15000, filtered_accel=[0.03252, -0.0304, 0.05], gyro=[1.96, 1.54, 0.49]
+[20:45:20.013] RX[TEST_example_packets]  02 6f 02 00 00 3a 98 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 05 30 22 ee 25 b2 44 54 80 00 44 3b 80 00 10 4a 0a
+[20:45:20.018] PACKET[TEST_example_packets] state: status=0b0110111100000010, uptime=15000, orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], latitude=34.0002, longitude=-116.9998, gps_altitude=850.0, barometric_altitude=750.0, witness_battery_voltage=4.17
+[20:45:20.019] RX[TEST_example_packets]  03 6f 02 00 00 3a 98 78 00 00 00 3a 98 05 08 0c 1e 4b 0a
+[20:45:20.023] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000010, fc_uptime=15000, status=0b0111100000000000, uptime=15000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.755
+[20:45:20.025] RX[TEST_example_packets]  ff 6f 02 00 00 3a 98 0a
+[20:45:20.081] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000010, uptime=15000
+[20:45:20.085] RX[TEST_example_packets]  f0 be 00 00 3a 98 00 00 00 00 00 00 0a
+[20:45:20.093] PACKET[TEST_example_packets] ground_station_status: rssi=-66, uptime=15000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:20.155] RX[TEST_example_packets]  e0 6f 02 00 00 3a 98 20 10 4a 00 03 2d ff fd 08 00 04 e2 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 00 43 ff c2 00 66 02 00 00 03 ff fd 00 05 00 1c 00 16 00 07 01 69 fe 08 66 44 3b 80 00 05 30 22 ee 25 b2 6a cd 74 8f 44 54 80 00 0a
+[20:45:20.164] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000010, uptime=15000, mcu_temperature=32, witness_battery_voltage=4.17, filtered_accel=[0.03252, -0.0304, 0.05], orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], low_accel=[0.032696, -0.030256, 0.049776], lsm6_temperature=27.0, high_accel=[0.031251, -0.031251, 0.052085], gyro=[1.96, 1.54, 0.49], pressure=92670, ms5607_temperature=21.5, barometric_altitude=750.0, latitude=34.0002, longitude=-116.9998, gps_time=1791849615, gps_altitude=850.0
+[20:45:20.170] RX[TEST_example_packets]  e1 78 00 00 00 3a 98 1d 1e 4b 05 08 0c 0a
+[20:45:20.254] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=15000, mcu_temperature=29, iris_battery_voltage=7.755, current_sense=[0.5, 0.8, 1.2]
+[20:45:21.045] RX[TEST_example_packets]  01 6e 03 00 00 75 30 ff fb 2d 00 00 9a 00 6b 6c ff d6 ff fc 00 07 0a
+[20:45:21.060] PACKET[TEST_example_packets] sensors: status=0b0110111000000011, uptime=30000, filtered_accel=[-0.0494, 0.00616, 1.1], gyro=[-2.94, -0.28, 0.49]
+[20:45:21.126] RX[TEST_example_packets]  02 6e 03 00 00 75 30 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 05 30 23 ee 25 b3 44 2f 00 00 44 16 00 00 10 2c 0a
+[20:45:21.131] PACKET[TEST_example_packets] state: status=0b0110111000000011, uptime=30000, orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], latitude=34.0003, longitude=-116.9997, gps_altitude=700.0, barometric_altitude=600.0, witness_battery_voltage=4.14
+[20:45:21.132] RX[TEST_example_packets]  03 6e 03 00 00 75 30 78 00 00 00 75 30 05 08 0c 1e 1e 0a
+[20:45:21.137] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000011, fc_uptime=30000, status=0b0111100000000000, uptime=30000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.71
+[20:45:21.138] RX[TEST_example_packets]  ff 6e 03 00 00 75 30 0a
+[20:45:21.142] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000011, uptime=30000
+[20:45:21.144] RX[TEST_example_packets]  f0 c2 00 00 75 30 00 00 00 00 00 00 0a
+[20:45:21.146] PACKET[TEST_example_packets] ground_station_status: rssi=-62, uptime=30000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:21.209] RX[TEST_example_packets]  e0 6e 03 00 00 75 30 21 10 2c ff fb 2d 00 00 9a 00 6b 6c 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 ff 9b 00 0d 08 ce 02 00 ff fb 00 01 00 6a ff d6 ff fc 00 07 01 70 84 08 66 44 16 00 00 05 30 23 ee 25 b3 6a cd 74 9e 44 2f 00 00 0a
+[20:45:21.214] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000011, uptime=30000, mcu_temperature=33, witness_battery_voltage=4.14, filtered_accel=[-0.0494, 0.00616, 1.1], orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], low_accel=[-0.049288, 0.006344, 1.099952], lsm6_temperature=27.0, high_accel=[-0.052085, 0.010417, 1.104202], gyro=[-2.94, -0.28, 0.49], pressure=94340, ms5607_temperature=21.5, barometric_altitude=600.0, latitude=34.0003, longitude=-116.9997, gps_time=1791849630, gps_altitude=700.0
+[20:45:21.216] RX[TEST_example_packets]  e1 78 00 00 00 75 30 1d 1e 1e 05 08 0c 0a
+[20:45:21.221] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=30000, mcu_temperature=29, iris_battery_voltage=7.71, current_sense=[0.5, 0.8, 1.2]
+[20:45:22.045] RX[TEST_example_packets]  01 6f 04 00 00 d6 d8 ff fb 1e 00 00 16 00 61 a8 ff d5 ff ff 00 07 0a
+[20:45:22.052] PACKET[TEST_example_packets] sensors: status=0b0110111100000100, uptime=55000, filtered_accel=[-0.05, 0.00088, 1.0], gyro=[-3.01, -0.07, 0.49]
+[20:45:22.061] RX[TEST_example_packets]  02 6f 04 00 00 d6 d8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 25 ee 25 b6 42 c8 00 00 00 00 00 00 0f fa 0a
+[20:45:22.069] PACKET[TEST_example_packets] state: status=0b0110111100000100, uptime=55000, orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0005, longitude=-116.9994, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.09
+[20:45:22.131] RX[TEST_example_packets]  03 6f 04 00 00 d6 d8 78 00 00 00 d6 d8 06 08 0c 1d d3 0a
+[20:45:22.143] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000100, fc_uptime=55000, status=0b0111100000000000, uptime=55000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.635
+[20:45:22.147] RX[TEST_example_packets]  ff 6f 04 00 00 d6 d8 0a
+[20:45:22.155] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000100, uptime=55000
+[20:45:22.218] RX[TEST_example_packets]  f0 c9 00 00 d6 d8 00 00 00 00 00 00 0a
+[20:45:22.221] PACKET[TEST_example_packets] ground_station_status: rssi=-55, uptime=55000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:22.223] RX[TEST_example_packets]  e0 6f 04 00 00 d6 d8 24 0f fa ff fb 1e 00 00 16 00 61 a8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 ff 9a 00 02 08 01 02 00 ff fb 00 00 00 60 ff d5 ff ff 00 07 01 8b cd 08 66 00 00 00 00 05 30 25 ee 25 b6 6a cd 74 b7 42 c8 00 00 0a
+[20:45:22.227] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000100, uptime=55000, mcu_temperature=36, witness_battery_voltage=4.09, filtered_accel=[-0.05, 0.00088, 1.0], orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[-0.049776, 0.000976, 0.999912], lsm6_temperature=27.0, high_accel=[-0.052085, 0.0, 1.000032], gyro=[-3.01, -0.07, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0005, longitude=-116.9994, gps_time=1791849655, gps_altitude=100.0
+[20:45:22.230] RX[TEST_example_packets]  e1 78 00 00 00 d6 d8 1d 1d d3 06 08 0c 0a
+[20:45:22.235] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=55000, mcu_temperature=29, iris_battery_voltage=7.635, current_sense=[0.6, 0.8, 1.2]
+[20:45:24.044] RX[TEST_example_packets]  01 6e 00 00 00 00 00 00 00 00 00 03 e8 00 61 a8 00 00 ff e3 00 07 0a
+[20:45:24.048] PACKET[TEST_example_packets] sensors: status=0b0110111000000000, uptime=0, filtered_accel=[0.0, 0.04, 1.0], gyro=[0.0, -2.03, 0.49]
+[20:45:24.051] RX[TEST_example_packets]  02 6e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 20 ee 25 b0 42 c8 00 00 00 00 00 00 10 68 0a
+[20:45:24.055] PACKET[TEST_example_packets] state: status=0b0110111000000000, uptime=0, orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0, longitude=-117.0, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.2
+[20:45:24.057] RX[TEST_example_packets]  03 6e 00 00 00 00 00 78 00 00 00 00 00 05 08 0c 1e 78 0a
+[20:45:24.062] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000000, fc_uptime=0, status=0b0111100000000000, uptime=0, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.8
+[20:45:24.063] RX[TEST_example_packets]  ff 6e 00 00 00 00 00 0a
+[20:45:24.147] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000000, uptime=0
+[20:45:24.151] RX[TEST_example_packets]  f0 bf 00 00 00 00 00 00 00 00 00 00 0a
+[20:45:24.216] PACKET[TEST_example_packets] ground_station_status: rssi=-65, uptime=0, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:24.218] RX[TEST_example_packets]  e0 6e 00 00 00 00 00 1e 10 68 00 00 00 00 03 e8 00 61 a8 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 00 00 00 52 08 01 02 00 00 00 00 04 00 60 00 00 ff e3 00 07 01 8b cd 08 66 00 00 00 00 05 30 20 ee 25 b0 6a cd 74 80 42 c8 00 00 0a
+[20:45:24.223] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000000, uptime=0, mcu_temperature=30, witness_battery_voltage=4.2, filtered_accel=[0.0, 0.04, 1.0], orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[0.0, 0.040016, 0.999912], lsm6_temperature=27.0, high_accel=[0.0, 0.041668, 1.000032], gyro=[0.0, -2.03, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0, longitude=-117.0, gps_time=1791849600, gps_altitude=100.0
+[20:45:24.225] RX[TEST_example_packets]  e1 78 00 00 00 00 00 1d 1e 78 05 08 0c 0a
+[20:45:24.231] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=0, mcu_temperature=29, iris_battery_voltage=7.8, current_sense=[0.5, 0.8, 1.2]
+[20:45:25.040] RX[TEST_example_packets]  01 6f 01 00 00 1b 58 00 03 35 00 02 f2 01 50 ea 00 1c ff ea 00 07 0a
+[20:45:25.053] PACKET[TEST_example_packets] sensors: status=0b0110111100000001, uptime=7000, filtered_accel=[0.03284, 0.03016, 3.45], gyro=[1.96, -1.54, 0.49]
+[20:45:25.119] RX[TEST_example_packets]  02 6f 01 00 00 1b 58 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 05 30 21 ee 25 b1 43 14 00 00 42 40 00 00 10 5a 0a
+[20:45:25.128] PACKET[TEST_example_packets] state: status=0b0110111100000001, uptime=7000, orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], latitude=34.0001, longitude=-116.9999, gps_altitude=148.0, barometric_altitude=48.0, witness_battery_voltage=4.186
+[20:45:25.130] RX[TEST_example_packets]  03 6f 01 00 00 1b 58 78 00 00 00 1b 58 06 08 0c 1e 63 0a
+[20:45:25.136] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000001, fc_uptime=7000, status=0b0111100000000000, uptime=7000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.779
+[20:45:25.138] RX[TEST_example_packets]  ff 6f 01 00 00 1b 58 0a
+[20:45:25.212] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000001, uptime=7000
+[20:45:25.213] RX[TEST_example_packets]  f0 b5 00 00 1b 58 00 00 00 00 00 00 0a
+[20:45:25.217] PACKET[TEST_example_packets] ground_station_status: rssi=-75, uptime=7000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:25.219] RX[TEST_example_packets]  e0 6f 01 00 00 1b 58 1f 10 5a 00 03 35 00 02 f2 01 50 ea 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 00 43 00 3e 1b 9e 02 00 00 03 00 03 01 4b 00 1c ff ea 00 07 01 89 8c 08 66 42 40 00 00 05 30 21 ee 25 b1 6a cd 74 87 43 14 00 00 0a
+[20:45:25.224] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000001, uptime=7000, mcu_temperature=31, witness_battery_voltage=4.186, filtered_accel=[0.03284, 0.03016, 3.45], orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], low_accel=[0.032696, 0.030256, 3.45016], lsm6_temperature=27.0, high_accel=[0.031251, 0.031251, 3.448027], gyro=[1.96, -1.54, 0.49], pressure=100748, ms5607_temperature=21.5, barometric_altitude=48.0, latitude=34.0001, longitude=-116.9999, gps_time=1791849607, gps_altitude=148.0
+[20:45:25.226] RX[TEST_example_packets]  e1 78 00 00 00 1b 58 1d 1e 63 06 08 0c 0a
+[20:45:25.304] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=7000, mcu_temperature=29, iris_battery_voltage=7.779, current_sense=[0.6, 0.8, 1.2]
+[20:45:26.006] RX[TEST_example_packets]  01 6f 02 00 00 3a 98 00 03 2d ff fd 08 00 04 e2 00 1c 00 16 00 07 0a
+[20:45:26.010] PACKET[TEST_example_packets] sensors: status=0b0110111100000010, uptime=15000, filtered_accel=[0.03252, -0.0304, 0.05], gyro=[1.96, 1.54, 0.49]
+[20:45:26.013] RX[TEST_example_packets]  02 6f 02 00 00 3a 98 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 05 30 22 ee 25 b2 44 54 80 00 44 3b 80 00 10 4a 0a
+[20:45:26.017] PACKET[TEST_example_packets] state: status=0b0110111100000010, uptime=15000, orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], latitude=34.0002, longitude=-116.9998, gps_altitude=850.0, barometric_altitude=750.0, witness_battery_voltage=4.17
+[20:45:26.021] RX[TEST_example_packets]  03 6f 02 00 00 3a 98 78 00 00 00 3a 98 05 08 0c 1e 4b 0a
+[20:45:26.027] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000010, fc_uptime=15000, status=0b0111100000000000, uptime=15000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.755
+[20:45:26.113] RX[TEST_example_packets]  ff 6f 02 00 00 3a 98 0a
+[20:45:26.122] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000010, uptime=15000
+[20:45:26.126] RX[TEST_example_packets]  f0 be 00 00 3a 98 00 00 00 00 00 00 0a
+[20:45:26.130] PACKET[TEST_example_packets] ground_station_status: rssi=-66, uptime=15000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:26.189] RX[TEST_example_packets]  e0 6f 02 00 00 3a 98 20 10 4a 00 03 2d ff fd 08 00 04 e2 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 00 43 ff c2 00 66 02 00 00 03 ff fd 00 05 00 1c 00 16 00 07 01 69 fe 08 66 44 3b 80 00 05 30 22 ee 25 b2 6a cd 74 8f 44 54 80 00 0a
+[20:45:26.196] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000010, uptime=15000, mcu_temperature=32, witness_battery_voltage=4.17, filtered_accel=[0.03252, -0.0304, 0.05], orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], low_accel=[0.032696, -0.030256, 0.049776], lsm6_temperature=27.0, high_accel=[0.031251, -0.031251, 0.052085], gyro=[1.96, 1.54, 0.49], pressure=92670, ms5607_temperature=21.5, barometric_altitude=750.0, latitude=34.0002, longitude=-116.9998, gps_time=1791849615, gps_altitude=850.0
+[20:45:26.201] RX[TEST_example_packets]  e1 78 00 00 00 3a 98 1d 1e 4b 05 08 0c 0a
+[20:45:26.208] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=15000, mcu_temperature=29, iris_battery_voltage=7.755, current_sense=[0.5, 0.8, 1.2]
+[20:45:27.020] RX[TEST_example_packets]  01 6e 03 00 00 75 30 ff fb 2d 00 00 9a 00 6b 6c ff d6 ff fc 00 07 0a
+[20:45:27.027] PACKET[TEST_example_packets] sensors: status=0b0110111000000011, uptime=30000, filtered_accel=[-0.0494, 0.00616, 1.1], gyro=[-2.94, -0.28, 0.49]
+[20:45:27.031] RX[TEST_example_packets]  02 6e 03 00 00 75 30 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 05 30 23 ee 25 b3 44 2f 00 00 44 16 00 00 10 2c 0a
+[20:45:27.041] PACKET[TEST_example_packets] state: status=0b0110111000000011, uptime=30000, orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], latitude=34.0003, longitude=-116.9997, gps_altitude=700.0, barometric_altitude=600.0, witness_battery_voltage=4.14
+[20:45:27.118] RX[TEST_example_packets]  03 6e 03 00 00 75 30 78 00 00 00 75 30 05 08 0c 1e 1e 0a
+[20:45:27.129] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000011, fc_uptime=30000, status=0b0111100000000000, uptime=30000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.71
+[20:45:27.133] RX[TEST_example_packets]  ff 6e 03 00 00 75 30 0a
+[20:45:27.141] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000011, uptime=30000
+[20:45:27.205] RX[TEST_example_packets]  f0 c2 00 00 75 30 00 00 00 00 00 00 0a
+[20:45:27.207] PACKET[TEST_example_packets] ground_station_status: rssi=-62, uptime=30000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:27.208] RX[TEST_example_packets]  e0 6e 03 00 00 75 30 21 10 2c ff fb 2d 00 00 9a 00 6b 6c 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 ff 9b 00 0d 08 ce 02 00 ff fb 00 01 00 6a ff d6 ff fc 00 07 01 70 84 08 66 44 16 00 00 05 30 23 ee 25 b3 6a cd 74 9e 44 2f 00 00 0a
+[20:45:27.213] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000011, uptime=30000, mcu_temperature=33, witness_battery_voltage=4.14, filtered_accel=[-0.0494, 0.00616, 1.1], orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], low_accel=[-0.049288, 0.006344, 1.099952], lsm6_temperature=27.0, high_accel=[-0.052085, 0.010417, 1.104202], gyro=[-2.94, -0.28, 0.49], pressure=94340, ms5607_temperature=21.5, barometric_altitude=600.0, latitude=34.0003, longitude=-116.9997, gps_time=1791849630, gps_altitude=700.0
+[20:45:27.215] RX[TEST_example_packets]  e1 78 00 00 00 75 30 1d 1e 1e 05 08 0c 0a
+[20:45:27.217] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=30000, mcu_temperature=29, iris_battery_voltage=7.71, current_sense=[0.5, 0.8, 1.2]
+[20:45:28.029] RX[TEST_example_packets]  01 6f 04 00 00 d6 d8 ff fb 1e 00 00 16 00 61 a8 ff d5 ff ff 00 07 0a
+[20:45:28.034] PACKET[TEST_example_packets] sensors: status=0b0110111100000100, uptime=55000, filtered_accel=[-0.05, 0.00088, 1.0], gyro=[-3.01, -0.07, 0.49]
+[20:45:28.037] RX[TEST_example_packets]  02 6f 04 00 00 d6 d8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 25 ee 25 b6 42 c8 00 00 00 00 00 00 0f fa 0a
+[20:45:28.041] PACKET[TEST_example_packets] state: status=0b0110111100000100, uptime=55000, orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0005, longitude=-116.9994, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.09
+[20:45:28.043] RX[TEST_example_packets]  03 6f 04 00 00 d6 d8 78 00 00 00 d6 d8 06 08 0c 1d d3 0a
+[20:45:28.047] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000100, fc_uptime=55000, status=0b0111100000000000, uptime=55000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.635
+[20:45:28.048] RX[TEST_example_packets]  ff 6f 04 00 00 d6 d8 0a
+[20:45:28.143] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000100, uptime=55000
+[20:45:28.145] RX[TEST_example_packets]  f0 c9 00 00 d6 d8 00 00 00 00 00 00 0a
+[20:45:28.147] PACKET[TEST_example_packets] ground_station_status: rssi=-55, uptime=55000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:28.150] RX[TEST_example_packets]  e0 6f 04 00 00 d6 d8 24 0f fa ff fb 1e 00 00 16 00 61 a8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 ff 9a 00 02 08 01 02 00 ff fb 00 00 00 60 ff d5 ff ff 00 07 01 8b cd 08 66 00 00 00 00 05 30 25 ee 25 b6 6a cd 74 b7 42 c8 00 00 0a
+[20:45:28.155] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000100, uptime=55000, mcu_temperature=36, witness_battery_voltage=4.09, filtered_accel=[-0.05, 0.00088, 1.0], orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[-0.049776, 0.000976, 0.999912], lsm6_temperature=27.0, high_accel=[-0.052085, 0.0, 1.000032], gyro=[-3.01, -0.07, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0005, longitude=-116.9994, gps_time=1791849655, gps_altitude=100.0
+[20:45:28.159] RX[TEST_example_packets]  e1 78 00 00 00 d6 d8 1d 1d d3 06 08 0c 0a
+[20:45:28.237] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=55000, mcu_temperature=29, iris_battery_voltage=7.635, current_sense=[0.6, 0.8, 1.2]
+[20:45:30.024] RX[TEST_example_packets]  01 6e 00 00 00 00 00 00 00 00 00 03 e8 00 61 a8 00 00 ff e3 00 07 0a
+[20:45:30.028] PACKET[TEST_example_packets] sensors: status=0b0110111000000000, uptime=0, filtered_accel=[0.0, 0.04, 1.0], gyro=[0.0, -2.03, 0.49]
+[20:45:30.031] RX[TEST_example_packets]  02 6e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 20 ee 25 b0 42 c8 00 00 00 00 00 00 10 68 0a
+[20:45:30.036] PACKET[TEST_example_packets] state: status=0b0110111000000000, uptime=0, orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0, longitude=-117.0, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.2
+[20:45:30.037] RX[TEST_example_packets]  03 6e 00 00 00 00 00 78 00 00 00 00 00 05 08 0c 1e 78 0a
+[20:45:30.041] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000000, fc_uptime=0, status=0b0111100000000000, uptime=0, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.8
+[20:45:30.043] RX[TEST_example_packets]  ff 6e 00 00 00 00 00 0a
+[20:45:30.130] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000000, uptime=0
+[20:45:30.134] RX[TEST_example_packets]  f0 bf 00 00 00 00 00 00 00 00 00 00 0a
+[20:45:30.139] PACKET[TEST_example_packets] ground_station_status: rssi=-65, uptime=0, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:30.144] RX[TEST_example_packets]  e0 6e 00 00 00 00 00 1e 10 68 00 00 00 00 03 e8 00 61 a8 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 00 00 00 52 08 01 02 00 00 00 00 04 00 60 00 00 ff e3 00 07 01 8b cd 08 66 00 00 00 00 05 30 20 ee 25 b0 6a cd 74 80 42 c8 00 00 0a
+[20:45:30.206] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000000, uptime=0, mcu_temperature=30, witness_battery_voltage=4.2, filtered_accel=[0.0, 0.04, 1.0], orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[0.0, 0.040016, 0.999912], lsm6_temperature=27.0, high_accel=[0.0, 0.041668, 1.000032], gyro=[0.0, -2.03, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0, longitude=-117.0, gps_time=1791849600, gps_altitude=100.0
+[20:45:30.214] RX[TEST_example_packets]  e1 78 00 00 00 00 00 1d 1e 78 05 08 0c 0a
+[20:45:30.220] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=0, mcu_temperature=29, iris_battery_voltage=7.8, current_sense=[0.5, 0.8, 1.2]
+[20:45:31.022] RX[TEST_example_packets]  01 6f 01 00 00 1b 58 00 03 35 00 02 f2 01 50 ea 00 1c ff ea 00 07 0a
+[20:45:31.027] PACKET[TEST_example_packets] sensors: status=0b0110111100000001, uptime=7000, filtered_accel=[0.03284, 0.03016, 3.45], gyro=[1.96, -1.54, 0.49]
+[20:45:31.031] RX[TEST_example_packets]  02 6f 01 00 00 1b 58 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 05 30 21 ee 25 b1 43 14 00 00 42 40 00 00 10 5a 0a
+[20:45:31.038] PACKET[TEST_example_packets] state: status=0b0110111100000001, uptime=7000, orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], latitude=34.0001, longitude=-116.9999, gps_altitude=148.0, barometric_altitude=48.0, witness_battery_voltage=4.186
+[20:45:31.110] RX[TEST_example_packets]  03 6f 01 00 00 1b 58 78 00 00 00 1b 58 06 08 0c 1e 63 0a
+[20:45:31.116] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000001, fc_uptime=7000, status=0b0111100000000000, uptime=7000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.779
+[20:45:31.118] RX[TEST_example_packets]  ff 6f 01 00 00 1b 58 0a
+[20:45:31.122] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000001, uptime=7000
+[20:45:31.124] RX[TEST_example_packets]  f0 b5 00 00 1b 58 00 00 00 00 00 00 0a
+[20:45:31.128] PACKET[TEST_example_packets] ground_station_status: rssi=-75, uptime=7000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:31.241] RX[TEST_example_packets]  e0 6f 01 00 00 1b 58 1f 10 5a 00 03 35 00 02 f2 01 50 ea 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 00 43 00 3e 1b 9e 02 00 00 03 00 03 01 4b 00 1c ff ea 00 07 01 89 8c 08 66 42 40 00 00 05 30 21 ee 25 b1 6a cd 74 87 43 14 00 00 0a
+[20:45:31.246] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000001, uptime=7000, mcu_temperature=31, witness_battery_voltage=4.186, filtered_accel=[0.03284, 0.03016, 3.45], orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], low_accel=[0.032696, 0.030256, 3.45016], lsm6_temperature=27.0, high_accel=[0.031251, 0.031251, 3.448027], gyro=[1.96, -1.54, 0.49], pressure=100748, ms5607_temperature=21.5, barometric_altitude=48.0, latitude=34.0001, longitude=-116.9999, gps_time=1791849607, gps_altitude=148.0
+[20:45:31.249] RX[TEST_example_packets]  e1 78 00 00 00 1b 58 1d 1e 63 06 08 0c 0a
+[20:45:31.257] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=7000, mcu_temperature=29, iris_battery_voltage=7.779, current_sense=[0.6, 0.8, 1.2]
+[20:45:32.019] RX[TEST_example_packets]  01 6f 02 00 00 3a 98 00 03 2d ff fd 08 00 04 e2 00 1c 00 16 00 07 0a
+[20:45:32.032] PACKET[TEST_example_packets] sensors: status=0b0110111100000010, uptime=15000, filtered_accel=[0.03252, -0.0304, 0.05], gyro=[1.96, 1.54, 0.49]
+[20:45:32.098] RX[TEST_example_packets]  02 6f 02 00 00 3a 98 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 05 30 22 ee 25 b2 44 54 80 00 44 3b 80 00 10 4a 0a
+[20:45:32.112] PACKET[TEST_example_packets] state: status=0b0110111100000010, uptime=15000, orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], latitude=34.0002, longitude=-116.9998, gps_altitude=850.0, barometric_altitude=750.0, witness_battery_voltage=4.17
+[20:45:32.115] RX[TEST_example_packets]  03 6f 02 00 00 3a 98 78 00 00 00 3a 98 05 08 0c 1e 4b 0a
+[20:45:32.172] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000010, fc_uptime=15000, status=0b0111100000000000, uptime=15000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.755
+[20:45:32.174] RX[TEST_example_packets]  ff 6f 02 00 00 3a 98 0a
+[20:45:32.181] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000010, uptime=15000
+[20:45:32.184] RX[TEST_example_packets]  f0 be 00 00 3a 98 00 00 00 00 00 00 0a
+[20:45:32.188] PACKET[TEST_example_packets] ground_station_status: rssi=-66, uptime=15000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:32.247] RX[TEST_example_packets]  e0 6f 02 00 00 3a 98 20 10 4a 00 03 2d ff fd 08 00 04 e2 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 00 43 ff c2 00 66 02 00 00 03 ff fd 00 05 00 1c 00 16 00 07 01 69 fe 08 66 44 3b 80 00 05 30 22 ee 25 b2 6a cd 74 8f 44 54 80 00 0a
+[20:45:32.257] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000010, uptime=15000, mcu_temperature=32, witness_battery_voltage=4.17, filtered_accel=[0.03252, -0.0304, 0.05], orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], low_accel=[0.032696, -0.030256, 0.049776], lsm6_temperature=27.0, high_accel=[0.031251, -0.031251, 0.052085], gyro=[1.96, 1.54, 0.49], pressure=92670, ms5607_temperature=21.5, barometric_altitude=750.0, latitude=34.0002, longitude=-116.9998, gps_time=1791849615, gps_altitude=850.0
+[20:45:32.261] RX[TEST_example_packets]  e1 78 00 00 00 3a 98 1d 1e 4b 05 08 0c 0a
+[20:45:32.271] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=15000, mcu_temperature=29, iris_battery_voltage=7.755, current_sense=[0.5, 0.8, 1.2]
+[20:45:33.044] RX[TEST_example_packets]  01 6e 03 00 00 75 30 ff fb 2d 00 00 9a 00 6b 6c ff d6 ff fc 00 07 0a
+[20:45:33.053] PACKET[TEST_example_packets] sensors: status=0b0110111000000011, uptime=30000, filtered_accel=[-0.0494, 0.00616, 1.1], gyro=[-2.94, -0.28, 0.49]
+[20:45:33.058] RX[TEST_example_packets]  02 6e 03 00 00 75 30 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 05 30 23 ee 25 b3 44 2f 00 00 44 16 00 00 10 2c 0a
+[20:45:33.131] PACKET[TEST_example_packets] state: status=0b0110111000000011, uptime=30000, orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], latitude=34.0003, longitude=-116.9997, gps_altitude=700.0, barometric_altitude=600.0, witness_battery_voltage=4.14
+[20:45:33.134] RX[TEST_example_packets]  03 6e 03 00 00 75 30 78 00 00 00 75 30 05 08 0c 1e 1e 0a
+[20:45:33.146] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000011, fc_uptime=30000, status=0b0111100000000000, uptime=30000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.71
+[20:45:33.232] RX[TEST_example_packets]  ff 6e 03 00 00 75 30 0a
+[20:45:33.245] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000011, uptime=30000
+[20:45:33.248] RX[TEST_example_packets]  f0 c2 00 00 75 30 00 00 00 00 00 00 0a
+[20:45:33.253] PACKET[TEST_example_packets] ground_station_status: rssi=-62, uptime=30000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:33.312] RX[TEST_example_packets]  e0 6e 03 00 00 75 30 21 10 2c ff fb 2d 00 00 9a 00 6b 6c 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 ff 9b 00 0d 08 ce 02 00 ff fb 00 01 00 6a ff d6 ff fc 00 07 01 70 84 08 66 44 16 00 00 05 30 23 ee 25 b3 6a cd 74 9e 44 2f 00 00 0a
+[20:45:33.316] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000011, uptime=30000, mcu_temperature=33, witness_battery_voltage=4.14, filtered_accel=[-0.0494, 0.00616, 1.1], orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], low_accel=[-0.049288, 0.006344, 1.099952], lsm6_temperature=27.0, high_accel=[-0.052085, 0.010417, 1.104202], gyro=[-2.94, -0.28, 0.49], pressure=94340, ms5607_temperature=21.5, barometric_altitude=600.0, latitude=34.0003, longitude=-116.9997, gps_time=1791849630, gps_altitude=700.0
+[20:45:33.318] RX[TEST_example_packets]  e1 78 00 00 00 75 30 1d 1e 1e 05 08 0c 0a
+[20:45:33.321] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=30000, mcu_temperature=29, iris_battery_voltage=7.71, current_sense=[0.5, 0.8, 1.2]
+[20:45:34.018] RX[TEST_example_packets]  01 6f 04 00 00 d6 d8 ff fb 1e 00 00 16 00 61 a8 ff d5 ff ff 00 07 0a
+[20:45:34.031] PACKET[TEST_example_packets] sensors: status=0b0110111100000100, uptime=55000, filtered_accel=[-0.05, 0.00088, 1.0], gyro=[-3.01, -0.07, 0.49]
+[20:45:34.102] RX[TEST_example_packets]  02 6f 04 00 00 d6 d8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 25 ee 25 b6 42 c8 00 00 00 00 00 00 0f fa 0a
+[20:45:34.110] PACKET[TEST_example_packets] state: status=0b0110111100000100, uptime=55000, orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0005, longitude=-116.9994, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.09
+[20:45:34.114] RX[TEST_example_packets]  03 6f 04 00 00 d6 d8 78 00 00 00 d6 d8 06 08 0c 1d d3 0a
+[20:45:34.127] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000100, fc_uptime=55000, status=0b0111100000000000, uptime=55000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.635
+[20:45:34.190] RX[TEST_example_packets]  ff 6f 04 00 00 d6 d8 0a
+[20:45:34.193] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000100, uptime=55000
+[20:45:34.194] RX[TEST_example_packets]  f0 c9 00 00 d6 d8 00 00 00 00 00 00 0a
+[20:45:34.196] PACKET[TEST_example_packets] ground_station_status: rssi=-55, uptime=55000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:34.197] RX[TEST_example_packets]  e0 6f 04 00 00 d6 d8 24 0f fa ff fb 1e 00 00 16 00 61 a8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 ff 9a 00 02 08 01 02 00 ff fb 00 00 00 60 ff d5 ff ff 00 07 01 8b cd 08 66 00 00 00 00 05 30 25 ee 25 b6 6a cd 74 b7 42 c8 00 00 0a
+[20:45:34.200] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000100, uptime=55000, mcu_temperature=36, witness_battery_voltage=4.09, filtered_accel=[-0.05, 0.00088, 1.0], orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[-0.049776, 0.000976, 0.999912], lsm6_temperature=27.0, high_accel=[-0.052085, 0.0, 1.000032], gyro=[-3.01, -0.07, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0005, longitude=-116.9994, gps_time=1791849655, gps_altitude=100.0
+[20:45:34.203] RX[TEST_example_packets]  e1 78 00 00 00 d6 d8 1d 1d d3 06 08 0c 0a
+[20:45:34.206] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=55000, mcu_temperature=29, iris_battery_voltage=7.635, current_sense=[0.6, 0.8, 1.2]
+[20:45:36.009] RX[TEST_example_packets]  01 6e 00 00 00 00 00 00 00 00 00 03 e8 00 61 a8 00 00 ff e3 00 07 0a
+[20:45:36.017] PACKET[TEST_example_packets] sensors: status=0b0110111000000000, uptime=0, filtered_accel=[0.0, 0.04, 1.0], gyro=[0.0, -2.03, 0.49]
+[20:45:36.022] RX[TEST_example_packets]  02 6e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 20 ee 25 b0 42 c8 00 00 00 00 00 00 10 68 0a
+[20:45:36.029] PACKET[TEST_example_packets] state: status=0b0110111000000000, uptime=0, orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0, longitude=-117.0, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.2
+[20:45:36.102] RX[TEST_example_packets]  03 6e 00 00 00 00 00 78 00 00 00 00 00 05 08 0c 1e 78 0a
+[20:45:36.113] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000000, fc_uptime=0, status=0b0111100000000000, uptime=0, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.8
+[20:45:36.118] RX[TEST_example_packets]  ff 6e 00 00 00 00 00 0a
+[20:45:36.185] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000000, uptime=0
+[20:45:36.186] RX[TEST_example_packets]  f0 bf 00 00 00 00 00 00 00 00 00 00 0a
+[20:45:36.188] PACKET[TEST_example_packets] ground_station_status: rssi=-65, uptime=0, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:36.191] RX[TEST_example_packets]  e0 6e 00 00 00 00 00 1e 10 68 00 00 00 00 03 e8 00 61 a8 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 00 00 00 52 08 01 02 00 00 00 00 04 00 60 00 00 ff e3 00 07 01 8b cd 08 66 00 00 00 00 05 30 20 ee 25 b0 6a cd 74 80 42 c8 00 00 0a
+[20:45:36.196] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000000, uptime=0, mcu_temperature=30, witness_battery_voltage=4.2, filtered_accel=[0.0, 0.04, 1.0], orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[0.0, 0.040016, 0.999912], lsm6_temperature=27.0, high_accel=[0.0, 0.041668, 1.000032], gyro=[0.0, -2.03, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0, longitude=-117.0, gps_time=1791849600, gps_altitude=100.0
+[20:45:36.199] RX[TEST_example_packets]  e1 78 00 00 00 00 00 1d 1e 78 05 08 0c 0a
+[20:45:36.205] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=0, mcu_temperature=29, iris_battery_voltage=7.8, current_sense=[0.5, 0.8, 1.2]
+[20:45:37.046] RX[TEST_example_packets]  01 6f 01 00 00 1b 58 00 03 35 00 02 f2 01 50 ea 00 1c ff ea 00 07 0a
+[20:45:37.051] PACKET[TEST_example_packets] sensors: status=0b0110111100000001, uptime=7000, filtered_accel=[0.03284, 0.03016, 3.45], gyro=[1.96, -1.54, 0.49]
+[20:45:37.057] RX[TEST_example_packets]  02 6f 01 00 00 1b 58 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 05 30 21 ee 25 b1 43 14 00 00 42 40 00 00 10 5a 0a
+[20:45:37.068] PACKET[TEST_example_packets] state: status=0b0110111100000001, uptime=7000, orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], latitude=34.0001, longitude=-116.9999, gps_altitude=148.0, barometric_altitude=48.0, witness_battery_voltage=4.186
+[20:45:37.122] RX[TEST_example_packets]  03 6f 01 00 00 1b 58 78 00 00 00 1b 58 06 08 0c 1e 63 0a
+[20:45:37.128] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000001, fc_uptime=7000, status=0b0111100000000000, uptime=7000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.779
+[20:45:37.129] RX[TEST_example_packets]  ff 6f 01 00 00 1b 58 0a
+[20:45:37.132] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000001, uptime=7000
+[20:45:37.133] RX[TEST_example_packets]  f0 b5 00 00 1b 58 00 00 00 00 00 00 0a
+[20:45:37.133] PACKET[TEST_example_packets] ground_station_status: rssi=-75, uptime=7000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:37.134] RX[TEST_example_packets]  e0 6f 01 00 00 1b 58 1f 10 5a 00 03 35 00 02 f2 01 50 ea 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 00 43 00 3e 1b 9e 02 00 00 03 00 03 01 4b 00 1c ff ea 00 07 01 89 8c 08 66 42 40 00 00 05 30 21 ee 25 b1 6a cd 74 87 43 14 00 00 0a
+[20:45:37.137] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000001, uptime=7000, mcu_temperature=31, witness_battery_voltage=4.186, filtered_accel=[0.03284, 0.03016, 3.45], orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], low_accel=[0.032696, 0.030256, 3.45016], lsm6_temperature=27.0, high_accel=[0.031251, 0.031251, 3.448027], gyro=[1.96, -1.54, 0.49], pressure=100748, ms5607_temperature=21.5, barometric_altitude=48.0, latitude=34.0001, longitude=-116.9999, gps_time=1791849607, gps_altitude=148.0
+[20:45:37.140] RX[TEST_example_packets]  e1 78 00 00 00 1b 58 1d 1e 63 06 08 0c 0a
+[20:45:37.142] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=7000, mcu_temperature=29, iris_battery_voltage=7.779, current_sense=[0.6, 0.8, 1.2]
+[20:45:38.047] RX[TEST_example_packets]  01 6f 02 00 00 3a 98 00 03 2d ff fd 08 00 04 e2 00 1c 00 16 00 07 0a
+[20:45:38.052] PACKET[TEST_example_packets] sensors: status=0b0110111100000010, uptime=15000, filtered_accel=[0.03252, -0.0304, 0.05], gyro=[1.96, 1.54, 0.49]
+[20:45:38.055] RX[TEST_example_packets]  02 6f 02 00 00 3a 98 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 05 30 22 ee 25 b2 44 54 80 00 44 3b 80 00 10 4a 0a
+[20:45:38.058] PACKET[TEST_example_packets] state: status=0b0110111100000010, uptime=15000, orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], latitude=34.0002, longitude=-116.9998, gps_altitude=850.0, barometric_altitude=750.0, witness_battery_voltage=4.17
+[20:45:38.060] RX[TEST_example_packets]  03 6f 02 00 00 3a 98 78 00 00 00 3a 98 05 08 0c 1e 4b 0a
+[20:45:38.066] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000010, fc_uptime=15000, status=0b0111100000000000, uptime=15000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.755
+[20:45:38.120] RX[TEST_example_packets]  ff 6f 02 00 00 3a 98 0a
+[20:45:38.123] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000010, uptime=15000
+[20:45:38.125] RX[TEST_example_packets]  f0 be 00 00 3a 98 00 00 00 00 00 00 0a
+[20:45:38.128] PACKET[TEST_example_packets] ground_station_status: rssi=-66, uptime=15000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:38.129] RX[TEST_example_packets]  e0 6f 02 00 00 3a 98 20 10 4a 00 03 2d ff fd 08 00 04 e2 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 00 43 ff c2 00 66 02 00 00 03 ff fd 00 05 00 1c 00 16 00 07 01 69 fe 08 66 44 3b 80 00 05 30 22 ee 25 b2 6a cd 74 8f 44 54 80 00 0a
+[20:45:38.134] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000010, uptime=15000, mcu_temperature=32, witness_battery_voltage=4.17, filtered_accel=[0.03252, -0.0304, 0.05], orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], low_accel=[0.032696, -0.030256, 0.049776], lsm6_temperature=27.0, high_accel=[0.031251, -0.031251, 0.052085], gyro=[1.96, 1.54, 0.49], pressure=92670, ms5607_temperature=21.5, barometric_altitude=750.0, latitude=34.0002, longitude=-116.9998, gps_time=1791849615, gps_altitude=850.0
+[20:45:38.136] RX[TEST_example_packets]  e1 78 00 00 00 3a 98 1d 1e 4b 05 08 0c 0a
+[20:45:38.195] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=15000, mcu_temperature=29, iris_battery_voltage=7.755, current_sense=[0.5, 0.8, 1.2]
+[20:45:39.055] RX[TEST_example_packets]  01 6e 03 00 00 75 30 ff fb 2d 00 00 9a 00 6b 6c ff d6 ff fc 00 07 0a
+[20:45:39.059] PACKET[TEST_example_packets] sensors: status=0b0110111000000011, uptime=30000, filtered_accel=[-0.0494, 0.00616, 1.1], gyro=[-2.94, -0.28, 0.49]
+[20:45:39.061] RX[TEST_example_packets]  02 6e 03 00 00 75 30 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 05 30 23 ee 25 b3 44 2f 00 00 44 16 00 00 10 2c 0a
+[20:45:39.066] PACKET[TEST_example_packets] state: status=0b0110111000000011, uptime=30000, orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], latitude=34.0003, longitude=-116.9997, gps_altitude=700.0, barometric_altitude=600.0, witness_battery_voltage=4.14
+[20:45:39.068] RX[TEST_example_packets]  03 6e 03 00 00 75 30 78 00 00 00 75 30 05 08 0c 1e 1e 0a
+[20:45:39.072] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000011, fc_uptime=30000, status=0b0111100000000000, uptime=30000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.71
+[20:45:39.073] RX[TEST_example_packets]  ff 6e 03 00 00 75 30 0a
+[20:45:39.127] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000011, uptime=30000
+[20:45:39.129] RX[TEST_example_packets]  f0 c2 00 00 75 30 00 00 00 00 00 00 0a
+[20:45:39.131] PACKET[TEST_example_packets] ground_station_status: rssi=-62, uptime=30000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:39.132] RX[TEST_example_packets]  e0 6e 03 00 00 75 30 21 10 2c ff fb 2d 00 00 9a 00 6b 6c 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 ff 9b 00 0d 08 ce 02 00 ff fb 00 01 00 6a ff d6 ff fc 00 07 01 70 84 08 66 44 16 00 00 05 30 23 ee 25 b3 6a cd 74 9e 44 2f 00 00 0a
+[20:45:39.137] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000011, uptime=30000, mcu_temperature=33, witness_battery_voltage=4.14, filtered_accel=[-0.0494, 0.00616, 1.1], orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], low_accel=[-0.049288, 0.006344, 1.099952], lsm6_temperature=27.0, high_accel=[-0.052085, 0.010417, 1.104202], gyro=[-2.94, -0.28, 0.49], pressure=94340, ms5607_temperature=21.5, barometric_altitude=600.0, latitude=34.0003, longitude=-116.9997, gps_time=1791849630, gps_altitude=700.0
+[20:45:39.140] RX[TEST_example_packets]  e1 78 00 00 00 75 30 1d 1e 1e 05 08 0c 0a
+[20:45:39.144] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=30000, mcu_temperature=29, iris_battery_voltage=7.71, current_sense=[0.5, 0.8, 1.2]
+[20:45:40.076] RX[TEST_example_packets]  01 6f 04 00 00 d6 d8 ff fb 1e 00 00 16 00 61 a8 ff d5 ff ff 00 07 0a
+[20:45:40.086] PACKET[TEST_example_packets] sensors: status=0b0110111100000100, uptime=55000, filtered_accel=[-0.05, 0.00088, 1.0], gyro=[-3.01, -0.07, 0.49]
+[20:45:40.092] RX[TEST_example_packets]  02 6f 04 00 00 d6 d8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 25 ee 25 b6 42 c8 00 00 00 00 00 00 0f fa 0a
+[20:45:40.099] PACKET[TEST_example_packets] state: status=0b0110111100000100, uptime=55000, orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0005, longitude=-116.9994, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.09
+[20:45:40.157] RX[TEST_example_packets]  03 6f 04 00 00 d6 d8 78 00 00 00 d6 d8 06 08 0c 1d d3 0a
+[20:45:40.161] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000100, fc_uptime=55000, status=0b0111100000000000, uptime=55000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.635
+[20:45:40.163] RX[TEST_example_packets]  ff 6f 04 00 00 d6 d8 0a
+[20:45:40.166] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000100, uptime=55000
+[20:45:40.167] RX[TEST_example_packets]  f0 c9 00 00 d6 d8 00 00 00 00 00 00 0a
+[20:45:40.169] PACKET[TEST_example_packets] ground_station_status: rssi=-55, uptime=55000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:40.171] RX[TEST_example_packets]  e0 6f 04 00 00 d6 d8 24 0f fa ff fb 1e 00 00 16 00 61 a8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 ff 9a 00 02 08 01 02 00 ff fb 00 00 00 60 ff d5 ff ff 00 07 01 8b cd 08 66 00 00 00 00 05 30 25 ee 25 b6 6a cd 74 b7 42 c8 00 00 0a
+[20:45:40.176] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000100, uptime=55000, mcu_temperature=36, witness_battery_voltage=4.09, filtered_accel=[-0.05, 0.00088, 1.0], orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[-0.049776, 0.000976, 0.999912], lsm6_temperature=27.0, high_accel=[-0.052085, 0.0, 1.000032], gyro=[-3.01, -0.07, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0005, longitude=-116.9994, gps_time=1791849655, gps_altitude=100.0
+[20:45:40.258] RX[TEST_example_packets]  e1 78 00 00 00 d6 d8 1d 1d d3 06 08 0c 0a
+[20:45:40.263] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=55000, mcu_temperature=29, iris_battery_voltage=7.635, current_sense=[0.6, 0.8, 1.2]
+[20:45:42.054] RX[TEST_example_packets]  01 6e 00 00 00 00 00 00 00 00 00 03 e8 00 61 a8 00 00 ff e3 00 07 0a
+[20:45:42.066] PACKET[TEST_example_packets] sensors: status=0b0110111000000000, uptime=0, filtered_accel=[0.0, 0.04, 1.0], gyro=[0.0, -2.03, 0.49]
+[20:45:42.073] RX[TEST_example_packets]  02 6e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 20 ee 25 b0 42 c8 00 00 00 00 00 00 10 68 0a
+[20:45:42.141] PACKET[TEST_example_packets] state: status=0b0110111000000000, uptime=0, orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0, longitude=-117.0, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.2
+[20:45:42.143] RX[TEST_example_packets]  03 6e 00 00 00 00 00 78 00 00 00 00 00 05 08 0c 1e 78 0a
+[20:45:42.147] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000000, fc_uptime=0, status=0b0111100000000000, uptime=0, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.8
+[20:45:42.149] RX[TEST_example_packets]  ff 6e 00 00 00 00 00 0a
+[20:45:42.152] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000000, uptime=0
+[20:45:42.153] RX[TEST_example_packets]  f0 bf 00 00 00 00 00 00 00 00 00 00 0a
+[20:45:42.155] PACKET[TEST_example_packets] ground_station_status: rssi=-65, uptime=0, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:42.157] RX[TEST_example_packets]  e0 6e 00 00 00 00 00 1e 10 68 00 00 00 00 03 e8 00 61 a8 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 00 00 00 52 08 01 02 00 00 00 00 04 00 60 00 00 ff e3 00 07 01 8b cd 08 66 00 00 00 00 05 30 20 ee 25 b0 6a cd 74 80 42 c8 00 00 0a
+[20:45:42.223] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000000, uptime=0, mcu_temperature=30, witness_battery_voltage=4.2, filtered_accel=[0.0, 0.04, 1.0], orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[0.0, 0.040016, 0.999912], lsm6_temperature=27.0, high_accel=[0.0, 0.041668, 1.000032], gyro=[0.0, -2.03, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0, longitude=-117.0, gps_time=1791849600, gps_altitude=100.0
+[20:45:42.225] RX[TEST_example_packets]  e1 78 00 00 00 00 00 1d 1e 78 05 08 0c 0a
+[20:45:42.227] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=0, mcu_temperature=29, iris_battery_voltage=7.8, current_sense=[0.5, 0.8, 1.2]
+[20:45:43.037] RX[TEST_example_packets]  01 6f 01 00 00 1b 58 00 03 35 00 02 f2 01 50 ea 00 1c ff ea 00 07 0a
+[20:45:43.041] PACKET[TEST_example_packets] sensors: status=0b0110111100000001, uptime=7000, filtered_accel=[0.03284, 0.03016, 3.45], gyro=[1.96, -1.54, 0.49]
+[20:45:43.044] RX[TEST_example_packets]  02 6f 01 00 00 1b 58 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 05 30 21 ee 25 b1 43 14 00 00 42 40 00 00 10 5a 0a
+[20:45:43.049] PACKET[TEST_example_packets] state: status=0b0110111100000001, uptime=7000, orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], latitude=34.0001, longitude=-116.9999, gps_altitude=148.0, barometric_altitude=48.0, witness_battery_voltage=4.186
+[20:45:43.050] RX[TEST_example_packets]  03 6f 01 00 00 1b 58 78 00 00 00 1b 58 06 08 0c 1e 63 0a
+[20:45:43.054] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000001, fc_uptime=7000, status=0b0111100000000000, uptime=7000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.779
+[20:45:43.055] RX[TEST_example_packets]  ff 6f 01 00 00 1b 58 0a
+[20:45:43.123] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000001, uptime=7000
+[20:45:43.125] RX[TEST_example_packets]  f0 b5 00 00 1b 58 00 00 00 00 00 00 0a
+[20:45:43.127] PACKET[TEST_example_packets] ground_station_status: rssi=-75, uptime=7000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:43.131] RX[TEST_example_packets]  e0 6f 01 00 00 1b 58 1f 10 5a 00 03 35 00 02 f2 01 50 ea 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 00 43 00 3e 1b 9e 02 00 00 03 00 03 01 4b 00 1c ff ea 00 07 01 89 8c 08 66 42 40 00 00 05 30 21 ee 25 b1 6a cd 74 87 43 14 00 00 0a
+[20:45:43.139] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000001, uptime=7000, mcu_temperature=31, witness_battery_voltage=4.186, filtered_accel=[0.03284, 0.03016, 3.45], orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], low_accel=[0.032696, 0.030256, 3.45016], lsm6_temperature=27.0, high_accel=[0.031251, 0.031251, 3.448027], gyro=[1.96, -1.54, 0.49], pressure=100748, ms5607_temperature=21.5, barometric_altitude=48.0, latitude=34.0001, longitude=-116.9999, gps_time=1791849607, gps_altitude=148.0
+[20:45:43.200] RX[TEST_example_packets]  e1 78 00 00 00 1b 58 1d 1e 63 06 08 0c 0a
+[20:45:43.207] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=7000, mcu_temperature=29, iris_battery_voltage=7.779, current_sense=[0.6, 0.8, 1.2]
+[20:45:44.062] RX[TEST_example_packets]  01 6f 02 00 00 3a 98 00 03 2d ff fd 08 00 04 e2 00 1c 00 16 00 07 0a
+[20:45:44.069] PACKET[TEST_example_packets] sensors: status=0b0110111100000010, uptime=15000, filtered_accel=[0.03252, -0.0304, 0.05], gyro=[1.96, 1.54, 0.49]
+[20:45:44.073] RX[TEST_example_packets]  02 6f 02 00 00 3a 98 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 05 30 22 ee 25 b2 44 54 80 00 44 3b 80 00 10 4a 0a
+[20:45:44.081] PACKET[TEST_example_packets] state: status=0b0110111100000010, uptime=15000, orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], latitude=34.0002, longitude=-116.9998, gps_altitude=850.0, barometric_altitude=750.0, witness_battery_voltage=4.17
+[20:45:44.164] RX[TEST_example_packets]  03 6f 02 00 00 3a 98 78 00 00 00 3a 98 05 08 0c 1e 4b 0a
+[20:45:44.169] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000010, fc_uptime=15000, status=0b0111100000000000, uptime=15000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.755
+[20:45:44.171] RX[TEST_example_packets]  ff 6f 02 00 00 3a 98 0a
+[20:45:44.173] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000010, uptime=15000
+[20:45:44.175] RX[TEST_example_packets]  f0 be 00 00 3a 98 00 00 00 00 00 00 0a
+[20:45:44.176] PACKET[TEST_example_packets] ground_station_status: rssi=-66, uptime=15000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:44.177] RX[TEST_example_packets]  e0 6f 02 00 00 3a 98 20 10 4a 00 03 2d ff fd 08 00 04 e2 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 00 43 ff c2 00 66 02 00 00 03 ff fd 00 05 00 1c 00 16 00 07 01 69 fe 08 66 44 3b 80 00 05 30 22 ee 25 b2 6a cd 74 8f 44 54 80 00 0a
+[20:45:44.181] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000010, uptime=15000, mcu_temperature=32, witness_battery_voltage=4.17, filtered_accel=[0.03252, -0.0304, 0.05], orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], low_accel=[0.032696, -0.030256, 0.049776], lsm6_temperature=27.0, high_accel=[0.031251, -0.031251, 0.052085], gyro=[1.96, 1.54, 0.49], pressure=92670, ms5607_temperature=21.5, barometric_altitude=750.0, latitude=34.0002, longitude=-116.9998, gps_time=1791849615, gps_altitude=850.0
+[20:45:44.182] RX[TEST_example_packets]  e1 78 00 00 00 3a 98 1d 1e 4b 05 08 0c 0a
+[20:45:44.185] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=15000, mcu_temperature=29, iris_battery_voltage=7.755, current_sense=[0.5, 0.8, 1.2]
+[20:45:45.039] RX[TEST_example_packets]  01 6e 03 00 00 75 30 ff fb 2d 00 00 9a 00 6b 6c ff d6 ff fc 00 07 0a
+[20:45:45.043] PACKET[TEST_example_packets] sensors: status=0b0110111000000011, uptime=30000, filtered_accel=[-0.0494, 0.00616, 1.1], gyro=[-2.94, -0.28, 0.49]
+[20:45:45.046] RX[TEST_example_packets]  02 6e 03 00 00 75 30 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 05 30 23 ee 25 b3 44 2f 00 00 44 16 00 00 10 2c 0a
+[20:45:45.050] PACKET[TEST_example_packets] state: status=0b0110111000000011, uptime=30000, orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], latitude=34.0003, longitude=-116.9997, gps_altitude=700.0, barometric_altitude=600.0, witness_battery_voltage=4.14
+[20:45:45.052] RX[TEST_example_packets]  03 6e 03 00 00 75 30 78 00 00 00 75 30 05 08 0c 1e 1e 0a
+[20:45:45.056] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000011, fc_uptime=30000, status=0b0111100000000000, uptime=30000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.71
+[20:45:45.057] RX[TEST_example_packets]  ff 6e 03 00 00 75 30 0a
+[20:45:45.116] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000011, uptime=30000
+[20:45:45.120] RX[TEST_example_packets]  f0 c2 00 00 75 30 00 00 00 00 00 00 0a
+[20:45:45.122] PACKET[TEST_example_packets] ground_station_status: rssi=-62, uptime=30000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:45.124] RX[TEST_example_packets]  e0 6e 03 00 00 75 30 21 10 2c ff fb 2d 00 00 9a 00 6b 6c 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 ff 9b 00 0d 08 ce 02 00 ff fb 00 01 00 6a ff d6 ff fc 00 07 01 70 84 08 66 44 16 00 00 05 30 23 ee 25 b3 6a cd 74 9e 44 2f 00 00 0a
+[20:45:45.129] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000011, uptime=30000, mcu_temperature=33, witness_battery_voltage=4.14, filtered_accel=[-0.0494, 0.00616, 1.1], orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], low_accel=[-0.049288, 0.006344, 1.099952], lsm6_temperature=27.0, high_accel=[-0.052085, 0.010417, 1.104202], gyro=[-2.94, -0.28, 0.49], pressure=94340, ms5607_temperature=21.5, barometric_altitude=600.0, latitude=34.0003, longitude=-116.9997, gps_time=1791849630, gps_altitude=700.0
+[20:45:45.190] RX[TEST_example_packets]  e1 78 00 00 00 75 30 1d 1e 1e 05 08 0c 0a
+[20:45:45.198] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=30000, mcu_temperature=29, iris_battery_voltage=7.71, current_sense=[0.5, 0.8, 1.2]
+[20:45:46.076] RX[TEST_example_packets]  01 6f 04 00 00 d6 d8 ff fb 1e 00 00 16 00 61 a8 ff d5 ff ff 00 07 0a
+[20:45:46.082] PACKET[TEST_example_packets] sensors: status=0b0110111100000100, uptime=55000, filtered_accel=[-0.05, 0.00088, 1.0], gyro=[-3.01, -0.07, 0.49]
+[20:45:46.088] RX[TEST_example_packets]  02 6f 04 00 00 d6 d8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 25 ee 25 b6 42 c8 00 00 00 00 00 00 0f fa 0a
+[20:45:46.100] PACKET[TEST_example_packets] state: status=0b0110111100000100, uptime=55000, orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0005, longitude=-116.9994, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.09
+[20:45:46.157] RX[TEST_example_packets]  03 6f 04 00 00 d6 d8 78 00 00 00 d6 d8 06 08 0c 1d d3 0a
+[20:45:46.161] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000100, fc_uptime=55000, status=0b0111100000000000, uptime=55000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.635
+[20:45:46.163] RX[TEST_example_packets]  ff 6f 04 00 00 d6 d8 0a
+[20:45:46.166] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000100, uptime=55000
+[20:45:46.168] RX[TEST_example_packets]  f0 c9 00 00 d6 d8 00 00 00 00 00 00 0a
+[20:45:46.170] PACKET[TEST_example_packets] ground_station_status: rssi=-55, uptime=55000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:46.172] RX[TEST_example_packets]  e0 6f 04 00 00 d6 d8 24 0f fa ff fb 1e 00 00 16 00 61 a8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 ff 9a 00 02 08 01 02 00 ff fb 00 00 00 60 ff d5 ff ff 00 07 01 8b cd 08 66 00 00 00 00 05 30 25 ee 25 b6 6a cd 74 b7 42 c8 00 00 0a
+[20:45:46.177] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000100, uptime=55000, mcu_temperature=36, witness_battery_voltage=4.09, filtered_accel=[-0.05, 0.00088, 1.0], orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[-0.049776, 0.000976, 0.999912], lsm6_temperature=27.0, high_accel=[-0.052085, 0.0, 1.000032], gyro=[-3.01, -0.07, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0005, longitude=-116.9994, gps_time=1791849655, gps_altitude=100.0
+[20:45:46.256] RX[TEST_example_packets]  e1 78 00 00 00 d6 d8 1d 1d d3 06 08 0c 0a
+[20:45:46.260] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=55000, mcu_temperature=29, iris_battery_voltage=7.635, current_sense=[0.6, 0.8, 1.2]
+[20:45:48.028] RX[TEST_example_packets]  01 6e 00 00 00 00 00 00 00 00 00 03 e8 00 61 a8 00 00 ff e3 00 07 0a
+[20:45:48.033] PACKET[TEST_example_packets] sensors: status=0b0110111000000000, uptime=0, filtered_accel=[0.0, 0.04, 1.0], gyro=[0.0, -2.03, 0.49]
+[20:45:48.036] RX[TEST_example_packets]  02 6e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 20 ee 25 b0 42 c8 00 00 00 00 00 00 10 68 0a
+[20:45:48.040] PACKET[TEST_example_packets] state: status=0b0110111000000000, uptime=0, orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0, longitude=-117.0, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.2
+[20:45:48.042] RX[TEST_example_packets]  03 6e 00 00 00 00 00 78 00 00 00 00 00 05 08 0c 1e 78 0a
+[20:45:48.046] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000000, fc_uptime=0, status=0b0111100000000000, uptime=0, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.8
+[20:45:48.106] RX[TEST_example_packets]  ff 6e 00 00 00 00 00 0a
+[20:45:48.114] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000000, uptime=0
+[20:45:48.119] RX[TEST_example_packets]  f0 bf 00 00 00 00 00 00 00 00 00 00 0a
+[20:45:48.125] PACKET[TEST_example_packets] ground_station_status: rssi=-65, uptime=0, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:48.184] RX[TEST_example_packets]  e0 6e 00 00 00 00 00 1e 10 68 00 00 00 00 03 e8 00 61 a8 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 00 00 00 52 08 01 02 00 00 00 00 04 00 60 00 00 ff e3 00 07 01 8b cd 08 66 00 00 00 00 05 30 20 ee 25 b0 6a cd 74 80 42 c8 00 00 0a
+[20:45:48.197] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000000, uptime=0, mcu_temperature=30, witness_battery_voltage=4.2, filtered_accel=[0.0, 0.04, 1.0], orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[0.0, 0.040016, 0.999912], lsm6_temperature=27.0, high_accel=[0.0, 0.041668, 1.000032], gyro=[0.0, -2.03, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0, longitude=-117.0, gps_time=1791849600, gps_altitude=100.0
+[20:45:48.203] RX[TEST_example_packets]  e1 78 00 00 00 00 00 1d 1e 78 05 08 0c 0a
+[20:45:48.291] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=0, mcu_temperature=29, iris_battery_voltage=7.8, current_sense=[0.5, 0.8, 1.2]
+[20:45:49.065] RX[TEST_example_packets]  01 6f 01 00 00 1b 58 00 03 35 00 02 f2 01 50 ea 00 1c ff ea 00 07 0a
+[20:45:49.071] PACKET[TEST_example_packets] sensors: status=0b0110111100000001, uptime=7000, filtered_accel=[0.03284, 0.03016, 3.45], gyro=[1.96, -1.54, 0.49]
+[20:45:49.141] RX[TEST_example_packets]  02 6f 01 00 00 1b 58 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 05 30 21 ee 25 b1 43 14 00 00 42 40 00 00 10 5a 0a
+[20:45:49.146] PACKET[TEST_example_packets] state: status=0b0110111100000001, uptime=7000, orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], latitude=34.0001, longitude=-116.9999, gps_altitude=148.0, barometric_altitude=48.0, witness_battery_voltage=4.186
+[20:45:49.147] RX[TEST_example_packets]  03 6f 01 00 00 1b 58 78 00 00 00 1b 58 06 08 0c 1e 63 0a
+[20:45:49.151] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000001, fc_uptime=7000, status=0b0111100000000000, uptime=7000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.779
+[20:45:49.153] RX[TEST_example_packets]  ff 6f 01 00 00 1b 58 0a
+[20:45:49.157] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000001, uptime=7000
+[20:45:49.159] RX[TEST_example_packets]  f0 b5 00 00 1b 58 00 00 00 00 00 00 0a
+[20:45:49.160] PACKET[TEST_example_packets] ground_station_status: rssi=-75, uptime=7000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:49.223] RX[TEST_example_packets]  e0 6f 01 00 00 1b 58 1f 10 5a 00 03 35 00 02 f2 01 50 ea 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 00 43 00 3e 1b 9e 02 00 00 03 00 03 01 4b 00 1c ff ea 00 07 01 89 8c 08 66 42 40 00 00 05 30 21 ee 25 b1 6a cd 74 87 43 14 00 00 0a
+[20:45:49.235] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000001, uptime=7000, mcu_temperature=31, witness_battery_voltage=4.186, filtered_accel=[0.03284, 0.03016, 3.45], orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], low_accel=[0.032696, 0.030256, 3.45016], lsm6_temperature=27.0, high_accel=[0.031251, 0.031251, 3.448027], gyro=[1.96, -1.54, 0.49], pressure=100748, ms5607_temperature=21.5, barometric_altitude=48.0, latitude=34.0001, longitude=-116.9999, gps_time=1791849607, gps_altitude=148.0
+[20:45:49.240] RX[TEST_example_packets]  e1 78 00 00 00 1b 58 1d 1e 63 06 08 0c 0a
+[20:45:49.296] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=7000, mcu_temperature=29, iris_battery_voltage=7.779, current_sense=[0.6, 0.8, 1.2]
+[20:45:50.062] RX[TEST_example_packets]  01 6f 02 00 00 3a 98 00 03 2d ff fd 08 00 04 e2 00 1c 00 16 00 07 0a
+[20:45:50.067] PACKET[TEST_example_packets] sensors: status=0b0110111100000010, uptime=15000, filtered_accel=[0.03252, -0.0304, 0.05], gyro=[1.96, 1.54, 0.49]
+[20:45:50.069] RX[TEST_example_packets]  02 6f 02 00 00 3a 98 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 05 30 22 ee 25 b2 44 54 80 00 44 3b 80 00 10 4a 0a
+[20:45:50.074] PACKET[TEST_example_packets] state: status=0b0110111100000010, uptime=15000, orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], latitude=34.0002, longitude=-116.9998, gps_altitude=850.0, barometric_altitude=750.0, witness_battery_voltage=4.17
+[20:45:50.075] RX[TEST_example_packets]  03 6f 02 00 00 3a 98 78 00 00 00 3a 98 05 08 0c 1e 4b 0a
+[20:45:50.079] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000010, fc_uptime=15000, status=0b0111100000000000, uptime=15000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.755
+[20:45:50.081] RX[TEST_example_packets]  ff 6f 02 00 00 3a 98 0a
+[20:45:50.156] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000010, uptime=15000
+[20:45:50.157] RX[TEST_example_packets]  f0 be 00 00 3a 98 00 00 00 00 00 00 0a
+[20:45:50.159] PACKET[TEST_example_packets] ground_station_status: rssi=-66, uptime=15000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:50.161] RX[TEST_example_packets]  e0 6f 02 00 00 3a 98 20 10 4a 00 03 2d ff fd 08 00 04 e2 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 00 43 ff c2 00 66 02 00 00 03 ff fd 00 05 00 1c 00 16 00 07 01 69 fe 08 66 44 3b 80 00 05 30 22 ee 25 b2 6a cd 74 8f 44 54 80 00 0a
+[20:45:50.166] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000010, uptime=15000, mcu_temperature=32, witness_battery_voltage=4.17, filtered_accel=[0.03252, -0.0304, 0.05], orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], low_accel=[0.032696, -0.030256, 0.049776], lsm6_temperature=27.0, high_accel=[0.031251, -0.031251, 0.052085], gyro=[1.96, 1.54, 0.49], pressure=92670, ms5607_temperature=21.5, barometric_altitude=750.0, latitude=34.0002, longitude=-116.9998, gps_time=1791849615, gps_altitude=850.0
+[20:45:50.169] RX[TEST_example_packets]  e1 78 00 00 00 3a 98 1d 1e 4b 05 08 0c 0a
+[20:45:50.173] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=15000, mcu_temperature=29, iris_battery_voltage=7.755, current_sense=[0.5, 0.8, 1.2]
+[20:45:51.050] RX[TEST_example_packets]  01 6e 03 00 00 75 30 ff fb 2d 00 00 9a 00 6b 6c ff d6 ff fc 00 07 0a
+[20:45:51.057] PACKET[TEST_example_packets] sensors: status=0b0110111000000011, uptime=30000, filtered_accel=[-0.0494, 0.00616, 1.1], gyro=[-2.94, -0.28, 0.49]
+[20:45:51.061] RX[TEST_example_packets]  02 6e 03 00 00 75 30 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 05 30 23 ee 25 b3 44 2f 00 00 44 16 00 00 10 2c 0a
+[20:45:51.067] PACKET[TEST_example_packets] state: status=0b0110111000000011, uptime=30000, orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], latitude=34.0003, longitude=-116.9997, gps_altitude=700.0, barometric_altitude=600.0, witness_battery_voltage=4.14
+[20:45:51.123] RX[TEST_example_packets]  03 6e 03 00 00 75 30 78 00 00 00 75 30 05 08 0c 1e 1e 0a
+[20:45:51.129] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000011, fc_uptime=30000, status=0b0111100000000000, uptime=30000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.71
+[20:45:51.132] RX[TEST_example_packets]  ff 6e 03 00 00 75 30 0a
+[20:45:51.142] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000011, uptime=30000
+[20:45:51.202] RX[TEST_example_packets]  f0 c2 00 00 75 30 00 00 00 00 00 00 0a
+[20:45:51.206] PACKET[TEST_example_packets] ground_station_status: rssi=-62, uptime=30000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:51.208] RX[TEST_example_packets]  e0 6e 03 00 00 75 30 21 10 2c ff fb 2d 00 00 9a 00 6b 6c 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 ff 9b 00 0d 08 ce 02 00 ff fb 00 01 00 6a ff d6 ff fc 00 07 01 70 84 08 66 44 16 00 00 05 30 23 ee 25 b3 6a cd 74 9e 44 2f 00 00 0a
+[20:45:51.215] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000011, uptime=30000, mcu_temperature=33, witness_battery_voltage=4.14, filtered_accel=[-0.0494, 0.00616, 1.1], orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], low_accel=[-0.049288, 0.006344, 1.099952], lsm6_temperature=27.0, high_accel=[-0.052085, 0.010417, 1.104202], gyro=[-2.94, -0.28, 0.49], pressure=94340, ms5607_temperature=21.5, barometric_altitude=600.0, latitude=34.0003, longitude=-116.9997, gps_time=1791849630, gps_altitude=700.0
+[20:45:51.282] RX[TEST_example_packets]  e1 78 00 00 00 75 30 1d 1e 1e 05 08 0c 0a
+[20:45:51.286] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=30000, mcu_temperature=29, iris_battery_voltage=7.71, current_sense=[0.5, 0.8, 1.2]
+[20:45:52.032] RX[TEST_example_packets]  01 6f 04 00 00 d6 d8 ff fb 1e 00 00 16 00 61 a8 ff d5 ff ff 00 07 0a
+[20:45:52.037] PACKET[TEST_example_packets] sensors: status=0b0110111100000100, uptime=55000, filtered_accel=[-0.05, 0.00088, 1.0], gyro=[-3.01, -0.07, 0.49]
+[20:45:52.041] RX[TEST_example_packets]  02 6f 04 00 00 d6 d8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 25 ee 25 b6 42 c8 00 00 00 00 00 00 0f fa 0a
+[20:45:52.044] PACKET[TEST_example_packets] state: status=0b0110111100000100, uptime=55000, orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0005, longitude=-116.9994, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.09
+[20:45:52.046] RX[TEST_example_packets]  03 6f 04 00 00 d6 d8 78 00 00 00 d6 d8 06 08 0c 1d d3 0a
+[20:45:52.051] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000100, fc_uptime=55000, status=0b0111100000000000, uptime=55000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.635
+[20:45:52.105] RX[TEST_example_packets]  ff 6f 04 00 00 d6 d8 0a
+[20:45:52.114] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000100, uptime=55000
+[20:45:52.117] RX[TEST_example_packets]  f0 c9 00 00 d6 d8 00 00 00 00 00 00 0a
+[20:45:52.122] PACKET[TEST_example_packets] ground_station_status: rssi=-55, uptime=55000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:52.179] RX[TEST_example_packets]  e0 6f 04 00 00 d6 d8 24 0f fa ff fb 1e 00 00 16 00 61 a8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 ff 9a 00 02 08 01 02 00 ff fb 00 00 00 60 ff d5 ff ff 00 07 01 8b cd 08 66 00 00 00 00 05 30 25 ee 25 b6 6a cd 74 b7 42 c8 00 00 0a
+[20:45:52.190] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000100, uptime=55000, mcu_temperature=36, witness_battery_voltage=4.09, filtered_accel=[-0.05, 0.00088, 1.0], orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[-0.049776, 0.000976, 0.999912], lsm6_temperature=27.0, high_accel=[-0.052085, 0.0, 1.000032], gyro=[-3.01, -0.07, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0005, longitude=-116.9994, gps_time=1791849655, gps_altitude=100.0
+[20:45:52.196] RX[TEST_example_packets]  e1 78 00 00 00 d6 d8 1d 1d d3 06 08 0c 0a
+[20:45:52.287] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=55000, mcu_temperature=29, iris_battery_voltage=7.635, current_sense=[0.6, 0.8, 1.2]
+[20:45:54.046] RX[TEST_example_packets]  01 6e 00 00 00 00 00 00 00 00 00 03 e8 00 61 a8 00 00 ff e3 00 07 0a
+[20:45:54.055] PACKET[TEST_example_packets] sensors: status=0b0110111000000000, uptime=0, filtered_accel=[0.0, 0.04, 1.0], gyro=[0.0, -2.03, 0.49]
+[20:45:54.061] RX[TEST_example_packets]  02 6e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 20 ee 25 b0 42 c8 00 00 00 00 00 00 10 68 0a
+[20:45:54.120] PACKET[TEST_example_packets] state: status=0b0110111000000000, uptime=0, orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0, longitude=-117.0, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.2
+[20:45:54.122] RX[TEST_example_packets]  03 6e 00 00 00 00 00 78 00 00 00 00 00 05 08 0c 1e 78 0a
+[20:45:54.126] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000000, fc_uptime=0, status=0b0111100000000000, uptime=0, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.8
+[20:45:54.127] RX[TEST_example_packets]  ff 6e 00 00 00 00 00 0a
+[20:45:54.131] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000000, uptime=0
+[20:45:54.132] RX[TEST_example_packets]  f0 bf 00 00 00 00 00 00 00 00 00 00 0a
+[20:45:54.134] PACKET[TEST_example_packets] ground_station_status: rssi=-65, uptime=0, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:54.136] RX[TEST_example_packets]  e0 6e 00 00 00 00 00 1e 10 68 00 00 00 00 03 e8 00 61 a8 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 00 00 00 52 08 01 02 00 00 00 00 04 00 60 00 00 ff e3 00 07 01 8b cd 08 66 00 00 00 00 05 30 20 ee 25 b0 6a cd 74 80 42 c8 00 00 0a
+[20:45:54.140] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000000, uptime=0, mcu_temperature=30, witness_battery_voltage=4.2, filtered_accel=[0.0, 0.04, 1.0], orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[0.0, 0.040016, 0.999912], lsm6_temperature=27.0, high_accel=[0.0, 0.041668, 1.000032], gyro=[0.0, -2.03, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0, longitude=-117.0, gps_time=1791849600, gps_altitude=100.0
+[20:45:54.256] RX[TEST_example_packets]  e1 78 00 00 00 00 00 1d 1e 78 05 08 0c 0a
+[20:45:54.283] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=0, mcu_temperature=29, iris_battery_voltage=7.8, current_sense=[0.5, 0.8, 1.2]
+[20:45:55.051] RX[TEST_example_packets]  01 6f 01 00 00 1b 58 00 03 35 00 02 f2 01 50 ea 00 1c ff ea 00 07 0a
+[20:45:55.055] PACKET[TEST_example_packets] sensors: status=0b0110111100000001, uptime=7000, filtered_accel=[0.03284, 0.03016, 3.45], gyro=[1.96, -1.54, 0.49]
+[20:45:55.059] RX[TEST_example_packets]  02 6f 01 00 00 1b 58 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 05 30 21 ee 25 b1 43 14 00 00 42 40 00 00 10 5a 0a
+[20:45:55.067] PACKET[TEST_example_packets] state: status=0b0110111100000001, uptime=7000, orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], latitude=34.0001, longitude=-116.9999, gps_altitude=148.0, barometric_altitude=48.0, witness_battery_voltage=4.186
+[20:45:55.069] RX[TEST_example_packets]  03 6f 01 00 00 1b 58 78 00 00 00 1b 58 06 08 0c 1e 63 0a
+[20:45:55.079] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000001, fc_uptime=7000, status=0b0111100000000000, uptime=7000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.779
+[20:45:55.196] RX[TEST_example_packets]  ff 6f 01 00 00 1b 58 0a
+[20:45:55.204] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000001, uptime=7000
+[20:45:55.210] RX[TEST_example_packets]  f0 b5 00 00 1b 58 00 00 00 00 00 00 0a
+[20:45:55.214] PACKET[TEST_example_packets] ground_station_status: rssi=-75, uptime=7000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:55.279] RX[TEST_example_packets]  e0 6f 01 00 00 1b 58 1f 10 5a 00 03 35 00 02 f2 01 50 ea 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 00 43 00 3e 1b 9e 02 00 00 03 00 03 01 4b 00 1c ff ea 00 07 01 89 8c 08 66 42 40 00 00 05 30 21 ee 25 b1 6a cd 74 87 43 14 00 00 0a
+[20:45:55.284] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000001, uptime=7000, mcu_temperature=31, witness_battery_voltage=4.186, filtered_accel=[0.03284, 0.03016, 3.45], orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], low_accel=[0.032696, 0.030256, 3.45016], lsm6_temperature=27.0, high_accel=[0.031251, 0.031251, 3.448027], gyro=[1.96, -1.54, 0.49], pressure=100748, ms5607_temperature=21.5, barometric_altitude=48.0, latitude=34.0001, longitude=-116.9999, gps_time=1791849607, gps_altitude=148.0
+[20:45:55.287] RX[TEST_example_packets]  e1 78 00 00 00 1b 58 1d 1e 63 06 08 0c 0a
+[20:45:55.290] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=7000, mcu_temperature=29, iris_battery_voltage=7.779, current_sense=[0.6, 0.8, 1.2]
+[20:45:56.036] RX[TEST_example_packets]  01 6f 02 00 00 3a 98 00 03 2d ff fd 08 00 04 e2 00 1c 00 16 00 07 0a
+[20:45:56.047] PACKET[TEST_example_packets] sensors: status=0b0110111100000010, uptime=15000, filtered_accel=[0.03252, -0.0304, 0.05], gyro=[1.96, 1.54, 0.49]
+[20:45:56.054] RX[TEST_example_packets]  02 6f 02 00 00 3a 98 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 05 30 22 ee 25 b2 44 54 80 00 44 3b 80 00 10 4a 0a
+[20:45:56.118] PACKET[TEST_example_packets] state: status=0b0110111100000010, uptime=15000, orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], latitude=34.0002, longitude=-116.9998, gps_altitude=850.0, barometric_altitude=750.0, witness_battery_voltage=4.17
+[20:45:56.122] RX[TEST_example_packets]  03 6f 02 00 00 3a 98 78 00 00 00 3a 98 05 08 0c 1e 4b 0a
+[20:45:56.134] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000010, fc_uptime=15000, status=0b0111100000000000, uptime=15000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.755
+[20:45:56.201] RX[TEST_example_packets]  ff 6f 02 00 00 3a 98 0a
+[20:45:56.204] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000010, uptime=15000
+[20:45:56.205] RX[TEST_example_packets]  f0 be 00 00 3a 98 00 00 00 00 00 00 0a
+[20:45:56.208] PACKET[TEST_example_packets] ground_station_status: rssi=-66, uptime=15000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:56.210] RX[TEST_example_packets]  e0 6f 02 00 00 3a 98 20 10 4a 00 03 2d ff fd 08 00 04 e2 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 00 43 ff c2 00 66 02 00 00 03 ff fd 00 05 00 1c 00 16 00 07 01 69 fe 08 66 44 3b 80 00 05 30 22 ee 25 b2 6a cd 74 8f 44 54 80 00 0a
+[20:45:56.216] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000010, uptime=15000, mcu_temperature=32, witness_battery_voltage=4.17, filtered_accel=[0.03252, -0.0304, 0.05], orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], low_accel=[0.032696, -0.030256, 0.049776], lsm6_temperature=27.0, high_accel=[0.031251, -0.031251, 0.052085], gyro=[1.96, 1.54, 0.49], pressure=92670, ms5607_temperature=21.5, barometric_altitude=750.0, latitude=34.0002, longitude=-116.9998, gps_time=1791849615, gps_altitude=850.0
+[20:45:56.219] RX[TEST_example_packets]  e1 78 00 00 00 3a 98 1d 1e 4b 05 08 0c 0a
+[20:45:56.274] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=15000, mcu_temperature=29, iris_battery_voltage=7.755, current_sense=[0.5, 0.8, 1.2]
+[20:45:57.058] RX[TEST_example_packets]  01 6e 03 00 00 75 30 ff fb 2d 00 00 9a 00 6b 6c ff d6 ff fc 00 07 0a
+[20:45:57.063] PACKET[TEST_example_packets] sensors: status=0b0110111000000011, uptime=30000, filtered_accel=[-0.0494, 0.00616, 1.1], gyro=[-2.94, -0.28, 0.49]
+[20:45:57.065] RX[TEST_example_packets]  02 6e 03 00 00 75 30 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 05 30 23 ee 25 b3 44 2f 00 00 44 16 00 00 10 2c 0a
+[20:45:57.069] PACKET[TEST_example_packets] state: status=0b0110111000000011, uptime=30000, orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], latitude=34.0003, longitude=-116.9997, gps_altitude=700.0, barometric_altitude=600.0, witness_battery_voltage=4.14
+[20:45:57.071] RX[TEST_example_packets]  03 6e 03 00 00 75 30 78 00 00 00 75 30 05 08 0c 1e 1e 0a
+[20:45:57.075] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000011, fc_uptime=30000, status=0b0111100000000000, uptime=30000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.71
+[20:45:57.077] RX[TEST_example_packets]  ff 6e 03 00 00 75 30 0a
+[20:45:57.080] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000011, uptime=30000
+[20:45:57.135] RX[TEST_example_packets]  f0 c2 00 00 75 30 00 00 00 00 00 00 0a
+[20:45:57.137] PACKET[TEST_example_packets] ground_station_status: rssi=-62, uptime=30000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:57.138] RX[TEST_example_packets]  e0 6e 03 00 00 75 30 21 10 2c ff fb 2d 00 00 9a 00 6b 6c 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 ff 9b 00 0d 08 ce 02 00 ff fb 00 01 00 6a ff d6 ff fc 00 07 01 70 84 08 66 44 16 00 00 05 30 23 ee 25 b3 6a cd 74 9e 44 2f 00 00 0a
+[20:45:57.144] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000011, uptime=30000, mcu_temperature=33, witness_battery_voltage=4.14, filtered_accel=[-0.0494, 0.00616, 1.1], orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], low_accel=[-0.049288, 0.006344, 1.099952], lsm6_temperature=27.0, high_accel=[-0.052085, 0.010417, 1.104202], gyro=[-2.94, -0.28, 0.49], pressure=94340, ms5607_temperature=21.5, barometric_altitude=600.0, latitude=34.0003, longitude=-116.9997, gps_time=1791849630, gps_altitude=700.0
+[20:45:57.146] RX[TEST_example_packets]  e1 78 00 00 00 75 30 1d 1e 1e 05 08 0c 0a
+[20:45:57.150] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=30000, mcu_temperature=29, iris_battery_voltage=7.71, current_sense=[0.5, 0.8, 1.2]
+[20:45:58.068] RX[TEST_example_packets]  01 6f 04 00 00 d6 d8 ff fb 1e 00 00 16 00 61 a8 ff d5 ff ff 00 07 0a
+[20:45:58.078] PACKET[TEST_example_packets] sensors: status=0b0110111100000100, uptime=55000, filtered_accel=[-0.05, 0.00088, 1.0], gyro=[-3.01, -0.07, 0.49]
+[20:45:58.085] RX[TEST_example_packets]  02 6f 04 00 00 d6 d8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 25 ee 25 b6 42 c8 00 00 00 00 00 00 0f fa 0a
+[20:45:58.151] PACKET[TEST_example_packets] state: status=0b0110111100000100, uptime=55000, orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0005, longitude=-116.9994, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.09
+[20:45:58.154] RX[TEST_example_packets]  03 6f 04 00 00 d6 d8 78 00 00 00 d6 d8 06 08 0c 1d d3 0a
+[20:45:58.167] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000100, fc_uptime=55000, status=0b0111100000000000, uptime=55000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.635
+[20:45:58.218] RX[TEST_example_packets]  ff 6f 04 00 00 d6 d8 0a
+[20:45:58.222] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000100, uptime=55000
+[20:45:58.224] RX[TEST_example_packets]  f0 c9 00 00 d6 d8 00 00 00 00 00 00 0a
+[20:45:58.226] PACKET[TEST_example_packets] ground_station_status: rssi=-55, uptime=55000, reserved=[0, 0, 0, 0, 0, 0]
+[20:45:58.228] RX[TEST_example_packets]  e0 6f 04 00 00 d6 d8 24 0f fa ff fb 1e 00 00 16 00 61 a8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 ff 9a 00 02 08 01 02 00 ff fb 00 00 00 60 ff d5 ff ff 00 07 01 8b cd 08 66 00 00 00 00 05 30 25 ee 25 b6 6a cd 74 b7 42 c8 00 00 0a
+[20:45:58.233] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000100, uptime=55000, mcu_temperature=36, witness_battery_voltage=4.09, filtered_accel=[-0.05, 0.00088, 1.0], orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[-0.049776, 0.000976, 0.999912], lsm6_temperature=27.0, high_accel=[-0.052085, 0.0, 1.000032], gyro=[-3.01, -0.07, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0005, longitude=-116.9994, gps_time=1791849655, gps_altitude=100.0
+[20:45:58.235] RX[TEST_example_packets]  e1 78 00 00 00 d6 d8 1d 1d d3 06 08 0c 0a
+[20:45:58.238] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=55000, mcu_temperature=29, iris_battery_voltage=7.635, current_sense=[0.6, 0.8, 1.2]
+[20:46:00.057] RX[TEST_example_packets]  01 6e 00 00 00 00 00 00 00 00 00 03 e8 00 61 a8 00 00 ff e3 00 07 0a
+[20:46:00.074] PACKET[TEST_example_packets] sensors: status=0b0110111000000000, uptime=0, filtered_accel=[0.0, 0.04, 1.0], gyro=[0.0, -2.03, 0.49]
+[20:46:00.142] RX[TEST_example_packets]  02 6e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 20 ee 25 b0 42 c8 00 00 00 00 00 00 10 68 0a
+[20:46:00.151] PACKET[TEST_example_packets] state: status=0b0110111000000000, uptime=0, orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0, longitude=-117.0, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.2
+[20:46:00.154] RX[TEST_example_packets]  03 6e 00 00 00 00 00 78 00 00 00 00 00 05 08 0c 1e 78 0a
+[20:46:00.158] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000000, fc_uptime=0, status=0b0111100000000000, uptime=0, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.8
+[20:46:00.229] RX[TEST_example_packets]  ff 6e 00 00 00 00 00 0a
+[20:46:00.235] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000000, uptime=0
+[20:46:00.237] RX[TEST_example_packets]  f0 bf 00 00 00 00 00 00 00 00 00 00 0a
+[20:46:00.239] PACKET[TEST_example_packets] ground_station_status: rssi=-65, uptime=0, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:00.242] RX[TEST_example_packets]  e0 6e 00 00 00 00 00 1e 10 68 00 00 00 00 03 e8 00 61 a8 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 00 00 00 52 08 01 02 00 00 00 00 04 00 60 00 00 ff e3 00 07 01 8b cd 08 66 00 00 00 00 05 30 20 ee 25 b0 6a cd 74 80 42 c8 00 00 0a
+[20:46:00.250] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000000, uptime=0, mcu_temperature=30, witness_battery_voltage=4.2, filtered_accel=[0.0, 0.04, 1.0], orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[0.0, 0.040016, 0.999912], lsm6_temperature=27.0, high_accel=[0.0, 0.041668, 1.000032], gyro=[0.0, -2.03, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0, longitude=-117.0, gps_time=1791849600, gps_altitude=100.0
+[20:46:00.339] RX[TEST_example_packets]  e1 78 00 00 00 00 00 1d 1e 78 05 08 0c 0a
+[20:46:00.348] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=0, mcu_temperature=29, iris_battery_voltage=7.8, current_sense=[0.5, 0.8, 1.2]
+[20:46:01.087] RX[TEST_example_packets]  01 6f 01 00 00 1b 58 00 03 35 00 02 f2 01 50 ea 00 1c ff ea 00 07 0a
+[20:46:01.094] PACKET[TEST_example_packets] sensors: status=0b0110111100000001, uptime=7000, filtered_accel=[0.03284, 0.03016, 3.45], gyro=[1.96, -1.54, 0.49]
+[20:46:01.098] RX[TEST_example_packets]  02 6f 01 00 00 1b 58 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 05 30 21 ee 25 b1 43 14 00 00 42 40 00 00 10 5a 0a
+[20:46:01.104] PACKET[TEST_example_packets] state: status=0b0110111100000001, uptime=7000, orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], latitude=34.0001, longitude=-116.9999, gps_altitude=148.0, barometric_altitude=48.0, witness_battery_voltage=4.186
+[20:46:01.221] RX[TEST_example_packets]  03 6f 01 00 00 1b 58 78 00 00 00 1b 58 06 08 0c 1e 63 0a
+[20:46:01.231] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000001, fc_uptime=7000, status=0b0111100000000000, uptime=7000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.779
+[20:46:01.234] RX[TEST_example_packets]  ff 6f 01 00 00 1b 58 0a
+[20:46:01.243] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000001, uptime=7000
+[20:46:01.314] RX[TEST_example_packets]  f0 b5 00 00 1b 58 00 00 00 00 00 00 0a
+[20:46:01.316] PACKET[TEST_example_packets] ground_station_status: rssi=-75, uptime=7000, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:01.319] RX[TEST_example_packets]  e0 6f 01 00 00 1b 58 1f 10 5a 00 03 35 00 02 f2 01 50 ea 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 00 43 00 3e 1b 9e 02 00 00 03 00 03 01 4b 00 1c ff ea 00 07 01 89 8c 08 66 42 40 00 00 05 30 21 ee 25 b1 6a cd 74 87 43 14 00 00 0a
+[20:46:01.323] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000001, uptime=7000, mcu_temperature=31, witness_battery_voltage=4.186, filtered_accel=[0.03284, 0.03016, 3.45], orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], low_accel=[0.032696, 0.030256, 3.45016], lsm6_temperature=27.0, high_accel=[0.031251, 0.031251, 3.448027], gyro=[1.96, -1.54, 0.49], pressure=100748, ms5607_temperature=21.5, barometric_altitude=48.0, latitude=34.0001, longitude=-116.9999, gps_time=1791849607, gps_altitude=148.0
+[20:46:01.326] RX[TEST_example_packets]  e1 78 00 00 00 1b 58 1d 1e 63 06 08 0c 0a
+[20:46:01.332] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=7000, mcu_temperature=29, iris_battery_voltage=7.779, current_sense=[0.6, 0.8, 1.2]
+[20:46:02.089] RX[TEST_example_packets]  01 6f 02 00 00 3a 98 00 03 2d ff fd 08 00 04 e2 00 1c 00 16 00 07 0a
+[20:46:02.102] PACKET[TEST_example_packets] sensors: status=0b0110111100000010, uptime=15000, filtered_accel=[0.03252, -0.0304, 0.05], gyro=[1.96, 1.54, 0.49]
+[20:46:02.108] RX[TEST_example_packets]  02 6f 02 00 00 3a 98 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 05 30 22 ee 25 b2 44 54 80 00 44 3b 80 00 10 4a 0a
+[20:46:02.169] PACKET[TEST_example_packets] state: status=0b0110111100000010, uptime=15000, orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], latitude=34.0002, longitude=-116.9998, gps_altitude=850.0, barometric_altitude=750.0, witness_battery_voltage=4.17
+[20:46:02.172] RX[TEST_example_packets]  03 6f 02 00 00 3a 98 78 00 00 00 3a 98 05 08 0c 1e 4b 0a
+[20:46:02.178] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000010, fc_uptime=15000, status=0b0111100000000000, uptime=15000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.755
+[20:46:02.180] RX[TEST_example_packets]  ff 6f 02 00 00 3a 98 0a
+[20:46:02.184] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000010, uptime=15000
+[20:46:02.238] RX[TEST_example_packets]  f0 be 00 00 3a 98 00 00 00 00 00 00 0a
+[20:46:02.243] PACKET[TEST_example_packets] ground_station_status: rssi=-66, uptime=15000, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:02.245] RX[TEST_example_packets]  e0 6f 02 00 00 3a 98 20 10 4a 00 03 2d ff fd 08 00 04 e2 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 00 43 ff c2 00 66 02 00 00 03 ff fd 00 05 00 1c 00 16 00 07 01 69 fe 08 66 44 3b 80 00 05 30 22 ee 25 b2 6a cd 74 8f 44 54 80 00 0a
+[20:46:02.252] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000010, uptime=15000, mcu_temperature=32, witness_battery_voltage=4.17, filtered_accel=[0.03252, -0.0304, 0.05], orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], low_accel=[0.032696, -0.030256, 0.049776], lsm6_temperature=27.0, high_accel=[0.031251, -0.031251, 0.052085], gyro=[1.96, 1.54, 0.49], pressure=92670, ms5607_temperature=21.5, barometric_altitude=750.0, latitude=34.0002, longitude=-116.9998, gps_time=1791849615, gps_altitude=850.0
+[20:46:02.255] RX[TEST_example_packets]  e1 78 00 00 00 3a 98 1d 1e 4b 05 08 0c 0a
+[20:46:02.260] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=15000, mcu_temperature=29, iris_battery_voltage=7.755, current_sense=[0.5, 0.8, 1.2]
+[20:46:03.081] RX[TEST_example_packets]  01 6e 03 00 00 75 30 ff fb 2d 00 00 9a 00 6b 6c ff d6 ff fc 00 07 0a
+[20:46:03.089] PACKET[TEST_example_packets] sensors: status=0b0110111000000011, uptime=30000, filtered_accel=[-0.0494, 0.00616, 1.1], gyro=[-2.94, -0.28, 0.49]
+[20:46:03.096] RX[TEST_example_packets]  02 6e 03 00 00 75 30 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 05 30 23 ee 25 b3 44 2f 00 00 44 16 00 00 10 2c 0a
+[20:46:03.108] PACKET[TEST_example_packets] state: status=0b0110111000000011, uptime=30000, orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], latitude=34.0003, longitude=-116.9997, gps_altitude=700.0, barometric_altitude=600.0, witness_battery_voltage=4.14
+[20:46:03.162] RX[TEST_example_packets]  03 6e 03 00 00 75 30 78 00 00 00 75 30 05 08 0c 1e 1e 0a
+[20:46:03.166] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000011, fc_uptime=30000, status=0b0111100000000000, uptime=30000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.71
+[20:46:03.168] RX[TEST_example_packets]  ff 6e 03 00 00 75 30 0a
+[20:46:03.170] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000011, uptime=30000
+[20:46:03.171] RX[TEST_example_packets]  f0 c2 00 00 75 30 00 00 00 00 00 00 0a
+[20:46:03.173] PACKET[TEST_example_packets] ground_station_status: rssi=-62, uptime=30000, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:03.174] RX[TEST_example_packets]  e0 6e 03 00 00 75 30 21 10 2c ff fb 2d 00 00 9a 00 6b 6c 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 ff 9b 00 0d 08 ce 02 00 ff fb 00 01 00 6a ff d6 ff fc 00 07 01 70 84 08 66 44 16 00 00 05 30 23 ee 25 b3 6a cd 74 9e 44 2f 00 00 0a
+[20:46:03.179] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000011, uptime=30000, mcu_temperature=33, witness_battery_voltage=4.14, filtered_accel=[-0.0494, 0.00616, 1.1], orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], low_accel=[-0.049288, 0.006344, 1.099952], lsm6_temperature=27.0, high_accel=[-0.052085, 0.010417, 1.104202], gyro=[-2.94, -0.28, 0.49], pressure=94340, ms5607_temperature=21.5, barometric_altitude=600.0, latitude=34.0003, longitude=-116.9997, gps_time=1791849630, gps_altitude=700.0
+[20:46:03.180] RX[TEST_example_packets]  e1 78 00 00 00 75 30 1d 1e 1e 05 08 0c 0a
+[20:46:03.240] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=30000, mcu_temperature=29, iris_battery_voltage=7.71, current_sense=[0.5, 0.8, 1.2]
+[20:46:04.061] RX[TEST_example_packets]  01 6f 04 00 00 d6 d8 ff fb 1e 00 00 16 00 61 a8 ff d5 ff ff 00 07 0a
+[20:46:04.068] PACKET[TEST_example_packets] sensors: status=0b0110111100000100, uptime=55000, filtered_accel=[-0.05, 0.00088, 1.0], gyro=[-3.01, -0.07, 0.49]
+[20:46:04.075] RX[TEST_example_packets]  02 6f 04 00 00 d6 d8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 25 ee 25 b6 42 c8 00 00 00 00 00 00 0f fa 0a
+[20:46:04.083] PACKET[TEST_example_packets] state: status=0b0110111100000100, uptime=55000, orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0005, longitude=-116.9994, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.09
+[20:46:04.143] RX[TEST_example_packets]  03 6f 04 00 00 d6 d8 78 00 00 00 d6 d8 06 08 0c 1d d3 0a
+[20:46:04.148] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000100, fc_uptime=55000, status=0b0111100000000000, uptime=55000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.635
+[20:46:04.149] RX[TEST_example_packets]  ff 6f 04 00 00 d6 d8 0a
+[20:46:04.153] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000100, uptime=55000
+[20:46:04.155] RX[TEST_example_packets]  f0 c9 00 00 d6 d8 00 00 00 00 00 00 0a
+[20:46:04.157] PACKET[TEST_example_packets] ground_station_status: rssi=-55, uptime=55000, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:04.159] RX[TEST_example_packets]  e0 6f 04 00 00 d6 d8 24 0f fa ff fb 1e 00 00 16 00 61 a8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 ff 9a 00 02 08 01 02 00 ff fb 00 00 00 60 ff d5 ff ff 00 07 01 8b cd 08 66 00 00 00 00 05 30 25 ee 25 b6 6a cd 74 b7 42 c8 00 00 0a
+[20:46:04.164] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000100, uptime=55000, mcu_temperature=36, witness_battery_voltage=4.09, filtered_accel=[-0.05, 0.00088, 1.0], orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[-0.049776, 0.000976, 0.999912], lsm6_temperature=27.0, high_accel=[-0.052085, 0.0, 1.000032], gyro=[-3.01, -0.07, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0005, longitude=-116.9994, gps_time=1791849655, gps_altitude=100.0
+[20:46:04.260] RX[TEST_example_packets]  e1 78 00 00 00 d6 d8 1d 1d d3 06 08 0c 0a
+[20:46:04.269] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=55000, mcu_temperature=29, iris_battery_voltage=7.635, current_sense=[0.6, 0.8, 1.2]
+[20:46:06.063] RX[TEST_example_packets]  01 6e 00 00 00 00 00 00 00 00 00 03 e8 00 61 a8 00 00 ff e3 00 07 0a
+[20:46:06.069] PACKET[TEST_example_packets] sensors: status=0b0110111000000000, uptime=0, filtered_accel=[0.0, 0.04, 1.0], gyro=[0.0, -2.03, 0.49]
+[20:46:06.072] RX[TEST_example_packets]  02 6e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 20 ee 25 b0 42 c8 00 00 00 00 00 00 10 68 0a
+[20:46:06.078] PACKET[TEST_example_packets] state: status=0b0110111000000000, uptime=0, orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0, longitude=-117.0, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.2
+[20:46:06.080] RX[TEST_example_packets]  03 6e 00 00 00 00 00 78 00 00 00 00 00 05 08 0c 1e 78 0a
+[20:46:06.084] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000000, fc_uptime=0, status=0b0111100000000000, uptime=0, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.8
+[20:46:06.141] RX[TEST_example_packets]  ff 6e 00 00 00 00 00 0a
+[20:46:06.147] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000000, uptime=0
+[20:46:06.153] RX[TEST_example_packets]  f0 bf 00 00 00 00 00 00 00 00 00 00 0a
+[20:46:06.156] PACKET[TEST_example_packets] ground_station_status: rssi=-65, uptime=0, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:06.158] RX[TEST_example_packets]  e0 6e 00 00 00 00 00 1e 10 68 00 00 00 00 03 e8 00 61 a8 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 00 00 00 52 08 01 02 00 00 00 00 04 00 60 00 00 ff e3 00 07 01 8b cd 08 66 00 00 00 00 05 30 20 ee 25 b0 6a cd 74 80 42 c8 00 00 0a
+[20:46:06.162] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000000, uptime=0, mcu_temperature=30, witness_battery_voltage=4.2, filtered_accel=[0.0, 0.04, 1.0], orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[0.0, 0.040016, 0.999912], lsm6_temperature=27.0, high_accel=[0.0, 0.041668, 1.000032], gyro=[0.0, -2.03, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0, longitude=-117.0, gps_time=1791849600, gps_altitude=100.0
+[20:46:06.222] RX[TEST_example_packets]  e1 78 00 00 00 00 00 1d 1e 78 05 08 0c 0a
+[20:46:06.241] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=0, mcu_temperature=29, iris_battery_voltage=7.8, current_sense=[0.5, 0.8, 1.2]
+[20:46:07.095] RX[TEST_example_packets]  01 6f 01 00 00 1b 58 00 03 35 00 02 f2 01 50 ea 00 1c ff ea 00 07 0a
+[20:46:07.099] PACKET[TEST_example_packets] sensors: status=0b0110111100000001, uptime=7000, filtered_accel=[0.03284, 0.03016, 3.45], gyro=[1.96, -1.54, 0.49]
+[20:46:07.102] RX[TEST_example_packets]  02 6f 01 00 00 1b 58 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 05 30 21 ee 25 b1 43 14 00 00 42 40 00 00 10 5a 0a
+[20:46:07.107] PACKET[TEST_example_packets] state: status=0b0110111100000001, uptime=7000, orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], latitude=34.0001, longitude=-116.9999, gps_altitude=148.0, barometric_altitude=48.0, witness_battery_voltage=4.186
+[20:46:07.110] RX[TEST_example_packets]  03 6f 01 00 00 1b 58 78 00 00 00 1b 58 06 08 0c 1e 63 0a
+[20:46:07.116] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000001, fc_uptime=7000, status=0b0111100000000000, uptime=7000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.779
+[20:46:07.176] RX[TEST_example_packets]  ff 6f 01 00 00 1b 58 0a
+[20:46:07.183] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000001, uptime=7000
+[20:46:07.185] RX[TEST_example_packets]  f0 b5 00 00 1b 58 00 00 00 00 00 00 0a
+[20:46:07.186] PACKET[TEST_example_packets] ground_station_status: rssi=-75, uptime=7000, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:07.188] RX[TEST_example_packets]  e0 6f 01 00 00 1b 58 1f 10 5a 00 03 35 00 02 f2 01 50 ea 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 00 43 00 3e 1b 9e 02 00 00 03 00 03 01 4b 00 1c ff ea 00 07 01 89 8c 08 66 42 40 00 00 05 30 21 ee 25 b1 6a cd 74 87 43 14 00 00 0a
+[20:46:07.193] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000001, uptime=7000, mcu_temperature=31, witness_battery_voltage=4.186, filtered_accel=[0.03284, 0.03016, 3.45], orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], low_accel=[0.032696, 0.030256, 3.45016], lsm6_temperature=27.0, high_accel=[0.031251, 0.031251, 3.448027], gyro=[1.96, -1.54, 0.49], pressure=100748, ms5607_temperature=21.5, barometric_altitude=48.0, latitude=34.0001, longitude=-116.9999, gps_time=1791849607, gps_altitude=148.0
+[20:46:07.302] RX[TEST_example_packets]  e1 78 00 00 00 1b 58 1d 1e 63 06 08 0c 0a
+[20:46:07.311] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=7000, mcu_temperature=29, iris_battery_voltage=7.779, current_sense=[0.6, 0.8, 1.2]
+[20:46:08.047] RX[TEST_example_packets]  01 6f 02 00 00 3a 98 00 03 2d ff fd 08 00 04 e2 00 1c 00 16 00 07 0a
+[20:46:08.052] PACKET[TEST_example_packets] sensors: status=0b0110111100000010, uptime=15000, filtered_accel=[0.03252, -0.0304, 0.05], gyro=[1.96, 1.54, 0.49]
+[20:46:08.055] RX[TEST_example_packets]  02 6f 02 00 00 3a 98 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 05 30 22 ee 25 b2 44 54 80 00 44 3b 80 00 10 4a 0a
+[20:46:08.060] PACKET[TEST_example_packets] state: status=0b0110111100000010, uptime=15000, orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], latitude=34.0002, longitude=-116.9998, gps_altitude=850.0, barometric_altitude=750.0, witness_battery_voltage=4.17
+[20:46:08.062] RX[TEST_example_packets]  03 6f 02 00 00 3a 98 78 00 00 00 3a 98 05 08 0c 1e 4b 0a
+[20:46:08.067] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000010, fc_uptime=15000, status=0b0111100000000000, uptime=15000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.755
+[20:46:08.119] RX[TEST_example_packets]  ff 6f 02 00 00 3a 98 0a
+[20:46:08.124] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000010, uptime=15000
+[20:46:08.127] RX[TEST_example_packets]  f0 be 00 00 3a 98 00 00 00 00 00 00 0a
+[20:46:08.131] PACKET[TEST_example_packets] ground_station_status: rssi=-66, uptime=15000, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:08.135] RX[TEST_example_packets]  e0 6f 02 00 00 3a 98 20 10 4a 00 03 2d ff fd 08 00 04 e2 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 00 43 ff c2 00 66 02 00 00 03 ff fd 00 05 00 1c 00 16 00 07 01 69 fe 08 66 44 3b 80 00 05 30 22 ee 25 b2 6a cd 74 8f 44 54 80 00 0a
+[20:46:08.193] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000010, uptime=15000, mcu_temperature=32, witness_battery_voltage=4.17, filtered_accel=[0.03252, -0.0304, 0.05], orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], low_accel=[0.032696, -0.030256, 0.049776], lsm6_temperature=27.0, high_accel=[0.031251, -0.031251, 0.052085], gyro=[1.96, 1.54, 0.49], pressure=92670, ms5607_temperature=21.5, barometric_altitude=750.0, latitude=34.0002, longitude=-116.9998, gps_time=1791849615, gps_altitude=850.0
+[20:46:08.196] RX[TEST_example_packets]  e1 78 00 00 00 3a 98 1d 1e 4b 05 08 0c 0a
+[20:46:08.201] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=15000, mcu_temperature=29, iris_battery_voltage=7.755, current_sense=[0.5, 0.8, 1.2]
+[20:46:09.051] RX[TEST_example_packets]  01 6e 03 00 00 75 30 ff fb 2d 00 00 9a 00 6b 6c ff d6 ff fc 00 07 0a
+[20:46:09.057] PACKET[TEST_example_packets] sensors: status=0b0110111000000011, uptime=30000, filtered_accel=[-0.0494, 0.00616, 1.1], gyro=[-2.94, -0.28, 0.49]
+[20:46:09.060] RX[TEST_example_packets]  02 6e 03 00 00 75 30 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 05 30 23 ee 25 b3 44 2f 00 00 44 16 00 00 10 2c 0a
+[20:46:09.067] PACKET[TEST_example_packets] state: status=0b0110111000000011, uptime=30000, orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], latitude=34.0003, longitude=-116.9997, gps_altitude=700.0, barometric_altitude=600.0, witness_battery_voltage=4.14
+[20:46:09.068] RX[TEST_example_packets]  03 6e 03 00 00 75 30 78 00 00 00 75 30 05 08 0c 1e 1e 0a
+[20:46:09.074] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000011, fc_uptime=30000, status=0b0111100000000000, uptime=30000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.71
+[20:46:09.143] RX[TEST_example_packets]  ff 6e 03 00 00 75 30 0a
+[20:46:09.149] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000011, uptime=30000
+[20:46:09.150] RX[TEST_example_packets]  f0 c2 00 00 75 30 00 00 00 00 00 00 0a
+[20:46:09.153] PACKET[TEST_example_packets] ground_station_status: rssi=-62, uptime=30000, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:09.157] RX[TEST_example_packets]  e0 6e 03 00 00 75 30 21 10 2c ff fb 2d 00 00 9a 00 6b 6c 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 ff 9b 00 0d 08 ce 02 00 ff fb 00 01 00 6a ff d6 ff fc 00 07 01 70 84 08 66 44 16 00 00 05 30 23 ee 25 b3 6a cd 74 9e 44 2f 00 00 0a
+[20:46:09.164] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000011, uptime=30000, mcu_temperature=33, witness_battery_voltage=4.14, filtered_accel=[-0.0494, 0.00616, 1.1], orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], low_accel=[-0.049288, 0.006344, 1.099952], lsm6_temperature=27.0, high_accel=[-0.052085, 0.010417, 1.104202], gyro=[-2.94, -0.28, 0.49], pressure=94340, ms5607_temperature=21.5, barometric_altitude=600.0, latitude=34.0003, longitude=-116.9997, gps_time=1791849630, gps_altitude=700.0
+[20:46:09.217] RX[TEST_example_packets]  e1 78 00 00 00 75 30 1d 1e 1e 05 08 0c 0a
+[20:46:09.226] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=30000, mcu_temperature=29, iris_battery_voltage=7.71, current_sense=[0.5, 0.8, 1.2]
+[20:46:10.067] RX[TEST_example_packets]  01 6f 04 00 00 d6 d8 ff fb 1e 00 00 16 00 61 a8 ff d5 ff ff 00 07 0a
+[20:46:10.072] PACKET[TEST_example_packets] sensors: status=0b0110111100000100, uptime=55000, filtered_accel=[-0.05, 0.00088, 1.0], gyro=[-3.01, -0.07, 0.49]
+[20:46:10.076] RX[TEST_example_packets]  02 6f 04 00 00 d6 d8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 25 ee 25 b6 42 c8 00 00 00 00 00 00 0f fa 0a
+[20:46:10.082] PACKET[TEST_example_packets] state: status=0b0110111100000100, uptime=55000, orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0005, longitude=-116.9994, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.09
+[20:46:10.085] RX[TEST_example_packets]  03 6f 04 00 00 d6 d8 78 00 00 00 d6 d8 06 08 0c 1d d3 0a
+[20:46:10.091] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000100, fc_uptime=55000, status=0b0111100000000000, uptime=55000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.635
+[20:46:10.181] RX[TEST_example_packets]  ff 6f 04 00 00 d6 d8 0a
+[20:46:10.184] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000100, uptime=55000
+[20:46:10.186] RX[TEST_example_packets]  f0 c9 00 00 d6 d8 00 00 00 00 00 00 0a
+[20:46:10.188] PACKET[TEST_example_packets] ground_station_status: rssi=-55, uptime=55000, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:10.189] RX[TEST_example_packets]  e0 6f 04 00 00 d6 d8 24 0f fa ff fb 1e 00 00 16 00 61 a8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 ff 9a 00 02 08 01 02 00 ff fb 00 00 00 60 ff d5 ff ff 00 07 01 8b cd 08 66 00 00 00 00 05 30 25 ee 25 b6 6a cd 74 b7 42 c8 00 00 0a
+[20:46:10.195] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000100, uptime=55000, mcu_temperature=36, witness_battery_voltage=4.09, filtered_accel=[-0.05, 0.00088, 1.0], orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[-0.049776, 0.000976, 0.999912], lsm6_temperature=27.0, high_accel=[-0.052085, 0.0, 1.000032], gyro=[-3.01, -0.07, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0005, longitude=-116.9994, gps_time=1791849655, gps_altitude=100.0
+[20:46:10.198] RX[TEST_example_packets]  e1 78 00 00 00 d6 d8 1d 1d d3 06 08 0c 0a
+[20:46:10.202] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=55000, mcu_temperature=29, iris_battery_voltage=7.635, current_sense=[0.6, 0.8, 1.2]
+[20:46:12.084] RX[TEST_example_packets]  01 6e 00 00 00 00 00 00 00 00 00 03 e8 00 61 a8 00 00 ff e3 00 07 0a
+[20:46:12.088] PACKET[TEST_example_packets] sensors: status=0b0110111000000000, uptime=0, filtered_accel=[0.0, 0.04, 1.0], gyro=[0.0, -2.03, 0.49]
+[20:46:12.091] RX[TEST_example_packets]  02 6e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 20 ee 25 b0 42 c8 00 00 00 00 00 00 10 68 0a
+[20:46:12.096] PACKET[TEST_example_packets] state: status=0b0110111000000000, uptime=0, orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0, longitude=-117.0, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.2
+[20:46:12.098] RX[TEST_example_packets]  03 6e 00 00 00 00 00 78 00 00 00 00 00 05 08 0c 1e 78 0a
+[20:46:12.102] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000000, fc_uptime=0, status=0b0111100000000000, uptime=0, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.8
+[20:46:12.103] RX[TEST_example_packets]  ff 6e 00 00 00 00 00 0a
+[20:46:12.183] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000000, uptime=0
+[20:46:12.185] RX[TEST_example_packets]  f0 bf 00 00 00 00 00 00 00 00 00 00 0a
+[20:46:12.188] PACKET[TEST_example_packets] ground_station_status: rssi=-65, uptime=0, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:12.190] RX[TEST_example_packets]  e0 6e 00 00 00 00 00 1e 10 68 00 00 00 00 03 e8 00 61 a8 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 00 00 00 52 08 01 02 00 00 00 00 04 00 60 00 00 ff e3 00 07 01 8b cd 08 66 00 00 00 00 05 30 20 ee 25 b0 6a cd 74 80 42 c8 00 00 0a
+[20:46:12.194] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000000, uptime=0, mcu_temperature=30, witness_battery_voltage=4.2, filtered_accel=[0.0, 0.04, 1.0], orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[0.0, 0.040016, 0.999912], lsm6_temperature=27.0, high_accel=[0.0, 0.041668, 1.000032], gyro=[0.0, -2.03, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0, longitude=-117.0, gps_time=1791849600, gps_altitude=100.0
+[20:46:12.200] RX[TEST_example_packets]  e1 78 00 00 00 00 00 1d 1e 78 05 08 0c 0a
+[20:46:12.271] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=0, mcu_temperature=29, iris_battery_voltage=7.8, current_sense=[0.5, 0.8, 1.2]
+[20:46:13.055] RX[TEST_example_packets]  01 6f 01 00 00 1b 58 00 03 35 00 02 f2 01 50 ea 00 1c ff ea 00 07 0a
+[20:46:13.065] PACKET[TEST_example_packets] sensors: status=0b0110111100000001, uptime=7000, filtered_accel=[0.03284, 0.03016, 3.45], gyro=[1.96, -1.54, 0.49]
+[20:46:13.068] RX[TEST_example_packets]  02 6f 01 00 00 1b 58 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 05 30 21 ee 25 b1 43 14 00 00 42 40 00 00 10 5a 0a
+[20:46:13.072] PACKET[TEST_example_packets] state: status=0b0110111100000001, uptime=7000, orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], latitude=34.0001, longitude=-116.9999, gps_altitude=148.0, barometric_altitude=48.0, witness_battery_voltage=4.186
+[20:46:13.074] RX[TEST_example_packets]  03 6f 01 00 00 1b 58 78 00 00 00 1b 58 06 08 0c 1e 63 0a
+[20:46:13.136] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000001, fc_uptime=7000, status=0b0111100000000000, uptime=7000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.779
+[20:46:13.139] RX[TEST_example_packets]  ff 6f 01 00 00 1b 58 0a
+[20:46:13.145] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000001, uptime=7000
+[20:46:13.147] RX[TEST_example_packets]  f0 b5 00 00 1b 58 00 00 00 00 00 00 0a
+[20:46:13.149] PACKET[TEST_example_packets] ground_station_status: rssi=-75, uptime=7000, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:13.151] RX[TEST_example_packets]  e0 6f 01 00 00 1b 58 1f 10 5a 00 03 35 00 02 f2 01 50 ea 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 00 43 00 3e 1b 9e 02 00 00 03 00 03 01 4b 00 1c ff ea 00 07 01 89 8c 08 66 42 40 00 00 05 30 21 ee 25 b1 6a cd 74 87 43 14 00 00 0a
+[20:46:13.156] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000001, uptime=7000, mcu_temperature=31, witness_battery_voltage=4.186, filtered_accel=[0.03284, 0.03016, 3.45], orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], low_accel=[0.032696, 0.030256, 3.45016], lsm6_temperature=27.0, high_accel=[0.031251, 0.031251, 3.448027], gyro=[1.96, -1.54, 0.49], pressure=100748, ms5607_temperature=21.5, barometric_altitude=48.0, latitude=34.0001, longitude=-116.9999, gps_time=1791849607, gps_altitude=148.0
+[20:46:13.212] RX[TEST_example_packets]  e1 78 00 00 00 1b 58 1d 1e 63 06 08 0c 0a
+[20:46:13.218] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=7000, mcu_temperature=29, iris_battery_voltage=7.779, current_sense=[0.6, 0.8, 1.2]
+[20:46:14.097] RX[TEST_example_packets]  01 6f 02 00 00 3a 98 00 03 2d ff fd 08 00 04 e2 00 1c 00 16 00 07 0a
+[20:46:14.104] PACKET[TEST_example_packets] sensors: status=0b0110111100000010, uptime=15000, filtered_accel=[0.03252, -0.0304, 0.05], gyro=[1.96, 1.54, 0.49]
+[20:46:14.108] RX[TEST_example_packets]  02 6f 02 00 00 3a 98 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 05 30 22 ee 25 b2 44 54 80 00 44 3b 80 00 10 4a 0a
+[20:46:14.115] PACKET[TEST_example_packets] state: status=0b0110111100000010, uptime=15000, orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], latitude=34.0002, longitude=-116.9998, gps_altitude=850.0, barometric_altitude=750.0, witness_battery_voltage=4.17
+[20:46:14.174] RX[TEST_example_packets]  03 6f 02 00 00 3a 98 78 00 00 00 3a 98 05 08 0c 1e 4b 0a
+[20:46:14.183] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000010, fc_uptime=15000, status=0b0111100000000000, uptime=15000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.755
+[20:46:14.185] RX[TEST_example_packets]  ff 6f 02 00 00 3a 98 0a
+[20:46:14.189] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000010, uptime=15000
+[20:46:14.191] RX[TEST_example_packets]  f0 be 00 00 3a 98 00 00 00 00 00 00 0a
+[20:46:14.194] PACKET[TEST_example_packets] ground_station_status: rssi=-66, uptime=15000, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:14.261] RX[TEST_example_packets]  e0 6f 02 00 00 3a 98 20 10 4a 00 03 2d ff fd 08 00 04 e2 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 00 43 ff c2 00 66 02 00 00 03 ff fd 00 05 00 1c 00 16 00 07 01 69 fe 08 66 44 3b 80 00 05 30 22 ee 25 b2 6a cd 74 8f 44 54 80 00 0a
+[20:46:14.266] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000010, uptime=15000, mcu_temperature=32, witness_battery_voltage=4.17, filtered_accel=[0.03252, -0.0304, 0.05], orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], low_accel=[0.032696, -0.030256, 0.049776], lsm6_temperature=27.0, high_accel=[0.031251, -0.031251, 0.052085], gyro=[1.96, 1.54, 0.49], pressure=92670, ms5607_temperature=21.5, barometric_altitude=750.0, latitude=34.0002, longitude=-116.9998, gps_time=1791849615, gps_altitude=850.0
+[20:46:14.269] RX[TEST_example_packets]  e1 78 00 00 00 3a 98 1d 1e 4b 05 08 0c 0a
+[20:46:14.274] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=15000, mcu_temperature=29, iris_battery_voltage=7.755, current_sense=[0.5, 0.8, 1.2]
+[20:46:15.081] RX[TEST_example_packets]  01 6e 03 00 00 75 30 ff fb 2d 00 00 9a 00 6b 6c ff d6 ff fc 00 07 0a
+[20:46:15.086] PACKET[TEST_example_packets] sensors: status=0b0110111000000011, uptime=30000, filtered_accel=[-0.0494, 0.00616, 1.1], gyro=[-2.94, -0.28, 0.49]
+[20:46:15.089] RX[TEST_example_packets]  02 6e 03 00 00 75 30 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 05 30 23 ee 25 b3 44 2f 00 00 44 16 00 00 10 2c 0a
+[20:46:15.093] PACKET[TEST_example_packets] state: status=0b0110111000000011, uptime=30000, orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], latitude=34.0003, longitude=-116.9997, gps_altitude=700.0, barometric_altitude=600.0, witness_battery_voltage=4.14
+[20:46:15.094] RX[TEST_example_packets]  03 6e 03 00 00 75 30 78 00 00 00 75 30 05 08 0c 1e 1e 0a
+[20:46:15.099] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000011, fc_uptime=30000, status=0b0111100000000000, uptime=30000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.71
+[20:46:15.100] RX[TEST_example_packets]  ff 6e 03 00 00 75 30 0a
+[20:46:15.160] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000011, uptime=30000
+[20:46:15.162] RX[TEST_example_packets]  f0 c2 00 00 75 30 00 00 00 00 00 00 0a
+[20:46:15.165] PACKET[TEST_example_packets] ground_station_status: rssi=-62, uptime=30000, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:15.168] RX[TEST_example_packets]  e0 6e 03 00 00 75 30 21 10 2c ff fb 2d 00 00 9a 00 6b 6c 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 ff 9b 00 0d 08 ce 02 00 ff fb 00 01 00 6a ff d6 ff fc 00 07 01 70 84 08 66 44 16 00 00 05 30 23 ee 25 b3 6a cd 74 9e 44 2f 00 00 0a
+[20:46:15.173] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000011, uptime=30000, mcu_temperature=33, witness_battery_voltage=4.14, filtered_accel=[-0.0494, 0.00616, 1.1], orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], low_accel=[-0.049288, 0.006344, 1.099952], lsm6_temperature=27.0, high_accel=[-0.052085, 0.010417, 1.104202], gyro=[-2.94, -0.28, 0.49], pressure=94340, ms5607_temperature=21.5, barometric_altitude=600.0, latitude=34.0003, longitude=-116.9997, gps_time=1791849630, gps_altitude=700.0
+[20:46:15.228] RX[TEST_example_packets]  e1 78 00 00 00 75 30 1d 1e 1e 05 08 0c 0a
+[20:46:15.239] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=30000, mcu_temperature=29, iris_battery_voltage=7.71, current_sense=[0.5, 0.8, 1.2]
+[20:46:16.056] RX[TEST_example_packets]  01 6f 04 00 00 d6 d8 ff fb 1e 00 00 16 00 61 a8 ff d5 ff ff 00 07 0a
+[20:46:16.064] PACKET[TEST_example_packets] sensors: status=0b0110111100000100, uptime=55000, filtered_accel=[-0.05, 0.00088, 1.0], gyro=[-3.01, -0.07, 0.49]
+[20:46:16.069] RX[TEST_example_packets]  02 6f 04 00 00 d6 d8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 25 ee 25 b6 42 c8 00 00 00 00 00 00 0f fa 0a
+[20:46:16.073] PACKET[TEST_example_packets] state: status=0b0110111100000100, uptime=55000, orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0005, longitude=-116.9994, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.09
+[20:46:16.076] RX[TEST_example_packets]  03 6f 04 00 00 d6 d8 78 00 00 00 d6 d8 06 08 0c 1d d3 0a
+[20:46:16.131] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000100, fc_uptime=55000, status=0b0111100000000000, uptime=55000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.635
+[20:46:16.133] RX[TEST_example_packets]  ff 6f 04 00 00 d6 d8 0a
+[20:46:16.136] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000100, uptime=55000
+[20:46:16.138] RX[TEST_example_packets]  f0 c9 00 00 d6 d8 00 00 00 00 00 00 0a
+[20:46:16.140] PACKET[TEST_example_packets] ground_station_status: rssi=-55, uptime=55000, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:16.142] RX[TEST_example_packets]  e0 6f 04 00 00 d6 d8 24 0f fa ff fb 1e 00 00 16 00 61 a8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 ff 9a 00 02 08 01 02 00 ff fb 00 00 00 60 ff d5 ff ff 00 07 01 8b cd 08 66 00 00 00 00 05 30 25 ee 25 b6 6a cd 74 b7 42 c8 00 00 0a
+[20:46:16.146] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000100, uptime=55000, mcu_temperature=36, witness_battery_voltage=4.09, filtered_accel=[-0.05, 0.00088, 1.0], orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[-0.049776, 0.000976, 0.999912], lsm6_temperature=27.0, high_accel=[-0.052085, 0.0, 1.000032], gyro=[-3.01, -0.07, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0005, longitude=-116.9994, gps_time=1791849655, gps_altitude=100.0
+[20:46:16.200] RX[TEST_example_packets]  e1 78 00 00 00 d6 d8 1d 1d d3 06 08 0c 0a
+[20:46:16.205] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=55000, mcu_temperature=29, iris_battery_voltage=7.635, current_sense=[0.6, 0.8, 1.2]
+[20:46:18.078] RX[TEST_example_packets]  01 6e 00 00 00 00 00 00 00 00 00 03 e8 00 61 a8 00 00 ff e3 00 07 0a
+[20:46:18.083] PACKET[TEST_example_packets] sensors: status=0b0110111000000000, uptime=0, filtered_accel=[0.0, 0.04, 1.0], gyro=[0.0, -2.03, 0.49]
+[20:46:18.086] RX[TEST_example_packets]  02 6e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 20 ee 25 b0 42 c8 00 00 00 00 00 00 10 68 0a
+[20:46:18.090] PACKET[TEST_example_packets] state: status=0b0110111000000000, uptime=0, orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0, longitude=-117.0, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.2
+[20:46:18.092] RX[TEST_example_packets]  03 6e 00 00 00 00 00 78 00 00 00 00 00 05 08 0c 1e 78 0a
+[20:46:18.096] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000000, fc_uptime=0, status=0b0111100000000000, uptime=0, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.8
+[20:46:18.153] RX[TEST_example_packets]  ff 6e 00 00 00 00 00 0a
+[20:46:18.156] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000000, uptime=0
+[20:46:18.158] RX[TEST_example_packets]  f0 bf 00 00 00 00 00 00 00 00 00 00 0a
+[20:46:18.164] PACKET[TEST_example_packets] ground_station_status: rssi=-65, uptime=0, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:18.167] RX[TEST_example_packets]  e0 6e 00 00 00 00 00 1e 10 68 00 00 00 00 03 e8 00 61 a8 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 00 00 00 52 08 01 02 00 00 00 00 04 00 60 00 00 ff e3 00 07 01 8b cd 08 66 00 00 00 00 05 30 20 ee 25 b0 6a cd 74 80 42 c8 00 00 0a
+[20:46:18.175] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000000, uptime=0, mcu_temperature=30, witness_battery_voltage=4.2, filtered_accel=[0.0, 0.04, 1.0], orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[0.0, 0.040016, 0.999912], lsm6_temperature=27.0, high_accel=[0.0, 0.041668, 1.000032], gyro=[0.0, -2.03, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0, longitude=-117.0, gps_time=1791849600, gps_altitude=100.0
+[20:46:18.258] RX[TEST_example_packets]  e1 78 00 00 00 00 00 1d 1e 78 05 08 0c 0a
+[20:46:18.267] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=0, mcu_temperature=29, iris_battery_voltage=7.8, current_sense=[0.5, 0.8, 1.2]
+[20:46:19.098] RX[TEST_example_packets]  01 6f 01 00 00 1b 58 00 03 35 00 02 f2 01 50 ea 00 1c ff ea 00 07 0a
+[20:46:19.121] PACKET[TEST_example_packets] sensors: status=0b0110111100000001, uptime=7000, filtered_accel=[0.03284, 0.03016, 3.45], gyro=[1.96, -1.54, 0.49]
+[20:46:19.195] RX[TEST_example_packets]  02 6f 01 00 00 1b 58 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 05 30 21 ee 25 b1 43 14 00 00 42 40 00 00 10 5a 0a
+[20:46:19.200] PACKET[TEST_example_packets] state: status=0b0110111100000001, uptime=7000, orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], latitude=34.0001, longitude=-116.9999, gps_altitude=148.0, barometric_altitude=48.0, witness_battery_voltage=4.186
+[20:46:19.210] RX[TEST_example_packets]  03 6f 01 00 00 1b 58 78 00 00 00 1b 58 06 08 0c 1e 63 0a
+[20:46:19.222] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000001, fc_uptime=7000, status=0b0111100000000000, uptime=7000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.779
+[20:46:19.286] RX[TEST_example_packets]  ff 6f 01 00 00 1b 58 0a
+[20:46:19.289] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000001, uptime=7000
+[20:46:19.291] RX[TEST_example_packets]  f0 b5 00 00 1b 58 00 00 00 00 00 00 0a
+[20:46:19.294] PACKET[TEST_example_packets] ground_station_status: rssi=-75, uptime=7000, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:19.295] RX[TEST_example_packets]  e0 6f 01 00 00 1b 58 1f 10 5a 00 03 35 00 02 f2 01 50 ea 00 00 00 00 00 00 00 00 3c 94 14 76 3f 7f f5 4b 40 60 00 00 3f e0 00 00 42 40 00 00 3f 00 00 00 3e 80 00 00 42 40 00 00 00 43 00 3e 1b 9e 02 00 00 03 00 03 01 4b 00 1c ff ea 00 07 01 89 8c 08 66 42 40 00 00 05 30 21 ee 25 b1 6a cd 74 87 43 14 00 00 0a
+[20:46:19.302] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000001, uptime=7000, mcu_temperature=31, witness_battery_voltage=4.186, filtered_accel=[0.03284, 0.03016, 3.45], orientation=[0.0, 0.0, 0.018076, 0.999837], position=[3.5, 1.75, 48.0], velocity=[0.5, 0.25, 48.0], low_accel=[0.032696, 0.030256, 3.45016], lsm6_temperature=27.0, high_accel=[0.031251, 0.031251, 3.448027], gyro=[1.96, -1.54, 0.49], pressure=100748, ms5607_temperature=21.5, barometric_altitude=48.0, latitude=34.0001, longitude=-116.9999, gps_time=1791849607, gps_altitude=148.0
+[20:46:19.410] RX[TEST_example_packets]  e1 78 00 00 00 1b 58 1d 1e 63 06 08 0c 0a
+[20:46:19.424] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=7000, mcu_temperature=29, iris_battery_voltage=7.779, current_sense=[0.6, 0.8, 1.2]
+[20:46:20.053] RX[TEST_example_packets]  01 6f 02 00 00 3a 98 00 03 2d ff fd 08 00 04 e2 00 1c 00 16 00 07 0a
+[20:46:20.058] PACKET[TEST_example_packets] sensors: status=0b0110111100000010, uptime=15000, filtered_accel=[0.03252, -0.0304, 0.05], gyro=[1.96, 1.54, 0.49]
+[20:46:20.061] RX[TEST_example_packets]  02 6f 02 00 00 3a 98 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 05 30 22 ee 25 b2 44 54 80 00 44 3b 80 00 10 4a 0a
+[20:46:20.065] PACKET[TEST_example_packets] state: status=0b0110111100000010, uptime=15000, orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], latitude=34.0002, longitude=-116.9998, gps_altitude=850.0, barometric_altitude=750.0, witness_battery_voltage=4.17
+[20:46:20.067] RX[TEST_example_packets]  03 6f 02 00 00 3a 98 78 00 00 00 3a 98 05 08 0c 1e 4b 0a
+[20:46:20.071] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000010, fc_uptime=15000, status=0b0111100000000000, uptime=15000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.755
+[20:46:20.073] RX[TEST_example_packets]  ff 6f 02 00 00 3a 98 0a
+[20:46:20.126] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000010, uptime=15000
+[20:46:20.129] RX[TEST_example_packets]  f0 be 00 00 3a 98 00 00 00 00 00 00 0a
+[20:46:20.132] PACKET[TEST_example_packets] ground_station_status: rssi=-66, uptime=15000, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:20.134] RX[TEST_example_packets]  e0 6f 02 00 00 3a 98 20 10 4a 00 03 2d ff fd 08 00 04 e2 00 00 00 00 00 00 00 00 bc c4 5e 6f 3f 7f ed 2b 40 f0 00 00 40 70 00 00 44 3b 80 00 3f 00 00 00 3e 80 00 00 42 70 00 00 00 43 ff c2 00 66 02 00 00 03 ff fd 00 05 00 1c 00 16 00 07 01 69 fe 08 66 44 3b 80 00 05 30 22 ee 25 b2 6a cd 74 8f 44 54 80 00 0a
+[20:46:20.138] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000010, uptime=15000, mcu_temperature=32, witness_battery_voltage=4.17, filtered_accel=[0.03252, -0.0304, 0.05], orientation=[0.0, 0.0, -0.023971, 0.999713], position=[7.5, 3.75, 750.0], velocity=[0.5, 0.25, 60.0], low_accel=[0.032696, -0.030256, 0.049776], lsm6_temperature=27.0, high_accel=[0.031251, -0.031251, 0.052085], gyro=[1.96, 1.54, 0.49], pressure=92670, ms5607_temperature=21.5, barometric_altitude=750.0, latitude=34.0002, longitude=-116.9998, gps_time=1791849615, gps_altitude=850.0
+[20:46:20.141] RX[TEST_example_packets]  e1 78 00 00 00 3a 98 1d 1e 4b 05 08 0c 0a
+[20:46:20.147] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=15000, mcu_temperature=29, iris_battery_voltage=7.755, current_sense=[0.5, 0.8, 1.2]
+[20:46:21.081] RX[TEST_example_packets]  01 6e 03 00 00 75 30 ff fb 2d 00 00 9a 00 6b 6c ff d6 ff fc 00 07 0a
+[20:46:21.085] PACKET[TEST_example_packets] sensors: status=0b0110111000000011, uptime=30000, filtered_accel=[-0.0494, 0.00616, 1.1], gyro=[-2.94, -0.28, 0.49]
+[20:46:21.088] RX[TEST_example_packets]  02 6e 03 00 00 75 30 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 05 30 23 ee 25 b3 44 2f 00 00 44 16 00 00 10 2c 0a
+[20:46:21.092] PACKET[TEST_example_packets] state: status=0b0110111000000011, uptime=30000, orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], latitude=34.0003, longitude=-116.9997, gps_altitude=700.0, barometric_altitude=600.0, witness_battery_voltage=4.14
+[20:46:21.094] RX[TEST_example_packets]  03 6e 03 00 00 75 30 78 00 00 00 75 30 05 08 0c 1e 1e 0a
+[20:46:21.098] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000011, fc_uptime=30000, status=0b0111100000000000, uptime=30000, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.71
+[20:46:21.099] RX[TEST_example_packets]  ff 6e 03 00 00 75 30 0a
+[20:46:21.154] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000011, uptime=30000
+[20:46:21.156] RX[TEST_example_packets]  f0 c2 00 00 75 30 00 00 00 00 00 00 0a
+[20:46:21.158] PACKET[TEST_example_packets] ground_station_status: rssi=-62, uptime=30000, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:21.160] RX[TEST_example_packets]  e0 6e 03 00 00 75 30 21 10 2c ff fb 2d 00 00 9a 00 6b 6c 00 00 00 00 00 00 00 00 bc 5e d2 fd 3f 7f f9 f0 41 70 00 00 40 f0 00 00 44 16 00 00 3f 00 00 00 3e 80 00 00 c1 f0 00 00 ff 9b 00 0d 08 ce 02 00 ff fb 00 01 00 6a ff d6 ff fc 00 07 01 70 84 08 66 44 16 00 00 05 30 23 ee 25 b3 6a cd 74 9e 44 2f 00 00 0a
+[20:46:21.164] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000011, uptime=30000, mcu_temperature=33, witness_battery_voltage=4.14, filtered_accel=[-0.0494, 0.00616, 1.1], orientation=[0.0, 0.0, -0.0136, 0.999907], position=[15.0, 7.5, 600.0], velocity=[0.5, 0.25, -30.0], low_accel=[-0.049288, 0.006344, 1.099952], lsm6_temperature=27.0, high_accel=[-0.052085, 0.010417, 1.104202], gyro=[-2.94, -0.28, 0.49], pressure=94340, ms5607_temperature=21.5, barometric_altitude=600.0, latitude=34.0003, longitude=-116.9997, gps_time=1791849630, gps_altitude=700.0
+[20:46:21.167] RX[TEST_example_packets]  e1 78 00 00 00 75 30 1d 1e 1e 05 08 0c 0a
+[20:46:21.171] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=30000, mcu_temperature=29, iris_battery_voltage=7.71, current_sense=[0.5, 0.8, 1.2]
+[20:46:22.087] RX[TEST_example_packets]  01 6f 04 00 00 d6 d8 ff fb 1e 00 00 16 00 61 a8 ff d5 ff ff 00 07 0a
+[20:46:22.098] PACKET[TEST_example_packets] sensors: status=0b0110111100000100, uptime=55000, filtered_accel=[-0.05, 0.00088, 1.0], gyro=[-3.01, -0.07, 0.49]
+[20:46:22.105] RX[TEST_example_packets]  02 6f 04 00 00 d6 d8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 25 ee 25 b6 42 c8 00 00 00 00 00 00 0f fa 0a
+[20:46:22.173] PACKET[TEST_example_packets] state: status=0b0110111100000100, uptime=55000, orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0005, longitude=-116.9994, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.09
+[20:46:22.179] RX[TEST_example_packets]  03 6f 04 00 00 d6 d8 78 00 00 00 d6 d8 06 08 0c 1d d3 0a
+[20:46:22.193] PACKET[TEST_example_packets] camera: fc_status=0b0110111100000100, fc_uptime=55000, status=0b0111100000000000, uptime=55000, current_sense=[0.6, 0.8, 1.2], iris_battery_voltage=7.635
+[20:46:22.245] RX[TEST_example_packets]  ff 6f 04 00 00 d6 d8 0a
+[20:46:22.249] PACKET[TEST_example_packets] heartbeat: status=0b0110111100000100, uptime=55000
+[20:46:22.254] RX[TEST_example_packets]  f0 c9 00 00 d6 d8 00 00 00 00 00 00 0a
+[20:46:22.256] PACKET[TEST_example_packets] ground_station_status: rssi=-55, uptime=55000, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:22.259] RX[TEST_example_packets]  e0 6f 04 00 00 d6 d8 24 0f fa ff fb 1e 00 00 16 00 61 a8 00 00 00 00 00 00 00 00 bc 4a 2c 3d 3f 7f fb 03 41 dc 00 00 41 5c 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 ff 9a 00 02 08 01 02 00 ff fb 00 00 00 60 ff d5 ff ff 00 07 01 8b cd 08 66 00 00 00 00 05 30 25 ee 25 b6 6a cd 74 b7 42 c8 00 00 0a
+[20:46:22.269] PACKET[TEST_example_packets] witness_debug: status=0b0110111100000100, uptime=55000, mcu_temperature=36, witness_battery_voltage=4.09, filtered_accel=[-0.05, 0.00088, 1.0], orientation=[0.0, 0.0, -0.01234, 0.999924], position=[27.5, 13.75, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[-0.049776, 0.000976, 0.999912], lsm6_temperature=27.0, high_accel=[-0.052085, 0.0, 1.000032], gyro=[-3.01, -0.07, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0005, longitude=-116.9994, gps_time=1791849655, gps_altitude=100.0
+[20:46:22.349] RX[TEST_example_packets]  e1 78 00 00 00 d6 d8 1d 1d d3 06 08 0c 0a
+[20:46:22.367] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=55000, mcu_temperature=29, iris_battery_voltage=7.635, current_sense=[0.6, 0.8, 1.2]
+[20:46:24.092] RX[TEST_example_packets]  01 6e 00 00 00 00 00 00 00 00 00 03 e8 00 61 a8 00 00 ff e3 00 07 0a
+[20:46:24.096] PACKET[TEST_example_packets] sensors: status=0b0110111000000000, uptime=0, filtered_accel=[0.0, 0.04, 1.0], gyro=[0.0, -2.03, 0.49]
+[20:46:24.099] RX[TEST_example_packets]  02 6e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 05 30 20 ee 25 b0 42 c8 00 00 00 00 00 00 10 68 0a
+[20:46:24.103] PACKET[TEST_example_packets] state: status=0b0110111000000000, uptime=0, orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], latitude=34.0, longitude=-117.0, gps_altitude=100.0, barometric_altitude=0.0, witness_battery_voltage=4.2
+[20:46:24.104] RX[TEST_example_packets]  03 6e 00 00 00 00 00 78 00 00 00 00 00 05 08 0c 1e 78 0a
+[20:46:24.109] PACKET[TEST_example_packets] camera: fc_status=0b0110111000000000, fc_uptime=0, status=0b0111100000000000, uptime=0, current_sense=[0.5, 0.8, 1.2], iris_battery_voltage=7.8
+[20:46:24.165] RX[TEST_example_packets]  ff 6e 00 00 00 00 00 0a
+[20:46:24.174] PACKET[TEST_example_packets] heartbeat: status=0b0110111000000000, uptime=0
+[20:46:24.176] RX[TEST_example_packets]  f0 bf 00 00 00 00 00 00 00 00 00 00 0a
+[20:46:24.239] PACKET[TEST_example_packets] ground_station_status: rssi=-65, uptime=0, reserved=[0, 0, 0, 0, 0, 0]
+[20:46:24.242] RX[TEST_example_packets]  e0 6e 00 00 00 00 00 1e 10 68 00 00 00 00 03 e8 00 61 a8 00 00 00 00 00 00 00 00 00 00 00 00 3f 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3f 00 00 00 3e 80 00 00 00 00 00 00 00 00 00 52 08 01 02 00 00 00 00 04 00 60 00 00 ff e3 00 07 01 8b cd 08 66 00 00 00 00 05 30 20 ee 25 b0 6a cd 74 80 42 c8 00 00 0a
+[20:46:24.247] PACKET[TEST_example_packets] witness_debug: status=0b0110111000000000, uptime=0, mcu_temperature=30, witness_battery_voltage=4.2, filtered_accel=[0.0, 0.04, 1.0], orientation=[0.0, 0.0, 0.0, 1.0], position=[0.0, 0.0, 0.0], velocity=[0.5, 0.25, 0.0], low_accel=[0.0, 0.040016, 0.999912], lsm6_temperature=27.0, high_accel=[0.0, 0.041668, 1.000032], gyro=[0.0, -2.03, 0.49], pressure=101325, ms5607_temperature=21.5, barometric_altitude=0.0, latitude=34.0, longitude=-117.0, gps_time=1791849600, gps_altitude=100.0
+[20:46:24.250] RX[TEST_example_packets]  e1 78 00 00 00 00 00 1d 1e 78 05 08 0c 0a
+[20:46:24.255] PACKET[TEST_example_packets] iris_debug: status=0b0111100000000000, uptime=0, mcu_temperature=29, iris_battery_voltage=7.8, current_sense=[0.5, 0.8, 1.2]
+[20:46:24.460] TEST_END[TEST_example_packets] stopped

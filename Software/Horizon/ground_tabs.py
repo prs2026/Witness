@@ -37,10 +37,11 @@ FEATHERWEIGHT_FIELDS = {"GPS_STAT": (
 
 
 class ReceiverTab(ttk.Frame):
-    def __init__(self, parent, log_dir, *, witness=False, schema=None):
+    def __init__(self, parent, log_dir, *, witness=False, schema=None, on_record=None):
         super().__init__(parent, padding=8)
         self.log_dir, self.witness = log_dir, witness
         self.receiver = None
+        self.on_record = on_record
         self.entries = []
         self.columnconfigure(0, weight=1)
         self.rowconfigure(4, weight=1)
@@ -127,8 +128,8 @@ class ReceiverTab(ttk.Frame):
 
 
 class WitnessTab(ReceiverTab):
-    def __init__(self, parent, *, log_dir):
-        super().__init__(parent, log_dir, witness=True, schema=WITNESS_FIELDS)
+    def __init__(self, parent, *, log_dir, on_record=None):
+        super().__init__(parent, log_dir, witness=True, schema=WITNESS_FIELDS, on_record=on_record)
         self.host = tk.StringVar(value=WITNESS_FEED_HOST)
         self.port = tk.StringVar(value=str(WITNESS_FEED_PORT))
         for column, (label, variable, width) in enumerate((
@@ -141,15 +142,15 @@ class WitnessTab(ReceiverTab):
         self.connect_button.grid(row=0, column=4)
         self.note.configure(text="Receive only: start main.py to supply decoded Witness telemetry. "
                             "Auto-reconnects; snapshots retain original age. Units: g, dps, m, m/s, V, A, C, Pa; "
-                            "uptime in ms. Commands and Witness graphs remain in main.py.")
+                            "uptime in ms. Live graphs are on Flight View; commands remain in main.py.")
 
     def make_receiver(self):
-        return WitnessReceiver(self.host.get().strip(), int(self.port.get()), self.log_dir)
+        return WitnessReceiver(self.host.get().strip(), int(self.port.get()), self.log_dir, on_record=self.on_record)
 
 
 class FeatherweightTab(ReceiverTab):
-    def __init__(self, parent, *, log_dir):
-        super().__init__(parent, log_dir, schema=FEATHERWEIGHT_FIELDS)
+    def __init__(self, parent, *, log_dir, on_record=None):
+        super().__init__(parent, log_dir, schema=FEATHERWEIGHT_FIELDS, on_record=on_record)
         ttk.Label(self.controls, text="Featherweight COM port:").grid(row=0, column=0, padx=(0, 4))
         self.port_combo = ttk.Combobox(self.controls, width=14, state="readonly")
         self.port_combo.grid(row=0, column=1, padx=(0, 5))
@@ -177,7 +178,7 @@ class FeatherweightTab(ReceiverTab):
         self.port_combo.set(current if current in ports else "(no port)")
 
     def make_receiver(self):
-        return FeatherweightReceiver(self.port_combo.get(), self.log_dir)
+        return FeatherweightReceiver(self.port_combo.get(), self.log_dir, on_record=self.on_record)
 
     def prepare_view(self):
         self.view.add_source(self.port_combo.get())

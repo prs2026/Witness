@@ -12,10 +12,11 @@ from aim_mqtt import AIM_TOPIC_FIELDS, AimMqttReceiver, AimSettings
 
 
 class AimMqttTab(ttk.Frame):
-    def __init__(self, parent, *, log_dir: Path, host, port, client_uuid, base_path):
+    def __init__(self, parent, *, log_dir: Path, host, port, client_uuid, base_path, on_sample=None):
         super().__init__(parent, padding=8)
         self.log_dir = log_dir
         self.receiver = None
+        self.on_sample = on_sample
         self._groups = {}
         self._rows = {}
         self._received = {}
@@ -159,7 +160,7 @@ class AimMqttTab(ttk.Frame):
                 self.host.get().strip(), int(self.port.get()),
                 self.client_uuid.get().strip(), self.base_path.get().strip().rstrip("/"),
             )
-            receiver = AimMqttReceiver(settings, self.log_dir)
+            receiver = AimMqttReceiver(settings, self.log_dir, on_sample=self.on_sample)
             receiver.start()
         except (ValueError, RuntimeError, OSError) as exc:
             messagebox.showerror("AIM XTRA MQTT", str(exc), parent=self)

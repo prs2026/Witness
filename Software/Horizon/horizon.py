@@ -16,13 +16,20 @@ Select the Featherweight COM port here (not in main.py). For AIM, leave the
 vendor AIM BASE application and its MQTT broker running, then click Connect.
 Horizon does not open the AIM USB device. Logs go in logs/: Witness JSONL,
 Featherweight raw BIN plus diagnostic/packet JSONL, and AIM MQTT JSONL.
+
+Flight View opens first. Edit flight_view_default.json, use Load layout, or
+start with: python horizon.py --flight-layout path/to/layout.json
+See flight_view.py's module help for the layout schema and source selection.
 """
 
+import argparse
 from pathlib import Path
 import tkinter as tk
 from tkinter import ttk
 
 from aim_tab import AimMqttTab
+from flight_data import DEFAULT_LAYOUT
+from flight_view import FlightView
 from ground_tabs import FeatherweightTab, WitnessTab
 from ground_settings import (
     DEFAULT_AIM_MQTT_HOST, DEFAULT_AIM_MQTT_PORT,
@@ -33,21 +40,24 @@ LOG_DIR = Path(__file__).resolve().parent / "logs"
 
 
 class HorizonGroundStation(tk.Tk):
-    def __init__(self, *, log_dir=LOG_DIR, auto_connect=True):
+    def __init__(self, *, log_dir=LOG_DIR, auto_connect=True, flight_layout=DEFAULT_LAYOUT):
         super().__init__()
         self.title("Horizon Unified Ground Station")
-        self.geometry("1100x780")
-        self.minsize(650, 440)
+        self.geometry(f"{min(1440, self.winfo_screenwidth() - 40)}x{min(900, self.winfo_screenheight() - 100)}")
+        self.minsize(min(1000, self.winfo_screenwidth() - 40), min(650, self.winfo_screenheight() - 100))
         ttk.Label(self, text="Horizon Unified Ground Station", font=("Segoe UI", 15, "bold"),
                   padding=(12, 8)).pack(anchor="w")
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill="both", expand=True, padx=8, pady=(0, 8))
-        self.witness = WitnessTab(self.notebook, log_dir=log_dir)
-        self.featherweight = FeatherweightTab(self.notebook, log_dir=log_dir)
+        self.flight = FlightView(self.notebook, layout_path=flight_layout)
+        self.witness = WitnessTab(self.notebook, log_dir=log_dir,
+                                 on_record=lambda record: self.flight.data.accept_record("witness", record))
+        self.featherweight = FeatherweightTab(self.notebook, log_dir=log_dir,
+                                             on_record=lambda record: self.flight.data.accept_record("featherweight", record))
         self.aim = AimMqttTab(self.notebook, log_dir=log_dir, host=DEFAULT_AIM_MQTT_HOST,
                               port=DEFAULT_AIM_MQTT_PORT, client_uuid=DEFAULT_AIM_MQTT_UUID,
-                              base_path=DEFAULT_AIM_MQTT_BASE_PATH)
-        for tab, title in ((self.witness, "Witness"), (self.featherweight, "Featherweight GPS"),
+                              base_path=DEFAULT_AIM_MQTT_BASE_PATH, on_sample=self.flight.data.accept_aim)
+        for tab, title in ((self.flight, "Flight View"), (self.witness, "Witness"), (self.featherweight, "Featherweight GPS"),
                            (self.aim, "AIM XTRA MQTT")):
             self.notebook.add(tab, text=title)
         self._connect_id = self.after(0, self._auto_connect) if auto_connect else None
@@ -62,8 +72,13 @@ class HorizonGroundStation(tk.Tk):
             self.after_cancel(self._connect_id)
         for tab in (self.witness, self.featherweight, self.aim):
             tab.close()
+        self.flight.close()
         self.destroy()
 
 
 if __name__ == "__main__":
-    HorizonGroundStation().mainloop()
+    parser = argparse.ArgumentParser(description="Horizon Unified Ground Station")
+    parser.add_argument("--flight-layout", default=DEFAULT_LAYOUT, type=Path,
+                        help="Flight View JSON layout (default: flight_view_default.json next to horizon.py)")
+    args = parser.parse_args()
+    HorizonGroundStation(flight_layout=args.flight_layout).mainloop()

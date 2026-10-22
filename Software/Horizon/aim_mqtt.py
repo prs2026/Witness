@@ -116,7 +116,7 @@ class AimMqttReceiver:
     not cause received payloads to be omitted from the log.
     """
 
-    def __init__(self, settings: AimSettings, log_dir: Path):
+    def __init__(self, settings: AimSettings, log_dir: Path, *, on_sample=None):
         self.settings = settings
         self.log_dir = Path(log_dir)
         self.client = None
@@ -134,6 +134,7 @@ class AimMqttReceiver:
         self.messages = self.bytes_received = self.errors = 0
         self.last_received = None
         self._last_status = None
+        self.on_sample = on_sample
 
     def start(self):
         try:
@@ -258,6 +259,14 @@ class AimMqttReceiver:
         except (ValueError, TypeError, RecursionError) as exc:
             record["error"] = str(exc)
         self._write_log(record)
+        if "error" not in record and self.on_sample is not None:
+            try:
+                source = f"{self.settings.host}:{self.settings.port}/{self.settings.base_path}"
+                self.on_sample(source, topic, fields, received_mono, bool(message.retain))
+            except Exception as exc:
+                # A visualization error must never stop MQTT reception/logging.
+                self._diagnostic(f"FLIGHT_VIEW_ERROR: {exc}")
+                self._write_log({"event": "display_error", "received_at": received_at, "error": str(exc)})
         with self._lock:
             self.messages += 1
             self.bytes_received += len(payload)
