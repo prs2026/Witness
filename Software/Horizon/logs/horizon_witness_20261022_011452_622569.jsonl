@@ -1,0 +1,6 @@
+{"event": "status", "received_at": 1792656892.624662, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792656893.7051103, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792656894.7050998, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792656895.714672, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792656896.714808, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792656896.7157543, "message": "Connected to Witness (receive only)"}
