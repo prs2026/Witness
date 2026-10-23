@@ -5,7 +5,7 @@ from functools import lru_cache
 import math
 from tkinter import font as tkfont
 
-from flight_data import nice_step, plot_segments
+from flight_data import graph_range, nice_step, plot_segments
 
 BG = "#ffffff"
 PANEL = "#ffffff"
@@ -50,6 +50,8 @@ def value_text(trace, history):
 
 def quality_text(history, end):
     if history.received is None:
+        if history.quality == "INVALID":
+            return "INVALID / NO DATA", BAD
         return "N/A" if history.quality == "UNAVAILABLE" else "NO DATA", MUTED
     age = max(0, end - history.received)
     if history.quality != "LIVE":
@@ -132,7 +134,7 @@ class DashboardRenderer:
         # Default sketch: two columns, two tall rows and a shorter bottom row.
         columns = min(layout.columns, len(layout.plots))
         row_count = math.ceil(len(layout.plots) / columns)
-        weights = (0.37, 0.37, 0.26) if row_count == 3 else [1 / row_count] * row_count
+        weights = [1 / row_count] * row_count
         usable_h = height - 2 * pad - (row_count - 1) * gap
         cell_w = (center_w - (columns - 1) * gap) / columns
         tops = [pad + usable_h * sum(weights[:r]) + r * gap for r in range(row_count)]
@@ -178,7 +180,7 @@ class DashboardRenderer:
             self.text((x0, y0 + h * .68, x1, y0 + h * .78), "NOT CONFIGURED", 24, MUTED)
         self.text((x0, y0 + h * .90, x1, y0 + h * .93), "Distance: from first live position / Set pad", 12, MUTED)
         self.text((x0, y0 + h * .935, x1, y0 + h * .965), "Altitude: pressure reference / GPS ASL", 12, MUTED)
-        self.text((x0, y0 + h * .965, x1, y1 - 4), "AIM raw units are not converted to SI", 11, WARN)
+        self.text((x0, y0 + h * .965, x1, y1 - 4), "A baro / Vz: estimates; GPS units raw", 11, WARN)
 
     def compact_flight(self, box, rows, end):
         x0, y0, x1, y1 = box
@@ -214,7 +216,7 @@ class DashboardRenderer:
             self.text((x0, top + 87, x1, top + 107), history.source or "Waiting for Witness", 12, MUTED)
         else:
             self.text((x0, top + 25, x1, top + 65), "NOT CONFIGURED", 19, MUTED)
-        self.text((x0, y1 - 24, x1, y1 - 3), "AIM raw units; details on input tabs", 12, WARN)
+        self.text((x0, y1 - 24, x1, y1 - 3), "A baro / Vz estimated; GPS raw", 12, WARN)
 
     def status_panel(self, box, title, rows, end):
         x0, y0, x1, y1 = box
@@ -291,15 +293,8 @@ class DashboardRenderer:
         for axis in ("left", "right"):
             axis_values = [v for trace, points in zip(plot.traces, visible) if trace.axis == axis
                            for _, v in points if v is not None]
-            limits = plot.y_range if axis == "left" else None
-            low, high = limits or (min(axis_values, default=0), max(axis_values, default=1))
-            if limits is None:
-                padding = max((high - low) * .08, abs(high) * .01, .01)
-                low, high = low - padding, high + padding
-            step = nice_step(high - low, max(1, int((bottom - top) / 35)))
-            if limits is None:
-                low, high = math.floor(low / step) * step, math.ceil(high / step) * step
-            ranges[axis] = low, high, step
+            limits = plot.y_range if axis == "left" and not layout.auto_scale else None
+            ranges[axis] = graph_range(axis_values, bottom - top, limits)
         xm = lambda stamp: left + (stamp - start) / layout.window_seconds * (right - left)
         def ym(value, axis):
             low, high, _ = ranges[axis]
@@ -316,7 +311,9 @@ class DashboardRenderer:
                     label_box = (x0 + 1, y - 10, left - 3, y + 10)
                 else:
                     label_box = (right + 3, y - 10, x1 - 1, y + 10)
-                self.text(label_box, f"{value:.2g}", self.min_font,
+                precision = max(0, min(9, -math.floor(math.log10(step)) + 1))
+                label = f"{value:.{precision}f}" if abs(value) < 1e5 else f"{value:.8g}"
+                self.text(label_box, label, self.min_font,
                           BAD if axis == "right" else MUTED, align="right" if axis == "left" else "left")
         label_w = self.font(self.min_font).measure("00:00:00") + 8
         xstep = nice_step(layout.window_seconds, max(1, int((right - left) / (label_w + 8))))

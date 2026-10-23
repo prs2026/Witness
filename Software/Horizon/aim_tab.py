@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 import time
 import tkinter as tk
@@ -21,6 +22,7 @@ class AimMqttTab(AutoConnectTab, ttk.Frame):
         self._groups = {}
         self._rows = {}
         self._received = {}
+        self._invalid = set()
         self._raw_lines = 0
         self._after_id = None
         self._limit_reported = False
@@ -100,6 +102,7 @@ class AimMqttTab(AutoConnectTab, ttk.Frame):
         self.tree.tag_configure("orange", background="#ffd27f")
         self.tree.tag_configure("stale", background="#ff8a80")
         self.tree.tag_configure("retained", background="#e4e4e4")
+        self.tree.tag_configure("invalid", background="#ff8a80")
         self.tree.grid(row=0, column=0, sticky="nsew")
         vertical = ttk.Scrollbar(fields_frame, orient="vertical", command=self.tree.yview)
         vertical.grid(row=0, column=1, sticky="ns")
@@ -131,6 +134,7 @@ class AimMqttTab(AutoConnectTab, ttk.Frame):
         self._groups.clear()
         self._rows.clear()
         self._received.clear()
+        self._invalid.clear()
         self._limit_reported = False
         for topic, fields in AIM_TOPIC_FIELDS.items():
             for field in fields:
@@ -206,6 +210,12 @@ class AimMqttTab(AutoConnectTab, ttk.Frame):
                 row = self._ensure_row(topic, field)
                 if row is None:
                     continue
+                if value is None or (type(value) is float and not math.isfinite(value)):
+                    self._invalid.add(row)
+                    self.tree.set(row, "delivery", "Invalid - holding last valid")
+                    self.tree.item(row, tags=("invalid",))
+                    continue
+                self._invalid.discard(row)
                 display = value if isinstance(value, str) else json.dumps(value, ensure_ascii=True)
                 self.tree.item(row, values=(
                     display, received_at.replace("T", " ").replace("+00:00", ""),
@@ -238,7 +248,7 @@ class AimMqttTab(AutoConnectTab, ttk.Frame):
                 tag = ("fresh" if age < 2 else "yellow" if age < 5
                        else "orange" if age < 10 else "stale")
                 self.tree.set(row, "age", f"{age:.1f}s")
-                self.tree.item(row, tags=("retained" if retained else tag,))
+                self.tree.item(row, tags=("invalid" if row in self._invalid else "retained" if retained else tag,))
         finally:
             self._after_id = self.after(100, self._poll)
 

@@ -1,8 +1,9 @@
 {
   "version": 1,
-  "description": "Fixed, non-scrolling launch dashboard: overview/state left, six plots center, GPS and power right. W=Witness, A=AIM, F=Featherweight. Unmapped fields explicitly show N/A. AIM altitude/battery remain raw because publisher units are unverified. Horizontal distance is relative to the first valid live position or Set pad; barometric/GPS altitudes are not automatically zeroed. Configure field mappings, conversions and trace units here; see flight_view.py. Featherweight RX_NOMTK provides tracker battery and RSSI; BATT_BLE is the local serial-connected device battery, kept separate. Zero battery readings are unavailable, not valid voltage measurements. AIM acceleration is AZ on an independent right raw axis (units unverified). AIM gyro AX~/AY~/AZ~ are quaternion-derived angular-rate estimates in deg/s, not raw gyro. Window selector changes time span without clearing history.",
+  "description": "Fixed, non-scrolling launch dashboard. W=Witness, A=AIM, F=Featherweight. A baro~ is standard pressure altitude in m, interpreting AIM pressure as Pa with 101325 Pa reference; A~ vertical velocity is delta barometric altitude / delta publisher timestamp in m/s, positive up. These are estimates, not AIM calibrated/fused outputs. A GPS remains raw on the right altitude axis and GPS readout (publisher units unverified). Altitudes are not zeroed by Set pad. Horizontal distance uses the first valid position. Invalid data holds the last valid readout with original age and an INVALID flag, with gaps in plots. FW tracker and local/GS batteries stay separate. Zero battery readings are invalid. AIM acceleration AZ stays on a separate raw axis; AX~/AY~/AZ~ gyro traces are quaternion-derived deg/s estimates. Window selector preserves history. See flight_view.py for configuration.",
   "title": "Horizon Flight View",
   "window_seconds": 120,
+  "auto_scale": true,
   "refresh_ms": 250,
   "columns": 2,
   "max_points": 6000,
@@ -11,6 +12,7 @@
     {
       "title": "Altitude",
       "unit": "m",
+      "right_unit": "GPS raw",
       "traces": [
         {
           "label": "W baro",
@@ -32,6 +34,23 @@
             "unit_type": "TRACKER"
           },
           "scale": 0.3048
+        },
+        {
+          "label": "A baro~",
+          "input": "aim",
+          "packet": "pressure_payload/v1",
+          "field": "_derived.barometric_altitude_m",
+          "color": "#990000",
+          "note": "Standard pressure altitude; assumes Pa and sea-level reference 101325 Pa"
+        },
+        {
+          "label": "A GPS",
+          "input": "aim",
+          "packet": "gnss_payload/v1",
+          "field": "gnss_coordinate.altitude",
+          "color": "#5b267d",
+          "axis": "right",
+          "note": "GPS publisher units unverified; separate raw axis"
         }
       ]
     },
@@ -165,6 +184,14 @@
             "unit_type": "TRACKER"
           },
           "scale": 0.3048
+        },
+        {
+          "label": "A~",
+          "input": "aim",
+          "packet": "pressure_payload/v1",
+          "field": "_derived.vertical_velocity_mps",
+          "color": "#990000",
+          "note": "Estimated from successive barometric altitudes; positive upwards"
         }
       ]
     },
@@ -249,12 +276,12 @@
           "color": "#171717"
         },
         {
-          "label": "A",
+          "label": "A baro~",
           "input": "aim",
-          "packet": "gnss_payload/v1",
-          "field": "gnss_coordinate.altitude",
+          "packet": "pressure_payload/v1",
+          "field": "_derived.barometric_altitude_m",
           "color": "#990000",
-          "unit": "raw"
+          "note": "Pressure altitude estimate, not GPS or calibrated AIM altitude"
         },
         {
           "label": "F",
@@ -285,13 +312,12 @@
           "color": "#171717"
         },
         {
-          "label": "A",
+          "label": "A~",
           "input": "aim",
-          "packet": "(unmapped)",
-          "field": "(unmapped)",
+          "packet": "pressure_payload/v1",
+          "field": "_derived.vertical_velocity_mps",
           "color": "#990000",
-          "enabled": false,
-          "note": "Not exposed by current AIM schema"
+          "note": "Estimated from barometric altitude differences; positive upwards"
         },
         {
           "label": "F",
@@ -390,6 +416,21 @@
           "packet": "gnss_payload/v1",
           "field": "satellites_used",
           "color": "#990000"
+        }
+      ]
+    },
+    {
+      "group": "gps",
+      "title": "AIM GPS altitude",
+      "unit": "raw",
+      "traces": [
+        {
+          "label": "A GPS",
+          "input": "aim",
+          "packet": "gnss_payload/v1",
+          "field": "gnss_coordinate.altitude",
+          "color": "#5b267d",
+          "note": "GPS altitude as published; units unverified"
         }
       ]
     },

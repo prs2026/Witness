@@ -2,6 +2,9 @@
 
 JSON: flight_view_default.json or Load layout / --flight-layout.
   version: 1; title; window_seconds; refresh_ms; columns; max_points; gap_seconds
+  auto_scale: true (default) fits each Y axis to all visible valid samples;
+    false honors explicit left-axis y_range limits. Bounds do not force zero
+    or round outward to tick steps. Padding depends on span, not DC offset.
   plots: [{title, unit, right_unit: optional, y_range: null or [min,max], traces: [...]}]
   readouts: [{group: flight|state|gps|power, title, unit, traces: [...]}]
   trace: {label, input: witness|featherweight|aim, packet: name or [names], field,
@@ -26,7 +29,17 @@ _derived.horizontal_distance_m uses Witness local X/Y or FW/AIM GPS lat/lon
 degrees. First valid live position is the reference; Set pad releases origins
 for the next live position. This is not slant range. Witness altitude remains
 pressure-referenced, FW altitude is converted from ft ASL. Set pad does not
-zero altitudes. AIM vertical velocity is unmapped, not guessed.
+zero altitudes. AIM pressure_payload/v1 derives _derived.barometric_altitude_m
+from pressure interpreted as Pa using a 101325 Pa standard atmosphere reference.
+_derived.vertical_velocity_mps is its altitude difference / publisher time
+difference, positive upwards, not AIM's fused velocity. A baro~ and A~ denote
+these estimates. GPS altitude stays on a separate raw-unit graph axis and GPS
+readout until publisher units are verified. Two fresh pressure samples within
+gap_seconds are required for velocity; duplicate/retained/backwards times are
+ignored and gaps/invalid pressure re-prime it. Clear/reload resets both AIM
+estimators. Invalid samples hold the last valid displayed value and original
+age, flag it INVALID, and leave a gap in graphs; they never plot held values
+as new samples. Raw packet/error logs remain unchanged.
 
 Featherweight RX_NOMTK supplies tracker_battery_voltage_v and rssi_dbm;
 BATT_BLE supplies battery_voltage_v for the LOCAL serial-connected device

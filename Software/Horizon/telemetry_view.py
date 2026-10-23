@@ -2,6 +2,7 @@
 
 import datetime as dt
 import json
+import math
 import time
 from tkinter import scrolledtext, ttk
 import tkinter as tk
@@ -131,6 +132,12 @@ class TelemetryView(ttk.Frame):
         for field, value in fields.items():
             row = self._row(source, packet["packet"], field)
             if row is None:
+                continue
+            if invalid or value is None or (type(value) is float and not math.isfinite(value)):
+                self.tree.set(row, "quality", quality if invalid else "INVALID - holding last valid")
+                if row in self._received:
+                    self._received[row] = self._received[row][0], True
+                self.tree.item(row, tags=("invalid",))
                 continue
             if witness and field in ("status", "fc_status") and isinstance(value, int):
                 display = f"0b{value:016b}"

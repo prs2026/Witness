@@ -15,6 +15,7 @@ import time
 
 from telemetry_view import flatten_fields
 from aim_orientation import AimAngularRateEstimator
+from aim_altitude import AimAltitudeEstimator
 
 DEFAULT_LAYOUT = Path(__file__).resolve().parent / "flight_view_default.json"
 COLORS = ("#004b80", "#803900", "#006020", "#5b267d", "#990000", "#555000")
@@ -80,6 +81,7 @@ class Layout:
     plots: tuple
     document: dict
     readouts: tuple = ()
+    auto_scale: bool = True
 
     @property
     def rows(self):
@@ -87,7 +89,10 @@ class Layout:
 
 
 def validate_layout(document):
-    _keys(document, "version description title window_seconds refresh_ms columns plot_height max_points gap_seconds plots readouts", "Layout")
+    _keys(document, "version description title window_seconds refresh_ms columns plot_height max_points gap_seconds plots readouts auto_scale", "Layout")
+    auto_scale = document.get("auto_scale", True)
+    if type(auto_scale) is not bool:
+        raise ValueError("auto_scale must be true or false")
     if type(document.get("version")) is not int or document["version"] != 1:
         raise ValueError("Layout version must be 1")
     title = _text(document.get("title", "Flight View"), "title")
@@ -193,7 +198,7 @@ def validate_layout(document):
     if sum(len(plot.traces) for plot in plots) * integers["max_points"] > 500000:
         raise ValueError("Layout exceeds 500,000 total history points; reduce max_points or traces")
     return Layout(title, window, **integers, gap_seconds=gap, plots=tuple(plots[:len(rows)]),
-                  document=document, readouts=tuple(plots[len(rows):]))
+                  document=document, readouts=tuple(plots[len(rows):]), auto_scale=auto_scale)
 
 
 def load_layout(path):
@@ -216,6 +221,7 @@ class History:
     source: str = ""
     quality: str = "NO DATA"
     live: bool = False
+    seen: float | None = None
 
 
 class FlightData:
@@ -229,6 +235,7 @@ class FlightData:
             self.selected = {}
             self.origins = {}
             self.aim_rates = AimAngularRateEstimator()
+            self.aim_altitude = AimAltitudeEstimator()
             self.histories = [[History(deque(maxlen=layout.max_points if not plot.group else 1),
                                        quality="NO DATA" if trace.enabled else "UNAVAILABLE")
                                for trace in plot.traces] for plot in layout.rows]
@@ -294,6 +301,13 @@ class FlightData:
             if kind == "aim" and packet == "orientation_payload/v1":
                 fields = {**fields, **self.aim_rates.update(source, fields, received,
                           retained=snapshot, valid=valid, max_gap=self.layout.gap_seconds)}
+            if kind == "aim" and packet == "pressure_payload/v1":
+                fields = {**fields, **self.aim_altitude.update(source, fields, received,
+                          retained=snapshot, valid=valid, max_gap=self.layout.gap_seconds)}
+            if kind == "aim" and packet == "gnss_payload/v1":
+                sats = fields.get("satellites_used", 4)
+                if type(sats) not in (int, float) or not 4 <= sats <= 256:
+                    fields = {**fields, "gnss_coordinate.altitude": None}
             fields = self._derive_distance(kind, source, fields, received, snapshot, valid)
             for trace, history in self.routes.get((kind, packet), ()):
                 if trace.field not in fields or any(fields.get(key) != value for key, value in trace.match.items()):
@@ -316,13 +330,19 @@ class FlightData:
                     value = None
                 if snapshot and history.live:
                     continue  # Cached/retained messages never refresh a live trace.
-                if history.received is not None and received < history.received:
+                if history.seen is not None and received < history.seen:
                     continue
                 if not snapshot and value is not None and trace.source == "*":
                     self.selected.setdefault(kind, source)
                 if history.source != source:
                     history.points.clear()
-                history.source, history.received, history.latest = source, received, value
+                    history.latest = history.received = None
+                history.source, history.seen = source, received
+                # Hold the last good display value and its ORIGINAL age. An
+                # invalid sample still breaks the plotted line and sets a flag;
+                # it must not turn a held number into a fresh measurement.
+                if value is not None:
+                    history.received, history.latest = received, value
                 history.quality = "SNAPSHOT" if snapshot else "INVALID" if value is None else "LIVE"
                 if not snapshot:
                     history.live = True
@@ -377,7 +397,7 @@ class FlightData:
 
     def snapshot(self):
         with self._lock:
-            return [[History(tuple(h.points), h.latest, h.received, h.source, h.quality, h.live)
+            return [[History(tuple(h.points), h.latest, h.received, h.source, h.quality, h.live, h.seen)
                      for h in row] for row in self.histories]
 
 
@@ -385,6 +405,23 @@ def nice_step(span, count=5):
     raw = max(span / count, 1e-12)
     magnitude = 10 ** math.floor(math.log10(raw))
     return next(step * magnitude for step in (1, 2, 2.5, 5, 10) if step * magnitude >= raw)
+
+
+def graph_range(values, pixels, limits=None):
+    """Tight data bounds, independent of tick spacing and absolute DC offset."""
+    if limits is not None:
+        low, high = limits
+    elif values:
+        low, high = min(values), max(values)
+        padding = max((high - low) * .08, math.ulp(max(abs(low), abs(high))) * 4, 1e-9)
+        if low == high:
+            padding = max(.01, padding)
+        low, high = low - padding, high + padding
+    else:
+        low, high = 0, 1
+    # Never round limits out to whole tick steps: on short panels this used to
+    # expand -60..0 to -100..100 and crush small changes around large offsets.
+    return low, high, nice_step(high - low, max(2, int(pixels / 35)))
 
 
 def plot_segments(points, start, end, pixels, gap):

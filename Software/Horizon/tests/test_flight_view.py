@@ -194,10 +194,11 @@ class HistoryTests(unittest.TestCase):
         self.assertEqual(model.snapshot()[0][1].latest, 304.8)
         packet["text_crc_valid"] = False
         accept(3)
-        self.assertIsNone(model.snapshot()[0][1].latest)
+        self.assertEqual(model.snapshot()[0][1].latest, 304.8)
+        self.assertEqual(model.snapshot()[0][1].received, 2)
         packet["text_crc_valid"], packet["fix_type"] = True, 0
         accept(4)
-        self.assertIsNone(model.snapshot()[0][1].latest)
+        self.assertEqual(model.snapshot()[0][1].latest, 304.8)
         fix_index = next(i for i, row in enumerate(model.layout.rows) if row.title == "Featherweight fix")
         self.assertEqual(model.snapshot()[fix_index][0].latest, 0)
 
