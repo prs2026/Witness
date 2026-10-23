@@ -290,7 +290,7 @@ class GuiTests(unittest.TestCase):
             unified.withdraw()
             try:
                 titles = [unified.notebook.tab(tab, "text") for tab in unified.notebook.tabs()]
-                self.assertEqual(titles, ["Flight View", "Witness", "Featherweight GPS", "AIM XTRA MQTT"])
+                self.assertEqual(titles, ["Flight View", "Witness", "Featherweight GPS", "AIM XTRA MQTT", "Layout Editor"])
                 replay = record(received_at=time.time() - 20, replay=True)
                 unified.witness.view.update_record(replay, witness=True)
                 unified.witness.view.update_ages()

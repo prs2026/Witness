@@ -1,0 +1,1661 @@
+{"event": "status", "received_at": 1792781951.3077054, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781952.3198113, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781953.3251889, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781954.328975, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781955.3436098, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781956.3532155, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781957.3612258, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781958.3663166, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781959.3772144, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781960.3885665, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781961.3988276, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781962.4024243, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781963.4094665, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781964.416053, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781965.4232528, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781966.426448, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781967.4365041, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781968.4471388, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781969.4525433, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781970.4602664, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781971.4688187, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781972.4767554, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781973.4897697, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781974.496028, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781975.5011675, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781976.5047164, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781977.5141418, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781978.5251224, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781979.5310419, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781980.5310433, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781981.5349874, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781982.5411985, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781983.5502715, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781984.557575, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781985.567298, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781986.5748467, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781987.5824878, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781988.5953176, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781989.609992, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781990.6188483, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781991.619909, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781992.6286416, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781993.6314049, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781994.6414194, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781995.6508403, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781996.658379, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781997.658515, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792781998.665646, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792781999.678478, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782000.6922054, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782001.7027824, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782002.7075822, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782003.7110486, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782004.7164922, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782005.7255228, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782006.7299902, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782007.7454717, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782008.7487867, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782009.7582688, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782010.764689, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782011.7751365, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782012.782149, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782013.7882028, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782014.79857, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782015.8086388, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782016.8134143, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782017.8215866, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782018.8279355, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782019.8279312, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782020.835222, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782021.83609, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782022.843658, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782023.8505914, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782024.8593395, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782025.8654392, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782026.8741167, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782027.874471, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782028.8757133, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782029.8791385, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782030.879214, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782031.8888483, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782032.889586, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782033.8988173, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782034.9013753, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782035.904348, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782036.9128437, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782037.912847, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782038.9221387, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782039.927204, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782040.935741, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782041.9425313, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782042.949761, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782043.9538136, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782044.9563277, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782045.9648616, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782046.9661038, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782047.9764824, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782048.9792712, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782049.9831018, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782050.9841027, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782051.9857953, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782052.9987836, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782054.0062864, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782055.0126069, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782056.0229528, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782057.0239859, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782058.0354815, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782059.0443158, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782060.0521972, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782061.0528848, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782062.0690105, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782063.06953, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782064.077803, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782065.0803878, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782066.0934262, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782067.1028013, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782068.112448, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782069.115929, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782070.1273866, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782071.1318977, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782072.1441689, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782073.1611707, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782074.1761963, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782075.186219, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782076.1891131, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782077.203129, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782078.219327, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782079.229263, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782080.2444808, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782081.2565472, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782082.269034, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782083.2781382, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782084.286053, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782085.2873788, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782086.298037, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782087.3115342, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782088.314636, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782089.3311343, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782090.3310614, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782091.3478196, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782092.347804, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782093.3649282, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782094.3726592, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782095.381243, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782096.3979864, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782097.4065762, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782098.40753, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782099.4243343, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782100.4328563, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782101.4385164, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782102.4393764, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782103.4449513, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782104.4472642, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782105.4586356, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782106.4642916, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782107.4658976, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782108.465926, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782109.4763305, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782110.4766953, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782111.4817464, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782112.4915447, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782113.5047462, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782114.5118282, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782115.5227935, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782116.5366037, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782117.5498695, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782118.552282, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782119.555461, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782120.5704, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782121.5771923, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782122.585932, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782123.5868099, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782124.594775, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782125.607519, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782126.6150053, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782127.619901, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782128.6315105, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782129.6449995, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782130.6522706, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782131.6572087, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782132.6646802, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782133.6696618, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782134.6818285, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782135.6830783, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782136.6955574, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782137.7031083, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782138.7076871, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782139.71958, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782140.7279944, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782141.7355123, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782142.7389896, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782143.7491002, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782144.7489722, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782145.765955, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782146.767159, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782147.7826216, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782148.7905974, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782149.79928, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782150.8141532, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782151.8152652, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782152.8292987, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782153.8310506, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782154.8365903, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782155.8433695, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782156.85327, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782157.8683193, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782158.8704827, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782159.8839204, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782160.8916028, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782161.901579, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782162.9100342, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782163.9195266, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782164.926011, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782165.9414926, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782166.9432697, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782167.9463875, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782168.950176, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782169.958139, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782170.9576187, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782171.960263, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782172.9752502, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782173.9793482, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782174.9815638, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782175.9868968, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782176.992043, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782178.0015104, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782179.0072567, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782180.0076597, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782181.0141683, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782182.0219443, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782183.0302546, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782184.039246, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782185.053013, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782186.0662618, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782187.067046, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782188.0719502, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782189.075548, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782190.078912, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782191.0803058, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782192.095667, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782193.104294, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782194.1176658, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782195.1295667, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782196.1449227, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782197.1500087, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782198.1626034, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782199.1722636, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782200.1778705, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782201.1881225, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782202.205715, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782203.213601, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782204.221046, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782205.2304676, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782206.23079, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782207.238632, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782208.2457352, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782209.2465014, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782210.2558017, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782211.2631094, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782212.2707777, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782213.2746637, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782214.2923682, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782215.2922437, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782216.3024335, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782217.3087654, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782218.3107686, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782219.3181767, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782220.320801, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782221.3257015, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782222.3327959, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782223.341261, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782224.3508093, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782225.354966, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782226.3602033, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782227.3638463, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782228.3759542, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782229.3758042, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782230.392348, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782231.4002898, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782232.40618, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782233.4082513, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782234.418426, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782235.4342625, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782236.4428568, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782237.4483607, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782238.4571056, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782239.4589927, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782240.467881, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782241.476202, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782242.4838574, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782243.4927585, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782244.5089521, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782245.50913, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782246.5181386, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782247.5258007, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782248.5431814, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782249.551288, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782250.5593762, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782251.5675826, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782252.584159, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782253.593083, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782254.609313, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782255.609735, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782256.6181045, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782257.626404, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782258.6351268, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782259.6515539, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782260.6598072, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782261.6681337, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782262.6767051, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782263.6848807, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782264.6855397, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782265.6932847, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782266.7019887, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782267.7096517, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782268.7103107, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782269.7184603, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782270.7347827, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782271.7382483, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782272.748805, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782273.763496, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782274.7677162, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782275.7802508, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782276.7855082, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782277.7935784, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782278.8104737, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782279.8105316, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782280.8120806, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782281.820353, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782282.8297358, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782283.831369, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782284.833647, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782285.8397188, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782286.8523896, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782287.8665516, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782288.8749712, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782289.8793302, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782290.8917341, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782291.8938544, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782292.8954647, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782293.902898, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782294.9131863, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782295.9168203, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782296.9229789, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782297.9335432, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782298.9476273, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782299.9513729, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782300.9630806, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782301.963918, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782302.9684956, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782303.9755054, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782304.9764497, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782305.9808486, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782306.9809194, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782307.9902644, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782308.995608, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782310.0004396, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782311.0027335, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782312.009249, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782313.022747, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782314.0341368, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782315.0424702, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782316.0558093, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782317.067712, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782318.077854, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782319.0893974, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782320.089271, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782321.099198, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782322.1099977, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782323.1230896, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782324.126758, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782325.140029, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782326.1415153, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782327.1434996, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782328.1562164, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782329.165024, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782330.1730158, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782331.1848285, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782332.1977694, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782333.203588, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782334.2164588, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782335.223651, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782336.2266288, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782337.237914, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782338.2421136, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782339.2577627, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782340.2612114, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782341.264313, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782342.2740474, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782343.2755723, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782344.2871797, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782345.28864, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782346.3032176, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782347.3151457, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782348.3304517, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782349.333448, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782350.3343701, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782351.35043, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782352.3561404, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782353.3715413, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782354.3865235, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782355.3991826, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782356.4120984, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782357.4284334, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782358.4430614, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782359.457606, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782360.458497, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782361.4611673, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782362.4619825, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782363.467033, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782364.4697106, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782365.4785144, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782366.4916728, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782367.4949396, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782368.4996765, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782369.5017147, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782370.5163171, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782371.517402, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782372.533132, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782373.5474932, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782374.5507653, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782375.562709, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782376.5727856, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782377.586993, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782378.5883107, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782379.596439, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782380.6065192, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782381.6175842, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782382.6271596, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782383.6340215, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782384.6485481, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782385.6484516, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782386.6575236, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782387.6634426, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782388.676311, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782389.684858, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782390.6872067, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782391.6988618, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782392.7109866, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782393.7257354, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782394.7351022, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782395.7479208, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782396.7487783, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782397.7633994, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782398.764939, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782399.779615, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782400.7941344, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782401.8050728, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782402.8197792, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782403.8252437, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782404.837959, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782405.850763, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782406.8632846, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782407.864799, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782408.8703158, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782409.8729916, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782410.877177, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782411.891236, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782412.903271, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782413.914168, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782414.9251401, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782415.9390867, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782416.951218, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782417.962139, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782418.974476, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782419.990321, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782420.9970374, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782422.005055, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782423.0135496, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782424.0229993, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782425.0384793, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782426.0473013, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782427.0552545, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782428.064558, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782429.0799959, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782430.0895262, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782431.0981572, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782432.1062584, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782433.1145034, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782434.1220384, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782435.130636, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782436.139194, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782437.147428, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782438.1641142, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782439.1645088, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782440.1810117, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782441.1815777, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782442.1893702, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782443.1975045, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782444.1984353, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782445.1996648, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782446.2144635, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782447.2162442, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782448.2308345, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782449.2395265, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782450.2478428, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782451.2645273, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782452.2729862, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782453.2807658, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782454.297756, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782455.3143818, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782456.3227038, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782457.3407686, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782458.347909, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782459.3561392, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782460.3736832, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782461.3817978, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782462.3903172, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782463.3979082, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782464.414695, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782465.4312286, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782466.4482608, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782467.4563353, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782468.4648898, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782469.4812458, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782470.489881, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782471.4903972, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782472.498534, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782473.5065496, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782474.5159106, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782475.5157473, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782476.531433, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782477.5319984, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782478.5483713, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782479.556529, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782480.5652015, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782481.5815701, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782482.5903392, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782483.598342, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782484.6069055, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782485.623337, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782486.6401799, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782487.648719, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782488.6651676, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782489.6651454, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782490.6819167, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782491.6901977, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782492.7070642, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782493.7230604, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782494.732822, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782495.7409263, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782496.7490077, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782497.7570527, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782498.7655113, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782499.7736926, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782500.7898588, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782501.7899957, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782502.7990346, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782503.815252, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782504.8241286, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782505.839008, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782506.849177, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782507.8569856, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782508.865823, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782509.8784978, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782510.8822365, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782511.8963637, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782512.9059024, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782513.9072852, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782514.9139106, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782515.9245582, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782516.9386225, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782517.9411347, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782518.9494073, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782519.9587076, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782520.9633656, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782521.9641643, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782522.9787571, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782523.9923432, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782525.0018067, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782526.0040498, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782527.0155323, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782528.0190926, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782529.0344062, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782530.037006, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782531.0486112, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782532.0594192, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782533.071179, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782534.071218, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782535.0836468, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782536.0957015, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782537.1114147, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782538.125981, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782539.142259, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782540.1505504, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782541.1582696, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782542.1669927, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782543.1834705, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782544.1915123, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782545.199723, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782546.2079883, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782547.2251742, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782548.227264, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782549.2332027, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782550.241442, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782551.250009, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782552.2578433, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782553.2668738, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782554.2747548, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782555.2835116, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782556.2921505, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782557.3083613, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782558.308407, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782559.316832, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782560.3249717, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782561.3333268, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782562.3416507, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782563.3510473, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782564.35857, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782565.366177, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782566.3669534, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782567.3737733, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782568.3737705, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782569.3836963, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782570.3921692, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782571.3992887, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782572.4000435, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782573.4087963, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782574.408612, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782575.4173958, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782576.425341, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782577.4336894, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782578.4440494, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782579.4505672, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782580.4586718, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782581.475377, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782582.4838452, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782583.490836, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782584.5004709, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782585.5090687, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782586.5089457, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782587.517102, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782588.5171359, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782589.5258224, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782590.5346577, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782591.542887, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782592.5508642, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782593.5676167, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782594.5765166, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782595.5927823, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782596.6005068, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782597.6176317, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782598.634301, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782599.6511183, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782600.6677954, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782601.6848125, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782602.6856103, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782603.693707, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782604.7008681, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782605.7095919, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782606.7177715, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782607.718598, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782608.7341847, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782609.7474961, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782610.7684216, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782611.7846668, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782612.7863467, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782613.7947917, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782614.7963638, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782615.8051867, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782616.8117533, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782617.8182697, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782618.8234346, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782619.8260024, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782620.827973, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782621.829234, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782622.828852, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782623.8350608, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782624.8373814, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782625.851385, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782626.851602, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782627.8608902, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782628.876638, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782629.885432, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782630.8936324, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782631.9102075, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782632.919203, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782633.927237, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782634.9305222, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782635.935489, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782636.9438787, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782637.9604237, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782638.9746788, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782639.978883, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782640.9836638, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782641.9855464, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782642.9861407, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782643.994001, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782645.0104468, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782646.0208924, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782647.0371952, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782648.0430758, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782649.0521228, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782650.0526202, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782651.0531228, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782652.0641165, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782653.0691836, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782654.0696666, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782655.0856984, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782656.0940495, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782657.1021113, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782658.1197388, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782659.136508, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782660.1443734, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782661.1618867, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782662.1777067, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782663.1866639, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782664.2027004, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782665.2191496, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782666.227896, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782667.2342248, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782668.2443337, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782669.2618556, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782670.270442, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782671.2867172, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782672.2876523, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782673.29436, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782674.3112664, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782675.3276188, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782676.33636, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782677.3449073, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782678.3592455, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782679.368387, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782680.3835342, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782681.3952425, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782682.4112904, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782683.4242342, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782684.4382057, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782685.4432256, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782686.4554925, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782687.4675448, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782688.4833577, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782689.4970016, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782690.4972398, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782691.5001414, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782692.5014324, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782693.5157669, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782694.5217981, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782695.525238, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782696.5294464, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782697.5320327, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782698.5333407, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782699.5474718, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782700.553478, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782701.563493, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782702.5713515, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782703.5780597, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782704.5934563, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782705.595269, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782706.5968282, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782707.6107383, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782708.6229894, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782709.6331723, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782710.6482415, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782711.663292, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782712.6769729, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782713.689202, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782714.6927106, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782715.6928105, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782716.7057397, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782717.7060766, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782718.7223911, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782719.7288728, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782720.7331972, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782721.7367811, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782722.7520113, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782723.757968, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782724.7724302, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782725.7871313, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782726.7909002, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782727.794994, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782728.8013031, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782729.806794, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782730.8142192, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782731.8146493, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782732.8155391, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782733.8198743, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782734.8237026, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782735.8361096, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782736.837931, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782737.8386228, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782738.8522186, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782739.867041, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782740.880051, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782741.888795, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782742.8920205, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782743.893735, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782744.8985713, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782745.9143016, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782746.9212952, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782747.9355838, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782748.9376898, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782749.9411137, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782750.9473526, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782751.9608502, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782752.9712133, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782753.97369, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782754.9836988, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782755.9881368, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782756.9944122, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782758.0045037, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782759.0097961, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782760.0191987, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782761.0196075, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782762.0286367, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782763.0414045, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782764.0549517, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782765.066562, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782766.0757802, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782767.0792809, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782768.0796497, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782769.0888677, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782770.0973532, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782771.105031, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782772.1057305, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782773.1222157, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782774.1382768, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782775.1552317, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782776.1715994, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782777.180353, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782778.188251, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782779.1895306, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782780.2058084, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782781.2219822, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782782.230123, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782783.23941, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782784.2469404, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782785.2637029, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782786.264387, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782787.2720397, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782788.2884777, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782789.3057983, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782790.321863, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782791.3311703, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782792.3470025, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782793.3640425, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782794.3644187, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782795.3722672, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782796.3805666, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782797.3888855, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782798.4057283, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782799.4140775, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782800.422197, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782801.4316552, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782802.447194, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782803.4557483, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782804.463922, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782805.4734514, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782806.489686, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782807.4983397, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782808.5056937, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782809.522614, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782810.5388985, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782811.5474536, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782812.5640185, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782813.5729802, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782814.589375, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782815.59772, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782816.6058378, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782817.614413, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782818.6225483, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782819.6237028, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782820.6235385, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782821.6320105, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782822.6477525, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782823.656498, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782824.6723113, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782825.6740363, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782826.6808345, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782827.6898606, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782828.7060432, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782829.7141504, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782830.714725, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782831.7230024, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782832.7312129, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782833.7403018, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782834.7477798, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782835.7574825, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782836.773007, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782837.7814813, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782838.7906108, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782839.8001773, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782840.8064861, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782841.8145993, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782842.824513, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782843.831335, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782844.8313372, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782845.8323503, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782846.8482378, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782847.8650408, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782848.878518, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782849.884665, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782850.8932228, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782851.9080615, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782852.9227083, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782853.924955, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782854.937757, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782855.9384427, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782856.9497042, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782857.9542801, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782858.9650512, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782859.9677014, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782860.9822354, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782861.9955533, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782863.0109425, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782864.023495, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782865.0384004, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782866.0490718, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782867.0626917, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782868.0642698, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782869.0752416, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782870.0896277, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782871.0904412, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782872.1028705, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782873.117873, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782874.134403, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782875.1507015, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782876.1626477, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782877.1723068, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782878.1743896, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782879.1825244, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782880.1908884, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782881.1990113, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782882.2071562, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782883.2239606, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782884.2336287, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782885.2405689, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782886.248992, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782887.2573252, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782888.259431, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782889.265767, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782890.2744374, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782891.2820609, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782892.2892644, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782893.2992074, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782894.3160896, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782895.3254118, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782896.3411827, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782897.3583188, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782898.3674455, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782899.3822236, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782900.391917, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782901.4093783, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782902.4252923, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782903.4328763, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782904.4412916, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782905.449587, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782906.4581609, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782907.4656663, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782908.4751813, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782909.4828002, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782910.4831238, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782911.4910817, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782912.5079994, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782913.5083477, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782914.5250044, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782915.533021, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782916.5415168, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782917.5497973, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782918.5584328, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782919.5663342, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782920.5769994, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782921.5916574, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782922.600248, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782923.6082706, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782924.6095517, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782925.6182764, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782926.6335266, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782927.6415565, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782928.6497564, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782929.6583323, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782930.667062, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782931.6747866, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782932.6837165, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782933.7000222, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782934.708797, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782935.7166862, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782936.7251155, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782937.7334783, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782938.73636, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782939.750252, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782940.7672935, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782941.7837012, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782942.7931938, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782943.808695, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782944.816994, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782945.8170729, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782946.8250284, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782947.8261018, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782948.8343034, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782949.8508682, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782950.8592436, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782951.8673666, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782952.8760307, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782953.8922193, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782954.8996558, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782955.900877, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782956.9089568, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782957.9203787, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782958.9255302, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782959.9339073, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782960.9430802, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782961.9592063, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782962.9675646, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782963.975918, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782964.993029, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782966.0093079, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782967.0178866, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782968.0259736, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782969.0347817, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782970.0425014, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782971.0597403, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782972.0676205, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782973.0757823, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782974.0926335, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782975.101324, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782976.1010065, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782977.1098003, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782978.118109, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782979.126882, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782980.143049, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782981.1514442, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782982.159136, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782983.1679835, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782984.1762035, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782985.1927845, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782986.201024, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782987.2102118, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782988.2259705, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782989.2345204, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782990.236066, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782991.2434921, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782992.2513359, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782993.268174, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782994.2764926, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782995.2785666, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782996.2849698, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782997.2934613, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792782998.3101916, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792782999.3266444, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783000.3410404, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783001.349362, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783002.363335, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783003.3769503, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783004.382907, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783005.3852232, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783006.3932712, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783007.4013824, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783008.4101655, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783009.4190388, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783010.4267232, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783011.4365957, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783012.4436266, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783013.4520373, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783014.4595199, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783015.4689078, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783016.4768245, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783017.4920783, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783018.5071404, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783019.5197983, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783020.533221, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783021.5399518, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783022.540109, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783023.5552201, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783024.5700366, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783025.5849564, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783026.597593, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783027.600266, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783028.6101422, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783029.6118646, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783030.6205568, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783031.6276975, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783032.6377878, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783033.6480048, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783034.6496806, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783035.6617785, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783036.6704936, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783037.6813834, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783038.6857734, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783039.6993737, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783040.699482, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783041.7126708, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783042.7198105, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783043.7348294, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783044.7491508, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783045.7634325, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783046.7720332, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783047.7735617, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783048.7739897, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783049.7850275, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783050.7868514, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783051.7998219, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783052.8141954, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783053.8263, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783054.829307, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783055.8353505, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783056.8354619, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783057.8511033, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783058.8593051, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783059.8753686, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783060.887273, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783061.8896358, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783062.8947544, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783063.9116626, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783064.9281886, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783065.9367876, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783066.9532616, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783067.9562907, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783068.959545, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783069.9680672, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783070.981, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783071.994941, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783073.005253, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783074.0061479, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783075.006734, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783076.008082, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783077.0107036, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783078.023353, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783079.0291584, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783080.0449471, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783081.0583327, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783082.068949, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783083.0785239, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783084.0934904, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783085.1072905, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783086.1179235, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783087.1332586, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783088.1434066, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783089.1540015, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783090.1669743, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783091.1805074, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783092.1898973, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783093.2045171, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783094.2205982, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783095.2383976, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783096.2456615, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783097.2539637, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783098.2632053, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783099.263977, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783100.271167, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783101.2789602, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783102.2962766, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783103.312247, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783104.3294473, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783105.3457804, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783106.3628278, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783107.3792, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783108.3882194, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783109.3961563, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783110.4115689, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783111.420951, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783112.4376867, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783113.4376457, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783114.4384112, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783115.4543488, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783116.4559202, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783117.462558, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783118.4710221, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783119.4710586, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783120.480433, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783121.4877126, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783122.4881165, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783123.5046706, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783124.512789, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783125.512993, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783126.5216646, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783127.5379405, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783128.555083, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783129.5712616, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783130.5882008, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783131.5890956, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783132.605033, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783133.6210926, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783134.6382596, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783135.6548982, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783136.6716344, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783137.6867788, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783138.6971767, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783139.6984942, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783140.7052004, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783141.7131991, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783142.7192283, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783143.7385046, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783144.7550848, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783145.7557504, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783146.771735, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783147.7726178, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783148.7887187, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783149.804978, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783150.8220272, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783151.822401, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783152.8394687, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783153.8551412, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783154.8720603, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783155.888756, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783156.897325, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783157.9135103, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783158.922068, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783159.938559, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783160.9560513, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783161.9637232, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783162.972603, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783163.9804702, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783164.9975898, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783166.0052087, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783167.0224338, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783168.0312064, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783169.0473304, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783170.0637486, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783171.0809162, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783172.097082, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783173.1147451, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783174.1224952, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783175.139172, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783176.139786, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783177.155853, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783178.1723926, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783179.1892662, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783180.2056198, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783181.2067275, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783182.2064872, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783183.2142432, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783184.2306767, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783185.2396035, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783186.247551, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783187.2646372, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783188.2815664, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783189.2979507, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783190.3026874, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783191.312035, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783192.3199885, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783193.3202157, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783194.3324308, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783195.3368964, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783196.3511674, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783197.3516483, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783198.3631446, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783199.366585, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783200.3670404, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783201.380433, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783202.3938997, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783203.4065974, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783204.4209807, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783205.4332259, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783206.442072, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783207.4570744, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783208.4675481, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783209.481355, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783210.493715, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783211.5040677, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783212.516184, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783213.528592, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783214.5406895, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783215.5520542, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783216.5652232, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783217.5804105, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783218.5821543, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783219.5869887, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783220.587606, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783221.6007948, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783222.6154509, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783223.6177132, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783224.6231382, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783225.632015, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783226.6390433, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783227.6489365, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783228.6567936, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783229.6661222, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783230.6817758, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783231.6996012, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783232.7152166, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783233.723908, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783234.7394366, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783235.7408025, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783236.749217, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783237.7575214, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783238.7730103, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783239.7908416, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783240.8086152, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783241.815751, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783242.8240685, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783243.8406992, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783244.855739, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783245.857686, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783246.8741698, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783247.8826537, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783248.8905404, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783249.8997536, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783250.9157395, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783251.9326363, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783252.94081, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783253.9492955, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783254.950212, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783255.9583354, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783256.9657106, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783257.974427, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783258.9908109, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783259.9995592, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783261.0160518, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783262.0243745, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783263.0328362, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783264.0495026, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783265.0577033, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783266.0664723, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783267.0749512, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783268.0911074, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783269.0909173, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783270.099722, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783271.0995636, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783272.1078796, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783273.1233447, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783274.1330082, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783275.1496072, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783276.1664412, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783277.1746895, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783278.191471, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783279.199599, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783280.20943, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783281.2170656, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783282.2334118, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783283.2414951, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783284.258416, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783285.2665088, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783286.2749317, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783287.2916205, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783288.3003457, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783289.3091667, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783290.3169308, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783291.3249624, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783292.3350346, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783293.3500412, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783294.3592348, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783295.3747776, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783296.3836079, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783297.390507, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783298.400523, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783299.4082885, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783300.4168918, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783301.42898, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783302.4292703, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783303.4424858, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783304.4544103, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783305.4567525, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783306.4675047, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783307.4770746, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783308.4819396, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783309.4897873, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783310.4986472, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783311.5063524, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783312.506781, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783313.5173306, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783314.523409, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783315.5232842, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783316.5315387, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783317.5330336, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783318.5485365, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783319.5566766, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783320.5677435, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783321.5734248, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783322.5737891, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783323.590033, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783324.59808, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783325.6068585, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783326.609636, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783327.6179862, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783328.6222146, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783329.6273012, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783330.6406863, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783331.6483657, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783332.6571178, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783333.667774, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783334.6683447, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783335.673956, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783336.6764922, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783337.68193, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783338.6827018, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783339.686685, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783340.6989427, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783341.707009, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783342.7142794, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783343.7172928, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783344.7321875, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783345.738971, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783346.7399535, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783347.748081, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783348.7593317, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783349.7678216, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783350.7823691, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783351.7935104, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783352.8058927, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783353.8183784, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783354.8236492, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783355.8401425, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783356.8568556, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783357.8567917, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783358.8682582, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783359.8799534, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783360.8809063, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783361.894038, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783362.9097273, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783363.9100266, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783364.9252744, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783365.9400623, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783366.9533932, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783367.9652197, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783368.9754457, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783369.98909, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783370.9985821, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783372.0131145, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783373.0265048, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783374.0419698, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783375.05734, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783376.0699046, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783377.0844982, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783378.0962641, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783379.1123629, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783380.124883, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783381.1378825, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783382.151183, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783383.1520572, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783384.1627104, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783385.165468, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783386.176192, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783387.1899338, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783388.2022438, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783389.2113552, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783390.2139175, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783391.2275312, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783392.227927, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783393.235619, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783394.2523732, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783395.2690842, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783396.2772753, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783397.2857773, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783398.2940922, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783399.3107605, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783400.3259041, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783401.3443978, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783402.3524508, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783403.354051, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783404.3626184, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783405.3694017, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783406.3695142, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783407.371317, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783408.3857396, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783409.3876622, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783410.3943675, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783411.4029093, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783412.4107747, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783413.4191778, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783414.4274864, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783415.4374292, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783416.4515061, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783417.4530404, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783418.461302, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783419.4779787, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783420.4942198, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783421.5113227, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783422.527999, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783423.5375087, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783424.5535548, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783425.5696852, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783426.5781915, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783427.5950491, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783428.6036708, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783429.6202884, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783430.636531, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783431.6451492, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783432.6511953, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783433.6533706, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783434.662315, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783435.6701477, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783436.6867127, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783437.6963718, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783438.711588, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783439.720017, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783440.728263, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783441.7454343, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783442.7532098, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783443.761948, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783444.778325, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783445.7869976, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783446.7873929, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783447.8037083, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783448.8202322, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783449.8381312, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783450.8536203, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783451.8708029, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783452.8786185, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783453.895614, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783454.9037275, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783455.9205952, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783456.9370978, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783457.9457345, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783458.9480007, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783459.9628818, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783460.9788246, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783461.988073, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783463.0039, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783464.0194159, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783465.028363, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783466.0455894, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783467.0540643, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783468.0709019, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783469.0789223, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783470.088287, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783471.1041892, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783472.113124, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783473.1289756, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783474.1382132, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783475.1543217, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783476.1627095, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783477.1625252, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783478.1789782, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783479.1865168, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783480.1879363, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783481.2040343, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783482.2129383, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783483.2293253, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783484.2376964, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783485.2459123, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783486.262918, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783487.2795184, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783488.2963333, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783489.3127322, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783490.3214474, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783491.3295133, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783492.338055, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783493.3460677, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783494.3631809, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783495.3713539, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783496.3877869, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783497.3995905, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783498.4051845, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783499.416449, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783500.4241078, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783501.428908, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783502.4330277, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783503.441217, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783504.4510076, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783505.4580371, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783506.4725509, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783507.4794047, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783508.4876597, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783509.4893632, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783510.4954133, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783511.50723, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783512.5128582, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783513.5129733, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783514.5207977, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783515.52718, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783516.5354211, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783517.5378504, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783518.5414503, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783519.5464268, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783520.5557504, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783521.57083, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783522.5813725, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783523.5878756, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783524.5947967, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783525.5962105, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783526.5978286, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783527.6089087, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783528.6218507, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783529.6231215, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783530.6356022, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783531.635522, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783532.638939, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783533.648955, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783534.664324, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783535.6671703, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783536.669415, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783537.684416, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783538.6907163, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783539.6938365, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783540.6970565, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783541.7101347, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783542.7203047, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783543.7207117, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783544.7343554, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783545.7467802, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783546.7610958, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783547.7753644, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783548.7788844, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783549.792487, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783550.7965717, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783551.8112407, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783552.8257535, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783553.826931, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783554.8413496, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783555.8475077, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783556.8614862, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783557.8621554, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783558.8778665, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783559.8930633, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783560.907281, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783561.9223723, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783562.9378698, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783563.9392772, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783564.9554334, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783565.956603, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783566.963272, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783567.9796233, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783568.9911296, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783569.993183, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783571.009151, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783572.0183396, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783573.0231967, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783574.0312011, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783575.0336, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783576.0389671, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783577.0508687, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783578.0640597, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783579.0691278, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783580.0786214, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783581.0816374, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783582.089994, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783583.0987985, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783584.112983, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783585.1165807, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783586.1315348, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783587.1382608, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783588.156412, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783589.1675267, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783590.1766424, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783591.1814425, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783592.1869879, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783593.1953578, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783594.2023237, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783595.2092361, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783596.2098606, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783597.215157, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783598.2160766, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783599.2319486, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783600.2335973, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783601.2387872, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783602.2397838, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783603.2470455, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783604.2570062, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783605.2653553, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783606.2673364, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783607.2740955, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783608.2792683, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783609.2903645, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783610.305857, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783611.3172803, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783612.3187451, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783613.329673, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783614.3299372, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783615.3403065, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783616.3453052, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783617.3550086, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783618.357328, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783619.3638334, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783620.3737352, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783621.3815923, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783622.3871615, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783623.4020452, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783624.407072, "message": "Connecting to Witness at 127.0.0.1:8766..."}
+{"event": "status", "received_at": 1792783625.4161747, "message": "Waiting for Witness: timed out; retrying in 1s"}
+{"event": "status", "received_at": 1792783626.4236383, "message": "Connecting to Witness at 127.0.0.1:8766..."}

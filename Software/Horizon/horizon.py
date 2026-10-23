@@ -21,7 +21,9 @@ Disconnect also disables that input's auto-connect. No network range is scanned.
 Horizon does not open the AIM USB device. Logs go in logs/: Witness JSONL,
 Featherweight raw BIN plus diagnostic/packet JSONL, and AIM MQTT JSONL.
 
-Flight View opens first. Edit flight_view_default.json, use Load layout, or
+Flight View opens first. Use the Layout Editor tab to edit a separate draft,
+then Apply to update the dashboard or Save JSON to reuse it. Applying resets
+graph history, not receiver connections or logs. You can also load a layout or
 start with: python horizon.py --flight-layout path/to/layout.json
 See flight_view.py's module help for the layout schema and source selection.
 """
@@ -34,6 +36,7 @@ from tkinter import ttk
 from aim_tab import AimMqttTab
 from flight_data import DEFAULT_LAYOUT
 from flight_view import FlightView
+from flight_editor import FlightLayoutEditor
 from ground_tabs import FeatherweightTab, WitnessTab
 from ground_settings import (
     DEFAULT_AIM_MQTT_HOST, DEFAULT_AIM_MQTT_PORT,
@@ -59,8 +62,9 @@ class HorizonGroundStation(tk.Tk):
         self.aim = AimMqttTab(self.notebook, log_dir=log_dir, host=DEFAULT_AIM_MQTT_HOST,
                               port=DEFAULT_AIM_MQTT_PORT, client_uuid=DEFAULT_AIM_MQTT_UUID,
                               base_path=DEFAULT_AIM_MQTT_BASE_PATH, on_sample=self.flight.data.accept_aim)
+        self.layout_editor = FlightLayoutEditor(self.notebook, self.flight)
         for tab, title in ((self.flight, "Flight View"), (self.witness, "Witness"), (self.featherweight, "Featherweight GPS"),
-                           (self.aim, "AIM XTRA MQTT")):
+                           (self.aim, "AIM XTRA MQTT"), (self.layout_editor, "Layout Editor")):
             self.notebook.add(tab, text=title)
         for tab in (self.witness, self.featherweight, self.aim):
             tab.set_auto_connect(auto_connect)

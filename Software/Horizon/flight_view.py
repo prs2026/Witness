@@ -1,6 +1,8 @@
 """Horizon's single-pane launch dashboard. Nothing on this tab scrolls.
 
 JSON: flight_view_default.json or Flight controls > Load layout / --flight-layout.
+The Layout Editor tab offers form-based editing, trace/row ordering and JSON
+save/load. Draft edits do not affect live telemetry until explicitly applied.
 The compact Flight controls menu contains layout, pause, clear, pad, time-window,
 fullscreen and display-details actions. Live/test/stale warnings remain visible
 beside it. No separate title/footer rows take space away from the dashboard.
@@ -18,7 +20,7 @@ pairs AIM CPU/ejection batteries. Voltage fields display three decimal places.
           axis: left|right}
 
 Default six plots occupy the center 2x3 grid; flight readouts/state stay left,
-GPS and power/continuity stay right. All dimensions follow the viewport.
+GPS and power stay right. All dimensions follow the viewport.
 Older plot-only JSON layouts also fit (no readouts). Legacy plot_height is
 accepted but no longer fixes the physical height. Use at most six plots in
 at most two columns and three rows; larger layouts are rejected, never hidden.

@@ -79,10 +79,19 @@ class FlightLayoutEditor(ttk.Frame):
         self.form = ttk.Frame(self.canvas, padding=10)
         self.form.columnconfigure(1, weight=1)
         self.form_window = self.canvas.create_window(0, 0, anchor="nw", window=self.form)
-        self.canvas.bind("<Configure>", lambda e: self.canvas.itemconfigure(self.form_window, width=e.width))
+        self.canvas.bind("<Configure>", self._resize_form)
+        self.canvas.bind("<MouseWheel>", self._wheel)
         self.form.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
         panes.add(right, weight=3)
         self.rebuild("layout")
+
+    def _resize_form(self, event):
+        self.canvas.itemconfigure(self.form_window, width=event.width)
+        self.hint.configure(wraplength=max(100, event.width - 25))
+
+    def _wheel(self, event):
+        self.canvas.yview_scroll(-1 if event.delta > 0 else 1, "units")
+        return "break"
 
     def _resize_status(self, event):
         # Status text wraps without forcing a minimum application width.
@@ -165,7 +174,7 @@ class FlightLayoutEditor(ttk.Frame):
             self.field("title", "Title", target["title"])
             self.field("unit", "Units", target.get("unit", "value"))
             if self.selected.startswith("readouts"):
-                self.field("group", "Position / section", GROUPS[target["group"]], list(GROUPS.values()))
+                self.field("group", "Position / section", GROUPS.get(target["group"], target["group"]), list(GROUPS.values()))
             else:
                 self.field("right_unit", "Right-axis units (optional)", target.get("right_unit") or "")
                 limits = target.get("y_range") or ("", "")
@@ -195,8 +204,11 @@ class FlightLayoutEditor(ttk.Frame):
                 "Packet lists use commas. Fixed Y limits apply only with Auto-scale off.\n"
                 'FW tracker filter: {"unit_type": "TRACKER"}. Leave {} for no filter.\n'
                 "Existing custom fields and filters are preserved. Right axis requires right-axis units.")
-        ttk.Label(self.form, text=hint, wraplength=420, justify="left").grid(row=18, column=0, columnspan=2, sticky="w", pady=8)
+        self.hint = ttk.Label(self.form, text=hint, wraplength=max(100, self.canvas.winfo_width() - 25), justify="left")
+        self.hint.grid(row=18, column=0, columnspan=2, sticky="w", pady=8)
         ttk.Button(self.form, text="Update draft item", command=self.update_item).grid(row=19, column=0, columnspan=2, sticky="ew")
+        for widget in [self.form, *self.form.winfo_children()]:
+            widget.bind("<MouseWheel>", self._wheel)
         self.canvas.yview_moveto(0)
         self.loading = False
 
@@ -229,6 +241,8 @@ class FlightLayoutEditor(ttk.Frame):
             elif self.selected.count(":") == 1:
                 if "group" in values:
                     values["group"] = next((key for key, label in GROUPS.items() if label == values["group"]), values["group"])
+                    if values["group"] not in GROUPS:
+                        raise ValueError("Choose a valid position / section")
                 else:
                     low, high = values.pop("y_min"), values.pop("y_max")
                     values["y_range"] = None if not low.strip() and not high.strip() else [float(low), float(high)]
@@ -244,7 +258,7 @@ class FlightLayoutEditor(ttk.Frame):
                     values.pop("unit")
                     updated.pop("unit", None)
             updated.update(values)
-        except (ValueError, TypeError, tk.TclError) as exc:
+        except (ValueError, TypeError, RecursionError, tk.TclError) as exc:
             self.status.set(f"Please correct this item: {exc}")
             return False
         target = self._target(self.selected)
@@ -273,8 +287,10 @@ class FlightLayoutEditor(ttk.Frame):
                 "field": "barometric_altitude", "color": "#171717"}
 
     def add_trace(self):
-        if not self.selected or self.selected == "layout" or not self.commit():
+        if not self.selected or self.selected == "layout":
             self.status.set("Select a graph or readout to add a trace.")
+            return
+        if not self.commit():
             return
         row_key = ":".join(self.selected.split(":")[:2])
         traces = self._target(row_key)["traces"]

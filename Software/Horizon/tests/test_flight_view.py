@@ -88,7 +88,8 @@ class LayoutTests(unittest.TestCase):
     def test_default_and_strict_validation(self):
         layout = load_layout(DEFAULT_LAYOUT)
         self.assertEqual(len(layout.plots), 6)
-        self.assertEqual(len(layout.readouts), 14)
+        self.assertEqual(len(layout.readouts), 12)
+        self.assertFalse(any("continuity" in row.title.lower() for row in layout.readouts))
         self.assertEqual({t.input for p in layout.plots for t in p.traces}, {"witness", "aim", "featherweight"})
         for changes in ({"version": True}, {"version": 2}, {"columns": 1.5}, {"columns": 0},
                         {"window_seconds": float("nan")}, {"refresh_ms": 0}, {"max_points": 20001},
@@ -493,7 +494,7 @@ class FlightGuiTests(unittest.TestCase):
         try:
             app.flight.redraw()
             self.assertIn("LAYOUT ERROR", app.flight.banner.cget("text"))
-            self.assertEqual(len(app.notebook.tabs()), 4)
+            self.assertEqual(len(app.notebook.tabs()), 5)
         finally:
             app.close()
 
