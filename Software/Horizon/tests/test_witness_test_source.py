@@ -137,7 +137,7 @@ class TestModeGuiTests(unittest.TestCase):
             except tk.TclError as exc:
                 self.skipTest(f"Tk display unavailable: {exc}")
             app.withdraw()
-            unified = HorizonGroundStation(log_dir=Path(directory), auto_connect=False)
+            unified = HorizonGroundStation(log_dir=Path(directory), auto_connect=False, broker_enabled=False)
             unified.withdraw()
             def pump_until(predicate, timeout=5):
                 deadline = time.monotonic() + timeout

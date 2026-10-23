@@ -15,7 +15,12 @@ the Witness feed uses 127.0.0.1:8766, not either of Witness's raw TCP inputs.
 Select generic Featherweight adapters once here (not in main.py); after a valid
 packet their USB identity is saved in auto_connect_featherweight.json. Named
 Featherweight devices are discovered automatically. For AIM, leave the vendor
-AIM BASE application and its MQTT broker running. Each input has an Auto-connect
+AIM BASE application running and publish to localhost:1883. Horizon starts an
+embedded, local-only MQTT broker by default; disable it with the checkbox in
+the AIM tab or --no-broker to use an external broker. No separate broker app is
+needed. The broker stops when Horizon closes; retained messages are not persisted.
+Install requirements.txt after upgrading. Broker lifecycle/errors are logged
+to logs/mqtt_broker_*.log. Each input has an Auto-connect
 checkbox: turning it off keeps a healthy connection but stops future retries.
 Disconnect also disables that input's auto-connect. No network range is scanned.
 Horizon does not open the AIM USB device. Logs go in logs/: Witness JSONL,
@@ -41,13 +46,15 @@ from ground_tabs import FeatherweightTab, WitnessTab
 from ground_settings import (
     DEFAULT_AIM_MQTT_HOST, DEFAULT_AIM_MQTT_PORT,
     DEFAULT_AIM_MQTT_UUID, DEFAULT_AIM_MQTT_BASE_PATH,
+    DEFAULT_MQTT_BROKER_ENABLED, DEFAULT_MQTT_BROKER_PORT,
 )
 
 LOG_DIR = Path(__file__).resolve().parent / "logs"
 
 
 class HorizonGroundStation(tk.Tk):
-    def __init__(self, *, log_dir=LOG_DIR, auto_connect=True, flight_layout=DEFAULT_LAYOUT):
+    def __init__(self, *, log_dir=LOG_DIR, auto_connect=True, flight_layout=DEFAULT_LAYOUT,
+                 broker_enabled=DEFAULT_MQTT_BROKER_ENABLED, broker_port=DEFAULT_MQTT_BROKER_PORT):
         super().__init__()
         self.title("Horizon Unified Ground Station")
         self.geometry(f"{min(1440, self.winfo_screenwidth() - 40)}x{min(900, self.winfo_screenheight() - 100)}")
@@ -61,7 +68,8 @@ class HorizonGroundStation(tk.Tk):
                                              on_record=lambda record: self.flight.data.accept_record("featherweight", record))
         self.aim = AimMqttTab(self.notebook, log_dir=log_dir, host=DEFAULT_AIM_MQTT_HOST,
                               port=DEFAULT_AIM_MQTT_PORT, client_uuid=DEFAULT_AIM_MQTT_UUID,
-                              base_path=DEFAULT_AIM_MQTT_BASE_PATH, on_sample=self.flight.data.accept_aim)
+                              base_path=DEFAULT_AIM_MQTT_BASE_PATH, on_sample=self.flight.data.accept_aim,
+                              broker_enabled=broker_enabled, broker_port=broker_port)
         self.layout_editor = FlightLayoutEditor(self.notebook, self.flight)
         for tab, title in ((self.flight, "Flight View"), (self.witness, "Witness"), (self.featherweight, "Featherweight GPS"),
                            (self.aim, "AIM XTRA MQTT"), (self.layout_editor, "Layout Editor")):
@@ -82,5 +90,7 @@ if __name__ == "__main__":
     parser.add_argument("--flight-layout", default=DEFAULT_LAYOUT, type=Path,
                         help="Flight View JSON layout (default: flight_view_default.json next to horizon.py)")
     parser.add_argument("--no-auto-connect", action="store_true", help="start with all automatic connections off")
+    parser.add_argument("--no-broker", action="store_true", help="do not start the embedded localhost MQTT broker")
     args = parser.parse_args()
-    HorizonGroundStation(flight_layout=args.flight_layout, auto_connect=not args.no_auto_connect).mainloop()
+    HorizonGroundStation(flight_layout=args.flight_layout, auto_connect=not args.no_auto_connect,
+                         broker_enabled=DEFAULT_MQTT_BROKER_ENABLED and not args.no_broker).mainloop()

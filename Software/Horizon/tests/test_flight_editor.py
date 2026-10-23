@@ -17,7 +17,7 @@ class FlightEditorTests(unittest.TestCase):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
         try:
-            self.app = HorizonGroundStation(log_dir=Path(self.directory.name), auto_connect=False)
+            self.app = HorizonGroundStation(log_dir=Path(self.directory.name), auto_connect=False, broker_enabled=False)
         except tk.TclError as exc:
             self.skipTest(f"Tk display unavailable: {exc}")
         self.app.withdraw()

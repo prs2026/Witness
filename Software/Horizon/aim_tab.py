@@ -11,10 +11,13 @@ from tkinter import messagebox, scrolledtext, ttk
 
 from aim_mqtt import AIM_TOPIC_FIELDS, AimMqttReceiver, AimSettings
 from auto_connect import AutoConnectTab
+from mqtt_broker import EmbeddedMqttBroker
+from ground_settings import DEFAULT_MQTT_BROKER_ENABLED, DEFAULT_MQTT_BROKER_PORT
 
 
 class AimMqttTab(AutoConnectTab, ttk.Frame):
-    def __init__(self, parent, *, log_dir: Path, host, port, client_uuid, base_path, on_sample=None):
+    def __init__(self, parent, *, log_dir: Path, host, port, client_uuid, base_path, on_sample=None,
+                 broker_enabled=DEFAULT_MQTT_BROKER_ENABLED, broker_port=DEFAULT_MQTT_BROKER_PORT):
         super().__init__(parent, padding=8)
         self.log_dir = log_dir
         self.receiver = None
@@ -33,8 +36,13 @@ class AimMqttTab(AutoConnectTab, ttk.Frame):
         self.status = tk.StringVar(value="Disconnected")
         self.stats = tk.StringVar(value="Messages: 0   Bytes: 0   Errors: 0")
         self.log_status = tk.StringVar(value="")
+        self.broker = EmbeddedMqttBroker(log_dir, port=broker_port)
+        self.broker_enabled = tk.BooleanVar(value=broker_enabled)
+        self.broker_status = tk.StringVar(value="Embedded broker off")
+        self._last_broker_status = None
         self._build_ui()
         self._reset_fields()
+        self.broker_changed()
         self._after_id = self.after(100, self._poll)
 
     def _build_ui(self):
@@ -65,6 +73,11 @@ class AimMqttTab(AutoConnectTab, ttk.Frame):
         entry.grid(row=0, column=1, sticky="ew")
         self.entries.append(entry)
         ttk.Label(topic_controls, text="/#  (receive only)").grid(row=0, column=2)
+        self.broker_button = ttk.Checkbutton(topic_controls, text="Run embedded MQTT broker (local only)",
+                                             variable=self.broker_enabled, command=self.broker_changed)
+        self.broker_button.grid(row=1, column=0, columnspan=3, sticky="w", pady=(5, 0))
+        ttk.Label(topic_controls, text="Turning this off disconnects its clients; an external broker is unaffected.").grid(
+            row=2, column=0, columnspan=3, sticky="w")
 
         information = ttk.Frame(self)
         information.grid(row=2, column=0, sticky="ew", pady=5)
@@ -74,6 +87,10 @@ class AimMqttTab(AutoConnectTab, ttk.Frame):
         information.bind("<Configure>", lambda event: status_label.configure(
             wraplength=max(150, event.width)))
         ttk.Label(information, textvariable=self.stats).grid(row=1, column=0, sticky="w")
+        broker_label = ttk.Label(information, textvariable=self.broker_status, wraplength=650)
+        broker_label.grid(row=2, column=0, sticky="ew")
+        information.bind("<Configure>", lambda event: broker_label.configure(
+            wraplength=max(150, event.width)), add=True)
         ttk.Label(
             self,
             text="Values and timestamps are shown as published. Retained messages may be old. "
@@ -124,6 +141,24 @@ class AimMqttTab(AutoConnectTab, ttk.Frame):
         log_label.grid(row=5, column=0, sticky="ew", pady=(4, 0))
         self.bind("<Configure>", lambda event: log_label.configure(
             wraplength=max(150, event.width - 16)))
+
+    def broker_changed(self):
+        if self.broker_enabled.get():
+            self.broker.start()
+        else:
+            self.broker.stop()
+
+    def _poll_broker(self):
+        state, message, path = self.broker.snapshot()
+        # Honor a rapid off/on toggle once the previous listener has closed.
+        if self.broker_enabled.get() and state == "stopped" and not self.broker.alive:
+            self.broker.start()
+            state, message, path = self.broker.snapshot()
+        self.broker_status.set(message)
+        status = (state, message, path)
+        if status != self._last_broker_status:
+            self._last_broker_status = status
+            self._append_lines([f"BROKER: {message}" + (f" | Log: {path}" if path else "")])
 
     def _scroll_fields(self, event):
         self.tree.yview_scroll(-int(event.delta / 120), "units")
@@ -239,6 +274,7 @@ class AimMqttTab(AutoConnectTab, ttk.Frame):
 
     def _poll(self):
         try:
+            self._poll_broker()
             if self.receiver is not None:
                 self._consume(self.receiver)
             self.auto_tick()
@@ -257,3 +293,4 @@ class AimMqttTab(AutoConnectTab, ttk.Frame):
             self.after_cancel(self._after_id)
             self._after_id = None
         self.disconnect()
+        self.broker.stop(wait=True)

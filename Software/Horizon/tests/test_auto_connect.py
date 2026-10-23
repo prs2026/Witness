@@ -144,7 +144,7 @@ class AutoGuiTests(unittest.TestCase):
         import tkinter as tk
         from horizon import HorizonGroundStation
         try:
-            app = HorizonGroundStation(log_dir=Path(directory), **kwargs)
+            app = HorizonGroundStation(log_dir=Path(directory), broker_enabled=False, **kwargs)
         except tk.TclError as exc:
             self.skipTest(f"Tk display unavailable: {exc}")
         app.withdraw()

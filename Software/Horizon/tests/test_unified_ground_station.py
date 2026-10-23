@@ -243,7 +243,7 @@ class GuiTests(unittest.TestCase):
         from horizon import HorizonGroundStation
         with tempfile.TemporaryDirectory() as directory:
             try:
-                unified = HorizonGroundStation(log_dir=Path(directory), auto_connect=False)
+                unified = HorizonGroundStation(log_dir=Path(directory), auto_connect=False, broker_enabled=False)
             except tk.TclError as exc:
                 self.skipTest(f"Tk display unavailable: {exc}")
             unified.withdraw()
@@ -284,7 +284,7 @@ class GuiTests(unittest.TestCase):
         from horizon import HorizonGroundStation
         with tempfile.TemporaryDirectory() as directory:
             try:
-                unified = HorizonGroundStation(log_dir=Path(directory), auto_connect=False)
+                unified = HorizonGroundStation(log_dir=Path(directory), auto_connect=False, broker_enabled=False)
             except tk.TclError as exc:
                 self.skipTest(f"Tk display unavailable: {exc}")
             unified.withdraw()

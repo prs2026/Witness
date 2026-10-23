@@ -8,3 +8,8 @@ DEFAULT_AIM_MQTT_HOST = "localhost"
 DEFAULT_AIM_MQTT_PORT = 1883
 DEFAULT_AIM_MQTT_UUID = "124"
 DEFAULT_AIM_MQTT_BASE_PATH = "entacore/aim/1234"
+
+# Embedded broker is local-only (no authentication/TLS). Independent of the
+# subscriber host/port, which may point at an external broker instead.
+DEFAULT_MQTT_BROKER_ENABLED = True
+DEFAULT_MQTT_BROKER_PORT = 1883

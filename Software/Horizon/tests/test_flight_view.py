@@ -329,7 +329,7 @@ class FlightGuiTests(unittest.TestCase):
         from witness_test_source import demo_packets
         with tempfile.TemporaryDirectory() as directory:
             try:
-                app = HorizonGroundStation(log_dir=Path(directory), auto_connect=False)
+                app = HorizonGroundStation(log_dir=Path(directory), auto_connect=False, broker_enabled=False)
             except tk.TclError as exc:
                 self.skipTest(f"Tk display unavailable: {exc}")
             app.withdraw()
@@ -487,7 +487,7 @@ class FlightGuiTests(unittest.TestCase):
         import tkinter as tk
         from horizon import HorizonGroundStation
         try:
-            app = HorizonGroundStation(auto_connect=False, flight_layout=Path("missing_layout_file.json"))
+            app = HorizonGroundStation(auto_connect=False, broker_enabled=False, flight_layout=Path("missing_layout_file.json"))
         except tk.TclError as exc:
             self.skipTest(f"Tk display unavailable: {exc}")
         app.withdraw()
