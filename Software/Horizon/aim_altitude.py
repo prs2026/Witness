@@ -35,13 +35,19 @@ def pressure_altitude(pressure):
 class AimAltitudeEstimator:
     def __init__(self):
         self.previous = {}
+        self.last_received = {}
 
     def update(self, source, fields, received, *, retained=False, valid=True, max_gap=3):
         if retained or "pressure" not in fields:
             return {}
         previous = self.previous.get(source)
-        if previous is not None and received < previous[2]:
+        if received < self.last_received.get(source, -math.inf):
             return {}
+        if source not in self.last_received and len(self.last_received) >= 128:
+            oldest = next(iter(self.last_received))
+            self.last_received.pop(oldest)
+            self.previous.pop(oldest, None)
+        self.last_received[source] = received
         altitude = pressure_altitude(fields["pressure"]) if valid else None
         stamp = fields.get("timestamp")
         if type(stamp) is not int or not 0 <= stamp <= 10**18:

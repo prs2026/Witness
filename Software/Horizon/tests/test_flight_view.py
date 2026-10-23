@@ -27,6 +27,28 @@ def document(**changes):
 
 
 class LayoutTests(unittest.TestCase):
+    def test_compact_power_rows_and_voltage_precision(self):
+        from flight_data import History
+        from flight_render import value_text
+        layout = load_layout(DEFAULT_LAYOUT)
+        self.assertNotIn("AIM GPS altitude", [row.title for row in layout.readouts])
+        self.assertNotIn("Featherweight fix", [row.title for row in layout.readouts])
+        pair = next(row for row in layout.readouts if row.title == "AIM CPU / eject battery")
+        self.assertEqual([trace.label for trace in pair.traces], ["CPU", "Eject"])
+        for row in layout.readouts:
+            for trace in row.traces:
+                if "voltage" in trace.field:
+                    self.assertEqual(value_text(trace, History([], latest=4.123456)), "4.123")
+                    self.assertEqual(value_text(trace, History([], latest=12)), "12.000")
+                    self.assertEqual(value_text(trace, History([])), "--")
+        doc = document(readouts=[{"group": "power", "title": "Pair", "unit": "V", "traces": [
+            {"label": "CPU", "input": "aim", "packet": "computer_battery_payload/v1", "field": "voltage"},
+            {"label": "Eject", "input": "aim", "packet": "ejection_battery_payload/v1", "field": "voltage"}]}])
+        validate_layout(doc)
+        doc["readouts"][0]["traces"].append(dict(doc["readouts"][0]["traces"][0]))
+        with self.assertRaises(ValueError):
+            validate_layout(doc)
+
     def test_secondary_axis_validation(self):
         doc = document()
         trace = doc['plots'][0]['traces'][0]
@@ -66,7 +88,7 @@ class LayoutTests(unittest.TestCase):
     def test_default_and_strict_validation(self):
         layout = load_layout(DEFAULT_LAYOUT)
         self.assertEqual(len(layout.plots), 6)
-        self.assertEqual(len(layout.readouts), 16)
+        self.assertEqual(len(layout.readouts), 14)
         self.assertEqual({t.input for p in layout.plots for t in p.traces}, {"witness", "aim", "featherweight"})
         for changes in ({"version": True}, {"version": 2}, {"columns": 1.5}, {"columns": 0},
                         {"window_seconds": float("nan")}, {"refresh_ms": 0}, {"max_points": 20001},
@@ -172,6 +194,8 @@ class HistoryTests(unittest.TestCase):
             accept(value, 3 + i)
             self.assertEqual(model.snapshot()[0][0].quality, "INVALID")
             self.assertIsNone(model.snapshot()[0][0].points[-1][1])
+            self.assertEqual(model.snapshot()[0][0].latest, 3)
+            self.assertEqual(model.snapshot()[0][0].received, 2)
         for stamp in range(10, 300):
             accept(2, stamp)
         self.assertEqual(len(model.snapshot()[0][0].points), 100)
@@ -199,8 +223,7 @@ class HistoryTests(unittest.TestCase):
         packet["text_crc_valid"], packet["fix_type"] = True, 0
         accept(4)
         self.assertEqual(model.snapshot()[0][1].latest, 304.8)
-        fix_index = next(i for i, row in enumerate(model.layout.rows) if row.title == "Featherweight fix")
-        self.assertEqual(model.snapshot()[fix_index][0].latest, 0)
+        self.assertFalse(any(row.title == "Featherweight fix" for row in model.layout.readouts))
 
     def test_mqtt_full_rate_retained_and_partial_updates(self):
         doc = document()
@@ -311,6 +334,19 @@ class FlightGuiTests(unittest.TestCase):
             app.withdraw()
             try:
                 flight = app.flight
+                self.assertEqual(flight.canvas.grid_info()["row"], 1)
+                self.assertIs(flight.banner.master, flight.actions_button.master)
+                labels = [flight.actions_menu.entrycget(i, "label")
+                          for i in range(flight.actions_menu.index("end") + 1)
+                          if flight.actions_menu.type(i) != "separator"]
+                for label in ("Load layout...", "Save layout...", "Default layout", "Pause view",
+                              "Clear plots", "Set pad", "Graph time window", "Fullscreen"):
+                    self.assertIn(label, labels)
+                flight.actions_menu.invoke(flight.pause_menu_index)
+                self.assertTrue(flight.paused)
+                self.assertEqual(flight.actions_menu.entrycget(flight.pause_menu_index, "label"), "Resume live")
+                flight.actions_menu.invoke(flight.pause_menu_index)
+                self.assertFalse(flight.paused)
                 self.assertEqual(app.notebook.select(), str(flight))
                 receiver = app.witness.make_receiver()  # No connection opened.
                 decoder = PacketDecoder(lambda packet: receiver.accept({"source": "TEST_flight",
@@ -347,6 +383,9 @@ class FlightGuiTests(unittest.TestCase):
                 flight.data.accept_aim('TEST_AIM', 'z_acceleration_payload/v1', {'z_acceleration': 20},
                                        time.monotonic(), False)
                 from test_aim_orientation import rotation, sample
+                now = time.monotonic()
+                flight.data.accept_aim('TEST_AIM', 'computer_battery_payload/v1', {'voltage': 4.123456}, now, False)
+                flight.data.accept_aim('TEST_AIM', 'ejection_battery_payload/v1', {'voltage': 8.765432}, now, False)
                 for index, angle in enumerate((0, 9, 18)):
                     flight.data.accept_aim('TEST_AIM', 'orientation_payload/v1',
                                            sample(rotation((1, 0, 0), angle), index * .1),
@@ -355,6 +394,8 @@ class FlightGuiTests(unittest.TestCase):
                     flight.renderer.draw(flight.data.layout, flight.data.snapshot(), time.monotonic(),
                                          flight.wall_offset, width=width, height=height)
                     self.assertEqual(len(flight.renderer.panel_bounds), 9)
+                    power_bounds = flight.renderer.panel_bounds["power"]
+                    self.assertLessEqual(power_bounds[2] - power_bounds[0], max(190, width * .20))
                     for bounds in flight.renderer.panel_bounds.values():
                         x0, y0, x1, y1 = bounds
                         self.assertGreaterEqual(x0, 0)
@@ -379,6 +420,8 @@ class FlightGuiTests(unittest.TestCase):
                     self.assertTrue(any("RSSI" in value for value in texts))
                     self.assertTrue(any('FW tracker battery' in value for value in texts))
                     self.assertTrue(any('FW local / GS battery' in value for value in texts))
+                    self.assertIn('4.123 raw', texts)
+                    self.assertIn('8.765 raw', texts)
                     self.assertTrue(any('AX~ 90' in value for value in texts))
                     self.assertTrue(any('AY~ 0' in value for value in texts))
                     self.assertTrue(any('AZ~ 0' in value for value in texts))

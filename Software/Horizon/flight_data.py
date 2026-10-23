@@ -144,8 +144,8 @@ def validate_layout(document):
         traces = row.get("traces")
         if not isinstance(traces, list) or not 1 <= len(traces) <= 8:
             raise ValueError(f"{name}: expected 1 to 8 traces")
-        if is_readout and len(traces) > (3 if group == "flight" else 1):
-            raise ValueError("Flight readouts allow 3 values; other readouts allow 1")
+        if is_readout and len(traces) > (3 if group == "flight" else 2 if group == "power" else 1):
+            raise ValueError("Flight readouts allow 3 values, power allows 2, other readouts allow 1")
         parsed = []
         for ti, trace in enumerate(traces):
             _keys(trace, "label input packet field source color scale offset match unit enabled note format axis", name + " trace")

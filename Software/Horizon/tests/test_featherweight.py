@@ -151,13 +151,20 @@ class FeatherweightDisplayTests(unittest.TestCase):
             self.assertEqual(view.tree.set(row, 'value'), '3.513')
             local = view._rows[('COM5', 'BATT_BLE', 'battery_voltage_v')]
             self.assertEqual(view.tree.set(local, 'value'), '3.73')
+            last_received = view._received[local][0]
+            invalid_local = parse_featherweight_line(CAPTURE[1].replace('3730', '9999'))
+            view.update_record({'source': 'COM5', 'received_at': time.time(),
+                'packet': {**invalid_local, 'packet': 'BATT_BLE'}})
+            self.assertEqual(view.tree.set(local, 'value'), '3.73')
+            self.assertEqual(view._received[local][0], last_received)
+            self.assertEqual(view.tree.set(local, 'quality'), 'BAD TEXT CRC')
             packet = parse_featherweight_line(replace_payload(CAPTURE[5], 'CRC_OK', 'CRC_ERR'))
             view.update_record({'source': 'COM5', 'received_at': time.time(),
                 'packet': {**packet, 'packet': 'RX_NOMTK'}})
             view.update_ages()
             self.assertEqual(view.tree.set(row, 'quality'), 'BAD RADIO CRC')
             self.assertIn('invalid', view.tree.item(row, 'tags'))
-            self.assertEqual(view.tree.set(local, 'quality'), 'Live')
+            self.assertEqual(view.tree.set(local, 'quality'), 'BAD TEXT CRC')
         finally:
             root.destroy()
 

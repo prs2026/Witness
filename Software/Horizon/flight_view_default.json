@@ -421,21 +421,6 @@
     },
     {
       "group": "gps",
-      "title": "AIM GPS altitude",
-      "unit": "raw",
-      "traces": [
-        {
-          "label": "A GPS",
-          "input": "aim",
-          "packet": "gnss_payload/v1",
-          "field": "gnss_coordinate.altitude",
-          "color": "#5b267d",
-          "note": "GPS altitude as published; units unverified"
-        }
-      ]
-    },
-    {
-      "group": "gps",
       "title": "Featherweight satellites",
       "unit": "sats",
       "traces": [
@@ -448,24 +433,6 @@
           "match": {
             "unit_type": "TRACKER"
           }
-        }
-      ]
-    },
-    {
-      "group": "gps",
-      "title": "Featherweight fix",
-      "unit": "mode",
-      "traces": [
-        {
-          "label": "F",
-          "input": "featherweight",
-          "packet": "GPS_STAT",
-          "field": "fix_type",
-          "color": "#006020",
-          "match": {
-            "unit_type": "TRACKER"
-          },
-          "note": "0=no fix, 2=2D, 3=3D"
         }
       ]
     },
@@ -505,63 +472,22 @@
     },
     {
       "group": "power",
-      "title": "AIM computer battery",
+      "title": "AIM CPU / eject battery",
       "unit": "raw",
       "traces": [
         {
-          "label": "A",
+          "label": "CPU",
           "input": "aim",
           "packet": "computer_battery_payload/v1",
           "field": "voltage",
           "color": "#990000"
-        }
-      ]
-    },
-    {
-      "group": "power",
-      "title": "AIM ejection battery",
-      "unit": "raw",
-      "traces": [
+        },
         {
-          "label": "A",
+          "label": "Eject",
           "input": "aim",
           "packet": "ejection_battery_payload/v1",
           "field": "voltage",
           "color": "#990000"
-        }
-      ]
-    },
-    {
-      "group": "power",
-      "title": "AIM continuity 1",
-      "unit": "state",
-      "traces": [
-        {
-          "label": "A",
-          "input": "aim",
-          "packet": "(unmapped)",
-          "field": "(unmapped)",
-          "color": "#990000",
-          "format": "continuity",
-          "enabled": false,
-          "note": "Topic / field not mapped"
-        }
-      ]
-    },
-    {
-      "group": "power",
-      "title": "AIM continuity 2",
-      "unit": "state",
-      "traces": [
-        {
-          "label": "A",
-          "input": "aim",
-          "packet": "(unmapped)",
-          "field": "(unmapped)",
-          "color": "#990000",
-          "format": "continuity",
-          "enabled": false,
-          "note": "Topic / field not mapped"
         }
       ]
     },

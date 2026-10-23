@@ -49,10 +49,8 @@ class HorizonGroundStation(tk.Tk):
         self.title("Horizon Unified Ground Station")
         self.geometry(f"{min(1440, self.winfo_screenwidth() - 40)}x{min(900, self.winfo_screenheight() - 100)}")
         self.minsize(min(1000, self.winfo_screenwidth() - 40), min(650, self.winfo_screenheight() - 100))
-        ttk.Label(self, text="Horizon Unified Ground Station", font=("Segoe UI", 15, "bold"),
-                  padding=(12, 8)).pack(anchor="w")
         self.notebook = ttk.Notebook(self)
-        self.notebook.pack(fill="both", expand=True, padx=8, pady=(0, 8))
+        self.notebook.pack(fill="both", expand=True, padx=4, pady=(2, 4))
         self.flight = FlightView(self.notebook, layout_path=flight_layout)
         self.witness = WitnessTab(self.notebook, log_dir=log_dir,
                                  on_record=lambda record: self.flight.data.accept_record("witness", record))

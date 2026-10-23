@@ -45,6 +45,8 @@ def value_text(trace, history):
         return STATES[int(value)] if value in range(5) else "INVALID STATE"
     if trace.format == "continuity":
         return {0: "OPEN", 1: "CONTINUITY"}.get(value, "UNKNOWN")
+    if "voltage" in trace.field.lower():
+        return f"{value:.3f}"
     return f"{value:.5g}"
 
 
@@ -114,7 +116,9 @@ class DashboardRenderer:
         self.min_font = max(12, min(16, int(min(width / 120, height / 60))))
         gap, pad = 8, 5
         available = width - 2 * pad - 2 * gap
-        left_w, center_w = (available * .26, available * .49) if self.compact else (available * .28, available * .49)
+        left_w = available * (.26 if self.compact else .28)
+        right_w = max(190, min(300, available * .19))
+        center_w = available - left_w - right_w
         left = (pad, pad, pad + left_w, height - pad)
         cx = left[2] + gap
         right_x = cx + center_w + gap
@@ -130,8 +134,8 @@ class DashboardRenderer:
         self.panel("gps", gps_box)
         self.panel("power", power_box)
         self.status_panel(gps_box, "GPS / SATELLITES", [(p, h) for p, h in rows if p.group == "gps"], end)
-        self.status_panel(power_box, "POWER / CONTINUITY", [(p, h) for p, h in rows if p.group == "power"], end)
-        # Default sketch: two columns, two tall rows and a shorter bottom row.
+        self.status_panel(power_box, "POWER", [(p, h) for p, h in rows if p.group == "power"], end)
+        # Equal graph heights; the narrower status column gives graphs more width.
         columns = min(layout.columns, len(layout.plots))
         row_count = math.ceil(len(layout.plots) / columns)
         weights = [1 / row_count] * row_count
@@ -230,6 +234,22 @@ class DashboardRenderer:
         row_h = (h - heading - 10) / len(rows)
         for index, (row, data) in enumerate(rows):
             top = y0 + heading + index * row_h
+            if len(data) == 2:
+                # Paired power supplies share one row, but keep independent
+                # values and stale/invalid markers (never combine timestamps).
+                self.text((x0, top, x1, top + row_h * .42), row.title, 14, MUTED)
+                for ti, (trace, history) in enumerate(zip(row.traces, data)):
+                    a = x0 + (x1 - x0) * ti / 2
+                    b = x0 + (x1 - x0) * (ti + 1) / 2 - 2
+                    status, color = quality_text(history, end)
+                    marker = "!" if status.startswith(("AGE", "STALE", "INVALID", "SNAPSHOT")) else ""
+                    unit = trace.unit or row.unit
+                    self.text((a, top + row_h * .42, b, top + row_h - 3),
+                              f"{value_text(trace, history)}{marker} {unit}", 14,
+                              color if marker else trace.color, True)
+                if index < len(rows) - 1:
+                    self.canvas.create_line(x0, top + row_h, x1, top + row_h, fill=GRID)
+                continue
             trace, history = row.traces[0], data[0]
             unit = trace.unit or row.unit
             value = value_text(trace, history)

@@ -1,6 +1,11 @@
 """Horizon's single-pane launch dashboard. Nothing on this tab scrolls.
 
-JSON: flight_view_default.json or Load layout / --flight-layout.
+JSON: flight_view_default.json or Flight controls > Load layout / --flight-layout.
+The compact Flight controls menu contains layout, pause, clear, pad, time-window,
+fullscreen and display-details actions. Live/test/stale warnings remain visible
+beside it. No separate title/footer rows take space away from the dashboard.
+Power readouts may contain two traces (left/right in listed order); the default
+pairs AIM CPU/ejection batteries. Voltage fields display three decimal places.
   version: 1; title; window_seconds; refresh_ms; columns; max_points; gap_seconds
   auto_scale: true (default) fits each Y axis to all visible valid samples;
     false honors explicit left-axis y_range limits. Bounds do not force zero
@@ -34,7 +39,7 @@ from pressure interpreted as Pa using a 101325 Pa standard atmosphere reference.
 _derived.vertical_velocity_mps is its altitude difference / publisher time
 difference, positive upwards, not AIM's fused velocity. A baro~ and A~ denote
 these estimates. GPS altitude stays on a separate raw-unit graph axis and GPS
-readout until publisher units are verified. Two fresh pressure samples within
+trace until publisher units are verified. Two fresh pressure samples within
 gap_seconds are required for velocity; duplicate/retained/backwards times are
 ignored and gaps/invalid pressure re-prime it. Clear/reload resets both AIM
 estimators. Invalid samples hold the last valid displayed value and original
@@ -96,31 +101,35 @@ class FlightView(ttk.Frame):
                 "traces": [{"label": "W", "input": "witness", "packet": "state", "field": "barometric_altitude"}]}]})
         self.data = FlightData(layout)
         self.columnconfigure(0, weight=1)
-        self.rowconfigure(2, weight=1)
+        self.rowconfigure(1, weight=1)
         toolbar = ttk.Frame(self)
-        toolbar.grid(row=0, column=0, sticky="ew", pady=(0, 4))
-        for label, command in (("Load", self.choose_layout), ("Save", self.save_layout),
-                               ("Default", lambda: self.load_config(DEFAULT_LAYOUT))):
-            ttk.Button(toolbar, text=label, command=command, width=7).pack(side="left", padx=(0, 4))
-        self.pause_button = ttk.Button(toolbar, text="Pause view", command=self.toggle_pause, width=12)
-        self.pause_button.pack(side="left", padx=4)
-        ttk.Button(toolbar, text="Clear plots", command=self.clear, width=11).pack(side="left", padx=4)
-        ttk.Button(toolbar, text="Set pad", command=self.set_pad, width=10).pack(side="left", padx=4)
-        ttk.Label(toolbar, text="Window:").pack(side="left", padx=(8, 3))
+        toolbar.grid(row=0, column=0, sticky="ew", pady=(0, 2))
+        toolbar.columnconfigure(1, weight=1)
+        self.actions_button = ttk.Menubutton(toolbar, text="Flight controls", direction="below")
+        self.actions_button.grid(row=0, column=0, padx=(0, 6))
+        self.actions_menu = tk.Menu(self.actions_button, tearoff=False)
+        self.actions_button.configure(menu=self.actions_menu)
+        for label, command in (("Load layout...", self.choose_layout), ("Save layout...", self.save_layout),
+                               ("Default layout", lambda: self.load_config(DEFAULT_LAYOUT))):
+            self.actions_menu.add_command(label=label, command=command)
+        self.actions_menu.add_separator()
+        self.pause_menu_index = self.actions_menu.index("end") + 1
+        self.actions_menu.add_command(label="Pause view", command=self.toggle_pause)
+        self.actions_menu.add_command(label="Clear plots", command=self.clear)
+        self.actions_menu.add_command(label="Set pad", command=self.set_pad)
         self.window_var = tk.StringVar()
-        self.window_selector = ttk.Combobox(toolbar, textvariable=self.window_var, state="readonly", width=8)
-        self.window_selector.pack(side="left")
-        self.window_selector.bind("<<ComboboxSelected>>", self.select_window)
+        self.window_menu = tk.Menu(self.actions_menu, tearoff=False)
+        self.actions_menu.add_cascade(label="Graph time window", menu=self.window_menu)
         self.sync_window()
-        ttk.Button(toolbar, text="Full (F11)", command=self.toggle_fullscreen, width=10).pack(side="right")
-        self.banner = tk.Label(self, anchor="w", foreground=TEXT, font=("Segoe UI", 11, "bold"),
-                               height=1, width=1, padx=8, pady=4)
-        self.banner.grid(row=1, column=0, sticky="ew", pady=(0, 4))
+        self.actions_menu.add_command(label="Fullscreen", accelerator="F11", command=self.toggle_fullscreen)
+        self.actions_menu.add_separator()
+        self.actions_menu.add_command(label="Layout / display details...", command=self.show_details)
+        self.banner = tk.Label(toolbar, anchor="w", foreground=TEXT, font=("Segoe UI", 11, "bold"),
+                               height=1, width=1, padx=8, pady=2)
+        self.banner.grid(row=0, column=1, sticky="ew")
         self.canvas = tk.Canvas(self, background=BG, highlightthickness=0, width=1, height=1)
-        self.canvas.grid(row=2, column=0, sticky="nsew")
+        self.canvas.grid(row=1, column=0, sticky="nsew")
         self.renderer = DashboardRenderer(self.canvas)
-        self.info = ttk.Label(self, text="", width=1, anchor="w", font=("Segoe UI", 9))
-        self.info.grid(row=3, column=0, sticky="ew", pady=(3, 0))
         self.canvas.bind("<Configure>", lambda _event: self.redraw())
         self.bind("<Map>", lambda _event: self.redraw())
         # Consume wheel events; there is no hidden content to scroll to.
@@ -148,9 +157,20 @@ class FlightView(ttk.Frame):
 
     def sync_window(self):
         seconds = self.data.layout.window_seconds
-        self.window_selector["values"] = tuple(f"{value:g} s" for value in sorted(
-            {10, 30, 60, 120, 300, 600, 1800, 3600, seconds}))
+        self.window_menu.delete(0, "end")
+        for value in sorted({10, 30, 60, 120, 300, 600, 1800, 3600, seconds}):
+            self.window_menu.add_radiobutton(label=f"{value:g} s", value=f"{value:g} s",
+                                            variable=self.window_var, command=self.select_window)
         self.window_var.set(f"{seconds:g} s")
+
+    def show_details(self):
+        messagebox.showinfo("Flight View details", self.display_details(), parent=self)
+
+    def display_details(self):
+        return (f"{self.layout_path.name}\n{self.data.layout.window_seconds:g}s window | UTC receive time\n"
+                "Solid W / dashed A | A gyro ~ = quaternion estimate\n"
+                "! old/invalid | History bounded by max_points\n"
+                "AIM GPS altitude remains on the Altitude graph. FW fix mode is on the Featherweight GPS tab.")
 
     def select_window(self, _event=None):
         try:
@@ -166,14 +186,19 @@ class FlightView(ttk.Frame):
         except (OSError, ValueError) as exc:
             messagebox.showerror("Flight View layout", str(exc), parent=self)
             return False
+        self.apply_layout(layout, Path(filename))
+        return True
+
+    def apply_layout(self, layout, path=None):
+        """Apply a validated editor/file layout; receiver connections stay intact."""
         self.data.configure(layout)
         self.sync_window()
-        self.layout_path = Path(filename)
+        if path is not None:
+            self.layout_path = Path(path)
         self.load_error = None
         self.paused, self.frozen = False, None
-        self.pause_button.configure(text="Pause view")
+        self.actions_menu.entryconfigure(self.pause_menu_index, label="Pause view")
         self.redraw()
-        return True
 
     def save_layout(self):
         filename = filedialog.asksaveasfilename(parent=self, title="Save Flight View layout", defaultextension=".json",
@@ -199,7 +224,7 @@ class FlightView(ttk.Frame):
     def toggle_pause(self):
         self.paused = not self.paused
         self.frozen = (time.monotonic(), self.data.snapshot()) if self.paused else None
-        self.pause_button.configure(text="Resume live" if self.paused else "Pause view")
+        self.actions_menu.entryconfigure(self.pause_menu_index, label="Resume live" if self.paused else "Pause view")
         self.redraw()
 
     def redraw(self):
@@ -213,10 +238,8 @@ class FlightView(ttk.Frame):
         warning = "TEST DATA | " if simulated else ""
         if self.load_error:
             warning = "LAYOUT ERROR (fallback active) | " + warning
-        self.banner.configure(text=f"{warning}{state}",
+        self.banner.configure(text=f"{warning}{state} | {self.data.layout.window_seconds:g}s",
                               background="#fff2a8" if self.paused or simulated or self.load_error else "#d8efdf" if fresh else "#ffd5cf")
-        self.info.configure(text=f"{self.layout_path.name} | {self.data.layout.window_seconds:g}s window | UTC receive time | "
-                            "Solid W / dashed A | A gyro ~ = quaternion estimate | ! old/invalid | History bounded by max_points")
         self.renderer.draw(self.data.layout, histories, end, self.wall_offset)
 
     def _poll(self):
