@@ -27,6 +27,23 @@ def document(**changes):
 
 
 class LayoutTests(unittest.TestCase):
+    def test_secondary_axis_validation(self):
+        doc = document()
+        trace = doc['plots'][0]['traces'][0]
+        trace['axis'] = 'right'
+        with self.assertRaises(ValueError):
+            validate_layout(doc)
+        doc['plots'][0]['right_unit'] = 'raw'
+        trace['unit'] = 'g'
+        with self.assertRaises(ValueError):
+            validate_layout(doc)
+        trace['unit'] = 'raw'
+        layout = validate_layout(doc)
+        self.assertEqual(layout.plots[0].traces[0].axis, 'right')
+        trace['axis'] = 'invalid'
+        with self.assertRaises(ValueError):
+            validate_layout(doc)
+
     def test_light_palette_and_legacy_color_readability(self):
         self.assertEqual(BG, "#ffffff")
         self.assertEqual(PANEL, "#ffffff")
@@ -83,6 +100,36 @@ class LayoutTests(unittest.TestCase):
 
 
 class HistoryTests(unittest.TestCase):
+    def test_time_window_keeps_history_sources_and_origins(self):
+        model = FlightData(validate_layout(document()))
+        for stamp in range(0, 500, 10):
+            model.accept('witness', 'W', 'sensors', {'filtered_accel[0]': stamp}, stamp)
+        before = model.snapshot()
+        bindings = dict(model.selected)
+        for seconds in (10, 30, 60, 120, 300, 600, 1800, 3600):
+            model.set_window(seconds)
+            self.assertEqual(model.layout.window_seconds, seconds)
+            self.assertEqual(model.layout.document['window_seconds'], seconds)
+            self.assertEqual(model.snapshot(), before)
+            self.assertEqual(model.selected, bindings)
+        for bad in (True, 0, 3601, float('nan'), '60'):
+            with self.assertRaises(ValueError):
+                model.set_window(bad)
+
+    def test_default_aim_acceleration_uses_independent_raw_axis(self):
+        model = FlightData(load_layout(DEFAULT_LAYOUT))
+        for value in (1, 9):
+            model.accept_aim('A', 'z_acceleration_payload/v1', {'z_acceleration': value}, value, False)
+        model.accept('witness', 'W', 'sensors', {'filtered_accel[0]': 2, 'gyro[0]': 3}, 10)
+        self.assertEqual(model.snapshot()[1][0].latest, 2)
+        self.assertEqual(model.snapshot()[1][3].latest, 9)
+        self.assertEqual(model.layout.plots[1].traces[3].axis, 'right')
+        self.assertEqual(model.layout.plots[1].right_unit, 'A raw')
+        # Partial orientation without a timestamp cannot produce angular rates.
+        model.accept_aim('A', 'orientation_payload/v1', {'x': 1, 'y': 2, 'z': 3}, 11, False)
+        self.assertEqual(model.snapshot()[2][3].quality, 'INVALID')
+        self.assertIsNone(model.snapshot()[2][3].latest)
+
     def test_peak_is_preserved_before_receiver_coalescing(self):
         model = FlightData(validate_layout(document()))
         receiver = LoggedReceiver("unused", "test", on_record=lambda r: model.accept_record("witness", r))
@@ -129,6 +176,8 @@ class HistoryTests(unittest.TestCase):
             accept(2, stamp)
         self.assertEqual(len(model.snapshot()[0][0].points), 100)
         accept(2, 1000)
+        self.assertEqual(len(model.snapshot()[0][0].points), 100)  # Zooming back out still has older samples.
+        accept(2, 5000)
         self.assertEqual(len(model.snapshot()[0][0].points), 1)
 
     def test_featherweight_crc_fix_and_tracker_filter(self):
@@ -292,6 +341,15 @@ class FlightGuiTests(unittest.TestCase):
                 app.update()
                 self.assertFalse(app.tk.getboolean(app.attributes("-fullscreen")))
                 # The default summary/state/GPS/power and ALL six graphs fit.
+                flight.data.accept_aim('TEST_AIM', 'z_acceleration_payload/v1', {'z_acceleration': 1},
+                                       time.monotonic() - 1, False)
+                flight.data.accept_aim('TEST_AIM', 'z_acceleration_payload/v1', {'z_acceleration': 20},
+                                       time.monotonic(), False)
+                from test_aim_orientation import rotation, sample
+                for index, angle in enumerate((0, 9, 18)):
+                    flight.data.accept_aim('TEST_AIM', 'orientation_payload/v1',
+                                           sample(rotation((1, 0, 0), angle), index * .1),
+                                           time.monotonic() - .3 + index * .1, False)
                 for width, height in ((980, 480), (1360, 650), (1760, 900)):
                     flight.renderer.draw(flight.data.layout, flight.data.snapshot(), time.monotonic(),
                                          flight.wall_offset, width=width, height=height)
@@ -303,6 +361,9 @@ class FlightGuiTests(unittest.TestCase):
                         self.assertLessEqual(x1, width)
                         self.assertLessEqual(y1, height)
                     for item, box in flight.renderer.text_boxes:
+                        from tkinter import font as tkfont
+                        font = tkfont.Font(root=app, name=flight.canvas.itemcget(item, 'font'), exists=True)
+                        self.assertGreaterEqual(abs(font.cget('size')), 12)
                         self.assertGreaterEqual(contrast_on_white(flight.canvas.itemcget(item, "fill")), 7)
                         bbox = flight.canvas.bbox(item)
                         self.assertGreaterEqual(bbox[0], box[0] - 2)
@@ -315,10 +376,22 @@ class FlightGuiTests(unittest.TestCase):
                     self.assertIn("TEST_flight", texts)
                     self.assertIn("N/A", texts)
                     self.assertTrue(any("RSSI" in value for value in texts))
+                    self.assertTrue(any('FW tracker battery' in value for value in texts))
+                    self.assertTrue(any('FW local / GS battery' in value for value in texts))
+                    self.assertTrue(any('AX~ 90' in value for value in texts))
+                    self.assertTrue(any('AY~ 0' in value for value in texts))
+                    self.assertTrue(any('AZ~ 0' in value for value in texts))
+                    aim_lines = [i for i in flight.canvas.find_withtag('aim') if flight.canvas.type(i) == 'line']
+                    self.assertTrue(aim_lines)
+                    self.assertTrue(all(flight.canvas.itemcget(i, 'dash') for i in aim_lines))
                     self.assertEqual(flight.canvas.cget("yscrollcommand"), "")
                     self.assertEqual(flight.canvas.cget("scrollregion"), "")
                 flight.toggle_pause()
                 frozen = flight.frozen
+                flight.window_var.set('30 s')
+                flight.select_window()
+                self.assertEqual(flight.data.layout.window_seconds, 30)
+                self.assertIs(frozen, flight.frozen)
                 decoder.feed(demo_packets(7000)[0x02])
                 flight.redraw()
                 self.assertIs(frozen, flight.frozen)
@@ -343,10 +416,14 @@ class FlightGuiTests(unittest.TestCase):
                 self.assertEqual(len(flight.data.layout.plots), 1)
                 self.assertIsNone(flight.data.snapshot()[0][0].latest)
                 saved = Path(directory) / "saved.json"
+                flight.window_var.set('600 s')
+                flight.select_window()
                 with patch("flight_view.filedialog.asksaveasfilename", return_value=str(saved)):
                     flight.save_layout()
                 self.assertEqual(load_layout(saved).title, "Custom flight")
+                self.assertEqual(load_layout(saved).window_seconds, 600)
                 self.assertTrue(flight.load_config(DEFAULT_LAYOUT))
+                self.assertEqual(flight.window_var.get(), '120 s')
                 # AIM tab forwards its callback to the subscriber, no MQTT started.
                 with patch("aim_tab.AimMqttReceiver.start"):
                     app.aim.toggle_connection()

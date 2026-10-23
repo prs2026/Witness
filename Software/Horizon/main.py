@@ -4,6 +4,11 @@ Offline demo: python main.py --test
 Timed hex replay: python main.py --test-file test_data/example_packets.json
 Use --test-speed 2 for 2x playback and --test-once to disable looping.
 Test bytes pass through PacketDecoder; they are never written to hardware.
+USB auto-connect is on by default. Witness-named devices are discovered; for
+generic adapters select a port manually once. After a decoded packet, its USB
+identity is saved in auto_connect_witness.json (not its changing COM number).
+The Auto-connect USB checkbox stops discovery connections, not healthy inputs.
+Manual Disconnect turns it off. Test mode always disables automatic USB opens.
 """
 
 from __future__ import annotations
@@ -23,6 +28,7 @@ from tkinter import filedialog, messagebox, scrolledtext, ttk
 from ground_settings import WITNESS_FEED_HOST, WITNESS_FEED_PORT
 from witness_link import WitnessPublisher
 from witness_test_source import builtin_scenario, load_scenario, play_scenario, validate_speed
+from serial_discovery import RETRY_SECONDS, SerialDiscovery, SerialOpenJob
 
 
 ROOT = Path(__file__).resolve().parent
@@ -297,12 +303,17 @@ class PacketDecoder:
 
 
 class SerialMonitor(tk.Tk):
-    def __init__(self, *, test_mode=False, test_source="", test_speed=1.0, test_loop=True):
+    def __init__(self, *, test_mode=False, test_source="", test_speed=1.0, test_loop=True, auto_connect=True):
         super().__init__()
         self.title("Witness Communications Monitor")
         self.geometry("920x720")
         self.serials = {}
         self.tcp_sockets = {}
+        self.discovery = SerialDiscovery("witness")
+        self.auto_connect = tk.BooleanVar(value=auto_connect and not test_mode)
+        self._auto_job = None
+        self._auto_after = None
+        self._next_auto_open = 0
         self.stop_event = threading.Event()
         self.test_active = False
         self._test_source = None
@@ -340,6 +351,7 @@ class SerialMonitor(tk.Tk):
             self.feed_status.set(f"Horizon feed unavailable: {exc}")
             self.console_write(f"FEED_ERROR {exc}; Witness input still works")
         self.refresh_ports()
+        self._auto_after = self.after(250, self._auto_poll)
         self.after(50, self.process_events)
         self.after(100, self.draw_graphs)
         self.after(100, self.update_age_indicators)
@@ -381,6 +393,13 @@ class SerialMonitor(tk.Tk):
             port_entry.insert(0, port_default)
             port_entry.pack(side="left")
             self.tcp_entries.append((host_entry, port_entry))
+        auto_controls = ttk.Frame(self, padding=(8, 0, 8, 4))
+        auto_controls.pack(fill="x")
+        self.auto_button = ttk.Checkbutton(auto_controls, text="Auto-connect USB", variable=self.auto_connect,
+                                           command=self._auto_changed)
+        self.auto_button.pack(side="left")
+        ttk.Label(auto_controls, text="Known Witness devices only; select generic adapters manually once.").pack(
+            side="left", padx=8)
         test_controls = ttk.Frame(self, padding=(8, 0, 8, 4))
         test_controls.pack(fill="x")
         test_controls.columnconfigure(1, weight=1)
@@ -681,11 +700,11 @@ class SerialMonitor(tk.Tk):
             section.grid_configure(row=index // columns, column=index % columns)
 
     def refresh_ports(self):
-        try:
-            from serial.tools import list_ports
-            ports = [p.device for p in list_ports.comports()]
-        except ImportError:
-            ports = []
+        self.discovery.refresh(force=True)
+        self._update_port_choices()
+
+    def _update_port_choices(self):
+        ports = [p.device for p in self.discovery.ports]
         choices = [NO_SERIAL_PORT, *ports]
         for combo in (
             self.port_a_combo,
@@ -693,8 +712,102 @@ class SerialMonitor(tk.Tk):
         ):
             current = combo.get()
             combo["values"] = choices
-            combo.set(current if current in ports else NO_SERIAL_PORT)
+            combo.set(current if current in ports or current in self.serials else NO_SERIAL_PORT)
         self.refresh_command_targets()
+
+    def _auto_changed(self):
+        self._next_auto_open = 0
+        if self.test_active or self._test_start_id is not None:
+            self.auto_connect.set(False)
+        if not self.auto_connect.get() and self._auto_job is not None:
+            self._auto_job.cancel()
+            self._auto_job = None
+            self.connect_button.configure(text="Disconnect" if self.serials or self.tcp_sockets else "Connect")
+
+    def _auto_poll(self):
+        try:
+            self.discovery.refresh()
+            self._update_port_choices()
+            if self.discovery.error:
+                self.console_write(f"AUTO_CONNECT {self.discovery.error}")
+                self.discovery.error = None
+            if not self.auto_connect.get() or self.test_active or self._test_start_id is not None:
+                if self._auto_job is not None:
+                    self._auto_job.cancel()
+                    self._auto_job = None
+                return
+            if self._auto_job is not None:
+                result = self._auto_job.take()
+                if result is None:
+                    return
+                port = self._auto_job.port
+                self._auto_job = None
+                self.connect_button.configure(text="Disconnect" if self.serials or self.tcp_sockets else "Connect")
+                stream, error = result
+                if error:
+                    self.console_write(f"AUTO_CONNECT[{port}] {error}; will retry")
+                    self.status_label.configure(text=f"Waiting for {port}")
+                else:
+                    self._accept_auto_port(port, stream)
+                self._next_auto_open = time.monotonic() + RETRY_SECONDS
+            if len(self.serials) >= 2 or time.monotonic() < self._next_auto_open:
+                return
+            candidates = self.discovery.candidates(exclude=self.serials)
+            if not candidates:
+                return
+            port = candidates[0]
+            self.discovery.attempted(port)
+            self._next_auto_open = time.monotonic() + RETRY_SECONDS
+            try:
+                baud = int(self.baud_combo.get())
+                if baud <= 0:
+                    raise ValueError("baud must be positive")
+            except ValueError as exc:
+                self.console_write(f"AUTO_CONNECT invalid baud: {exc}")
+                return
+            self.console_write(f"AUTO_CONNECT[{port}] opening known Witness USB device")
+            self._auto_job = SerialOpenJob(port, baud)
+            self.connect_button.configure(text="Cancel connect")
+        except Exception as exc:
+            self.console_write(f"AUTO_CONNECT_ERROR {exc}")
+        finally:
+            self._auto_after = self.after(250, self._auto_poll)
+
+    def _accept_auto_port(self, port, stream):
+        if port in self.serials or len(self.serials) >= 2:
+            stream.close()
+            return
+        log_file = None
+        try:
+            LOG_DIR.mkdir(parents=True, exist_ok=True)
+            stamp = _dt.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            safe_port = "".join(char if char.isalnum() else "_" for char in port)
+            log_file = (LOG_DIR / f"serial_{safe_port}_{stamp}.bin").open("ab")
+            if self.debug_log_file is None:
+                self.debug_log_file = (LOG_DIR / f"debug_{stamp}.log").open("a", encoding="utf-8")
+        except OSError:
+            stream.close()
+            if log_file is not None:
+                log_file.close()
+            raise
+        if self._test_display:
+            self._clear_telemetry()
+            self._test_display = False
+            self.title("Witness Communications Monitor")
+            self.test_status.set("Live mode. Test values cleared.")
+            self.test_status_label.configure(background=self.cget("background"))
+        self.serials[port] = stream
+        self.log_files[port] = log_file
+        self.stop_event.clear()
+        for combo in (self.port_a_combo, self.port_b_combo):
+            if combo.get() not in self.serials or combo.get() == port:
+                combo.set(port)
+                break
+        self.connect_button.configure(text="Disconnect")
+        self.status_label.configure(text=f"Connected: {', '.join(self.serials)}")
+        self.refresh_command_targets()
+        self.console_write(f"AUTO_CONNECT[{port}] connected")
+        threading.Thread(target=self.read_serial, args=(port, stream), daemon=True).start()
 
     def refresh_command_targets(self):
         targets = [] if self.test_active else list(self.serials) + list(self.tcp_sockets)
@@ -799,7 +912,11 @@ class SerialMonitor(tk.Tk):
         return "break"
 
     def toggle_connection(self):
-        self.disconnect() if (self.serials or self.tcp_sockets) else self.connect()
+        if self.serials or self.tcp_sockets or self._auto_job is not None:
+            self.auto_connect.set(False)
+            self.disconnect()
+        else:
+            self.connect()
 
     def _start_requested_test(self):
         self._test_start_id = None
@@ -834,6 +951,8 @@ class SerialMonitor(tk.Tk):
         if self.serials or self.tcp_sockets:
             messagebox.showerror("Test mode", "Disconnect real serial/TCP inputs before starting a test.", parent=self)
             return False
+        self.auto_connect.set(False)
+        self._auto_changed()
         raw_log = None
         try:
             speed = validate_speed(float(self.test_speed.get()))
@@ -927,6 +1046,9 @@ class SerialMonitor(tk.Tk):
             self.debug_log_file = None
 
     def connect(self):
+        if self._auto_job is not None:
+            self._auto_job.cancel()
+            self._auto_job = None
         if self.test_active:
             messagebox.showerror("Test mode", "Stop the test before connecting real inputs.", parent=self)
             return
@@ -1026,7 +1148,7 @@ class SerialMonitor(tk.Tk):
                     self.events.put(("bytes", (port_name, bytes(data))))
                     decoder.feed(data)
             except Exception as exc:
-                self.events.put(("error", (port_name, str(exc))))
+                self.events.put(("error", (port_name, str(exc), serial_port)))
                 break
 
     def read_tcp(self, source_name, tcp_socket):
@@ -1038,7 +1160,7 @@ class SerialMonitor(tk.Tk):
             try:
                 data = tcp_socket.recv(4096)
                 if not data:
-                    self.events.put(("error", (source_name, "TCP server closed the connection")))
+                    self.events.put(("error", (source_name, "TCP server closed the connection", tcp_socket)))
                     break
                 log_file = self.log_files.get(source_name)
                 if log_file is not None:
@@ -1049,7 +1171,7 @@ class SerialMonitor(tk.Tk):
             except socket.timeout:
                 continue
             except Exception as exc:
-                self.events.put(("error", (source_name, str(exc))))
+                self.events.put(("error", (source_name, str(exc), tcp_socket)))
                 break
 
     def process_events(self):
@@ -1069,9 +1191,23 @@ class SerialMonitor(tk.Tk):
                     # input; never mix those values with this test run.
                     continue
                 if kind == "error":
-                    port_name, message = payload
+                    port_name, message, stream = payload
+                    inputs = self.serials if port_name in self.serials else self.tcp_sockets
+                    if inputs.get(port_name) is not stream:
+                        continue  # A late failure from a replaced/disconnected worker.
+                    inputs.pop(port_name)
+                    stream.close()
+                    log_file = self.log_files.pop(port_name, None)
+                    if log_file is not None:
+                        log_file.close()
+                    self.refresh_command_targets()
+                    if not self.serials and not self.tcp_sockets:
+                        self.connect_button.configure(text="Connect")
                     self.status_label.configure(text=f"Serial error on {port_name}: {message}")
                     self.console_write(f"ERROR[{port_name}] {message}")
+                    if not self.serials and not self.tcp_sockets and self.debug_log_file is not None:
+                        self.debug_log_file.close()
+                        self.debug_log_file = None
                 elif kind == "decoder_error":
                     port_name, message = payload
                     self.console_write(f"BAD_PACKET[{port_name}] {message}")
@@ -1080,6 +1216,8 @@ class SerialMonitor(tk.Tk):
                     self.console_write(f"RX[{port_name}]  {data.hex(' ')}")
                 else:
                     port_name, packet = payload
+                    if port_name in self.serials:
+                        self.discovery.remember(port_name)
                     self.update_values("packet", packet)
                     self.console_write(f"PACKET[{port_name}] {self.format_packet(packet)}")
             except queue.Empty:
@@ -1340,6 +1478,9 @@ class SerialMonitor(tk.Tk):
                                width=max(200, right - left))
 
     def disconnect(self):
+        if self._auto_job is not None:
+            self._auto_job.cancel()
+            self._auto_job = None
         self.stop_event.set()
         for serial_port in self.serials.values():
             try:
@@ -1368,6 +1509,8 @@ class SerialMonitor(tk.Tk):
         self.status_label.configure(text="Disconnected")
 
     def close(self):
+        if self._auto_after is not None:
+            self.after_cancel(self._auto_after)
         if self._test_start_id is not None:
             self.after_cancel(self._test_start_id)
         self.stop_test()
@@ -1382,6 +1525,7 @@ def command_line(argv=None):
     parser.add_argument("--test-file", metavar="JSON", help="start timed hex-packet replay from a JSON file")
     parser.add_argument("--test-speed", type=float, default=1.0, help="playback multiplier, 0.1 to 10 (default: 1)")
     parser.add_argument("--test-once", action="store_true", help="stop at end of test instead of looping")
+    parser.add_argument("--no-auto-connect", action="store_true", help="disable automatic Witness USB connections")
     args = parser.parse_args(argv)
     try:
         validate_speed(args.test_speed)
@@ -1394,4 +1538,4 @@ if __name__ == "__main__":
     args = command_line()
     SerialMonitor(test_mode=args.test or args.test_file is not None,
                   test_source=args.test_file or "", test_speed=args.test_speed,
-                  test_loop=not args.test_once).mainloop()
+                  test_loop=not args.test_once, auto_connect=not args.no_auto_connect).mainloop()

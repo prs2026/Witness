@@ -2,11 +2,12 @@
 
 JSON: flight_view_default.json or Load layout / --flight-layout.
   version: 1; title; window_seconds; refresh_ms; columns; max_points; gap_seconds
-  plots: [{title, unit, y_range: null or [min,max], traces: [...]}]
+  plots: [{title, unit, right_unit: optional, y_range: null or [min,max], traces: [...]}]
   readouts: [{group: flight|state|gps|power, title, unit, traces: [...]}]
   trace: {label, input: witness|featherweight|aim, packet: name or [names], field,
           source: "*", color: "#RRGGBB", scale: 1, offset: 0, match: {},
-          enabled: true, note: "", format: number|state|continuity, unit: override}
+          enabled: true, note: "", format: number|state|continuity, unit: override,
+          axis: left|right}
 
 Default six plots occupy the center 2x3 grid; flight readouts/state stay left,
 GPS and power/continuity stay right. All dimensions follow the viewport.
@@ -39,6 +40,21 @@ graph values; readouts show age. Clear resets history but never logs.
 F11 toggles fullscreen; Escape exits fullscreen. No extra dependencies.
 White panels and dark text are used throughout the dashboard. Pale custom or
 legacy trace colors are darkened for readability without changing saved JSON.
+Window selects the visible timespan without clearing history, including while
+paused. Save layout persists it. History remains bounded by max_points / one
+hour, so a longer selected window may contain empty space at the start.
+AIM BASE 4.3.0 publishes Z acceleration but its units are unverified: it uses
+the right raw axis. AIM gyro traces AX~/AY~/AZ~ are ESTIMATES from quaternion
+differences, not raw measurements. They use orientation_payload/v1 and derived
+fields _derived.gyro_dps[0..2], in deg/s on the same axis as Witness. The sample
+timestamp is microseconds, independent of the graph's host receive clock.
+The calculation assumes Hamilton body-to-world quaternions; AIM axis convention
+and mounting relative to Witness have not been verified. Duplicates, retained
+samples and backwards times produce no estimate; invalid data or a gap longer
+than gap_seconds re-primes the estimator. No extrapolation across missing data.
+Clear/reload resets the estimator; Pause/time-window changes do not. More than
+180 degrees of rotation between samples is ambiguous. Witness uses solid lines;
+AIM uses dashed lines. See aim_orientation.py for the calculation and limits.
 """
 
 import json
@@ -70,14 +86,20 @@ class FlightView(ttk.Frame):
         self.rowconfigure(2, weight=1)
         toolbar = ttk.Frame(self)
         toolbar.grid(row=0, column=0, sticky="ew", pady=(0, 4))
-        for label, command in (("Load layout", self.choose_layout), ("Save layout", self.save_layout),
+        for label, command in (("Load", self.choose_layout), ("Save", self.save_layout),
                                ("Default", lambda: self.load_config(DEFAULT_LAYOUT))):
-            ttk.Button(toolbar, text=label, command=command, width=11).pack(side="left", padx=(0, 4))
+            ttk.Button(toolbar, text=label, command=command, width=7).pack(side="left", padx=(0, 4))
         self.pause_button = ttk.Button(toolbar, text="Pause view", command=self.toggle_pause, width=12)
         self.pause_button.pack(side="left", padx=4)
         ttk.Button(toolbar, text="Clear plots", command=self.clear, width=11).pack(side="left", padx=4)
         ttk.Button(toolbar, text="Set pad", command=self.set_pad, width=10).pack(side="left", padx=4)
-        ttk.Button(toolbar, text="Fullscreen (F11)", command=self.toggle_fullscreen, width=18).pack(side="right")
+        ttk.Label(toolbar, text="Window:").pack(side="left", padx=(8, 3))
+        self.window_var = tk.StringVar()
+        self.window_selector = ttk.Combobox(toolbar, textvariable=self.window_var, state="readonly", width=8)
+        self.window_selector.pack(side="left")
+        self.window_selector.bind("<<ComboboxSelected>>", self.select_window)
+        self.sync_window()
+        ttk.Button(toolbar, text="Full (F11)", command=self.toggle_fullscreen, width=10).pack(side="right")
         self.banner = tk.Label(self, anchor="w", foreground=TEXT, font=("Segoe UI", 11, "bold"),
                                height=1, width=1, padx=8, pady=4)
         self.banner.grid(row=1, column=0, sticky="ew", pady=(0, 4))
@@ -111,6 +133,20 @@ class FlightView(ttk.Frame):
         if filename:
             self.load_config(filename)
 
+    def sync_window(self):
+        seconds = self.data.layout.window_seconds
+        self.window_selector["values"] = tuple(f"{value:g} s" for value in sorted(
+            {10, 30, 60, 120, 300, 600, 1800, 3600, seconds}))
+        self.window_var.set(f"{seconds:g} s")
+
+    def select_window(self, _event=None):
+        try:
+            self.data.set_window(float(self.window_var.get().split()[0]))
+        except (ValueError, IndexError):
+            self.sync_window()
+            return
+        self.redraw()
+
     def load_config(self, filename):
         try:
             layout = load_layout(filename)
@@ -118,6 +154,7 @@ class FlightView(ttk.Frame):
             messagebox.showerror("Flight View layout", str(exc), parent=self)
             return False
         self.data.configure(layout)
+        self.sync_window()
         self.layout_path = Path(filename)
         self.load_error = None
         self.paused, self.frozen = False, None
@@ -166,7 +203,7 @@ class FlightView(ttk.Frame):
         self.banner.configure(text=f"{warning}{state}",
                               background="#fff2a8" if self.paused or simulated or self.load_error else "#d8efdf" if fresh else "#ffd5cf")
         self.info.configure(text=f"{self.layout_path.name} | {self.data.layout.window_seconds:g}s window | UTC receive time | "
-                            "! = old/invalid graph value | Input tabs show full source/quality details")
+                            "Solid W / dashed A | A gyro ~ = quaternion estimate | ! old/invalid | History bounded by max_points")
         self.renderer.draw(self.data.layout, histories, end, self.wall_offset)
 
     def _poll(self):

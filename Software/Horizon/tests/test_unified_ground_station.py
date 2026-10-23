@@ -250,7 +250,7 @@ class GuiTests(unittest.TestCase):
             witness = None
             try:
                 with patch("main.DEFAULT_WITNESS_FEED_PORT", 0):
-                    witness = SerialMonitor()
+                    witness = SerialMonitor(auto_connect=False)
                 witness.withdraw()
                 unified.witness.port.set(str(witness.publisher.port))
                 unified.witness.connect()
@@ -309,7 +309,7 @@ class GuiTests(unittest.TestCase):
             finally:
                 unified.close()
             with patch("main.DEFAULT_WITNESS_FEED_PORT", 0):
-                witness = SerialMonitor()
+                witness = SerialMonitor(auto_connect=False)
             witness.withdraw()
             try:
                 self.assertFalse(hasattr(witness, "aim_page"))

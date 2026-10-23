@@ -63,6 +63,8 @@ class DashboardRenderer:
         self.fonts = {}
         self.panel_bounds = {}
         self.text_boxes = []
+        self.min_font = 12
+        self.compact = True
 
     def font(self, size, bold=False):
         key = size, bold
@@ -72,15 +74,17 @@ class DashboardRenderer:
         return self.fonts[key]
 
     def text(self, box, text, size=14, color=TEXT, bold=False, align="left"):
-        """Fit a single line INSIDE its assigned box; ellipsize only as a last resort."""
+        """Keep a readable pixel floor; shorten labels rather than shrinking to 6px."""
         x0, y0, x1, y1 = box
-        width, height = max(1, x1 - x0 - 4), max(1, y1 - y0 - 2)
+        width, height = max(1, x1 - x0 - 4), max(1, y1 - y0)
         text = str(text).replace("\n", " ")
-        size = max(6, int(min(size, height * 0.8)))
+        size = max(self.min_font, int(min(size, height * 0.8)))
         font = self.font(size, bold)
-        while size > 6 and (font.measure(text) > width or font.metrics("linespace") > height):
+        while size > self.min_font and (font.measure(text) > width or font.metrics("linespace") > height):
             size -= 1
             font = self.font(size, bold)
+        if font.metrics("linespace") > height:
+            return None  # Ancillary text cannot overlap a neighboring row.
         if font.measure(text) > width:
             while text and font.measure(text + "...") > width:
                 text = text[:-1]
@@ -104,9 +108,11 @@ class DashboardRenderer:
         height = height or c.winfo_height()
         if width < 100 or height < 100:
             return
+        self.compact = width < 1450 or height < 700
+        self.min_font = max(12, min(16, int(min(width / 120, height / 60))))
         gap, pad = 8, 5
         available = width - 2 * pad - 2 * gap
-        left_w, center_w = available * 0.30, available * 0.51
+        left_w, center_w = (available * .26, available * .49) if self.compact else (available * .28, available * .49)
         left = (pad, pad, pad + left_w, height - pad)
         cx = left[2] + gap
         right_x = cx + center_w + gap
@@ -114,7 +120,9 @@ class DashboardRenderer:
         self.panel("flight", left)
         rows = list(zip(layout.rows, histories))
         self.flight(left, [(row, data) for row, data in rows if row.group in ("flight", "state")], end)
-        split = pad + (height - 2 * pad) * 0.46
+        gps_count = sum(row.group == "gps" for row in layout.rows)
+        split = (pad + 38 + max(20, self.min_font + 8) * max(1, gps_count) if self.compact
+                 else pad + (height - 2 * pad) * .40)
         gps_box = (right[0], right[1], right[2], split - gap / 2)
         power_box = (right[0], split + gap / 2, right[2], right[3])
         self.panel("gps", gps_box)
@@ -136,6 +144,9 @@ class DashboardRenderer:
             self.graph(box, plot, data, layout, end, wall_offset)
 
     def flight(self, box, rows, end):
+        if self.compact:
+            self.compact_flight(box, rows, end)
+            return
         x0, y0, x1, y1 = box
         x0, x1 = x0 + 10, x1 - 10
         w, h = x1 - x0, y1 - y0
@@ -169,11 +180,47 @@ class DashboardRenderer:
         self.text((x0, y0 + h * .935, x1, y0 + h * .965), "Altitude: pressure reference / GPS ASL", 12, MUTED)
         self.text((x0, y0 + h * .965, x1, y1 - 4), "AIM raw units are not converted to SI", 11, WARN)
 
+    def compact_flight(self, box, rows, end):
+        x0, y0, x1, y1 = box
+        x0, x1 = x0 + 8, x1 - 8
+        h = y1 - y0
+        self.text((x0, y0 + 2, x1, y0 + 25), "FLIGHT OVERVIEW", 19, bold=True)
+        self.text((x0, y0 + 25, x1, y0 + 45), "W Witness / A AIM / F FW", 12, MUTED)
+        metrics = [(row, data) for row, data in rows if row.group == "flight"]
+        for i, (row, data) in enumerate(metrics):
+            top = y0 + h * (.105 + i * .19)
+            self.text((x0, top, x1, top + 20), row.title, 16, bold=True)
+            line_h = max(19, min(26, (h * .19 - 23) / 3))
+            for ti, (trace, history) in enumerate(zip(row.traces, data)):
+                y = top + 21 + ti * line_h
+                cut = x0 + (x1 - x0) * .70
+                unit = trace.unit or row.unit
+                self.text((x0, y, cut, y + line_h),
+                          f"{trace.label}: {value_text(trace, history)} {unit}", 17, trace.color, True)
+                status, color = quality_text(history, end)
+                short = (f"!{max(0, end-history.received):.0f}s" if status.startswith(("AGE", "STALE"))
+                         else "NO DATA" if status == "NO DATA" else status.split()[0])
+                self.text((cut, y, x1, y + line_h), short, 12, color, align="right")
+        top = y0 + h * .70
+        self.canvas.create_line(x0, top, x1, top, fill=GRID)
+        self.text((x0, top + 3, x1, top + 24), "WITNESS STATE", 16, bold=True)
+        states = [(row, data) for row, data in rows if row.group == "state"]
+        if states:
+            row, data = states[0]
+            trace, history = row.traces[0], data[0]
+            self.text((x0, top + 25, x1, top + 65), value_text(trace, history), 34, trace.color, True)
+            status, color = quality_text(history, end)
+            self.text((x0, top + 66, x1, top + 86), status, 14, color)
+            self.text((x0, top + 87, x1, top + 107), history.source or "Waiting for Witness", 12, MUTED)
+        else:
+            self.text((x0, top + 25, x1, top + 65), "NOT CONFIGURED", 19, MUTED)
+        self.text((x0, y1 - 24, x1, y1 - 3), "AIM raw units; details on input tabs", 12, WARN)
+
     def status_panel(self, box, title, rows, end):
         x0, y0, x1, y1 = box
         x0, x1 = x0 + 9, x1 - 9
         h = y1 - y0
-        heading = min(32, h * .13)
+        heading = 30 if self.compact else 32
         self.text((x0, y0 + 5, x1, y0 + heading), title, 17, bold=True)
         if not rows:
             self.text((x0, y0 + heading + 5, x1, y0 + heading + 30), "No readouts configured", 12, MUTED)
@@ -186,6 +233,26 @@ class DashboardRenderer:
             value = value_text(trace, history)
             if trace.format == "number" and trace.enabled:
                 value += " " + unit
+            if self.compact or row_h < 3 * (self.font(self.min_font).metrics("linespace") + 3):
+                # Two lines per row, with quality alongside the value. Eight
+                # power readings stay legible on a 1000x650 application window.
+                label = row.title.replace("Featherweight", "FW").replace("Witness", "W").replace("computer", "CPU")
+                if title == "GPS / SATELLITES" or row_h < 2 * self.font(self.min_font).metrics("linespace") + 2:
+                    cut = x0 + (x1 - x0) * .65
+                    status, color = quality_text(history, end)
+                    marker = " !" if status.startswith(("AGE", "STALE", "INVALID", "SNAPSHOT")) else ""
+                    self.text((x0, top, cut, top + row_h), label, 14, MUTED)
+                    self.text((cut, top, x1, top + row_h), value + marker, 14,
+                              color if marker else trace.color, True, align="right")
+                    continue
+                self.text((x0, top, x1, top + row_h / 2), label, 14, MUTED)
+                cut = x0 + (x1 - x0) * .55
+                self.text((x0, top + row_h / 2, cut, top + row_h), value, 16, trace.color, True)
+                status, color = quality_text(history, end)
+                self.text((cut, top + row_h / 2, x1, top + row_h), status, 12, color, align="right")
+                if index < len(rows) - 1:
+                    self.canvas.create_line(x0, top + row_h, x1, top + row_h, fill=GRID)
+                continue
             self.text((x0, top + 2, x1, top + row_h * .34), row.title, 14, MUTED)
             self.text((x0, top + row_h * .34, x1, top + row_h * .69), value, 21, trace.color, True)
             status, color = quality_text(history, end)
@@ -197,44 +264,64 @@ class DashboardRenderer:
     def graph(self, box, plot, histories, layout, end, wall_offset):
         x0, y0, x1, y1 = box
         w, h = x1 - x0, y1 - y0
-        self.text((x0 + 7, y0 + 3, x1 - 7, y0 + 25), f"{plot.title} [{plot.unit}]", 15, bold=True)
-        legend_rows = math.ceil(len(histories) / 3)
+        units = plot.unit + (f" | {plot.right_unit}" if plot.right_unit else "")
+        self.text((x0 + 5, y0 + 2, x1 - 5, y0 + 25), f"{plot.title} [{units}]", 15, bold=True)
+        columns = min(2 if self.compact else 3, len(histories))
+        legend_h = self.min_font + 7
+        legend_rows = math.ceil(len(histories) / columns)
         for i, (trace, history) in enumerate(zip(plot.traces, histories)):
-            row, col = divmod(i, 3)
-            columns = min(3, len(histories))
-            lx = x0 + 7 + col * (w - 14) / columns
+            row, col = divmod(i, columns)
+            lx = x0 + 5 + col * (w - 10) / columns
             _, color = quality_text(history, end)
             stale = history.received is not None and end - history.received >= 2
-            marker = " !" if stale or history.quality in ("INVALID", "SNAPSHOT") else ""
-            self.text((lx, y0 + 26 + row * 15, lx + (w - 14) / columns - 2, y0 + 40 + row * 15),
-                      f"{trace.label} {value_text(trace, history)}{marker}", 11,
+            marker = "!" if stale or history.quality in ("INVALID", "SNAPSHOT") else ""
+            self.text((lx, y0 + 26 + row * legend_h, lx + (w - 10) / columns - 2,
+                       y0 + 26 + (row + 1) * legend_h),
+                      f"{trace.label} {value_text(trace, history)}{marker}", self.min_font,
                       color if marker else trace.color)
-        left, right = x0 + min(49, w * .22), x1 - 10
-        top, bottom = y0 + 31 + legend_rows * 15, y1 - 24
+        margin = max(40, self.min_font * 3.5)
+        left, right = x0 + margin, x1 - (margin if plot.right_unit else 10)
+        top, bottom = y0 + 30 + legend_rows * legend_h, y1 - (self.min_font + 12)
         if right <= left or bottom - top < 8:
             return
         start = end - layout.window_seconds
         visible = [[(t, v) for t, v in hist.points if start <= t <= end] for hist in histories]
         values = [v for points in visible for _, v in points if v is not None]
-        low, high = plot.y_range or (min(values, default=0), max(values, default=1))
-        if plot.y_range is None:
-            padding = max((high - low) * .08, abs(high) * .01, .01)
-            low, high = low - padding, high + padding
-            step = nice_step(high - low, 3)
-            low, high = math.floor(low / step) * step, math.ceil(high / step) * step
-        else:
-            step = nice_step(high - low, 3)
+        ranges = {}
+        for axis in ("left", "right"):
+            axis_values = [v for trace, points in zip(plot.traces, visible) if trace.axis == axis
+                           for _, v in points if v is not None]
+            limits = plot.y_range if axis == "left" else None
+            low, high = limits or (min(axis_values, default=0), max(axis_values, default=1))
+            if limits is None:
+                padding = max((high - low) * .08, abs(high) * .01, .01)
+                low, high = low - padding, high + padding
+            step = nice_step(high - low, max(1, int((bottom - top) / 35)))
+            if limits is None:
+                low, high = math.floor(low / step) * step, math.ceil(high / step) * step
+            ranges[axis] = low, high, step
         xm = lambda stamp: left + (stamp - start) / layout.window_seconds * (right - left)
-        ym = lambda value: bottom - (max(low, min(high, value)) - low) / (high - low) * (bottom - top)
-        for index in range(12):
-            value = (math.ceil(low / step) + index) * step
-            if value > high + step * 1e-6:
-                break
-            y = ym(value)
-            self.canvas.create_line(left, y, right, y, fill=GRID)
-            self.text((x0 + 2, y - 7, left - 4, y + 7), f"{value:.3g}", 10, MUTED, align="right")
-        xstep = nice_step(layout.window_seconds, max(1, int((right - left) / 80)))
+        def ym(value, axis):
+            low, high, _ = ranges[axis]
+            return bottom - (max(low, min(high, value)) - low) / (high - low) * (bottom - top)
+        for axis in ("left", "right") if plot.right_unit else ("left",):
+            low, high, step = ranges[axis]
+            for index in range(12):
+                value = (math.ceil(low / step) + index) * step
+                if value > high + step * 1e-6:
+                    break
+                y = ym(value, axis)
+                if axis == "left":
+                    self.canvas.create_line(left, y, right, y, fill=GRID)
+                    label_box = (x0 + 1, y - 10, left - 3, y + 10)
+                else:
+                    label_box = (right + 3, y - 10, x1 - 1, y + 10)
+                self.text(label_box, f"{value:.2g}", self.min_font,
+                          BAD if axis == "right" else MUTED, align="right" if axis == "left" else "left")
+        label_w = self.font(self.min_font).measure("00:00:00") + 8
+        xstep = nice_step(layout.window_seconds, max(1, int((right - left) / (label_w + 8))))
         first = math.ceil((start + wall_offset) / xstep) * xstep
+        last_label_end = -math.inf
         for index in range(20):
             stamp = first + index * xstep - wall_offset
             if stamp > end:
@@ -242,20 +329,27 @@ class DashboardRenderer:
             x = xm(stamp)
             self.canvas.create_line(x, top, x, bottom, fill=GRID)
             label = dt.datetime.fromtimestamp(stamp + wall_offset, dt.timezone.utc).strftime("%H:%M:%S")
-            tx = max(left + 25, min(right - 25, x))
-            self.text((tx - 27, bottom + 3, tx + 27, y1 - 3), label, 9, MUTED, align="center")
+            tx = max(left + label_w / 2, min(right - label_w / 2, x))
+            if tx - label_w / 2 >= last_label_end + 4:
+                self.text((tx - label_w / 2, bottom + 3, tx + label_w / 2, y1 - 2),
+                          label, self.min_font, MUTED, align="center")
+                last_label_end = tx + label_w / 2
         clipped = False
         for trace, points in zip(plot.traces, visible):
             color = readable_color(trace.color)
+            low, high, _ = ranges[trace.axis]
             clipped |= any(v is not None and not low <= v <= high for _, v in points)
             for segment in plot_segments(points, start, end, right - left, layout.gap_seconds):
-                coords = [coordinate for stamp, value in segment for coordinate in (xm(stamp), ym(value))]
+                coords = [coordinate for stamp, value in segment for coordinate in (xm(stamp), ym(value, trace.axis))]
                 if len(coords) >= 4:
-                    self.canvas.create_line(*coords, fill=color, width=2)
+                    self.canvas.create_line(*coords, fill=color, width=2,
+                                            dash=(6, 3) if trace.input == "aim" else (),
+                                            tags=("trace", trace.input, trace.axis))
                 elif coords:
                     x, y = coords
-                    self.canvas.create_oval(x - 1, y - 1, x + 1, y + 1, fill=color, outline="")
+                    self.canvas.create_oval(x - 2, y - 2, x + 2, y + 2, fill=color, outline="",
+                                            tags=("trace", trace.input, trace.axis))
         if not values or clipped:
-            self.text((left + 3, top + 3, right - 3, min(top + 22, bottom)),
-                      "OUT OF RANGE" if clipped else "NO LIVE SAMPLES", 11, BAD if clipped else MUTED,
-                      align="center")
+            self.text((left + 3, top + 2, right - 3, min(top + 24, bottom)),
+                      "OUT OF RANGE" if clipped else "NO LIVE SAMPLES", self.min_font,
+                      BAD if clipped else MUTED, align="center")

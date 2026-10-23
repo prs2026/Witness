@@ -9,9 +9,10 @@ import tkinter as tk
 from tkinter import messagebox, scrolledtext, ttk
 
 from aim_mqtt import AIM_TOPIC_FIELDS, AimMqttReceiver, AimSettings
+from auto_connect import AutoConnectTab
 
 
-class AimMqttTab(ttk.Frame):
+class AimMqttTab(AutoConnectTab, ttk.Frame):
     def __init__(self, parent, *, log_dir: Path, host, port, client_uuid, base_path, on_sample=None):
         super().__init__(parent, padding=8)
         self.log_dir = log_dir
@@ -52,6 +53,7 @@ class AimMqttTab(ttk.Frame):
             self.entries.append(entry)
         self.connect_button = ttk.Button(controls, text="Connect", command=self.toggle_connection)
         self.connect_button.grid(row=0, column=6)
+        self.init_auto_connect(controls, row=0, column=7, padx=(8, 0))
 
         topic_controls = ttk.Frame(self)
         topic_controls.grid(row=1, column=0, sticky="ew", pady=(6, 0))
@@ -153,7 +155,13 @@ class AimMqttTab(ttk.Frame):
 
     def toggle_connection(self):
         if self.receiver is not None:
+            self.set_auto_connect(False)
             self.disconnect()
+            return
+        self.connect()
+
+    def connect(self, *, automatic=False):
+        if self.receiver is not None:
             return
         try:
             settings = AimSettings(
@@ -161,12 +169,16 @@ class AimMqttTab(ttk.Frame):
                 self.client_uuid.get().strip(), self.base_path.get().strip().rstrip("/"),
             )
             receiver = AimMqttReceiver(settings, self.log_dir, on_sample=self.on_sample)
+            receiver.auto_retry = self.auto_connect.get()
             receiver.start()
         except (ValueError, RuntimeError, OSError) as exc:
-            messagebox.showerror("AIM XTRA MQTT", str(exc), parent=self)
+            self.status.set(f"Connection failed: {exc}")
+            if not automatic:
+                messagebox.showerror("AIM XTRA MQTT", str(exc), parent=self)
             return
         self.receiver = receiver
-        self._reset_fields()
+        if not automatic:
+            self._reset_fields()
         self.status.set(f"Connecting to {settings.host}:{settings.port}...")
         self.stats.set("Messages: 0   Bytes: 0   Errors: 0")
         self.log_status.set(f"Log: {receiver.log_path}")
@@ -219,6 +231,7 @@ class AimMqttTab(ttk.Frame):
         try:
             if self.receiver is not None:
                 self._consume(self.receiver)
+            self.auto_tick()
             now = time.monotonic()
             for row, (received, retained) in self._received.items():
                 age = max(0, now - received)

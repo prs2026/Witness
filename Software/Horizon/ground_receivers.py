@@ -28,6 +28,11 @@ class LoggedReceiver:
         self.status = "Disconnected"
         self.messages = self.bytes_received = self.errors = 0
         self.on_record = on_record
+        self.auto_retry = True
+
+    @property
+    def running(self):
+        return self._thread is not None and self._thread.is_alive()
 
     def start(self):
         if self._thread is not None:
@@ -169,9 +174,12 @@ class WitnessReceiver(LoggedReceiver):
                             raise ValueError("Witness feed record exceeds 64 KiB without a newline")
             except (OSError, ValueError) as exc:
                 if not self._stop.is_set():
-                    self.report(f"Waiting for Witness: {exc}; retrying in 1s",
+                    self.report(f"Waiting for Witness: {exc}; " +
+                                ("retrying in 1s" if self.auto_retry else "auto-connect off"),
                                 error=isinstance(exc, ValueError), status=True)
                     self._stop.wait(1)
+                    if not self.auto_retry:
+                        break
 
 
 class FeatherweightReceiver(LoggedReceiver):

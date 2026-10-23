@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Fixed, non-scrolling launch dashboard: overview/state left, six plots center, GPS and power right. W=Witness, A=AIM, F=Featherweight. Unmapped fields explicitly show N/A. AIM altitude/battery remain raw because publisher units are unverified. Horizontal distance is relative to the first valid live position or Set pad; barometric/GPS altitudes are not automatically zeroed. Configure field mappings, conversions and trace units here; see flight_view.py. Featherweight RX_NOMTK provides tracker battery and RSSI; BATT_BLE is the local serial-connected device battery, kept separate. Zero battery readings are unavailable, not valid voltage measurements.",
+  "description": "Fixed, non-scrolling launch dashboard: overview/state left, six plots center, GPS and power right. W=Witness, A=AIM, F=Featherweight. Unmapped fields explicitly show N/A. AIM altitude/battery remain raw because publisher units are unverified. Horizontal distance is relative to the first valid live position or Set pad; barometric/GPS altitudes are not automatically zeroed. Configure field mappings, conversions and trace units here; see flight_view.py. Featherweight RX_NOMTK provides tracker battery and RSSI; BATT_BLE is the local serial-connected device battery, kept separate. Zero battery readings are unavailable, not valid voltage measurements. AIM acceleration is AZ on an independent right raw axis (units unverified). AIM gyro AX~/AY~/AZ~ are quaternion-derived angular-rate estimates in deg/s, not raw gyro. Window selector changes time span without clearing history.",
   "title": "Horizon Flight View",
   "window_seconds": 120,
   "refresh_ms": 250,
@@ -40,7 +40,7 @@
       "unit": "g",
       "traces": [
         {
-          "label": "X",
+          "label": "WX",
           "input": "witness",
           "packet": [
             "sensors",
@@ -50,7 +50,7 @@
           "color": "#004b80"
         },
         {
-          "label": "Y",
+          "label": "WY",
           "input": "witness",
           "packet": [
             "sensors",
@@ -60,7 +60,7 @@
           "color": "#803900"
         },
         {
-          "label": "Z",
+          "label": "WZ",
           "input": "witness",
           "packet": [
             "sensors",
@@ -68,15 +68,25 @@
           ],
           "field": "filtered_accel[2]",
           "color": "#006020"
+        },
+        {
+          "label": "AZ",
+          "input": "aim",
+          "packet": "z_acceleration_payload/v1",
+          "field": "z_acceleration",
+          "color": "#990000",
+          "axis": "right",
+          "note": "AIM units unverified; separate raw axis"
         }
-      ]
+      ],
+      "right_unit": "A raw"
     },
     {
-      "title": "Gyro",
+      "title": "Gyro (A est.)",
       "unit": "deg/s",
       "traces": [
         {
-          "label": "X",
+          "label": "WX",
           "input": "witness",
           "packet": [
             "sensors",
@@ -86,7 +96,7 @@
           "color": "#004b80"
         },
         {
-          "label": "Y",
+          "label": "WY",
           "input": "witness",
           "packet": [
             "sensors",
@@ -96,7 +106,7 @@
           "color": "#803900"
         },
         {
-          "label": "Z",
+          "label": "WZ",
           "input": "witness",
           "packet": [
             "sensors",
@@ -104,6 +114,30 @@
           ],
           "field": "gyro[2]",
           "color": "#006020"
+        },
+        {
+          "label": "AX~",
+          "input": "aim",
+          "packet": "orientation_payload/v1",
+          "field": "_derived.gyro_dps[0]",
+          "color": "#004b80",
+          "note": "Quaternion-derived deg/s estimate; AIM frame/mounting unverified"
+        },
+        {
+          "label": "AY~",
+          "input": "aim",
+          "packet": "orientation_payload/v1",
+          "field": "_derived.gyro_dps[1]",
+          "color": "#803900",
+          "note": "Quaternion-derived deg/s estimate; AIM frame/mounting unverified"
+        },
+        {
+          "label": "AZ~",
+          "input": "aim",
+          "packet": "orientation_payload/v1",
+          "field": "_derived.gyro_dps[2]",
+          "color": "#006020",
+          "note": "Quaternion-derived deg/s estimate; AIM frame/mounting unverified"
         }
       ]
     },

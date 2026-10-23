@@ -7,6 +7,8 @@ from featherweight import FEATHERWEIGHT_BAUD
 from ground_receivers import FeatherweightReceiver, WitnessReceiver
 from ground_settings import WITNESS_FEED_HOST, WITNESS_FEED_PORT
 from telemetry_view import TelemetryView
+from auto_connect import AutoConnectTab
+from serial_discovery import SerialDiscovery
 
 WITNESS_FIELDS = {
     "sensors": ("status", "uptime", "filtered_accel[0]", "filtered_accel[1]", "filtered_accel[2]",
@@ -50,7 +52,7 @@ FEATHERWEIGHT_FIELDS.update({
 })
 
 
-class ReceiverTab(ttk.Frame):
+class ReceiverTab(AutoConnectTab, ttk.Frame):
     def __init__(self, parent, log_dir, *, witness=False, schema=None, on_record=None):
         super().__init__(parent, padding=8)
         self.log_dir, self.witness = log_dir, witness
@@ -77,21 +79,26 @@ class ReceiverTab(ttk.Frame):
 
     def toggle_connection(self):
         if self.receiver is not None:
+            self.set_auto_connect(False)
             self.disconnect()
         else:
             self.connect()
 
-    def connect(self):
+    def connect(self, *, automatic=False):
         if self.receiver is not None:
             return
         try:
             receiver = self.make_receiver()
+            receiver.auto_retry = self.auto_connect.get()
             receiver.start()
         except (ValueError, RuntimeError, OSError) as exc:
-            messagebox.showerror("Input connection", str(exc), parent=self)
+            self.status.set(f"Connection failed: {exc}")
+            if not automatic:
+                messagebox.showerror("Input connection", str(exc), parent=self)
             return
         self.receiver = receiver
-        self.view.clear()
+        if not automatic:
+            self.view.clear()
         self.prepare_view()
         self.status.set("Connecting...")
         self.log_status.set(f"Log: {receiver.log_path}")
@@ -108,17 +115,22 @@ class ReceiverTab(ttk.Frame):
         self.status.set(status)
         self.stats.set(f"Packets: {messages}   Bytes: {byte_count}   Errors: {errors}")
         for record in updates:
+            self.remember_source(record)
             try:
                 self.view.update_record(record, witness=self.witness)
             except (ValueError, TypeError, OverflowError, OSError) as exc:
                 diagnostics.append(f"DISPLAY_ERROR: {exc}")
         self.view.append(diagnostics)
 
+    def remember_source(self, record):
+        pass
+
     def _poll(self):
         try:
             if self.receiver is not None:
                 self._consume(self.receiver)
             self.view.update_ages()
+            self.auto_tick()
         finally:
             self._after_id = self.after(100, self._poll)
 
@@ -154,8 +166,9 @@ class WitnessTab(ReceiverTab):
             self.entries.append(entry)
         self.connect_button = ttk.Button(self.controls, text="Connect", command=self.toggle_connection)
         self.connect_button.grid(row=0, column=4)
+        self.init_auto_connect(self.controls, row=0, column=5, padx=12)
         self.note.configure(text="Receive only: start main.py to supply decoded Witness telemetry. "
-                            "Auto-reconnects; snapshots retain original age. Units: g, dps, m, m/s, V, A, C, Pa; "
+                            "Auto-connect retries while enabled; snapshots retain original age. Units: g, dps, m, m/s, V, A, C, Pa; "
                             "uptime in ms. Live graphs are on Flight View; commands remain in main.py.")
 
     def make_receiver(self):
@@ -165,6 +178,7 @@ class WitnessTab(ReceiverTab):
 class FeatherweightTab(ReceiverTab):
     def __init__(self, parent, *, log_dir, on_record=None):
         super().__init__(parent, log_dir, schema=FEATHERWEIGHT_FIELDS, on_record=on_record)
+        self.discovery = SerialDiscovery("featherweight")
         ttk.Label(self.controls, text="Featherweight COM port:").grid(row=0, column=0, padx=(0, 4))
         self.port_combo = ttk.Combobox(self.controls, width=14, state="readonly")
         self.port_combo.grid(row=0, column=1, padx=(0, 5))
@@ -172,26 +186,50 @@ class FeatherweightTab(ReceiverTab):
         ttk.Button(self.controls, text="Refresh", command=self.refresh_ports).grid(row=0, column=2)
         self.connect_button = ttk.Button(self.controls, text="Connect", command=self.toggle_connection)
         self.connect_button.grid(row=0, column=3, padx=12)
+        self.init_auto_connect(self.controls, row=0, column=4)
         self.note.configure(text=f"{FEATHERWEIGHT_BAUD} baud, 8-N-1, receive only. "
                             "Altitude: ft ASL; velocity: ft/s; coordinates/heading: degrees. "
                             "Fix: 0 = no fix, 2 = 2D, 3 = 3D. Bad text/radio CRC is shown in red. "
                             "BATT_BLE = local/GS battery; RX_NOMTK = tracker battery. Voltages: V and raw mV; "
                             "temperature: C; RSSI: dBm; SNR: dB; TX airtime: ms; frequency: Hz. "
-                            "Binary FWT chatter without a tracker is ignored; raw bytes are logged.")
+                            "Binary FWT chatter without a tracker is ignored; raw bytes are logged. "
+                            "Auto-connect finds Featherweight-named USB devices or learned USB identities. "
+                            "For generic adapters select the port and Connect once to learn it.")
         self.refresh_ports()
         self.view.add_source("(no port)")
 
     def refresh_ports(self):
-        try:
-            from serial.tools import list_ports
-            ports = [port.device for port in list_ports.comports()]
-        except ImportError:
-            ports = []
+        self.discovery.refresh(force=True)
+        self._update_ports()
+
+    def _update_ports(self):
+        ports = [port.device for port in self.discovery.ports]
         current = self.port_combo.get()
         if self.receiver is not None:
             return
         self.port_combo["values"] = ["(no port)", *ports]
         self.port_combo.set(current if current in ports else "(no port)")
+
+    def auto_tick(self):
+        self.discovery.refresh()
+        self._update_ports()
+        if self.discovery.error:
+            self.view.append([self.discovery.error])
+            self.discovery.error = None
+        super().auto_tick()
+
+    def prepare_auto_connect(self):
+        candidates = self.discovery.candidates()
+        if not candidates:
+            self.status.set("Auto-connect: waiting for a known Featherweight USB device; select generic adapters manually once")
+            return False
+        self.port_combo.set(candidates[0])
+        self.discovery.attempted(candidates[0])
+        return True
+
+    def remember_source(self, record):
+        if record["packet"].get("text_crc_valid"):
+            self.discovery.remember(record["source"])
 
     def make_receiver(self):
         return FeatherweightReceiver(self.port_combo.get(), self.log_dir, on_record=self.on_record)

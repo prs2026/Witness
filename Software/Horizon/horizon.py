@@ -7,13 +7,17 @@ All three inputs are receive-only and have independent connection lifecycles.
 Usage:
     python -m pip install -r requirements.txt
     python main.py       # Witness ports, decoder, commands, graphs and raw logs
-    python horizon.py    # Run in a second terminal; auto-connects to Witness
+    python horizon.py    # Auto-connects to Witness, AIM MQTT and known Featherweight USB
 
 Restart an already-running main.py once after upgrading to enable its feed.
 Either app can subsequently start first. Defaults are in ground_settings.py;
 the Witness feed uses 127.0.0.1:8766, not either of Witness's raw TCP inputs.
-Select the Featherweight COM port here (not in main.py). For AIM, leave the
-vendor AIM BASE application and its MQTT broker running, then click Connect.
+Select generic Featherweight adapters once here (not in main.py); after a valid
+packet their USB identity is saved in auto_connect_featherweight.json. Named
+Featherweight devices are discovered automatically. For AIM, leave the vendor
+AIM BASE application and its MQTT broker running. Each input has an Auto-connect
+checkbox: turning it off keeps a healthy connection but stops future retries.
+Disconnect also disables that input's auto-connect. No network range is scanned.
 Horizon does not open the AIM USB device. Logs go in logs/: Witness JSONL,
 Featherweight raw BIN plus diagnostic/packet JSONL, and AIM MQTT JSONL.
 
@@ -60,16 +64,11 @@ class HorizonGroundStation(tk.Tk):
         for tab, title in ((self.flight, "Flight View"), (self.witness, "Witness"), (self.featherweight, "Featherweight GPS"),
                            (self.aim, "AIM XTRA MQTT")):
             self.notebook.add(tab, text=title)
-        self._connect_id = self.after(0, self._auto_connect) if auto_connect else None
+        for tab in (self.witness, self.featherweight, self.aim):
+            tab.set_auto_connect(auto_connect)
         self.protocol("WM_DELETE_WINDOW", self.close)
 
-    def _auto_connect(self):
-        self._connect_id = None
-        self.witness.connect()
-
     def close(self):
-        if self._connect_id is not None:
-            self.after_cancel(self._connect_id)
         for tab in (self.witness, self.featherweight, self.aim):
             tab.close()
         self.flight.close()
@@ -80,5 +79,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Horizon Unified Ground Station")
     parser.add_argument("--flight-layout", default=DEFAULT_LAYOUT, type=Path,
                         help="Flight View JSON layout (default: flight_view_default.json next to horizon.py)")
+    parser.add_argument("--no-auto-connect", action="store_true", help="start with all automatic connections off")
     args = parser.parse_args()
-    HorizonGroundStation(flight_layout=args.flight_layout).mainloop()
+    HorizonGroundStation(flight_layout=args.flight_layout, auto_connect=not args.no_auto_connect).mainloop()

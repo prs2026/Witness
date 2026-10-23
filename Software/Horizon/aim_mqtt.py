@@ -135,6 +135,12 @@ class AimMqttReceiver:
         self.last_received = None
         self._last_status = None
         self.on_sample = on_sample
+        self.auto_retry = True
+        self._thread = None
+
+    @property
+    def running(self):
+        return self._thread is not None and self._thread.is_alive()
 
     def start(self):
         try:
@@ -151,6 +157,7 @@ class AimMqttReceiver:
         self.client = mqtt.Client(
             callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
             client_id=self.client_id, clean_session=True, protocol=mqtt.MQTTv311,
+            reconnect_on_failure=False,
         )
         self.client.connect_timeout = 3.0
         self.client.reconnect_delay_set(min_delay=1, max_delay=15)
@@ -167,12 +174,36 @@ class AimMqttReceiver:
             self._closed.clear()
             self._set_status(f"Connecting to {self.settings.host}:{self.settings.port}...")
             self.client.connect_async(self.settings.host, self.settings.port, keepalive=30)
-            result = self.client.loop_start()
-            if result != mqtt.MQTT_ERR_SUCCESS:
-                raise RuntimeError(f"Could not start MQTT receiver: {result}")
+            self._thread = threading.Thread(target=self._network_loop, name="aim-mqtt", daemon=True)
+            self._thread.start()
         except Exception:
             self.stop(wait=True)
             raise
+
+    def _network_loop(self):
+        # Own the retry loop so the UI can turn retries off without disconnecting
+        # a healthy subscription. Paho's loop_start retries the initial connect
+        # unconditionally, even with reconnect_on_failure=False.
+        delay = 1.0
+        try:
+            while not self._stopped.is_set():
+                try:
+                    self.client.reconnect()
+                    if self._stopped.is_set():
+                        self.client.disconnect()
+                        break
+                    self.client.loop_forever(timeout=0.2, retry_first_connection=False)
+                except OSError:
+                    self._on_connect_fail(self.client, None)
+                if self._stopped.is_set() or not self.auto_retry:
+                    break
+                deadline = time.monotonic() + delay
+                while time.monotonic() < deadline:
+                    if self._stopped.wait(min(0.2, max(0, deadline - time.monotonic()))) or not self.auto_retry:
+                        return
+                delay = min(15.0, delay * 2)
+        except Exception as exc:
+            self._set_status(f"MQTT receiver stopped: {exc}")
 
     def _write_log(self, record):
         try:
@@ -233,13 +264,15 @@ class AimMqttReceiver:
     def _on_connect_fail(self, client, _userdata):
         if not self._stopped.is_set():
             self._set_status(
-                f"Broker unavailable at {self.settings.host}:{self.settings.port}; retrying. "
+                f"Broker unavailable at {self.settings.host}:{self.settings.port}; "
+                + ("retrying. " if self.auto_retry else "auto-connect off. ") +
                 "AIM BASE publishes to a broker; the broker must be running."
             )
 
     def _on_disconnect(self, client, _userdata, _flags, reason_code, _properties):
         if not self._stopped.is_set():
-            self._set_status(f"MQTT disconnected ({reason_code}); reconnecting...")
+            self._set_status(f"MQTT disconnected ({reason_code}); " +
+                             ("reconnecting..." if self.auto_retry else "auto-connect off"))
 
     def _on_message(self, client, _userdata, message):
         if self._stopped.is_set():
@@ -314,8 +347,8 @@ class AimMqttReceiver:
 
             def finish():
                 try:
-                    if self.client is not None:
-                        self.client.loop_stop()
+                    if self._thread is not None:
+                        self._thread.join(timeout=4)
                     self._set_status("Disconnected")
                 finally:
                     try:

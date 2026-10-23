@@ -5,7 +5,7 @@ coalescing, preserving short peaks. All plots use host receive time, not uptime.
 """
 
 from collections import deque
-from dataclasses import dataclass, field as dataclass_field
+from dataclasses import dataclass, field as dataclass_field, replace
 import json
 import math
 from pathlib import Path
@@ -14,6 +14,7 @@ import threading
 import time
 
 from telemetry_view import flatten_fields
+from aim_orientation import AimAngularRateEstimator
 
 DEFAULT_LAYOUT = Path(__file__).resolve().parent / "flight_view_default.json"
 COLORS = ("#004b80", "#803900", "#006020", "#5b267d", "#990000", "#555000")
@@ -54,6 +55,7 @@ class Trace:
     enabled: bool = True
     note: str = ""
     format: str = "number"
+    axis: str = "left"
 
 
 @dataclass(frozen=True)
@@ -63,6 +65,7 @@ class Plot:
     traces: tuple
     y_range: tuple | None = None
     group: str = ""
+    right_unit: str | None = None
 
 
 @dataclass(frozen=True)
@@ -110,7 +113,12 @@ def validate_layout(document):
     for index, row in enumerate(rows + readouts):
         name = f"Plot {index + 1}"
         is_readout = index >= len(rows)
-        _keys(row, "title unit traces y_range" + (" group" if is_readout else ""), name)
+        _keys(row, "title unit traces y_range right_unit" + (" group" if is_readout else ""), name)
+        right_unit = row.get("right_unit")
+        if right_unit is not None:
+            _text(right_unit, "right_unit", 30)
+            if is_readout:
+                raise ValueError("right_unit is only available for graphs")
         group = row.get("group", "")
         if is_readout:
             if group not in ("flight", "state", "gps", "power"):
@@ -135,7 +143,10 @@ def validate_layout(document):
             raise ValueError("Flight readouts allow 3 values; other readouts allow 1")
         parsed = []
         for ti, trace in enumerate(traces):
-            _keys(trace, "label input packet field source color scale offset match unit enabled note format", name + " trace")
+            _keys(trace, "label input packet field source color scale offset match unit enabled note format axis", name + " trace")
+            axis = trace.get("axis", "left")
+            if axis not in ("left", "right") or (axis == "right" and (is_readout or right_unit is None)):
+                raise ValueError("axis must be left, or right on a graph with right_unit")
             kind = trace.get("input")
             if kind not in ("witness", "featherweight", "aim"):
                 raise ValueError(f"{name}: input must be witness, featherweight, or aim")
@@ -162,8 +173,8 @@ def validate_layout(document):
             unit = trace.get("unit")
             if unit is not None:
                 _text(unit, "trace unit", 30)
-                if not is_readout and unit != row.get("unit", "value"):
-                    raise ValueError("Graph traces must use the graph's unit; use a separate graph for other units")
+                if not is_readout and unit != (right_unit if axis == "right" else row.get("unit", "value")):
+                    raise ValueError("Graph traces must use their axis unit")
             note = trace.get("note", "")
             if not isinstance(note, str) or len(note) > 80:
                 raise ValueError("note must be text of at most 80 characters")
@@ -176,9 +187,9 @@ def validate_layout(document):
                 _text(trace.get("source", "*"), "source"), color,
                 _number(trace.get("scale", 1), "scale", -1e12, 1e12),
                 _number(trace.get("offset", 0), "offset", -1e15, 1e15), match,
-                unit, enabled, note, display_format))
+                unit, enabled, note, display_format, axis))
         plots.append(Plot(plot_title, _text(row.get("unit", "value"), name + " unit", 60),
-                          tuple(parsed), tuple(limits) if limits else None, group))
+                          tuple(parsed), tuple(limits) if limits else None, group, right_unit))
     if sum(len(plot.traces) for plot in plots) * integers["max_points"] > 500000:
         raise ValueError("Layout exceeds 500,000 total history points; reduce max_points or traces")
     return Layout(title, window, **integers, gap_seconds=gap, plots=tuple(plots[:len(rows)]),
@@ -217,6 +228,7 @@ class FlightData:
             self.layout = layout
             self.selected = {}
             self.origins = {}
+            self.aim_rates = AimAngularRateEstimator()
             self.histories = [[History(deque(maxlen=layout.max_points if not plot.group else 1),
                                        quality="NO DATA" if trace.enabled else "UNAVAILABLE")
                                for trace in plot.traces] for plot in layout.rows]
@@ -229,6 +241,13 @@ class FlightData:
 
     def clear(self):
         self.configure(self.layout)
+
+    def set_window(self, seconds):
+        """Change only the view span; preserve data, source bindings and origins."""
+        seconds = _number(seconds, "window_seconds", 5, 3600)
+        with self._lock:
+            self.layout = replace(self.layout, window_seconds=seconds,
+                                  document={**self.layout.document, "window_seconds": seconds})
 
     def reset_pad(self):
         """Next valid live sample sets each source's origin. Other history stays."""
@@ -272,6 +291,9 @@ class FlightData:
         if not isinstance(received, (int, float)) or not math.isfinite(received):
             return
         with self._lock:
+            if kind == "aim" and packet == "orientation_payload/v1":
+                fields = {**fields, **self.aim_rates.update(source, fields, received,
+                          retained=snapshot, valid=valid, max_gap=self.layout.gap_seconds)}
             fields = self._derive_distance(kind, source, fields, received, snapshot, valid)
             for trace, history in self.routes.get((kind, packet), ()):
                 if trace.field not in fields or any(fields.get(key) != value for key, value in trace.match.items()):
@@ -305,7 +327,9 @@ class FlightData:
                 if not snapshot:
                     history.live = True
                     history.points.append((received, value))
-                    cutoff = received - self.layout.window_seconds - self.layout.gap_seconds
+                    # Keep history when zooming in, still bounded by max_points
+                    # and the maximum selectable time span.
+                    cutoff = received - 3600 - self.layout.gap_seconds
                     while history.points and history.points[0][0] < cutoff:
                         history.points.popleft()
 
