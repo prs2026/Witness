@@ -1,0 +1,2 @@
+{"event": "status", "received_at": "2026-10-23T19:31:40.095+00:00", "message": "Connecting to localhost:1883..."}
+{"event": "status", "received_at": "2026-10-23T19:31:44.175+00:00", "message": "Broker unavailable at localhost:1883; retrying. AIM BASE publishes to a broker; the broker must be running."}
