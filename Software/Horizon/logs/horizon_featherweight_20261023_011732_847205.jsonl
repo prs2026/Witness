@@ -1,0 +1,2 @@
+{"event": "status", "received_at": 1792743452.8489165, "message": "Opening COM6: 115200 baud, 8-N-1, read only"}
+{"event": "status", "received_at": 1792743452.8585129, "message": "Connected: COM6 (receive only)"}
