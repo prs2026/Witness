@@ -115,6 +115,7 @@ esp_err_t SpiDataForwarder::queue_immediate_radio_packet(
     const std::uint8_t *const data,
     const std::size_t length)
 {
+    if (!radio_available_.load()) return ESP_OK;
     if constexpr (!kForwardExternalPacketsImmediately) {
         return ESP_OK;
     }

@@ -21,9 +21,11 @@
 #define HW_PIN_RAD_BUSY       GPIO_NUM_39
 #define HW_PIN_RAD_RF_ENABLE  GPIO_NUM_40
 
-// MCU UART interface.
+// Broken-out MCU UART1 interface (115200 baud, 8N1 by default).
 #define HW_PIN_MCU_UART_TX    GPIO_NUM_5
 #define HW_PIN_MCU_UART_RX    GPIO_NUM_4
+// Set to 0 on reduced boards to skip all radio initialization and service.
+#define HW_RADIO_ENABLED      0
 
 // SPI2 interface.
 #define HW_PIN_SPI2_IO3       GPIO_NUM_9

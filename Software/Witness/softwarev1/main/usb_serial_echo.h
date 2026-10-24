@@ -60,7 +60,7 @@ private:
         const std::uint8_t *data,
         std::size_t length);
     // Parses a whitespace-separated hexadecimal 0x05 command and forwards
-    // the decoded bytes to UART2. Returns true when a command was forwarded.
+    // the decoded bytes to UART1. Returns true when a command was forwarded.
     bool forward_text_command_if_present();
     void process_protocol_command(std::uint16_t command);
     void process_tx_command();

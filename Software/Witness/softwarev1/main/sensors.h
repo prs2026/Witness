@@ -135,7 +135,6 @@ private:
     static constexpr std::size_t kMaximumSpiTransfer = 258;
     static constexpr std::uint32_t kBootDelayMs = 35;
     static constexpr std::uint32_t kResetDelayMs = 30;
-    static constexpr std::uint32_t kRadioInitRetryMs = 1000;
 
     // Main-page registers used by the driver.
     static constexpr std::uint8_t kRegFuncCfgAccess = 0x01;
@@ -216,7 +215,6 @@ private:
     bool has_gyro_sample_ = false;
     bool ms5607_initialized_ = false;
     bool radio_ready_ = false;
-    TickType_t last_radio_init_attempt_ = 0;
     std::array<TickType_t, kRadioPacketTypeCount> radio_last_sent_{};
     std::size_t next_radio_packet_index_ = 0;
     std::atomic_bool radio_transmission_enabled_{true};

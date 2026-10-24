@@ -37,7 +37,7 @@ private:
     esp_err_t make_data_sector(std::uint32_t sector, std::uint8_t *data);
 
     FlashLogger &logger_;
-    std::uint16_t first_cluster_[32]{};
-    std::uint16_t cluster_count_[32]{};
+    std::uint16_t first_cluster_[48]{};
+    std::uint16_t cluster_count_[48]{};
     std::size_t file_count_ = 0;
 };

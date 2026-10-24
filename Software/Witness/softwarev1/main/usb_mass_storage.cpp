@@ -36,7 +36,7 @@ const char *kStrings[] = {
 } // namespace
 
 esp_err_t UsbMassStorage::build_index() {
-    file_count_ = std::min<std::size_t>(logger_.export_file_count(), 32);
+    file_count_ = std::min<std::size_t>(logger_.export_file_count(), FlashLogger::kMaximumExportFiles);
     std::uint32_t next = 2;
     for (std::size_t i = 0; i < file_count_; ++i) {
         const std::uint32_t bytes = logger_.export_file(i).size;

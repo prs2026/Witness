@@ -3,6 +3,7 @@
 #include "flash_logger.h"
 #include "flight_state_machine.h"
 #include "heartbeat.h"
+#include "hardware_pins.h"
 #include "sensors.h"
 #include "spi_data_forwarder.h"
 #include "uart_driver.h"
@@ -15,7 +16,8 @@ extern "C" void app_main(void)
     static WitnessStatus witness_status;
     static FlightStateMachine flight_state_machine(witness_status);
     static Heartbeat heartbeat(spi_data_forwarder, witness_status);
-    static UartDriver uart_driver(spi_data_forwarder);
+    static UartDriver uart_driver(spi_data_forwarder, UART_NUM_1,
+                                  HW_PIN_MCU_UART_TX, HW_PIN_MCU_UART_RX);
     static CommandBridge command_bridge(uart_driver, spi_data_forwarder);
     static Sensors sensors(
         spi_data_forwarder,
@@ -38,6 +40,7 @@ extern "C" void app_main(void)
     // Install the diagnostic log sink before the remaining subsystems start so
     // their initialization output is included in this boot's TXT file.
     ESP_ERROR_CHECK(flash_logger.start());
+    uart_driver.set_log_sink(flash_logger);
     ESP_ERROR_CHECK(uart_driver.start());
     ESP_ERROR_CHECK(sensors.start());
     ESP_ERROR_CHECK(heartbeat.start());

@@ -201,7 +201,7 @@ Command values currently defined:
 
 The last three commands also have legacy compact USB forms described in
 section 7. Canonical commands received from USB or LoRa are retransmitted
-byte-for-byte on UART2. The firmware does not rewrite their status or uptime.
+byte-for-byte on UART1. The firmware does not rewrite their status or uptime.
 Radio commands are additionally interpreted locally.
 
 ### `0xFF` Heartbeat packet, 8 bytes
@@ -294,22 +294,22 @@ the sensors.
 
 `SpiDataForwarder::kForwardExternalPacketsImmediately` controls the immediate
 forwarding path and defaults to `true`. With it enabled, complete command frames
-received over USB and complete canonical frames reconstructed from UART2 are
+received over USB and complete canonical frames reconstructed from UART1 are
 queued ahead of scheduled telemetry. Radio-originated packets are never sent
 back to the radio, preventing an RF echo loop. Set the flag to `false` to make
 all radio output use only the per-packet latest-frame schedule.
 
 Every valid received radio packet up to the canonical maximum of 103 bytes is
 forwarded unchanged to USB. A received packet beginning with `0x05` is also
-forwarded unchanged to UART2 and queued for local interpretation. Debug enable,
+forwarded unchanged to UART1 and queued for local interpretation. Debug enable,
 mass storage, log erase, and flight-state commands execute locally. Load and
 5 V regulator commands have no Witness-local hardware action because they are
 implemented by the UART-connected device. SX1262 packets with a CRC error are
 discarded.
 
-## 6. UART2 bridge
+## 6. UART1 bridge and GPS logging
 
-UART2 uses:
+The existing broken-out UART connection uses ESP32 UART1:
 
 | Setting | Value |
 |---|---|
@@ -318,17 +318,55 @@ UART2 uses:
 | Parity | None |
 | Stop bits | 1 |
 | Flow control | None |
-| ESP32 TX | GPIO4 |
-| ESP32 RX | GPIO5 |
+| ESP32 TX | GPIO5 |
+| ESP32 RX | GPIO4 |
 
 Command packets are written exactly as received. No length, newline, checksum,
-or additional UART framing is added. UART2 receive data is copied unchanged to
+or additional UART framing is added. UART1 receive data is copied unchanged to
 USB serial. The UART byte stream is also parsed by fixed packet length; when a
 complete canonical frame with a valid EOF is found, it enters the immediate
 radio queue if that feature is enabled.
 
-At boot, Witness transmits the two bytes `05 22` and waits one second for a
-reply containing `05 22`. This is a link test, not a canonical 10-byte command.
+The legacy `05 22` startup loopback probe is disabled by default so an attached
+GPS receiver is not sent unsolicited bytes. It can be enabled with
+`UartDriver::kStartupLoopbackTestEnabled`. Baud is configured by
+`UartDriver::kBaudRate`. Connect GPS TX to GPIO4 and share ground; GPIO5 is only
+needed if commands must be sent to the receiver.
+
+Every received byte is also queued for flash before USB forwarding or packet
+parsing. No GPS protocol is assumed. Each boot exports three files with a
+matching hexadecimal session number:
+
+| File | Contents |
+|---|---|
+| `U0000001.BIN` | Exact UART1 receive stream, including binary messages and CR/LF |
+| `S0000001.BIN` | Existing 48-byte sensor records, using the flight-state logging gate |
+| `S0000001.TXT` | ESP-IDF diagnostic output |
+
+UART capture runs in every flight state, including Pad Idle and Landed. A
+32 KiB RAM queue absorbs flash write delays; the UART driver also has an 8 KiB
+RX buffer. Flash staging uses 4,080-byte batches and flushes partial batches every
+second. Entering read-only mass storage (`05 68 68`) stops capture and writes
+all accepted bytes before publishing the files. UART data arriving after
+capture stops is not part of the exported snapshot. Sudden power loss can lose
+the bytes still buffered in RAM; use the export command before disconnecting.
+
+New sessions use storage layout version 2: 10 NAND blocks for sensor data,
+40 for UART data and 12 for diagnostics, retaining 16 rotating sessions.
+The UART allocation holds up to 5,222,400 raw bytes per session (about 7.5
+minutes at continuous 115200-baud 8N1, longer for lower average GPS traffic).
+Old version-1 sensor and diagnostic sessions remain readable. No format or
+erase is required to upgrade. Buffer overflow or flash write failure sets the
+existing flash-log-failed status bit. When a file's allocation fills, that
+stream stops with a diagnostic and the other streams continue. These are
+finite buffers, not an unlimited lossless recorder.
+
+Radio initialization failure disables radio RX/TX for the rest of the boot,
+without repeated initialization attempts in the sensor loop. An SPI packet-RAM
+round trip rejects an absent radio even when SPI writes return success.
+`HW_RADIO_ENABLED` in `hardware_pins.h` may be set to `0` to skip initialization
+entirely on boards with no radio fitted. UART logging, USB, sensors and flash
+continue operating without a radio.
 
 ## 7. USB command input
 
@@ -346,7 +384,7 @@ USB also accepts a newline-terminated ASCII-hex representation:
 ```
 
 The spaces are part of the ASCII representation. They are removed during hex
-decoding, and the ten decoded bytes are sent to UART2. A terminal's "send hex"
+decoding, and the ten decoded bytes are sent to UART1. A terminal's "send hex"
 mode should instead send the ten binary bytes with no extra newline.
 
 Legacy compact binary commands are accepted after a 20 ms idle interval:
@@ -358,7 +396,7 @@ Legacy compact binary commands are accepted after a 20 ms idle interval:
 ```
 
 The same compact commands may be typed as ASCII hex followed by Enter. `TX 05
-...` is another accepted ASCII form and forwards the decoded bytes to UART2.
+...` is another accepted ASCII form and forwards the decoded bytes to UART1.
 
 USB input is echoed back byte-for-byte. A ground station using the same USB
 connection for commands and telemetry must therefore recognize or suppress its
@@ -369,7 +407,7 @@ own echoed command bytes.
 USB Serial/JTAG is not currently a telemetry-only channel. It may contain:
 
 - canonical binary telemetry frames;
-- received UART2 or radio bytes;
+- received UART1 or radio bytes;
 - echoed ground-station input; and
 - human-readable ESP-IDF log lines.
 

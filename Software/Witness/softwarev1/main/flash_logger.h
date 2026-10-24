@@ -11,6 +11,7 @@
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
+#include "freertos/stream_buffer.h"
 #include "w25n01kv.h"
 
 class Sensors;
@@ -29,7 +30,8 @@ public:
     static constexpr std::uint32_t kFlushIntervalMs = 1000;
     static constexpr std::uint32_t kTaskStackSize = 7168;
     static constexpr std::uint32_t kCaptureTaskStackSize = 3072;
-    static constexpr std::size_t kMaximumExportFiles = 32;
+    static constexpr std::size_t kMaximumExportFiles = 48;
+    static constexpr std::size_t kUartReceiveBufferSize = 32768;
 
     struct ExportFile {
         char name[13];                 // DOS 8.3 name, including terminator
@@ -37,6 +39,7 @@ public:
         std::uint32_t generation;
         std::uint8_t slot;
         std::uint8_t type;
+        std::uint8_t store_version;
     };
 
     FlashLogger(Sensors &sensors,
@@ -46,6 +49,9 @@ public:
     FlashLogger &operator=(const FlashLogger &) = delete;
 
     esp_err_t start();
+    // Exact UART bytes, recorded continuously regardless of flight state.
+    // No framing or timestamps are added.
+    esp_err_t log_uart_bytes(const std::uint8_t *data, std::size_t length);
 
     // Flushes the current session and permanently freezes logging until reset.
     // This must complete before exposing the read-only USB disk.
@@ -77,14 +83,15 @@ private:
     static constexpr std::uint32_t kReservedBlocks = 20;
     static constexpr std::uint32_t kSessionCount = 16;
     static constexpr std::uint32_t kBlocksPerSession = 62;
-    static constexpr std::uint32_t kBinaryBlocksPerSession = 50;
-    static constexpr std::uint32_t kTextBlocksPerSession =
-        kBlocksPerSession - kBinaryBlocksPerSession;
+    static constexpr std::uint32_t kBinaryBlocksPerSession = 10;
+    static constexpr std::uint32_t kUartBlocksPerSession = 40;
+    static constexpr std::uint32_t kTextBlocksPerSession = 12;
     static constexpr std::uint32_t kSessionMagic = 0x574C5331U; // WLS1
     static constexpr std::uint32_t kPageMagic = 0x574C5047U;    // WLPG
-    static constexpr std::uint8_t kStoreVersion = 1;
+    static constexpr std::uint8_t kStoreVersion = 2;
     static constexpr std::uint8_t kBinaryType = 1;
     static constexpr std::uint8_t kTextType = 2;
+    static constexpr std::uint8_t kUart1Type = 3;
     static constexpr std::uint16_t kRecordMagic = 0x574C;       // WL
     static constexpr std::uint8_t kRecordVersion = 1;
 
@@ -103,10 +110,20 @@ private:
         std::uint32_t block_count;
         std::uint32_t page_index;
         std::uint32_t last_erased_block;
+        bool full = false;
     };
+    struct FileLayout {
+        std::uint32_t first_block;
+        std::uint32_t block_count;
+        std::uint32_t first_page;
+    };
+    static FileLayout file_layout(std::uint8_t slot, std::uint8_t type,
+                                 std::uint8_t version);
 
     static_assert(kLogRateHz > 0 && (1000U % kLogRateHz) == 0);
     static_assert(kPrelaunchRecordCount > 0);
+    static_assert(kBinaryBlocksPerSession + kUartBlocksPerSession +
+                  kTextBlocksPerSession == kBlocksPerSession);
     static_assert(kRecordQueueDepth > kPrelaunchRecordCount);
     static_assert(kFlushIntervalMs == 500 || kFlushIntervalMs == 1000,
                   "Use a 0.5 s or 1 s NAND flush interval");
@@ -127,10 +144,13 @@ private:
                            std::size_t length);
     esp_err_t flush_binary();
     esp_err_t flush_text();
+    esp_err_t drain_uart_records(bool flush);
+    void set_uart_capture_enabled(bool enabled);
     esp_err_t append_record(const BinaryRecord &record);
     esp_err_t drain_binary_records();
     esp_err_t scan_file_size(std::uint8_t slot,
                              std::uint8_t type,
+                             std::uint8_t version,
                              std::uint32_t &size);
     esp_err_t read_file_data(std::size_t file_index,
                              std::uint32_t offset,
@@ -153,6 +173,9 @@ private:
     TaskHandle_t capture_task_handle_ = nullptr;
     QueueHandle_t text_queue_ = nullptr;
     QueueHandle_t binary_record_queue_ = nullptr;
+    StreamBufferHandle_t uart_queue_ = nullptr;
+    SemaphoreHandle_t uart_capture_mutex_ = nullptr;
+    bool capture_uart_ = true; // protected by uart_capture_mutex_
     SemaphoreHandle_t frozen_semaphore_ = nullptr;
     SemaphoreHandle_t erase_semaphore_ = nullptr;
     vprintf_like_t previous_vprintf_ = nullptr;
@@ -168,12 +191,16 @@ private:
     std::size_t binary_buffer_used_ = 0;
     std::uint8_t text_buffer_[4096]{};
     std::size_t text_buffer_used_ = 0;
+    // Two complete NAND payloads avoid wasting a third page for 16 bytes.
+    std::uint8_t uart_buffer_[2 * kPagePayloadSize]{};
+    std::size_t uart_buffer_used_ = 0;
     BinaryRecord prelaunch_records_[kPrelaunchRecordCount]{};
     std::size_t prelaunch_write_index_ = 0;
     std::size_t prelaunch_record_count_ = 0;
     bool prelaunch_dump_pending_ = true;
     Writer binary_writer_{};
     Writer text_writer_{};
+    Writer uart_writer_{};
     ExportFile export_files_[kMaximumExportFiles]{};
     std::size_t export_file_count_ = 0;
     // USB hosts read files in small sequential chunks. Retaining the current

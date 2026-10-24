@@ -177,16 +177,18 @@ esp_err_t Sensors::start()
                  esp_err_to_name(result));
     }
 
-    result = radio_.initialize(kSpiHost);
-    if (result == ESP_OK) {
-        radio_ready_ = true;
+    if constexpr (HW_RADIO_ENABLED != 0) {
+        result = radio_.initialize(kSpiHost);
+        radio_ready_ = result == ESP_OK;
+        if (!radio_ready_) {
+            radio_.release();
+            ESP_LOGW(kLogTag, "RA-01 unavailable (%s); radio disabled until reboot",
+                     esp_err_to_name(result));
+        }
     } else {
-        // Keep the sensor task alive if the optional radio is unavailable.
-        // Initialization is retried at the state-packet rate from run().
-        radio_.release();
-        ESP_LOGE(kLogTag, "RA-01 initialization failed: %s",
-                 esp_err_to_name(result));
+        ESP_LOGI(kLogTag, "radio disabled by HW_RADIO_ENABLED");
     }
+    data_forwarder_.set_radio_available(radio_ready_);
 
     result = initialize_battery_adc();
     if (result != ESP_OK) {
@@ -207,7 +209,7 @@ esp_err_t Sensors::start()
     }
 
     ESP_LOGI(kLogTag,
-             "sensor task ready: LSM6DSV320X, MS5607, and RA-01 on SPI3");
+             "sensor task ready; radio %s", radio_ready_ ? "ready" : "disabled");
     return ESP_OK;
 }
 
@@ -243,6 +245,7 @@ esp_err_t Sensors::handle_command(const std::uint16_t command)
 void Sensors::set_radio_transmission_enabled(const bool enabled)
 {
     radio_transmission_enabled_.store(enabled);
+    data_forwarder_.set_radio_available(enabled && radio_ready_);
     ESP_LOGI(
         kLogTag,
         "radio transmission %s",
@@ -790,25 +793,8 @@ void Sensors::poll_radio_commands()
 
 void Sensors::service_radio_transmit(const TickType_t now)
 {
-    if (!radio_transmission_enabled_.load()) {
+    if (!radio_transmission_enabled_.load() || !radio_ready_) {
         return;
-    }
-
-    if (!radio_ready_) {
-        if ((now - last_radio_init_attempt_) <
-            pdMS_TO_TICKS(kRadioInitRetryMs)) {
-            return;
-        }
-        last_radio_init_attempt_ = now;
-        const esp_err_t result = radio_.initialize(kSpiHost);
-        radio_ready_ = result == ESP_OK;
-        if (!radio_ready_) {
-            radio_.release();
-            ESP_LOGW(kLogTag, "RA-01 initialization retry failed: %s",
-                     esp_err_to_name(result));
-            return;
-        }
-        ESP_LOGI(kLogTag, "RA-01 initialization recovered");
     }
 
     SpiDataForwarder::RadioPacket packet{};
@@ -864,7 +850,7 @@ void Sensors::run()
     std::uint32_t consecutive_battery_errors = 0;
 
     for (;;) {
-        poll_radio_commands();
+        if (radio_ready_) poll_radio_commands();
 
         const esp_err_t lsm_result = fetch_lsm6dsv320x();
         witness_status_.set(
@@ -1021,7 +1007,7 @@ void Sensors::run()
             last_debug_packet_time = now;
         }
 
-        service_radio_transmit(now);
+        if (radio_ready_) service_radio_transmit(now);
 
         vTaskDelayUntil(&next_wake_time, kTaskPeriod);
     }
@@ -1041,6 +1027,7 @@ void Sensors::release_resources()
     }
     radio_.release();
     radio_ready_ = false;
+    data_forwarder_.set_radio_available(false);
     ms5607_.release();
     ms5607_initialized_ = false;
     if (spi_device_ != nullptr) {

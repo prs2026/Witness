@@ -8,11 +8,12 @@
 #include "comms.h"
 #include "esp_log.h"
 #include "hardware_pins.h"
+#include "flash_logger.h"
 #include "spi_data_forwarder.h"
 
 namespace {
 
-constexpr char kTag[] = "uart2";
+constexpr char kTag[] = "uart";
 constexpr std::array<std::uint8_t, 2> kLoopbackRequest = {0x05, 0x22};
 constexpr std::uint32_t kRadioFrameInterByteTimeoutMs = 20;
 
@@ -40,8 +41,10 @@ std::size_t canonical_frame_length(const std::uint8_t packet_id)
 
 }  // namespace
 
-UartDriver::UartDriver(SpiDataForwarder &serial_forwarder)
-    : serial_forwarder_(serial_forwarder)
+UartDriver::UartDriver(SpiDataForwarder &serial_forwarder, uart_port_t port,
+                       gpio_num_t tx_pin, gpio_num_t rx_pin)
+    : serial_forwarder_(serial_forwarder), port_(port),
+      tx_pin_(tx_pin), rx_pin_(rx_pin)
 {
 }
 
@@ -63,7 +66,7 @@ esp_err_t UartDriver::start()
 
     if (xTaskCreate(
             task_entry,
-            "uart2",
+            port_ == UART_NUM_1 ? "uart1" : "uart2",
             kTaskStackSize,
             this,
             kTaskPriority,
@@ -86,15 +89,15 @@ esp_err_t UartDriver::initialize()
     config.rx_flow_ctrl_thresh = 0;
     config.source_clk = UART_SCLK_DEFAULT;
 
-    esp_err_t result = uart_param_config(kPort, &config);
+    esp_err_t result = uart_param_config(port_, &config);
     if (result != ESP_OK) {
         return result;
     }
 
     result = uart_set_pin(
-        kPort,
-        HW_PIN_MCU_UART_TX,
-        HW_PIN_MCU_UART_RX,
+        port_,
+        tx_pin_,
+        rx_pin_,
         UART_PIN_NO_CHANGE,
         UART_PIN_NO_CHANGE);
     if (result != ESP_OK) {
@@ -102,7 +105,7 @@ esp_err_t UartDriver::initialize()
     }
 
     result = uart_driver_install(
-        kPort,
+        port_,
         kDriverBufferSize,
         kDriverBufferSize,
         0,
@@ -125,7 +128,7 @@ esp_err_t UartDriver::shutdown()
         return ESP_OK;
     }
 
-    const esp_err_t result = uart_driver_delete(kPort);
+    const esp_err_t result = uart_driver_delete(port_);
     if (result == ESP_OK) {
         initialized_ = false;
     }
@@ -144,7 +147,7 @@ esp_err_t UartDriver::transmit(
         return ESP_ERR_INVALID_ARG;
     }
 
-    const int written = uart_write_bytes(kPort, data, length);
+    const int written = uart_write_bytes(port_, data, length);
     if (written < 0) {
         return ESP_FAIL;
     }
@@ -152,7 +155,7 @@ esp_err_t UartDriver::transmit(
         return ESP_ERR_TIMEOUT;
     }
     return timeout_ticks == 0 ? ESP_OK
-                              : uart_wait_tx_done(kPort, timeout_ticks);
+                              : uart_wait_tx_done(port_, timeout_ticks);
 }
 
 esp_err_t UartDriver::send_loopback_request()
@@ -172,10 +175,11 @@ void UartDriver::run()
 {
     ESP_LOGI(
         kTag,
-        "ready at %" PRIu32 " baud on TX=%d RX=%d",
+        "UART%d ready at %" PRIu32 " baud on TX=%d RX=%d",
+        static_cast<int>(port_),
         kBaudRate,
-        static_cast<int>(HW_PIN_MCU_UART_TX),
-        static_cast<int>(HW_PIN_MCU_UART_RX));
+        static_cast<int>(tx_pin_),
+        static_cast<int>(rx_pin_));
 
     bool waiting_for_loopback_reply = false;
     bool previous_byte_was_05 = false;
@@ -183,17 +187,17 @@ void UartDriver::run()
     const TickType_t task_delay_ticks =
         std::max<TickType_t>(1, pdMS_TO_TICKS(kTaskTickMs));
 
-    const esp_err_t test_result = send_loopback_request();
-    if (test_result == ESP_OK) {
-        waiting_for_loopback_reply = true;
-        loopback_deadline = xTaskGetTickCount() +
-                            pdMS_TO_TICKS(kLoopbackReplyTimeoutMs);
-        ESP_LOGI(kTag, "sent loopback request: 05 22");
-    } else {
-        ESP_LOGE(
-            kTag,
-            "could not send loopback request: %s",
-            esp_err_to_name(test_result));
+    if constexpr (kStartupLoopbackTestEnabled) {
+        const esp_err_t test_result = send_loopback_request();
+        if (test_result == ESP_OK) {
+            waiting_for_loopback_reply = true;
+            loopback_deadline = xTaskGetTickCount() +
+                                pdMS_TO_TICKS(kLoopbackReplyTimeoutMs);
+            ESP_LOGI(kTag, "sent loopback request: 05 22");
+        } else {
+            ESP_LOGE(kTag, "could not send loopback request: %s",
+                     esp_err_to_name(test_result));
+        }
     }
 
     std::array<std::uint8_t, kReadBufferSize> receive_buffer{};
@@ -202,9 +206,12 @@ void UartDriver::run()
     std::size_t radio_frame_length = 0;
     std::size_t expected_radio_frame_length = 0;
     TickType_t last_radio_frame_byte_time = 0;
+    std::uint32_t lost_log_bytes = 0;
+    TickType_t last_log_warning = 0;
+    TickType_t last_usb_warning = 0;
     for (;;) {
         const int bytes_read = uart_read_bytes(
-            kPort,
+            port_,
             receive_buffer.data(),
             receive_buffer.size(),
             task_delay_ticks);
@@ -212,10 +219,27 @@ void UartDriver::run()
         if (bytes_read > 0) {
             const std::size_t received = static_cast<std::size_t>(bytes_read);
             const TickType_t receive_time = xTaskGetTickCount();
+            // Persist before USB forwarding or protocol parsing. GPS/NMEA,
+            // binary receiver messages, embedded zeros and CR/LF all survive.
+            if (logger_) {
+                const auto result = logger_->log_uart_bytes(
+                    receive_buffer.data(), received);
+                if (result != ESP_OK && result != ESP_ERR_INVALID_STATE) {
+                    lost_log_bytes += received;
+                    if (receive_time - last_log_warning >= pdMS_TO_TICKS(1000)) {
+                        ESP_LOGE(kTag, "UART%d flash input overflow/error: %lu bytes lost",
+                                 static_cast<int>(port_),
+                                 static_cast<unsigned long>(lost_log_bytes));
+                        last_log_warning = receive_time;
+                    }
+                }
+            }
             const esp_err_t forward_result =
                 serial_forwarder_.queue_raw_bytes(
                     receive_buffer.data(), received);
-            if (forward_result != ESP_OK) {
+            if (forward_result != ESP_OK &&
+                receive_time - last_usb_warning >= pdMS_TO_TICKS(1000)) {
+                last_usb_warning = receive_time;
                 ESP_LOGW(
                     kTag,
                     "could not forward %u UART bytes: %s",
@@ -227,6 +251,11 @@ void UartDriver::run()
             // before handing externally received packets to the radio. USB
             // still receives the original UART bytes without modification.
             for (std::size_t index = 0; index < received; ++index) {
+                if (!serial_forwarder_.radio_available()) {
+                    radio_frame_length = 0;
+                    expected_radio_frame_length = 0;
+                    break;
+                }
                 const std::uint8_t byte = receive_buffer[index];
                 if (radio_frame_length != 0U &&
                     (receive_time - last_radio_frame_byte_time) >

@@ -127,6 +127,15 @@ esp_err_t Ra01::initialize(const spi_host_device_t spi_host)
     result = write_command(kSetPacketType, packet_type, sizeof(packet_type));
     if (result != ESP_OK) return result;
 
+    // SPI writes alone also succeed with an absent radio. Verify an actual
+    // round trip through its packet RAM before scheduling any RX/TX work.
+    const std::array<std::uint8_t, 4> probe{{0xA5, 0x3C, 0x69, 0x96}};
+    std::array<std::uint8_t, 4> reply{};
+    result = write_buffer(probe.data(), probe.size());
+    if (result == ESP_OK) result = read_buffer(0, reply.data(), reply.size());
+    if (result != ESP_OK) return result;
+    if (reply != probe) return ESP_ERR_NOT_FOUND;
+
     const std::uint32_t frequency_word = static_cast<std::uint32_t>(
         (static_cast<std::uint64_t>(IRIS_RADIO_FREQUENCY_HZ) << 25U) /
         32000000ULL);

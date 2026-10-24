@@ -32,6 +32,8 @@ public:
 
     esp_err_t start();
     void set_output_enabled(bool enabled);
+    void set_radio_available(bool available) { radio_available_.store(available); }
+    bool radio_available() const { return radio_available_.load(); }
 
     // Adds an SPI-received packet to the USB forwarding buffer.
     esp_err_t queue_packet(
@@ -111,6 +113,7 @@ private:
     TaskHandle_t forward_task_handle_ = nullptr;
     TaskHandle_t spi_task_handle_ = nullptr;
     std::atomic<bool> output_enabled_{true};
+    std::atomic<bool> radio_available_{false};
     std::array<RadioCacheSlot, kRadioPacketTypeCount> radio_cache_{{
         {IRIS_PACKET_ID_SENSORS},
         {IRIS_PACKET_ID_STATE},

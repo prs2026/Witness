@@ -12,7 +12,7 @@ class UartDriver;
 class SpiDataForwarder;
 
 // Common command egress for commands received by USB now and by the radio in
-// the future. Commands are kept byte-for-byte intact when sent over UART2.
+// the future. Commands are kept byte-for-byte intact when sent over UART1.
 class CommandBridge final {
 public:
     CommandBridge(UartDriver &uart, SpiDataForwarder &data_forwarder);
@@ -27,7 +27,7 @@ public:
         std::size_t length);
 
     // Called by the radio polling code for each complete received command.
-    // The command is transmitted over UART2 and queued for local processing.
+    // The command is transmitted over UART1 and queued for local processing.
     esp_err_t submit_radio_command(
         const std::uint8_t *data,
         std::size_t length);
