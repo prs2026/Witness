@@ -20,6 +20,7 @@ class SpiDataForwarder;
 class WitnessStatus;
 class CommandBridge;
 class FlightStateMachine;
+class UartDriver;
 
 class Sensors final {
 public:
@@ -93,7 +94,8 @@ public:
         SpiDataForwarder &data_forwarder,
         WitnessStatus &witness_status,
         CommandBridge &command_bridge,
-        FlightStateMachine &flight_state_machine);
+        FlightStateMachine &flight_state_machine,
+        UartDriver &gps_uart);
 
     Sensors(const Sensors &) = delete;
     Sensors &operator=(const Sensors &) = delete;
@@ -201,6 +203,7 @@ private:
     WitnessStatus &witness_status_;
     CommandBridge &command_bridge_;
     FlightStateMachine &flight_state_machine_;
+    UartDriver &gps_uart_;
     Ms5607 ms5607_{};
     Ra01 radio_{};
     spi_device_handle_t spi_device_ = nullptr;

@@ -1,0 +1,1405 @@
+[01:47:09.678] AUTO_CONNECT[COM4] connected
+[01:47:09.804] RX[COM4]  01 67 00 00 00 3d 52 ff ff 18 00 1e bd ff a3 5b ff fe 00 15 ff ff 0a 01 6f 00 00 00 3d b6 ff ff 3d 00 1e b1 ff a3 43 ff fe 00 15 00 00 0a 01 6f 00 00 00 3e 1a ff ff 18 00 1e bd ff a3 67 ff fe 00 16 ff fb 0a
+[01:47:09.814] PACKET[COM4] sensors: status=0b0110011100000000, uptime=15698, filtered_accel=[-0.00928, 0.31476, -0.94868], gyro=[-0.14, 1.47, -0.07]
+[01:47:09.816] PACKET[COM4] sensors: status=0b0110111100000000, uptime=15798, filtered_accel=[-0.0078, 0.31428, -0.94964], gyro=[-0.14, 1.47, 0.0]
+[01:47:09.817] PACKET[COM4] sensors: status=0b0110111100000000, uptime=15898, filtered_accel=[-0.00928, 0.31476, -0.9482], gyro=[-0.14, 1.54, -0.35]
+[01:47:09.819] RX[COM4]  01
+[01:47:09.820] RX[COM4]  6f 00 00 00 3e 7e ff ff 0c 00 1e bd ff a3 67 ff fe 00 15 ff fd 0a
+[01:47:09.822] PACKET[COM4] sensors: status=0b0110111100000000, uptime=15998, filtered_accel=[-0.00976, 0.31476, -0.9482], gyro=[-0.14, 1.47, -0.21]
+[01:47:09.875] RX[COM4]  01
+[01:47:09.876] RX[COM4]  6f 00 00 00 3e e2 ff ff 24 00 1e bd ff a3 4f ff fe 00 15 ff ff 0a
+[01:47:09.878] PACKET[COM4] sensors: status=0b0110111100000000, uptime=16098, filtered_accel=[-0.0088, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.07]
+[01:47:09.981] RX[COM4]  01
+[01:47:09.982] RX[COM4]  6f 00 00 00 3f 46 ff ff 0c 00 1e b1 ff a3 4f ff fe 00 14 ff ff 0a 02 6f 00 00 00 3f 46 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 30 45 13 84 0a ff 6e 00 00 00 3f 46 0a
+[01:47:09.983] PACKET[COM4] sensors: status=0b0110111100000000, uptime=16198, filtered_accel=[-0.00976, 0.31428, -0.94916], gyro=[-0.14, 1.4, -0.07]
+[01:47:09.987] PACKET[COM4] state: status=0b0110111100000000, uptime=16198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.754211, witness_battery_voltage=4.996
+[01:47:09.989] PACKET[COM4] heartbeat: status=0b0110111000000000, uptime=16198
+[01:47:10.096] RX[COM4]  01
+[01:47:10.098] RX[COM4]  66 00 00 00 3f aa ff ff 24 00 1e bd ff a3 4f ff fd 00 15 ff fb 0a
+[01:47:10.099] PACKET[COM4] sensors: status=0b0110011000000000, uptime=16298, filtered_accel=[-0.0088, 0.31476, -0.94916], gyro=[-0.21, 1.47, -0.35]
+[01:47:10.213] RX[COM4]  01
+[01:47:10.214] RX[COM4]  66 00 00 00 40 0e ff ff 31 00 1e bd ff a3 4f ff fd 00 15 ff fa 0a
+[01:47:10.216] PACKET[COM4] sensors: status=0b0110011000000000, uptime=16398, filtered_accel=[-0.00828, 0.31476, -0.94916], gyro=[-0.21, 1.47, -0.42]
+[01:47:10.267] RX[COM4]  01
+[01:47:10.267] RX[COM4]  66 00 00 00 40 72 ff ff 18 00 1e b1 ff a3 37 ff fe 00 15 ff fe 0a
+[01:47:10.269] PACKET[COM4] sensors: status=0b0110011000000000, uptime=16498, filtered_accel=[-0.00928, 0.31428, -0.95012], gyro=[-0.14, 1.47, -0.14]
+[01:47:10.388] RX[COM4]  01
+[01:47:10.390] RX[COM4]  66 00 00 00 40 d6 ff ff 31 00 1e c9 ff a3 43 ff ff 00 14 00 01 0a
+[01:47:10.391] PACKET[COM4] sensors: status=0b0110011000000000, uptime=16598, filtered_accel=[-0.00828, 0.31524, -0.94964], gyro=[-0.07, 1.4, 0.07]
+[01:47:10.502] RX[COM4]  01
+[01:47:10.506] RX[COM4]  6e 00 00 00 41 3a ff ff 3d 00 1e c9 ff a3 37 ff ff 00 14 ff fe 0a
+[01:47:10.508] PACKET[COM4] sensors: status=0b0110111000000000, uptime=16698, filtered_accel=[-0.0078, 0.31524, -0.95012], gyro=[-0.07, 1.4, -0.14]
+[01:47:10.569] RX[COM4]  01
+[01:47:10.570] RX[COM4]  6e 00 00 00 41 9e ff ff 31 00 1e c9 ff a3 37 ff fe 00 15 ff fe 0a
+[01:47:10.572] PACKET[COM4] sensors: status=0b0110111000000000, uptime=16798, filtered_accel=[-0.00828, 0.31524, -0.95012], gyro=[-0.14, 1.47, -0.14]
+[01:47:10.680] RX[COM4]  01
+[01:47:10.681] RX[COM4]  6e 00 00 00 42 02 ff ff 24 00 1e c9 ff a3 43 ff fe 00 15 ff fc 0a
+[01:47:10.683] PACKET[COM4] sensors: status=0b0110111000000000, uptime=16898, filtered_accel=[-0.0088, 0.31524, -0.94964], gyro=[-0.14, 1.47, -0.28]
+[01:47:10.788] RX[COM4]  01
+[01:47:10.790] RX[COM4]  6e 00 00 00 42 66 ff ff 24 00 1e c9 ff a3 43 ff fe 00 15 ff fd 0a
+[01:47:10.794] PACKET[COM4] sensors: status=0b0110111000000000, uptime=16998, filtered_accel=[-0.0088, 0.31524, -0.94964], gyro=[-0.14, 1.47, -0.21]
+[01:47:11.050] RX[COM4]  01
+[01:47:11.050] RX[COM4]  6e 00 00 00 42 ca ff ff 3d 00 1e a5 ff a3 43 00 00 00 12 00 00 0a
+[01:47:11.052] PACKET[COM4] sensors: status=0b0110111000000000, uptime=17098, filtered_accel=[-0.0078, 0.3138, -0.94964], gyro=[0.0, 1.26, 0.0]
+[01:47:11.052] RX[COM4]  01
+[01:47:11.053] RX[COM4]  6e 00 00 00 43 2e ff ff 24 00 1e bd ff a3 37 ff ff 00 14 00 00 0a ff 6f 00 00 00 43 2e 0a 02 6e 00 00 00 43 2e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 2a 86 13 8c 0a
+[01:47:11.054] PACKET[COM4] sensors: status=0b0110111000000000, uptime=17198, filtered_accel=[-0.0088, 0.31476, -0.95012], gyro=[-0.07, 1.4, 0.0]
+[01:47:11.055] PACKET[COM4] heartbeat: status=0b0110111100000000, uptime=17198
+[01:47:11.057] PACKET[COM4] state: status=0b0110111000000000, uptime=17198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.664429, witness_battery_voltage=5.004
+[01:47:11.138] RX[COM4]  01
+[01:47:11.139] RX[COM4]  67 00 00 00 43 92 ff ff 24 00 1e bd ff a3 37 ff fe 00 14 ff fb 0a
+[01:47:11.142] PACKET[COM4] sensors: status=0b0110011100000000, uptime=17298, filtered_accel=[-0.0088, 0.31476, -0.95012], gyro=[-0.14, 1.4, -0.35]
+[01:47:11.218] RX[COM4]  01
+[01:47:11.219] RX[COM4]  67 00 00 00 43 f6 ff ff 31 00 1e b1 ff a3 2a ff fd 00 15 ff fb 0a
+[01:47:11.221] PACKET[COM4] sensors: status=0b0110011100000000, uptime=17398, filtered_accel=[-0.00828, 0.31428, -0.95064], gyro=[-0.21, 1.47, -0.35]
+[01:47:11.288] RX[COM4]  01
+[01:47:11.289] RX[COM4]  67 00 00 00 44 5a ff ff 3d 00 1e c9 ff a3 43 ff fe 00 14 ff fe 0a
+[01:47:11.295] PACKET[COM4] sensors: status=0b0110011100000000, uptime=17498, filtered_accel=[-0.0078, 0.31524, -0.94964], gyro=[-0.14, 1.4, -0.14]
+[01:47:11.534] RX[COM4]  01
+[01:47:11.535] RX[COM4]  67 00 00 00 44 be ff ff 31 00 1e bd ff a3 4f ff fe 00 15 ff fe 0a
+[01:47:11.536] PACKET[COM4] sensors: status=0b0110011100000000, uptime=17598, filtered_accel=[-0.00828, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.14]
+[01:47:11.536] RX[COM4]  01
+[01:47:11.536] RX[COM4]  6f 00 00 00 45 22 ff ff 0c 00 1e b1 ff a3 4f ff fe 00 15 00 00 0a
+[01:47:11.537] PACKET[COM4] sensors: status=0b0110111100000000, uptime=17698, filtered_accel=[-0.00976, 0.31428, -0.94916], gyro=[-0.14, 1.47, 0.0]
+[01:47:11.588] RX[COM4]  01
+[01:47:11.588] RX[COM4]  6f 00 00 00 45 86 ff ff 24 00 1e bd ff a3 43 ff fe 00 15 ff f9 0a
+[01:47:11.589] PACKET[COM4] sensors: status=0b0110111100000000, uptime=17798, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.14, 1.47, -0.49]
+[01:47:11.702] RX[COM4]  01
+[01:47:11.703] RX[COM4]  6f 00 00 00 45 ea ff ff 31 00 1e c9 ff a3 4f ff fe 00 15 ff fd 0a
+[01:47:11.704] PACKET[COM4] sensors: status=0b0110111100000000, uptime=17898, filtered_accel=[-0.00828, 0.31524, -0.94916], gyro=[-0.14, 1.47, -0.21]
+[01:47:11.810] RX[COM4]  01
+[01:47:11.811] RX[COM4]  6f 00 00 00 46 4e ff ff 24 00 1e c9 ff a3 4f ff fe 00 15 ff fd 0a
+[01:47:11.812] PACKET[COM4] sensors: status=0b0110111100000000, uptime=17998, filtered_accel=[-0.0088, 0.31524, -0.94916], gyro=[-0.14, 1.47, -0.21]
+[01:47:11.868] RX[COM4]  01
+[01:47:11.869] RX[COM4]  6f 00 00 00 46 b2 ff ff 24 00 1e bd ff a3 43 ff fe 00 14 00 00 0a
+[01:47:11.870] PACKET[COM4] sensors: status=0b0110111100000000, uptime=18098, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.14, 1.4, 0.0]
+[01:47:11.972] RX[COM4]  01
+[01:47:11.977] RX[COM4]  6f 00 00 00 47 16 ff ff 18 00 1e bd ff a3 43 ff fd 00 15 ff fd 0a ff 6e 00 00 00 47 16 0a 02 6f 00 00 00 47 16 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 19 71 13 8c 0a
+[01:47:11.982] PACKET[COM4] sensors: status=0b0110111100000000, uptime=18198, filtered_accel=[-0.00928, 0.31476, -0.94964], gyro=[-0.21, 1.47, -0.21]
+[01:47:11.984] PACKET[COM4] heartbeat: status=0b0110111000000000, uptime=18198
+[01:47:11.985] PACKET[COM4] state: status=0b0110111100000000, uptime=18198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.397522, witness_battery_voltage=5.004
+[01:47:12.094] RX[COM4]  01
+[01:47:12.096] RX[COM4]  66 00 00 00 47 7a ff ff 31 00 1e bd ff a3 2a ff fd 00 15 ff fa 0a
+[01:47:12.099] PACKET[COM4] sensors: status=0b0110011000000000, uptime=18298, filtered_accel=[-0.00828, 0.31476, -0.95064], gyro=[-0.21, 1.47, -0.42]
+[01:47:12.201] RX[COM4]  01
+[01:47:12.204] RX[COM4]  66 00 00 00 47 de ff ff 24 00 1e d5 ff a3 43 ff fe 00 15 00 00 0a
+[01:47:12.210] PACKET[COM4] sensors: status=0b0110011000000000, uptime=18398, filtered_accel=[-0.0088, 0.31572, -0.94964], gyro=[-0.14, 1.47, 0.0]
+[01:47:12.269] RX[COM4]  01
+[01:47:12.270] RX[COM4]  66 00 00 00 48 42 ff ff 0c 00 1e bd ff a3 43 ff fe 00 14 ff fb 0a
+[01:47:12.272] PACKET[COM4] sensors: status=0b0110011000000000, uptime=18498, filtered_accel=[-0.00976, 0.31476, -0.94964], gyro=[-0.14, 1.4, -0.35]
+[01:47:12.381] RX[COM4]  01
+[01:47:12.381] RX[COM4]  66 00 00 00 48 a6 ff ff 31 00 1e bd ff a3 4f ff fd 00 16 ff fe 0a
+[01:47:12.382] PACKET[COM4] sensors: status=0b0110011000000000, uptime=18598, filtered_accel=[-0.00828, 0.31476, -0.94916], gyro=[-0.21, 1.54, -0.14]
+[01:47:12.494] RX[COM4]  01
+[01:47:12.494] RX[COM4]  6e 00 00 00 49 0a ff ff 31 00 1e c9 ff a3 2a ff fe 00 15 ff fc 0a
+[01:47:12.495] PACKET[COM4] sensors: status=0b0110111000000000, uptime=18698, filtered_accel=[-0.00828, 0.31524, -0.95064], gyro=[-0.14, 1.47, -0.28]
+[01:47:12.603] RX[COM4]  01
+[01:47:12.604] RX[COM4]  6e 00 00 00 49 6e ff ff 18 00 1e c9 ff a3 37 ff fd 00 15 ff f9 0a
+[01:47:12.605] PACKET[COM4] sensors: status=0b0110111000000000, uptime=18798, filtered_accel=[-0.00928, 0.31524, -0.95012], gyro=[-0.21, 1.47, -0.49]
+[01:47:12.710] RX[COM4]  01
+[01:47:12.710] RX[COM4]  6e 00 00 00 49 d2 ff ff 18 00 1e c9 ff a3 37 ff fe 00 15 ff ff 0a
+[01:47:12.712] PACKET[COM4] sensors: status=0b0110111000000000, uptime=18898, filtered_accel=[-0.00928, 0.31524, -0.95012], gyro=[-0.14, 1.47, -0.07]
+[01:47:12.769] RX[COM4]  01
+[01:47:12.770] RX[COM4]  6e 00 00 00 4a 36 ff ff 24 00 1e bd ff a3 43 ff fe 00 14 ff ff 0a
+[01:47:12.772] PACKET[COM4] sensors: status=0b0110111000000000, uptime=18998, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.14, 1.4, -0.07]
+[01:47:12.884] RX[COM4]  01
+[01:47:12.885] RX[COM4]  6e 00 00 00 4a 9a ff ff 31 00 1e c9 ff a3 4f ff fe 00 15 ff ff 0a
+[01:47:12.887] PACKET[COM4] sensors: status=0b0110111000000000, uptime=19098, filtered_accel=[-0.00828, 0.31524, -0.94916], gyro=[-0.14, 1.47, -0.07]
+[01:47:13.001] RX[COM4]  01
+[01:47:13.003] RX[COM4]  66 00 00 00 4a fe ff ff 3d 00 1e bd ff a3 37 ff fe 00 15 ff fe 0a ff 67 00 00 00 4a fe 0a 02 66 00 00 00 4a fe 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[01:47:13.004] PACKET[COM4] sensors: status=0b0110011000000000, uptime=19198, filtered_accel=[-0.0078, 0.31476, -0.95012], gyro=[-0.14, 1.47, -0.14]
+[01:47:13.006] PACKET[COM4] heartbeat: status=0b0110011100000000, uptime=19198
+[01:47:13.006] RX[COM4]  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 19 71 13 80 0a
+[01:47:13.008] PACKET[COM4] state: status=0b0110011000000000, uptime=19198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.397522, witness_battery_voltage=4.992
+[01:47:13.063] RX[COM4]  01
+[01:47:13.066] RX[COM4]  67 00 00 00 4b 62 ff ff 18 00 1e bd ff a3 4f ff fe 00 16 ff fc 0a
+[01:47:13.068] PACKET[COM4] sensors: status=0b0110011100000000, uptime=19298, filtered_accel=[-0.00928, 0.31476, -0.94916], gyro=[-0.14, 1.54, -0.28]
+[01:47:13.186] RX[COM4]  01
+[01:47:13.187] RX[COM4]  67 00 00 00 4b c6 ff ff 31 00 1e c9 ff a3 37 ff fd 00 14 ff fe 0a
+[01:47:13.188] PACKET[COM4] sensors: status=0b0110011100000000, uptime=19398, filtered_accel=[-0.00828, 0.31524, -0.95012], gyro=[-0.21, 1.4, -0.14]
+[01:47:13.292] RX[COM4]  01
+[01:47:13.297] RX[COM4]  67 00 00 00 4c 2a ff ff 31 00 1e bd ff a3 67 ff ff 00 14 ff fe 0a
+[01:47:13.299] PACKET[COM4] sensors: status=0b0110011100000000, uptime=19498, filtered_accel=[-0.00828, 0.31476, -0.9482], gyro=[-0.07, 1.4, -0.14]
+[01:47:13.409] RX[COM4]  01
+[01:47:13.410] RX[COM4]  67 00 00 00 4c 8e ff ff 24 00 1e bd ff a3 5b ff fe 00 15 ff ff 0a
+[01:47:13.411] PACKET[COM4] sensors: status=0b0110011100000000, uptime=19598, filtered_accel=[-0.0088, 0.31476, -0.94868], gyro=[-0.14, 1.47, -0.07]
+[01:47:13.467] RX[COM4]  01
+[01:47:13.468] RX[COM4]  6f 00 00 00 4c f2 ff ff 31 00 1e bd ff a3 2a ff ff 00 15 ff ff 0a
+[01:47:13.470] PACKET[COM4] sensors: status=0b0110111100000000, uptime=19698, filtered_accel=[-0.00828, 0.31476, -0.95064], gyro=[-0.07, 1.47, -0.07]
+[01:47:13.580] RX[COM4]  01
+[01:47:13.581] RX[COM4]  6f 00 00 00 4d 56 ff ff 49 00 1e bd ff a3 43 ff ff 00 14 ff fe 0a
+[01:47:13.583] PACKET[COM4] sensors: status=0b0110111100000000, uptime=19798, filtered_accel=[-0.00732, 0.31476, -0.94964], gyro=[-0.07, 1.4, -0.14]
+[01:47:13.709] RX[COM4]  01
+[01:47:13.710] RX[COM4]  6f 00 00 00 4d ba ff ff 3d 00 1e b1 ff a3 37 ff ff 00 14 00 00 0a
+[01:47:13.711] PACKET[COM4] sensors: status=0b0110111100000000, uptime=19898, filtered_accel=[-0.0078, 0.31428, -0.95012], gyro=[-0.07, 1.4, 0.0]
+[01:47:13.826] RX[COM4]  01
+[01:47:13.829] RX[COM4]  6f 00 00 00 4e 1e ff ff 24 00 1e bd ff a3 43 ff fd 00 15 ff fd 0a
+[01:47:13.830] PACKET[COM4] sensors: status=0b0110111100000000, uptime=19998, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.21, 1.47, -0.21]
+[01:47:13.881] RX[COM4]  01
+[01:47:13.881] RX[COM4]  6f 00 00 00 4e 82 ff ff 18 00 1e bd ff a3 5b ff ff 00 14 00 02 0a
+[01:47:13.883] PACKET[COM4] sensors: status=0b0110111100000000, uptime=20098, filtered_accel=[-0.00928, 0.31476, -0.94868], gyro=[-0.07, 1.4, 0.14]
+[01:47:13.995] RX[COM4]  01
+[01:47:13.996] RX[COM4]  67 00 00 00 4e e6 ff ff 31 00 1e b1 ff a3 2a ff fe 00 15 ff fa 0a ff 66 00 00 00 4e e6 0a 02 67 00 00 00 4e e6 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 19 71 13 88 0a
+[01:47:13.998] PACKET[COM4] sensors: status=0b0110011100000000, uptime=20198, filtered_accel=[-0.00828, 0.31428, -0.95064], gyro=[-0.14, 1.47, -0.42]
+[01:47:14.001] PACKET[COM4] heartbeat: status=0b0110011000000000, uptime=20198
+[01:47:14.004] PACKET[COM4] state: status=0b0110011100000000, uptime=20198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.397522, witness_battery_voltage=5.0
+[01:47:14.063] RX[COM4]  01
+[01:47:14.065] RX[COM4]  66 00 00 00 4f 4a ff ff 31 00 1e c9 ff a3 5b ff fd 00 15 ff fc 0a
+[01:47:14.066] PACKET[COM4] sensors: status=0b0110011000000000, uptime=20298, filtered_accel=[-0.00828, 0.31524, -0.94868], gyro=[-0.21, 1.47, -0.28]
+[01:47:14.182] RX[COM4]  01
+[01:47:14.184] RX[COM4]  66 00 00 00 4f ae ff ff 31 00 1e bd ff a3 5b ff fe 00 14 ff fe 0a
+[01:47:14.186] PACKET[COM4] sensors: status=0b0110011000000000, uptime=20398, filtered_accel=[-0.00828, 0.31476, -0.94868], gyro=[-0.14, 1.4, -0.14]
+[01:47:14.297] RX[COM4]  01
+[01:47:14.298] RX[COM4]  66 00 00 00 50 12 ff ff 0c 00 1e bd ff a3 4f ff fe 00 15 ff ff 0a
+[01:47:14.300] PACKET[COM4] sensors: status=0b0110011000000000, uptime=20498, filtered_accel=[-0.00976, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.07]
+[01:47:14.403] RX[COM4]  01
+[01:47:14.403] RX[COM4]  6e 00 00 00 50 76 ff ff 0c 00 1e c9 ff a3 37 ff fe 00 14 ff fd 0a
+[01:47:14.404] PACKET[COM4] sensors: status=0b0110111000000000, uptime=20598, filtered_accel=[-0.00976, 0.31524, -0.95012], gyro=[-0.14, 1.4, -0.21]
+[01:47:14.518] RX[COM4]  01
+[01:47:14.521] RX[COM4]  6e 00 00 00 50 da ff ff 18 00 1e bd ff a3 2a ff fd 00 16 ff fb 0a
+[01:47:14.523] PACKET[COM4] sensors: status=0b0110111000000000, uptime=20698, filtered_accel=[-0.00928, 0.31476, -0.95064], gyro=[-0.21, 1.54, -0.35]
+[01:47:14.579] RX[COM4]  01
+[01:47:14.580] RX[COM4]  6e 00 00 00 51 3e ff ff 0c 00 1e bd ff a3 4f ff fd 00 15 ff fc 0a
+[01:47:14.581] PACKET[COM4] sensors: status=0b0110111000000000, uptime=20798, filtered_accel=[-0.00976, 0.31476, -0.94916], gyro=[-0.21, 1.47, -0.28]
+[01:47:14.690] RX[COM4]  01
+[01:47:14.690] RX[COM4]  6e 00 00 00 51 a2 ff ff 24 00 1e b1 ff a3 43 ff fe 00 14 ff ff 0a
+[01:47:14.691] PACKET[COM4] sensors: status=0b0110111000000000, uptime=20898, filtered_accel=[-0.0088, 0.31428, -0.94964], gyro=[-0.14, 1.4, -0.07]
+[01:47:14.803] RX[COM4]  01
+[01:47:14.804] RX[COM4]  6e 00 00 00 52 06 ff ff 31 00 1e c9 ff a3 1e ff fe 00 14 ff fb 0a
+[01:47:14.805] PACKET[COM4] sensors: status=0b0110111000000000, uptime=20998, filtered_accel=[-0.00828, 0.31524, -0.95112], gyro=[-0.14, 1.4, -0.35]
+[01:47:14.868] RX[COM4]  01
+[01:47:14.869] RX[COM4]  6e 00 00 00 52 6a ff ff 31 00 1e bd ff a3 37 ff fe 00 15 ff fd 0a
+[01:47:14.871] PACKET[COM4] sensors: status=0b0110111000000000, uptime=21098, filtered_accel=[-0.00828, 0.31476, -0.95012], gyro=[-0.14, 1.47, -0.21]
+[01:47:14.977] RX[COM4]  01
+[01:47:14.978] RX[COM4]  66 00 00 00 52 ce ff ff 0c 00 1e bd ff a3 74 ff fe 00 16 ff fa 0a ff 67 00 00 00 52 ce 0a
+[01:47:14.980] PACKET[COM4] sensors: status=0b0110011000000000, uptime=21198, filtered_accel=[-0.00976, 0.31476, -0.94768], gyro=[-0.14, 1.54, -0.42]
+[01:47:14.981] PACKET[COM4] heartbeat: status=0b0110011100000000, uptime=21198
+[01:47:14.981] RX[COM4]  02 66 00 00 00 52 ce 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 24 c6 13 8c 0a
+[01:47:14.983] PACKET[COM4] state: status=0b0110011000000000, uptime=21198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.574585, witness_battery_voltage=5.004
+[01:47:15.089] RX[COM4]  01
+[01:47:15.091] RX[COM4]  67 00 00 00 53 32 ff ff 18 00 1e bd ff a3 2a ff fe 00 15 ff fe 0a
+[01:47:15.092] PACKET[COM4] sensors: status=0b0110011100000000, uptime=21298, filtered_accel=[-0.00928, 0.31476, -0.95064], gyro=[-0.14, 1.47, -0.14]
+[01:47:15.196] RX[COM4]  01
+[01:47:15.196] RX[COM4]  67 00 00 00 53 96 ff ff 31 00 1e bd ff a3 2a ff fe 00 14 ff fd 0a
+[01:47:15.197] PACKET[COM4] sensors: status=0b0110011100000000, uptime=21398, filtered_accel=[-0.00828, 0.31476, -0.95064], gyro=[-0.14, 1.4, -0.21]
+[01:47:15.314] RX[COM4]  01
+[01:47:15.316] RX[COM4]  67 00 00 00 53 fa ff ff 31 00 1e c9 ff a3 43 ff fe 00 14 ff fe 0a
+[01:47:15.317] PACKET[COM4] sensors: status=0b0110011100000000, uptime=21498, filtered_accel=[-0.00828, 0.31524, -0.94964], gyro=[-0.14, 1.4, -0.14]
+[01:47:15.370] RX[COM4]  01
+[01:47:15.371] RX[COM4]  6f 00 00 00 54 5e ff ff 24 00 1e bd ff a3 4f ff fe 00 14 ff ff 0a
+[01:47:15.372] PACKET[COM4] sensors: status=0b0110111100000000, uptime=21598, filtered_accel=[-0.0088, 0.31476, -0.94916], gyro=[-0.14, 1.4, -0.07]
+[01:47:15.480] RX[COM4]  01
+[01:47:15.480] RX[COM4]  6f 00 00 00 54 c2 ff ff 3d 00 1e bd ff a3 43 ff fe 00 15 ff fa 0a
+[01:47:15.482] PACKET[COM4] sensors: status=0b0110111100000000, uptime=21698, filtered_accel=[-0.0078, 0.31476, -0.94964], gyro=[-0.14, 1.47, -0.42]
+[01:47:15.601] RX[COM4]  01
+[01:47:15.602] RX[COM4]  6f 00 00 00 55 26 ff ff 24 00 1e bd ff a3 4f ff fe 00 14 ff fd 0a
+[01:47:15.604] PACKET[COM4] sensors: status=0b0110111100000000, uptime=21798, filtered_accel=[-0.0088, 0.31476, -0.94916], gyro=[-0.14, 1.4, -0.21]
+[01:47:15.713] RX[COM4]  01
+[01:47:15.713] RX[COM4]  6f 00 00 00 55 8a ff ff 31 00 1e c9 ff a3 4f ff fe 00 15 ff fe 0a
+[01:47:15.716] PACKET[COM4] sensors: status=0b0110111100000000, uptime=21898, filtered_accel=[-0.00828, 0.31524, -0.94916], gyro=[-0.14, 1.47, -0.14]
+[01:47:15.769] RX[COM4]  01
+[01:47:15.769] RX[COM4]  6f 00 00 00 55 ee ff ff 18 00 1e c9 ff a3 37 ff fd 00 15 ff fd 0a
+[01:47:15.771] PACKET[COM4] sensors: status=0b0110111100000000, uptime=21998, filtered_accel=[-0.00928, 0.31524, -0.95012], gyro=[-0.21, 1.47, -0.21]
+[01:47:15.873] RX[COM4]  01
+[01:47:15.874] RX[COM4]  6f 00 00 00 56 52 ff ff 24 00 1e d5 ff a3 4f ff fe 00 15 00 02 0a
+[01:47:15.875] PACKET[COM4] sensors: status=0b0110111100000000, uptime=22098, filtered_accel=[-0.0088, 0.31572, -0.94916], gyro=[-0.14, 1.47, 0.14]
+[01:47:15.978] RX[COM4]  01
+[01:47:15.979] RX[COM4]  67 00 00 00 56 b6 ff ff 31 00 1e bd ff a3 4f ff fe 00 15 ff fa 0a ff 66 00 00 00 56 b6 0a
+[01:47:15.980] PACKET[COM4] sensors: status=0b0110011100000000, uptime=22198, filtered_accel=[-0.00828, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.42]
+[01:47:15.981] PACKET[COM4] heartbeat: status=0b0110011000000000, uptime=22198
+[01:47:15.981] RX[COM4]  02 67 00 00 00 56 b6 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 30 45 13 88 0a
+[01:47:15.982] PACKET[COM4] state: status=0b0110011100000000, uptime=22198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.754211, witness_battery_voltage=5.0
+[01:47:16.085] RX[COM4]  01
+[01:47:16.086] RX[COM4]  66 00 00 00 57 1a ff ff 24 00 1e c9 ff a3 5b ff fe 00 15 ff fe 0a
+[01:47:16.088] PACKET[COM4] sensors: status=0b0110011000000000, uptime=22298, filtered_accel=[-0.0088, 0.31524, -0.94868], gyro=[-0.14, 1.47, -0.14]
+[01:47:16.199] RX[COM4]  01
+[01:47:16.200] RX[COM4]  66 00 00 00 57 7e ff ff 18 00 1e bd ff a3 67 ff fe 00 14 ff fc 0a
+[01:47:16.202] PACKET[COM4] sensors: status=0b0110011000000000, uptime=22398, filtered_accel=[-0.00928, 0.31476, -0.9482], gyro=[-0.14, 1.4, -0.28]
+[01:47:16.309] RX[COM4]  01
+[01:47:16.310] RX[COM4]  66 00 00 00 57 e2 ff ff 0c 00 1e bd ff a3 67 ff fe 00 14 ff ff 0a
+[01:47:16.312] PACKET[COM4] sensors: status=0b0110011000000000, uptime=22498, filtered_accel=[-0.00976, 0.31476, -0.9482], gyro=[-0.14, 1.4, -0.07]
+[01:47:16.364] RX[COM4]  01
+[01:47:16.367] RX[COM4]  6e 00 00 00 58 46 ff ff 31 00 1e d5 ff a3 37 ff fe 00 14 ff ff 0a
+[01:47:16.368] PACKET[COM4] sensors: status=0b0110111000000000, uptime=22598, filtered_accel=[-0.00828, 0.31572, -0.95012], gyro=[-0.14, 1.4, -0.07]
+[01:47:16.471] RX[COM4]  01
+[01:47:16.472] RX[COM4]  6e 00 00 00 58 aa ff ff 24 00 1e d5 ff a3 fa ff fe 00 15 ff fc 0a
+[01:47:16.473] PACKET[COM4] sensors: status=0b0110111000000000, uptime=22698, filtered_accel=[-0.0088, 0.31572, -0.94232], gyro=[-0.14, 1.47, -0.28]
+[01:47:16.579] RX[COM4]  01
+[01:47:16.582] RX[COM4]  6e 00 00 00 59 0e ff ff 24 00 1e c9 ff a3 98 ff fd 00 15 ff fc 0a
+[01:47:16.583] PACKET[COM4] sensors: status=0b0110111000000000, uptime=22798, filtered_accel=[-0.0088, 0.31524, -0.94624], gyro=[-0.21, 1.47, -0.28]
+[01:47:16.701] RX[COM4]  01
+[01:47:16.702] RX[COM4]  6e 00 00 00 59 72 ff ff 24 00 1e b1 ff a3 43 ff fe 00 15 ff fd 0a
+[01:47:16.704] PACKET[COM4] sensors: status=0b0110111000000000, uptime=22898, filtered_accel=[-0.0088, 0.31428, -0.94964], gyro=[-0.14, 1.47, -0.21]
+[01:47:16.811] RX[COM4]  01
+[01:47:16.812] RX[COM4]  6e 00 00 00 59 d6 ff ff 31 00 1e c9 ff a3 4f ff fd 00 15 ff fc 0a
+[01:47:16.814] PACKET[COM4] sensors: status=0b0110111000000000, uptime=22998, filtered_accel=[-0.00828, 0.31524, -0.94916], gyro=[-0.21, 1.47, -0.28]
+[01:47:16.872] RX[COM4]  01
+[01:47:16.873] RX[COM4]  66 00 00 00 5a 3a ff ff 18 00 1e b1 ff a3 43 ff fd 00 16 ff fb 0a
+[01:47:16.876] PACKET[COM4] sensors: status=0b0110011000000000, uptime=23098, filtered_accel=[-0.00928, 0.31428, -0.94964], gyro=[-0.21, 1.54, -0.35]
+[01:47:16.998] RX[COM4]  01
+[01:47:16.998] RX[COM4]  66 00 00 00 5a 9e ff ff 0c 00 1e b1 ff a3 43 ff fe 00 15 ff fc 0a ff 67 00 00 00 5a 9e 0a
+[01:47:16.999] PACKET[COM4] sensors: status=0b0110011000000000, uptime=23198, filtered_accel=[-0.00976, 0.31428, -0.94964], gyro=[-0.14, 1.47, -0.28]
+[01:47:17.000] PACKET[COM4] heartbeat: status=0b0110011100000000, uptime=23198
+[01:47:17.000] RX[COM4]  02 66 00 00 00 5a 9e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 24 c6 13 94 0a
+[01:47:17.001] PACKET[COM4] state: status=0b0110011000000000, uptime=23198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.574585, witness_battery_voltage=5.012
+[01:47:17.121] RX[COM4]  01
+[01:47:17.122] RX[COM4]  67 00 00 00 5b 02 ff ff 0c 00 1e c9 ff a3 37 ff ff 00 14 ff ff 0a
+[01:47:17.124] PACKET[COM4] sensors: status=0b0110011100000000, uptime=23298, filtered_accel=[-0.00976, 0.31524, -0.95012], gyro=[-0.07, 1.4, -0.07]
+[01:47:17.189] RX[COM4]  01
+[01:47:17.191] RX[COM4]  67 00 00 00 5b 66 ff ff 3d 00 1e b1 ff a3 43 ff fe 00 14 ff fe 0a
+[01:47:17.193] PACKET[COM4] sensors: status=0b0110011100000000, uptime=23398, filtered_accel=[-0.0078, 0.31428, -0.94964], gyro=[-0.14, 1.4, -0.14]
+[01:47:17.307] RX[COM4]  01
+[01:47:17.308] RX[COM4]  6f 00 00 00 5b ca ff ff 24 00 1e a5 ff a3 43 ff fe 00 13 00 01 0a
+[01:47:17.310] PACKET[COM4] sensors: status=0b0110111100000000, uptime=23498, filtered_accel=[-0.0088, 0.3138, -0.94964], gyro=[-0.14, 1.33, 0.07]
+[01:47:17.371] RX[COM4]  01
+[01:47:17.372] RX[COM4]  6f 00 00 00 5c 2e ff ff 24 00 1e b1 ff a3 37 ff fe 00 15 ff fe 0a
+[01:47:17.374] PACKET[COM4] sensors: status=0b0110111100000000, uptime=23598, filtered_accel=[-0.0088, 0.31428, -0.95012], gyro=[-0.14, 1.47, -0.14]
+[01:47:17.496] RX[COM4]  01
+[01:47:17.496] RX[COM4]  6f 00 00 00 5c 92 ff ff 31 00 1e bd ff a3 43 ff fe 00 14 ff fd 0a
+[01:47:17.498] PACKET[COM4] sensors: status=0b0110111100000000, uptime=23698, filtered_accel=[-0.00828, 0.31476, -0.94964], gyro=[-0.14, 1.4, -0.21]
+[01:47:17.620] RX[COM4]  01
+[01:47:17.621] RX[COM4]  6f 00 00 00 5c f6 ff ff 31 00 1e c9 ff a3 37 ff fe 00 15 ff ff 0a
+[01:47:17.623] PACKET[COM4] sensors: status=0b0110111100000000, uptime=23798, filtered_accel=[-0.00828, 0.31524, -0.95012], gyro=[-0.14, 1.47, -0.07]
+[01:47:17.677] RX[COM4]  01
+[01:47:17.679] RX[COM4]  6f 00 00 00 5d 5a ff ff 31 00 1e c9 ff a3 4f ff ff 00 15 00 00 0a
+[01:47:17.681] PACKET[COM4] sensors: status=0b0110111100000000, uptime=23898, filtered_accel=[-0.00828, 0.31524, -0.94916], gyro=[-0.07, 1.47, 0.0]
+[01:47:17.788] RX[COM4]  01
+[01:47:17.788] RX[COM4]  6f 00 00 00 5d be ff ff 18 00 1e d5 ff a3 4f ff fe 00 14 ff ff 0a
+[01:47:17.789] PACKET[COM4] sensors: status=0b0110111100000000, uptime=23998, filtered_accel=[-0.00928, 0.31572, -0.94916], gyro=[-0.14, 1.4, -0.07]
+[01:47:17.896] RX[COM4]  01
+[01:47:17.897] RX[COM4]  67 00 00 00 5e 22 ff ff 24 00 1e bd ff a3 43 ff fe 00 15 ff fb 0a
+[01:47:17.898] PACKET[COM4] sensors: status=0b0110011100000000, uptime=24098, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.14, 1.47, -0.35]
+[01:47:18.006] RX[COM4]  01
+[01:47:18.006] RX[COM4]  67 00 00 00 5e 86 ff ff 31 00 1e c9 ff a3 5b ff fe 00 15 ff fd 0a ff 66 00 00 00 5e 86 0a 02 67 00 00 00 5e 86 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[01:47:18.008] PACKET[COM4] sensors: status=0b0110011100000000, uptime=24198, filtered_accel=[-0.00828, 0.31524, -0.94868], gyro=[-0.14, 1.47, -0.21]
+[01:47:18.010] PACKET[COM4] heartbeat: status=0b0110011000000000, uptime=24198
+[01:47:18.010] RX[COM4]  00 00 00 00 44 27 30 45 13 8c 0a
+[01:47:18.012] PACKET[COM4] state: status=0b0110011100000000, uptime=24198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.754211, witness_battery_voltage=5.004
+[01:47:18.074] RX[COM4]  01
+[01:47:18.076] RX[COM4]  66 00 00 00 5e ea ff ff 18 00 1e c9 ff a3 43 ff fe 00 15 ff fe 0a
+[01:47:18.078] PACKET[COM4] sensors: status=0b0110011000000000, uptime=24298, filtered_accel=[-0.00928, 0.31524, -0.94964], gyro=[-0.14, 1.47, -0.14]
+[01:47:18.185] RX[COM4]  01
+[01:47:18.186] RX[COM4]  66 00 00 00 5f 4e ff ff 18 00 1e bd ff a3 5b ff fe 00 15 00 00 0a
+[01:47:18.188] PACKET[COM4] sensors: status=0b0110011000000000, uptime=24398, filtered_accel=[-0.00928, 0.31476, -0.94868], gyro=[-0.14, 1.47, 0.0]
+[01:47:18.303] RX[COM4]  01
+[01:47:18.304] RX[COM4]  6e 00 00 00 5f b2 ff ff 18 00 1e bd ff a3 37 ff fe 00 15 00 01 0a
+[01:47:18.305] PACKET[COM4] sensors: status=0b0110111000000000, uptime=24498, filtered_accel=[-0.00928, 0.31476, -0.95012], gyro=[-0.14, 1.47, 0.07]
+[01:47:18.365] RX[COM4]  01
+[01:47:18.365] RX[COM4]  6e 00 00 00 60 16 ff ff 3d 00 1e bd ff a3 4f ff fe 00 14 ff fe 0a
+[01:47:18.366] PACKET[COM4] sensors: status=0b0110111000000000, uptime=24598, filtered_accel=[-0.0078, 0.31476, -0.94916], gyro=[-0.14, 1.4, -0.14]
+[01:47:18.472] RX[COM4]  01
+[01:47:18.473] RX[COM4]  6e 00 00 00 60 7a ff ff 24 00 1e b1 ff a3 4f ff fe 00 15 ff fb 0a
+[01:47:18.474] PACKET[COM4] sensors: status=0b0110111000000000, uptime=24698, filtered_accel=[-0.0088, 0.31428, -0.94916], gyro=[-0.14, 1.47, -0.35]
+[01:47:18.577] RX[COM4]  01
+[01:47:18.578] RX[COM4]  6e 00 00 00 60 de ff ff 18 00 1e bd ff a3 43 ff fe 00 14 00 00 0a
+[01:47:18.580] PACKET[COM4] sensors: status=0b0110111000000000, uptime=24798, filtered_accel=[-0.00928, 0.31476, -0.94964], gyro=[-0.14, 1.4, 0.0]
+[01:47:18.704] RX[COM4]  01
+[01:47:18.705] RX[COM4]  6e 00 00 00 61 42 ff ff 24 00 1e bd ff a3 37 ff fe 00 14 00 00 0a
+[01:47:18.706] PACKET[COM4] sensors: status=0b0110111000000000, uptime=24898, filtered_accel=[-0.0088, 0.31476, -0.95012], gyro=[-0.14, 1.4, 0.0]
+[01:47:18.827] RX[COM4]  01
+[01:47:18.827] RX[COM4]  6e 00 00 00 61 a6 ff ff 31 00 1e bd ff a3 43 ff fe 00 14 ff fc 0a
+[01:47:18.829] PACKET[COM4] sensors: status=0b0110111000000000, uptime=24998, filtered_accel=[-0.00828, 0.31476, -0.94964], gyro=[-0.14, 1.4, -0.28]
+[01:47:18.888] RX[COM4]  01
+[01:47:18.890] RX[COM4]  66 00 00 00 62 0a ff ff 18 00 1e bd ff a3 37 ff fd 00 16 ff fc 0a
+[01:47:18.892] PACKET[COM4] sensors: status=0b0110011000000000, uptime=25098, filtered_accel=[-0.00928, 0.31476, -0.95012], gyro=[-0.21, 1.54, -0.28]
+[01:47:19.019] RX[COM4]  01
+[01:47:19.019] RX[COM4]  66 00 00 00 62 6e ff ff 18 00 1e c9 ff a3 37 ff fe 00 15 ff fc 0a ff 67 00 00 00 62 6e 0a 02 66 00 00 00 62 6e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 30 45 13 84 0a
+[01:47:19.021] PACKET[COM4] sensors: status=0b0110011000000000, uptime=25198, filtered_accel=[-0.00928, 0.31524, -0.95012], gyro=[-0.14, 1.47, -0.28]
+[01:47:19.022] PACKET[COM4] heartbeat: status=0b0110011100000000, uptime=25198
+[01:47:19.023] PACKET[COM4] state: status=0b0110011000000000, uptime=25198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.754211, witness_battery_voltage=4.996
+[01:47:19.076] RX[COM4]  01
+[01:47:19.077] RX[COM4]  67 00 00 00 62 d2 ff ff 24 00 1e bd ff a3 37 ff fe 00 14 ff fc 0a
+[01:47:19.079] PACKET[COM4] sensors: status=0b0110011100000000, uptime=25298, filtered_accel=[-0.0088, 0.31476, -0.95012], gyro=[-0.14, 1.4, -0.28]
+[01:47:19.194] RX[COM4]  01
+[01:47:19.195] RX[COM4]  67 00 00 00 63 36 ff ff 24 00 1e bd ff a3 4f ff fe 00 15 ff fe 0a
+[01:47:19.196] PACKET[COM4] sensors: status=0b0110011100000000, uptime=25398, filtered_accel=[-0.0088, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.14]
+[01:47:19.314] RX[COM4]  01
+[01:47:19.316] RX[COM4]  6f 00 00 00 63 9a ff ff 3d 00 1e bd ff a3 2a ff ff 00 14 ff ff 0a
+[01:47:19.317] PACKET[COM4] sensors: status=0b0110111100000000, uptime=25498, filtered_accel=[-0.0078, 0.31476, -0.95064], gyro=[-0.07, 1.4, -0.07]
+[01:47:19.369] RX[COM4]  01
+[01:47:19.370] RX[COM4]  6f 00 00 00 63 fe ff ff 0c 00 1e bd ff a3 4f ff fd 00 15 ff fb 0a
+[01:47:19.371] PACKET[COM4] sensors: status=0b0110111100000000, uptime=25598, filtered_accel=[-0.00976, 0.31476, -0.94916], gyro=[-0.21, 1.47, -0.35]
+[01:47:19.485] RX[COM4]  01
+[01:47:19.486] RX[COM4]  6f 00 00 00 64 62 ff ff 31 00 1e b1 ff a3 37 ff fe 00 14 ff ff 0a
+[01:47:19.487] PACKET[COM4] sensors: status=0b0110111100000000, uptime=25698, filtered_accel=[-0.00828, 0.31428, -0.95012], gyro=[-0.14, 1.4, -0.07]
+[01:47:19.604] RX[COM4]  01
+[01:47:19.605] RX[COM4]  6f 00 00 00 64 c6 ff ff 31 00 1e bd ff a3 37 ff fe 00 14 ff ff 0a
+[01:47:19.606] PACKET[COM4] sensors: status=0b0110111100000000, uptime=25798, filtered_accel=[-0.00828, 0.31476, -0.95012], gyro=[-0.14, 1.4, -0.07]
+[01:47:19.719] RX[COM4]  01
+[01:47:19.721] RX[COM4]  6f 00 00 00 65 2a ff ff 24 00 1e bd ff a3 4f ff fe 00 14 ff ff 0a
+[01:47:19.722] PACKET[COM4] sensors: status=0b0110111100000000, uptime=25898, filtered_accel=[-0.0088, 0.31476, -0.94916], gyro=[-0.14, 1.4, -0.07]
+[01:47:19.775] RX[COM4]  01
+[01:47:19.776] RX[COM4]  6f 00 00 00 65 8e ff ff 31 00 1e bd ff a3 4f ff fe 00 14 00 00 0a
+[01:47:19.777] PACKET[COM4] sensors: status=0b0110111100000000, uptime=25998, filtered_accel=[-0.00828, 0.31476, -0.94916], gyro=[-0.14, 1.4, 0.0]
+[01:47:19.891] RX[COM4]  01
+[01:47:19.892] RX[COM4]  67 00 00 00 65 f2 ff ff 31 00 1e b1 ff a3 2a ff fd 00 16 ff f8 0a
+[01:47:19.895] PACKET[COM4] sensors: status=0b0110011100000000, uptime=26098, filtered_accel=[-0.00828, 0.31428, -0.95064], gyro=[-0.21, 1.54, -0.56]
+[01:47:20.012] RX[COM4]  01
+[01:47:20.013] RX[COM4]  67 00 00 00 66 56 ff ff 31 00 1e bd ff a3 4f ff ff 00 14 00 01 0a ff 66 00 00 00 66 56 0a 02 67 00 00 00 66 56 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 1f 31 13 8c 0a
+[01:47:20.014] PACKET[COM4] sensors: status=0b0110011100000000, uptime=26198, filtered_accel=[-0.00828, 0.31476, -0.94916], gyro=[-0.07, 1.4, 0.07]
+[01:47:20.016] PACKET[COM4] heartbeat: status=0b0110011000000000, uptime=26198
+[01:47:20.017] PACKET[COM4] state: status=0b0110011100000000, uptime=26198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.487366, witness_battery_voltage=5.004
+[01:47:20.077] RX[COM4]  01
+[01:47:20.078] RX[COM4]  66 00 00 00 66 ba ff ff 24 00 1e c9 ff a3 2a ff fe 00 15 ff fa 0a
+[01:47:20.080] PACKET[COM4] sensors: status=0b0110011000000000, uptime=26298, filtered_accel=[-0.0088, 0.31524, -0.95064], gyro=[-0.14, 1.47, -0.42]
+[01:47:20.188] RX[COM4]  01
+[01:47:20.189] RX[COM4]  66 00 00 00 67 1e ff ff 18 00 1e bd ff a3 4f ff fe 00 14 00 00 0a
+[01:47:20.191] PACKET[COM4] sensors: status=0b0110011000000000, uptime=26398, filtered_accel=[-0.00928, 0.31476, -0.94916], gyro=[-0.14, 1.4, 0.0]
+[01:47:20.301] RX[COM4]  01
+[01:47:20.302] RX[COM4]  6e 00 00 00 67 82 ff ff 18 00 1e b1 ff a3 4f ff fe 00 15 ff fd 0a
+[01:47:20.303] PACKET[COM4] sensors: status=0b0110111000000000, uptime=26498, filtered_accel=[-0.00928, 0.31428, -0.94916], gyro=[-0.14, 1.47, -0.21]
+[01:47:20.420] RX[COM4]  01
+[01:47:20.421] RX[COM4]  6e 00 00 00 67 e6 ff ff 31 00 1e bd ff a3 43 ff fe 00 15 ff fb 0a
+[01:47:20.422] PACKET[COM4] sensors: status=0b0110111000000000, uptime=26598, filtered_accel=[-0.00828, 0.31476, -0.94964], gyro=[-0.14, 1.47, -0.35]
+[01:47:20.484] RX[COM4]  01
+[01:47:20.485] RX[COM4]  6e 00 00 00 68 4a ff ff 18 00 1e bd ff a3 4f ff fe 00 15 ff fe 0a
+[01:47:20.487] PACKET[COM4] sensors: status=0b0110111000000000, uptime=26698, filtered_accel=[-0.00928, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.14]
+[01:47:20.593] RX[COM4]  01
+[01:47:20.594] RX[COM4]  6e 00 00 00 68 ae ff ff 18 00 1e bd ff a3 4f ff fd 00 15 ff fa 0a
+[01:47:20.596] PACKET[COM4] sensors: status=0b0110111000000000, uptime=26798, filtered_accel=[-0.00928, 0.31476, -0.94916], gyro=[-0.21, 1.47, -0.42]
+[01:47:20.708] RX[COM4]  01
+[01:47:20.709] RX[COM4]  6e 00 00 00 69 12 ff ff 18 00 1e b1 ff a3 37 ff fd 00 15 ff fd 0a
+[01:47:20.710] PACKET[COM4] sensors: status=0b0110111000000000, uptime=26898, filtered_accel=[-0.00928, 0.31428, -0.95012], gyro=[-0.21, 1.47, -0.21]
+[01:47:20.766] RX[COM4]  01
+[01:47:20.768] RX[COM4]  66 00 00 00 69 76 ff ff 31 00 1e bd ff a3 5b ff fe 00 14 ff ff 0a
+[01:47:20.769] PACKET[COM4] sensors: status=0b0110011000000000, uptime=26998, filtered_accel=[-0.00828, 0.31476, -0.94868], gyro=[-0.14, 1.4, -0.07]
+[01:47:20.876] RX[COM4]  01
+[01:47:20.878] RX[COM4]  66 00 00 00 69 da ff ff 00 00 1e d5 ff a3 4f ff fe 00 15 ff fa 0a
+[01:47:20.880] PACKET[COM4] sensors: status=0b0110011000000000, uptime=27098, filtered_accel=[-0.01024, 0.31572, -0.94916], gyro=[-0.14, 1.47, -0.42]
+[01:47:20.989] RX[COM4]  01
+[01:47:20.989] RX[COM4]  66 00 00 00 6a 3e ff ff 0c 00 1e b1 ff a3 4f ff fd 00 15 ff fe 0a ff 67 00 00 00 6a 3e 0a
+[01:47:20.991] PACKET[COM4] sensors: status=0b0110011000000000, uptime=27198, filtered_accel=[-0.00976, 0.31428, -0.94916], gyro=[-0.21, 1.47, -0.14]
+[01:47:20.991] PACKET[COM4] heartbeat: status=0b0110011100000000, uptime=27198
+[01:47:20.992] RX[COM4]  02 66 00 00 00 6a 3e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 30 45 13 88 0a
+[01:47:20.992] PACKET[COM4] state: status=0b0110011000000000, uptime=27198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.754211, witness_battery_voltage=5.0
+[01:47:21.109] RX[COM4]  01
+[01:47:21.110] RX[COM4]  67 00 00 00 6a a2 ff ff 31 00 1e c9 ff a3 2a ff fe 00 14 ff fd 0a
+[01:47:21.112] PACKET[COM4] sensors: status=0b0110011100000000, uptime=27298, filtered_accel=[-0.00828, 0.31524, -0.95064], gyro=[-0.14, 1.4, -0.21]
+[01:47:21.166] RX[COM4]  01
+[01:47:21.167] RX[COM4]  6f 00 00 00 6b 06 ff ff 31 00 1e bd ff a3 5b ff fe 00 14 00 00 0a
+[01:47:21.168] PACKET[COM4] sensors: status=0b0110111100000000, uptime=27398, filtered_accel=[-0.00828, 0.31476, -0.94868], gyro=[-0.14, 1.4, 0.0]
+[01:47:21.269] RX[COM4]  01
+[01:47:21.270] RX[COM4]  6f 00 00 00 6b 6a ff ff 0c 00 1e b1 ff a3 37 ff fe 00 15 ff fc 0a
+[01:47:21.271] PACKET[COM4] sensors: status=0b0110111100000000, uptime=27498, filtered_accel=[-0.00976, 0.31428, -0.95012], gyro=[-0.14, 1.47, -0.28]
+[01:47:21.379] RX[COM4]  01
+[01:47:21.380] RX[COM4]  6f 00 00 00 6b ce ff ff 31 00 1e b1 ff a3 5b ff fd 00 16 ff fa 0a
+[01:47:21.382] PACKET[COM4] sensors: status=0b0110111100000000, uptime=27598, filtered_accel=[-0.00828, 0.31428, -0.94868], gyro=[-0.21, 1.54, -0.42]
+[01:47:21.496] RX[COM4]  01
+[01:47:21.497] RX[COM4]  6f 00 00 00 6c 32 ff ff 24 00 1e c9 ff a3 2a ff fe 00 15 ff fb 0a
+[01:47:21.498] PACKET[COM4] sensors: status=0b0110111100000000, uptime=27698, filtered_accel=[-0.0088, 0.31524, -0.95064], gyro=[-0.14, 1.47, -0.35]
+[01:47:21.563] RX[COM4]  01
+[01:47:21.564] RX[COM4]  6f 00 00 00 6c 96 ff ff 31 00 1e b1 ff a3 43 ff fe 00 15 ff fd 0a
+[01:47:21.565] PACKET[COM4] sensors: status=0b0110111100000000, uptime=27798, filtered_accel=[-0.00828, 0.31428, -0.94964], gyro=[-0.14, 1.47, -0.21]
+[01:47:21.683] RX[COM4]  01
+[01:47:21.684] RX[COM4]  6f 00 00 00 6c fa ff ff 3d 00 1e c9 ff a3 43 00 00 00 14 ff fe 0a
+[01:47:21.686] PACKET[COM4] sensors: status=0b0110111100000000, uptime=27898, filtered_accel=[-0.0078, 0.31524, -0.94964], gyro=[0.0, 1.4, -0.14]
+[01:47:21.801] RX[COM4]  01
+[01:47:21.803] RX[COM4]  67 00 00 00 6d 5e ff ff 0c 00 1e c9 ff a3 4f ff fd 00 16 ff f9 0a
+[01:47:21.807] PACKET[COM4] sensors: status=0b0110011100000000, uptime=27998, filtered_accel=[-0.00976, 0.31524, -0.94916], gyro=[-0.21, 1.54, -0.49]
+[01:47:21.871] RX[COM4]  01
+[01:47:21.874] RX[COM4]  67 00 00 00 6d c2 ff ff 31 00 1e b1 ff a3 37 ff fe 00 14 ff fd 0a
+[01:47:21.875] PACKET[COM4] sensors: status=0b0110011100000000, uptime=28098, filtered_accel=[-0.00828, 0.31428, -0.95012], gyro=[-0.14, 1.4, -0.21]
+[01:47:21.986] RX[COM4]  01
+[01:47:21.987] RX[COM4]  67 00 00 00 6e 26 ff ff 3d 00 1e a5 ff a3 43 ff ff 00 15 ff fd 0a ff 66 00 00 00 6e 26 0a 02 67 00 00 00 6e 26 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 35 da 13 88 0a
+[01:47:21.989] PACKET[COM4] sensors: status=0b0110011100000000, uptime=28198, filtered_accel=[-0.0078, 0.3138, -0.94964], gyro=[-0.07, 1.47, -0.21]
+[01:47:21.990] PACKET[COM4] heartbeat: status=0b0110011000000000, uptime=28198
+[01:47:21.991] PACKET[COM4] state: status=0b0110011100000000, uptime=28198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.841431, witness_battery_voltage=5.0
+[01:47:22.117] RX[COM4]  01
+[01:47:22.119] RX[COM4]  66 00 00 00 6e 8a ff ff 3d 00 1e bd ff a3 43 ff fe 00 15 ff fc 0a
+[01:47:22.121] PACKET[COM4] sensors: status=0b0110011000000000, uptime=28298, filtered_accel=[-0.0078, 0.31476, -0.94964], gyro=[-0.14, 1.47, -0.28]
+[01:47:22.172] RX[COM4]  01
+[01:47:22.173] RX[COM4]  6e 00 00 00 6e ee ff ff 24 00 1e b1 ff a3 5b ff fe 00 15 ff fd 0a
+[01:47:22.175] PACKET[COM4] sensors: status=0b0110111000000000, uptime=28398, filtered_accel=[-0.0088, 0.31428, -0.94868], gyro=[-0.14, 1.47, -0.21]
+[01:47:22.293] RX[COM4]  01
+[01:47:22.294] RX[COM4]  6e 00 00 00 6f 52 ff ff 3d 00 1e c9 ff a3 37 ff fe 00 16 ff f8 0a
+[01:47:22.295] PACKET[COM4] sensors: status=0b0110111000000000, uptime=28498, filtered_accel=[-0.0078, 0.31524, -0.95012], gyro=[-0.14, 1.54, -0.56]
+[01:47:22.402] RX[COM4]  01
+[01:47:22.403] RX[COM4]  6e 00 00 00 6f b6 ff ff 3d 00 1e c9 ff a3 43 ff fe 00 14 ff fc 0a
+[01:47:22.404] PACKET[COM4] sensors: status=0b0110111000000000, uptime=28598, filtered_accel=[-0.0078, 0.31524, -0.94964], gyro=[-0.14, 1.4, -0.28]
+[01:47:22.507] RX[COM4]  01
+[01:47:22.507] RX[COM4]  6e 00 00 00 70 1a ff ff 24 00 1e bd ff a3 43 ff ff 00 14 ff fc 0a
+[01:47:22.518] PACKET[COM4] sensors: status=0b0110111000000000, uptime=28698, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.07, 1.4, -0.28]
+[01:47:22.569] RX[COM4]  01
+[01:47:22.570] RX[COM4]  6e 00 00 00 70 7e ff ff 24 00 1e bd ff a3 67 ff fd 00 14 00 01 0a
+[01:47:22.571] PACKET[COM4] sensors: status=0b0110111000000000, uptime=28798, filtered_accel=[-0.0088, 0.31476, -0.9482], gyro=[-0.21, 1.4, 0.07]
+[01:47:22.675] RX[COM4]  01
+[01:47:22.676] RX[COM4]  6e 00 00 00 70 e2 ff ff 18 00 1e b1 ff a3 4f ff fe 00 15 ff fe 0a
+[01:47:22.677] PACKET[COM4] sensors: status=0b0110111000000000, uptime=28898, filtered_accel=[-0.00928, 0.31428, -0.94916], gyro=[-0.14, 1.47, -0.14]
+[01:47:22.782] RX[COM4]  01
+[01:47:22.782] RX[COM4]  66 00 00 00 71 46 ff ff 31 00 1e bd ff a3 4f ff fe 00 15 ff f9 0a
+[01:47:22.784] PACKET[COM4] sensors: status=0b0110011000000000, uptime=28998, filtered_accel=[-0.00828, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.49]
+[01:47:22.888] RX[COM4]  01
+[01:47:22.889] RX[COM4]  66 00 00 00 71 aa ff ff 18 00 1e b1 ff a3 4f ff fe 00 14 ff ff 0a
+[01:47:22.890] PACKET[COM4] sensors: status=0b0110011000000000, uptime=29098, filtered_accel=[-0.00928, 0.31428, -0.94916], gyro=[-0.14, 1.4, -0.07]
+[01:47:22.993] RX[COM4]  01
+[01:47:22.994] RX[COM4]  66 00 00 00 72 0e ff ff 24 00 1e bd ff a3 5b ff fd 00 15 ff fb 0a ff 67 00 00 00 72 0e 0a 02 66 00 00 00 72 0e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 19 71 13 98 0a
+[01:47:22.997] PACKET[COM4] sensors: status=0b0110011000000000, uptime=29198, filtered_accel=[-0.0088, 0.31476, -0.94868], gyro=[-0.21, 1.47, -0.35]
+[01:47:23.001] PACKET[COM4] heartbeat: status=0b0110011100000000, uptime=29198
+[01:47:23.004] PACKET[COM4] state: status=0b0110011000000000, uptime=29198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.397522, witness_battery_voltage=5.016
+[01:47:23.108] RX[COM4]  01
+[01:47:23.109] RX[COM4]  67 00 00 00 72 72 ff ff 24 00 1e c9 ff a3 37 ff ff 00 14 ff fe 0a
+[01:47:23.113] PACKET[COM4] sensors: status=0b0110011100000000, uptime=29298, filtered_accel=[-0.0088, 0.31524, -0.95012], gyro=[-0.07, 1.4, -0.14]
+[01:47:23.170] RX[COM4]  01
+[01:47:23.172] RX[COM4]  6f 00 00 00 72 d6 ff ff 24 00 1e b1 ff a3 37 ff fe 00 14 ff fd 0a
+[01:47:23.174] PACKET[COM4] sensors: status=0b0110111100000000, uptime=29398, filtered_accel=[-0.0088, 0.31428, -0.95012], gyro=[-0.14, 1.4, -0.21]
+[01:47:23.287] RX[COM4]  01
+[01:47:23.287] RX[COM4]  6f 00 00 00 73 3a ff ff 18 00 1e bd ff a3 4f ff fd 00 16 ff fc 0a
+[01:47:23.289] PACKET[COM4] sensors: status=0b0110111100000000, uptime=29498, filtered_accel=[-0.00928, 0.31476, -0.94916], gyro=[-0.21, 1.54, -0.28]
+[01:47:23.401] RX[COM4]  01
+[01:47:23.402] RX[COM4]  6f 00 00 00 73 9e ff ff 0c 00 1e b1 ff a3 43 ff fe 00 15 ff fd 0a
+[01:47:23.404] PACKET[COM4] sensors: status=0b0110111100000000, uptime=29598, filtered_accel=[-0.00976, 0.31428, -0.94964], gyro=[-0.14, 1.47, -0.21]
+[01:47:23.514] RX[COM4]  01
+[01:47:23.515] RX[COM4]  6f 00 00 00 74 02 ff ff 31 00 1e bd ff a3 37 ff fd 00 15 ff fb 0a
+[01:47:23.516] PACKET[COM4] sensors: status=0b0110111100000000, uptime=29698, filtered_accel=[-0.00828, 0.31476, -0.95012], gyro=[-0.21, 1.47, -0.35]
+[01:47:23.579] RX[COM4]  01
+[01:47:23.581] RX[COM4]  6f 00 00 00 74 66 ff ff 3d 00 1e c9 ff a3 37 ff fe 00 15 ff fc 0a
+[01:47:23.582] PACKET[COM4] sensors: status=0b0110111100000000, uptime=29798, filtered_accel=[-0.0078, 0.31524, -0.95012], gyro=[-0.14, 1.47, -0.28]
+[01:47:23.701] RX[COM4]  01
+[01:47:23.701] RX[COM4]  6f 00 00 00 74 ca ff ff 31 00 1e bd ff a3 4f ff fe 00 15 ff fd 0a
+[01:47:23.703] PACKET[COM4] sensors: status=0b0110111100000000, uptime=29898, filtered_accel=[-0.00828, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.21]
+[01:47:23.811] RX[COM4]  01
+[01:47:23.811] RX[COM4]  67 00 00 00 75 2e ff ff 24 00 1e c9 ff a3 4f ff fc 00 16 ff f8 0a
+[01:47:23.813] PACKET[COM4] sensors: status=0b0110011100000000, uptime=29998, filtered_accel=[-0.0088, 0.31524, -0.94916], gyro=[-0.28, 1.54, -0.56]
+[01:47:23.867] RX[COM4]  01
+[01:47:23.868] RX[COM4]  67 00 00 00 75 92 ff ff 31 00 1e bd ff a3 43 ff ff 00 15 ff fc 0a
+[01:47:23.869] PACKET[COM4] sensors: status=0b0110011100000000, uptime=30098, filtered_accel=[-0.00828, 0.31476, -0.94964], gyro=[-0.07, 1.47, -0.28]
+[01:47:23.984] RX[COM4]  01
+[01:47:23.986] RX[COM4]  67 00 00 00 75 f6 ff ff 31 00 1e c9 ff a3 43 ff ff 00 14 ff fe 0a ff 66 00 00 00 75 f6 0a 02 67 00 00 00 75 f6 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 30 45 13 84 0a
+[01:47:23.988] PACKET[COM4] sensors: status=0b0110011100000000, uptime=30198, filtered_accel=[-0.00828, 0.31524, -0.94964], gyro=[-0.07, 1.4, -0.14]
+[01:47:23.989] PACKET[COM4] heartbeat: status=0b0110011000000000, uptime=30198
+[01:47:23.990] PACKET[COM4] state: status=0b0110011100000000, uptime=30198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.754211, witness_battery_voltage=4.996
+[01:47:24.103] RX[COM4]  01
+[01:47:24.104] RX[COM4]  66 00 00 00 76 5a ff ff 24 00 1e bd ff a3 4f ff fd 00 15 ff fd 0a
+[01:47:24.106] PACKET[COM4] sensors: status=0b0110011000000000, uptime=30298, filtered_accel=[-0.0088, 0.31476, -0.94916], gyro=[-0.21, 1.47, -0.21]
+[01:47:24.210] RX[COM4]  01
+[01:47:24.212] RX[COM4]  6e 00 00 00 76 be ff ff 31 00 1e b1 ff a3 37 ff fe 00 15 ff fc 0a
+[01:47:24.214] PACKET[COM4] sensors: status=0b0110111000000000, uptime=30398, filtered_accel=[-0.00828, 0.31428, -0.95012], gyro=[-0.14, 1.47, -0.28]
+[01:47:24.266] RX[COM4]  01
+[01:47:24.268] RX[COM4]  6e 00 00 00 77 22 ff ff 31 00 1e bd ff a3 43 ff fd 00 16 ff f8 0a
+[01:47:24.270] PACKET[COM4] sensors: status=0b0110111000000000, uptime=30498, filtered_accel=[-0.00828, 0.31476, -0.94964], gyro=[-0.21, 1.54, -0.56]
+[01:47:24.381] RX[COM4]  01
+[01:47:24.381] RX[COM4]  6e 00 00 00 77 86 ff ff 31 00 1e c9 ff a3 43 ff fe 00 15 ff fe 0a
+[01:47:24.382] PACKET[COM4] sensors: status=0b0110111000000000, uptime=30598, filtered_accel=[-0.00828, 0.31524, -0.94964], gyro=[-0.14, 1.47, -0.14]
+[01:47:24.495] RX[COM4]  01
+[01:47:24.497] RX[COM4]  6e 00 00 00 77 ea ff ff 24 00 1e bd ff a3 43 ff fd 00 15 ff fc 0a
+[01:47:24.499] PACKET[COM4] sensors: status=0b0110111000000000, uptime=30698, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.21, 1.47, -0.28]
+[01:47:24.613] RX[COM4]  01
+[01:47:24.614] RX[COM4]  6e 00 00 00 78 4e ff ff 00 00 1e bd ff a3 43 ff fe 00 14 00 01 0a
+[01:47:24.615] PACKET[COM4] sensors: status=0b0110111000000000, uptime=30798, filtered_accel=[-0.01024, 0.31476, -0.94964], gyro=[-0.14, 1.4, 0.07]
+[01:47:24.670] RX[COM4]  01
+[01:47:24.671] RX[COM4]  66 00 00 00 78 b2 ff ff 31 00 1e c9 ff a3 43 ff fe 00 15 ff fd 0a
+[01:47:24.672] PACKET[COM4] sensors: status=0b0110011000000000, uptime=30898, filtered_accel=[-0.00828, 0.31524, -0.94964], gyro=[-0.14, 1.47, -0.21]
+[01:47:24.773] RX[COM4]  01
+[01:47:24.774] RX[COM4]  66 00 00 00 79 16 ff ff 24 00 1e bd ff a3 5b ff fe 00 15 ff fd 0a
+[01:47:24.775] PACKET[COM4] sensors: status=0b0110011000000000, uptime=30998, filtered_accel=[-0.0088, 0.31476, -0.94868], gyro=[-0.14, 1.47, -0.21]
+[01:47:24.884] RX[COM4]  01
+[01:47:24.884] RX[COM4]  66 00 00 00 79 7a ff ff 18 00 1e bd ff a3 43 ff fe 00 15 00 00 0a
+[01:47:24.886] PACKET[COM4] sensors: status=0b0110011000000000, uptime=31098, filtered_accel=[-0.00928, 0.31476, -0.94964], gyro=[-0.14, 1.47, 0.0]
+[01:47:25.000] RX[COM4]  01
+[01:47:25.001] RX[COM4]  66 00 00 00 79 de ff ff 24 00 1e bd ff a3 4f ff fe 00 16 ff fd 0a ff 67 00 00 00 79 de 0a 02 66 00 00 00 79 de 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 1f 31 13 80 0a
+[01:47:25.003] PACKET[COM4] sensors: status=0b0110011000000000, uptime=31198, filtered_accel=[-0.0088, 0.31476, -0.94916], gyro=[-0.14, 1.54, -0.21]
+[01:47:25.005] PACKET[COM4] heartbeat: status=0b0110011100000000, uptime=31198
+[01:47:25.006] PACKET[COM4] state: status=0b0110011000000000, uptime=31198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.487366, witness_battery_voltage=4.992
+[01:47:25.109] RX[COM4]  01
+[01:47:25.110] RX[COM4]  6f 00 00 00 7a 42 ff ff 3d 00 1e bd ff a3 37 ff fe 00 15 ff fd 0a
+[01:47:25.112] PACKET[COM4] sensors: status=0b0110111100000000, uptime=31298, filtered_accel=[-0.0078, 0.31476, -0.95012], gyro=[-0.14, 1.47, -0.21]
+[01:47:25.167] RX[COM4]  01
+[01:47:25.168] RX[COM4]  6f 00 00 00 7a a6 ff ff 0c 00 1e c9 ff a3 4f ff fd 00 16 ff fb 0a
+[01:47:25.171] PACKET[COM4] sensors: status=0b0110111100000000, uptime=31398, filtered_accel=[-0.00976, 0.31524, -0.94916], gyro=[-0.21, 1.54, -0.35]
+[01:47:25.280] RX[COM4]  01
+[01:47:25.281] RX[COM4]  6f 00 00 00 7b 0a ff ff 0c 00 1e bd ff a3 43 ff fe 00 16 ff fc 0a
+[01:47:25.283] PACKET[COM4] sensors: status=0b0110111100000000, uptime=31498, filtered_accel=[-0.00976, 0.31476, -0.94964], gyro=[-0.14, 1.54, -0.28]
+[01:47:25.397] RX[COM4]  01
+[01:47:25.397] RX[COM4]  6f 00 00 00 7b 6e ff ff 31 00 1e bd ff a3 2a ff fe 00 14 ff ff 0a
+[01:47:25.399] PACKET[COM4] sensors: status=0b0110111100000000, uptime=31598, filtered_accel=[-0.00828, 0.31476, -0.95064], gyro=[-0.14, 1.4, -0.07]
+[01:47:25.506] RX[COM4]  01
+[01:47:25.507] RX[COM4]  6f 00 00 00 7b d2 ff ff 49 00 1e c9 ff a3 37 ff ff 00 14 ff fd 0a
+[01:47:25.508] PACKET[COM4] sensors: status=0b0110111100000000, uptime=31698, filtered_accel=[-0.00732, 0.31524, -0.95012], gyro=[-0.07, 1.4, -0.21]
+[01:47:25.564] RX[COM4]  01
+[01:47:25.570] RX[COM4]  6f 00 00 00 7c 36 ff ff 3d 00 1e bd ff a3 37 ff ff 00 14 ff ff 0a
+[01:47:25.578] PACKET[COM4] sensors: status=0b0110111100000000, uptime=31798, filtered_accel=[-0.0078, 0.31476, -0.95012], gyro=[-0.07, 1.4, -0.07]
+[01:47:25.683] RX[COM4]  01
+[01:47:25.684] RX[COM4]  67 00 00 00 7c 9a ff ff 18 00 1e b1 ff a3 4f ff fe 00 15 ff f9 0a
+[01:47:25.685] PACKET[COM4] sensors: status=0b0110011100000000, uptime=31898, filtered_accel=[-0.00928, 0.31428, -0.94916], gyro=[-0.14, 1.47, -0.49]
+[01:47:25.810] RX[COM4]  01
+[01:47:25.813] RX[COM4]  67 00 00 00 7c fe ff ff 24 00 1e b1 ff a3 37 ff ff 00 15 ff fb 0a
+[01:47:25.814] PACKET[COM4] sensors: status=0b0110011100000000, uptime=31998, filtered_accel=[-0.0088, 0.31428, -0.95012], gyro=[-0.07, 1.47, -0.35]
+[01:47:25.867] RX[COM4]  01
+[01:47:25.868] RX[COM4]  67 00 00 00 7d 62 ff ff 3d 00 1e c9 ff a3 37 ff fe 00 14 ff fd 0a
+[01:47:25.870] PACKET[COM4] sensors: status=0b0110011100000000, uptime=32098, filtered_accel=[-0.0078, 0.31524, -0.95012], gyro=[-0.14, 1.4, -0.21]
+[01:47:25.985] RX[COM4]  01
+[01:47:25.986] RX[COM4]  67 00 00 00 7d c6 ff ff 24 00 1e bd ff a3 43 ff fe 00 15 ff fe 0a ff 66 00 00 00 7d c6 0a 02 67 00 00 00 7d c6 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 1f 31 13 88 0a
+[01:47:25.988] PACKET[COM4] sensors: status=0b0110011100000000, uptime=32198, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.14, 1.47, -0.14]
+[01:47:25.989] PACKET[COM4] heartbeat: status=0b0110011000000000, uptime=32198
+[01:47:25.990] PACKET[COM4] state: status=0b0110011100000000, uptime=32198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.487366, witness_battery_voltage=5.0
+[01:47:26.095] RX[COM4]  01
+[01:47:26.096] RX[COM4]  6e 00 00 00 7e 2a ff ff 0c 00 1e bd ff a3 43 ff fe 00 15 ff fc 0a
+[01:47:26.098] PACKET[COM4] sensors: status=0b0110111000000000, uptime=32298, filtered_accel=[-0.00976, 0.31476, -0.94964], gyro=[-0.14, 1.47, -0.28]
+[01:47:26.204] RX[COM4]  01
+[01:47:26.206] RX[COM4]  6e 00 00 00 7e 8e ff ff 3d 00 1e c9 ff a3 2a ff fe 00 16 ff f9 0a
+[01:47:26.207] PACKET[COM4] sensors: status=0b0110111000000000, uptime=32398, filtered_accel=[-0.0078, 0.31524, -0.95064], gyro=[-0.14, 1.54, -0.49]
+[01:47:26.263] RX[COM4]  01
+[01:47:26.265] RX[COM4]  6e 00 00 00 7e f2 ff ff 31 00 1e c9 ff a3 4f ff fe 00 14 ff ff 0a
+[01:47:26.266] PACKET[COM4] sensors: status=0b0110111000000000, uptime=32498, filtered_accel=[-0.00828, 0.31524, -0.94916], gyro=[-0.14, 1.4, -0.07]
+[01:47:26.372] RX[COM4]  01
+[01:47:26.373] RX[COM4]  6e 00 00 00 7f 56 ff ff 24 00 1e bd ff a3 43 ff fe 00 15 ff fd 0a
+[01:47:26.374] PACKET[COM4] sensors: status=0b0110111000000000, uptime=32598, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.14, 1.47, -0.21]
+[01:47:26.485] RX[COM4]  01
+[01:47:26.487] RX[COM4]  6e 00 00 00 7f ba ff ff 18 00 1e b1 ff a3 5b ff fe 00 15 ff ff 0a
+[01:47:26.488] PACKET[COM4] sensors: status=0b0110111000000000, uptime=32698, filtered_accel=[-0.00928, 0.31428, -0.94868], gyro=[-0.14, 1.47, -0.07]
+[01:47:26.600] RX[COM4]  01
+[01:47:26.600] RX[COM4]  6e 00 00 00 80 1e ff ff 24 00 1e c9 ff a3 4f ff fd 00 15 ff fc 0a
+[01:47:26.602] PACKET[COM4] sensors: status=0b0110111000000000, uptime=32798, filtered_accel=[-0.0088, 0.31524, -0.94916], gyro=[-0.21, 1.47, -0.28]
+[01:47:26.713] RX[COM4]  01
+[01:47:26.713] RX[COM4]  66 00 00 00 80 82 ff ff 31 00 1e c9 ff a3 37 ff fe 00 15 ff f9 0a
+[01:47:26.714] PACKET[COM4] sensors: status=0b0110011000000000, uptime=32898, filtered_accel=[-0.00828, 0.31524, -0.95012], gyro=[-0.14, 1.47, -0.49]
+[01:47:26.777] RX[COM4]  01
+[01:47:26.779] RX[COM4]  66 00 00 00 80 e6 ff ff 18 00 1e b1 ff a3 4f ff fe 00 16 ff fc 0a
+[01:47:26.780] PACKET[COM4] sensors: status=0b0110011000000000, uptime=32998, filtered_accel=[-0.00928, 0.31428, -0.94916], gyro=[-0.14, 1.54, -0.28]
+[01:47:26.899] RX[COM4]  01
+[01:47:26.900] RX[COM4]  66 00 00 00 81 4a ff ff 18 00 1e b1 ff a3 4f ff fe 00 15 ff fb 0a
+[01:47:26.901] PACKET[COM4] sensors: status=0b0110011000000000, uptime=33098, filtered_accel=[-0.00928, 0.31428, -0.94916], gyro=[-0.14, 1.47, -0.35]
+[01:47:26.964] RX[COM4]  01
+[01:47:26.965] RX[COM4]  66 00 00 00 81 ae ff ff 31 00 1e bd ff a3 43 ff fe 00 15 ff fb 0a ff 67 00 00 00 81 ae 0a 02 66 00 00 00 81 ae 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 1f 31 13 8c 0a
+[01:47:26.967] PACKET[COM4] sensors: status=0b0110011000000000, uptime=33198, filtered_accel=[-0.00828, 0.31476, -0.94964], gyro=[-0.14, 1.47, -0.35]
+[01:47:26.968] PACKET[COM4] heartbeat: status=0b0110011100000000, uptime=33198
+[01:47:26.970] PACKET[COM4] state: status=0b0110011000000000, uptime=33198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.487366, witness_battery_voltage=5.004
+[01:47:27.096] RX[COM4]  01
+[01:47:27.098] RX[COM4]  6f 00 00 00 82 12 ff ff 3d 00 1e c9 ff a3 2a ff ff 00 14 ff fe 0a
+[01:47:27.100] PACKET[COM4] sensors: status=0b0110111100000000, uptime=33298, filtered_accel=[-0.0078, 0.31524, -0.95064], gyro=[-0.07, 1.4, -0.14]
+[01:47:27.211] RX[COM4]  01
+[01:47:27.212] RX[COM4]  6f 00 00 00 82 76 ff ff 0c 00 1e bd ff a3 43 ff fe 00 16 ff f9 0a
+[01:47:27.214] PACKET[COM4] sensors: status=0b0110111100000000, uptime=33398, filtered_accel=[-0.00976, 0.31476, -0.94964], gyro=[-0.14, 1.54, -0.49]
+[01:47:27.266] RX[COM4]  01
+[01:47:27.267] RX[COM4]  6f 00 00 00 82 da ff ff 31 00 1e b1 ff a3 37 ff fe 00 15 ff fc 0a
+[01:47:27.271] PACKET[COM4] sensors: status=0b0110111100000000, uptime=33498, filtered_accel=[-0.00828, 0.31428, -0.95012], gyro=[-0.14, 1.47, -0.28]
+[01:47:27.379] RX[COM4]  01
+[01:47:27.380] RX[COM4]  6f 00 00 00 83 3e ff ff 31 00 1e bd ff a3 43 ff fe 00 14 ff ff 0a
+[01:47:27.382] PACKET[COM4] sensors: status=0b0110111100000000, uptime=33598, filtered_accel=[-0.00828, 0.31476, -0.94964], gyro=[-0.14, 1.4, -0.07]
+[01:47:27.490] RX[COM4]  01
+[01:47:27.491] RX[COM4]  6f 00 00 00 83 a2 ff ff 3d 00 1e c9 ff a3 43 ff fe 00 15 ff fe 0a
+[01:47:27.492] PACKET[COM4] sensors: status=0b0110111100000000, uptime=33698, filtered_accel=[-0.0078, 0.31524, -0.94964], gyro=[-0.14, 1.47, -0.14]
+[01:47:27.615] RX[COM4]  01
+[01:47:27.618] RX[COM4]  67 00 00 00 84 06 ff ff 0c 00 1e bd ff a3 2a ff ff 00 15 ff fe 0a
+[01:47:27.621] PACKET[COM4] sensors: status=0b0110011100000000, uptime=33798, filtered_accel=[-0.00976, 0.31476, -0.95064], gyro=[-0.07, 1.47, -0.14]
+[01:47:27.673] RX[COM4]  01
+[01:47:27.673] RX[COM4]  67 00 00 00 84 6a ff ff 31 00 1e bd ff a3 4f ff fe 00 15 ff fa 0a
+[01:47:27.674] PACKET[COM4] sensors: status=0b0110011100000000, uptime=33898, filtered_accel=[-0.00828, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.42]
+[01:47:27.783] RX[COM4]  01
+[01:47:27.784] RX[COM4]  67 00 00 00 84 ce ff ff 31 00 1e c9 ff a3 2a ff fe 00 15 ff fc 0a
+[01:47:27.785] PACKET[COM4] sensors: status=0b0110011100000000, uptime=33998, filtered_accel=[-0.00828, 0.31524, -0.95064], gyro=[-0.14, 1.47, -0.28]
+[01:47:27.890] RX[COM4]  01
+[01:47:27.891] RX[COM4]  67 00 00 00 85 32 ff ff 31 00 1e bd ff a3 4f ff fe 00 15 ff fd 0a
+[01:47:27.896] PACKET[COM4] sensors: status=0b0110011100000000, uptime=34098, filtered_accel=[-0.00828, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.21]
+[01:47:28.003] RX[COM4]  01
+[01:47:28.003] RX[COM4]  67 00 00 00 85 96 ff ff 0c 00 1e c9 ff a3 4f ff ff 00 15 00 00 0a ff 66 00 00 00 85 96 0a 02 67 00 00 00 85 96 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 2a 86 13 84 0a
+[01:47:28.005] PACKET[COM4] sensors: status=0b0110011100000000, uptime=34198, filtered_accel=[-0.00976, 0.31524, -0.94916], gyro=[-0.07, 1.47, 0.0]
+[01:47:28.006] PACKET[COM4] heartbeat: status=0b0110011000000000, uptime=34198
+[01:47:28.007] PACKET[COM4] state: status=0b0110011100000000, uptime=34198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.664429, witness_battery_voltage=4.996
+[01:47:28.062] RX[COM4]  01
+[01:47:28.064] RX[COM4]  6e 00 00 00 85 fa ff ff 31 00 1e b1 ff a3 43 ff fe 00 15 ff fb 0a
+[01:47:28.065] PACKET[COM4] sensors: status=0b0110111000000000, uptime=34298, filtered_accel=[-0.00828, 0.31428, -0.94964], gyro=[-0.14, 1.47, -0.35]
+[01:47:28.176] RX[COM4]  01
+[01:47:28.178] RX[COM4]  6e 00 00 00 86 5e ff ff 3d 00 1e c9 ff a3 43 ff fe 00 15 ff fb 0a
+[01:47:28.180] PACKET[COM4] sensors: status=0b0110111000000000, uptime=34398, filtered_accel=[-0.0078, 0.31524, -0.94964], gyro=[-0.14, 1.47, -0.35]
+[01:47:28.294] RX[COM4]  01
+[01:47:28.295] RX[COM4]  6e 00 00 00 86 c2 ff ff 3d 00 1e c9 ff a3 37 ff fe 00 15 ff fd 0a
+[01:47:28.297] PACKET[COM4] sensors: status=0b0110111000000000, uptime=34498, filtered_accel=[-0.0078, 0.31524, -0.95012], gyro=[-0.14, 1.47, -0.21]
+[01:47:28.408] RX[COM4]  01
+[01:47:28.409] RX[COM4]  6e 00 00 00 87 26 ff ff 18 00 1e b1 ff a3 43 ff fe 00 15 ff fc 0a
+[01:47:28.411] PACKET[COM4] sensors: status=0b0110111000000000, uptime=34598, filtered_accel=[-0.00928, 0.31428, -0.94964], gyro=[-0.14, 1.47, -0.28]
+[01:47:28.471] RX[COM4]  01
+[01:47:28.473] RX[COM4]  6e 00 00 00 87 8a ff ff 18 00 1e c9 ff a3 37 ff fe 00 15 ff fe 0a
+[01:47:28.474] PACKET[COM4] sensors: status=0b0110111000000000, uptime=34698, filtered_accel=[-0.00928, 0.31524, -0.95012], gyro=[-0.14, 1.47, -0.14]
+[01:47:28.589] RX[COM4]  01
+[01:47:28.591] RX[COM4]  66 00 00 00 87 ee ff ff 3d 00 1e c9 ff a3 67 ff fe 00 15 ff fa 0a
+[01:47:28.592] PACKET[COM4] sensors: status=0b0110011000000000, uptime=34798, filtered_accel=[-0.0078, 0.31524, -0.9482], gyro=[-0.14, 1.47, -0.42]
+[01:47:28.704] RX[COM4]  01
+[01:47:28.705] RX[COM4]  66 00 00 00 88 52 ff ff 24 00 1e bd ff a3 4f ff fe 00 16 ff fc 0a
+[01:47:28.706] PACKET[COM4] sensors: status=0b0110011000000000, uptime=34898, filtered_accel=[-0.0088, 0.31476, -0.94916], gyro=[-0.14, 1.54, -0.28]
+[01:47:28.763] RX[COM4]  01
+[01:47:28.763] RX[COM4]  66 00 00 00 88 b6 ff ff 18 00 1e a5 ff a3 4f ff fe 00 14 ff ff 0a
+[01:47:28.764] PACKET[COM4] sensors: status=0b0110011000000000, uptime=34998, filtered_accel=[-0.00928, 0.3138, -0.94916], gyro=[-0.14, 1.4, -0.07]
+[01:47:28.877] RX[COM4]  01
+[01:47:28.878] RX[COM4]  66 00 00 00 89 1a ff ff 18 00 1e c9 ff a3 4f ff fe 00 15 ff fd 0a
+[01:47:28.879] PACKET[COM4] sensors: status=0b0110011000000000, uptime=35098, filtered_accel=[-0.00928, 0.31524, -0.94916], gyro=[-0.14, 1.47, -0.21]
+[01:47:28.987] RX[COM4]  01
+[01:47:28.988] RX[COM4]  6e 00 00 00 89 7e ff ff 31 00 1e bd ff a3 1e ff ff 00 15 ff fe 0a ff 6f 00 00 00 89 7e 0a 02 6e 00 00 00 89 7e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 19 71 13 8c 0a
+[01:47:28.989] PACKET[COM4] sensors: status=0b0110111000000000, uptime=35198, filtered_accel=[-0.00828, 0.31476, -0.95112], gyro=[-0.07, 1.47, -0.14]
+[01:47:28.990] PACKET[COM4] heartbeat: status=0b0110111100000000, uptime=35198
+[01:47:28.992] PACKET[COM4] state: status=0b0110111000000000, uptime=35198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.397522, witness_battery_voltage=5.004
+[01:47:29.103] RX[COM4]  01
+[01:47:29.107] RX[COM4]  6f 00 00 00 89 e2 ff ff 24 00 1e bd ff a3 4f ff fe 00 15 ff fa 0a
+[01:47:29.110] PACKET[COM4] sensors: status=0b0110111100000000, uptime=35298, filtered_accel=[-0.0088, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.42]
+[01:47:29.172] RX[COM4]  01
+[01:47:29.173] RX[COM4]  6f 00 00 00 8a 46 ff ff 0c 00 1e c9 ff a3 43 ff fe 00 16 ff fc 0a
+[01:47:29.174] PACKET[COM4] sensors: status=0b0110111100000000, uptime=35398, filtered_accel=[-0.00976, 0.31524, -0.94964], gyro=[-0.14, 1.54, -0.28]
+[01:47:29.291] RX[COM4]  01
+[01:47:29.292] RX[COM4]  6f 00 00 00 8a aa ff ff 18 00 1e bd ff a3 4f ff fe 00 15 ff fd 0a
+[01:47:29.294] PACKET[COM4] sensors: status=0b0110111100000000, uptime=35498, filtered_accel=[-0.00928, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.21]
+[01:47:29.400] RX[COM4]  01
+[01:47:29.401] RX[COM4]  6f 00 00 00 8b 0e ff ff 31 00 1e b1 ff a3 43 ff fe 00 15 ff fe 0a
+[01:47:29.402] PACKET[COM4] sensors: status=0b0110111100000000, uptime=35598, filtered_accel=[-0.00828, 0.31428, -0.94964], gyro=[-0.14, 1.47, -0.14]
+[01:47:29.504] RX[COM4]  01
+[01:47:29.505] RX[COM4]  6f 00 00 00 8b 72 ff ff 31 00 1e c9 ff a3 43 ff ff 00 14 ff ff 0a
+[01:47:29.506] PACKET[COM4] sensors: status=0b0110111100000000, uptime=35698, filtered_accel=[-0.00828, 0.31524, -0.94964], gyro=[-0.07, 1.4, -0.07]
+[01:47:29.609] RX[COM4]  01
+[01:47:29.610] RX[COM4]  67 00 00 00 8b d6 ff ff 24 00 1e c9 ff a3 2a ff fd 00 15 ff f9 0a
+[01:47:29.612] PACKET[COM4] sensors: status=0b0110011100000000, uptime=35798, filtered_accel=[-0.0088, 0.31524, -0.95064], gyro=[-0.21, 1.47, -0.49]
+[01:47:29.666] RX[COM4]  01
+[01:47:29.666] RX[COM4]  67 00 00 00 8c 3a ff ff 24 00 1e b1 ff a3 2a ff fe 00 14 ff fe 0a
+[01:47:29.667] PACKET[COM4] sensors: status=0b0110011100000000, uptime=35898, filtered_accel=[-0.0088, 0.31428, -0.95064], gyro=[-0.14, 1.4, -0.14]
+[01:47:29.781] RX[COM4]  01
+[01:47:29.781] RX[COM4]  67 00 00 00 8c 9e ff ff 3d 00 1e b1 ff a3 37 ff fe 00 15 ff fc 0a
+[01:47:29.783] PACKET[COM4] sensors: status=0b0110011100000000, uptime=35998, filtered_accel=[-0.0078, 0.31428, -0.95012], gyro=[-0.14, 1.47, -0.28]
+[01:47:29.893] RX[COM4]  01
+[01:47:29.894] RX[COM4]  67 00 00 00 8d 02 ff ff 3d 00 1e bd ff a3 43 ff fe 00 14 ff ff 0a
+[01:47:29.898] PACKET[COM4] sensors: status=0b0110011100000000, uptime=36098, filtered_accel=[-0.0078, 0.31476, -0.94964], gyro=[-0.14, 1.4, -0.07]
+[01:47:29.962] RX[COM4]  01
+[01:47:29.964] RX[COM4]  6f 00 00 00 8d 66 ff ff 18 00 1e bd ff a3 4f ff fe 00 15 ff fc 0a ff 6e 00 00 00 8d 66 0a 02 6f 00 00 00 8d 66 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 19 71 13 84 0a
+[01:47:29.965] PACKET[COM4] sensors: status=0b0110111100000000, uptime=36198, filtered_accel=[-0.00928, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.28]
+[01:47:29.967] PACKET[COM4] heartbeat: status=0b0110111000000000, uptime=36198
+[01:47:29.968] PACKET[COM4] state: status=0b0110111100000000, uptime=36198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.397522, witness_battery_voltage=4.996
+[01:47:30.077] RX[COM4]  01
+[01:47:30.079] RX[COM4]  6e 00 00 00 8d ca ff ff 24 00 1e b1 ff a3 43 ff fe 00 15 ff fc 0a
+[01:47:30.080] PACKET[COM4] sensors: status=0b0110111000000000, uptime=36298, filtered_accel=[-0.0088, 0.31428, -0.94964], gyro=[-0.14, 1.47, -0.28]
+[01:47:30.188] RX[COM4]  01
+[01:47:30.189] RX[COM4]  6e 00 00 00 8e 2e ff ff 24 00 1e bd ff a3 4f ff ff 00 15 ff fb 0a
+[01:47:30.190] PACKET[COM4] sensors: status=0b0110111000000000, uptime=36398, filtered_accel=[-0.0088, 0.31476, -0.94916], gyro=[-0.07, 1.47, -0.35]
+[01:47:30.305] RX[COM4]  01
+[01:47:30.306] RX[COM4]  6e 00 00 00 8e 92 ff ff 24 00 1e d5 ff a3 4f ff fe 00 15 ff fc 0a
+[01:47:30.307] PACKET[COM4] sensors: status=0b0110111000000000, uptime=36498, filtered_accel=[-0.0088, 0.31572, -0.94916], gyro=[-0.14, 1.47, -0.28]
+[01:47:30.368] RX[COM4]  01
+[01:47:30.369] RX[COM4]  6e 00 00 00 8e f6 ff ff 24 00 1e c9 ff a3 43 ff fe 00 15 00 00 0a
+[01:47:30.370] PACKET[COM4] sensors: status=0b0110111000000000, uptime=36598, filtered_accel=[-0.0088, 0.31524, -0.94964], gyro=[-0.14, 1.47, 0.0]
+[01:47:30.486] RX[COM4]  01
+[01:47:30.487] RX[COM4]  6e 00 00 00 8f 5a ff ff 18 00 1e bd ff a3 4f ff fe 00 15 ff ff 0a
+[01:47:30.488] PACKET[COM4] sensors: status=0b0110111000000000, uptime=36698, filtered_accel=[-0.00928, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.07]
+[01:47:30.601] RX[COM4]  01
+[01:47:30.603] RX[COM4]  66 00 00 00 8f be ff ff 24 00 1e bd ff a3 43 ff fe 00 15 ff f9 0a
+[01:47:30.604] PACKET[COM4] sensors: status=0b0110011000000000, uptime=36798, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.14, 1.47, -0.49]
+[01:47:30.666] RX[COM4]  01
+[01:47:30.668] RX[COM4]  66 00 00 00 90 22 ff ff 24 00 1e b1 ff a3 37 ff fd 00 15 ff fb 0a
+[01:47:30.669] PACKET[COM4] sensors: status=0b0110011000000000, uptime=36898, filtered_accel=[-0.0088, 0.31428, -0.95012], gyro=[-0.21, 1.47, -0.35]
+[01:47:30.772] RX[COM4]  01
+[01:47:30.773] RX[COM4]  66 00 00 00 90 86 ff ff 24 00 1e c9 ff a3 4f ff fd 00 15 ff fd 0a
+[01:47:30.775] PACKET[COM4] sensors: status=0b0110011000000000, uptime=36998, filtered_accel=[-0.0088, 0.31524, -0.94916], gyro=[-0.21, 1.47, -0.21]
+[01:47:30.891] RX[COM4]  01
+[01:47:30.893] RX[COM4]  66 00 00 00 90 ea ff ff 24 00 1e bd ff a3 37 ff fe 00 15 00 00 0a
+[01:47:30.895] PACKET[COM4] sensors: status=0b0110011000000000, uptime=37098, filtered_accel=[-0.0088, 0.31476, -0.95012], gyro=[-0.14, 1.47, 0.0]
+[01:47:31.004] RX[COM4]  01
+[01:47:31.007] RX[COM4]  6e 00 00 00 91 4e ff ff 24 00 1e bd ff a3 2a ff ff 00 14 00 01 0a ff 6f 00 00 00 91 4e 0a 02 6e 00 00 00 91 4e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 3b 9a 13 8c 0a
+[01:47:31.008] PACKET[COM4] sensors: status=0b0110111000000000, uptime=37198, filtered_accel=[-0.0088, 0.31476, -0.95064], gyro=[-0.07, 1.4, 0.07]
+[01:47:31.009] PACKET[COM4] heartbeat: status=0b0110111100000000, uptime=37198
+[01:47:31.011] PACKET[COM4] state: status=0b0110111000000000, uptime=37198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.931274, witness_battery_voltage=5.004
+[01:47:31.070] RX[COM4]  01
+[01:47:31.071] RX[COM4]  6f 00 00 00 91 b2 ff ff 18 00 1e c9 ff a3 43 ff fe 00 16 ff fb 0a
+[01:47:31.073] PACKET[COM4] sensors: status=0b0110111100000000, uptime=37298, filtered_accel=[-0.00928, 0.31524, -0.94964], gyro=[-0.14, 1.54, -0.35]
+[01:47:31.189] RX[COM4]  01
+[01:47:31.190] RX[COM4]  6f 00 00 00 92 16 ff ff 18 00 1e bd ff a3 37 ff fd 00 15 ff ff 0a
+[01:47:31.191] PACKET[COM4] sensors: status=0b0110111100000000, uptime=37398, filtered_accel=[-0.00928, 0.31476, -0.95012], gyro=[-0.21, 1.47, -0.07]
+[01:47:31.304] RX[COM4]  01
+[01:47:31.305] RX[COM4]  6f 00 00 00 92 7a ff ff 18 00 1e c9 ff a3 4f ff fd 00 15 ff fd 0a
+[01:47:31.306] PACKET[COM4] sensors: status=0b0110111100000000, uptime=37498, filtered_accel=[-0.00928, 0.31524, -0.94916], gyro=[-0.21, 1.47, -0.21]
+[01:47:31.414] RX[COM4]  01
+[01:47:31.415] RX[COM4]  6f 00 00 00 92 de ff ff 31 00 1e b1 ff a3 43 ff fe 00 14 00 01 0a
+[01:47:31.416] PACKET[COM4] sensors: status=0b0110111100000000, uptime=37598, filtered_accel=[-0.00828, 0.31428, -0.94964], gyro=[-0.14, 1.4, 0.07]
+[01:47:31.468] RX[COM4]  01
+[01:47:31.471] RX[COM4]  67 00 00 00 93 42 ff ff 18 00 1e bd ff a3 1e ff fd 00 14 ff fc 0a
+[01:47:31.472] PACKET[COM4] sensors: status=0b0110011100000000, uptime=37698, filtered_accel=[-0.00928, 0.31476, -0.95112], gyro=[-0.21, 1.4, -0.28]
+[01:47:31.600] RX[COM4]  01
+[01:47:31.605] RX[COM4]  67 00 00 00 93 a6 ff ff 18 00 1e c9 ff a3 37 ff fe 00 15 ff fa 0a
+[01:47:31.608] PACKET[COM4] sensors: status=0b0110011100000000, uptime=37798, filtered_accel=[-0.00928, 0.31524, -0.95012], gyro=[-0.14, 1.47, -0.42]
+[01:47:31.664] RX[COM4]  01
+[01:47:31.665] RX[COM4]  67 00 00 00 94 0a ff ff 31 00 1e bd ff a3 37 ff fe 00 15 ff fc 0a
+[01:47:31.666] PACKET[COM4] sensors: status=0b0110011100000000, uptime=37898, filtered_accel=[-0.00828, 0.31476, -0.95012], gyro=[-0.14, 1.47, -0.28]
+[01:47:31.779] RX[COM4]  01
+[01:47:31.779] RX[COM4]  67 00 00 00 94 6e ff ff 31 00 1e b1 ff a3 37 ff fe 00 14 ff ff 0a
+[01:47:31.780] PACKET[COM4] sensors: status=0b0110011100000000, uptime=37998, filtered_accel=[-0.00828, 0.31428, -0.95012], gyro=[-0.14, 1.4, -0.07]
+[01:47:31.905] RX[COM4]  01
+[01:47:31.907] RX[COM4]  6f 00 00 00 94 d2 ff ff 31 00 1e bd ff a3 2a ff fe 00 14 ff ff 0a
+[01:47:31.909] PACKET[COM4] sensors: status=0b0110111100000000, uptime=38098, filtered_accel=[-0.00828, 0.31476, -0.95064], gyro=[-0.14, 1.4, -0.07]
+[01:47:32.013] RX[COM4]  01
+[01:47:32.014] RX[COM4]  6f 00 00 00 95 36 ff ff 31 00 1e c9 ff a3 4f ff fd 00 14 ff fb 0a ff 6e 00 00 00 95 36 0a 02 6f 00 00 00 95 36 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 30 45 13 8c 0a
+[01:47:32.015] PACKET[COM4] sensors: status=0b0110111100000000, uptime=38198, filtered_accel=[-0.00828, 0.31524, -0.94916], gyro=[-0.21, 1.4, -0.35]
+[01:47:32.018] PACKET[COM4] heartbeat: status=0b0110111000000000, uptime=38198
+[01:47:32.020] PACKET[COM4] state: status=0b0110111100000000, uptime=38198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.754211, witness_battery_voltage=5.004
+[01:47:32.074] RX[COM4]  01
+[01:47:32.075] RX[COM4]  6e 00 00 00 95 9a ff ff 24 00 1e b1 ff a3 12 ff fe 00 14 ff fd 0a
+[01:47:32.077] PACKET[COM4] sensors: status=0b0110111000000000, uptime=38298, filtered_accel=[-0.0088, 0.31428, -0.9516], gyro=[-0.14, 1.4, -0.21]
+[01:47:32.187] RX[COM4]  01
+[01:47:32.188] RX[COM4]  6e 00 00 00 95 fe ff ff 31 00 1e c9 ff a3 1e ff fd 00 15 ff fe 0a
+[01:47:32.189] PACKET[COM4] sensors: status=0b0110111000000000, uptime=38398, filtered_accel=[-0.00828, 0.31524, -0.95112], gyro=[-0.21, 1.47, -0.14]
+[01:47:32.302] RX[COM4]  01
+[01:47:32.303] RX[COM4]  6e 00 00 00 96 62 ff ff 31 00 1e c9 ff a3 43 ff fe 00 14 00 00 0a
+[01:47:32.305] PACKET[COM4] sensors: status=0b0110111000000000, uptime=38498, filtered_accel=[-0.00828, 0.31524, -0.94964], gyro=[-0.14, 1.4, 0.0]
+[01:47:32.364] RX[COM4]  01
+[01:47:32.365] RX[COM4]  6e 00 00 00 96 c6 ff ff 18 00 1e bd ff a3 4f ff fd 00 15 ff fd 0a
+[01:47:32.366] PACKET[COM4] sensors: status=0b0110111000000000, uptime=38598, filtered_accel=[-0.00928, 0.31476, -0.94916], gyro=[-0.21, 1.47, -0.21]
+[01:47:32.469] RX[COM4]  01
+[01:47:32.470] RX[COM4]  66 00 00 00 97 2a ff ff 3d 00 1e bd ff a3 37 ff fe 00 15 ff fc 0a
+[01:47:32.471] PACKET[COM4] sensors: status=0b0110011000000000, uptime=38698, filtered_accel=[-0.0078, 0.31476, -0.95012], gyro=[-0.14, 1.47, -0.28]
+[01:47:32.580] RX[COM4]  01
+[01:47:32.581] RX[COM4]  66 00 00 00 97 8e ff ff 3d 00 1e c9 ff a3 43 ff fe 00 14 ff fe 0a
+[01:47:32.582] PACKET[COM4] sensors: status=0b0110011000000000, uptime=38798, filtered_accel=[-0.0078, 0.31524, -0.94964], gyro=[-0.14, 1.4, -0.14]
+[01:47:32.689] RX[COM4]  01
+[01:47:32.690] RX[COM4]  66 00 00 00 97 f2 ff ff 24 00 1e bd ff a3 37 ff ff 00 15 ff ff 0a
+[01:47:32.693] PACKET[COM4] sensors: status=0b0110011000000000, uptime=38898, filtered_accel=[-0.0088, 0.31476, -0.95012], gyro=[-0.07, 1.47, -0.07]
+[01:47:32.803] RX[COM4]  01
+[01:47:32.804] RX[COM4]  66 00 00 00 98 56 ff ff 0c 00 1e c9 ff a3 5b ff fe 00 15 ff fd 0a
+[01:47:32.805] PACKET[COM4] sensors: status=0b0110011000000000, uptime=38998, filtered_accel=[-0.00976, 0.31524, -0.94868], gyro=[-0.14, 1.47, -0.21]
+[01:47:32.862] RX[COM4]  01
+[01:47:32.863] RX[COM4]  6e 00 00 00 98 ba ff ff 24 00 1e bd ff a3 43 ff ff 00 16 ff fe 0a
+[01:47:32.864] PACKET[COM4] sensors: status=0b0110111000000000, uptime=39098, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.07, 1.54, -0.14]
+[01:47:32.970] RX[COM4]  01
+[01:47:32.973] RX[COM4]  6e 00 00 00 99 1e ff ff 31 00 1e b1 ff a3 5b ff fd 00 15 ff f9 0a ff 6f 00 00 00 99 1e 0a 02 6e 00 00 00 99 1e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 24 c6 13 8c 0a
+[01:47:32.974] PACKET[COM4] sensors: status=0b0110111000000000, uptime=39198, filtered_accel=[-0.00828, 0.31428, -0.94868], gyro=[-0.21, 1.47, -0.49]
+[01:47:32.975] PACKET[COM4] heartbeat: status=0b0110111100000000, uptime=39198
+[01:47:32.976] PACKET[COM4] state: status=0b0110111000000000, uptime=39198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.574585, witness_battery_voltage=5.004
+[01:47:33.085] RX[COM4]  01
+[01:47:33.088] RX[COM4]  6f 00 00 00 99 82 ff ff 31 00 1e bd ff a3 4f ff fd 00 15 ff fc 0a
+[01:47:33.091] PACKET[COM4] sensors: status=0b0110111100000000, uptime=39298, filtered_accel=[-0.00828, 0.31476, -0.94916], gyro=[-0.21, 1.47, -0.28]
+[01:47:33.196] RX[COM4]  01
+[01:47:33.198] RX[COM4]  6f 00 00 00 99 e6 ff ff 18 00 1e b1 ff a3 4f ff fd 00 16 ff ff 0a
+[01:47:33.199] PACKET[COM4] sensors: status=0b0110111100000000, uptime=39398, filtered_accel=[-0.00928, 0.31428, -0.94916], gyro=[-0.21, 1.54, -0.07]
+[01:47:33.302] RX[COM4]  01
+[01:47:33.304] RX[COM4]  6f 00 00 00 9a 4a ff ff 0c 00 1e bd ff a3 43 ff ff 00 14 00 00 0a
+[01:47:33.305] PACKET[COM4] sensors: status=0b0110111100000000, uptime=39498, filtered_accel=[-0.00976, 0.31476, -0.94964], gyro=[-0.07, 1.4, 0.0]
+[01:47:33.364] RX[COM4]  01
+[01:47:33.365] RX[COM4]  6f 00 00 00 9a ae ff ff 31 00 1e bd ff a3 37 ff fd 00 14 ff fe 0a
+[01:47:33.366] PACKET[COM4] sensors: status=0b0110111100000000, uptime=39598, filtered_accel=[-0.00828, 0.31476, -0.95012], gyro=[-0.21, 1.4, -0.14]
+[01:47:33.480] RX[COM4]  01
+[01:47:33.481] RX[COM4]  67 00 00 00 9b 12 ff ff 24 00 1e bd ff a3 4f ff fd 00 16 ff fc 0a
+[01:47:33.482] PACKET[COM4] sensors: status=0b0110011100000000, uptime=39698, filtered_accel=[-0.0088, 0.31476, -0.94916], gyro=[-0.21, 1.54, -0.28]
+[01:47:33.597] RX[COM4]  01
+[01:47:33.598] RX[COM4]  67 00 00 00 9b 76 ff ff 0c 00 1e bd ff a3 37 ff fe 00 15 ff fe 0a
+[01:47:33.599] PACKET[COM4] sensors: status=0b0110011100000000, uptime=39798, filtered_accel=[-0.00976, 0.31476, -0.95012], gyro=[-0.14, 1.47, -0.14]
+[01:47:33.707] RX[COM4]  01
+[01:47:33.708] RX[COM4]  67 00 00 00 9b da ff ff 31 00 1e c9 ff a3 4f ff fe 00 15 ff fc 0a
+[01:47:33.710] PACKET[COM4] sensors: status=0b0110011100000000, uptime=39898, filtered_accel=[-0.00828, 0.31524, -0.94916], gyro=[-0.14, 1.47, -0.28]
+[01:47:33.763] RX[COM4]  01
+[01:47:33.763] RX[COM4]  67 00 00 00 9c 3e ff ff 31 00 1e c9 ff a3 37 ff fe 00 14 ff fe 0a
+[01:47:33.765] PACKET[COM4] sensors: status=0b0110011100000000, uptime=39998, filtered_accel=[-0.00828, 0.31524, -0.95012], gyro=[-0.14, 1.4, -0.14]
+[01:47:33.884] RX[COM4]  01
+[01:47:33.885] RX[COM4]  6f 00 00 00 9c a2 ff ff 3d 00 1e c9 ff a3 43 ff fe 00 14 ff ff 0a
+[01:47:33.889] PACKET[COM4] sensors: status=0b0110111100000000, uptime=40098, filtered_accel=[-0.0078, 0.31524, -0.94964], gyro=[-0.14, 1.4, -0.07]
+[01:47:34.002] RX[COM4]  01
+[01:47:34.004] RX[COM4]  6f 00 00 00 9d 06 ff ff 18 00 1e bd ff a3 43 ff fe 00 15 ff fa 0a ff 6e 00 00 00 9d 06 0a 02 6f 00 00 00 9d 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 2a 86 13 80 0a
+[01:47:34.005] PACKET[COM4] sensors: status=0b0110111100000000, uptime=40198, filtered_accel=[-0.00928, 0.31476, -0.94964], gyro=[-0.14, 1.47, -0.42]
+[01:47:34.006] PACKET[COM4] heartbeat: status=0b0110111000000000, uptime=40198
+[01:47:34.007] PACKET[COM4] state: status=0b0110111100000000, uptime=40198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.664429, witness_battery_voltage=4.992
+[01:47:34.068] RX[COM4]  01
+[01:47:34.070] RX[COM4]  6e 00 00 00 9d 6a ff ff 24 00 1e c9 ff a3 37 ff ff 00 15 ff fc 0a
+[01:47:34.072] PACKET[COM4] sensors: status=0b0110111000000000, uptime=40298, filtered_accel=[-0.0088, 0.31524, -0.95012], gyro=[-0.07, 1.47, -0.28]
+[01:47:34.187] RX[COM4]  01
+[01:47:34.189] RX[COM4]  6e 00 00 00 9d ce ff ff 3d 00 1e c9 ff a3 37 ff ff 00 14 00 00 0a
+[01:47:34.190] PACKET[COM4] sensors: status=0b0110111000000000, uptime=40398, filtered_accel=[-0.0078, 0.31524, -0.95012], gyro=[-0.07, 1.4, 0.0]
+[01:47:34.302] RX[COM4]  01
+[01:47:34.304] RX[COM4]  6e 00 00 00 9e 32 ff ff 18 00 1e bd ff a3 5b ff ff 00 15 ff ff 0a
+[01:47:34.305] PACKET[COM4] sensors: status=0b0110111000000000, uptime=40498, filtered_accel=[-0.00928, 0.31476, -0.94868], gyro=[-0.07, 1.47, -0.07]
+[01:47:34.368] RX[COM4]  01
+[01:47:34.369] RX[COM4]  6e 00 00 00 9e 96 ff ff 24 00 1e b1 ff a3 37 ff fe 00 15 ff fe 0a
+[01:47:34.371] PACKET[COM4] sensors: status=0b0110111000000000, uptime=40598, filtered_accel=[-0.0088, 0.31428, -0.95012], gyro=[-0.14, 1.47, -0.14]
+[01:47:34.480] RX[COM4]  01
+[01:47:34.481] RX[COM4]  66 00 00 00 9e fa ff ff 31 00 1e a5 ff a3 2a ff fe 00 14 ff fb 0a
+[01:47:34.482] PACKET[COM4] sensors: status=0b0110011000000000, uptime=40698, filtered_accel=[-0.00828, 0.3138, -0.95064], gyro=[-0.14, 1.4, -0.35]
+[01:47:34.600] RX[COM4]  01
+[01:47:34.601] RX[COM4]  66 00 00 00 9f 5e ff ff 31 00 1e b1 ff a3 43 ff fe 00 14 ff ff 0a
+[01:47:34.602] PACKET[COM4] sensors: status=0b0110011000000000, uptime=40798, filtered_accel=[-0.00828, 0.31428, -0.94964], gyro=[-0.14, 1.4, -0.07]
+[01:47:34.663] RX[COM4]  01
+[01:47:34.665] RX[COM4]  66 00 00 00 9f c2 ff ff 24 00 1e c9 ff a3 43 ff ff 00 16 ff ff 0a
+[01:47:34.667] PACKET[COM4] sensors: status=0b0110011000000000, uptime=40898, filtered_accel=[-0.0088, 0.31524, -0.94964], gyro=[-0.07, 1.54, -0.07]
+[01:47:34.779] RX[COM4]  01
+[01:47:34.780] RX[COM4]  66 00 00 00 a0 26 ff ff 18 00 1e c9 ff a3 5b ff fe 00 15 ff fe 0a
+[01:47:34.781] PACKET[COM4] sensors: status=0b0110011000000000, uptime=40998, filtered_accel=[-0.00928, 0.31524, -0.94868], gyro=[-0.14, 1.47, -0.14]
+[01:47:34.891] RX[COM4]  01
+[01:47:34.891] RX[COM4]  6e 00 00 00 a0 8a ff ff 3d 00 1e b1 ff a3 4f ff fe 00 15 ff fa 0a
+[01:47:34.893] PACKET[COM4] sensors: status=0b0110111000000000, uptime=41098, filtered_accel=[-0.0078, 0.31428, -0.94916], gyro=[-0.14, 1.47, -0.42]
+[01:47:35.011] RX[COM4]  01
+[01:47:35.012] RX[COM4]  6e 00 00 00 a0 ee ff ff 31 00 1e c9 ff a3 4f ff fe 00 15 ff fc 0a ff 6f 00 00 00 a0 ee 0a 02 6e 00 00 00 a0 ee 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 2a 86 13 88 0a
+[01:47:35.014] PACKET[COM4] sensors: status=0b0110111000000000, uptime=41198, filtered_accel=[-0.00828, 0.31524, -0.94916], gyro=[-0.14, 1.47, -0.28]
+[01:47:35.016] PACKET[COM4] heartbeat: status=0b0110111100000000, uptime=41198
+[01:47:35.018] PACKET[COM4] state: status=0b0110111000000000, uptime=41198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.664429, witness_battery_voltage=5.0
+[01:47:35.069] RX[COM4]  01
+[01:47:35.070] RX[COM4]  6f 00 00 00 a1 52 ff ff 24 00 1e bd ff a3 5b ff fe 00 15 ff fd 0a
+[01:47:35.073] PACKET[COM4] sensors: status=0b0110111100000000, uptime=41298, filtered_accel=[-0.0088, 0.31476, -0.94868], gyro=[-0.14, 1.47, -0.21]
+[01:47:35.183] RX[COM4]  01
+[01:47:35.184] RX[COM4]  6f 00 00 00 a1 b6 ff ff 18 00 1e bd ff a3 43 ff fe 00 14 ff ff 0a
+[01:47:35.187] PACKET[COM4] sensors: status=0b0110111100000000, uptime=41398, filtered_accel=[-0.00928, 0.31476, -0.94964], gyro=[-0.14, 1.4, -0.07]
+[01:47:35.311] RX[COM4]  01
+[01:47:35.312] RX[COM4]  6f 00 00 00 a2 1a ff ff 24 00 1e bd ff a3 43 ff ff 00 14 ff fe 0a
+[01:47:35.314] PACKET[COM4] sensors: status=0b0110111100000000, uptime=41498, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.07, 1.4, -0.14]
+[01:47:35.367] RX[COM4]  01
+[01:47:35.368] RX[COM4]  67 00 00 00 a2 7e ff ff 24 00 1e bd ff a3 4f ff ff 00 15 ff ff 0a
+[01:47:35.370] PACKET[COM4] sensors: status=0b0110011100000000, uptime=41598, filtered_accel=[-0.0088, 0.31476, -0.94916], gyro=[-0.07, 1.47, -0.07]
+[01:47:35.486] RX[COM4]  01
+[01:47:35.489] RX[COM4]  67 00 00 00 a2 e2 ff ff 18 00 1e bd ff a3 43 ff fd 00 15 ff fc 0a
+[01:47:35.490] PACKET[COM4] sensors: status=0b0110011100000000, uptime=41698, filtered_accel=[-0.00928, 0.31476, -0.94964], gyro=[-0.21, 1.47, -0.28]
+[01:47:35.604] RX[COM4]  01
+[01:47:35.604] RX[COM4]  67 00 00 00 a3 46 ff ff 31 00 1e b1 ff a3 37 ff fd 00 15 ff fb 0a
+[01:47:35.606] PACKET[COM4] sensors: status=0b0110011100000000, uptime=41798, filtered_accel=[-0.00828, 0.31428, -0.95012], gyro=[-0.21, 1.47, -0.35]
+[01:47:35.663] RX[COM4]  01
+[01:47:35.664] RX[COM4]  67 00 00 00 a3 aa ff ff 3d 00 1e b1 ff a3 4f ff fe 00 15 ff fc 0a
+[01:47:35.665] PACKET[COM4] sensors: status=0b0110011100000000, uptime=41898, filtered_accel=[-0.0078, 0.31428, -0.94916], gyro=[-0.14, 1.47, -0.28]
+[01:47:35.780] RX[COM4]  01
+[01:47:35.781] RX[COM4]  6f 00 00 00 a4 0e ff ff 18 00 1e bd ff a3 1e ff fd 00 15 ff fe 0a
+[01:47:35.783] PACKET[COM4] sensors: status=0b0110111100000000, uptime=41998, filtered_accel=[-0.00928, 0.31476, -0.95112], gyro=[-0.21, 1.47, -0.14]
+[01:47:35.895] RX[COM4]  01
+[01:47:35.895] RX[COM4]  6f 00 00 00 a4 72 ff ff 18 00 1e bd ff a3 43 ff fe 00 16 ff fc 0a
+[01:47:35.897] PACKET[COM4] sensors: status=0b0110111100000000, uptime=42098, filtered_accel=[-0.00928, 0.31476, -0.94964], gyro=[-0.14, 1.54, -0.28]
+[01:47:36.021] RX[COM4]  01
+[01:47:36.022] RX[COM4]  6f 00 00 00 a4 d6 ff ff 3d 00 1e b1 ff a3 43 ff fe 00 15 ff fb 0a ff 6e 00 00 00 a4 d6 0a 02 6f 00 00 00 a4 d6 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 30 45 13 94 0a
+[01:47:36.024] PACKET[COM4] sensors: status=0b0110111100000000, uptime=42198, filtered_accel=[-0.0078, 0.31428, -0.94964], gyro=[-0.14, 1.47, -0.35]
+[01:47:36.025] PACKET[COM4] heartbeat: status=0b0110111000000000, uptime=42198
+[01:47:36.027] PACKET[COM4] state: status=0b0110111100000000, uptime=42198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.754211, witness_battery_voltage=5.012
+[01:47:36.097] RX[COM4]  01
+[01:47:36.099] RX[COM4]  6e 00 00 00 a5 3a ff ff 31 00 1e bd ff a3 5b ff ff 00 14 ff fd 0a
+[01:47:36.102] PACKET[COM4] sensors: status=0b0110111000000000, uptime=42298, filtered_accel=[-0.00828, 0.31476, -0.94868], gyro=[-0.07, 1.4, -0.21]
+[01:47:36.215] RX[COM4]  01
+[01:47:36.216] RX[COM4]  6e 00 00 00 a5 9e ff ff 24 00 1e bd ff a3 43 ff fd 00 14 ff fe 0a
+[01:47:36.219] PACKET[COM4] sensors: status=0b0110111000000000, uptime=42398, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.21, 1.4, -0.14]
+[01:47:36.278] RX[COM4]  01
+[01:47:36.279] RX[COM4]  6e 00 00 00 a6 02 ff ff 24 00 1e a5 ff a3 4f ff fe 00 15 ff fe 0a
+[01:47:36.280] PACKET[COM4] sensors: status=0b0110111000000000, uptime=42498, filtered_accel=[-0.0088, 0.3138, -0.94916], gyro=[-0.14, 1.47, -0.14]
+[01:47:36.391] RX[COM4]  01
+[01:47:36.392] RX[COM4]  66 00 00 00 a6 66 ff ff 31 00 1e c9 ff a3 37 ff ff 00 15 ff f9 0a
+[01:47:36.394] PACKET[COM4] sensors: status=0b0110011000000000, uptime=42598, filtered_accel=[-0.00828, 0.31524, -0.95012], gyro=[-0.07, 1.47, -0.49]
+[01:47:36.504] RX[COM4]  01
+[01:47:36.505] RX[COM4]  66 00 00 00 a6 ca ff ff 3d 00 1e b1 ff a3 43 ff ff 00 15 ff ff 0a
+[01:47:36.507] PACKET[COM4] sensors: status=0b0110011000000000, uptime=42698, filtered_accel=[-0.0078, 0.31428, -0.94964], gyro=[-0.07, 1.47, -0.07]
+[01:47:36.616] RX[COM4]  01
+[01:47:36.617] RX[COM4]  66 00 00 00 a7 2e ff ff 31 00 1e d5 ff a3 37 ff fe 00 15 ff fc 0a
+[01:47:36.619] PACKET[COM4] sensors: status=0b0110011000000000, uptime=42798, filtered_accel=[-0.00828, 0.31572, -0.95012], gyro=[-0.14, 1.47, -0.28]
+[01:47:36.671] RX[COM4]  01
+[01:47:36.671] RX[COM4]  66 00 00 00 a7 92 ff ff 18 00 1e bd ff a3 4f ff fe 00 15 00 00 0a
+[01:47:36.673] PACKET[COM4] sensors: status=0b0110011000000000, uptime=42898, filtered_accel=[-0.00928, 0.31476, -0.94916], gyro=[-0.14, 1.47, 0.0]
+[01:47:36.787] RX[COM4]  01
+[01:47:36.788] RX[COM4]  6e 00 00 00 a7 f6 ff ff 18 00 1e b1 ff a3 5b ff fe 00 15 ff ff 0a
+[01:47:36.789] PACKET[COM4] sensors: status=0b0110111000000000, uptime=42998, filtered_accel=[-0.00928, 0.31428, -0.94868], gyro=[-0.14, 1.47, -0.07]
+[01:47:36.902] RX[COM4]  01
+[01:47:36.903] RX[COM4]  6e 00 00 00 a8 5a ff ff 31 00 1e c9 ff a3 43 ff fe 00 15 ff f9 0a
+[01:47:36.904] PACKET[COM4] sensors: status=0b0110111000000000, uptime=43098, filtered_accel=[-0.00828, 0.31524, -0.94964], gyro=[-0.14, 1.47, -0.49]
+[01:47:36.965] RX[COM4]  01
+[01:47:36.966] RX[COM4]  6e 00 00 00 a8 be ff ff 24 00 1e d5 ff a3 4f ff fe 00 16 ff fb 0a ff 6f 00 00 00 a8 be 0a 02 6e 00 00 00 a8 be 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 24 c6 13 8c 0a
+[01:47:36.967] PACKET[COM4] sensors: status=0b0110111000000000, uptime=43198, filtered_accel=[-0.0088, 0.31572, -0.94916], gyro=[-0.14, 1.54, -0.35]
+[01:47:36.971] PACKET[COM4] heartbeat: status=0b0110111100000000, uptime=43198
+[01:47:36.972] PACKET[COM4] state: status=0b0110111000000000, uptime=43198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.574585, witness_battery_voltage=5.004
+[01:47:37.089] RX[COM4]  01
+[01:47:37.090] RX[COM4]  6f 00 00 00 a9 22 ff ff 24 00 1e b1 ff a3 43 ff fe 00 15 ff ff 0a
+[01:47:37.092] PACKET[COM4] sensors: status=0b0110111100000000, uptime=43298, filtered_accel=[-0.0088, 0.31428, -0.94964], gyro=[-0.14, 1.47, -0.07]
+[01:47:37.164] RX[COM4]  01
+[01:47:37.165] RX[COM4]  6f 00 00 00 a9 86 ff ff 31 00 1e c9 ff a3 43 ff fe 00 15 ff fd 0a
+[01:47:37.173] PACKET[COM4] sensors: status=0b0110111100000000, uptime=43398, filtered_accel=[-0.00828, 0.31524, -0.94964], gyro=[-0.14, 1.47, -0.21]
+[01:47:37.279] RX[COM4]  01
+[01:47:37.280] RX[COM4]  6f 00 00 00 a9 ea ff ff 31 00 1e c9 ff a3 2a ff ff 00 14 ff ff 0a
+[01:47:37.282] PACKET[COM4] sensors: status=0b0110111100000000, uptime=43498, filtered_accel=[-0.00828, 0.31524, -0.95064], gyro=[-0.07, 1.4, -0.07]
+[01:47:37.383] RX[COM4]  01
+[01:47:37.384] RX[COM4]  67 00 00 00 aa 4e ff ff 24 00 1e bd ff a3 4f ff fe 00 15 ff f9 0a
+[01:47:37.385] PACKET[COM4] sensors: status=0b0110011100000000, uptime=43598, filtered_accel=[-0.0088, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.49]
+[01:47:37.490] RX[COM4]  01
+[01:47:37.491] RX[COM4]  67 00 00 00 aa b2 ff ff 24 00 1e bd ff a3 43 ff fe 00 16 ff fa 0a
+[01:47:37.492] PACKET[COM4] sensors: status=0b0110011100000000, uptime=43698, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.14, 1.54, -0.42]
+[01:47:37.595] RX[COM4]  01
+[01:47:37.596] RX[COM4]  67 00 00 00 ab 16 ff ff 24 00 1e b1 ff a3 2a ff fe 00 14 ff ff 0a
+[01:47:37.597] PACKET[COM4] sensors: status=0b0110011100000000, uptime=43798, filtered_accel=[-0.0088, 0.31428, -0.95064], gyro=[-0.14, 1.4, -0.07]
+[01:47:37.701] RX[COM4]  01
+[01:47:37.702] RX[COM4]  67 00 00 00 ab 7a ff ff 3d 00 1e c9 ff a3 67 ff ff 00 14 ff fd 0a
+[01:47:37.704] PACKET[COM4] sensors: status=0b0110011100000000, uptime=43898, filtered_accel=[-0.0078, 0.31524, -0.9482], gyro=[-0.07, 1.4, -0.21]
+[01:47:37.769] RX[COM4]  01
+[01:47:37.769] RX[COM4]  6f 00 00 00 ab de ff ff 18 00 1e c9 ff a3 5b ff fe 00 14 00 01 0a
+[01:47:37.770] PACKET[COM4] sensors: status=0b0110111100000000, uptime=43998, filtered_accel=[-0.00928, 0.31524, -0.94868], gyro=[-0.14, 1.4, 0.07]
+[01:47:37.876] RX[COM4]  01
+[01:47:37.876] RX[COM4]  6f 00 00 00 ac 42 ff ff 3d 00 1e c9 ff a3 37 ff fe 00 14 ff fb 0a
+[01:47:37.877] PACKET[COM4] sensors: status=0b0110111100000000, uptime=44098, filtered_accel=[-0.0078, 0.31524, -0.95012], gyro=[-0.14, 1.4, -0.35]
+[01:47:37.981] RX[COM4]  01
+[01:47:37.982] RX[COM4]  6f 00 00 00 ac a6 ff ff 3d 00 1e c9 ff a3 2a ff fe 00 15 ff fb 0a
+[01:47:37.984] PACKET[COM4] sensors: status=0b0110111100000000, uptime=44198, filtered_accel=[-0.0078, 0.31524, -0.95064], gyro=[-0.14, 1.47, -0.35]
+[01:47:37.984] RX[COM4]  ff
+[01:47:37.984] RX[COM4]  6e 00 00 00 ac a6 0a 02 6f 00 00 00 ac a6 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 35 da 13 84 0a
+[01:47:37.985] PACKET[COM4] heartbeat: status=0b0110111000000000, uptime=44198
+[01:47:37.987] PACKET[COM4] state: status=0b0110111100000000, uptime=44198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.841431, witness_battery_voltage=4.996
+[01:47:38.088] RX[COM4]  01
+[01:47:38.089] RX[COM4]  6e 00 00 00 ad 0a ff ff 3d 00 1e bd ff a3 37 ff ff 00 15 ff fe 0a
+[01:47:38.091] PACKET[COM4] sensors: status=0b0110111000000000, uptime=44298, filtered_accel=[-0.0078, 0.31476, -0.95012], gyro=[-0.07, 1.47, -0.14]
+[01:47:38.206] RX[COM4]  01
+[01:47:38.207] RX[COM4]  6e 00 00 00 ad 6e ff ff 18 00 1e bd ff a3 5b ff fd 00 15 ff fb 0a
+[01:47:38.208] PACKET[COM4] sensors: status=0b0110111000000000, uptime=44398, filtered_accel=[-0.00928, 0.31476, -0.94868], gyro=[-0.21, 1.47, -0.35]
+[01:47:38.269] RX[COM4]  01
+[01:47:38.270] RX[COM4]  66 00 00 00 ad d2 ff ff 31 00 1e bd ff a3 43 ff fe 00 14 ff fa 0a
+[01:47:38.271] PACKET[COM4] sensors: status=0b0110011000000000, uptime=44498, filtered_accel=[-0.00828, 0.31476, -0.94964], gyro=[-0.14, 1.4, -0.42]
+[01:47:38.381] RX[COM4]  01
+[01:47:38.382] RX[COM4]  66 00 00 00 ae 36 ff ff 24 00 1e b1 ff a3 37 ff fe 00 14 ff fb 0a
+[01:47:38.383] PACKET[COM4] sensors: status=0b0110011000000000, uptime=44598, filtered_accel=[-0.0088, 0.31428, -0.95012], gyro=[-0.14, 1.4, -0.35]
+[01:47:38.499] RX[COM4]  01
+[01:47:38.500] RX[COM4]  66 00 00 00 ae 9a ff ff 18 00 1e bd ff a3 4f ff fe 00 15 ff fd 0a
+[01:47:38.501] PACKET[COM4] sensors: status=0b0110011000000000, uptime=44698, filtered_accel=[-0.00928, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.21]
+[01:47:38.614] RX[COM4]  01
+[01:47:38.615] RX[COM4]  66 00 00 00 ae fe ff ff 18 00 1e b1 ff a3 4f ff fe 00 15 ff fd 0a
+[01:47:38.617] PACKET[COM4] sensors: status=0b0110011000000000, uptime=44798, filtered_accel=[-0.00928, 0.31428, -0.94916], gyro=[-0.14, 1.47, -0.21]
+[01:47:38.671] RX[COM4]  01
+[01:47:38.671] RX[COM4]  6e 00 00 00 af 62 ff ff 18 00 1e b1 ff a3 37 ff ff 00 14 ff fe 0a
+[01:47:38.673] PACKET[COM4] sensors: status=0b0110111000000000, uptime=44898, filtered_accel=[-0.00928, 0.31428, -0.95012], gyro=[-0.07, 1.4, -0.14]
+[01:47:38.788] RX[COM4]  01
+[01:47:38.789] RX[COM4]  6e 00 00 00 af c6 ff ff 24 00 1e b1 ff a3 43 ff fe 00 15 ff fd 0a
+[01:47:38.790] PACKET[COM4] sensors: status=0b0110111000000000, uptime=44998, filtered_accel=[-0.0088, 0.31428, -0.94964], gyro=[-0.14, 1.47, -0.21]
+[01:47:38.910] RX[COM4]  01
+[01:47:38.913] RX[COM4]  6e 00 00 00 b0 2a ff ff 24 00 1e b1 ff a3 43 ff fe 00 15 ff fc 0a
+[01:47:38.914] PACKET[COM4] sensors: status=0b0110111000000000, uptime=45098, filtered_accel=[-0.0088, 0.31428, -0.94964], gyro=[-0.14, 1.47, -0.28]
+[01:47:38.975] RX[COM4]  01
+[01:47:38.976] RX[COM4]  6e 00 00 00 b0 8e ff ff 18 00 1e bd ff a3 37 ff fe 00 15 ff fb 0a ff 6f 00 00 00 b0 8e 0a 02 6e 00 00 00 b0 8e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 30 45 13 8c 0a
+[01:47:38.978] PACKET[COM4] sensors: status=0b0110111000000000, uptime=45198, filtered_accel=[-0.00928, 0.31476, -0.95012], gyro=[-0.14, 1.47, -0.35]
+[01:47:38.980] PACKET[COM4] heartbeat: status=0b0110111100000000, uptime=45198
+[01:47:38.981] PACKET[COM4] state: status=0b0110111000000000, uptime=45198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.754211, witness_battery_voltage=5.004
+[01:47:39.084] RX[COM4]  01
+[01:47:39.086] RX[COM4]  6f 00 00 00 b0 f2 ff ff 24 00 1e c9 ff a3 2a ff fe 00 15 ff fc 0a
+[01:47:39.087] PACKET[COM4] sensors: status=0b0110111100000000, uptime=45298, filtered_accel=[-0.0088, 0.31524, -0.95064], gyro=[-0.14, 1.47, -0.28]
+[01:47:39.190] RX[COM4]  01
+[01:47:39.191] RX[COM4]  6f 00 00 00 b1 56 ff ff 24 00 1e bd ff a3 43 ff fe 00 14 ff fd 0a
+[01:47:39.192] PACKET[COM4] sensors: status=0b0110111100000000, uptime=45398, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.14, 1.4, -0.21]
+[01:47:39.296] RX[COM4]  01
+[01:47:39.296] RX[COM4]  67 00 00 00 b1 ba ff ff 24 00 1e b1 ff a3 43 ff fe 00 15 ff fb 0a
+[01:47:39.298] PACKET[COM4] sensors: status=0b0110011100000000, uptime=45498, filtered_accel=[-0.0088, 0.31428, -0.94964], gyro=[-0.14, 1.47, -0.35]
+[01:47:39.400] RX[COM4]  01
+[01:47:39.402] RX[COM4]  67 00 00 00 b2 1e ff ff 24 00 1e bd ff a3 2a ff fd 00 15 ff f8 0a
+[01:47:39.403] PACKET[COM4] sensors: status=0b0110011100000000, uptime=45598, filtered_accel=[-0.0088, 0.31476, -0.95064], gyro=[-0.21, 1.47, -0.56]
+[01:47:39.513] RX[COM4]  01
+[01:47:39.514] RX[COM4]  67 00 00 00 b2 82 ff ff 31 00 1e c9 ff a3 37 ff fe 00 14 ff fc 0a
+[01:47:39.515] PACKET[COM4] sensors: status=0b0110011100000000, uptime=45698, filtered_accel=[-0.00828, 0.31524, -0.95012], gyro=[-0.14, 1.4, -0.28]
+[01:47:39.568] RX[COM4]  01
+[01:47:39.571] RX[COM4]  67 00 00 00 b2 e6 ff ff 31 00 1e bd ff a3 12 ff ff 00 15 ff fd 0a
+[01:47:39.573] PACKET[COM4] sensors: status=0b0110011100000000, uptime=45798, filtered_accel=[-0.00828, 0.31476, -0.9516], gyro=[-0.07, 1.47, -0.21]
+[01:47:39.683] RX[COM4]  01
+[01:47:39.683] RX[COM4]  6f 00 00 00 b3 4a ff ff 24 00 1e bd ff a3 43 ff fe 00 15 ff fc 0a
+[01:47:39.685] PACKET[COM4] sensors: status=0b0110111100000000, uptime=45898, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.14, 1.47, -0.28]
+[01:47:39.794] RX[COM4]  01
+[01:47:39.795] RX[COM4]  6f 00 00 00 b3 ae ff ff 24 00 1e bd ff a3 37 ff fe 00 15 ff fb 0a
+[01:47:39.800] PACKET[COM4] sensors: status=0b0110111100000000, uptime=45998, filtered_accel=[-0.0088, 0.31476, -0.95012], gyro=[-0.14, 1.47, -0.35]
+[01:47:39.908] RX[COM4]  01
+[01:47:39.910] RX[COM4]  6f 00 00 00 b4 12 ff ff 31 00 1e d5 ff a3 43 ff fe 00 14 ff fd 0a
+[01:47:39.912] PACKET[COM4] sensors: status=0b0110111100000000, uptime=46098, filtered_accel=[-0.00828, 0.31572, -0.94964], gyro=[-0.14, 1.4, -0.21]
+[01:47:39.968] RX[COM4]  01
+[01:47:39.968] RX[COM4]  6f 00 00 00 b4 76 ff ff 3d 00 1e c9 ff a3 37 ff fe 00 16 ff fa 0a ff 6e 00 00 00 b4 76 0a 02 6f 00 00 00 b4 76 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 1f 31 13 9c 0a
+[01:47:39.972] PACKET[COM4] sensors: status=0b0110111100000000, uptime=46198, filtered_accel=[-0.0078, 0.31524, -0.95012], gyro=[-0.14, 1.54, -0.42]
+[01:47:39.974] PACKET[COM4] heartbeat: status=0b0110111000000000, uptime=46198
+[01:47:39.976] PACKET[COM4] state: status=0b0110111100000000, uptime=46198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.487366, witness_battery_voltage=5.02
+[01:47:40.083] RX[COM4]  01
+[01:47:40.084] RX[COM4]  6e 00 00 00 b4 da ff ff 18 00 1e c9 ff a3 37 ff fe 00 15 ff fc 0a
+[01:47:40.085] PACKET[COM4] sensors: status=0b0110111000000000, uptime=46298, filtered_accel=[-0.00928, 0.31524, -0.95012], gyro=[-0.14, 1.47, -0.28]
+[01:47:40.190] RX[COM4]  01
+[01:47:40.191] RX[COM4]  6e 00 00 00 b5 3e ff ff 24 00 1e bd ff a3 4f ff fd 00 14 ff fd 0a
+[01:47:40.193] PACKET[COM4] sensors: status=0b0110111000000000, uptime=46398, filtered_accel=[-0.0088, 0.31476, -0.94916], gyro=[-0.21, 1.4, -0.21]
+[01:47:40.295] RX[COM4]  01
+[01:47:40.296] RX[COM4]  66 00 00 00 b5 a2 ff ff 24 00 1e d5 ff a3 43 ff ff 00 14 ff f9 0a
+[01:47:40.297] PACKET[COM4] sensors: status=0b0110011000000000, uptime=46498, filtered_accel=[-0.0088, 0.31572, -0.94964], gyro=[-0.07, 1.4, -0.49]
+[01:47:40.410] RX[COM4]  01
+[01:47:40.411] RX[COM4]  66 00 00 00 b6 06 ff ff 24 00 1e b1 ff a3 4f ff fe 00 15 ff fa 0a
+[01:47:40.413] PACKET[COM4] sensors: status=0b0110011000000000, uptime=46598, filtered_accel=[-0.0088, 0.31428, -0.94916], gyro=[-0.14, 1.47, -0.42]
+[01:47:40.467] RX[COM4]  01
+[01:47:40.468] RX[COM4]  66 00 00 00 b6 6a ff ff 00 00 1e bd ff a3 5b ff fd 00 15 ff ff 0a
+[01:47:40.470] PACKET[COM4] sensors: status=0b0110011000000000, uptime=46698, filtered_accel=[-0.01024, 0.31476, -0.94868], gyro=[-0.21, 1.47, -0.07]
+[01:47:40.571] RX[COM4]  01
+[01:47:40.571] RX[COM4]  66 00 00 00 b6 ce ff ff 24 00 1e bd ff a3 37 ff fe 00 14 ff ff 0a
+[01:47:40.572] PACKET[COM4] sensors: status=0b0110011000000000, uptime=46798, filtered_accel=[-0.0088, 0.31476, -0.95012], gyro=[-0.14, 1.4, -0.07]
+[01:47:40.673] RX[COM4]  01
+[01:47:40.673] RX[COM4]  6e 00 00 00 b7 32 ff ff 31 00 1e b1 ff a3 37 ff ff 00 14 00 01 0a
+[01:47:40.674] PACKET[COM4] sensors: status=0b0110111000000000, uptime=46898, filtered_accel=[-0.00828, 0.31428, -0.95012], gyro=[-0.07, 1.4, 0.07]
+[01:47:40.778] RX[COM4]  01
+[01:47:40.781] RX[COM4]  6e 00 00 00 b7 96 ff ff 18 00 1e c9 ff a3 4f ff fd 00 16 ff f9 0a
+[01:47:40.782] PACKET[COM4] sensors: status=0b0110111000000000, uptime=46998, filtered_accel=[-0.00928, 0.31524, -0.94916], gyro=[-0.21, 1.54, -0.49]
+[01:47:40.891] RX[COM4]  01
+[01:47:40.894] RX[COM4]  6e 00 00 00 b7 fa ff ff 31 00 1e bd ff a3 43 ff fd 00 15 ff fd 0a
+[01:47:40.895] PACKET[COM4] sensors: status=0b0110111000000000, uptime=47098, filtered_accel=[-0.00828, 0.31476, -0.94964], gyro=[-0.21, 1.47, -0.21]
+[01:47:41.013] RX[COM4]  01
+[01:47:41.016] RX[COM4]  6e 00 00 00 b8 5e ff ff 18 00 1e bd ff a3 37 ff ff 00 15 ff fc 0a ff 6f 00 00 00 b8 5e 0a 02 6e 00 00 00 b8 5e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 3b 9a 13 88 0a
+[01:47:41.017] PACKET[COM4] sensors: status=0b0110111000000000, uptime=47198, filtered_accel=[-0.00928, 0.31476, -0.95012], gyro=[-0.07, 1.47, -0.28]
+[01:47:41.019] PACKET[COM4] heartbeat: status=0b0110111100000000, uptime=47198
+[01:47:41.022] PACKET[COM4] state: status=0b0110111000000000, uptime=47198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.931274, witness_battery_voltage=5.0
+[01:47:41.074] RX[COM4]  01
+[01:47:41.075] RX[COM4]  6f 00 00 00 b8 c2 ff ff 24 00 1e c9 ff a3 37 ff fe 00 15 ff fc 0a
+[01:47:41.078] PACKET[COM4] sensors: status=0b0110111100000000, uptime=47298, filtered_accel=[-0.0088, 0.31524, -0.95012], gyro=[-0.14, 1.47, -0.28]
+[01:47:41.183] RX[COM4]  01
+[01:47:41.185] RX[COM4]  6f 00 00 00 b9 26 ff ff 31 00 1e bd ff a3 43 ff ff 00 14 ff ff 0a
+[01:47:41.189] PACKET[COM4] sensors: status=0b0110111100000000, uptime=47398, filtered_accel=[-0.00828, 0.31476, -0.94964], gyro=[-0.07, 1.4, -0.07]
+[01:47:41.293] RX[COM4]  01
+[01:47:41.295] RX[COM4]  67 00 00 00 b9 8a ff ff 24 00 1e c9 ff a3 37 ff fd 00 16 ff f9 0a
+[01:47:41.297] PACKET[COM4] sensors: status=0b0110011100000000, uptime=47498, filtered_accel=[-0.0088, 0.31524, -0.95012], gyro=[-0.21, 1.54, -0.49]
+[01:47:41.399] RX[COM4]  01
+[01:47:41.401] RX[COM4]  67 00 00 00 b9 ee ff ff 3d 00 1e c9 ff a3 43 ff fe 00 15 ff f9 0a
+[01:47:41.410] PACKET[COM4] sensors: status=0b0110011100000000, uptime=47598, filtered_accel=[-0.0078, 0.31524, -0.94964], gyro=[-0.14, 1.47, -0.49]
+[01:47:41.515] RX[COM4]  01
+[01:47:41.515] RX[COM4]  67 00 00 00 ba 52 ff ff 24 00 1e c9 ff a3 37 ff fe 00 14 ff fd 0a
+[01:47:41.517] PACKET[COM4] sensors: status=0b0110011100000000, uptime=47698, filtered_accel=[-0.0088, 0.31524, -0.95012], gyro=[-0.14, 1.4, -0.21]
+[01:47:41.571] RX[COM4]  01
+[01:47:41.572] RX[COM4]  67 00 00 00 ba b6 ff ff 18 00 1e bd ff a3 37 ff fe 00 14 ff fc 0a
+[01:47:41.574] PACKET[COM4] sensors: status=0b0110011100000000, uptime=47798, filtered_accel=[-0.00928, 0.31476, -0.95012], gyro=[-0.14, 1.4, -0.28]
+[01:47:41.678] RX[COM4]  01
+[01:47:41.680] RX[COM4]  6f 00 00 00 bb 1a ff ff 3d 00 1e b1 ff a3 37 ff fe 00 14 00 02 0a
+[01:47:41.682] PACKET[COM4] sensors: status=0b0110111100000000, uptime=47898, filtered_accel=[-0.0078, 0.31428, -0.95012], gyro=[-0.14, 1.4, 0.14]
+[01:47:41.784] RX[COM4]  01
+[01:47:41.785] RX[COM4]  6f 00 00 00 bb 7e ff ff 3d 00 1e c9 ff a3 5b ff fe 00 14 ff fa 0a
+[01:47:41.786] PACKET[COM4] sensors: status=0b0110111100000000, uptime=47998, filtered_accel=[-0.0078, 0.31524, -0.94868], gyro=[-0.14, 1.4, -0.42]
+[01:47:41.897] RX[COM4]  01
+[01:47:41.898] RX[COM4]  6f 00 00 00 bb e2 ff ff 24 00 1e bd ff a3 4f ff fe 00 15 ff ff 0a
+[01:47:41.900] PACKET[COM4] sensors: status=0b0110111100000000, uptime=48098, filtered_accel=[-0.0088, 0.31476, -0.94916], gyro=[-0.14, 1.47, -0.07]
+[01:47:42.009] RX[COM4]  01
+[01:47:42.010] RX[COM4]  6f 00 00 00 bc 46 ff ff 24 00 1e c9 ff a3 4f ff fe 00 15 ff fd 0a ff 6e 00 00 00 bc 46 0a 02 6f 00 00 00 bc 46 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 41 2f 13 84 0a
+[01:47:42.016] PACKET[COM4] sensors: status=0b0110111100000000, uptime=48198, filtered_accel=[-0.0088, 0.31524, -0.94916], gyro=[-0.14, 1.47, -0.21]
+[01:47:42.018] PACKET[COM4] heartbeat: status=0b0110111000000000, uptime=48198
+[01:47:42.020] PACKET[COM4] state: status=0b0110111100000000, uptime=48198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=669.018494, witness_battery_voltage=4.996
+[01:47:42.075] RX[COM4]  01
+[01:47:42.076] RX[COM4]  6e 00 00 00 bc aa ff ff 18 00 1e b1 ff a3 37 ff fe 00 14 ff fe 0a
+[01:47:42.080] PACKET[COM4] sensors: status=0b0110111000000000, uptime=48298, filtered_accel=[-0.00928, 0.31428, -0.95012], gyro=[-0.14, 1.4, -0.14]
+[01:47:42.186] RX[COM4]  01
+[01:47:42.187] RX[COM4]  66 00 00 00 bd 0e ff ff 18 00 1e bd ff a3 37 ff fe 00 14 ff fe 0a
+[01:47:42.189] PACKET[COM4] sensors: status=0b0110011000000000, uptime=48398, filtered_accel=[-0.00928, 0.31476, -0.95012], gyro=[-0.14, 1.4, -0.14]
+[01:47:42.297] RX[COM4]  01
+[01:47:42.298] RX[COM4]  66 00 00 00 bd 72 ff ff 18 00 1e bd ff a3 5b ff fe 00 15 ff fe 0a
+[01:47:42.300] PACKET[COM4] sensors: status=0b0110011000000000, uptime=48498, filtered_accel=[-0.00928, 0.31476, -0.94868], gyro=[-0.14, 1.47, -0.14]
+[01:47:42.401] RX[COM4]  01
+[01:47:42.404] RX[COM4]  66 00 00 00 bd d6 ff ff 24 00 1e bd ff a3 37 ff fd 00 14 ff fc 0a
+[01:47:42.408] PACKET[COM4] sensors: status=0b0110011000000000, uptime=48598, filtered_accel=[-0.0088, 0.31476, -0.95012], gyro=[-0.21, 1.4, -0.28]
+[01:47:42.463] RX[COM4]  01
+[01:47:42.466] RX[COM4]  66 00 00 00 be 3a ff ff 18 00 1e bd ff a3 37 ff fd 00 15 ff fe 0a
+[01:47:42.467] PACKET[COM4] sensors: status=0b0110011000000000, uptime=48698, filtered_accel=[-0.00928, 0.31476, -0.95012], gyro=[-0.21, 1.47, -0.14]
+[01:47:42.578] RX[COM4]  01
+[01:47:42.579] RX[COM4]  6e 00 00 00 be 9e ff ff 3d 00 1e bd ff a3 1e ff fe 00 15 ff fb 0a
+[01:47:42.580] PACKET[COM4] sensors: status=0b0110111000000000, uptime=48798, filtered_accel=[-0.0078, 0.31476, -0.95112], gyro=[-0.14, 1.47, -0.35]
+[01:47:42.683] RX[COM4]  01
+[01:47:42.684] RX[COM4]  6e 00 00 00 bf 02 ff ff 18 00 1e bd ff a3 43 ff fd 00 15 ff fc 0a
+[01:47:42.685] PACKET[COM4] sensors: status=0b0110111000000000, uptime=48898, filtered_accel=[-0.00928, 0.31476, -0.94964], gyro=[-0.21, 1.47, -0.28]
+[01:47:42.789] RX[COM4]  01
+[01:47:42.789] RX[COM4]  6e 00 00 00 bf 66 ff ff 24 00 1e bd ff a3 1e ff fe 00 15 ff fb 0a
+[01:47:42.790] PACKET[COM4] sensors: status=0b0110111000000000, uptime=48998, filtered_accel=[-0.0088, 0.31476, -0.95112], gyro=[-0.14, 1.47, -0.35]
+[01:47:42.879] RX[COM4]  01
+[01:47:42.882] RX[COM4]  6e 00 00 00 bf ca ff ff 24 00 1e bd ff a3 37 ff ff 00 14 ff fc 0a
+[01:47:42.883] PACKET[COM4] sensors: status=0b0110111000000000, uptime=49098, filtered_accel=[-0.0088, 0.31476, -0.95012], gyro=[-0.07, 1.4, -0.28]
+[01:47:42.987] RX[COM4]  01
+[01:47:42.988] RX[COM4]  6e 00 00 00 c0 2e ff ff 31 00 1e bd ff a3 4f ff ff 00 15 ff fb 0a ff 6f 00 00 00 c0 2e 0a 02 6e 00 00 00 c0 2e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 35 da 13 84 0a
+[01:47:42.990] PACKET[COM4] sensors: status=0b0110111000000000, uptime=49198, filtered_accel=[-0.00828, 0.31476, -0.94916], gyro=[-0.07, 1.47, -0.35]
+[01:47:42.991] PACKET[COM4] heartbeat: status=0b0110111100000000, uptime=49198
+[01:47:42.993] PACKET[COM4] state: status=0b0110111000000000, uptime=49198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.841431, witness_battery_voltage=4.996
+[01:47:43.103] RX[COM4]  01
+[01:47:43.104] RX[COM4]  6f 00 00 00 c0 92 ff ff 24 00 1e bd ff a3 43 ff fe 00 15 ff fc 0a
+[01:47:43.106] PACKET[COM4] sensors: status=0b0110111100000000, uptime=49298, filtered_accel=[-0.0088, 0.31476, -0.94964], gyro=[-0.14, 1.47, -0.28]
+[01:47:43.211] RX[COM4]  01
+[01:47:43.212] RX[COM4]  67 00 00 00 c0 f6 ff ff 31 00 1e bd ff a3 1e ff fd 00 15 ff fb 0a
+[01:47:43.214] PACKET[COM4] sensors: status=0b0110011100000000, uptime=49398, filtered_accel=[-0.00828, 0.31476, -0.95112], gyro=[-0.21, 1.47, -0.35]
+[01:47:43.267] RX[COM4]  01
+[01:47:43.268] RX[COM4]  67 00 00 00 c1 5a ff ff 31 00 1e d5 ff a3 37 ff ff 00 14 ff fc 0a
+[01:47:43.270] PACKET[COM4] sensors: status=0b0110011100000000, uptime=49498, filtered_accel=[-0.00828, 0.31572, -0.95012], gyro=[-0.07, 1.4, -0.28]
+[01:47:43.379] RX[COM4]  01
+[01:47:43.380] RX[COM4]  67 00 00 00 c1 be ff ff 31 00 1e bd ff a3 5b ff ff 00 14 ff fe 0a
+[01:47:43.381] PACKET[COM4] sensors: status=0b0110011100000000, uptime=49598, filtered_accel=[-0.00828, 0.31476, -0.94868], gyro=[-0.07, 1.4, -0.14]
+[01:47:43.497] RX[COM4]  01
+[01:47:43.501] RX[COM4]  67 00 00 00 c2 22 ff ff 18 00 1e b1 ff a3 67 ff ff 00 14 ff ff 0a
+[01:47:43.504] PACKET[COM4] sensors: status=0b0110011100000000, uptime=49698, filtered_accel=[-0.00928, 0.31428, -0.9482], gyro=[-0.07, 1.4, -0.07]
+[01:47:43.568] RX[COM4]  01
+[01:47:43.570] RX[COM4]  6f 00 00 00 c2 86 ff ff 0c 00 1e bd ff a3 37 ff fe 00 14 ff fe 0a
+[01:47:43.572] PACKET[COM4] sensors: status=0b0110111100000000, uptime=49798, filtered_accel=[-0.00976, 0.31476, -0.95012], gyro=[-0.14, 1.4, -0.14]
+[01:47:43.682] RX[COM4]  01
+[01:47:43.684] RX[COM4]  6f 00 00 00 c2 ea ff ff 31 00 1e c9 ff a3 2a ff fe 00 15 ff fa 0a
+[01:47:43.686] PACKET[COM4] sensors: status=0b0110111100000000, uptime=49898, filtered_accel=[-0.00828, 0.31524, -0.95064], gyro=[-0.14, 1.47, -0.42]
+[01:47:43.793] RX[COM4]  01
+[01:47:43.793] RX[COM4]  6f 00 00 00 c3 4e ff ff 31 00 1e bd ff a3 4f ff ff 00 14 ff ff 0a
+[01:47:43.795] PACKET[COM4] sensors: status=0b0110111100000000, uptime=49998, filtered_accel=[-0.00828, 0.31476, -0.94916], gyro=[-0.07, 1.4, -0.07]
+[01:47:43.909] RX[COM4]  01
+[01:47:43.910] RX[COM4]  6f 00 00 00 c3 b2 ff ff 00 00 1e c9 ff a3 43 ff fe 00 14 ff fe 0a
+[01:47:43.912] PACKET[COM4] sensors: status=0b0110111100000000, uptime=50098, filtered_accel=[-0.01024, 0.31524, -0.94964], gyro=[-0.14, 1.4, -0.14]
+[01:47:43.964] RX[COM4]  01
+[01:47:43.965] RX[COM4]  6f 00 00 00 c4 16 ff ff 31 00 1e bd ff a3 12 ff fe 00 15 ff fe 0a ff 6e 00 00 00 c4 16 0a 02 6f 00 00 00 c4 16 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 24 c6 13 8c 0a
+[01:47:43.967] PACKET[COM4] sensors: status=0b0110111100000000, uptime=50198, filtered_accel=[-0.00828, 0.31476, -0.9516], gyro=[-0.14, 1.47, -0.14]
+[01:47:43.970] PACKET[COM4] heartbeat: status=0b0110111000000000, uptime=50198
+[01:47:43.972] PACKET[COM4] state: status=0b0110111100000000, uptime=50198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.574585, witness_battery_voltage=5.004
+[01:47:44.075] RX[COM4]  01
+[01:47:44.076] RX[COM4]  6e 00 00 00 c4 7a ff ff 24 00 1e c9 ff a3 12 ff fe 00 14 ff ff 0a
+[01:47:44.077] PACKET[COM4] sensors: status=0b0110111000000000, uptime=50298, filtered_accel=[-0.0088, 0.31524, -0.9516], gyro=[-0.14, 1.4, -0.07]
+[01:47:44.186] RX[COM4]  01
+[01:47:44.187] RX[COM4]  66 00 00 00 c4 de ff ff 18 00 1e bd ff a3 67 ff fe 00 16 ff f8 0a
+[01:47:44.189] PACKET[COM4] sensors: status=0b0110011000000000, uptime=50398, filtered_accel=[-0.00928, 0.31476, -0.9482], gyro=[-0.14, 1.54, -0.56]
+[01:47:44.302] RX[COM4]  01
+[01:47:44.303] RX[COM4]  66 00 00 00 c5 42 ff ff 18 00 1e b1 ff a3 67 ff fe 00 15 ff fd 0a
+[01:47:44.305] PACKET[COM4] sensors: status=0b0110011000000000, uptime=50498, filtered_accel=[-0.00928, 0.31428, -0.9482], gyro=[-0.14, 1.47, -0.21]
+[01:47:44.412] RX[COM4]  01
+[01:47:44.413] RX[COM4]  66 00 00 00 c5 a6 ff ff 24 00 1e c9 ff a3 43 ff fe 00 15 ff fc 0a
+[01:47:44.415] PACKET[COM4] sensors: status=0b0110011000000000, uptime=50598, filtered_accel=[-0.0088, 0.31524, -0.94964], gyro=[-0.14, 1.47, -0.28]
+[01:47:44.468] RX[COM4]  01
+[01:47:44.468] RX[COM4]  66 00 00 00 c6 0a ff ff 31 00 1e a5 ff a3 37 ff ff 00 14 ff fe 0a
+[01:47:44.470] PACKET[COM4] sensors: status=0b0110011000000000, uptime=50698, filtered_accel=[-0.00828, 0.3138, -0.95012], gyro=[-0.07, 1.4, -0.14]
+[01:47:44.576] RX[COM4]  01
+[01:47:44.577] RX[COM4]  6e 00 00 00 c6 6e ff ff 31 00 1e c9 ff a3 4f ff fe 00 15 ff fc 0a
+[01:47:44.578] PACKET[COM4] sensors: status=0b0110111000000000, uptime=50798, filtered_accel=[-0.00828, 0.31524, -0.94916], gyro=[-0.14, 1.47, -0.28]
+[01:47:44.694] RX[COM4]  01
+[01:47:44.695] RX[COM4]  6e 00 00 00 c6 d2 ff ff 24 00 1e b1 ff a3 4f ff fc 00 16 ff fa 0a
+[01:47:44.696] PACKET[COM4] sensors: status=0b0110111000000000, uptime=50898, filtered_accel=[-0.0088, 0.31428, -0.94916], gyro=[-0.28, 1.54, -0.42]
+[01:47:44.799] RX[COM4]  01
+[01:47:44.800] RX[COM4]  6e 00 00 00 c7 36 ff ff 31 00 1e c9 ff a3 2a ff fe 00 15 ff fc 0a
+[01:47:44.802] PACKET[COM4] sensors: status=0b0110111000000000, uptime=50998, filtered_accel=[-0.00828, 0.31524, -0.95064], gyro=[-0.14, 1.47, -0.28]
+[01:47:44.919] RX[COM4]  01
+[01:47:44.920] RX[COM4]  6e 00 00 00 c7 9a ff ff 24 00 1e c9 ff a3 43 ff ff 00 15 ff fd 0a
+[01:47:44.921] PACKET[COM4] sensors: status=0b0110111000000000, uptime=51098, filtered_accel=[-0.0088, 0.31524, -0.94964], gyro=[-0.07, 1.47, -0.21]
+[01:47:44.976] RX[COM4]  01
+[01:47:44.978] RX[COM4]  6e 00 00 00 c7 fe ff ff 24 00 1e bd ff a3 37 ff ff 00 15 ff fd 0a ff 6f 00 00 00 c7 fe 0a 02 6e 00 00 00 c7 fe 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 44 27 2a 86 13 8c 0a
+[01:47:44.981] PACKET[COM4] sensors: status=0b0110111000000000, uptime=51198, filtered_accel=[-0.0088, 0.31476, -0.95012], gyro=[-0.07, 1.47, -0.21]
+[01:47:44.982] PACKET[COM4] heartbeat: status=0b0110111100000000, uptime=51198
+[01:47:44.983] PACKET[COM4] state: status=0b0110111000000000, uptime=51198, orientation=[0.0, 0.0, 0.0, 0.0], position=[0.0, 0.0, 0.0], velocity=[0.0, 0.0, 0.0], latitude=0.0, longitude=0.0, gps_altitude=0.0, barometric_altitude=668.664429, witness_battery_voltage=5.004
+[01:47:45.094] RX[COM4]  01
+[01:47:45.095] RX[COM4]  67 00 00 00 c8 62 ff ff 24 00 1e bd ff a3 1e ff fe 00 15 ff fc 0a
+[01:47:45.097] PACKET[COM4] sensors: status=0b0110011100000000, uptime=51298, filtered_accel=[-0.0088, 0.31476, -0.95112], gyro=[-0.14, 1.47, -0.28]
+[01:47:45.199] RX[COM4]  01
+[01:47:45.200] RX[COM4]  67 00 00 00 c8 c6 ff ff 3d 00 1e bd ff a3 12 ff ff 00 15 ff f9 0a
+[01:47:45.202] PACKET[COM4] sensors: status=0b0110011100000000, uptime=51398, filtered_accel=[-0.0078, 0.31476, -0.9516], gyro=[-0.07, 1.47, -0.49]
+[01:47:45.312] RX[COM4]  01
+[01:47:45.314] RX[COM4]  67 00 00 00 c9 2a ff ff 3d 00 1e bd ff a3 43 ff fe 00 15 ff fd 0a
+[01:47:45.315] PACKET[COM4] sensors: status=0b0110011100000000, uptime=51498, filtered_accel=[-0.0078, 0.31476, -0.94964], gyro=[-0.14, 1.47, -0.21]
+[01:47:45.366] RX[COM4]  01
+[01:47:45.367] RX[COM4]  67 00 00 00 c9 8e ff ff 18 00 1e a5 ff a3 67 ff fe 00 15 ff fe 0a
+[01:47:45.368] PACKET[COM4] sensors: status=0b0110011100000000, uptime=51598, filtered_accel=[-0.00928, 0.3138, -0.9482], gyro=[-0.14, 1.47, -0.14]
+[01:47:45.484] RX[COM4]  01
+[01:47:45.486] RX[COM4]  6f 00 00 00 c9 f2 ff ff 0c 00 1e b1 ff a3 2a ff fe 00 15 00 01 0a
+[01:47:45.488] PACKET[COM4] sensors: status=0b0110111100000000, uptime=51698, filtered_accel=[-0.00976, 0.31428, -0.95064], gyro=[-0.14, 1.47, 0.07]
+[01:47:45.490] TX[COM4] USB Mass Storage:  05 68 68
+[01:47:45.544] RX[COM4]  05
+[01:47:45.545] RX[COM4]  68 68
+[01:47:45.545] RX[COM4]  57
+[01:47:45.546] RX[COM4]  20 28 35 31 38 36 31 29 20 73 65 72 69 61 6c 5f 63 6f 6d 6d 61 6e 64 3a 20 65 78 74 65 72 6e
+[01:47:45.546] BAD_PACKET[COM4] bad EOF for 0x05: expected 0x0a, got 0x36; resync=discard 1 byte
+[01:47:45.546] BAD_PACKET[COM4] unknown packet ID 0x29; discarded 1 byte(s)
+[01:47:45.547] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.547] BAD_PACKET[COM4] unknown packet ID 0x73; discarded 1 byte(s)
+[01:47:45.547] BAD_PACKET[COM4] unknown packet ID 0x65; discarded 1 byte(s)
+[01:47:45.547] BAD_PACKET[COM4] unknown packet ID 0x72; discarded 1 byte(s)
+[01:47:45.548] BAD_PACKET[COM4] unknown packet ID 0x69; discarded 1 byte(s)
+[01:47:45.548] BAD_PACKET[COM4] unknown packet ID 0x61; discarded 1 byte(s)
+[01:47:45.548] BAD_PACKET[COM4] unknown packet ID 0x6c; discarded 1 byte(s)
+[01:47:45.549] BAD_PACKET[COM4] unknown packet ID 0x5f; discarded 1 byte(s)
+[01:47:45.549] BAD_PACKET[COM4] unknown packet ID 0x63; discarded 1 byte(s)
+[01:47:45.549] BAD_PACKET[COM4] unknown packet ID 0x6f; discarded 1 byte(s)
+[01:47:45.550] BAD_PACKET[COM4] unknown packet ID 0x6d; discarded 1 byte(s)
+[01:47:45.550] BAD_PACKET[COM4] unknown packet ID 0x6d; discarded 1 byte(s)
+[01:47:45.551] BAD_PACKET[COM4] unknown packet ID 0x61; discarded 1 byte(s)
+[01:47:45.551] BAD_PACKET[COM4] unknown packet ID 0x6e; discarded 1 byte(s)
+[01:47:45.551] BAD_PACKET[COM4] unknown packet ID 0x64; discarded 1 byte(s)
+[01:47:45.551] BAD_PACKET[COM4] unknown packet ID 0x3a; discarded 1 byte(s)
+[01:47:45.552] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.552] BAD_PACKET[COM4] unknown packet ID 0x65; discarded 1 byte(s)
+[01:47:45.552] BAD_PACKET[COM4] unknown packet ID 0x78; discarded 1 byte(s)
+[01:47:45.553] BAD_PACKET[COM4] unknown packet ID 0x74; discarded 1 byte(s)
+[01:47:45.553] BAD_PACKET[COM4] unknown packet ID 0x65; discarded 1 byte(s)
+[01:47:45.553] BAD_PACKET[COM4] unknown packet ID 0x72; discarded 1 byte(s)
+[01:47:45.554] BAD_PACKET[COM4] unknown packet ID 0x6e; discarded 1 byte(s)
+[01:47:45.554] RX[COM4]  61 6c 20 63 6f 6d 6d 61 6e 64 20 66 6f 72 77 61 72 64 69 6e 67 20 66 61 69 6c 65 64 3a 20 45 53 50 5f 45 52 52 5f 49 4e
+[01:47:45.555] BAD_PACKET[COM4] unknown packet ID 0x61; discarded 1 byte(s)
+[01:47:45.555] BAD_PACKET[COM4] unknown packet ID 0x6c; discarded 1 byte(s)
+[01:47:45.555] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.556] BAD_PACKET[COM4] unknown packet ID 0x63; discarded 1 byte(s)
+[01:47:45.556] BAD_PACKET[COM4] unknown packet ID 0x6f; discarded 1 byte(s)
+[01:47:45.557] BAD_PACKET[COM4] unknown packet ID 0x6d; discarded 1 byte(s)
+[01:47:45.557] BAD_PACKET[COM4] unknown packet ID 0x6d; discarded 1 byte(s)
+[01:47:45.557] BAD_PACKET[COM4] unknown packet ID 0x61; discarded 1 byte(s)
+[01:47:45.557] BAD_PACKET[COM4] unknown packet ID 0x6e; discarded 1 byte(s)
+[01:47:45.558] BAD_PACKET[COM4] unknown packet ID 0x64; discarded 1 byte(s)
+[01:47:45.558] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.558] BAD_PACKET[COM4] unknown packet ID 0x66; discarded 1 byte(s)
+[01:47:45.558] BAD_PACKET[COM4] unknown packet ID 0x6f; discarded 1 byte(s)
+[01:47:45.559] BAD_PACKET[COM4] unknown packet ID 0x72; discarded 1 byte(s)
+[01:47:45.559] BAD_PACKET[COM4] unknown packet ID 0x77; discarded 1 byte(s)
+[01:47:45.559] BAD_PACKET[COM4] unknown packet ID 0x61; discarded 1 byte(s)
+[01:47:45.559] BAD_PACKET[COM4] unknown packet ID 0x72; discarded 1 byte(s)
+[01:47:45.560] BAD_PACKET[COM4] unknown packet ID 0x64; discarded 1 byte(s)
+[01:47:45.560] BAD_PACKET[COM4] unknown packet ID 0x69; discarded 1 byte(s)
+[01:47:45.561] BAD_PACKET[COM4] unknown packet ID 0x6e; discarded 1 byte(s)
+[01:47:45.562] BAD_PACKET[COM4] unknown packet ID 0x67; discarded 1 byte(s)
+[01:47:45.562] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.563] BAD_PACKET[COM4] unknown packet ID 0x66; discarded 1 byte(s)
+[01:47:45.563] BAD_PACKET[COM4] unknown packet ID 0x61; discarded 1 byte(s)
+[01:47:45.564] BAD_PACKET[COM4] unknown packet ID 0x69; discarded 1 byte(s)
+[01:47:45.564] BAD_PACKET[COM4] unknown packet ID 0x6c; discarded 1 byte(s)
+[01:47:45.564] BAD_PACKET[COM4] unknown packet ID 0x65; discarded 1 byte(s)
+[01:47:45.616] BAD_PACKET[COM4] unknown packet ID 0x64; discarded 1 byte(s)
+[01:47:45.617] BAD_PACKET[COM4] unknown packet ID 0x3a; discarded 1 byte(s)
+[01:47:45.617] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.617] BAD_PACKET[COM4] unknown packet ID 0x45; discarded 1 byte(s)
+[01:47:45.617] BAD_PACKET[COM4] unknown packet ID 0x53; discarded 1 byte(s)
+[01:47:45.618] BAD_PACKET[COM4] unknown packet ID 0x50; discarded 1 byte(s)
+[01:47:45.618] BAD_PACKET[COM4] unknown packet ID 0x5f; discarded 1 byte(s)
+[01:47:45.618] BAD_PACKET[COM4] unknown packet ID 0x45; discarded 1 byte(s)
+[01:47:45.619] BAD_PACKET[COM4] unknown packet ID 0x52; discarded 1 byte(s)
+[01:47:45.621] BAD_PACKET[COM4] unknown packet ID 0x52; discarded 1 byte(s)
+[01:47:45.622] BAD_PACKET[COM4] unknown packet ID 0x5f; discarded 1 byte(s)
+[01:47:45.624] BAD_PACKET[COM4] unknown packet ID 0x49; discarded 1 byte(s)
+[01:47:45.625] BAD_PACKET[COM4] unknown packet ID 0x4e; discarded 1 byte(s)
+[01:47:45.625] RX[COM4]  56 41 4c 49 44 5f 53 54 41 54 45 0d 0a
+[01:47:45.627] BAD_PACKET[COM4] unknown packet ID 0x56; discarded 1 byte(s)
+[01:47:45.627] BAD_PACKET[COM4] unknown packet ID 0x41; discarded 1 byte(s)
+[01:47:45.628] BAD_PACKET[COM4] unknown packet ID 0x4c; discarded 1 byte(s)
+[01:47:45.628] BAD_PACKET[COM4] unknown packet ID 0x49; discarded 1 byte(s)
+[01:47:45.629] BAD_PACKET[COM4] unknown packet ID 0x44; discarded 1 byte(s)
+[01:47:45.629] BAD_PACKET[COM4] unknown packet ID 0x5f; discarded 1 byte(s)
+[01:47:45.629] BAD_PACKET[COM4] unknown packet ID 0x53; discarded 1 byte(s)
+[01:47:45.630] BAD_PACKET[COM4] unknown packet ID 0x54; discarded 1 byte(s)
+[01:47:45.630] BAD_PACKET[COM4] unknown packet ID 0x41; discarded 1 byte(s)
+[01:47:45.630] BAD_PACKET[COM4] unknown packet ID 0x54; discarded 1 byte(s)
+[01:47:45.631] BAD_PACKET[COM4] unknown packet ID 0x45; discarded 1 byte(s)
+[01:47:45.631] BAD_PACKET[COM4] unknown packet ID 0x0d; discarded 1 byte(s)
+[01:47:45.632] BAD_PACKET[COM4] unknown packet ID 0x0a; discarded 1 byte(s)
+[01:47:45.632] RX[COM4]  49
+[01:47:45.632] BAD_PACKET[COM4] unknown packet ID 0x49; discarded 1 byte(s)
+[01:47:45.633] RX[COM4]  20
+[01:47:45.633] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.635] RX[COM4]  28 35 31 38 36
+[01:47:45.635] BAD_PACKET[COM4] unknown packet ID 0x28; discarded 1 byte(s)
+[01:47:45.636] BAD_PACKET[COM4] unknown packet ID 0x35; discarded 1 byte(s)
+[01:47:45.636] BAD_PACKET[COM4] unknown packet ID 0x31; discarded 1 byte(s)
+[01:47:45.691] BAD_PACKET[COM4] unknown packet ID 0x38; discarded 1 byte(s)
+[01:47:45.692] BAD_PACKET[COM4] unknown packet ID 0x36; discarded 1 byte(s)
+[01:47:45.692] RX[COM4]  31 29 20 73 65 6e 73 6f 72
+[01:47:45.692] BAD_PACKET[COM4] unknown packet ID 0x31; discarded 1 byte(s)
+[01:47:45.693] BAD_PACKET[COM4] unknown packet ID 0x29; discarded 1 byte(s)
+[01:47:45.693] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.693] BAD_PACKET[COM4] unknown packet ID 0x73; discarded 1 byte(s)
+[01:47:45.694] BAD_PACKET[COM4] unknown packet ID 0x65; discarded 1 byte(s)
+[01:47:45.694] BAD_PACKET[COM4] unknown packet ID 0x6e; discarded 1 byte(s)
+[01:47:45.694] BAD_PACKET[COM4] unknown packet ID 0x73; discarded 1 byte(s)
+[01:47:45.694] BAD_PACKET[COM4] unknown packet ID 0x6f; discarded 1 byte(s)
+[01:47:45.695] BAD_PACKET[COM4] unknown packet ID 0x72; discarded 1 byte(s)
+[01:47:45.695] RX[COM4]  73 3a 20
+[01:47:45.695] BAD_PACKET[COM4] unknown packet ID 0x73; discarded 1 byte(s)
+[01:47:45.696] BAD_PACKET[COM4] unknown packet ID 0x3a; discarded 1 byte(s)
+[01:47:45.697] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.698] RX[COM4]  72 61 64 69 6f
+[01:47:45.699] BAD_PACKET[COM4] unknown packet ID 0x72; discarded 1 byte(s)
+[01:47:45.699] BAD_PACKET[COM4] unknown packet ID 0x61; discarded 1 byte(s)
+[01:47:45.699] BAD_PACKET[COM4] unknown packet ID 0x64; discarded 1 byte(s)
+[01:47:45.700] BAD_PACKET[COM4] unknown packet ID 0x69; discarded 1 byte(s)
+[01:47:45.700] BAD_PACKET[COM4] unknown packet ID 0x6f; discarded 1 byte(s)
+[01:47:45.701] RX[COM4]  20 74 72
+[01:47:45.701] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.701] BAD_PACKET[COM4] unknown packet ID 0x74; discarded 1 byte(s)
+[01:47:45.701] BAD_PACKET[COM4] unknown packet ID 0x72; discarded 1 byte(s)
+[01:47:45.702] RX[COM4]  61
+[01:47:45.702] BAD_PACKET[COM4] unknown packet ID 0x61; discarded 1 byte(s)
+[01:47:45.703] RX[COM4]  6e 73 6d 69 73
+[01:47:45.705] BAD_PACKET[COM4] unknown packet ID 0x6e; discarded 1 byte(s)
+[01:47:45.706] BAD_PACKET[COM4] unknown packet ID 0x73; discarded 1 byte(s)
+[01:47:45.706] BAD_PACKET[COM4] unknown packet ID 0x6d; discarded 1 byte(s)
+[01:47:45.706] BAD_PACKET[COM4] unknown packet ID 0x69; discarded 1 byte(s)
+[01:47:45.706] BAD_PACKET[COM4] unknown packet ID 0x73; discarded 1 byte(s)
+[01:47:45.707] RX[COM4]  73 69 6f
+[01:47:45.707] BAD_PACKET[COM4] unknown packet ID 0x73; discarded 1 byte(s)
+[01:47:45.707] BAD_PACKET[COM4] unknown packet ID 0x69; discarded 1 byte(s)
+[01:47:45.708] BAD_PACKET[COM4] unknown packet ID 0x6f; discarded 1 byte(s)
+[01:47:45.708] RX[COM4]  6e
+[01:47:45.709] BAD_PACKET[COM4] unknown packet ID 0x6e; discarded 1 byte(s)
+[01:47:45.709] RX[COM4]  20 64
+[01:47:45.709] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.710] BAD_PACKET[COM4] unknown packet ID 0x64; discarded 1 byte(s)
+[01:47:45.710] RX[COM4]  69
+[01:47:45.710] BAD_PACKET[COM4] unknown packet ID 0x69; discarded 1 byte(s)
+[01:47:45.762] RX[COM4]  73 61
+[01:47:45.763] BAD_PACKET[COM4] unknown packet ID 0x73; discarded 1 byte(s)
+[01:47:45.763] BAD_PACKET[COM4] unknown packet ID 0x61; discarded 1 byte(s)
+[01:47:45.763] RX[COM4]  62 6c 65 64 0d 0a
+[01:47:45.763] BAD_PACKET[COM4] unknown packet ID 0x62; discarded 1 byte(s)
+[01:47:45.764] BAD_PACKET[COM4] unknown packet ID 0x6c; discarded 1 byte(s)
+[01:47:45.764] BAD_PACKET[COM4] unknown packet ID 0x65; discarded 1 byte(s)
+[01:47:45.764] BAD_PACKET[COM4] unknown packet ID 0x64; discarded 1 byte(s)
+[01:47:45.765] BAD_PACKET[COM4] unknown packet ID 0x0d; discarded 1 byte(s)
+[01:47:45.765] BAD_PACKET[COM4] unknown packet ID 0x0a; discarded 1 byte(s)
+[01:47:45.765] RX[COM4]  49
+[01:47:45.765] BAD_PACKET[COM4] unknown packet ID 0x49; discarded 1 byte(s)
+[01:47:45.766] RX[COM4]  20
+[01:47:45.766] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.767] RX[COM4]  28 35 31
+[01:47:45.768] BAD_PACKET[COM4] unknown packet ID 0x28; discarded 1 byte(s)
+[01:47:45.768] BAD_PACKET[COM4] unknown packet ID 0x35; discarded 1 byte(s)
+[01:47:45.768] BAD_PACKET[COM4] unknown packet ID 0x31; discarded 1 byte(s)
+[01:47:45.768] RX[COM4]  38
+[01:47:45.769] BAD_PACKET[COM4] unknown packet ID 0x38; discarded 1 byte(s)
+[01:47:45.770] RX[COM4]  36 31 29 20
+[01:47:45.770] BAD_PACKET[COM4] unknown packet ID 0x36; discarded 1 byte(s)
+[01:47:45.771] BAD_PACKET[COM4] unknown packet ID 0x31; discarded 1 byte(s)
+[01:47:45.771] BAD_PACKET[COM4] unknown packet ID 0x29; discarded 1 byte(s)
+[01:47:45.771] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.772] RX[COM4]  73
+[01:47:45.772] BAD_PACKET[COM4] unknown packet ID 0x73; discarded 1 byte(s)
+[01:47:45.772] RX[COM4]  65 72
+[01:47:45.772] BAD_PACKET[COM4] unknown packet ID 0x65; discarded 1 byte(s)
+[01:47:45.773] BAD_PACKET[COM4] unknown packet ID 0x72; discarded 1 byte(s)
+[01:47:45.773] RX[COM4]  69
+[01:47:45.775] BAD_PACKET[COM4] unknown packet ID 0x69; discarded 1 byte(s)
+[01:47:45.775] RX[COM4]  61 6c 5f
+[01:47:45.775] BAD_PACKET[COM4] unknown packet ID 0x61; discarded 1 byte(s)
+[01:47:45.775] BAD_PACKET[COM4] unknown packet ID 0x6c; discarded 1 byte(s)
+[01:47:45.776] BAD_PACKET[COM4] unknown packet ID 0x5f; discarded 1 byte(s)
+[01:47:45.776] RX[COM4]  63
+[01:47:45.776] BAD_PACKET[COM4] unknown packet ID 0x63; discarded 1 byte(s)
+[01:47:45.776] RX[COM4]  6f 6d 6d 61
+[01:47:45.777] BAD_PACKET[COM4] unknown packet ID 0x6f; discarded 1 byte(s)
+[01:47:45.777] BAD_PACKET[COM4] unknown packet ID 0x6d; discarded 1 byte(s)
+[01:47:45.777] BAD_PACKET[COM4] unknown packet ID 0x6d; discarded 1 byte(s)
+[01:47:45.778] BAD_PACKET[COM4] unknown packet ID 0x61; discarded 1 byte(s)
+[01:47:45.778] RX[COM4]  6e
+[01:47:45.779] BAD_PACKET[COM4] unknown packet ID 0x6e; discarded 1 byte(s)
+[01:47:45.779] RX[COM4]  64 3a
+[01:47:45.779] BAD_PACKET[COM4] unknown packet ID 0x64; discarded 1 byte(s)
+[01:47:45.780] BAD_PACKET[COM4] unknown packet ID 0x3a; discarded 1 byte(s)
+[01:47:45.780] RX[COM4]  20 66 72 65
+[01:47:45.782] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.782] BAD_PACKET[COM4] unknown packet ID 0x66; discarded 1 byte(s)
+[01:47:45.835] BAD_PACKET[COM4] unknown packet ID 0x72; discarded 1 byte(s)
+[01:47:45.836] BAD_PACKET[COM4] unknown packet ID 0x65; discarded 1 byte(s)
+[01:47:45.837] RX[COM4]  65
+[01:47:45.837] BAD_PACKET[COM4] unknown packet ID 0x65; discarded 1 byte(s)
+[01:47:45.837] RX[COM4]  7a 69 6e 67 20 6c 6f 67
+[01:47:45.838] BAD_PACKET[COM4] unknown packet ID 0x7a; discarded 1 byte(s)
+[01:47:45.838] BAD_PACKET[COM4] unknown packet ID 0x69; discarded 1 byte(s)
+[01:47:45.838] BAD_PACKET[COM4] unknown packet ID 0x6e; discarded 1 byte(s)
+[01:47:45.838] BAD_PACKET[COM4] unknown packet ID 0x67; discarded 1 byte(s)
+[01:47:45.839] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.839] BAD_PACKET[COM4] unknown packet ID 0x6c; discarded 1 byte(s)
+[01:47:45.839] BAD_PACKET[COM4] unknown packet ID 0x6f; discarded 1 byte(s)
+[01:47:45.839] BAD_PACKET[COM4] unknown packet ID 0x67; discarded 1 byte(s)
+[01:47:45.840] RX[COM4]  73 20
+[01:47:45.840] BAD_PACKET[COM4] unknown packet ID 0x73; discarded 1 byte(s)
+[01:47:45.840] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.840] RX[COM4]  66
+[01:47:45.841] BAD_PACKET[COM4] unknown packet ID 0x66; discarded 1 byte(s)
+[01:47:45.841] RX[COM4]  6f 72 20 72
+[01:47:45.841] BAD_PACKET[COM4] unknown packet ID 0x6f; discarded 1 byte(s)
+[01:47:45.841] BAD_PACKET[COM4] unknown packet ID 0x72; discarded 1 byte(s)
+[01:47:45.842] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.842] BAD_PACKET[COM4] unknown packet ID 0x72; discarded 1 byte(s)
+[01:47:45.842] RX[COM4]  65
+[01:47:45.843] BAD_PACKET[COM4] unknown packet ID 0x65; discarded 1 byte(s)
+[01:47:45.843] RX[COM4]  61
+[01:47:45.843] BAD_PACKET[COM4] unknown packet ID 0x61; discarded 1 byte(s)
+[01:47:45.844] RX[COM4]  64
+[01:47:45.844] BAD_PACKET[COM4] unknown packet ID 0x64; discarded 1 byte(s)
+[01:47:45.844] RX[COM4]  2d 6f 6e
+[01:47:45.845] BAD_PACKET[COM4] unknown packet ID 0x2d; discarded 1 byte(s)
+[01:47:45.845] BAD_PACKET[COM4] unknown packet ID 0x6f; discarded 1 byte(s)
+[01:47:45.845] BAD_PACKET[COM4] unknown packet ID 0x6e; discarded 1 byte(s)
+[01:47:45.910] RX[COM4]  6c
+[01:47:45.913] BAD_PACKET[COM4] unknown packet ID 0x6c; discarded 1 byte(s)
+[01:47:45.918] RX[COM4]  79 20 55
+[01:47:45.920] BAD_PACKET[COM4] unknown packet ID 0x79; discarded 1 byte(s)
+[01:47:45.922] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.924] BAD_PACKET[COM4] unknown packet ID 0x55; discarded 1 byte(s)
+[01:47:45.926] RX[COM4]  53
+[01:47:45.927] BAD_PACKET[COM4] unknown packet ID 0x53; discarded 1 byte(s)
+[01:47:45.928] RX[COM4]  42 20 65
+[01:47:45.930] BAD_PACKET[COM4] unknown packet ID 0x42; discarded 1 byte(s)
+[01:47:45.981] BAD_PACKET[COM4] unknown packet ID 0x20; discarded 1 byte(s)
+[01:47:45.982] BAD_PACKET[COM4] unknown packet ID 0x65; discarded 1 byte(s)
+[01:47:45.982] RX[COM4]  78
+[01:47:45.983] BAD_PACKET[COM4] unknown packet ID 0x78; discarded 1 byte(s)
+[01:47:45.986] RX[COM4]  70 6f 72
+[01:47:45.992] BAD_PACKET[COM4] unknown packet ID 0x70; discarded 1 byte(s)
+[01:47:45.993] BAD_PACKET[COM4] unknown packet ID 0x6f; discarded 1 byte(s)
+[01:47:45.994] BAD_PACKET[COM4] unknown packet ID 0x72; discarded 1 byte(s)
+[01:47:45.995] RX[COM4]  74
+[01:47:45.996] BAD_PACKET[COM4] unknown packet ID 0x74; discarded 1 byte(s)
+[01:47:45.996] RX[COM4]  0d 0a
+[01:47:45.996] BAD_PACKET[COM4] unknown packet ID 0x0d; discarded 1 byte(s)
+[01:47:45.997] BAD_PACKET[COM4] unknown packet ID 0x0a; discarded 1 byte(s)
+[01:47:45.998] ERROR[COM4] ClearCommError failed (PermissionError(13, 'The device does not recognize the command.', None, 22))

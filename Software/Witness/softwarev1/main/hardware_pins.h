@@ -24,6 +24,9 @@
 // Broken-out MCU UART1 interface (115200 baud, 8N1 by default).
 #define HW_PIN_MCU_UART_TX    GPIO_NUM_5
 #define HW_PIN_MCU_UART_RX    GPIO_NUM_4
+// GPS I2C reuses the same broken-out pair. UART1 must not run concurrently.
+#define HW_PIN_GPS_I2C_SDA    HW_PIN_MCU_UART_RX
+#define HW_PIN_GPS_I2C_SCL    HW_PIN_MCU_UART_TX
 // Set to 0 on reduced boards to skip all radio initialization and service.
 #define HW_RADIO_ENABLED      0
 

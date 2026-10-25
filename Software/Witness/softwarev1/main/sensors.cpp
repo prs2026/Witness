@@ -1,4 +1,5 @@
 #include "sensors.h"
+#include "uart_driver.h"
 
 #include <array>
 #include <cmath>
@@ -133,11 +134,13 @@ Sensors::Sensors(
     SpiDataForwarder &data_forwarder,
     WitnessStatus &witness_status,
     CommandBridge &command_bridge,
-    FlightStateMachine &flight_state_machine)
+    FlightStateMachine &flight_state_machine,
+    UartDriver &gps_uart)
     : data_forwarder_(data_forwarder),
       witness_status_(witness_status),
       command_bridge_(command_bridge),
-      flight_state_machine_(flight_state_machine)
+      flight_state_machine_(flight_state_machine),
+      gps_uart_(gps_uart)
 {
 }
 
@@ -555,6 +558,12 @@ esp_err_t Sensors::queue_sensor_packet()
 esp_err_t Sensors::queue_state_packet()
 {
     std::uint8_t payload[IRIS_PACKET_STATE_DATA_LENGTH]{};
+    const auto gps = gps_uart_.latest_gps_fix();
+    write_i24_be(&payload[IRIS_PACKET_STATE_LATITUDE_OFFSET],
+        static_cast<std::int32_t>(std::lround(gps.latitude_degrees * IRIS_FIELD_GPS_COORDINATE_SCALE)));
+    write_i24_be(&payload[IRIS_PACKET_STATE_LONGITUDE_OFFSET],
+        static_cast<std::int32_t>(std::lround(gps.longitude_degrees * IRIS_FIELD_GPS_COORDINATE_SCALE)));
+    write_float_be(&payload[IRIS_PACKET_STATE_GPS_ALTITUDE_OFFSET], gps.altitude_meters);
     witness_status_.write(&payload[IRIS_PACKET_STATE_STATUS_OFFSET]);
 
     const std::uint32_t uptime_milliseconds =
@@ -656,8 +665,13 @@ esp_err_t Sensors::queue_debug_packet()
         &payload[IRIS_PACKET_WITNESS_DEBUG_BAROMETRIC_ALTITUDE_OFFSET],
         working_sample_.barometric_altitude_meters);
 
-    // MCU temperature, estimator outputs, and GPS fields remain zero until
-    // their producers are implemented.
+    const auto gps = gps_uart_.latest_gps_fix();
+    write_i24_be(&payload[IRIS_PACKET_WITNESS_DEBUG_LATITUDE_OFFSET],
+        static_cast<std::int32_t>(std::lround(gps.latitude_degrees * IRIS_FIELD_GPS_COORDINATE_SCALE)));
+    write_i24_be(&payload[IRIS_PACKET_WITNESS_DEBUG_LONGITUDE_OFFSET],
+        static_cast<std::int32_t>(std::lround(gps.longitude_degrees * IRIS_FIELD_GPS_COORDINATE_SCALE)));
+    write_float_be(&payload[IRIS_PACKET_WITNESS_DEBUG_GPS_ALTITUDE_OFFSET], gps.altitude_meters);
+    // MCU temperature, estimator outputs, and GPS Unix time remain zero.
     return data_forwarder_.queue_packet(
         IRIS_PACKET_ID_WITNESS_DEBUG, payload, sizeof(payload));
 }

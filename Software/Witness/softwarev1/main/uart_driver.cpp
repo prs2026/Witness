@@ -7,6 +7,7 @@
 
 #include "comms.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "hardware_pins.h"
 #include "flash_logger.h"
 #include "spi_data_forwarder.h"
@@ -171,8 +172,22 @@ void UartDriver::task_entry(void *const context)
     static_cast<UartDriver *>(context)->run();
 }
 
+bool UartDriver::gps_send(void *context, const std::uint8_t *data,
+                          const std::size_t length)
+{
+    return static_cast<UartDriver *>(context)->transmit(
+               data, length, pdMS_TO_TICKS(100)) == ESP_OK;
+}
+
+bool UartDriver::gps_set_baud(void *context, const std::uint32_t baud)
+{
+    auto *self = static_cast<UartDriver *>(context);
+    return uart_set_baudrate(self->port_, baud) == ESP_OK;
+}
+
 void UartDriver::run()
 {
+    NmeaGps nmea;
     ESP_LOGI(
         kTag,
         "UART%d ready at %" PRIu32 " baud on TX=%d RX=%d",
@@ -209,7 +224,15 @@ void UartDriver::run()
     std::uint32_t lost_log_bytes = 0;
     TickType_t last_log_warning = 0;
     TickType_t last_usb_warning = 0;
+    std::uint32_t total_rx_bytes = 0;
+    std::uint32_t last_rx_ms = 0;
+    std::uint32_t last_diagnostic_ms = 0;
+    auto last_gps_status = gps_.status();
+    if (last_gps_status == Px1120sGps::Status::Configuring)
+        ESP_LOGI(kTag, "PX1120S startup: configuring airborne navigation; UART fixed at %lu baud",
+                 static_cast<unsigned long>(kBaudRate));
     for (;;) {
+        gps_.service(static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL));
         const int bytes_read = uart_read_bytes(
             port_,
             receive_buffer.data(),
@@ -218,6 +241,8 @@ void UartDriver::run()
 
         if (bytes_read > 0) {
             const std::size_t received = static_cast<std::size_t>(bytes_read);
+            total_rx_bytes += received;
+            last_rx_ms = static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
             const TickType_t receive_time = xTaskGetTickCount();
             // Persist before USB forwarding or protocol parsing. GPS/NMEA,
             // binary receiver messages, embedded zeros and CR/LF all survive.
@@ -234,6 +259,17 @@ void UartDriver::run()
                     }
                 }
             }
+            gps_.consume(receive_buffer.data(), received,
+                         static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL));
+            const auto previous_gga_count = nmea.gga_sentence_count();
+            nmea.consume(receive_buffer.data(), received, last_rx_ms);
+            if (nmea.gga_sentence_count() != previous_gga_count) {
+                gps_.observe_nmea();
+            }
+            const auto fix = nmea.latest_fix();
+            portENTER_CRITICAL(&fix_lock_);
+            latest_fix_ = fix;
+            portEXIT_CRITICAL(&fix_lock_);
             const esp_err_t forward_result =
                 serial_forwarder_.queue_raw_bytes(
                     receive_buffer.data(), received);
@@ -312,6 +348,33 @@ void UartDriver::run()
             ESP_LOGW(kTag, "UART receive failed");
         }
 
+        if (gps_.status() != last_gps_status) {
+            last_gps_status = gps_.status();
+            if (last_gps_status == Px1120sGps::Status::Ready) {
+                ESP_LOGI(kTag, "PX1120S airborne mode %u confirmed at %lu baud (4 g receiver)",
+                         Px1120sGps::kNavigationMode, static_cast<unsigned long>(kBaudRate));
+            } else if (last_gps_status == Px1120sGps::Status::Failed) {
+                ESP_LOGW(kTag, "PX1120S startup failed: %s; raw logging continues at %lu baud",
+                         gps_.failure_reason(), static_cast<unsigned long>(kBaudRate));
+            }
+        }
+
+        const auto now_ms = static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
+        if (now_ms - last_diagnostic_ms >= kGpsDiagnosticIntervalMs) {
+            last_diagnostic_ms = now_ms;
+            std::uint32_t baud = 0;
+            (void)uart_get_baudrate(port_, &baud);
+            ESP_LOGI(kTag, "GPS RX: baud=%lu bytes=%lu GGA=%lu fix=%s idle_ms=%lu",
+                     static_cast<unsigned long>(baud),
+                     static_cast<unsigned long>(total_rx_bytes),
+                     static_cast<unsigned long>(nmea.gga_sentence_count()),
+                     NmeaGps::fresh(nmea.latest_fix(), now_ms) ? "valid" : "none",
+                     static_cast<unsigned long>(now_ms - last_rx_ms));
+            if (now_ms - last_rx_ms >= kGpsDiagnosticIntervalMs) {
+                ESP_LOGW(kTag, "GPS UART input silent; reception and raw logging remain enabled");
+            }
+        }
+
         if (waiting_for_loopback_reply &&
             static_cast<std::int32_t>(
                 xTaskGetTickCount() - loopback_deadline) >= 0) {
@@ -322,4 +385,13 @@ void UartDriver::run()
                 kLoopbackReplyTimeoutMs);
         }
     }
+}
+
+NmeaGps::Fix UartDriver::latest_gps_fix() const
+{
+    portENTER_CRITICAL(&fix_lock_);
+    const auto fix = latest_fix_;
+    portEXIT_CRITICAL(&fix_lock_);
+    return NmeaGps::fresh(fix, static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL))
+        ? fix : NmeaGps::Fix{};
 }

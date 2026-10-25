@@ -49,9 +49,12 @@ public:
     FlashLogger &operator=(const FlashLogger &) = delete;
 
     esp_err_t start();
-    // Exact UART bytes, recorded continuously regardless of flight state.
+    // Exact external GPS bytes, recorded continuously regardless of flight state.
     // No framing or timestamps are added.
-    esp_err_t log_uart_bytes(const std::uint8_t *data, std::size_t length);
+    esp_err_t log_external_bytes(const std::uint8_t *data, std::size_t length);
+    esp_err_t log_uart_bytes(const std::uint8_t *data, std::size_t length) {
+        return log_external_bytes(data, length);
+    }
 
     // Flushes the current session and permanently freezes logging until reset.
     // This must complete before exposing the read-only USB disk.

@@ -364,7 +364,7 @@ void UsbSerialEcho::process_radio_command(
         case IRIS_COMMAND_CH3_LOAD_ON:
         case IRIS_COMMAND_5V_REGULATOR_OFF:
         case IRIS_COMMAND_5V_REGULATOR_ON:
-            // These commands are implemented by the UART-connected device.
+            // These commands are implemented by the external device.
             // They were already retransmitted by CommandBridge.
             break;
         default:
@@ -437,7 +437,7 @@ void UsbSerialEcho::process_command()
     } else if (std::strcmp(command_buffer_, "CAM 2 OFF") == 0) {
         set_camera_state(1, false);
     } else if (command_forwarded) {
-        // The UART bridge owns generic compact commands and complete
+        // The external bridge owns generic compact commands and complete
         // canonical 10-byte command packets that have no local action.
         return;
     } else {
@@ -453,7 +453,7 @@ void UsbSerialEcho::forward_usb_command(
     if (result != ESP_OK) {
         ESP_LOGW(
             kLogTag,
-            "UART command forwarding failed: %s",
+            "external command forwarding failed: %s",
             esp_err_to_name(result));
     }
 }

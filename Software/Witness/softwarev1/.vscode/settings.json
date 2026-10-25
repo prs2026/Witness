@@ -33,6 +33,6 @@
     "--compile-commands-dir=c:\\Users\\Ejfso\\Documents\\GitHub\\witness\\Software\\Witness\\softwarev1\\build"
   ],
   "idf.flashType": "UART",
-  "idf.portWin": "COM10"
+  "idf.portWin": "COM4"
   
 }

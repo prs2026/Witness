@@ -146,7 +146,7 @@ samples, converted to the defined 40 micro-g/count format.
 | 63 | 1 | EOF `0x0A` |
 
 Currently only status, uptime, barometric altitude, and battery voltage are
-populated. Estimator and GPS fields are zero until those producers exist.
+populated. GPS position and altitude come from UART1 NMEA GGA fixes; estimator fields remain zero.
 
 ### `0x03` Camera telemetry packet, 19 bytes
 
@@ -201,7 +201,7 @@ Command values currently defined:
 
 The last three commands also have legacy compact USB forms described in
 section 7. Canonical commands received from USB or LoRa are retransmitted
-byte-for-byte on UART1. The firmware does not rewrite their status or uptime.
+byte-for-byte through the external UART1 command path. The firmware does not rewrite their status or uptime.
 Radio commands are additionally interpreted locally.
 
 ### `0xFF` Heartbeat packet, 8 bytes
@@ -239,7 +239,7 @@ Radio commands are additionally interpreted locally.
 | 98 | 4 | GPS altitude, float32 m MSL |
 | 102 | 1 | EOF `0x0A` |
 
-MCU temperature, estimator fields, and GPS fields currently remain zero.
+MCU temperature, estimator fields, and GPS Unix time remain zero. GPS latitude, longitude and MSL altitude come from UART1 NMEA GGA fixes.
 
 ### `0xE1` IRIS debug packet, 14 bytes
 
@@ -294,67 +294,99 @@ the sensors.
 
 `SpiDataForwarder::kForwardExternalPacketsImmediately` controls the immediate
 forwarding path and defaults to `true`. With it enabled, complete command frames
-received over USB and complete canonical frames reconstructed from UART1 are
+received over USB are
 queued ahead of scheduled telemetry. Radio-originated packets are never sent
 back to the radio, preventing an RF echo loop. Set the flag to `false` to make
 all radio output use only the per-packet latest-frame schedule.
 
 Every valid received radio packet up to the canonical maximum of 103 bytes is
 forwarded unchanged to USB. A received packet beginning with `0x05` is also
-forwarded unchanged to UART1 and queued for local interpretation. Debug enable,
+queued unchanged for UART1 transmission and local interpretation. Debug enable,
 mass storage, log erase, and flight-state commands execute locally. Load and
 5 V regulator commands have no Witness-local hardware action because they are
-implemented by the UART-connected device. SX1262 packets with a CRC error are
+implemented by the external device. The PX1120S itself does not understand these
+AMA load/regulator commands. SX1262 packets with a CRC error are
 discarded.
 
-## 6. UART1 bridge and GPS logging
+## 6. GPS UART1 interface and logging
 
-The existing broken-out UART connection uses ESP32 UART1:
+GPS uses UART1 again; the I2C driver is not started or included in the build.
 
 | Setting | Value |
 |---|---|
-| Baud | 115200 |
-| Data bits | 8 |
-| Parity | None |
-| Stop bits | 1 |
-| Flow control | None |
-| ESP32 TX | GPIO5 |
-| ESP32 RX | GPIO4 |
+| ESP32 RX | GPIO4 <- GPS TX |
+| ESP32 TX | GPIO5 -> GPS RX |
+| Ground | Shared with receiver |
+| Logic voltage | 3.3 V |
+| Operational baud | 115200, 8N1, no flow control |
 
-Command packets are written exactly as received. No length, newline, checksum,
-or additional UART framing is added. UART1 receive data is copied unchanged to
-USB serial. The UART byte stream is also parsed by fixed packet length; when a
-complete canonical frame with a valid EOF is found, it enters the immediate
-radio queue if that feature is enabled.
+The UART task retains startup airborne-mode configuration at a fixed 115200
+baud (`Px1120sGps::kBaudRate`). It never sends a receiver baud-change command
+or probes another baud rate. Checksum-valid GGA, including no-fix reports,
+allows airborne configuration to proceed even if the initial mode query gets
+no binary response. Successful mode readback is still required for confirmation.
+A five-second `GPS RX` diagnostic reports host baud, total bytes, valid GGA
+sentence count, fix validity and time since the last UART byte. A failed startup
+configuration does not stop raw collection, sensors, heartbeat or flash logging.
 
-The legacy `05 22` startup loopback probe is disabled by default so an attached
-GPS receiver is not sent unsolicited bytes. It can be enabled with
-`UartDriver::kStartupLoopbackTestEnabled`. Baud is configured by
-`UartDriver::kBaudRate`. Connect GPS TX to GPIO4 and share ground; GPIO5 is only
-needed if commands must be sent to the receiver.
+Checksum-validated NMEA GGA sentences (including GP/GN talkers) populate
+latitude, longitude and GPS MSL altitude in state (0x02) and Witness debug (0x06)
+packets. Arbitrarily fragmented UART reads are supported. Coordinates convert
+from NMEA degrees/minutes and hemisphere into signed decimal degrees, then are
+rounded to the canonical signed int24 scale of 0.0001 degree/count.
+Altitude is big-endian float32 metres above mean sea level, not ellipsoid height.
+GPS Unix time remains zero (GGA contains no date).
 
-Every received byte is also queued for flash before USB forwarding or packet
-parsing. No GPS protocol is assumed. Each boot exports three files with a
+A no-fix GGA invalidates the current fix immediately. A fix also expires after
+`NmeaGps::kFixTimeoutMs` (3000 ms). Invalid/missing/stale fixes emit zero in all
+three GPS fields, without changing existing status-bit assignments. Zero is not
+a unique invalid marker: a legitimate zero coordinate/altitude has the same
+representation. Bad checksums are discarded and cannot refresh the fix age.
+Raw UART bytes are logged unchanged regardless of fix validity.
+
+Settings are in `main/px1120s_gps.h`: `kConfigureAtStartup`,
+`kNavigationMode` (5 = airborne), `kSaveSettingsToFlash` (false = SRAM only),
+startup delay, reply timeout and retry count. Defaults reapply the configuration
+on every boot without writing receiver flash. The PX1120S datasheet specifies
+a 4 g dynamics capability; its binary protocol selects `airborne` rather than
+a separate numeric `4 g` profile. This does not change the physical receiver's
+dynamics rating.
+
+SkyTraq binary frames use `A0 A1`, a two-byte big-endian payload length, the
+payload, its XOR checksum, and `0D 0A`. Startup commands with SRAM-only attributes:
+
+| Action | Complete frame (hex) |
+|---|---|
+| Query navigation mode | `A0 A1 00 02 64 18 7C 0D 0A` |
+| Set airborne navigation | `A0 A1 00 04 64 17 05 00 76 0D 0A` |
+| Expected airborne readback | `A0 A1 00 03 64 8B 05 EA 0D 0A` |
+
+Reference: [SkyTraq AN0037 binary message protocol](https://www.skytraq.com.tw/homesite/AN0037.pdf),
+commands `0x64/0x17`, `0x64/0x18`, and response `0x64/0x8B`.
+The supplied [PX1120S manual](c4dba7.pdf) lists the receiver's dynamics rating
+and factory baud rate on PDF page 3.
+
+Every received UART byte is also queued unchanged for flash before USB forwarding or
+GPS parsing. Each boot exports three files with a
 matching hexadecimal session number:
 
 | File | Contents |
 |---|---|
-| `U0000001.BIN` | Exact UART1 receive stream, including binary messages and CR/LF |
+| `U0000001.BIN` | Raw external GPS payload bytes, received over UART1 |
 | `S0000001.BIN` | Existing 48-byte sensor records, using the flight-state logging gate |
 | `S0000001.TXT` | ESP-IDF diagnostic output |
 
-UART capture runs in every flight state, including Pad Idle and Landed. A
-32 KiB RAM queue absorbs flash write delays; the UART driver also has an 8 KiB
-RX buffer. Flash staging uses 4,080-byte batches and flushes partial batches every
+GPS capture runs in every flight state, including Pad Idle and Landed. A
+32 KiB RAM queue absorbs flash write delays. Flash staging uses 4,080-byte batches and flushes partial batches every
 second. Entering read-only mass storage (`05 68 68`) stops capture and writes
-all accepted bytes before publishing the files. UART data arriving after
+all accepted bytes before publishing the files. GPS data arriving after
 capture stops is not part of the exported snapshot. Sudden power loss can lose
 the bytes still buffered in RAM; use the export command before disconnecting.
 
 New sessions use storage layout version 2: 10 NAND blocks for sensor data,
-40 for UART data and 12 for diagnostics, retaining 16 rotating sessions.
-The UART allocation holds up to 5,222,400 raw bytes per session (about 7.5
-minutes at continuous 115200-baud 8N1, longer for lower average GPS traffic).
+40 for external GPS data and 12 for diagnostics, retaining 16 rotating sessions.
+The GPS allocation holds up to 5,222,400 raw bytes per session; recording duration
+depends on the receiver's actual output rate.
 Old version-1 sensor and diagnostic sessions remain readable. No format or
 erase is required to upgrade. Buffer overflow or flash write failure sets the
 existing flash-log-failed status bit. When a file's allocation fills, that
@@ -365,7 +397,7 @@ Radio initialization failure disables radio RX/TX for the rest of the boot,
 without repeated initialization attempts in the sensor loop. An SPI packet-RAM
 round trip rejects an absent radio even when SPI writes return success.
 `HW_RADIO_ENABLED` in `hardware_pins.h` may be set to `0` to skip initialization
-entirely on boards with no radio fitted. UART logging, USB, sensors and flash
+entirely on boards with no radio fitted. GPS logging, USB, sensors and flash
 continue operating without a radio.
 
 ## 7. USB command input
@@ -384,7 +416,7 @@ USB also accepts a newline-terminated ASCII-hex representation:
 ```
 
 The spaces are part of the ASCII representation. They are removed during hex
-decoding, and the ten decoded bytes are sent to UART1. A terminal's "send hex"
+decoding, and the ten decoded bytes are queued for UART1. A terminal's "send hex"
 mode should instead send the ten binary bytes with no extra newline.
 
 Legacy compact binary commands are accepted after a 20 ms idle interval:
@@ -396,7 +428,7 @@ Legacy compact binary commands are accepted after a 20 ms idle interval:
 ```
 
 The same compact commands may be typed as ASCII hex followed by Enter. `TX 05
-...` is another accepted ASCII form and forwards the decoded bytes to UART1.
+...` is another accepted ASCII form and queues the decoded bytes for UART1.
 
 USB input is echoed back byte-for-byte. A ground station using the same USB
 connection for commands and telemetry must therefore recognize or suppress its
@@ -407,7 +439,7 @@ own echoed command bytes.
 USB Serial/JTAG is not currently a telemetry-only channel. It may contain:
 
 - canonical binary telemetry frames;
-- received UART1 or radio bytes;
+- received GPS UART1 or radio bytes;
 - echoed ground-station input; and
 - human-readable ESP-IDF log lines.
 

@@ -8,6 +8,8 @@
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "px1120s_gps.h"
+#include "nmea_gps.h"
 
 class SpiDataForwarder;
 class FlashLogger;
@@ -16,13 +18,14 @@ class UartDriver final {
 public:
     // UART task settings. The UART baud rate can be changed here without
     // modifying the implementation.
-    static constexpr std::uint32_t kBaudRate = 115200;
+    static constexpr std::uint32_t kBaudRate = Px1120sGps::kBaudRate;
     // GPS receivers must not receive the legacy 05 22 startup probe.
     static constexpr bool kStartupLoopbackTestEnabled = false;
     static constexpr UBaseType_t kTaskPriority = 3;
     static constexpr std::uint32_t kTaskStackSize = 4096;
     static constexpr std::uint32_t kTaskTickMs = 2;
     static constexpr std::uint32_t kLoopbackReplyTimeoutMs = 1000;
+    static constexpr std::uint32_t kGpsDiagnosticIntervalMs = 5000;
 
     UartDriver(SpiDataForwarder &serial_forwarder, uart_port_t port,
                gpio_num_t tx_pin, gpio_num_t rx_pin);
@@ -34,6 +37,8 @@ public:
 
     esp_err_t start();
     esp_err_t shutdown();
+    // Thread-safe snapshot; invalid/stale fixes return zero-valued coordinates.
+    NmeaGps::Fix latest_gps_fix() const;
 
     // Writes the exact bytes supplied to this UART.
     esp_err_t transmit(
@@ -46,6 +51,8 @@ private:
     static constexpr std::size_t kReadBufferSize = 64;
 
     static void task_entry(void *context);
+    static bool gps_send(void *context, const std::uint8_t *data, std::size_t length);
+    static bool gps_set_baud(void *context, std::uint32_t baud);
     esp_err_t initialize();
     esp_err_t send_loopback_request();
     void run();
@@ -55,6 +62,9 @@ private:
     uart_port_t port_;
     gpio_num_t tx_pin_;
     gpio_num_t rx_pin_;
+    Px1120sGps gps_{{this, gps_send, gps_set_baud}};
+    mutable portMUX_TYPE fix_lock_ = portMUX_INITIALIZER_UNLOCKED;
+    NmeaGps::Fix latest_fix_{};
     TaskHandle_t task_handle_ = nullptr;
     bool initialized_ = false;
 };

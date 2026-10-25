@@ -8,9 +8,9 @@
 #include "uart_driver.h"
 
 CommandBridge::CommandBridge(
-    UartDriver &uart,
+    UartDriver &gps,
     SpiDataForwarder &data_forwarder)
-    : uart_(uart),
+    : gps_(gps),
       data_forwarder_(data_forwarder)
 {
 }
@@ -30,25 +30,25 @@ esp_err_t CommandBridge::submit_usb_command(
     const std::uint8_t *const data,
     const std::size_t length)
 {
-    const esp_err_t uart_result = forward_command(data, length);
+    const esp_err_t transport_result = forward_command(data, length);
     const esp_err_t radio_result =
         data_forwarder_.queue_immediate_radio_packet(data, length);
-    return uart_result != ESP_OK ? uart_result : radio_result;
+    return transport_result != ESP_OK ? transport_result : radio_result;
 }
 
 esp_err_t CommandBridge::submit_radio_command(
     const std::uint8_t *const data,
     const std::size_t length)
 {
-    const esp_err_t uart_result = forward_command(data, length);
+    const esp_err_t transport_result = forward_command(data, length);
 
     if (radio_command_queue_ == nullptr) {
-        return uart_result == ESP_OK ? ESP_ERR_INVALID_STATE : uart_result;
+        return transport_result == ESP_OK ? ESP_ERR_INVALID_STATE : transport_result;
     }
     if (data == nullptr || length == 0U ||
         length > IRIS_PACKET_COMMAND_FRAME_LENGTH ||
         data[0] != IRIS_PACKET_ID_COMMAND) {
-        return uart_result == ESP_OK ? ESP_ERR_INVALID_ARG : uart_result;
+        return transport_result == ESP_OK ? ESP_ERR_INVALID_ARG : transport_result;
     }
 
     QueuedCommand command{};
@@ -58,7 +58,7 @@ esp_err_t CommandBridge::submit_radio_command(
         xQueueSend(radio_command_queue_, &command, 0) == pdTRUE
             ? ESP_OK
             : ESP_ERR_NO_MEM;
-    return uart_result != ESP_OK ? uart_result : queue_result;
+    return transport_result != ESP_OK ? transport_result : queue_result;
 }
 
 bool CommandBridge::receive_radio_command(
@@ -90,5 +90,5 @@ esp_err_t CommandBridge::forward_command(
         return ESP_ERR_INVALID_ARG;
     }
 
-    return uart_.transmit(data, length, pdMS_TO_TICKS(100));
+    return gps_.transmit(data, length, pdMS_TO_TICKS(100));
 }

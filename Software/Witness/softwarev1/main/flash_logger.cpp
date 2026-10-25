@@ -73,7 +73,7 @@ esp_err_t FlashLogger::start() {
     return ESP_OK;
 }
 
-esp_err_t FlashLogger::log_uart_bytes(
+esp_err_t FlashLogger::log_external_bytes(
     const std::uint8_t *data,
     const std::size_t length)
 {
