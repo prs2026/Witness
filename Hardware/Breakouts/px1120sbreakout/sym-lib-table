@@ -1,0 +1,4 @@
+(sym_lib_table
+	(version 7)
+	(lib (name "Witness") (type "KiCad") (uri "C:/Users/Ejfso/Documents/GitHub/witness/Hardware/KicadLibs/Witness.kicad_sym") (options "") (descr ""))
+)
