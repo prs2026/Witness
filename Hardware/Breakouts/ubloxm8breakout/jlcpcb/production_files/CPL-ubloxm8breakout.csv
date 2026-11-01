@@ -1,0 +1,17 @@
+Designator,Val,Package,Mid X,Mid Y,Rotation,Layer
+AE1,Antenna_Shield,U.FL_Molex_MCRF_73412-0110_Vertical,2.8,-14.3,90.0,top
+C1,10u,C_0805_2012Metric,23.5,-2.575,90.0,top
+C3,100n,C_0603_1608Metric,21.75,-2.775,90.0,top
+D1,LED,LED_0603_1608Metric,5.0,-5.85,0.0,top
+D2,LED,LED_0603_1608Metric,25.8,-2.4,90.0,top
+H1,MountingHole,MountingHole_2.2mm_M2,2.5,-2.5,0.0,top
+H2,MountingHole,MountingHole_2.2mm_M2,26.5,-14.5,0.0,top
+J1,MOLEX-MICROLOCK,Molex_MicroLock-2200980471-01x04-Horizontal,23.7,-8.15,90.0,top
+L1,L_Small,L_0603_1608Metric,5.95,-13.45,-90.0,top
+R2,0,R_0603_1608Metric,22.65,-12.95,180.0,top
+R3,0,R_0603_1608Metric,22.65,-14.4,0.0,top
+R6,10,R_0603_1608Metric,5.95,-10.4,90.0,top
+R7,1k,R_0603_1608Metric,5.0,-7.4,180.0,top
+R8,1k,R_0603_1608Metric,27.35,-2.35,-90.0,top
+TP1,TestPoint,TestPoint_Pad_1.5x1.5mm,3.4,-10.35,0.0,top
+U1,NEO-M8N,ublox_NEO,13.85,-8.4,0.0,top
