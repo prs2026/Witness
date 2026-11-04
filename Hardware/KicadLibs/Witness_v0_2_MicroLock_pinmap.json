@@ -1,0 +1,150 @@
+{
+  "source": "C:\\Users\\Ejfso\\Documents\\GitHub\\witness\\Hardware\\witnessv0.2\\witness\\witness.kicad_pcb",
+  "origin_mm": [
+    113.0,
+    118.75
+  ],
+  "view": "source board top view; no mirroring",
+  "pins": [
+    {
+      "pin": "J2_1",
+      "connector": "J2",
+      "contact": "1",
+      "signal": "BATT_RAW",
+      "source_net": "/IO/BATT_RAW",
+      "x_mm": -5.400000000000006,
+      "y_mm": 10.75,
+      "drill_mm": 0.5
+    },
+    {
+      "pin": "J2_2",
+      "connector": "J2",
+      "contact": "2",
+      "signal": "GND",
+      "source_net": "GND",
+      "x_mm": -5.400000000000006,
+      "y_mm": 12.0,
+      "drill_mm": 0.5
+    },
+    {
+      "pin": "J5_1",
+      "connector": "J5",
+      "contact": "1",
+      "signal": "+3V3",
+      "source_net": "+3V3",
+      "x_mm": -3.075000000000003,
+      "y_mm": 15.550000000000011,
+      "drill_mm": 0.5
+    },
+    {
+      "pin": "J5_2",
+      "connector": "J5",
+      "contact": "2",
+      "signal": "TXD_MCU",
+      "source_net": "/IO/TXD_MCU",
+      "x_mm": -1.8250000000000028,
+      "y_mm": 15.550000000000011,
+      "drill_mm": 0.5
+    },
+    {
+      "pin": "J5_3",
+      "connector": "J5",
+      "contact": "3",
+      "signal": "RXD_MCU",
+      "source_net": "/IO/RXD_MCU",
+      "x_mm": -0.5750000000000028,
+      "y_mm": 15.550000000000011,
+      "drill_mm": 0.5
+    },
+    {
+      "pin": "J5_4",
+      "connector": "J5",
+      "contact": "4",
+      "signal": "GND",
+      "source_net": "GND",
+      "x_mm": 0.6749999999999972,
+      "y_mm": 15.550000000000011,
+      "drill_mm": 0.5
+    },
+    {
+      "pin": "J6_1",
+      "connector": "J6",
+      "contact": "1",
+      "signal": "NC",
+      "source_net": "Net-(J6-Pin_1)",
+      "x_mm": 4.299999999999997,
+      "y_mm": 13.025000000000006,
+      "drill_mm": 0.5
+    },
+    {
+      "pin": "J6_2",
+      "connector": "J6",
+      "contact": "2",
+      "signal": "CAN_L",
+      "source_net": "/IO/CAN_L",
+      "x_mm": 4.299999999999997,
+      "y_mm": 11.775000000000006,
+      "drill_mm": 0.5
+    },
+    {
+      "pin": "J6_3",
+      "connector": "J6",
+      "contact": "3",
+      "signal": "CAN_H",
+      "source_net": "/IO/CAN_H",
+      "x_mm": 4.299999999999997,
+      "y_mm": 10.525000000000006,
+      "drill_mm": 0.5
+    },
+    {
+      "pin": "J6_4",
+      "connector": "J6",
+      "contact": "4",
+      "signal": "GND",
+      "source_net": "GND",
+      "x_mm": 4.299999999999997,
+      "y_mm": 9.275000000000006,
+      "drill_mm": 0.5
+    },
+    {
+      "pin": "MP",
+      "connector": "H4",
+      "contact": "1",
+      "signal": "GND",
+      "source_net": "GND",
+      "x_mm": -7.25,
+      "y_mm": 17.5,
+      "drill_mm": 2.2
+    },
+    {
+      "pin": "MP",
+      "connector": "H5",
+      "contact": "1",
+      "signal": "GND",
+      "source_net": "GND",
+      "x_mm": 7.5,
+      "y_mm": 17.25,
+      "drill_mm": 2.2
+    },
+    {
+      "pin": "MP",
+      "connector": "H6",
+      "contact": "1",
+      "signal": "GND",
+      "source_net": "GND",
+      "x_mm": -7.25,
+      "y_mm": -17.25,
+      "drill_mm": 2.2
+    },
+    {
+      "pin": "MP",
+      "connector": "H7",
+      "contact": "1",
+      "signal": "GND",
+      "source_net": "GND",
+      "x_mm": 7.0,
+      "y_mm": -17.25,
+      "drill_mm": 2.2
+    }
+  ]
+}

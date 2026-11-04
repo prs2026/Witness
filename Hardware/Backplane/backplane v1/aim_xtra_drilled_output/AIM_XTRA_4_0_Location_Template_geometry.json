@@ -1,0 +1,94 @@
+{
+  "source": "C:\\Users\\Ejfso\\Documents\\GitHub\\witness\\Hardware\\Backplane\\backplane v1\\AIM_XTRA_4.0_No_Antenna - Boss-Extrude16.step",
+  "view": "top from STEP +Y: X right and Z down",
+  "origin_xz_mm": [
+    6.0201619127407024,
+    -0.9656652360515005
+  ],
+  "pcb_envelope_mm": [
+    [
+      -50.0,
+      -15.0
+    ],
+    [
+      50.0,
+      15.0
+    ]
+  ],
+  "outline_note": "PCB bounding envelope; component intersection edges omitted",
+  "mounting_locations": [
+    {
+      "label": "MH1",
+      "x_mm": -47.0,
+      "y_mm": -12.0,
+      "source_diameter_mm": 3.0,
+      "step_center_m": [
+        -0.0409798380872593,
+        0.0016,
+        -0.0129656652360515
+      ],
+      "entity": 1648
+    },
+    {
+      "label": "MH2",
+      "x_mm": 47.0,
+      "y_mm": -12.0,
+      "source_diameter_mm": 3.0,
+      "step_center_m": [
+        0.0530201619127407,
+        0.0016,
+        -0.0129656652360515
+      ],
+      "entity": 1645
+    },
+    {
+      "label": "MH3",
+      "x_mm": -47.0,
+      "y_mm": 12.0,
+      "source_diameter_mm": 3.0,
+      "step_center_m": [
+        -0.0409798380872593,
+        0.0016,
+        0.0110343347639485
+      ],
+      "entity": 1647
+    },
+    {
+      "label": "MH4",
+      "x_mm": 47.0,
+      "y_mm": 12.0,
+      "source_diameter_mm": 3.0,
+      "step_center_m": [
+        0.0530201619127407,
+        0.0016,
+        0.0110343347639485
+      ],
+      "entity": 1646
+    }
+  ],
+  "screw_terminal_bar_mm": [
+    [
+      -38.9,
+      8.246
+    ],
+    [
+      -7.9,
+      14.746
+    ]
+  ],
+  "terminal_faces": [
+    1757,
+    1758,
+    1759,
+    1760,
+    1761,
+    1762,
+    1763
+  ],
+  "symbol_mounting_holes": "graphical circles MH1-MH4; no electrical pins",
+  "pads": "four non-electrical NPTH pads only",
+  "drills": true,
+  "previous_library_sha256": "2810ce97a228e4bdaf12da5898a5b66db44479d469696ca3afbfd8ebdd55a31d",
+  "mounting_drill_mm": 3.0,
+  "mounting_type": "unplated"
+}

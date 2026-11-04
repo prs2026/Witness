@@ -1,0 +1,11 @@
+{
+  "transform": "local X -> -X, local Y unchanged; pad numbers preserved; front-layer mating-face footprint",
+  "source_hashes": {
+    "Witness_v0_2_MicroLock": "47f981f3241e41f60a3ca9a4c7aa98d9b3e18f4690f97b346b85df395bd307bd",
+    "BlueRaven_2025_Location_Template": "7980dfc7ce553e26a20b5c6f0f81530e450418bfd8b460c2dca37cc06c97b1b0"
+  },
+  "footprints": [
+    "Witness_v0_2_MicroLock",
+    "BlueRaven_2025_Location_Template"
+  ]
+}

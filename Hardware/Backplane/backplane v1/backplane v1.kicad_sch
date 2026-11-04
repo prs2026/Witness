@@ -1,0 +1,3598 @@
+(kicad_sch
+	(version 20260306)
+	(generator "eeschema")
+	(generator_version "10.0")
+	(uuid "88077a8f-1b7e-4728-b6c6-fe5d2ba05903")
+	(paper "A4")
+	(lib_symbols
+		(symbol "Connector_Generic:Conn_01x02"
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J"
+				(at 0 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Conn_01x02"
+				(at 0 -5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "connector"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "Connector*:*_1x??_*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Conn_01x02_1_1"
+				(rectangle
+					(start -1.27 1.27)
+					(end 1.27 -3.81)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(rectangle
+					(start -1.27 0.127)
+					(end 0 -0.127)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 -2.413)
+					(end 0 -2.667)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at -5.08 0 0)
+					(length 3.81)
+					(name "Pin_1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -2.54 0)
+					(length 3.81)
+					(name "Pin_2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Connector_Generic:Conn_01x04"
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J"
+				(at 0 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Conn_01x04"
+				(at 0 -7.62 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "connector"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "Connector*:*_1x??_*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Conn_01x04_1_1"
+				(rectangle
+					(start -1.27 3.81)
+					(end 1.27 -6.35)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(rectangle
+					(start -1.27 2.667)
+					(end 0 2.413)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 0.127)
+					(end 0 -0.127)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 -2.413)
+					(end 0 -2.667)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 -4.953)
+					(end 0 -5.207)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at -5.08 2.54 0)
+					(length 3.81)
+					(name "Pin_1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 0 0)
+					(length 3.81)
+					(name "Pin_2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -2.54 0)
+					(length 3.81)
+					(name "Pin_3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -5.08 0)
+					(length 3.81)
+					(name "Pin_4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Witness_Modules:AIM_XTRA_4_0_Location_Template"
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "A"
+				(at 0 12.7 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "AIM_XTRA_4_0"
+				(at 0 10.16 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "Witness_Modules:AIM_XTRA_4_0_Location_Template"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Mechanical mounting template: four 3 mm unplated mounting holes and screw-terminal bar. No electrical pins or copper pads. Board envelope from STEP."
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "AIM_XTRA_4_0_Location_Template_0_1"
+				(rectangle
+					(start -25 7.5)
+					(end 25 -7.5)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(circle
+					(center -23.5 6)
+					(radius 0.75)
+					(stroke
+						(width 0.2)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center -23.5 -6)
+					(radius 0.75)
+					(stroke
+						(width 0.2)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 23.5 6)
+					(radius 0.75)
+					(stroke
+						(width 0.2)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 23.5 -6)
+					(radius 0.75)
+					(stroke
+						(width 0.2)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(text "MH1"
+					(at -20.9 6 0)
+					(effects
+						(font
+							(size 1 1)
+						)
+					)
+				)
+				(text "MH3"
+					(at -20.9 -6 0)
+					(effects
+						(font
+							(size 1 1)
+						)
+					)
+				)
+				(text "MH2"
+					(at 20.9 6 0)
+					(effects
+						(font
+							(size 1 1)
+						)
+					)
+				)
+				(text "MH4"
+					(at 20.9 -6 0)
+					(effects
+						(font
+							(size 1 1)
+						)
+					)
+				)
+			)
+			(symbol "AIM_XTRA_4_0_Location_Template_1_1"
+				(pin passive line
+					(at -16.51 -12.7 90)
+					(length 5.08)
+					(name "COMP_+"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -13.97 -12.7 90)
+					(length 5.08)
+					(name "COMP_-"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -11.43 -12.7 90)
+					(length 5.08)
+					(name "PYRO_+"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -8.89 -12.7 90)
+					(length 5.08)
+					(name "PYRO_-"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -6.35 -12.7 90)
+					(length 5.08)
+					(name "A+"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -3.81 -12.7 90)
+					(length 5.08)
+					(name "A-"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -1.27 -12.7 90)
+					(length 5.08)
+					(name "B+"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "7"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 1.27 -12.7 90)
+					(length 5.08)
+					(name "B-"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "8"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 3.81 -12.7 90)
+					(length 5.08)
+					(name "C+"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "9"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 6.35 -12.7 90)
+					(length 5.08)
+					(name "C-"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "10"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 8.89 -12.7 90)
+					(length 5.08)
+					(name "D+"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "11"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 11.43 -12.7 90)
+					(length 5.08)
+					(name "D-"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "12"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Witness_Modules:BlueRaven_2025_Location_Template"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "A"
+				(at 0 12.7 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "BlueRaven_2025"
+				(at 0 10.16 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "Witness_Modules:BlueRaven_2025_Location_Template"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Six generic terminal pins. Footprint is a silkscreen-only location template, without electrical pads or drilled holes. Pin numbers are positional, not manufacturer assignments."
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "BlueRaven_2025_Location_Template_0_1"
+				(rectangle
+					(start -10.16 7.62)
+					(end 10.16 -10.16)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+			)
+			(symbol "BlueRaven_2025_Location_Template_1_1"
+				(pin passive line
+					(at -15.24 5.08 0)
+					(length 5.08)
+					(name "Vin"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -15.24 2.54 0)
+					(length 5.08)
+					(name "GND"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -15.24 0 0)
+					(length 5.08)
+					(name "Apo"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -15.24 -2.54 0)
+					(length 5.08)
+					(name "Main"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -15.24 -5.08 0)
+					(length 5.08)
+					(name "3rd"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -15.24 -7.62 0)
+					(length 5.08)
+					(name "4th"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Witness_Modules:FWGPS_Tracker_v15_Location_Template"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "A"
+				(at 0 12.7 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "FWGPS_Tracker_v15"
+				(at 0 10.16 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "Witness_Modules:FWGPS_Tracker_v15_Location_Template"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "FWGPS mechanical template. Two generic terminal pins numbered left to right, silkscreen-only terminal centers, and two unplated mounting drills. Mounting holes shown as graphical circles. No electrical terminal pads or manufacturer pin assignments."
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "FWGPS_Tracker_v15_Location_Template_0_1"
+				(rectangle
+					(start -15.24 7.62)
+					(end 15.24 -7.62)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(circle
+					(center -10.668 3.81)
+					(radius 0.9754)
+					(stroke
+						(width 0.2)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 4.572 -3.81)
+					(radius 0.9754)
+					(stroke
+						(width 0.2)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(text "MH1"
+					(at -10.668 1.81 0)
+					(effects
+						(font
+							(size 1 1)
+						)
+					)
+				)
+				(text "MH2"
+					(at 4.572 -5.81 0)
+					(effects
+						(font
+							(size 1 1)
+						)
+					)
+				)
+			)
+			(symbol "FWGPS_Tracker_v15_Location_Template_1_1"
+				(pin passive line
+					(at 20.32 2.54 180)
+					(length 5.08)
+					(name "BATT-"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 20.32 0 180)
+					(length 5.08)
+					(name "BATT+"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Witness_Modules:UBlox_M8_Breakout"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "A"
+				(at 0 12.7 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "UBlox_M8_Breakout"
+				(at 0 10.16 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "Witness_Modules:UBlox_M8_Breakout"
+				(at 0 -1.27 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "u-blox NEO-M8N breakout module: Micro-Lock J1 pins 1 +3V3, 2 RX (module input), 3 TX (module output), 4 GND. Two 2.2 mm mounting holes."
+				(at 0 -1.27 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "UBlox_M8_Breakout_0_1"
+				(rectangle
+					(start -10.16 7.62)
+					(end 12.7 -7.62)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(circle
+					(center -7.8 3.9)
+					(radius 0.715)
+					(stroke
+						(width 0.15)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 7.8 -3.9)
+					(radius 0.715)
+					(stroke
+						(width 0.15)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "UBlox_M8_Breakout_1_1"
+				(pin power_in line
+					(at 17.78 3.81 180)
+					(length 5.08)
+					(name "+3V3"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at 17.78 1.27 180)
+					(length 5.08)
+					(name "RX"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin output line
+					(at 17.78 -1.27 180)
+					(length 5.08)
+					(name "TX"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 17.78 -3.81 180)
+					(length 5.08)
+					(name "GND"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Witness_Modules:Witness_v0_2_MicroLock"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "A"
+				(at 0 20.32 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Witness_v0_2_MicroLock"
+				(at 0 17.78 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "Witness_Modules:Witness_v0_2_MicroLock"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Witness v0.2: J2 battery, J5 UART, J6 CAN. MP is all four grounded M2 mounting holes. J6_1 is NC."
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Witness_v0_2_MicroLock_0_1"
+				(rectangle
+					(start -10.16 15.24)
+					(end 10.16 -10.16)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+			)
+			(symbol "Witness_v0_2_MicroLock_1_1"
+				(pin passive line
+					(at -15.24 10.16 0)
+					(length 5.08)
+					(name "J2_BATT_RAW"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "J2_1"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -15.24 7.62 0)
+					(length 5.08)
+					(name "J2_GND"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "J2_2"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -15.24 0 0)
+					(length 5.08)
+					(name "J5_+3V3"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "J5_1"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -15.24 -2.54 0)
+					(length 5.08)
+					(name "J5_TXD_MCU"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "J5_2"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -15.24 -5.08 0)
+					(length 5.08)
+					(name "J5_RXD_MCU"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "J5_3"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -15.24 -7.62 0)
+					(length 5.08)
+					(name "J5_GND"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "J5_4"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 15.24 10.16 180)
+					(length 5.08)
+					(name "J6_NC"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "J6_1"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 15.24 7.62 180)
+					(length 5.08)
+					(name "J6_CAN_L"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "J6_2"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 15.24 5.08 180)
+					(length 5.08)
+					(name "J6_CAN_H"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "J6_3"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 15.24 2.54 180)
+					(length 5.08)
+					(name "J6_GND"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "J6_4"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 15.24 -7.62 180)
+					(length 5.08)
+					(name "MOUNT_GND"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "MP"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Witness_Modules:miniMagSwitch"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "A"
+				(at 0.254 9.652 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "miniMagSwitch"
+				(at 0.254 7.112 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "Witness_Modules:miniMagSwitch"
+				(at -5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Magnetic power switch module. H2 input (VCC/GND), H1 output (SWITCH_OUT/GND). Two isolated 4-40 mounting holes."
+				(at -5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "miniMagSwitch_0_1"
+				(rectangle
+					(start -7.62 5.08)
+					(end 7.62 -2.54)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+			)
+			(symbol "miniMagSwitch_1_1"
+				(pin passive line
+					(at 12.7 2.54 180)
+					(length 5.08)
+					(name "VOUT"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "H1_1"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 12.7 0 180)
+					(length 5.08)
+					(name "GND_OUT"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "H1_2"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -12.7 2.54 0)
+					(length 5.08)
+					(name "VIN"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "H2_1"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -12.7 0 0)
+					(length 5.08)
+					(name "GND_IN"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "H2_2"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	)
+	(junction
+		(at 120.65 140.97)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "6531788d-5719-4e5d-b535-a4382638b84d")
+	)
+	(junction
+		(at 109.22 110.49)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "b90dd20a-460f-40a1-8dae-b5607ec78afe")
+	)
+	(junction
+		(at 114.3 99.06)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "fb5cdcf6-63ca-43a7-ba04-442d9425c594")
+	)
+	(no_connect
+		(at 123.19 163.83)
+		(uuid "20ecc14d-a362-4018-a6d1-7819f76a60e5")
+	)
+	(no_connect
+		(at 247.65 88.9)
+		(uuid "36da4d9b-e6d8-4b98-bfe4-f3993444d3da")
+	)
+	(no_connect
+		(at 116.84 115.57)
+		(uuid "6e901ad3-ee13-4432-85ae-2b5dbd9bc71d")
+	)
+	(no_connect
+		(at 123.19 168.91)
+		(uuid "817162af-99b8-44dc-b160-a36731a2fa02")
+	)
+	(no_connect
+		(at 123.19 161.29)
+		(uuid "9f03ab11-9120-44cf-83c3-bb3824c7adc9")
+	)
+	(no_connect
+		(at 123.19 166.37)
+		(uuid "a9d050b8-a738-4ec4-bcb4-1944137c83e6")
+	)
+	(no_connect
+		(at 123.19 148.59)
+		(uuid "c792fdba-d18f-48fc-9fc1-ca47c9e919b0")
+	)
+	(no_connect
+		(at 116.84 113.03)
+		(uuid "ce2c8ba1-b94e-49ff-ace5-aa9d44d9176e")
+	)
+	(wire
+		(pts
+			(xy 207.01 93.98) (xy 207.01 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "00f751fa-8098-47fb-a3ae-7f750941b527")
+	)
+	(wire
+		(pts
+			(xy 120.65 146.05) (xy 120.65 140.97)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "04ff98ef-b033-4d93-8a1d-edf7d3c0de4f")
+	)
+	(wire
+		(pts
+			(xy 207.01 86.36) (xy 217.17 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "09b560a3-1a12-443b-b52b-59f5d4791345")
+	)
+	(wire
+		(pts
+			(xy 109.22 90.17) (xy 114.3 90.17)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0a9d865b-3dc8-4be9-aa40-d786043e784e")
+	)
+	(wire
+		(pts
+			(xy 247.65 73.66) (xy 255.27 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1414e851-4040-4cbb-9e77-7de1dce082b9")
+	)
+	(wire
+		(pts
+			(xy 102.87 158.75) (xy 123.19 158.75)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1b9b7f7d-66de-4eb1-8e06-e85aa30fe9de")
+	)
+	(wire
+		(pts
+			(xy 114.3 99.06) (xy 109.22 99.06)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "22e1b076-7c62-4c77-8622-7b9777a7f8d7")
+	)
+	(wire
+		(pts
+			(xy 120.65 137.16) (xy 120.65 140.97)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "25702803-334d-495a-88df-0bb33bb6dfa3")
+	)
+	(wire
+		(pts
+			(xy 111.76 113.03) (xy 111.76 110.49)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "295b8408-7380-4626-b33a-d9aae53c3f71")
+	)
+	(wire
+		(pts
+			(xy 92.71 55.88) (xy 104.14 55.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2c1fea65-e47c-4fc3-88d5-c7357397f16c")
+	)
+	(wire
+		(pts
+			(xy 111.76 137.16) (xy 120.65 137.16)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "315ad0bc-f79d-4802-95f2-f3fb6b57ef13")
+	)
+	(wire
+		(pts
+			(xy 109.22 115.57) (xy 97.79 115.57)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3641df43-39db-487d-a272-967cce5918e7")
+	)
+	(wire
+		(pts
+			(xy 199.39 81.28) (xy 217.17 81.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "38fcf9ce-7d4e-4e66-a0b7-f2f57361517e")
+	)
+	(wire
+		(pts
+			(xy 92.71 53.34) (xy 104.14 53.34)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "508d1151-cf3c-45ac-bc5a-4da9609a5ac6")
+	)
+	(wire
+		(pts
+			(xy 217.17 88.9) (xy 217.17 96.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5345428d-4db0-4e8d-9a0a-e47a871c033a")
+	)
+	(wire
+		(pts
+			(xy 114.3 99.06) (xy 114.3 102.87)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "59fb32d1-9f0f-4a66-93fd-6acb8aabab99")
+	)
+	(wire
+		(pts
+			(xy 120.65 140.97) (xy 123.19 140.97)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "61365bd6-1ab1-4702-b651-1565f19fc993")
+	)
+	(wire
+		(pts
+			(xy 82.55 139.7) (xy 86.36 139.7)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "64c287d8-e0b3-4da3-8285-fae7d760161d")
+	)
+	(wire
+		(pts
+			(xy 114.3 102.87) (xy 116.84 102.87)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6698c823-0f4a-423f-ad0f-610762316504")
+	)
+	(wire
+		(pts
+			(xy 247.65 76.2) (xy 255.27 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7052c280-6211-448b-992a-464dccd0e3ce")
+	)
+	(wire
+		(pts
+			(xy 217.17 96.52) (xy 196.85 96.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "725680c9-fc42-4b98-ab93-0fefffd9c0c1")
+	)
+	(wire
+		(pts
+			(xy 186.69 71.12) (xy 189.23 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "76712b68-7ee5-4ae7-a2ef-3101724bb73e")
+	)
+	(wire
+		(pts
+			(xy 102.87 153.67) (xy 123.19 153.67)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "776e9976-832a-4f3d-add7-43abb75c802b")
+	)
+	(wire
+		(pts
+			(xy 114.3 90.17) (xy 114.3 99.06)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "77e68f20-366c-4f11-aa51-a766783901e2")
+	)
+	(wire
+		(pts
+			(xy 186.69 73.66) (xy 189.23 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "81b3920d-87b1-4297-a1a3-8daad9866f07")
+	)
+	(wire
+		(pts
+			(xy 214.63 73.66) (xy 217.17 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "81dd4f13-ff9a-4c8e-aa5d-e84ca970993f")
+	)
+	(wire
+		(pts
+			(xy 123.19 146.05) (xy 120.65 146.05)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9240fa3f-1217-43f2-a96c-5dfae62ee678")
+	)
+	(wire
+		(pts
+			(xy 109.22 110.49) (xy 109.22 115.57)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "970f2d06-7b35-4543-81fd-e42700dd449c")
+	)
+	(wire
+		(pts
+			(xy 111.76 105.41) (xy 116.84 105.41)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a60c873e-3352-426c-81ab-7b905897cca0")
+	)
+	(wire
+		(pts
+			(xy 97.79 107.95) (xy 116.84 107.95)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a890e2e4-249a-4dbc-805f-c6d9451bf90c")
+	)
+	(wire
+		(pts
+			(xy 111.76 92.71) (xy 111.76 105.41)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ac223aef-82cf-4311-acac-bde4ef232236")
+	)
+	(wire
+		(pts
+			(xy 111.76 110.49) (xy 116.84 110.49)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ad57609e-8d11-43b0-9721-c29b8d670560")
+	)
+	(wire
+		(pts
+			(xy 196.85 93.98) (xy 207.01 93.98)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "af866fe8-7da6-40d2-ab6a-8188d9a09821")
+	)
+	(wire
+		(pts
+			(xy 199.39 88.9) (xy 199.39 81.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "af9f027c-d4c9-45c0-a89a-5c3562040c53")
+	)
+	(wire
+		(pts
+			(xy 199.39 88.9) (xy 196.85 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b4e63c5b-ce7d-4d20-b926-d6c131b2f1a9")
+	)
+	(wire
+		(pts
+			(xy 115.57 143.51) (xy 123.19 143.51)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b81ed3af-a9f4-4441-a525-acc0ad160873")
+	)
+	(wire
+		(pts
+			(xy 247.65 78.74) (xy 255.27 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "be598c72-c2d6-4bb1-95b0-76487e47677e")
+	)
+	(wire
+		(pts
+			(xy 201.93 83.82) (xy 201.93 91.44)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c150ba91-efdb-4435-9a29-49b86b1b526d")
+	)
+	(wire
+		(pts
+			(xy 82.55 137.16) (xy 86.36 137.16)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c48117a9-47e8-4f7f-b62b-5152706c4f0c")
+	)
+	(wire
+		(pts
+			(xy 109.22 99.06) (xy 109.22 110.49)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c5ecfa25-2b45-4473-8fbe-ea3ce5506323")
+	)
+	(wire
+		(pts
+			(xy 217.17 83.82) (xy 201.93 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ccac5231-58ab-43a5-956e-b44a2f11b1cd")
+	)
+	(wire
+		(pts
+			(xy 111.76 139.7) (xy 115.57 139.7)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d07a57ed-1960-446c-affe-8634b02907ed")
+	)
+	(wire
+		(pts
+			(xy 201.93 91.44) (xy 196.85 91.44)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d11eb44e-e138-4b9a-b03f-41f451f04638")
+	)
+	(wire
+		(pts
+			(xy 102.87 151.13) (xy 123.19 151.13)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d5b28bce-8b5d-4b49-abe9-034fb7b550c9")
+	)
+	(wire
+		(pts
+			(xy 102.87 156.21) (xy 123.19 156.21)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d99edc4e-b20c-4807-b4bc-8ebb21ca91c8")
+	)
+	(wire
+		(pts
+			(xy 214.63 71.12) (xy 217.17 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "db3425db-94b4-4c5e-9d67-b14df1b3918c")
+	)
+	(wire
+		(pts
+			(xy 115.57 139.7) (xy 115.57 143.51)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e0f66fc8-b56a-4ace-b95b-ea92cdb52d14")
+	)
+	(wire
+		(pts
+			(xy 97.79 110.49) (xy 109.22 110.49)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e2cea6ad-0e8e-4d0c-b25b-c61f071e2981")
+	)
+	(wire
+		(pts
+			(xy 111.76 92.71) (xy 109.22 92.71)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e2e5c0e0-845b-4524-b2de-285ace7ca2e1")
+	)
+	(wire
+		(pts
+			(xy 80.01 92.71) (xy 83.82 92.71)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ebe4573f-0976-42f9-b6fc-60b5343c5124")
+	)
+	(wire
+		(pts
+			(xy 247.65 71.12) (xy 255.27 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f4f08556-ff34-4eee-9bd0-e399d0c30103")
+	)
+	(wire
+		(pts
+			(xy 97.79 113.03) (xy 111.76 113.03)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f791eb27-222b-4d5e-b6be-f79134887d1a")
+	)
+	(wire
+		(pts
+			(xy 80.01 90.17) (xy 83.82 90.17)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fd7447c8-bd22-4b19-8c50-886198cba41d")
+	)
+	(symbol
+		(lib_id "Witness_Modules:Witness_v0_2_MicroLock")
+		(at 232.41 81.28 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "089d3fa7-7161-4ee7-b53b-ea1f4abf26a0")
+		(property "Reference" "A1"
+			(at 232.41 60.96 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "Witness_v0_2_MicroLock"
+			(at 232.41 63.5 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Witness_Modules:Witness_v0_2_MicroLock"
+			(at 232.41 81.28 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 232.41 81.28 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Witness v0.2: J2 battery, J5 UART, J6 CAN. MP is all four grounded M2 mounting holes. J6_1 is NC."
+			(at 232.41 81.28 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "J5_1"
+			(uuid "27b99087-6b29-4570-9c55-0d836424c0a3")
+		)
+		(pin "MP"
+			(uuid "81e22942-5bcb-4815-8471-9eb628820eef")
+		)
+		(pin "J6_3"
+			(uuid "758bc2e5-921d-4f75-a308-eda28d5be9b9")
+		)
+		(pin "J5_3"
+			(uuid "b774559a-6389-4804-b553-9583ffd2bcff")
+		)
+		(pin "J6_2"
+			(uuid "27891662-0b32-4df5-90b3-0d9344633cfc")
+		)
+		(pin "J6_4"
+			(uuid "da26dc28-dfbe-4399-9907-b9b710acd02b")
+		)
+		(pin "J2_2"
+			(uuid "8c736ae2-39b9-4c64-aa99-fd3daaf02028")
+		)
+		(pin "J2_1"
+			(uuid "a0de9f2c-5327-4109-80bf-638783b8e0c4")
+		)
+		(pin "J5_4"
+			(uuid "142b8b71-c224-4c2f-b41d-b080978ba968")
+		)
+		(pin "J6_1"
+			(uuid "7cc1d1ee-503a-4ee3-9a45-a1f7c45dca80")
+		)
+		(pin "J5_2"
+			(uuid "e1749ce2-aae4-4d24-a282-b305e7afcfb0")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "A1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x02")
+		(at 87.63 55.88 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "2ac40cc5-2c86-41e1-a8b4-e21ca42888c4")
+		(property "Reference" "J3"
+			(at 85.09 55.8801 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "Conn_01x02"
+			(at 85.09 53.3401 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical"
+			(at 87.63 55.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 87.63 55.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 87.63 55.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "76e43a5a-4c41-4b65-95b3-8e9ac17580d4")
+		)
+		(pin "1"
+			(uuid "547238ef-7f07-4736-8731-cc867b1d56c5")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "J3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Witness_Modules:FWGPS_Tracker_v15_Location_Template")
+		(at 124.46 55.88 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "3214a7c9-b7cd-4a2b-9d2e-f019197623f7")
+		(property "Reference" "A5"
+			(at 124.46 43.18 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "FWGPS_Tracker_v15"
+			(at 124.46 45.72 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Witness_Modules:FWGPS_Tracker_v15_Location_Template"
+			(at 124.46 55.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 124.46 55.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "FWGPS mechanical template. Two generic terminal pins numbered left to right, silkscreen-only terminal centers, and two unplated mounting drills. Mounting holes shown as graphical circles. No electrical terminal pads or manufacturer pin assignments."
+			(at 124.46 55.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "fb062f56-2365-4f94-a300-bf24cfc1c923")
+		)
+		(pin "2"
+			(uuid "7fb3a078-0b7e-4539-97d7-c4df957e9a98")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "A5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x04")
+		(at 97.79 153.67 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "42b86f03-bcf6-4874-9704-5e1767ecb048")
+		(property "Reference" "J1"
+			(at 98.044 145.796 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "MOLEX-MICROLOCK"
+			(at 98.044 148.336 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Witness:CONN_2200980000-SD_04P_MOL"
+			(at 97.79 153.67 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 97.79 153.67 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 97.79 153.67 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "4"
+			(uuid "921f154a-23dd-4f75-8884-e589e7f44954")
+		)
+		(pin "1"
+			(uuid "d5d4d9dc-8dc6-44b7-8354-50a7ee17c7e8")
+		)
+		(pin "2"
+			(uuid "8f9e976b-f1d3-44e7-9964-798f2a9bce76")
+		)
+		(pin "3"
+			(uuid "ec85797f-8f90-4d2c-9034-eafb5566fda5")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "J1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x02")
+		(at 181.61 73.66 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "6303d70f-e295-4f48-a878-612ee7e103b4")
+		(property "Reference" "J6"
+			(at 179.07 73.6601 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "Conn_01x02"
+			(at 179.07 71.1201 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical"
+			(at 181.61 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 181.61 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 181.61 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "3850408d-e6d2-4d1e-a959-9d450419bed2")
+		)
+		(pin "1"
+			(uuid "a15e0da1-29b5-40a6-8e98-210d03572510")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "J6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x02")
+		(at 77.47 137.16 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "67f50745-ac65-481b-b710-b3e41dbdf2fa")
+		(property "Reference" "J2"
+			(at 74.93 137.1599 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "Conn_01x02"
+			(at 74.93 139.6999 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical"
+			(at 77.47 137.16 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 77.47 137.16 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 77.47 137.16 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "7139823e-7e70-4d7c-9234-7ca435fc5032")
+		)
+		(pin "1"
+			(uuid "8e6e8c9d-9d45-45f2-affc-d219fdd83435")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "J2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Witness_Modules:miniMagSwitch")
+		(at 96.52 92.71 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "7040092a-a60e-41bd-a693-3c7aaecff1a2")
+		(property "Reference" "A6"
+			(at 96.52 82.55 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "miniMagSwitch"
+			(at 96.52 85.09 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Witness_Modules:miniMagSwitch"
+			(at 96.52 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 96.52 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Magnetic power switch module. H2 input (VCC/GND), H1 output (SWITCH_OUT/GND). Two isolated 4-40 mounting holes."
+			(at 96.52 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "H1_2"
+			(uuid "b99af098-a180-4ef9-a3ff-4dffc5f3a04e")
+		)
+		(pin "H2_1"
+			(uuid "cd365bdb-df33-411b-811d-16ef0007f912")
+		)
+		(pin "H2_2"
+			(uuid "4ca7e13d-a55f-491a-b422-d18bfbb9cc09")
+		)
+		(pin "H1_1"
+			(uuid "fab768b4-86e7-43f5-b342-a00143c9b0b0")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "A6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Witness_Modules:miniMagSwitch")
+		(at 99.06 139.7 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "7befde0d-b103-42e3-8fba-fc3a3bb8ad63")
+		(property "Reference" "A4"
+			(at 99.06 129.54 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "miniMagSwitch"
+			(at 99.06 132.08 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Witness_Modules:miniMagSwitch"
+			(at 99.06 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 99.06 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Magnetic power switch module. H2 input (VCC/GND), H1 output (SWITCH_OUT/GND). Two isolated 4-40 mounting holes."
+			(at 99.06 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "H1_2"
+			(uuid "f292e086-50f9-428d-b01f-905d7da9493d")
+		)
+		(pin "H2_1"
+			(uuid "c3e594a7-5f48-48c7-8fae-a57ee7a0fdef")
+		)
+		(pin "H2_2"
+			(uuid "d82c1e95-8472-4332-b8c5-b0122d6357bb")
+		)
+		(pin "H1_1"
+			(uuid "f2e291d6-3a75-40c4-b467-365c1c53f71c")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "A4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Witness_Modules:AIM_XTRA_4_0_Location_Template")
+		(at 135.89 157.48 270)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "88ded0f5-8ca7-4f1c-b612-7378964bbe7a")
+		(property "Reference" "A2"
+			(at 144.78 156.2099 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "AIM_XTRA_4_0"
+			(at 144.78 158.7499 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Witness_Modules:AIM_XTRA_4_0_Location_Template"
+			(at 135.89 157.48 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 135.89 157.48 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Mechanical mounting template: four 3 mm unplated mounting holes and screw-terminal bar. No electrical pins or copper pads. Board envelope from STEP."
+			(at 135.89 157.48 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "5"
+			(uuid "70f176ad-4e52-4c36-9be5-0cdceb169d35")
+		)
+		(pin "1"
+			(uuid "957b7fd1-f71b-4d00-8a93-bdd1d834b687")
+		)
+		(pin "6"
+			(uuid "99a930b5-a9bf-454b-b030-2c12b1aa0c99")
+		)
+		(pin "10"
+			(uuid "b7bc9bd2-a225-47ee-8aab-e4169770a0ba")
+		)
+		(pin "4"
+			(uuid "fe08bd12-4d61-4c5c-b47b-55d1f4cc4bd4")
+		)
+		(pin "8"
+			(uuid "d739f294-7a80-45ad-a40b-eb35736dc912")
+		)
+		(pin "12"
+			(uuid "7f3d293e-6648-448c-a35c-aa003f682179")
+		)
+		(pin "2"
+			(uuid "9e0cbe0e-e920-49e3-abdc-cbfeeb1c5e27")
+		)
+		(pin "3"
+			(uuid "20a71510-ab00-4c00-ab5e-c47eecea91ca")
+		)
+		(pin "7"
+			(uuid "e59ec5e4-9e7c-4895-a129-01d0fe4800a2")
+		)
+		(pin "9"
+			(uuid "e0224d8c-6ff6-4ea9-a2ba-7c5d60d9888d")
+		)
+		(pin "11"
+			(uuid "aec09694-41c1-4d90-944d-16a13c6b8097")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "A2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x02")
+		(at 74.93 90.17 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "8e82a6d2-9953-4938-ae59-5e8dda9ac379")
+		(property "Reference" "J4"
+			(at 72.39 90.1699 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "Conn_01x02"
+			(at 72.39 92.7099 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical"
+			(at 74.93 90.17 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 74.93 90.17 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 74.93 90.17 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "5886a0d1-1928-4c9f-8cfb-aaa1f9509ea6")
+		)
+		(pin "1"
+			(uuid "a20a33b6-35cb-4737-897a-809afff8e09c")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "J4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x04")
+		(at 260.35 73.66 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "9382e77e-843a-4fff-98ff-c77c9f8940ef")
+		(property "Reference" "J7"
+			(at 260.096 65.532 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "MOLEX-MICROLOCK"
+			(at 260.096 68.072 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Witness:CONN_2200980000-SD_04P_MOL"
+			(at 260.35 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 260.35 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 260.35 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "4"
+			(uuid "d3abe835-f1e1-40d2-9982-78e1884d24b4")
+		)
+		(pin "1"
+			(uuid "b9aa2bf6-e471-4999-be80-03735e062eb5")
+		)
+		(pin "2"
+			(uuid "57f2359e-7cd0-4cdf-8406-4fe80cb7a7db")
+		)
+		(pin "3"
+			(uuid "4b11f8a2-1287-4023-b3af-2ed09c13a2fd")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "J7")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Witness_Modules:BlueRaven_2025_Location_Template")
+		(at 132.08 107.95 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "95ea0757-60c6-4abd-8943-4e22eee6e087")
+		(property "Reference" "A3"
+			(at 143.51 107.9499 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "BlueRaven_2025"
+			(at 143.51 110.4899 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Witness_Modules:BlueRaven_2025_Location_Template"
+			(at 132.08 107.95 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 132.08 107.95 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Six generic terminal pins. Footprint is a silkscreen-only location template, without electrical pads or drilled holes. Pin numbers are positional, not manufacturer assignments."
+			(at 132.08 107.95 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "cbfcedb3-7ba1-4d43-b872-4c7ca1140e99")
+		)
+		(pin "2"
+			(uuid "0e568cde-8a24-4cec-b306-e3716e7ddea6")
+		)
+		(pin "3"
+			(uuid "5a113f7e-01a8-4ebe-9aaf-a1e77dcf5a1a")
+		)
+		(pin "4"
+			(uuid "6e75cf50-fc6f-4637-8d8a-ace2ba674f42")
+		)
+		(pin "5"
+			(uuid "e913869b-49b5-4821-bbb5-b5214275a574")
+		)
+		(pin "6"
+			(uuid "afc26bc9-b9ad-415a-9fcc-4adf9049f0e9")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "A3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Witness_Modules:UBlox_M8_Breakout")
+		(at 179.07 92.71 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "b619a1e3-9bb4-4bda-842b-07d886314b3b")
+		(property "Reference" "A8"
+			(at 179.07 80.01 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "UBlox_M8_Breakout"
+			(at 179.07 82.55 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Witness_Modules:UBlox_M8_Breakout"
+			(at 179.07 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 179.07 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "u-blox NEO-M8N breakout module: Micro-Lock J1 pins 1 +3V3, 2 RX (module input), 3 TX (module output), 4 GND. Two 2.2 mm mounting holes."
+			(at 179.07 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "4"
+			(uuid "1e16b4f0-ac38-4336-9828-4b63c68f955c")
+		)
+		(pin "1"
+			(uuid "5f47f123-a380-4542-9521-71cc24ecd51c")
+		)
+		(pin "2"
+			(uuid "3b3663cd-9d2d-45dd-b16e-a9765dd37277")
+		)
+		(pin "3"
+			(uuid "e839268a-76a4-4803-953e-a36c1f6ddf64")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "A8")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Witness_Modules:miniMagSwitch")
+		(at 201.93 73.66 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "df2b8791-ae18-43ce-98c2-694671dfb1af")
+		(property "Reference" "A7"
+			(at 201.93 63.5 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "miniMagSwitch"
+			(at 201.93 66.04 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Witness_Modules:miniMagSwitch"
+			(at 201.93 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 201.93 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Magnetic power switch module. H2 input (VCC/GND), H1 output (SWITCH_OUT/GND). Two isolated 4-40 mounting holes."
+			(at 201.93 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "H1_2"
+			(uuid "93a89eb7-5ab2-4f7a-9511-9627998d96d0")
+		)
+		(pin "H2_1"
+			(uuid "6800c6e5-639e-4efe-9400-3a5f243b8960")
+		)
+		(pin "H2_2"
+			(uuid "ee80f972-ca7f-4e99-9c0a-685f83741382")
+		)
+		(pin "H1_1"
+			(uuid "af4e54a5-b911-4ef0-a243-a4795757a412")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "A7")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x04")
+		(at 92.71 110.49 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "e69a58b8-3187-43ee-a33a-9e9f9a4399bf")
+		(property "Reference" "J5"
+			(at 92.964 102.108 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "MOLEX-MICROLOCK"
+			(at 92.964 104.648 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Witness:CONN_2200980000-SD_04P_MOL"
+			(at 92.71 110.49 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 92.71 110.49 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 92.71 110.49 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "4"
+			(uuid "a0935348-8489-46b3-9adb-e7f35c9bc7fa")
+		)
+		(pin "1"
+			(uuid "67f6d6a5-3c08-42bf-9037-e3d19dc3c259")
+		)
+		(pin "2"
+			(uuid "f18d8749-e474-4567-ab05-10bc1f084ccf")
+		)
+		(pin "3"
+			(uuid "7ea7dc2f-d274-4c41-843f-94d91fa39c99")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "J5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+	(embedded_fonts no)
+)

@@ -1,0 +1,124 @@
+{
+  "source": "C:\\Users\\Ejfso\\Documents\\GitHub\\witness\\Hardware\\Backplane\\backplane v1\\GPS Tracker v15 parts - FWGPS.step",
+  "view": "unmirrored top view: STEP +X right and +Y up",
+  "origin_xy_mm": [
+    17.78,
+    -6.35
+  ],
+  "mounting_holes": [
+    {
+      "label": "MH1",
+      "x_mm": -17.78,
+      "y_mm": -6.35,
+      "diameter_mm": 3.2512000000000003,
+      "step_center_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "entity": 211
+    },
+    {
+      "label": "MH2",
+      "x_mm": 7.62,
+      "y_mm": 6.35,
+      "diameter_mm": 3.2512000000000003,
+      "step_center_m": [
+        0.0254,
+        -0.0127,
+        0.0
+      ],
+      "entity": 210
+    }
+  ],
+  "terminal_markers": [
+    {
+      "label": "1",
+      "x_mm": 12.595211,
+      "y_mm": 3.597122,
+      "diameter_mm": 1.1176000000000001,
+      "step_center_m": [
+        0.0303752105683089,
+        -0.00994712207466364,
+        0.0254
+      ],
+      "entity": 213
+    },
+    {
+      "label": "2",
+      "x_mm": 15.134817,
+      "y_mm": 3.588111,
+      "diameter_mm": 1.0463654861337242,
+      "step_center_m": [
+        0.0329148173332215,
+        -0.00993811059743166,
+        0.0254
+      ],
+      "entity": 212
+    }
+  ],
+  "terminal_numbering": "1 then 2 from left to right",
+  "outline_mm": [
+    [
+      [
+        -21.082,
+        -10.16
+      ],
+      [
+        -21.082,
+        -4.7498
+      ]
+    ],
+    [
+      [
+        -21.082,
+        -4.7498
+      ],
+      [
+        -19.05,
+        -1.651
+      ]
+    ],
+    [
+      [
+        -19.05,
+        -1.651
+      ],
+      [
+        -19.05,
+        10.16
+      ]
+    ],
+    [
+      [
+        -19.05,
+        10.16
+      ],
+      [
+        21.082,
+        10.16
+      ]
+    ],
+    [
+      [
+        21.082,
+        10.16
+      ],
+      [
+        21.082,
+        -10.16
+      ]
+    ],
+    [
+      [
+        21.082,
+        -10.16
+      ],
+      [
+        -21.082,
+        -10.16
+      ]
+    ]
+  ],
+  "previous_library_sha256": "22b4bea17cb87e961f0cea42c1d5da26c1591662c557b1299b397769d86b45a9"
+}

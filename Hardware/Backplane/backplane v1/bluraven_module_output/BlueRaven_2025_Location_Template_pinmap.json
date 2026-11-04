@@ -1,0 +1,113 @@
+{
+  "source": "C:\\Users\\Ejfso\\Documents\\GitHub\\witness\\Hardware\\Backplane\\backplane v1\\bluraven_2025_v9 - 16-copper-1__Body1.step",
+  "origin_mm": [
+    22.529799925,
+    10.0076
+  ],
+  "view": "unmirrored top view; STEP +X right, +Y up; footprint +Y down",
+  "numbering": "1 through 6 from top to bottom",
+  "terminal_nominal_diameter_mm": 1.1176,
+  "pins": [
+    {
+      "pin": "1",
+      "x_mm": 18.0594,
+      "y_mm": -6.7564,
+      "step_center_m": [
+        0.0405892,
+        0.016764,
+        0.0
+      ],
+      "source_diameter_mm": 1.13,
+      "entity": 20697
+    },
+    {
+      "pin": "2",
+      "x_mm": 18.0594,
+      "y_mm": -4.2164,
+      "step_center_m": [
+        0.0405892,
+        0.014224,
+        0.0
+      ],
+      "source_diameter_mm": 1.13,
+      "entity": 20790
+    },
+    {
+      "pin": "3",
+      "x_mm": 18.0594,
+      "y_mm": -1.6764,
+      "step_center_m": [
+        0.0405892,
+        0.011684,
+        0.0
+      ],
+      "source_diameter_mm": 1.13,
+      "entity": 20854
+    },
+    {
+      "pin": "4",
+      "x_mm": 18.0594,
+      "y_mm": 0.8636,
+      "step_center_m": [
+        0.0405892,
+        0.009144,
+        0.0
+      ],
+      "source_diameter_mm": 1.13,
+      "entity": 20729
+    },
+    {
+      "pin": "5",
+      "x_mm": 18.0594,
+      "y_mm": 3.4036,
+      "step_center_m": [
+        0.0405892,
+        0.006604,
+        0.0
+      ],
+      "source_diameter_mm": 1.13,
+      "entity": 20681
+    },
+    {
+      "pin": "6",
+      "x_mm": 18.0594,
+      "y_mm": 5.9436,
+      "step_center_m": [
+        0.0405892,
+        0.004064,
+        0.0
+      ],
+      "source_diameter_mm": 1.13,
+      "entity": 20822
+    }
+  ],
+  "mounting_locations": [
+    {
+      "label": "MH1",
+      "x_mm": -18.9738,
+      "y_mm": -6.5024,
+      "step_center_m": [
+        0.003556,
+        0.01651,
+        0.0
+      ],
+      "source_diameter_mm": 3.232,
+      "entity": 20886
+    },
+    {
+      "label": "MH2",
+      "x_mm": 10.2362,
+      "y_mm": 6.1976,
+      "step_center_m": [
+        0.032766,
+        0.00381,
+        0.0
+      ],
+      "source_diameter_mm": 3.232,
+      "entity": 20758
+    }
+  ],
+  "pads": false,
+  "drills": false,
+  "previous_library_sha256": "724598e4fe42cffd2374f634befdb483199a228be491d8e1127aea643d091d22"
+}

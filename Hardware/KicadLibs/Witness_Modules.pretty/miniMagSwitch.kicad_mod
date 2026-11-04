@@ -1,0 +1,283 @@
+(footprint "miniMagSwitch"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "miniMagSwitch module: H2 input, H1 switched output, two unplated 4-40 mounting holes; source board top view")
+	(tags "miniMagSwitch magnetic power switch module")
+	(property "Reference" "A**"
+		(at 0 -7 0)
+		(layer "F.SilkS")
+		(uuid "35866b7f-2a7a-4e47-b2f5-4039291e5e16")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "miniMagSwitch"
+		(at 0 7 0)
+		(layer "F.Fab")
+		(uuid "3418474e-aa64-4b91-9a14-d0fee45ced2b")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "538c3ab9-1bef-4954-99d5-dde44085fc1a")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "379e86a0-0e40-49f9-b467-6f26f3fea755")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(attr through_hole)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_line
+		(start -5.842 -5.207)
+		(end -5.842 3.81)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "e2fc26ee-c99e-4670-99e2-ccf930e18f57")
+	)
+	(fp_line
+		(start -5.842 3.81)
+		(end -4.445 3.81)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "ee70cec9-9778-44c1-9907-2c9f33dbb133")
+	)
+	(fp_line
+		(start -4.445 3.81)
+		(end -4.445 5.21747)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "9413a19d-9c8f-412f-8aba-bf91fb0eb2af")
+	)
+	(fp_line
+		(start -4.445 5.21747)
+		(end 5.842 5.207)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "a10650dc-319e-4270-9cb8-227aecad6e04")
+	)
+	(fp_line
+		(start 4.42171 -5.22206)
+		(end -5.842 -5.207)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "8813cebf-9043-4e2d-a1b8-2ddd0d43db3b")
+	)
+	(fp_line
+		(start 4.42171 -3.81366)
+		(end 4.42171 -5.22206)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "51130dbc-03f6-4fd8-b8f7-2d6e8aee412f")
+	)
+	(fp_line
+		(start 5.83281 -3.81366)
+		(end 4.42171 -3.81366)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "a7bf210d-c8cd-460e-9fc1-765863c509bc")
+	)
+	(fp_line
+		(start 5.842 5.207)
+		(end 5.83281 -3.81366)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "5a40ce0a-5a1b-4267-a971-b44117e777ff")
+	)
+	(fp_rect
+		(start -6.35 -5.75)
+		(end 6.35 5.75)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.CrtYd")
+		(uuid "e4055bd8-b53e-4041-9c3c-a2ab98fc316f")
+	)
+	(fp_line
+		(start -5.842 -5.207)
+		(end -5.842 3.81)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "dab0506e-c46c-4cec-9119-15eae95a47bd")
+	)
+	(fp_line
+		(start -5.842 3.81)
+		(end -4.445 3.81)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "5b3fde81-6cc1-4e72-875a-f526c072fc2b")
+	)
+	(fp_line
+		(start -4.445 3.81)
+		(end -4.445 5.21747)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "fff703a4-0855-4ac6-ae29-f287c21d5c2b")
+	)
+	(fp_line
+		(start -4.445 5.21747)
+		(end 5.842 5.207)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "54f376e2-986a-479f-a057-9ec024be801c")
+	)
+	(fp_line
+		(start 4.42171 -5.22206)
+		(end -5.842 -5.207)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "3fc6dd67-988c-46fe-9e01-2230e63ead5e")
+	)
+	(fp_line
+		(start 4.42171 -3.81366)
+		(end 4.42171 -5.22206)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "6f424db3-b7ea-4887-9dba-8bdc63078cf1")
+	)
+	(fp_line
+		(start 5.83281 -3.81366)
+		(end 4.42171 -3.81366)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "1fc58bdc-836b-414a-b1bd-a53ea2859686")
+	)
+	(fp_line
+		(start 5.842 5.207)
+		(end 5.83281 -3.81366)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "53058ec8-049d-4981-a7ec-5b3a02f2f5fc")
+	)
+	(pad "" np_thru_hole circle
+		(at -4.445 3.81)
+		(size 2.9464 2.9464)
+		(drill 2.9464)
+		(layers "*.Cu" "*.Mask")
+		(uuid "167357ad-770e-4c84-bf84-a7c13a121294")
+	)
+	(pad "" np_thru_hole circle
+		(at 4.445 -3.81)
+		(size 2.9464 2.9464)
+		(drill 2.9464)
+		(layers "*.Cu" "*.Mask")
+		(uuid "e0ce5b00-2b97-48d3-93c0-25882c54c6bc")
+	)
+	(pad "H1_1" thru_hole rect
+		(at 4.953 4.318)
+		(size 1.7 1.7)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "ba62cfcf-bae8-4e9d-b7a1-be0e8a106307")
+	)
+	(pad "H1_2" thru_hole circle
+		(at 2.413 4.318)
+		(size 1.7 1.7)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "e600ad3f-a92c-41e4-a1b8-587817d6b0f9")
+	)
+	(pad "H2_1" thru_hole rect
+		(at -4.953 -4.318)
+		(size 1.7 1.7)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "e023d5b3-4ca2-4323-ae47-a1ed8d67e999")
+	)
+	(pad "H2_2" thru_hole circle
+		(at -2.413 -4.318)
+		(size 1.7 1.7)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "e948e465-b099-463c-b806-08e9a810ac7e")
+	)
+	(embedded_fonts no)
+	(model "C:/Users/Ejfso/Documents/GitHub/witness/Hardware/KicadLibs/miniMagSwitch.step"
+		(offset
+			(xyz -5.75 5.25 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -0 -0 -0)
+		)
+	)
+)

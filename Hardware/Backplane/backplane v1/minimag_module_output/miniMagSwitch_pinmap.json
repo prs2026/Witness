@@ -1,0 +1,70 @@
+{
+  "source": "C:\\Users\\Ejfso\\Documents\\GitHub\\miniMagSwitch",
+  "view": "top; no mirroring",
+  "origin_mm": [
+    5.842,
+    5.207
+  ],
+  "pins": [
+    {
+      "pin": "H1_1",
+      "connector": "H1",
+      "contact": "1",
+      "signal": "SWITCH_OUT",
+      "x_mm": 4.953,
+      "y_mm": 4.318,
+      "source_x_mm": 10.795,
+      "source_y_mm": -9.525,
+      "size_mm": 1.7,
+      "drill_mm": 1.0
+    },
+    {
+      "pin": "H1_2",
+      "connector": "H1",
+      "contact": "2",
+      "signal": "GND",
+      "x_mm": 2.413,
+      "y_mm": 4.318,
+      "source_x_mm": 8.255,
+      "source_y_mm": -9.525,
+      "size_mm": 1.7,
+      "drill_mm": 1.0
+    },
+    {
+      "pin": "H2_1",
+      "connector": "H2",
+      "contact": "1",
+      "signal": "VCC",
+      "x_mm": -4.953,
+      "y_mm": -4.318,
+      "source_x_mm": 0.889,
+      "source_y_mm": -0.889,
+      "size_mm": 1.7,
+      "drill_mm": 1.0
+    },
+    {
+      "pin": "H2_2",
+      "connector": "H2",
+      "contact": "2",
+      "signal": "GND",
+      "x_mm": -2.413,
+      "y_mm": -4.318,
+      "source_x_mm": 3.429,
+      "source_y_mm": -0.889,
+      "size_mm": 1.7,
+      "drill_mm": 1.0
+    }
+  ],
+  "mounting_holes_mm": [
+    [
+      4.445,
+      -3.81
+    ],
+    [
+      -4.445,
+      3.81
+    ]
+  ],
+  "mounting_drill_mm": 2.9464,
+  "previous_library_sha256": "29654db68f5e248573e3c136687b1c29d48485b3c4233acd70e31e5fe35df181"
+}
