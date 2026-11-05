@@ -1,0 +1,51 @@
+{
+  "source": "C:\\Users\\Ejfso\\Documents\\GitHub\\witness\\Hardware\\KicadLibs\\1101008_EMI_Bracket_Wide_30.94mm.step",
+  "source_sha256": "66ae41860a24d4ea1c7c5044bc7cad6def9942b3baa8c1f38078beb0003338cf",
+  "contact_plane_source_x_mm": -1.5875,
+  "contact_faces": [
+    {
+      "source_face": 252,
+      "x_mm": 0,
+      "y_mm": -15.216000000000001,
+      "contact_length_mm": 38.10000000000002,
+      "contact_width_mm": 0.5080000000000009
+    },
+    {
+      "source_face": 250,
+      "x_mm": 0,
+      "y_mm": 15.216000000000001,
+      "contact_length_mm": 38.10000000000002,
+      "contact_width_mm": 0.5080000000000009
+    }
+  ],
+  "pad_number": "1",
+  "pad_net_intent": "GND",
+  "pad_dimensions_mm": [
+    39.1,
+    1.5
+  ],
+  "pad_fillet_allowance_mm": {
+    "ends": 0.5,
+    "sides": 0.496
+  },
+  "paste_apertures": false,
+  "model_offset_mm": [
+    354.585773103001,
+    0,
+    -1.5875
+  ],
+  "model_kicad_rotation_deg": [
+    0,
+    -90,
+    0
+  ],
+  "physical_model_transform": "X=sourceZ-Zcenter; Y=sourceY; Z=-sourceX-1.5875 mm",
+  "dimensions_mm": [
+    38.1,
+    30.94,
+    8.89
+  ],
+  "previous_library_sha256": "dfd4de2b00e8c7b98204de9fb306d9ab5f3d86d36c4f056ef5bf299d2d85f824",
+  "original_source": "C:\\Users\\Ejfso\\Documents\\GitHub\\witness\\Hardware\\KicadLibs\\1101 - Nosecone - 1101008 - EMI bracket(1).step",
+  "modification": "Overall width +3 mm; both sides translated outward 1.5 mm; thickness and bend radii retained"
+}

@@ -1,15 +1,13 @@
 Comment,Designator,Footprint,LCSC,Quantity
 LED,D1,LED_0603_1608Metric,,1
-MOLEX-MICROLOCK,J1,Molex_MicroLock-2200980471-01x04-Horizontal,,1
-0,R3,R_0603_1608Metric,,1
+MOLEX-MICROLOCK,J1,CONN_2200980000-SD_04P_MOL,,1
 L_Small,L1,L_0603_1608Metric,,1
 NEO-M8N,U1,ublox_NEO,,1
-0,R2,R_0603_1608Metric,,1
 10,R6,R_0603_1608Metric,,1
 100n,C3,C_0603_1608Metric,,1
 LED,D2,LED_0603_1608Metric,,1
 1k,R8,R_0603_1608Metric,,1
 Antenna_Shield,AE1,U.FL_Molex_MCRF_73412-0110_Vertical,,1
-10u,C1,C_0805_2012Metric,,1
 TestPoint,TP1,TestPoint_Pad_1.5x1.5mm,,1
 1k,R7,R_0603_1608Metric,,1
+10u,C4,C_0603_1608Metric,,1

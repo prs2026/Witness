@@ -1,0 +1,19 @@
+Designator,Val,Package,Mid X,Mid Y,Rotation,Layer
+A1,Witness_v0_2_MicroLock,Witness_v0_2_MicroLock,174.6,-91.2,270.0,bottom
+A2,AIM_XTRA_4_0,AIM_XTRA_4_0_Location_Template,151.15,-97.585,180.0,top
+A3,BlueRaven_2025,BlueRaven_2025_Location_Template,219.5681,-99.2976,0.0,bottom
+A4,miniMagSwitch,miniMagSwitch_SideOn_DualHeader,211.771375,-120.719665,175.0,top
+A5,FWGPS_Tracker_v15,FWGPS_Tracker_v15_Location_Template,128.638157,-101.975131,5.0,bottom
+A6,miniMagSwitch,miniMagSwitch_SideOn_DualHeader,212.646182,-78.110306,5.0,top
+A7,miniMagSwitch,miniMagSwitch_SideOn_DualHeader,141.746375,-84.555334,355.0,bottom
+A8,UBlox_M8_Breakout,UBlox_M8_Breakout,178.55,-110.2,180.0,bottom
+J1,MOLEX-MICROLOCK,CONN_2200980000-SD_04P_MOL,238.932561,-85.6604,270.0,bottom
+J10,Conn_01x02,CONN_B02B-PASK-1_JST,201.281749,-78.58175,0.0,bottom
+J11,Conn_01x02,CONN_B02B-PASK-1_JST,186.88175,-120.51825,180.0,top
+J12,Conn_01x02,CONN_B02B-PASK-1_JST,195.518249,-78.18175,0.0,top
+J5,MOLEX-MICROLOCK,CONN_2200980000-SD_04P_MOL,239.132561,-115.2604,270.0,bottom
+J6,Conn_01x02,CONN_B02B-PASK-1_JST,194.18175,-120.86825,180.0,top
+J7,MOLEX-MICROLOCK,CONN_2200980000-SD_04P_MOL,238.932561,-78.0604,270.0,bottom
+J8,JST-PH,JST_PH_B4B-PH-K_1x04_P2.00mm_Vertical,226.6,-79.0,180.0,bottom
+J9,JST-PH,JST_PH_B4B-PH-K_1x04_P2.00mm_Vertical,228.2,-119.45,0.0,bottom
+SH1,EMI_Bracket_1101008,EMI_Bracket_1101008,213.675,-99.15,0.0,bottom

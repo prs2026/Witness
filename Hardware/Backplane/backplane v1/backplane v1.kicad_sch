@@ -1902,6 +1902,12 @@
 		)
 	)
 	(junction
+		(at 71.12 137.16)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "496079fb-b205-4be8-bf10-91f704befe79")
+	)
+	(junction
 		(at 120.65 140.97)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -1912,6 +1918,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "65f3c5b3-b091-43bd-ad66-537d5b5fd2ec")
+	)
+	(junction
+		(at 71.12 139.7)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "b982d731-da9d-427b-b504-690a1d39283a")
 	)
 	(junction
 		(at 114.3 99.06)
@@ -2133,7 +2145,7 @@
 	)
 	(wire
 		(pts
-			(xy 68.58 139.7) (xy 86.36 139.7)
+			(xy 68.58 139.7) (xy 71.12 139.7)
 		)
 		(stroke
 			(width 0)
@@ -2313,6 +2325,16 @@
 	)
 	(wire
 		(pts
+			(xy 71.12 137.16) (xy 86.36 137.16)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "aacdb882-9b78-46b1-8cce-6ac37650bf58")
+	)
+	(wire
+		(pts
 			(xy 111.76 93.98) (xy 111.76 104.14)
 		)
 		(stroke
@@ -2403,7 +2425,7 @@
 	)
 	(wire
 		(pts
-			(xy 68.58 137.16) (xy 86.36 137.16)
+			(xy 68.58 137.16) (xy 71.12 137.16)
 		)
 		(stroke
 			(width 0)
@@ -2480,6 +2502,16 @@
 			(type default)
 		)
 		(uuid "d5b28bce-8b5d-4b49-abe9-034fb7b550c9")
+	)
+	(wire
+		(pts
+			(xy 71.12 139.7) (xy 86.36 139.7)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d7141163-7a96-433d-b97a-423b82caf94a")
 	)
 	(wire
 		(pts
@@ -2722,6 +2754,88 @@
 		(uuid "fe4abe25-5f81-445b-ab7e-c6a999969881")
 	)
 	(symbol
+		(lib_id "Connector_Generic:Conn_01x02")
+		(at 63.5 91.44 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "069c13c4-3a95-437d-af34-a9a0da01cd49")
+		(property "Reference" "J10"
+			(at 60.96 91.4399 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "Conn_01x02"
+			(at 60.96 93.9799 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Witness:CONN_B02B-PASK-1_JST"
+			(at 63.5 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 63.5 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 63.5 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "0e632d89-1f5e-4476-8794-32396eb61abd")
+		)
+		(pin "1"
+			(uuid "fe4ce609-ed72-4f58-9dc0-1a1c5c070080")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "J10")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Witness_Modules:Witness_v0_2_MicroLock")
 		(at 232.41 81.28 0)
 		(unit 1)
@@ -2823,87 +2937,6 @@
 			(project "backplane v1"
 				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
 					(reference "A1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector_Generic:Conn_01x02")
-		(at 87.63 55.88 180)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "2ac40cc5-2c86-41e1-a8b4-e21ca42888c4")
-		(property "Reference" "J3"
-			(at 85.09 55.8801 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "Conn_01x02"
-			(at 85.09 53.3401 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical"
-			(at 87.63 55.88 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 87.63 55.88 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
-			(at 87.63 55.88 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "2"
-			(uuid "76e43a5a-4c41-4b65-95b3-8e9ac17580d4")
-		)
-		(pin "1"
-			(uuid "547238ef-7f07-4736-8731-cc867b1d56c5")
-		)
-		(instances
-			(project "backplane v1"
-				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
-					(reference "J3")
 					(unit 1)
 				)
 			)
@@ -3328,7 +3361,8 @@
 	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x02")
-		(at 170.18 73.66 180)
+		(at 170.18 71.12 0)
+		(mirror y)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -3338,7 +3372,7 @@
 		(dnp no)
 		(uuid "6303d70f-e295-4f48-a878-612ee7e103b4")
 		(property "Reference" "J6"
-			(at 167.64 73.6601 0)
+			(at 167.64 71.1199 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -3349,7 +3383,7 @@
 			)
 		)
 		(property "Value" "Conn_01x02"
-			(at 167.64 71.1201 0)
+			(at 167.64 73.6599 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -3359,8 +3393,8 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical"
-			(at 170.18 73.66 0)
+		(property "Footprint" "Witness:CONN_B02B-PASK-1_JST"
+			(at 170.18 71.12 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3371,7 +3405,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 170.18 73.66 0)
+			(at 170.18 71.12 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3382,7 +3416,7 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
-			(at 170.18 73.66 0)
+			(at 170.18 71.12 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3402,88 +3436,6 @@
 			(project "backplane v1"
 				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
 					(reference "J6")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector_Generic:Conn_01x02")
-		(at 63.5 137.16 0)
-		(mirror y)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "67f50745-ac65-481b-b710-b3e41dbdf2fa")
-		(property "Reference" "J2"
-			(at 60.96 137.1599 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "Conn_01x02"
-			(at 60.96 139.6999 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical"
-			(at 63.5 137.16 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 63.5 137.16 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
-			(at 63.5 137.16 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "2"
-			(uuid "7139823e-7e70-4d7c-9234-7ca435fc5032")
-		)
-		(pin "1"
-			(uuid "8e6e8c9d-9d45-45f2-affc-d219fdd83435")
-		)
-		(instances
-			(project "backplane v1"
-				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
-					(reference "J2")
 					(unit 1)
 				)
 			)
@@ -3775,7 +3727,7 @@
 	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x02")
-		(at 63.5 91.44 0)
+		(at 87.63 53.34 0)
 		(mirror y)
 		(unit 1)
 		(body_style 1)
@@ -3784,9 +3736,9 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "8e82a6d2-9953-4938-ae59-5e8dda9ac379")
-		(property "Reference" "J4"
-			(at 60.96 91.4399 0)
+		(uuid "8bbc7479-7e1d-48ed-8ff4-180307dcc784")
+		(property "Reference" "J11"
+			(at 85.09 53.3399 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -3797,7 +3749,7 @@
 			)
 		)
 		(property "Value" "Conn_01x02"
-			(at 60.96 93.9799 0)
+			(at 85.09 55.8799 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -3807,8 +3759,8 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical"
-			(at 63.5 91.44 0)
+		(property "Footprint" "Witness:CONN_B02B-PASK-1_JST"
+			(at 87.63 53.34 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3819,7 +3771,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 63.5 91.44 0)
+			(at 87.63 53.34 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3830,7 +3782,7 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
-			(at 63.5 91.44 0)
+			(at 87.63 53.34 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3841,15 +3793,15 @@
 			)
 		)
 		(pin "2"
-			(uuid "5886a0d1-1928-4c9f-8cfb-aaa1f9509ea6")
+			(uuid "e08de16f-c96b-46fb-839f-beeb8c58dc3b")
 		)
 		(pin "1"
-			(uuid "a20a33b6-35cb-4737-897a-809afff8e09c")
+			(uuid "be19c261-073d-437c-b9be-55e7fbdb8515")
 		)
 		(instances
 			(project "backplane v1"
 				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
-					(reference "J4")
+					(reference "J11")
 					(unit 1)
 				)
 			)
@@ -4115,6 +4067,88 @@
 			(project "backplane v1"
 				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
 					(reference "A8")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x02")
+		(at 66.04 137.16 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "ba5126aa-05b0-4e91-85cd-6713a8a1ddff")
+		(property "Reference" "J12"
+			(at 63.5 137.1599 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "Conn_01x02"
+			(at 63.5 139.6999 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Witness:CONN_B02B-PASK-1_JST"
+			(at 66.04 137.16 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 66.04 137.16 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 66.04 137.16 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "1a0a6f6f-b643-47d8-8016-ecfb659b6d8d")
+		)
+		(pin "1"
+			(uuid "db7401ea-d7c0-4cd6-a7f0-1699a83d5843")
+		)
+		(instances
+			(project "backplane v1"
+				(path "/88077a8f-1b7e-4728-b6c6-fe5d2ba05903"
+					(reference "J12")
 					(unit 1)
 				)
 			)

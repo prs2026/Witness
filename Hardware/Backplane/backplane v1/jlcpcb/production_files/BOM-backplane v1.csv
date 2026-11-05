@@ -1,0 +1,16 @@
+Comment,Designator,Footprint,LCSC,Quantity
+EMI_Bracket_1101008,SH1,EMI_Bracket_1101008,,1
+Conn_01x02,J6,CONN_B02B-PASK-1_JST,,1
+miniMagSwitch,A4,miniMagSwitch_SideOn_DualHeader,,1
+miniMagSwitch,A6,miniMagSwitch_SideOn_DualHeader,,1
+MOLEX-MICROLOCK,J7,CONN_2200980000-SD_04P_MOL,,1
+UBlox_M8_Breakout,A8,UBlox_M8_Breakout,,1
+MOLEX-MICROLOCK,J1,CONN_2200980000-SD_04P_MOL,,1
+JST-PH,J8,JST_PH_B4B-PH-K_1x04_P2.00mm_Vertical,,1
+MOLEX-MICROLOCK,J5,CONN_2200980000-SD_04P_MOL,,1
+Witness_v0_2_MicroLock,A1,Witness_v0_2_MicroLock,,1
+miniMagSwitch,A7,miniMagSwitch_SideOn_DualHeader,,1
+JST-PH,J9,JST_PH_B4B-PH-K_1x04_P2.00mm_Vertical,,1
+Conn_01x02,J12,CONN_B02B-PASK-1_JST,,1
+Conn_01x02,J11,CONN_B02B-PASK-1_JST,,1
+Conn_01x02,J10,CONN_B02B-PASK-1_JST,,1
