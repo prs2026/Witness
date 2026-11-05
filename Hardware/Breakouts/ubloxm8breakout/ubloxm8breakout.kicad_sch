@@ -2271,7 +2271,7 @@
 	)
 	(wire
 		(pts
-			(xy 90.17 88.9) (xy 111.76 88.9)
+			(xy 90.17 88.9) (xy 127 88.9)
 		)
 		(stroke
 			(width 0)
@@ -2331,16 +2331,6 @@
 	)
 	(wire
 		(pts
-			(xy 116.84 88.9) (xy 127 88.9)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "478cb3f6-90c4-4401-8760-029aa8782033")
-	)
-	(wire
-		(pts
 			(xy 144.78 66.04) (xy 151.13 66.04)
 		)
 		(stroke
@@ -2388,16 +2378,6 @@
 			(type default)
 		)
 		(uuid "64d1e4ad-9d3e-426d-a533-ddfa4dbd678f")
-	)
-	(wire
-		(pts
-			(xy 116.84 91.44) (xy 127 91.44)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "6776b00f-fb13-460e-9157-6f9478a9a53f")
 	)
 	(wire
 		(pts
@@ -2521,7 +2501,7 @@
 	)
 	(wire
 		(pts
-			(xy 90.17 91.44) (xy 111.76 91.44)
+			(xy 90.17 91.44) (xy 127 91.44)
 		)
 		(stroke
 			(width 0)
@@ -3770,88 +3750,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:C_Small")
-		(at 147.32 58.42 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "2fa6731a-caea-431b-9059-686bae2519a7")
-		(property "Reference" "C1"
-			(at 149.86 57.1562 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "10u"
-			(at 149.86 59.6962 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
-			(at 147.32 58.42 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 147.32 58.42 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Unpolarized capacitor, small symbol"
-			(at 147.32 58.42 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "b628a0dc-4612-4561-805c-3d4218ca2ab9")
-		)
-		(pin "2"
-			(uuid "0caf0783-0bc2-4b55-923f-8f48f93e682b")
-		)
-		(instances
-			(project "ubloxm8breakout"
-				(path "/e42f1afe-5f78-42e6-8923-c9a23c1b1be0"
-					(reference "C1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Mechanical:MountingHole")
 		(at 111.76 154.94 0)
 		(unit 1)
@@ -4015,86 +3913,6 @@
 			(project "ubloxm8breakout"
 				(path "/e42f1afe-5f78-42e6-8923-c9a23c1b1be0"
 					(reference "D2")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:R_Small")
-		(at 114.3 91.44 90)
-		(mirror x)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "687fc495-4ef2-4754-9055-1194fb0ba981")
-		(property "Reference" "R2"
-			(at 115.062 93.472 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.016 1.016)
-				)
-			)
-		)
-		(property "Value" "0"
-			(at 112.776 93.472 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
-			(at 114.3 91.44 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 114.3 91.44 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Resistor, small symbol"
-			(at 114.3 91.44 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "2"
-			(uuid "6904193e-c376-484a-953b-9d0ed333257e")
-		)
-		(pin "1"
-			(uuid "8baf9150-ee32-4ccc-bf21-b1dd13522996")
-		)
-		(instances
-			(project "ubloxm8breakout"
-				(path "/e42f1afe-5f78-42e6-8923-c9a23c1b1be0"
-					(reference "R2")
 					(unit 1)
 				)
 			)
@@ -4497,6 +4315,87 @@
 		)
 	)
 	(symbol
+		(lib_id "Device:C_Small")
+		(at 147.32 58.42 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "8bf45f3e-342a-4d61-9c94-01c3435502a7")
+		(property "Reference" "C4"
+			(at 149.86 57.1562 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "10u"
+			(at 149.86 59.6962 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+			(at 147.32 58.42 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 147.32 58.42 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Unpolarized capacitor, small symbol"
+			(at 147.32 58.42 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "50715173-0143-473a-9798-fdc2884d5769")
+		)
+		(pin "2"
+			(uuid "f53434dd-e2b0-4229-b00b-097afedeb233")
+		)
+		(instances
+			(project "ubloxm8breakout"
+				(path "/e42f1afe-5f78-42e6-8923-c9a23c1b1be0"
+					(reference "C4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:+3V3")
 		(at 142.24 52.07 0)
 		(unit 1)
@@ -4732,85 +4631,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R_Small")
-		(at 114.3 88.9 90)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "d14798b9-5fdc-4b42-b314-20cae6c612a2")
-		(property "Reference" "R3"
-			(at 115.062 86.868 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.016 1.016)
-				)
-			)
-		)
-		(property "Value" "0"
-			(at 112.776 86.868 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
-			(at 114.3 88.9 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 114.3 88.9 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Resistor, small symbol"
-			(at 114.3 88.9 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "2"
-			(uuid "ffd5d4cd-4e7a-4af5-a2c1-63edccd6b54d")
-		)
-		(pin "1"
-			(uuid "9acb9026-22cc-4105-acbf-2216b01e7be3")
-		)
-		(instances
-			(project "ubloxm8breakout"
-				(path "/e42f1afe-5f78-42e6-8923-c9a23c1b1be0"
-					(reference "R3")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "RF_GPS:NEO-M8N")
 		(at 144.78 96.52 0)
 		(unit 1)
@@ -4989,7 +4809,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Witness:Molex_MicroLock-2200980471-01x04-Horizontal"
+		(property "Footprint" "Witness:CONN_2200980000-SD_04P_MOL"
 			(at 85.09 91.44 0)
 			(hide yes)
 			(show_name no)

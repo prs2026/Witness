@@ -1,0 +1,53 @@
+{
+  "source": "C:\\Users\\Ejfso\\Documents\\GitHub\\miniMagSwitch",
+  "host_thickness_mm": 1.6,
+  "connector_row_separation_mm": 8.636,
+  "required_header_lead_standoff_mm": 3.518,
+  "pins": [
+    {
+      "pin": "H1_1",
+      "signal": "SWITCH_OUT",
+      "x_mm": 4.953,
+      "y_mm": 2.54,
+      "assembly_side": "back",
+      "lead_center_z_mm": -5.118
+    },
+    {
+      "pin": "H1_2",
+      "signal": "GND",
+      "x_mm": 2.413,
+      "y_mm": 2.54,
+      "assembly_side": "back",
+      "lead_center_z_mm": -5.118
+    },
+    {
+      "pin": "H2_1",
+      "signal": "VCC",
+      "x_mm": -4.953,
+      "y_mm": 2.54,
+      "assembly_side": "front",
+      "lead_center_z_mm": 3.518
+    },
+    {
+      "pin": "H2_2",
+      "signal": "GND",
+      "x_mm": -2.413,
+      "y_mm": 2.54,
+      "assembly_side": "front",
+      "lead_center_z_mm": 3.518
+    }
+  ],
+  "placement": "Origin on host PCB edge; host inside +Y, module outside -Y; source board vertical; H2 on front, H1 on back",
+  "hardware": "Parametric long-tail bent-pin assembly; not a verified catalogue header",
+  "module_model_offset_mm": [
+    -5.842,
+    1.8000508,
+    4.407
+  ],
+  "module_model_rotation_deg": [
+    -90,
+    0,
+    0
+  ],
+  "previous_library_sha256": "11928f2cfa4bc605386a016c1adf63d4655ae175486ed84a212dcb9db6b3ade3"
+}

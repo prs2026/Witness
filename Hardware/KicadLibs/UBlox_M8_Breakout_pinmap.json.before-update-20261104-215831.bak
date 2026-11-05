@@ -1,0 +1,73 @@
+{
+  "source": "C:\\Users\\Ejfso\\Documents\\GitHub\\witness\\Hardware\\Breakouts\\ubloxm8breakout\\ubloxm8breakout.kicad_pcb",
+  "origin_xy_mm": [
+    143.75,
+    90.5
+  ],
+  "view": "source board top view, unmirrored",
+  "pins": [
+    {
+      "pin": "1",
+      "name": "+3V3",
+      "x_mm": 9.2,
+      "y_mm": 1.525,
+      "size_mm": [
+        0.8,
+        1.3
+      ],
+      "drill_mm": 0.5,
+      "rotation_deg": 90.0
+    },
+    {
+      "pin": "2",
+      "name": "RX",
+      "x_mm": 9.2,
+      "y_mm": 0.275,
+      "size_mm": [
+        0.8,
+        1.3
+      ],
+      "drill_mm": 0.5,
+      "rotation_deg": 90.0
+    },
+    {
+      "pin": "3",
+      "name": "TX",
+      "x_mm": 9.2,
+      "y_mm": -0.975,
+      "size_mm": [
+        0.8,
+        1.3
+      ],
+      "drill_mm": 0.5,
+      "rotation_deg": 90.0
+    },
+    {
+      "pin": "4",
+      "name": "GND",
+      "x_mm": 9.2,
+      "y_mm": -2.225,
+      "size_mm": [
+        0.8,
+        1.3
+      ],
+      "drill_mm": 0.5,
+      "rotation_deg": 90.0
+    }
+  ],
+  "mounting_holes": [
+    {
+      "label": "H1",
+      "x_mm": -12.0,
+      "y_mm": -6.0,
+      "drill_mm": 2.2
+    },
+    {
+      "label": "H2",
+      "x_mm": 12.0,
+      "y_mm": 6.0,
+      "drill_mm": 2.2
+    }
+  ],
+  "previous_library_sha256": "c382c14e4d5212a1303d48675c4c0e6c7fa0eda5cab6cca3e4acd6c288cd74e0"
+}

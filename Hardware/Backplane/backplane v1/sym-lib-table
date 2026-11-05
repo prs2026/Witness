@@ -2,4 +2,5 @@
 	(version 7)
 	(lib (name "Witness_Modules") (type "KiCad") (uri "${KIPRJMOD}/../../KicadLibs/Witness_Modules.kicad_sym") (options "") (descr "Witness board modules"))
 	(lib (name "rocketry computerswitness") (type "KiCad") (uri "C:/Users/Ejfso/Documents/GitHub/witness/Hardware/KicadLibs/rocketry computerswitness.kicad_sym") (options "") (descr ""))
+	(lib (name "Seeed_Studio_XIAO_Series") (type "KiCad") (uri "C:/Users/Ejfso/Documents/GitHub/witness/Hardware/KicadLibs/Seeed_Studio_XIAO_Series.kicad_sym") (options "") (descr ""))
 )

@@ -8,7 +8,7 @@
 		(at 1.875 0 0)
 		(unlocked yes)
 		(layer "F.SilkS")
-		(uuid "36cde37b-5a81-4a4f-b769-9e25424f15da")
+		(uuid "f4e4346a-aefe-42c2-9003-383654712b05")
 		(effects
 			(font
 				(size 1 1)
@@ -20,7 +20,7 @@
 		(at 1.875 0 0)
 		(unlocked yes)
 		(layer "F.Fab")
-		(uuid "560a6a8c-613c-4179-b955-fe863f607765")
+		(uuid "12fc5124-0de3-4ea2-b17b-cc9499166748")
 		(effects
 			(font
 				(size 1 1)
@@ -32,7 +32,7 @@
 		(at 0 0 0)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "6371e63b-6457-4da0-b284-3820e23dc96f")
+		(uuid "2a088c64-34b5-4512-82f6-6249b3c3adbc")
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -43,13 +43,14 @@
 		(at 0 0 0)
 		(layer "F.Fab")
 		(hide yes)
-		(uuid "a27ec856-cadd-4aca-b8e7-63893b3b435a")
+		(uuid "3c77c6b0-7e09-473a-9fe2-7fdb279cf5d2")
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 		)
 	)
+	(clearance 0.1)
 	(attr through_hole)
 	(duplicate_pad_numbers_are_jumpers no)
 	(fp_line
@@ -60,7 +61,7 @@
 			(type solid)
 		)
 		(layer "F.SilkS")
-		(uuid "167c2113-439b-43c3-8787-33ee2c6fc83e")
+		(uuid "74ea4f66-30ef-461c-a3c1-2e9531a680c5")
 	)
 	(fp_line
 		(start -1.7064 3.19551)
@@ -70,7 +71,7 @@
 			(type solid)
 		)
 		(layer "F.SilkS")
-		(uuid "9090bd27-bfde-4fc0-ace2-600100ca7f8c")
+		(uuid "95ede94b-8992-4e04-8bdc-c653d1dcd90a")
 	)
 	(fp_line
 		(start -1.7064 4.854199)
@@ -80,7 +81,7 @@
 			(type solid)
 		)
 		(layer "F.SilkS")
-		(uuid "0150be32-58fa-46c1-bf39-77d62214c802")
+		(uuid "e5d6b693-813a-4d75-b4d3-d33991604b66")
 	)
 	(fp_line
 		(start -0.838832 -0.302)
@@ -90,7 +91,7 @@
 			(type solid)
 		)
 		(layer "F.SilkS")
-		(uuid "93d8a3d9-bb27-4218-8de9-5ac4dc018cc9")
+		(uuid "bc49fd3f-5101-47a1-8d99-02f11cfdea0c")
 	)
 	(fp_line
 		(start 5.4564 -0.302)
@@ -100,7 +101,7 @@
 			(type solid)
 		)
 		(layer "F.SilkS")
-		(uuid "c0de5415-f1c1-46da-983e-40eda2601a74")
+		(uuid "5bf682a9-6aa0-41fe-80f5-6c7c6590d822")
 	)
 	(fp_line
 		(start 5.4564 2.20453)
@@ -110,7 +111,7 @@
 			(type solid)
 		)
 		(layer "F.SilkS")
-		(uuid "7b866f69-7988-4998-aa84-20cf900fb11c")
+		(uuid "49be9292-ab16-416c-9945-8145306852f4")
 	)
 	(fp_line
 		(start 5.4564 4.854199)
@@ -120,7 +121,7 @@
 			(type solid)
 		)
 		(layer "F.SilkS")
-		(uuid "4064f491-e4dc-467d-826d-7545ba7e858b")
+		(uuid "8144d326-d081-4cee-9c5a-346eda593001")
 	)
 	(fp_circle
 		(center -2.5954 0)
@@ -131,7 +132,7 @@
 		)
 		(fill no)
 		(layer "F.SilkS")
-		(uuid "5165163c-4491-4249-bda4-3ce911969106")
+		(uuid "2eecd146-d2a3-4c94-ae76-010e99ae8db9")
 	)
 	(fp_circle
 		(center -2.5954 0)
@@ -142,7 +143,7 @@
 		)
 		(fill no)
 		(layer "B.SilkS")
-		(uuid "d170aa2c-ddc8-4cb4-90a3-a62b2b9aef9e")
+		(uuid "cec3f37d-7018-46f8-bea9-e17e5446c9de")
 	)
 	(fp_line
 		(start -1.8334 -0.8128)
@@ -152,7 +153,7 @@
 			(type solid)
 		)
 		(layer "F.CrtYd")
-		(uuid "419d3d16-60ba-43a3-846a-4d3cd74385b1")
+		(uuid "7f830aaa-c45c-4d23-b491-649902ab9218")
 	)
 	(fp_line
 		(start -1.8334 4.981199)
@@ -162,7 +163,7 @@
 			(type solid)
 		)
 		(layer "F.CrtYd")
-		(uuid "affa6a8d-14f0-4a04-ad69-1f8b039aec46")
+		(uuid "d6b2e6da-0634-4d4c-bed8-2c027b888a77")
 	)
 	(fp_line
 		(start 5.5834 -0.8128)
@@ -172,7 +173,7 @@
 			(type solid)
 		)
 		(layer "F.CrtYd")
-		(uuid "cc62b04e-c383-4a79-82f2-77358bd12597")
+		(uuid "201c7e9d-445a-43ce-94bb-22bc2d2b4f8e")
 	)
 	(fp_line
 		(start 5.5834 4.981199)
@@ -182,7 +183,7 @@
 			(type solid)
 		)
 		(layer "F.CrtYd")
-		(uuid "b7384cbd-973c-48f2-a61d-ecd5f88c7866")
+		(uuid "2a7be6e3-8d96-4dde-89a2-b16d87c0f998")
 	)
 	(fp_line
 		(start -1.5794 -0.175)
@@ -192,7 +193,7 @@
 			(type solid)
 		)
 		(layer "F.Fab")
-		(uuid "0df3c2d3-1c08-4122-9d96-37d8f8837174")
+		(uuid "5a7367c8-e689-48c4-ab8b-c829b97fdbfa")
 	)
 	(fp_line
 		(start -1.5794 4.727199)
@@ -202,7 +203,7 @@
 			(type solid)
 		)
 		(layer "F.Fab")
-		(uuid "a9bdadeb-5750-4949-a549-eee6bc6c0d30")
+		(uuid "b4ac4faf-4480-4ace-8f34-42903415f531")
 	)
 	(fp_line
 		(start 5.3294 -0.175)
@@ -212,7 +213,7 @@
 			(type solid)
 		)
 		(layer "F.Fab")
-		(uuid "48039aaa-18b0-4195-bd57-850699464e34")
+		(uuid "670a3991-1dc3-43aa-a364-fff833d85aa2")
 	)
 	(fp_line
 		(start 5.3294 4.727199)
@@ -222,7 +223,7 @@
 			(type solid)
 		)
 		(layer "F.Fab")
-		(uuid "0c5f8101-3bfe-4372-96ca-efa8bc5deb32")
+		(uuid "238b05b7-5a92-4cb5-a018-3e8c35fdf5a0")
 	)
 	(fp_circle
 		(center 0 -1.5748)
@@ -233,13 +234,13 @@
 		)
 		(fill no)
 		(layer "F.Fab")
-		(uuid "ff1f0585-b3fa-47da-bcf5-708c975c05cf")
+		(uuid "b3ddf195-8c9e-4ac7-8466-01dc3d9fc8d9")
 	)
 	(fp_text user "${REFERENCE}"
 		(at 1.875 0 0)
 		(unlocked yes)
 		(layer "F.Fab")
-		(uuid "45bebc52-659f-498a-b3be-fb0f6465bb42")
+		(uuid "5b0274a7-75c2-422d-a2f7-f4776fb8e6fe")
 		(effects
 			(font
 				(size 1 1)
@@ -252,14 +253,14 @@
 		(size 1.143 1.143)
 		(drill 1.143)
 		(layers)
-		(uuid "30c07bbd-033c-4a3a-9db0-b42c79bb1f62")
+		(uuid "6b4012d3-9b96-4a36-8a1b-623a912f3c42")
 	)
 	(pad "" np_thru_hole circle
 		(at 4.700001 2.70002)
 		(size 1.143 1.143)
 		(drill 1.143)
 		(layers)
-		(uuid "7c53cacd-7b7d-472f-883b-de03d4f694bd")
+		(uuid "a1014334-2760-41b9-91e7-6cb21b3fb986")
 	)
 	(pad "1" thru_hole circle
 		(at 0 0)
@@ -267,7 +268,7 @@
 		(drill 0.6604)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "f6aeb6c8-5a8d-4eea-8303-683c3e1f99db")
+		(uuid "21bc46e4-fe5a-478b-a5d0-3f97928ec1a1")
 	)
 	(pad "2" thru_hole circle
 		(at 1.25 0)
@@ -275,7 +276,7 @@
 		(drill 0.6604)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "9dc60171-a5ac-4810-b124-c086eea016b3")
+		(uuid "5a696294-4d1a-4d52-9e56-62c55daab69d")
 	)
 	(pad "3" thru_hole circle
 		(at 2.5 0)
@@ -283,7 +284,7 @@
 		(drill 0.6604)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "70b37053-f58a-4636-a741-9b2839c6932f")
+		(uuid "ddae4701-a487-4a35-8cff-5d6daea64aac")
 	)
 	(pad "4" thru_hole circle
 		(at 3.75 0)
@@ -291,7 +292,7 @@
 		(drill 0.6604)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
-		(uuid "f0d308f3-761d-4827-ba30-c4b44bc82b07")
+		(uuid "c08276dd-d771-4446-80f1-de370c93d888")
 	)
 	(embedded_fonts no)
 	(model "C:/Users/Ejfso/Documents/GitHub/witness/Hardware/KicadLibs/2200980471.stp"

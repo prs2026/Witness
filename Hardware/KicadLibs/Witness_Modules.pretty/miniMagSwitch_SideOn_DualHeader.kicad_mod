@@ -1,0 +1,284 @@
+(footprint "miniMagSwitch_SideOn_DualHeader"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "miniMagSwitch vertical beside PCB edge: H2 input header on FRONT, H1 output header on BACK. 1.6 mm host board; required horizontal lead center 3.518 mm from each face. Long-tail/custom header geometry, verify hardware. Four 1 mm drills at 2.54 mm pair pitch.")
+	(property "Reference" "A**"
+		(at 0 6 0)
+		(layer "F.SilkS")
+		(uuid "2df8a2e1-54d5-41f5-b01c-e9f558cfc413")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "miniMagSwitch_SideOn_DualHeader"
+		(at 0 7.5 0)
+		(layer "F.Fab")
+		(uuid "4bba4458-da6b-4471-b7f9-f652c52b2e38")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "777dffd7-555f-457d-90ac-6bb6d3cdc1ca")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "84e12ce8-9b4c-4226-ba8c-50825a257c05")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(attr through_hole)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_rect
+		(start -6.223 0)
+		(end -1.143 2.2)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.SilkS")
+		(uuid "8d9aa987-0e29-4d52-8439-c2c1618d2949")
+	)
+	(fp_rect
+		(start -5.842 -1.800051)
+		(end 5.842 -0.2)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.SilkS")
+		(uuid "4ecc1d5b-9212-405d-9946-0555db166818")
+	)
+	(fp_rect
+		(start -5.842 -1.800051)
+		(end 5.842 -0.2)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(fill no)
+		(layer "B.SilkS")
+		(uuid "db42bbf1-44ac-478f-bef6-36127edf5082")
+	)
+	(fp_rect
+		(start 1.143 0)
+		(end 6.223 2.2)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(fill no)
+		(layer "B.SilkS")
+		(uuid "63c8e054-825e-44a2-897d-67b1aa15d5f5")
+	)
+	(fp_line
+		(start -8 0)
+		(end 8 0)
+		(stroke
+			(width 0.15)
+			(type dash)
+		)
+		(layer "Dwgs.User")
+		(uuid "74218de2-41ae-46c2-8a87-ac75d629d013")
+	)
+	(fp_rect
+		(start -6.75 -2.3)
+		(end 6.75 3.9)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(fill no)
+		(layer "B.CrtYd")
+		(uuid "de7177fc-ee51-4e92-add7-af8c2acda158")
+	)
+	(fp_rect
+		(start -6.75 -2.3)
+		(end 6.75 3.9)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.CrtYd")
+		(uuid "b6a9c902-40dc-4c26-916a-4da5b90a37dd")
+	)
+	(fp_rect
+		(start -5.842 -1.800051)
+		(end 5.842 -0.2)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(fill no)
+		(layer "B.Fab")
+		(uuid "f9c5ba81-2a64-4b4f-97dd-8293be3680b7")
+	)
+	(fp_rect
+		(start -5.842 -1.800051)
+		(end 5.842 -0.2)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.Fab")
+		(uuid "5ca82ba6-bb99-4181-90b7-ac8729b9346d")
+	)
+	(fp_text user "H2 INPUT - FRONT"
+		(at 0 4.7 0)
+		(layer "F.SilkS")
+		(uuid "ac7ea5f5-3038-4432-b3dd-7dc92c0cbc28")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
+	)
+	(fp_text user "H1 OUTPUT - BACK"
+		(at 0 4.7 0)
+		(layer "B.SilkS")
+		(uuid "5ca725ee-a8e2-4ed3-a2a1-da6d55646766")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+			(justify mirror)
+		)
+	)
+	(fp_text user "PCB EDGE / GLUE"
+		(at 0 -3 0)
+		(layer "Dwgs.User")
+		(uuid "1087e828-399e-4a45-8dfd-57da981e03e7")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
+	)
+	(fp_text user "H2_1"
+		(at -4.953 3.7 0)
+		(layer "F.Fab")
+		(uuid "eebdea20-f308-4803-9b8b-3cf05963587d")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
+	)
+	(fp_text user "H2_2"
+		(at -2.413 3.7 0)
+		(layer "F.Fab")
+		(uuid "3d89f636-d6a2-4fe5-be0c-8ada0e4336f9")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
+	)
+	(fp_text user "H1_2"
+		(at 2.413 3.7 0)
+		(layer "F.Fab")
+		(uuid "cc87af1e-98fa-4f82-b212-b9da4710ef71")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
+	)
+	(fp_text user "H1_1"
+		(at 4.953 3.7 0)
+		(layer "F.Fab")
+		(uuid "0ac725ef-18f2-42fe-b3a3-ed8d0805da33")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
+	)
+	(pad "H1_1" thru_hole rect
+		(at 4.953 2.54)
+		(size 1.7 1.7)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "1bd752b2-a2be-4dd8-bf78-f926b8093d7e")
+	)
+	(pad "H1_2" thru_hole circle
+		(at 2.413 2.54)
+		(size 1.7 1.7)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "b70d2f25-3518-4fb4-8c6a-c8e628a7d4fe")
+	)
+	(pad "H2_1" thru_hole rect
+		(at -4.953 2.54)
+		(size 1.7 1.7)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "3dc29106-74bf-496b-ad60-7de607eed5fa")
+	)
+	(pad "H2_2" thru_hole circle
+		(at -2.413 2.54)
+		(size 1.7 1.7)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "dfcf4e00-c935-4b69-8267-fb79795e116c")
+	)
+	(embedded_fonts no)
+	(model "C:/Users/Ejfso/Documents/GitHub/witness/Hardware/KicadLibs/Witness_Modules.3dshapes/miniMagSwitch_SideOn_PCB.step"
+		(offset
+			(xyz -5.842 1.8000508 4.407)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -90 0 0)
+		)
+	)
+	(model "C:/Users/Ejfso/Documents/GitHub/witness/Hardware/KicadLibs/Witness_Modules.3dshapes/miniMagSwitch_SideOn_Headers.step"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
+)

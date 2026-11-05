@@ -1,0 +1,100 @@
+{
+  "source": "C:\\Users\\Ejfso\\Documents\\GitHub\\witness\\Hardware\\Breakouts\\ubloxm8breakout\\ubloxm8breakout.kicad_pcb",
+  "source_sha256": "2114a0fa4f95a9cc0cb7654931a6fb4507952f2b44e4b7877c271d3e0face275",
+  "origin_xy_mm": [
+    143.75,
+    90.5
+  ],
+  "view": "source board top view, unmirrored",
+  "pins": [
+    {
+      "pin": "1",
+      "name": "+3V3",
+      "x_mm": 6.5,
+      "y_mm": 1.5,
+      "size_mm": [
+        1.1176,
+        1.1176
+      ],
+      "drill_mm": 0.6604,
+      "rotation_deg": 90.0,
+      "shape": "circle"
+    },
+    {
+      "pin": "2",
+      "name": "RX",
+      "x_mm": 6.5,
+      "y_mm": 0.25,
+      "size_mm": [
+        1.1176,
+        1.1176
+      ],
+      "drill_mm": 0.6604,
+      "rotation_deg": 90.0,
+      "shape": "circle"
+    },
+    {
+      "pin": "3",
+      "name": "TX",
+      "x_mm": 6.5,
+      "y_mm": -1.0,
+      "size_mm": [
+        1.1176,
+        1.1176
+      ],
+      "drill_mm": 0.6604,
+      "rotation_deg": 90.0,
+      "shape": "circle"
+    },
+    {
+      "pin": "4",
+      "name": "GND",
+      "x_mm": 6.5,
+      "y_mm": -2.25,
+      "size_mm": [
+        1.1176,
+        1.1176
+      ],
+      "drill_mm": 0.6604,
+      "rotation_deg": 90.0,
+      "shape": "circle"
+    }
+  ],
+  "mounting_holes": [
+    {
+      "label": "H1",
+      "x_mm": -12.0,
+      "y_mm": -6.0,
+      "drill_mm": 2.2
+    },
+    {
+      "label": "H2",
+      "x_mm": 9.0,
+      "y_mm": 5.5,
+      "drill_mm": 2.2
+    }
+  ],
+  "connector_guide_holes_reference_only": [
+    {
+      "x_mm": 9.20002,
+      "y_mm": 2.450001,
+      "source_drill_mm": 1.143
+    },
+    {
+      "x_mm": 9.20002,
+      "y_mm": -3.200001,
+      "source_drill_mm": 1.143
+    }
+  ],
+  "board_outline_mm": {
+    "start": [
+      -14.5,
+      -8.5
+    ],
+    "end": [
+      11.5,
+      8.0
+    ],
+    "radius": 2.0
+  }
+}
