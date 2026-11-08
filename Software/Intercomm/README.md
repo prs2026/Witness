@@ -52,5 +52,5 @@ g++ -std=c++17 -Wall -Wextra -Werror can_transport_test.cpp -o can_transport_tes
 ```
 
 `bench_check.py` captures the three bench USB TCP streams on `prs2026hitl`
-(7100 Iris, 7101 Aperture, 7102 Witness) and can send the harmless Iris ping
+(7101 Iris, 7100 Aperture, 7102 Witness) and can send the harmless Iris ping
 through Aperture. Captures go to `captures/`.

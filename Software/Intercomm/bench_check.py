@@ -13,7 +13,7 @@ import socket
 import time
 
 LENGTHS = {1: 23, 2: 64, 3: 19, 5: 10, 0xE0: 103, 0xE1: 14, 0xFF: 8, 0xF0: 13}
-PORTS = {"iris": 7100, "aperture": 7101, "witness": 7102}
+PORTS = {"iris": 7101, "aperture": 7100, "witness": 7102}
 
 
 def capture(host, board, port, duration, output, ping):

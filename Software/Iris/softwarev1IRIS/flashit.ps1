@@ -1,5 +1,5 @@
 param(
-    [string]$Port = 'rfc2217://prs2026hitl:7000',
+    [string]$Port = 'rfc2217://prs2026hitl:7001',
     [string]$Python = 'C:\Espressif\tools\python\v6.1\venv\Scripts\python.exe'
 )
 $ErrorActionPreference = 'Stop'

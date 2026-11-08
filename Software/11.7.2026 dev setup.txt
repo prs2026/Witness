@@ -1,5 +1,5 @@
-ttyacm1 - aperture - port 7001 to program port 7101 to read usb data
-ttyacm0 - iris - port 7000 to program port 7100 to read usb data
+ttyacm0 - aperture - port 7000 to program port 7100 to read usb data
+ttyacm1 - iris - port 7001 to program port 7101 to read usb data
 ttyacm2 - witness - port 7002 to program port 7102 to read usb data
 
 hostname - prs2026hitl

@@ -1,5 +1,5 @@
 param(
-    [string]$Port = 'rfc2217://prs2026hitl:7001',
+    [string]$Port = 'rfc2217://prs2026hitl:7000',
     [int]$Baud = 460800
 )
 $ErrorActionPreference = 'Stop'

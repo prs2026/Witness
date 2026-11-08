@@ -342,10 +342,10 @@ The checked-in Linux flashing script uses:
 ./flashit.sh
 ```
 
-Both `flashit.sh` and `flashit.ps1` default to `rfc2217://prs2026hitl:7000`
+Both `flashit.sh` and `flashit.ps1` default to `rfc2217://prs2026hitl:7001`
 and flash the configured 4 MB ESP32-C3 image. The shell script accepts a port
 as its first argument; PowerShell accepts `-Port` and `-Python`.
-USB data is read independently at raw TCP `prs2026hitl:7100`.
+USB data is read independently at raw TCP `prs2026hitl:7101`.
 `openserial.sh` starts minicom on
 `/dev/ttyUSB0` at 115200 and may also need adjustment.
 
