@@ -135,8 +135,14 @@
 #define IRIS_FIELD_FILTERED_ACCEL_Z_LENGTH 3U
 
 // Orientation quaternion: big-endian IEEE-754 float32, unitless normalized
-// quaternion components in X, Y, Z, W order. Coordinate-frame convention is
-// estimator-defined and must be shared separately by producers and consumers.
+// quaternion components in X, Y, Z, W order (scalar last).
+// Convention: Hamilton quaternion rotating BODY vectors into the WORLD frame
+// (v_world = q * v_body * q^-1). WORLD is local ENU: +X east, +Y north,
+// +Z up. BODY is the LSM6 sensor frame, with +X along the rocket's nose axis
+// (an upright rocket on the pad has body +X pointing to world +Z). Heading
+// (rotation about world +Z) is not observable without a magnetometer; it is
+// fixed arbitrarily at initialization by the shortest-arc tilt alignment.
+// All four components zero means attitude is not available.
 #define IRIS_FIELD_ORIENTATION_QUAT_X_LENGTH 4U
 #define IRIS_FIELD_ORIENTATION_QUAT_Y_LENGTH 4U
 #define IRIS_FIELD_ORIENTATION_QUAT_Z_LENGTH 4U

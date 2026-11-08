@@ -1,4 +1,4 @@
-idf_component_register(SRCS "hitl_input.cpp" "can_link.cpp" "twai_driver.cpp" "command_bridge.cpp" "uart_driver.cpp" "nmea_gps.cpp" "hitl_input.cpp" "gps_receiver.cpp" "flight_state_machine.cpp" "w25n01kv.cpp" "ra01.cpp" "flash_logger.cpp" "ms5607.cpp" "sensors.cpp" "spi_data_forwarder.cpp" "heartbeat.cpp" "main.cpp" "usb_serial_echo.cpp" "usb_mass_storage.cpp"
+idf_component_register(SRCS "hitl_input.cpp" "can_link.cpp" "twai_driver.cpp" "command_bridge.cpp" "uart_driver.cpp" "nmea_gps.cpp" "hitl_input.cpp" "gps_receiver.cpp" "flight_state_machine.cpp" "attitude_estimator.cpp" "w25n01kv.cpp" "ra01.cpp" "flash_logger.cpp" "ms5607.cpp" "sensors.cpp" "spi_data_forwarder.cpp" "heartbeat.cpp" "main.cpp" "usb_serial_echo.cpp" "usb_mass_storage.cpp"
                     INCLUDE_DIRS "." "../../../Intercomm"
                     # An explicit list disables main's implicit dependency on
                     # every component, so name each one the sources include.

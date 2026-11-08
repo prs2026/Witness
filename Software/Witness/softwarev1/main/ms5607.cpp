@@ -43,7 +43,10 @@ esp_err_t Ms5607::initialize(const spi_host_device_t host)
     }
 
     // The RTOS tick can be coarser than the required 2.8 ms PROM reload time.
-    vTaskDelay(pdMS_TO_TICKS(kResetDelayMs) + 1U);
+    // Round up to whole ticks, plus one because vTaskDelay(n) can return just
+    // after n-1 tick periods (3 ticks = at least 4 ms at the 500 Hz tick).
+    vTaskDelay(static_cast<TickType_t>(
+                   (kResetDelayMs * configTICK_RATE_HZ + 999U) / 1000U) + 1U);
 
     result = read_prom();
     if (result != ESP_OK) {

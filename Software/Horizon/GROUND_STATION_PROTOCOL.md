@@ -49,7 +49,7 @@ is byte 0, the first payload byte is byte 1, and EOF is the last byte.
 | Witness/IRIS MCU temperature | `int8` | degrees C = raw |
 | Witness/IRIS battery | `uint16` BE | millivolts = raw |
 | Filtered acceleration | `int24` BE | g = raw x 0.000040 |
-| Quaternion X/Y/Z/W | float32 BE | unitless normalized quaternion |
+| Quaternion X/Y/Z/W | float32 BE | unitless normalized Hamilton quaternion, scalar last, body to ENU world; all zero = unavailable |
 | Position X/Y/Z | float32 BE | meters, estimator local frame |
 | Velocity X/Y/Z | float32 BE | meters/second, estimator local frame |
 | LSM6 low-g acceleration | `int16` BE | g = raw x 0.000488 |
@@ -128,7 +128,7 @@ Decode the flight state as `byte1 & 0x07`, not as the whole byte.
 | 20 | 2 | Gyro Z, signed int16 |
 | 22 | 1 | EOF `0x0A` |
 
-The estimator is not implemented yet. The firmware currently generates the
+No acceleration filter is implemented yet. The firmware currently generates the
 "filtered acceleration" fields from the most recent low-g accelerometer
 samples, converted to the defined 40 micro-g/count format.
 
@@ -157,10 +157,25 @@ samples, converted to the defined 40 micro-g/count format.
 | 63 | 1 | GPS satellites used, uint8 |
 | 64 | 1 | EOF `0x0A` |
 
-Status, uptime, barometric altitude, battery voltage, valid UART1 GPS fixes and
-the satellite count are populated; estimator fields remain zero. Satellites come
-from the most recent checksum-valid GGA within 3 s and are reported even when
-that GGA has no fix (position fields are then zero); they are 0 when stale.
+Status, uptime, the orientation quaternion, barometric altitude, battery
+voltage, valid UART1 GPS fixes and the satellite count are populated; position
+and velocity remain zero. Satellites come from the most recent checksum-valid
+GGA within 3 s and are reported even when that GGA has no fix (position fields
+are then zero); they are 0 when stale.
+
+Quaternion convention (`0x02` and `0xE0`): Hamilton quaternion sent X, Y, Z,
+W (scalar last), rotating BODY vectors into WORLD (`v_world = q v_body q^-1`).
+WORLD is local ENU (+X east, +Y north, +Z up). BODY is the LSM6 sensor frame,
+with +X along the rocket nose axis, so an upright rocket on the pad has body +X
+pointing to world +Z. **All four components zero means attitude is not
+available**: before the first accepted 1 s stationary window on the pad,
+after HITL entry/exit until a new window is accepted, or when no window was
+accepted before launch. Heading (rotation about world +Z) is not observable without a
+magnetometer; it is fixed arbitrarily by the shortest-arc tilt alignment at
+initialization (an exactly upright rocket gets body +Y = north, body +Z =
+west), so compare yaw only relative to that start. The attitude is gyro
+propagated on the pad with a gated accelerometer tilt correction, purely gyro
+integrated in Boost/Coast/Descent, and held constant from Landed onwards.
 
 ### `0x03` Camera telemetry packet, 19 bytes
 
@@ -262,7 +277,12 @@ zero bytes at 6..11, and EOF `0x0A` at byte 12. Before a valid receive, RSSI is
 | 98 | 4 | GPS altitude, float32 m MSL |
 | 102 | 1 | EOF `0x0A` |
 
-MCU temperature, estimator fields, and GPS Unix time remain zero. GPS latitude, longitude and MSL altitude come from UART1 NMEA GGA fixes.
+MCU temperature, position, velocity and GPS Unix time remain zero. The
+quaternion is populated exactly as in `0x02` (same convention; all zero until
+the estimator is initialized), so enabling debug output with command `0x00E0`
+gives 10 Hz quaternions on USB (LoRa still sends the newest debug frame at its
+1 Hz radio rate). GPS latitude, longitude and MSL altitude come from UART1 NMEA
+GGA fixes.
 
 ### `0xE1` IRIS debug packet, 14 bytes
 
@@ -304,6 +324,16 @@ LoRa, CAN and logging continue.
   Barometric altitude is computed from the pressure with the MS5607 formula.
   The GPS fields feed state, debug and the GPS-locked bit exactly like a UART
   GGA (quality 1..8 is a fix; satellites are reported without one).
+- The attitude estimator is reset on HITL entry and exit, then runs on the
+  `0x0C` gyro and low-g accelerometer counts exactly as on real data: the
+  quaternion stays all zero until a 1 s stationary window of simulated
+  samples is accepted in Pad Idle (every |a| 0.95..1.05 g, accel scatter
+  <= 0.02 g, gyro median <= 5 dps with at most 40% of samples more than 10 dps
+  from it). Its time step is the Witness time of the sensor pass that consumed
+  each frame (the `sim_time_ms` field is not used); a pass without a new frame
+  is skipped and the next step spans 20 ms. The gyro passes through a 5-sample
+  running median, so the reported attitude lags by 2 samples (20 ms). Send
+  frames at a steady 100 Hz.
 - HITL commands are bridged to Iris like any other `0x05` command (Iris ignores
   them). `0x0C` packets are never forwarded to CAN or LoRa.
 
@@ -370,10 +400,14 @@ Rates must be non-zero integer divisors of 1000 Hz.
 Only one scheduled frame is transmitted per sensor-task pass. Due packet types
 are serviced round-robin, so simultaneous deadlines do not permanently favor
 one ID. The requested rates are upper targets: LoRa airtime and immediate
-traffic can reduce the achieved aggregate rate. Between transmissions the
-radio is returned to continuous receive mode. DIO1 indicates RX completion,
-and all radio work is performed by the sensor task so SPI3 access does not race
-the sensors.
+traffic can reduce the achieved aggregate rate. Transmission is non-blocking:
+the sensor task loads the frame and issues SetTx, then checks DIO1 for TxDone on
+later 10 ms passes (about 170 ms of airtime for a 103-byte frame at SF7/125
+kHz), so radio traffic no longer slows the 100 Hz sensor loop. A new frame is
+started only after the previous one completes; reception is impossible while
+transmitting. After each transmission the radio is returned to continuous
+receive mode. DIO1 indicates RX or TX completion, and all radio work is
+performed by the sensor task so SPI3 access does not race the sensors.
 
 `SpiDataForwarder::kForwardExternalPacketsImmediately` controls the immediate
 forwarding path and defaults to `true`. With it enabled, complete command frames

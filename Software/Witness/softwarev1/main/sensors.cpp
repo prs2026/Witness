@@ -131,6 +131,31 @@ void write_float_be(std::uint8_t *destination, const float value)
     write_u32_be(destination, bits);
 }
 
+// Wire order X, Y, Z, W (scalar last); all zero until the estimator is valid.
+void write_quaternion(std::uint8_t *payload, const std::size_t x_offset,
+                      const std::size_t y_offset, const std::size_t z_offset,
+                      const std::size_t w_offset, const attitude::Quaternion &q)
+{
+    write_float_be(&payload[x_offset], q.x);
+    write_float_be(&payload[y_offset], q.y);
+    write_float_be(&payload[z_offset], q.z);
+    write_float_be(&payload[w_offset], q.w);
+}
+
+constexpr float kMilliDegreesToRadians = 3.14159265358979F / 180'000.0F;
+constexpr float kRadiansToDegrees = 180.0F / 3.14159265358979F;
+
+static_assert(static_cast<int>(attitude::FlightPhase::PadIdle) ==
+              static_cast<int>(FlightStateMachine::State::PadIdle));
+static_assert(static_cast<int>(attitude::FlightPhase::Boost) ==
+              static_cast<int>(FlightStateMachine::State::Boost));
+static_assert(static_cast<int>(attitude::FlightPhase::Coast) ==
+              static_cast<int>(FlightStateMachine::State::Coast));
+static_assert(static_cast<int>(attitude::FlightPhase::Descent) ==
+              static_cast<int>(FlightStateMachine::State::Descent));
+static_assert(static_cast<int>(attitude::FlightPhase::Landed) ==
+              static_cast<int>(FlightStateMachine::State::Landed));
+
 std::uint32_t uptime_ms()
 {
     return static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
@@ -362,6 +387,10 @@ bool Sensors::service_hitl(const std::uint32_t now_ms, bool &new_sample)
         hitl_samples_since_summary_ = 0;
         hitl_last_summary_ms_ = now_ms;
         reset_sensor_sample();
+        // Never carry an attitude across a real/simulated source change.
+        attitude_.reset();
+        ESP_LOGI(kLogTag, "attitude reset: sensor source is now %s",
+                 active ? "HITL 0x0C frames" : "the real IMU");
         witness_status_.set_state_flag(
             IRIS_WITNESS_STATUS_HITL_ACTIVE_MASK, active);
         publish_sample();
@@ -792,6 +821,11 @@ esp_err_t Sensors::queue_state_packet()
     write_u16_be(
         &payload[IRIS_PACKET_STATE_BATTERY_VOLTAGE_OFFSET],
         encode_battery_voltage(working_sample_.battery_voltage_mv));
+    write_quaternion(payload, IRIS_PACKET_STATE_ORIENTATION_X_OFFSET,
+                     IRIS_PACKET_STATE_ORIENTATION_Y_OFFSET,
+                     IRIS_PACKET_STATE_ORIENTATION_Z_OFFSET,
+                     IRIS_PACKET_STATE_ORIENTATION_W_OFFSET,
+                     attitude_.quaternion());
     // Reported from the latest GGA even without a fix; zero when stale.
     payload[IRIS_PACKET_STATE_GPS_SATELLITES_OFFSET] = gps.satellites;
 
@@ -889,7 +923,12 @@ esp_err_t Sensors::queue_debug_packet()
     write_i24_be(&payload[IRIS_PACKET_WITNESS_DEBUG_LONGITUDE_OFFSET],
         static_cast<std::int32_t>(std::lround(gps.longitude_degrees * IRIS_FIELD_GPS_COORDINATE_SCALE)));
     write_float_be(&payload[IRIS_PACKET_WITNESS_DEBUG_GPS_ALTITUDE_OFFSET], gps.altitude_meters);
-    // MCU temperature, estimator outputs, and GPS Unix time remain zero.
+    write_quaternion(payload, IRIS_PACKET_WITNESS_DEBUG_ORIENTATION_X_OFFSET,
+                     IRIS_PACKET_WITNESS_DEBUG_ORIENTATION_Y_OFFSET,
+                     IRIS_PACKET_WITNESS_DEBUG_ORIENTATION_Z_OFFSET,
+                     IRIS_PACKET_WITNESS_DEBUG_ORIENTATION_W_OFFSET,
+                     attitude_.quaternion());
+    // MCU temperature, the other estimator outputs and GPS Unix time remain zero.
     return data_forwarder_.queue_packet(
         IRIS_PACKET_ID_WITNESS_DEBUG, payload, sizeof(payload));
 }
@@ -1029,10 +1068,17 @@ void Sensors::service_radio_transmit(const TickType_t now)
         return;
     }
 
+    if (radio_.transmit_in_progress()) {
+        return;  // One packet on the air at a time.
+    }
+
     SpiDataForwarder::RadioPacket packet{};
     if (data_forwarder_.receive_immediate_radio_packet(packet)) {
-        const esp_err_t result = radio_.transmit(packet.data, packet.length);
+        const esp_err_t result =
+            radio_.start_transmit(packet.data, packet.length);
+        ++radio_tx_started_;
         if (result != ESP_OK) {
+            ++radio_tx_failed_;
             ESP_LOGE(kLogTag, "immediate radio TX failed: %s",
                      esp_err_to_name(result));
         }
@@ -1057,8 +1103,11 @@ void Sensors::service_radio_transmit(const TickType_t now)
         radio_last_sent_[index] = now;
         next_radio_packet_index_ =
             (index + 1U) % kRadioPacketTypeCount;
-        const esp_err_t result = radio_.transmit(packet.data, packet.length);
+        const esp_err_t result =
+            radio_.start_transmit(packet.data, packet.length);
+        ++radio_tx_started_;
         if (result != ESP_OK) {
+            ++radio_tx_failed_;
             ESP_LOGE(
                 kLogTag,
                 "radio TX for packet 0x%02X failed: %s",
@@ -1067,6 +1116,108 @@ void Sensors::service_radio_transmit(const TickType_t now)
         }
         return;
     }
+}
+
+bool Sensors::service_radio_transmit_completion()
+{
+    esp_err_t error = ESP_OK;
+    const Ra01::TxStatus status = radio_.poll_transmit(&error);
+    if (status == Ra01::TxStatus::Timeout || status == Ra01::TxStatus::Error) {
+        ++radio_tx_failed_;
+        ESP_LOGE(kLogTag, "radio TX did not complete: %s",
+                 esp_err_to_name(error));
+    }
+    return radio_.transmit_in_progress();
+}
+
+void Sensors::update_attitude(const std::uint64_t timestamp_us)
+{
+    if (!has_gyro_sample_ || !has_low_g_accel_sample_) {
+        return;
+    }
+    attitude::Step step{};
+    step.gyro_rad_s = {working_sample_.gyro_mdps[0] * kMilliDegreesToRadians,
+                       working_sample_.gyro_mdps[1] * kMilliDegreesToRadians,
+                       working_sample_.gyro_mdps[2] * kMilliDegreesToRadians};
+    step.specific_force_g = {working_sample_.low_g_accel_mg[0] / 1000.0F,
+                             working_sample_.low_g_accel_mg[1] / 1000.0F,
+                             working_sample_.low_g_accel_mg[2] / 1000.0F};
+    step.timestamp_us = timestamp_us;
+    step.phase =
+        static_cast<attitude::FlightPhase>(flight_state_machine_.state());
+    const attitude::StepResult result = attitude_.update(step);
+    ++attitude_updates_since_report_;
+
+    if (result.initialized_now) {
+        const attitude::Vector3 bias = attitude_.gyro_bias_rad_s();
+        ESP_LOGI(kLogTag,
+                 "attitude initialized: tilt %.2f deg from vertical, gyro bias "
+                 "%.3f %.3f %.3f dps",
+                 static_cast<double>(attitude_.tilt_from_vertical_deg()),
+                 static_cast<double>(bias.x * kRadiansToDegrees),
+                 static_cast<double>(bias.y * kRadiansToDegrees),
+                 static_cast<double>(bias.z * kRadiansToDegrees));
+    }
+    if (result.entered_landed) {
+        if (attitude_.valid()) {
+            const attitude::Quaternion q = attitude_.quaternion();
+            ESP_LOGI(kLogTag,
+                     "attitude after flight: q xyzw [%.5f %.5f %.5f %.5f], "
+                     "tilt %.2f deg from vertical, integrated %lu steps over "
+                     "%.3f s (gaps %lu, late %lu)",
+                     static_cast<double>(q.x), static_cast<double>(q.y),
+                     static_cast<double>(q.z), static_cast<double>(q.w),
+                     static_cast<double>(attitude_.tilt_from_vertical_deg()),
+                     static_cast<unsigned long>(attitude_.flight_steps()),
+                     attitude_.flight_time_s(),
+                     static_cast<unsigned long>(attitude_.gaps()),
+                     static_cast<unsigned long>(attitude_.late_steps()));
+        } else {
+            ESP_LOGW(kLogTag,
+                     "attitude after flight unavailable: no stationary pad "
+                     "window initialized the estimator");
+        }
+    }
+}
+
+void Sensors::report_attitude_rate(const std::uint64_t now_us)
+{
+    if (attitude_report_start_us_ == 0U) {
+        attitude_report_start_us_ = now_us;
+        return;
+    }
+    const std::uint64_t elapsed_us = now_us - attitude_report_start_us_;
+    if (elapsed_us < kAttitudeReportIntervalMs * 1000ULL) {
+        return;
+    }
+    const double rate_hz = static_cast<double>(attitude_updates_since_report_) *
+                           1e6 / static_cast<double>(elapsed_us);
+    const attitude::Quaternion q = attitude_.quaternion();
+    ESP_LOGI(kLogTag,
+             "attitude: %.1f Hz, max dt %.1f ms, gaps %lu, late %lu, "
+             "spikes rejected %lu, windows %lu ok/%lu accel/%lu gyro "
+             "rejected, overruns %lu, max pass %lu us, radio TX %lu "
+             "(failed %lu), %s, tilt %.1f deg, q xyzw [%.4f %.4f %.4f %.4f]",
+             rate_hz, static_cast<double>(attitude_.max_dt_us()) / 1000.0,
+             static_cast<unsigned long>(attitude_.gaps()),
+             static_cast<unsigned long>(attitude_.late_steps()),
+             static_cast<unsigned long>(attitude_.spikes_rejected()),
+             static_cast<unsigned long>(attitude_.windows_accepted()),
+             static_cast<unsigned long>(attitude_.windows_rejected_accel()),
+             static_cast<unsigned long>(attitude_.windows_rejected_gyro()),
+             static_cast<unsigned long>(loop_overruns_),
+             static_cast<unsigned long>(max_pass_us_),
+             static_cast<unsigned long>(radio_tx_started_),
+             static_cast<unsigned long>(radio_tx_failed_),
+             attitude_.valid() ? (attitude_.landed_hold() ? "held" : "valid")
+                               : "not initialized",
+             static_cast<double>(attitude_.tilt_from_vertical_deg()),
+             static_cast<double>(q.x), static_cast<double>(q.y),
+             static_cast<double>(q.z), static_cast<double>(q.w));
+    attitude_updates_since_report_ = 0;
+    attitude_report_start_us_ = now_us;
+    attitude_.reset_max_dt();
+    max_pass_us_ = 0;
 }
 
 void Sensors::run()
@@ -1082,11 +1233,20 @@ void Sensors::run()
     std::uint32_t consecutive_battery_errors = 0;
 
     for (;;) {
-        if (radio_ready_) poll_radio_commands();
-
+        // IMU sampling and the attitude update come first in each 10 ms pass
+        // so their timestamps stay regular; radio work follows and no longer
+        // blocks (transmissions are started here and completed on later
+        // passes).
+        const std::uint64_t pass_start_us =
+            static_cast<std::uint64_t>(esp_timer_get_time());
         bool hitl_new_sample = false;
-        const bool hitl = service_hitl(uptime_ms(), hitl_new_sample);
+        const bool hitl = service_hitl(
+            static_cast<std::uint32_t>(pass_start_us / 1000ULL),
+            hitl_new_sample);
         const TickType_t now = xTaskGetTickCount();
+        // Attitude timestamp: the LSM6 read time, or in HITL the time this
+        // pass consumed the 0x0C frame (frames are not timestamped on arrival).
+        std::uint64_t imu_timestamp_us = pass_start_us;
         esp_err_t lsm_result = ESP_ERR_NOT_FOUND;
         bool ms5607_updated = false;
         bool battery_updated = false;
@@ -1103,6 +1263,7 @@ void Sensors::run()
             }
             barometer_healthy = working_sample_.ms5607_ready;
         } else {
+            imu_timestamp_us = static_cast<std::uint64_t>(esp_timer_get_time());
             lsm_result = fetch_lsm6dsv320x();
             witness_status_.set(
                 IRIS_WITNESS_STATUS_LOW_G_ACCEL_READY_MASK,
@@ -1231,6 +1392,10 @@ void Sensors::run()
             publish_sample();
         }
 
+        if (lsm_result == ESP_OK) {
+            update_attitude(imu_timestamp_us);
+        }
+
         if (lsm_result == ESP_OK &&
             (now - last_sensor_packet_time) >= kPacketPeriod) {
             const esp_err_t queue_result = queue_sensor_packet();
@@ -1260,9 +1425,24 @@ void Sensors::run()
             last_debug_packet_time = now;
         }
 
-        if (radio_ready_) service_radio_transmit(now);
+        if (radio_ready_ && !service_radio_transmit_completion()) {
+            poll_radio_commands();
+            service_radio_transmit(now);
+        }
 
-        vTaskDelayUntil(&next_wake_time, kTaskPeriod);
+        const std::uint64_t pass_end_us =
+            static_cast<std::uint64_t>(esp_timer_get_time());
+        const std::uint64_t pass_us = pass_end_us - pass_start_us;
+        if (pass_us > max_pass_us_) {
+            max_pass_us_ = static_cast<std::uint32_t>(pass_us);
+        }
+        report_attitude_rate(pass_end_us);
+
+        // Deadline scheduling: wake every kTaskPeriod (5 ticks = 10 ms)
+        // measured from the previous deadline, not from the end of this pass.
+        if (xTaskDelayUntil(&next_wake_time, kTaskPeriod) == pdFALSE) {
+            ++loop_overruns_;
+        }
     }
 }
 

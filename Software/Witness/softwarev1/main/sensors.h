@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "attitude_estimator.h"
 #include "comms.h"
 #include "driver/spi_master.h"
 #include "esp_adc/adc_cali.h"
@@ -33,7 +34,8 @@ public:
     static constexpr std::uint32_t kStatePacketRateHz = 1;
     static constexpr std::uint32_t kDebugPacketRateHz = 10;
     static constexpr std::uint32_t kBatterySampleRateHz = 10;
-    static constexpr std::uint32_t kTaskStackSize = 4096;
+    // Float formatting in the attitude log lines needs more than 4 KiB.
+    static constexpr std::uint32_t kTaskStackSize = 6144;
 
     // Independent LoRa downlink rates. Each transmission uses the most recent
     // canonical frame generated at the packet's normal producer/USB rate.
@@ -69,6 +71,24 @@ public:
     static constexpr std::uint8_t kGyroFullScale = 0x04;            // +/-2000 dps
     static constexpr std::uint8_t kHighGAccelOutputDataRate = 0x04; // 960 Hz
     static constexpr std::uint8_t kHighGAccelFullScale = 0x04;      // +/-320 g
+
+    // Register facts checked 2026-11-08 against ST's official driver header
+    // github.com/STMicroelectronics/lsm6dsv320x-pid (master, lsm6dsv320x_reg.h):
+    //   CTRL1 0x10 odr_xl[3:0] op_mode_xl[6:4]; CTRL2 0x11 odr_g[3:0]
+    //   op_mode_g[6:4]; ODR code 0x6 = 120 Hz, 0x7 = 240, 0x8 = 480, 0x9 = 960.
+    //   CTRL6 0x15 fs_g[2:0] (0x4 = 2000 dps), lpf1_g_bw[6:4].
+    //   CTRL7 0x16 lpf1_g_en bit 0.
+    //   CTRL8 0x17 fs_xl[1:0] (0x3 = 16 g), hp_lpf2_xl_bw[7:5].
+    //   CTRL9 0x18 lpf2_xl_en bit 3, hp_slope_xl_en bit 4.
+    //   CTRL1_XL_HG 0x4E fs_xl_hg[2:0] (0x4 = 320 g), odr_xl_hg[5:3]
+    //   (0x4 = 960 Hz), xl_hg_regout_en bit 7.
+    // The values written below match those fields. The gyro LPF1 and accel
+    // LPF2 are deliberately left at reset (disabled): the cutoff and delay
+    // for each lpf1_g_bw / hp_lpf2_xl_bw code are only in the datasheet,
+    // which could not be retrieved, so no bandwidth code is guessed. A linear
+    // low-pass also cannot remove the measured interference spikes from the
+    // attitude: it preserves their area (DC gain 1), so the integrated angle
+    // error is unchanged; the estimator's running median handles them.
 
     struct Sample {
         std::int16_t low_g_accel_raw[3]{};
@@ -118,6 +138,10 @@ public:
 private:
     static_assert(kTaskRateHz > 0 && (1000U % kTaskRateHz) == 0,
                   "Sensors task rate must divide evenly into 1000 ms");
+    // The 100 Hz IMU/attitude loop is a whole number of scheduler ticks
+    // (5 ticks at the 500 Hz CONFIG_FREERTOS_HZ).
+    static_assert((configTICK_RATE_HZ % kTaskRateHz) == 0,
+                  "Scheduler tick rate must be a multiple of the sensor rate");
     static_assert(kPacketRateHz > 0 && (1000U % kPacketRateHz) == 0,
                   "Sensor packet rate must divide evenly into 1000 ms");
     static_assert(
@@ -148,6 +172,7 @@ private:
     static constexpr std::uint32_t kBootDelayMs = 35;
     static constexpr std::uint32_t kResetDelayMs = 30;
     static constexpr std::uint32_t kHitlSummaryIntervalMs = 10'000;
+    static constexpr std::uint32_t kAttitudeReportIntervalMs = 10'000;
 
     // Main-page registers used by the driver.
     static constexpr std::uint8_t kRegFuncCfgAccess = 0x01;
@@ -206,6 +231,11 @@ private:
     esp_err_t read_battery_voltage();
     void poll_radio_commands();
     void service_radio_transmit(TickType_t now);
+    // Completes a non-blocking radio transmission; true while one is in flight.
+    bool service_radio_transmit_completion();
+    // Feeds the attitude estimator with the current IMU sample.
+    void update_attitude(std::uint64_t timestamp_us);
+    void report_attitude_rate(std::uint64_t now_us);
     void publish_sample();
     // Applies HITL enter/exit/timeout and any new sample to working_sample_.
     // Returns true while HITL replaces the real IMU, barometer and battery.
@@ -253,4 +283,13 @@ private:
     std::uint32_t hitl_session_in_use_ = 0;
     std::uint32_t hitl_samples_since_summary_ = 0;
     std::uint32_t hitl_last_summary_ms_ = 0;
+
+    // Attitude estimator and 100 Hz loop diagnostics (sensor task only).
+    attitude::Estimator attitude_{};
+    std::uint32_t attitude_updates_since_report_ = 0;
+    std::uint64_t attitude_report_start_us_ = 0;
+    std::uint32_t loop_overruns_ = 0;
+    std::uint32_t max_pass_us_ = 0;
+    std::uint32_t radio_tx_started_ = 0;
+    std::uint32_t radio_tx_failed_ = 0;
 };
