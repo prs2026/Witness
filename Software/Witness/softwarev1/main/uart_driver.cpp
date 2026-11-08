@@ -380,11 +380,13 @@ void UartDriver::run()
             last_diagnostic_ms = now_ms;
             std::uint32_t baud = 0;
             (void)uart_get_baudrate(port_, &baud);
-            ESP_LOGI(kTag, "GPS RX: baud=%lu bytes=%lu GGA=%lu fix=%s idle_ms=%lu",
+            const auto gga = nmea.latest_fix();
+            ESP_LOGI(kTag, "GPS RX: baud=%lu bytes=%lu GGA=%lu fix=%s sats=%u idle_ms=%lu",
                      static_cast<unsigned long>(baud),
                      static_cast<unsigned long>(total_rx_bytes),
                      static_cast<unsigned long>(nmea.gga_sentence_count()),
-                     NmeaGps::fresh(nmea.latest_fix(), now_ms) ? "valid" : "none",
+                     NmeaGps::fresh(gga, now_ms) ? "valid" : "none",
+                     NmeaGps::gga_fresh(gga, now_ms) ? static_cast<unsigned>(gga.satellites) : 0U,
                      static_cast<unsigned long>(now_ms - last_rx_ms));
             if (now_ms - last_rx_ms >= kGpsDiagnosticIntervalMs) {
                 ESP_LOGW(kTag, "GPS UART input silent; reception and raw logging remain enabled");
@@ -408,6 +410,8 @@ NmeaGps::Fix UartDriver::latest_gps_fix() const
     portENTER_CRITICAL(&fix_lock_);
     const auto fix = latest_fix_;
     portEXIT_CRITICAL(&fix_lock_);
-    return NmeaGps::fresh(fix, static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL))
+    // A fresh no-fix GGA still reports its satellite count; position fields
+    // are already zero and valid is false for it.
+    return NmeaGps::gga_fresh(fix, static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL))
         ? fix : NmeaGps::Fix{};
 }

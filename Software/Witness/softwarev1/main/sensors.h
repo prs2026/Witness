@@ -13,7 +13,9 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
+#include "hitl_input.h"
 #include "ms5607.h"
+#include "nmea_gps.h"
 #include "ra01.h"
 
 class SpiDataForwarder;
@@ -105,6 +107,14 @@ public:
     esp_err_t handle_command(std::uint16_t command);
     void set_radio_transmission_enabled(bool enabled);
 
+    // HITL mode (see hitl_input.h). Thread-safe; called from the USB command
+    // task. Entry requires USB and Pad Idle; every outcome is logged.
+    esp_err_t enter_hitl(hitl::Source source);
+    esp_err_t exit_hitl(hitl::Source source);
+    // Accepts a decoded 0x0C sample while HITL is active; false otherwise.
+    bool submit_hitl_sample(const hitl::Sample &sample);
+    bool hitl_active() const;
+
 private:
     static_assert(kTaskRateHz > 0 && (1000U % kTaskRateHz) == 0,
                   "Sensors task rate must divide evenly into 1000 ms");
@@ -137,6 +147,7 @@ private:
     static constexpr std::size_t kMaximumSpiTransfer = 258;
     static constexpr std::uint32_t kBootDelayMs = 35;
     static constexpr std::uint32_t kResetDelayMs = 30;
+    static constexpr std::uint32_t kHitlSummaryIntervalMs = 10'000;
 
     // Main-page registers used by the driver.
     static constexpr std::uint8_t kRegFuncCfgAccess = 0x01;
@@ -196,6 +207,13 @@ private:
     void poll_radio_commands();
     void service_radio_transmit(TickType_t now);
     void publish_sample();
+    // Applies HITL enter/exit/timeout and any new sample to working_sample_.
+    // Returns true while HITL replaces the real IMU, barometer and battery.
+    bool service_hitl(std::uint32_t now_ms, bool &new_sample);
+    void apply_hitl_sample();
+    void reset_sensor_sample();
+    // UART GPS fix, or the simulated fix while HITL is active.
+    NmeaGps::Fix current_gps_fix() const;
     void run();
     void release_resources();
 
@@ -224,4 +242,15 @@ private:
     std::atomic_bool debug_packet_output_enabled_{false};
     Sample working_sample_{};
     Sample latest_sample_{};
+
+    // hitl_controller_ is shared with the USB task under hitl_lock_. The
+    // remaining HITL members belong to the sensor task.
+    mutable portMUX_TYPE hitl_lock_ = portMUX_INITIALIZER_UNLOCKED;
+    hitl::Controller hitl_controller_{};
+    hitl::Sample hitl_sample_{};
+    bool hitl_in_use_ = false;
+    bool hitl_has_sample_ = false;
+    std::uint32_t hitl_session_in_use_ = 0;
+    std::uint32_t hitl_samples_since_summary_ = 0;
+    std::uint32_t hitl_last_summary_ms_ = 0;
 };

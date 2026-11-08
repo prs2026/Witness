@@ -42,10 +42,12 @@ source when it differs from an older conversation, workbook, or prose document.
 | [GROUND_STATION_PROTOCOL.md](GROUND_STATION_PROTOCOL.md) | Ground-station framing, field tables and command examples |
 | [main/sensors.h](main/sensors.h), [main/sensors.cpp](main/sensors.cpp) | IMU driver, ADC, sensor task, radio scheduling and telemetry generation |
 | [main/ms5607.h](main/ms5607.h), [main/ms5607.cpp](main/ms5607.cpp) | Pressure sensor driver |
+| [main/pressure_altitude.h](main/pressure_altitude.h) | Pressure-to-altitude formula shared by the MS5607 driver and HITL |
+| [main/hitl_input.h](main/hitl_input.h), [main/hitl_input.cpp](main/hitl_input.cpp) | Host-testable HITL `0x0C` decoder, frame assembler and enter/exit/timeout state |
 | [main/flight_state_machine.h](main/flight_state_machine.h), [main/flight_state_machine.cpp](main/flight_state_machine.cpp) | Flight transitions and sensor-log state gate |
 | [main/witness_status.h](main/witness_status.h) | Atomic ownership of the two status bytes |
 | [main/heartbeat.cpp](main/heartbeat.cpp) | Heartbeat packets, red LED pulse and state-specific PWM beeps |
-| [main/usb_serial_echo.cpp](main/usb_serial_echo.cpp) | USB echo, command parsing, local command execution and export switch |
+| [main/usb_serial_echo.cpp](main/usb_serial_echo.cpp) | USB echo, command parsing, `0x0C` HITL framing, local command execution and export switch |
 | [main/command_bridge.cpp](main/command_bridge.cpp) | Forwarding USB/radio commands to Iris CAN and queueing radio commands for local execution |
 | [main/can_link.h](main/can_link.h), [main/can_link.cpp](main/can_link.cpp), [main/twai_driver.cpp](main/twai_driver.cpp) | Iris CAN link: command/heartbeat transmit, fragmentation and reassembly via [Intercomm](../../Intercomm/README.md) |
 | [main/spi_data_forwarder.cpp](main/spi_data_forwarder.cpp) | Queued USB output, latest-frame radio cache and immediate radio queue |
@@ -150,8 +152,8 @@ The `filtered_accel` wire field is currently encoded from low-g acceleration;
 its name does not imply that a fused estimator or a high/low-g blending filter
 has been implemented. State orientation, position and velocity are currently
 zero. MCU temperature and GPS Unix time also remain zero in debug output.
-GPS coordinates and altitude are supplied separately by the UART GPS snapshot,
-not by `Sensors::Sample`.
+GPS coordinates, altitude and satellite count are supplied separately by the
+UART GPS snapshot (or the HITL sample), not by `Sensors::Sample`.
 
 ## Canonical communication format
 
@@ -165,9 +167,10 @@ tables use absolute frame offsets. Account for the initial ID byte.
 | ID | Packet | Payload bytes | Complete frame bytes |
 |---|---|---:|---:|
 | `01` | Sensors | 21 | 23 |
-| `02` | State | 62 | 64 |
+| `02` | State | 63 | 65 |
 | `03` | Camera telemetry | 17 | 19 |
 | `05` | Command | 8 | 10 |
+| `0C` | HITL sensor input (host to Witness, USB only, never forwarded) | 45 | 47 |
 | `E0` | Witness debug | 101 | 103 |
 | `E1` | IRIS debug | 12 | 14 |
 | `FF` | Heartbeat | 6 | 8 |
@@ -182,7 +185,7 @@ GPS coordinates are signed int24 at 0.0001 degree/count; GPS altitude is float32
 metres above mean sea level. See the field catalog in `comms.h` for every field.
 
 USB is deliberately a **mixed byte stream**: canonical binary telemetry, echoed
-host input, diagnostic text, raw GPS/NMEA and received radio payloads. A text
+host input (except `0C` HITL frames), diagnostic text, raw GPS/NMEA and received radio payloads. A text
 terminal displays binary telemetry as garbage, and a UART chunk boundary can
 allow a telemetry packet to appear between parts of a displayed NMEA sentence.
 GPS parsing and raw logging occur before USB mirroring, so USB interleaving does
@@ -213,8 +216,11 @@ terminal stall means sensor acquisition or GPS reception stopped.
 | 7 | Flash logging fault; also set on raw UART log buffer overflow |
 
 Byte 1 bits 0..2 contain the state enum: Pad Idle 0, Boost 1, Coast 2, Descent 3,
-Landed 4. Bits 3..7 are reserved zero. There is no GPS-fix or radio-ready status
-bit. Readiness flags should not be mistaken for a universal freshness guarantee.
+Landed 4. Bit 3 is GPS locked (a fresh GGA fix with quality >= 1 from UART or
+HITL), set each sensor-loop pass. Bit 4 is HITL active. Bits 5..7 are reserved
+zero. `WitnessStatus::set_state_flag()` owns bits 3/4; `flight_state()` returns
+only the state. There is no radio-ready bit. Readiness flags should not be
+mistaken for a universal freshness guarantee.
 
 The automatic transitions in `flight_state_machine.cpp` are:
 
@@ -250,6 +256,8 @@ the bench; append CR/LF. Hex shown here is text unless sent as actual binary.
 | `05 73 00` through `05 73 04` | Sets flight state; `01` from Pad Idle is a launch trigger |
 | `05 68 68` | Freezes logs and switches USB to read-only mass storage until reset |
 | `05 68 69` | Destructively erases all stored sessions and creates a fresh session |
+| `05 00 00 00 00 00 00 48 49 0A` (canonical only) | Enter HITL mode; USB and Pad Idle only |
+| `05 00 00 00 00 00 00 48 58 0A` (canonical only) | Exit HITL mode |
 | `TX 05 ...` | Bridges decoded command bytes to CAN/radio; do not assume it performs the same local actions as the non-TX form |
 | `TX ID payload...` with another ID | Queues the future SPI command path; no hardware SPI transmission yet |
 
@@ -259,7 +267,8 @@ export commands merely to inspect or test the system.
 
 `CommandBridge` validates canonical commands and normalizes legacy three-byte commands to complete 10-byte frames before forwarding to Iris CAN. UART1 is exclusively the GPS receiver. USB commands can additionally enter the immediate radio queue; radio commands are queued for local interpretation independently of CAN availability. Invalid EOF/length commands are rejected before forwarding.
 
-Radio local handlers support debug enable, export, erase and state setting.
+Radio local handlers support debug enable, export, erase, state setting and
+HITL exit; HITL enter from radio is rejected and logged.
 Load opcodes `30..35` and regulator opcodes `50..51` are external-device commands,
 not implemented local output controls. For radio debug enable, use command value
 `00 E0` in the compact or canonical representation; do not infer arbitrary
@@ -293,9 +302,12 @@ and debug packets carry the parsed coordinates instead.
 `NmeaGps` object accepts checksum-valid GGA sentences across arbitrary UART read
 boundaries, including GP/GN talkers, converts degrees/minutes and hemisphere to
 decimal degrees, and reads altitude in metres MSL. It does not derive Unix time
-from RMC/ZDA. No-fix GGA immediately invalidates a fix; fixes expire after 3000 ms.
+from RMC/ZDA. It also keeps GGA fix quality (field 6) and satellites used
+(field 7). No-fix GGA immediately invalidates the position but its satellite
+count is still reported; the GGA expires after 3000 ms (`NmeaGps::gga_fresh`).
 Invalid or stale state/debug GPS fields are zero, which is not a unique invalid
-sentinel because zero coordinates and altitude can also be legitimate.
+sentinel because zero coordinates and altitude can also be legitimate; use the
+GPS-locked status bit. State packet byte 63 carries satellites (0 when stale).
 
 `GpsReceiver` ([main/gps_receiver.h](main/gps_receiver.h)) identifies the fitted
 receiver, then configures it in receiver RAM on every boot (no receiver flash
@@ -338,6 +350,60 @@ Bench status: on 2026-11-07 the PX1120S confirmed airborne mode with the previou
 firmware. The rate and NMEA changes, and the whole u-blox path, are covered by
 host tests only and are not yet verified on hardware. Five-second `GPS RX`
 diagnostics report baud, byte count, GGA count, fix freshness and idle time.
+
+## HITL mode
+
+Hardware-in-the-loop mode lets a USB host drive the flight software with
+simulated sensors. Pure logic (decode, framing, enter/exit/timeout with
+injected time) is in `hitl_input.*`; `Sensors` owns a `hitl::Controller` under
+a spinlock and the USB task feeds it.
+
+- **Enter** `0x4849`, canonical 10-byte frame only, accepted only from USB and
+  only in Pad Idle. Radio, compact form and other flight states are rejected
+  and logged. Reboot always starts with HITL off.
+- **Exit** `0x4858` from USB or radio, or automatically after
+  `IRIS_HITL_INPUT_TIMEOUT_MS` (1000 ms) without a valid `0x0C` frame, counted
+  from entry or the last frame. Exit does not change the flight state.
+- **Simulated**: low-g, high-g, gyro, IMU temperature, pressure (altitude via
+  `pressure_altitude.h`, the MS5607 formula), barometer temperature, GPS
+  position/altitude/satellites/quality and battery. While active the sensor
+  task does not read the LSM6, MS5607 or battery ADC; SPI3 radio RX/TX,
+  CAN, heartbeat and flash logging continue (flash records simulated data).
+- **Substitution**: `Sensors::service_hitl()` runs at the top of each sensor
+  pass. A new sample is copied into `working_sample_` and counts as one IMU,
+  barometer and battery update, so the flight state machine, `0x01`, `0x02`,
+  `0xE0`, `latest_sample()` and flash capture all use it.
+  `Sensors::current_gps_fix()` returns the simulated fix in place of
+  `UartDriver::latest_gps_fix()` for state, debug and the GPS-locked bit. The
+  UART parser and raw GPS logging keep running.
+- **Readiness**: on enter, exit, timeout or re-entry the working sample and
+  all five readiness flags are cleared. Until the first frame (or, after
+  exit, the first real reading) readiness flags are clear, battery/barometer
+  are zero, GPS has no fix and 0 satellites, no `0x01` is sent and the flight
+  state machine gets no observation. In HITL each frame sets the four IMU
+  flags; the barometer flag follows pressure != 0.
+- **USB framing**: a `0x0C` byte starts a 47-byte frame unless a binary
+  `0x05` command is in progress. Text commands are printable, so a `0x0C` or
+  `0x05` byte discards any unterminated text line first; otherwise stale text
+  (seen on the bench as echoed boot log output with no newline, from the tty
+  being in default echo mode while ser2net reopens it) swallowed the next
+  binary command. The frame is
+  checked for EOF at byte 46; a bad EOF resynchronizes on the next `0x0C` in the
+  rejected bytes, and a partial frame idle for 20 ms is dropped. There is no CRC,
+  so a resync through payload bytes can rarely accept one misaligned frame.
+  Bytes consumed as frames are **not echoed** (saving ~4.7 KB/s at 100 Hz) and
+  never reach `CommandBridge`; `TX 0C ...` is rejected. HITL `0x05` commands are
+  still bridged to Iris and the immediate radio queue like other USB commands.
+- **Log lines** (tag `hitl` unless noted): `HITL mode entered from USB: ...`
+  (W), `HITL enter rejected: received from radio; ...` (W),
+  `HITL enter rejected: flight state is <state>; HITL requires pad idle` (W),
+  `HITL enter ignored: already active`, `HITL mode exited by <USB|radio>
+  command; real sensors restored`, `HITL exit from <src> ignored: HITL not
+  active`, `HITL input timeout: no valid 0x0C packet for 1000 ms; exiting HITL,
+  real sensors restored` (W), `first HITL sample received (sim time N ms)`, a
+  10 s `HITL active: N samples ...` summary, and in tag `serial_command`
+  rate-limited `0x0C HITL frame rejected: ...` and `N 0x0C HITL frame(s)
+  ignored: HITL mode is not active` warnings.
 
 ## Flash storage and export
 
@@ -471,10 +537,18 @@ if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 g++ -std=c++17 -Wall -Wextra -Werror -I main tests/skytraq_i2c_mailbox_test.cpp main/skytraq_i2c_mailbox.cpp -o build/skytraq_i2c_mailbox_test.exe
 if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 & .\build\skytraq_i2c_mailbox_test.exe
+
+g++ -std=c++17 -Wall -Wextra -Werror -I main tests/hitl_input_test.cpp main/hitl_input.cpp -o build/hitl_input_test.exe
+if ($LASTEXITCODE -ne 0) { throw "compile failed" }
+& .\build\hitl_input_test.exe
 ```
 
-The tests exercise parsing, fixed-baud configuration protocol handling and the
-inactive mailbox implementation using fake transports. They do not validate
+This PC has no host `g++`; the HITL, NMEA and GPS-receiver tests were last run
+on a Linux host with `-fsanitize=undefined` (AddressSanitizer unavailable there).
+
+The tests exercise parsing, fixed-baud configuration protocol handling, HITL
+decoding/framing/state rules and the inactive mailbox implementation using
+fake transports. They do not validate
 RF, SPI timing, storage power-loss behavior, flight detection or physical wiring.
 
 In the previous sandbox the full firmware built using Ninja directly after an

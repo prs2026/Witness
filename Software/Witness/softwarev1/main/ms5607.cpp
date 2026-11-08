@@ -1,4 +1,5 @@
 #include "ms5607.h"
+#include "pressure_altitude.h"
 
 #include <cmath>
 #include <cstddef>
@@ -274,13 +275,8 @@ void Ms5607::compensate()
     sample_.temperature_centi_celsius =
         static_cast<std::int32_t>(temperature);
 
-    const float pressure_mbar = static_cast<float>(pressure) / 100.0F;
-    if (pressure_mbar > 0.0F) {
-        sample_.altitude_meters = 44330.0F *
-            (1.0F - std::pow(
-                        pressure_mbar / kSeaLevelPressureMbar,
-                        0.19029495F));
-    }
+    (void)pressure_altitude_meters(sample_.pressure_centi_mbar,
+                                   sample_.altitude_meters);
     sample_.timestamp_us = static_cast<std::uint64_t>(esp_timer_get_time());
     sample_.valid = true;
 }

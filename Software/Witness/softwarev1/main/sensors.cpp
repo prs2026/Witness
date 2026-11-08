@@ -22,6 +22,7 @@
 namespace {
 
 constexpr char kLogTag[] = "sensors";
+constexpr char kHitlTag[] = "hitl";
 
 constexpr std::array<std::uint8_t, Sensors::kRadioPacketTypeCount>
     kRadioPacketIds = {
@@ -59,6 +60,8 @@ static_assert(valid_radio_rate(Sensors::kRadioHeartbeatPacketRateHz));
 static_assert(valid_radio_rate(Sensors::kRadioWitnessDebugPacketRateHz));
 static_assert(valid_radio_rate(Sensors::kRadioIrisDebugPacketRateHz));
 
+static_assert(IRIS_PACKET_STATE_GPS_SATELLITES_LENGTH == 1U,
+              "0x02 satellites field is one byte");
 static_assert(IRIS_PACKET_STATE_BATTERY_VOLTAGE_LENGTH ==
                   sizeof(std::uint16_t),
               "0x02 battery encoder requires a two-byte field");
@@ -127,6 +130,24 @@ void write_float_be(std::uint8_t *destination, const float value)
     std::memcpy(&bits, &value, sizeof(bits));
     write_u32_be(destination, bits);
 }
+
+std::uint32_t uptime_ms()
+{
+    return static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
+}
+
+const char *hitl_source_name(const hitl::Source source)
+{
+    return source == hitl::Source::Usb ? "USB" : "radio";
+}
+
+constexpr std::uint8_t kSensorReadyMasks[] = {
+    IRIS_WITNESS_STATUS_LOW_G_ACCEL_READY_MASK,
+    IRIS_WITNESS_STATUS_GYRO_READY_MASK,
+    IRIS_WITNESS_STATUS_IMU_TEMPERATURE_READY_MASK,
+    IRIS_WITNESS_STATUS_HIGH_G_ACCEL_READY_MASK,
+    IRIS_WITNESS_STATUS_BAROMETER_READY_MASK,
+};
 
 }  // namespace
 
@@ -243,6 +264,201 @@ esp_err_t Sensors::handle_command(const std::uint16_t command)
     ESP_LOGI(kLogTag, "Witness debug packets enabled at %u Hz",
              static_cast<unsigned>(kDebugPacketRateHz));
     return ESP_OK;
+}
+
+esp_err_t Sensors::enter_hitl(const hitl::Source source)
+{
+    const FlightStateMachine::State state = flight_state_machine_.state();
+    const std::uint32_t now_ms = uptime_ms();
+    portENTER_CRITICAL(&hitl_lock_);
+    const auto result = hitl_controller_.enter(
+        source, state == FlightStateMachine::State::PadIdle, now_ms);
+    portEXIT_CRITICAL(&hitl_lock_);
+
+    switch (result) {
+    case hitl::Controller::EnterResult::Entered:
+        ESP_LOGW(kHitlTag,
+                 "HITL mode entered from USB: IMU, barometer, GPS and battery "
+                 "now come from 0x0C packets; exits after %u ms without input",
+                 static_cast<unsigned>(hitl::kInputTimeoutMs));
+        return ESP_OK;
+    case hitl::Controller::EnterResult::AlreadyActive:
+        ESP_LOGI(kHitlTag, "HITL enter ignored: already active");
+        return ESP_OK;
+    case hitl::Controller::EnterResult::RejectedSource:
+        ESP_LOGW(kHitlTag,
+                 "HITL enter rejected: received from %s; HITL can only be "
+                 "entered over USB",
+                 hitl_source_name(source));
+        return ESP_ERR_NOT_ALLOWED;
+    case hitl::Controller::EnterResult::RejectedFlightState:
+    default:
+        ESP_LOGW(kHitlTag,
+                 "HITL enter rejected: flight state is %s; HITL requires pad idle",
+                 FlightStateMachine::state_name(state));
+        return ESP_ERR_INVALID_STATE;
+    }
+}
+
+esp_err_t Sensors::exit_hitl(const hitl::Source source)
+{
+    portENTER_CRITICAL(&hitl_lock_);
+    const bool was_active = hitl_controller_.exit();
+    portEXIT_CRITICAL(&hitl_lock_);
+    if (was_active) {
+        ESP_LOGI(kHitlTag, "HITL mode exited by %s command; real sensors restored",
+                 hitl_source_name(source));
+    } else {
+        ESP_LOGI(kHitlTag, "HITL exit from %s ignored: HITL not active",
+                 hitl_source_name(source));
+    }
+    return ESP_OK;
+}
+
+bool Sensors::submit_hitl_sample(const hitl::Sample &sample)
+{
+    const std::uint32_t now_ms = uptime_ms();
+    portENTER_CRITICAL(&hitl_lock_);
+    const bool accepted = hitl_controller_.submit(sample, now_ms);
+    portEXIT_CRITICAL(&hitl_lock_);
+    return accepted;
+}
+
+bool Sensors::hitl_active() const
+{
+    portENTER_CRITICAL(&hitl_lock_);
+    const bool active = hitl_controller_.active();
+    portEXIT_CRITICAL(&hitl_lock_);
+    return active;
+}
+
+bool Sensors::service_hitl(const std::uint32_t now_ms, bool &new_sample)
+{
+    new_sample = false;
+    portENTER_CRITICAL(&hitl_lock_);
+    const bool timed_out = hitl_controller_.expire(now_ms);
+    const bool active = hitl_controller_.active();
+    const std::uint32_t session = hitl_controller_.session();
+    if (active) {
+        new_sample = hitl_controller_.take_sample(hitl_sample_);
+    }
+    portEXIT_CRITICAL(&hitl_lock_);
+
+    if (timed_out) {
+        ESP_LOGW(kHitlTag,
+                 "HITL input timeout: no valid 0x0C packet for %u ms; exiting "
+                 "HITL, real sensors restored",
+                 static_cast<unsigned>(hitl::kInputTimeoutMs));
+    }
+
+    // Entry, exit, timeout or exit+re-entry: discard every sensor value so
+    // real and simulated data are never mixed. Readiness flags stay clear and
+    // no sensor packet or flight-state observation is produced until the
+    // first sample from the new source (a 0x0C frame or a real reading).
+    if (active != hitl_in_use_ || (active && session != hitl_session_in_use_)) {
+        hitl_in_use_ = active;
+        hitl_session_in_use_ = session;
+        hitl_has_sample_ = false;
+        hitl_samples_since_summary_ = 0;
+        hitl_last_summary_ms_ = now_ms;
+        reset_sensor_sample();
+        witness_status_.set_state_flag(
+            IRIS_WITNESS_STATUS_HITL_ACTIVE_MASK, active);
+        publish_sample();
+    }
+
+    if (new_sample) {
+        if (!hitl_has_sample_) {
+            ESP_LOGI(kHitlTag, "first HITL sample received (sim time %lu ms)",
+                     static_cast<unsigned long>(hitl_sample_.sim_time_ms));
+        }
+        apply_hitl_sample();
+        hitl_has_sample_ = true;
+        ++hitl_samples_since_summary_;
+    }
+
+    if (active && now_ms - hitl_last_summary_ms_ >= kHitlSummaryIntervalMs) {
+        ESP_LOGI(kHitlTag, "HITL active: %lu samples in last %lu ms, sim time %lu ms",
+                 static_cast<unsigned long>(hitl_samples_since_summary_),
+                 static_cast<unsigned long>(now_ms - hitl_last_summary_ms_),
+                 static_cast<unsigned long>(hitl_sample_.sim_time_ms));
+        hitl_samples_since_summary_ = 0;
+        hitl_last_summary_ms_ = now_ms;
+    }
+    return active;
+}
+
+void Sensors::apply_hitl_sample()
+{
+    const hitl::Sample &input = hitl_sample_;
+    for (std::size_t axis = 0; axis < 3; ++axis) {
+        working_sample_.low_g_accel_raw[axis] = input.low_g_accel_raw[axis];
+        working_sample_.high_g_accel_raw[axis] = input.high_g_accel_raw[axis];
+        working_sample_.gyro_raw[axis] = input.gyro_raw[axis];
+        working_sample_.low_g_accel_mg[axis] = input.low_g_accel_mg[axis];
+        working_sample_.high_g_accel_mg[axis] = input.high_g_accel_mg[axis];
+        working_sample_.gyro_mdps[axis] = input.gyro_mdps[axis];
+    }
+    working_sample_.temperature_raw = input.temperature_raw;
+    working_sample_.temperature_celsius = input.temperature_celsius;
+    working_sample_.pressure_centi_mbar =
+        static_cast<std::int32_t>(input.pressure_pa);
+    working_sample_.ms5607_temperature_centi_celsius =
+        input.barometer_temperature_centi_celsius;
+    working_sample_.barometric_altitude_meters =
+        input.barometric_altitude_meters;
+    working_sample_.battery_voltage_mv = input.battery_mv;
+    working_sample_.battery_adc_raw = 0;
+    working_sample_.low_g_accel_ready = true;
+    working_sample_.high_g_accel_ready = true;
+    working_sample_.gyro_ready = true;
+    working_sample_.temperature_ready = true;
+    working_sample_.ms5607_ready = input.barometer_valid;
+    has_low_g_accel_sample_ = true;
+    has_high_g_accel_sample_ = true;
+    has_gyro_sample_ = true;
+
+    witness_status_.set(IRIS_WITNESS_STATUS_LOW_G_ACCEL_READY_MASK, true);
+    witness_status_.set(IRIS_WITNESS_STATUS_GYRO_READY_MASK, true);
+    witness_status_.set(IRIS_WITNESS_STATUS_IMU_TEMPERATURE_READY_MASK, true);
+    witness_status_.set(IRIS_WITNESS_STATUS_HIGH_G_ACCEL_READY_MASK, true);
+    witness_status_.set(IRIS_WITNESS_STATUS_BAROMETER_READY_MASK,
+                        input.barometer_valid);
+}
+
+void Sensors::reset_sensor_sample()
+{
+    working_sample_ = Sample{};
+    has_low_g_accel_sample_ = false;
+    has_high_g_accel_sample_ = false;
+    has_gyro_sample_ = false;
+    for (const std::uint8_t mask : kSensorReadyMasks) {
+        witness_status_.set(mask, false);
+    }
+}
+
+NmeaGps::Fix Sensors::current_gps_fix() const
+{
+    if (!hitl_in_use_) {
+        return gps_uart_.latest_gps_fix();
+    }
+    // Same shape as a fresh UART GGA: satellites even without a fix, and
+    // position fields only with one. Freshness is the HITL input timeout.
+    NmeaGps::Fix fix{};
+    if (!hitl_has_sample_) {
+        return fix;
+    }
+    fix.gga = true;
+    fix.received_ms = uptime_ms();
+    fix.satellites = hitl_sample_.satellites;
+    fix.fix_quality = hitl_sample_.fix_quality;
+    fix.valid = hitl_sample_.gps_fix;
+    if (fix.valid) {
+        fix.latitude_degrees = hitl_sample_.latitude_degrees;
+        fix.longitude_degrees = hitl_sample_.longitude_degrees;
+        fix.altitude_meters = hitl_sample_.gps_altitude_meters;
+    }
+    return fix;
 }
 
 void Sensors::set_radio_transmission_enabled(const bool enabled)
@@ -558,7 +774,7 @@ esp_err_t Sensors::queue_sensor_packet()
 esp_err_t Sensors::queue_state_packet()
 {
     std::uint8_t payload[IRIS_PACKET_STATE_DATA_LENGTH]{};
-    const auto gps = gps_uart_.latest_gps_fix();
+    const auto gps = current_gps_fix();
     write_i24_be(&payload[IRIS_PACKET_STATE_LATITUDE_OFFSET],
         static_cast<std::int32_t>(std::lround(gps.latitude_degrees * IRIS_FIELD_GPS_COORDINATE_SCALE)));
     write_i24_be(&payload[IRIS_PACKET_STATE_LONGITUDE_OFFSET],
@@ -576,6 +792,8 @@ esp_err_t Sensors::queue_state_packet()
     write_u16_be(
         &payload[IRIS_PACKET_STATE_BATTERY_VOLTAGE_OFFSET],
         encode_battery_voltage(working_sample_.battery_voltage_mv));
+    // Reported from the latest GGA even without a fix; zero when stale.
+    payload[IRIS_PACKET_STATE_GPS_SATELLITES_OFFSET] = gps.satellites;
 
     return data_forwarder_.queue_packet(
         IRIS_PACKET_ID_STATE, payload, sizeof(payload));
@@ -665,7 +883,7 @@ esp_err_t Sensors::queue_debug_packet()
         &payload[IRIS_PACKET_WITNESS_DEBUG_BAROMETRIC_ALTITUDE_OFFSET],
         working_sample_.barometric_altitude_meters);
 
-    const auto gps = gps_uart_.latest_gps_fix();
+    const auto gps = current_gps_fix();
     write_i24_be(&payload[IRIS_PACKET_WITNESS_DEBUG_LATITUDE_OFFSET],
         static_cast<std::int32_t>(std::lround(gps.latitude_degrees * IRIS_FIELD_GPS_COORDINATE_SCALE)));
     write_i24_be(&payload[IRIS_PACKET_WITNESS_DEBUG_LONGITUDE_OFFSET],
@@ -866,93 +1084,116 @@ void Sensors::run()
     for (;;) {
         if (radio_ready_) poll_radio_commands();
 
-        const esp_err_t lsm_result = fetch_lsm6dsv320x();
-        witness_status_.set(
-            IRIS_WITNESS_STATUS_LOW_G_ACCEL_READY_MASK,
-            working_sample_.low_g_accel_ready);
-        witness_status_.set(
-            IRIS_WITNESS_STATUS_GYRO_READY_MASK,
-            working_sample_.gyro_ready);
-        witness_status_.set(
-            IRIS_WITNESS_STATUS_IMU_TEMPERATURE_READY_MASK,
-            working_sample_.temperature_ready);
-        witness_status_.set(
-            IRIS_WITNESS_STATUS_HIGH_G_ACCEL_READY_MASK,
-            working_sample_.high_g_accel_ready);
-        if (lsm_result == ESP_OK) {
-            consecutive_lsm_errors = 0;
-        } else {
-            ++consecutive_lsm_errors;
-            if (consecutive_lsm_errors == 1 ||
-                (consecutive_lsm_errors % kTaskRateHz) == 0) {
-                ESP_LOGE(kLogTag, "LSM6DSV320X read failed: %s",
-                         esp_err_to_name(lsm_result));
-            }
-        }
-
+        bool hitl_new_sample = false;
+        const bool hitl = service_hitl(uptime_ms(), hitl_new_sample);
         const TickType_t now = xTaskGetTickCount();
+        esp_err_t lsm_result = ESP_ERR_NOT_FOUND;
         bool ms5607_updated = false;
-        if (!ms5607_initialized_ &&
-            (now - last_ms5607_init_attempt) >= kStatePacketPeriod) {
-            last_ms5607_init_attempt = now;
-            const esp_err_t initialization_result =
-                ms5607_.initialize(kSpiHost);
-            if (initialization_result == ESP_OK) {
-                ms5607_initialized_ = true;
-                consecutive_ms5607_errors = 0;
-                ESP_LOGI(kLogTag, "MS5607 initialization recovered");
-            } else {
-                ms5607_.release();
-                ESP_LOGE(kLogTag, "MS5607 initialization retry failed: %s",
-                         esp_err_to_name(initialization_result));
-            }
-        }
-
-        if (ms5607_initialized_) {
-            const esp_err_t ms5607_result = ms5607_.poll(ms5607_updated);
-            if (ms5607_result == ESP_OK) {
-                consecutive_ms5607_errors = 0;
-            } else {
-                ++consecutive_ms5607_errors;
-                if (consecutive_ms5607_errors == 1 ||
-                    (consecutive_ms5607_errors % kTaskRateHz) == 0) {
-                    ESP_LOGE(kLogTag, "MS5607 read failed: %s",
-                             esp_err_to_name(ms5607_result));
-                }
-            }
-        }
-
-        if (ms5607_updated) {
-            const Ms5607::Sample &barometer = ms5607_.sample();
-            working_sample_.pressure_centi_mbar =
-                barometer.pressure_centi_mbar;
-            working_sample_.ms5607_temperature_centi_celsius =
-                barometer.temperature_centi_celsius;
-            working_sample_.barometric_altitude_meters =
-                barometer.altitude_meters;
-            working_sample_.ms5607_ready = barometer.valid;
-            witness_status_.set(
-                IRIS_WITNESS_STATUS_BAROMETER_READY_MASK,
-                working_sample_.ms5607_ready);
-        }
-
         bool battery_updated = false;
-        ++battery_sample_counter;
-        if (battery_sample_counter >= kBatterySampleDivider) {
-            battery_sample_counter = 0;
-            const esp_err_t battery_result = read_battery_voltage();
-            if (battery_result == ESP_OK) {
-                consecutive_battery_errors = 0;
+        bool barometer_healthy = false;
+
+        if (hitl) {
+            // HITL replaces the IMU, barometer and battery; they are not read.
+            // Only a new 0x0C sample counts as an update, so the flight state
+            // machine and sensor packet see each simulated sample once.
+            if (hitl_new_sample) {
+                lsm_result = ESP_OK;
+                ms5607_updated = true;
                 battery_updated = true;
+            }
+            barometer_healthy = working_sample_.ms5607_ready;
+        } else {
+            lsm_result = fetch_lsm6dsv320x();
+            witness_status_.set(
+                IRIS_WITNESS_STATUS_LOW_G_ACCEL_READY_MASK,
+                working_sample_.low_g_accel_ready);
+            witness_status_.set(
+                IRIS_WITNESS_STATUS_GYRO_READY_MASK,
+                working_sample_.gyro_ready);
+            witness_status_.set(
+                IRIS_WITNESS_STATUS_IMU_TEMPERATURE_READY_MASK,
+                working_sample_.temperature_ready);
+            witness_status_.set(
+                IRIS_WITNESS_STATUS_HIGH_G_ACCEL_READY_MASK,
+                working_sample_.high_g_accel_ready);
+            if (lsm_result == ESP_OK) {
+                consecutive_lsm_errors = 0;
             } else {
-                ++consecutive_battery_errors;
-                if (consecutive_battery_errors == 1 ||
-                    (consecutive_battery_errors % kBatterySampleRateHz) == 0) {
-                    ESP_LOGE(kLogTag, "battery ADC read failed: %s",
-                             esp_err_to_name(battery_result));
+                ++consecutive_lsm_errors;
+                if (consecutive_lsm_errors == 1 ||
+                    (consecutive_lsm_errors % kTaskRateHz) == 0) {
+                    ESP_LOGE(kLogTag, "LSM6DSV320X read failed: %s",
+                             esp_err_to_name(lsm_result));
                 }
             }
+
+            if (!ms5607_initialized_ &&
+                (now - last_ms5607_init_attempt) >= kStatePacketPeriod) {
+                last_ms5607_init_attempt = now;
+                const esp_err_t initialization_result =
+                    ms5607_.initialize(kSpiHost);
+                if (initialization_result == ESP_OK) {
+                    ms5607_initialized_ = true;
+                    consecutive_ms5607_errors = 0;
+                    ESP_LOGI(kLogTag, "MS5607 initialization recovered");
+                } else {
+                    ms5607_.release();
+                    ESP_LOGE(kLogTag, "MS5607 initialization retry failed: %s",
+                             esp_err_to_name(initialization_result));
+                }
+            }
+
+            if (ms5607_initialized_) {
+                const esp_err_t ms5607_result = ms5607_.poll(ms5607_updated);
+                if (ms5607_result == ESP_OK) {
+                    consecutive_ms5607_errors = 0;
+                } else {
+                    ++consecutive_ms5607_errors;
+                    if (consecutive_ms5607_errors == 1 ||
+                        (consecutive_ms5607_errors % kTaskRateHz) == 0) {
+                        ESP_LOGE(kLogTag, "MS5607 read failed: %s",
+                                 esp_err_to_name(ms5607_result));
+                    }
+                }
+            }
+
+            if (ms5607_updated) {
+                const Ms5607::Sample &barometer = ms5607_.sample();
+                working_sample_.pressure_centi_mbar =
+                    barometer.pressure_centi_mbar;
+                working_sample_.ms5607_temperature_centi_celsius =
+                    barometer.temperature_centi_celsius;
+                working_sample_.barometric_altitude_meters =
+                    barometer.altitude_meters;
+                working_sample_.ms5607_ready = barometer.valid;
+                witness_status_.set(
+                    IRIS_WITNESS_STATUS_BAROMETER_READY_MASK,
+                    working_sample_.ms5607_ready);
+            }
+
+            ++battery_sample_counter;
+            if (battery_sample_counter >= kBatterySampleDivider) {
+                battery_sample_counter = 0;
+                const esp_err_t battery_result = read_battery_voltage();
+                if (battery_result == ESP_OK) {
+                    consecutive_battery_errors = 0;
+                    battery_updated = true;
+                } else {
+                    ++consecutive_battery_errors;
+                    if (consecutive_battery_errors == 1 ||
+                        (consecutive_battery_errors % kBatterySampleRateHz) == 0) {
+                        ESP_LOGE(kLogTag, "battery ADC read failed: %s",
+                                 esp_err_to_name(battery_result));
+                    }
+                }
+            }
+            barometer_healthy = ms5607_initialized_ &&
+                                working_sample_.ms5607_ready &&
+                                consecutive_ms5607_errors == 0U;
         }
+
+        witness_status_.set_state_flag(
+            IRIS_WITNESS_STATUS_GPS_LOCKED_MASK, current_gps_fix().valid);
 
         if (lsm_result == ESP_OK || ms5607_updated || battery_updated) {
             working_sample_.timestamp_us =
@@ -981,9 +1222,7 @@ void Sensors::run()
                 observation.angular_rate_dps[axis] =
                     working_sample_.gyro_mdps[axis] / 1000.0F;
             }
-            observation.barometric_altitude_valid =
-                ms5607_initialized_ && working_sample_.ms5607_ready &&
-                consecutive_ms5607_errors == 0U;
+            observation.barometric_altitude_valid = barometer_healthy;
             observation.barometric_altitude_meters =
                 working_sample_.barometric_altitude_meters;
             observation.timestamp_us = working_sample_.timestamp_us;

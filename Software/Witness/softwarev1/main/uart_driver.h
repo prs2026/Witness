@@ -37,7 +37,8 @@ public:
 
     esp_err_t start();
     esp_err_t shutdown();
-    // Thread-safe snapshot; invalid/stale fixes return zero-valued coordinates.
+    // Thread-safe snapshot of the latest GGA within the fix timeout, otherwise
+    // a zero Fix. Position fields are zero unless valid; satellites are kept.
     NmeaGps::Fix latest_gps_fix() const;
 
     // Writes the exact bytes supplied to this UART.
