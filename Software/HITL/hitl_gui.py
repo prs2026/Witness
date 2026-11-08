@@ -3,9 +3,11 @@
 GUI:       python hitl_gui.py
 Headless:  python hitl_gui.py --headless --preset "Nominal 10 g" \
                --host prs2026hitl --port 7100
+CSV:       python hitl_gui.py --headless --csv trajectories/x.csv
 
-The tool only ever transmits HITL ENTER (0x4849), HITL EXIT (0x4858) and 0x0C
-HITL sensor frames. See README.md for the safety rules.
+The tool only ever transmits HITL ENTER (0x4849), HITL EXIT (0x4858), Witness
+debug start (0x00E0, CSV runs only) and 0x0C HITL sensor frames. See README.md
+for the safety rules.
 """
 
 from __future__ import annotations
@@ -22,19 +24,25 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
     sys.path.insert(0, HERE)
 
+import attitude as att  # noqa: E402
 import hitl_protocol as hp  # noqa: E402
 import hitl_session as hs  # noqa: E402
 import sim_model as sm  # noqa: E402
+import trajectory_csv as tc  # noqa: E402
 
 SETTINGS_PATH = os.path.join(HERE, "hitl_settings.json")
 DEFAULT_HOST = "prs2026hitl"
 DEFAULT_PORT = 7100
 DEFAULT_TOLERANCE_S = 1.0
+TRAJECTORY_DIR = os.path.join(HERE, "trajectories")
+CSV_SOURCE = "CSV trajectory"
 
 
 def load_settings(path: str = SETTINGS_PATH) -> dict:
     settings = {"host": DEFAULT_HOST, "port": DEFAULT_PORT,
-                "preset": "Nominal 10 g", "tolerance_s": DEFAULT_TOLERANCE_S}
+                "preset": "Nominal 10 g", "tolerance_s": DEFAULT_TOLERANCE_S,
+                "csv_path": "", "att_final_tilt_deg": att.DEFAULT_THRESHOLDS[
+                    "final_tilt_max_deg"]}
     try:
         with open(path) as f:
             data = json.load(f)
@@ -53,9 +61,9 @@ def save_settings(settings: dict, path: str = SETTINGS_PATH):
         pass
 
 
-def parse_overrides(items) -> dict:
-    """--set key=value pairs -> typed SimParams overrides."""
-    types = {f.name: f.type for f in dataclasses.fields(sm.SimParams)}
+def parse_overrides(items, cls=sm.SimParams) -> dict:
+    """--set key=value pairs -> typed overrides for a params dataclass."""
+    types = {f.name: f.type for f in dataclasses.fields(cls)}
     out = {}
     for item in items or []:
         key, _, raw = item.partition("=")
@@ -70,6 +78,8 @@ def coerce(type_name, raw: str):
     t = str(type_name)
     if "None" in t and raw.lower() in ("", "none"):
         return None
+    if t == "str":
+        return raw
     if "bool" in t:
         return raw.lower() in ("1", "true", "yes", "on")
     if "int" in t and "float" not in t:
@@ -81,22 +91,58 @@ def coerce(type_name, raw: str):
 # Headless
 # ---------------------------------------------------------------------------
 
+def attitude_thresholds(args) -> dict:
+    return {"final_tilt_max_deg": args.att_final_tilt,
+            "final_att_max_deg": args.att_final_error,
+            "flight_tilt_max_deg": args.att_flight_tilt}
+
+
 def run_headless(args) -> int:
-    try:
-        params = sm.preset_params(args.preset)
-    except KeyError as exc:
-        print(exc.args[0], file=sys.stderr)
+    scale = max(int(args.time_scale), int(args.speed or 1))
+    if scale != 1 and not hs.is_loopback(args.host):
+        print("--speed is only allowed against the local fake Witness "
+              "(127.0.0.1); hardware runs are real time", file=sys.stderr)
         return 2
-    params = dataclasses.replace(params, **parse_overrides(args.set))
+    if args.csv:
+        try:
+            params = tc.CsvParams(csv_path=args.csv,
+                                  **parse_overrides(args.set, tc.CsvParams))
+            label = "CSV " + os.path.basename(args.csv)
+        except (OSError, ValueError, TypeError) as exc:
+            print(f"bad CSV run arguments: {exc}", file=sys.stderr)
+            return 2
+    else:
+        try:
+            params = sm.preset_params(args.preset)
+        except KeyError as exc:
+            print(exc.args[0], file=sys.stderr)
+            return 2
+        params = dataclasses.replace(params, **parse_overrides(args.set))
+        label = args.preset
     runs_dir = None if args.no_save else (args.runs_dir or hs.DEFAULT_RUNS_DIR)
     session = hs.HitlSession(runs_dir=runs_dir)
-    run = session.prepare_run(params, preset=args.preset,
-                              tolerance_s=args.tolerance,
-                              time_scale=args.time_scale)
+    try:
+        run = session.prepare_run(params, preset=label,
+                                  tolerance_s=args.tolerance,
+                                  time_scale=scale,
+                                  att_thresholds=attitude_thresholds(args),
+                                  att_latency_ms=args.att_latency_ms)
+    except (OSError, ValueError) as exc:
+        print(f"cannot build run: {exc}", file=sys.stderr)
+        return 2
     summary = sm.summarize(run.samples)
-    print(f"Preset {args.preset!r}: {summary['duration_s']:.1f} s sim, "
+    print(f"{'Source' if args.csv else 'Preset'} {label!r}: "
+          f"{summary['duration_s']:.1f} s sim, "
           f"apogee {summary['apogee_agl_m']:.0f} m AGL at "
           f"{summary['apogee_t_s']:.1f} s")
+    if run.csv_report:
+        print(tc.format_report(run.csv_report))
+    print("Expected: " + (", ".join(
+        f"{hp.FLIGHT_STATES[k]} {v:.2f} s"
+        for k, v in sorted(run.expected.items(), key=lambda kv: kv[1]))
+        or "no transitions"))
+    if args.dry_run:
+        return 0
     try:
         session.connect(args.host, args.port, timeout=args.connect_timeout)
     except OSError as exc:
@@ -121,7 +167,12 @@ def run_headless(args) -> int:
         time.sleep(0.05)
     drain()
     try:
-        session.start_run(run, abort_on_no_hitl=True)
+        try:
+            session.start_run(run, abort_on_no_hitl=True)
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            session.disconnect()
+            return 2
         while not session.wait_run(0.2):
             drain()
             if not session.connected:
@@ -224,6 +275,21 @@ class HitlApp:
                           values=list(sm.PRESETS), state="readonly", width=28)
         cb.pack(anchor="w", fill="x")
         cb.bind("<<ComboboxSelected>>", lambda e: self.load_preset())
+        csv_row = ttk.Frame(left)
+        csv_row.pack(fill="x", pady=(4, 0))
+        ttk.Button(csv_row, text="Load CSV\u2026",
+                   command=self.load_csv).pack(side="left")
+        self.csv_label = ttk.Label(csv_row, text="(preset source)",
+                                   width=26)
+        self.csv_label.pack(side="left", padx=4)
+        att_row = ttk.Frame(left)
+        att_row.pack(fill="x")
+        ttk.Label(att_row, text="Final tilt max deg").pack(side="left")
+        self.att_tilt_var = tk.StringVar(
+            value=str(self.settings.get("att_final_tilt_deg", 5.0)))
+        ttk.Entry(att_row, textvariable=self.att_tilt_var,
+                  width=6).pack(side="left", padx=4)
+        self.csv_path = None
         pf_outer = ttk.LabelFrame(left, text="Parameters", padding=2)
         pf_outer.pack(fill="both", expand=True, pady=4)
         canvas = tk.Canvas(pf_outer, width=270, highlightthickness=0)
@@ -235,21 +301,11 @@ class HitlApp:
         canvas.configure(yscrollcommand=sb.set)
         canvas.pack(side="left", fill="both", expand=True)
         sb.pack(side="right", fill="y")
+        self.param_frame = pf
+        self.param_cls = None
         self.param_vars = {}
         self.param_types = {}
-        for r, f in enumerate(dataclasses.fields(sm.SimParams)):
-            ttk.Label(pf, text=f.name).grid(row=r, column=0, sticky="w")
-            t = str(f.type)
-            self.param_types[f.name] = t
-            if "bool" in t:
-                var = tk.BooleanVar()
-                ttk.Checkbutton(pf, variable=var).grid(row=r, column=1,
-                                                       sticky="w")
-            else:
-                var = tk.StringVar()
-                ttk.Entry(pf, textvariable=var, width=10).grid(
-                    row=r, column=1, sticky="w")
-            self.param_vars[f.name] = var
+        self._build_param_grid(sm.SimParams)
         ttk.Button(left, text="Predict transitions",
                    command=self.predict).pack(fill="x")
         self.predict_label = ttk.Label(left, text="", justify="left",
@@ -300,17 +356,86 @@ class HitlApp:
         self.root.after(250, self.redraw_plot)
 
     # ------------------------------------------------------------ params
-    def load_preset(self):
-        p = sm.preset_params(self.preset_var.get())
-        for name, value in p.to_dict().items():
-            var = self.param_vars[name]
+    def _build_param_grid(self, cls):
+        """(Re)build the parameter entries for SimParams or CsvParams."""
+        if self.param_cls is cls:
+            return
+        tk = self.tk
+        from tkinter import ttk
+        for child in self.param_frame.winfo_children():
+            child.destroy()
+        self.param_cls = cls
+        self.param_vars = {}
+        self.param_types = {}
+        r = 0
+        for f in dataclasses.fields(cls):
+            if f.name == "csv_path":
+                continue
+            ttk.Label(self.param_frame, text=f.name).grid(row=r, column=0,
+                                                          sticky="w")
+            t = str(f.type)
+            self.param_types[f.name] = t
+            if "bool" in t:
+                var = tk.BooleanVar()
+                ttk.Checkbutton(self.param_frame, variable=var).grid(
+                    row=r, column=1, sticky="w")
+            elif f.name == "after_apogee_attitude":
+                var = tk.StringVar()
+                ttk.Combobox(self.param_frame, textvariable=var,
+                             values=tc.ATTITUDE_MODES, state="readonly",
+                             width=9).grid(row=r, column=1, sticky="w")
+            else:
+                var = tk.StringVar()
+                ttk.Entry(self.param_frame, textvariable=var, width=10).grid(
+                    row=r, column=1, sticky="w")
+            self.param_vars[f.name] = var
+            r += 1
+
+    def _fill_params(self, values: dict):
+        for name, value in values.items():
+            var = self.param_vars.get(name)
+            if var is None:
+                continue
             if "bool" in self.param_types[name]:
                 var.set(bool(value))
             else:
                 var.set("" if value is None else str(value))
+
+    def load_preset(self):
+        self.csv_path = None
+        self.csv_label.config(text="(preset source)")
+        self._build_param_grid(sm.SimParams)
+        p = sm.preset_params(self.preset_var.get())
+        self._fill_params(p.to_dict())
         self.predict()
 
-    def read_params(self) -> sm.SimParams:
+    def load_csv(self, path: str | None = None):
+        """Switch the source to a trajectory CSV (file dialog if no path)."""
+        if path is None:
+            from tkinter import filedialog
+            last = self.settings.get("csv_path") or ""
+            path = filedialog.askopenfilename(
+                title="Load trajectory CSV",
+                initialdir=os.path.dirname(last) if last else TRAJECTORY_DIR,
+                filetypes=(("CSV", "*.csv"), ("All files", "*.*")))
+            if not path:
+                return
+        was_csv = self.param_cls is tc.CsvParams
+        keep = {}
+        if was_csv:
+            try:
+                keep = self.read_params().to_dict()
+            except ValueError:
+                keep = {}
+        self._build_param_grid(tc.CsvParams)
+        self._fill_params(keep or tc.CsvParams().to_dict())
+        self.csv_path = path
+        self.csv_label.config(text=os.path.basename(path))
+        self.settings["csv_path"] = path
+        save_settings(self.settings, self.settings_path)
+        self.predict()
+
+    def read_params(self):
         values = {}
         for name, var in self.param_vars.items():
             t = self.param_types[name]
@@ -321,7 +446,15 @@ class HitlApp:
                     values[name] = coerce(t, var.get().strip())
                 except ValueError:
                     raise ValueError(f"bad value for {name}: {var.get()!r}")
+        if self.param_cls is tc.CsvParams:
+            return tc.CsvParams(csv_path=self.csv_path or "", **values)
         return sm.SimParams(**values)
+
+    def _att_thresholds(self) -> dict:
+        raw = self.att_tilt_var.get().strip()
+        th = {"final_tilt_max_deg": None if raw.lower() in ("", "none")
+              else float(raw)}
+        return th
 
     def predict(self):
         try:
@@ -329,15 +462,27 @@ class HitlApp:
         except ValueError as exc:
             self.predict_label.config(text=str(exc))
             return None
-        samples = sm.generate(params)
-        exp = sm.predict_transitions(samples)
+        report = ""
+        if isinstance(params, tc.CsvParams):
+            try:
+                build = tc.build(params)
+            except (OSError, ValueError) as exc:
+                self.predict_label.config(text=f"CSV error: {exc}")
+                return None
+            samples = build.samples
+            exp = hs.expected_from_track(samples,
+                                         sm.predict_state_track(samples))
+            report = "\n" + tc.format_report(build.report)
+        else:
+            samples = sm.generate(params)
+            exp = sm.predict_transitions(samples)
         s = sm.summarize(samples)
         text = (f"Duration {s['duration_s']:.1f} s, apogee "
                 f"{s['apogee_agl_m']:.0f} m AGL at {s['apogee_t_s']:.1f} s\n"
                 + "\n".join(f"{hp.FLIGHT_STATES[k]}: {v:.2f} s"
                             for k, v in sorted(exp.items(),
                                                key=lambda kv: kv[1]))
-                + ("" if exp else "No transitions expected"))
+                + ("" if exp else "No transitions expected") + report)
         self.predict_label.config(text=text)
         if self.session.run is None or not self.session.run.running:
             self._fill_table({k: v for k, v in exp.items()}, {})
@@ -375,13 +520,25 @@ class HitlApp:
         try:
             params = self.read_params()
             tol = float(self.tol_var.get())
+            th = self._att_thresholds()
         except ValueError as exc:
             self.append_log(f"[tool] {exc}")
             return
-        self.settings.update(preset=self.preset_var.get(), tolerance_s=tol)
+        self.settings.update(preset=self.preset_var.get(), tolerance_s=tol,
+                             att_final_tilt_deg=th["final_tilt_max_deg"])
         save_settings(self.settings, self.settings_path)
-        run = self.session.prepare_run(params, preset=self.preset_var.get(),
-                                       tolerance_s=tol)
+        label = (CSV_SOURCE + " " + os.path.basename(self.csv_path)
+                 if self.csv_path else self.preset_var.get())
+        try:
+            run = self.session.prepare_run(params, preset=label,
+                                           tolerance_s=tol,
+                                           att_thresholds=th)
+        except (OSError, ValueError) as exc:
+            self.append_log(f"[tool] cannot build run: {exc}")
+            return
+        if run.csv_report:
+            for line in tc.format_report(run.csv_report).splitlines():
+                self.append_log("[csv] " + line)
         self.hide_banner()
         self._safe(lambda: self.session.start_run(run))
         self._refresh_buttons()
@@ -519,18 +676,32 @@ class HitlApp:
         h = max(c.winfo_height(), 160)
         if run is not None:
             t_end = max(run.samples[-1].t_ms / 1000 if run.samples else 1, 1)
-            half = h // 2
+            panels = 3 if run.truth_quats is not None else 2
+            ph = h // panels
             alts = [a for _t, a in run.plot_true] + \
                 [a for _t, a in run.plot_baro]
             accs = [a for _t, a in run.plot_accel] + \
                 [a for _t, a in run.plot_wacc]
-            self._draw_series(c, 0, half, w, t_end, alts, "Altitude MSL (m)",
+            self._draw_series(c, 0, ph, w, t_end, alts, "Altitude MSL (m)",
                               [(run.plot_true, "#1f5fbf", "sim true"),
                                (run.plot_baro, "#d2691e", "Witness baro")])
-            self._draw_series(c, half, h - half, w, t_end, accs,
+            self._draw_series(c, ph, ph, w, t_end, accs,
                               "X accel (g)",
                               [(run.plot_accel, "#1f5fbf", "sim low-g X"),
                                (run.plot_wacc, "#d2691e", "Witness accel X")])
+            if panels == 3:
+                now = run.sim_ms / 1000
+                truth = [pt for pt in run.plot_tilt_truth if pt[0] <= now]
+                series = [(truth, "#1f5fbf", "truth tilt"),
+                          (run.plot_tilt_w, "#d2691e", "Witness tilt"),
+                          (run.plot_tilt_err, "#2e8b57", "tilt err"),
+                          (run.plot_att_err, "#b00020", "att err")]
+                vals = [v for pts, _c, _l in series for _t, v in pts]
+                title = "Tilt / attitude error (deg)"
+                if run.att_records and not run.plot_tilt_w:
+                    title += "  - Witness attitude not available (all zero)"
+                self._draw_series(c, 2 * ph, h - 2 * ph, w, t_end, vals,
+                                  title, series)
             x = 50 + (w - 60) * min(run.sim_ms / 1000 / t_end, 1)
             c.create_line(x, 0, x, h, fill="#bbb", dash=(2, 2))
         else:
@@ -557,11 +728,11 @@ class HitlApp:
                       else f"{lo:.1f}", anchor="e", font=("Segoe UI", 8))
         c.create_text(right, bot + 8, text=f"{t_end:.0f} s", anchor="e",
                       font=("Segoe UI", 8))
-        lx = left + 150
+        lx = left + 190
         for pts, color, label in series:
             c.create_text(lx, y0 + 8, text=label, fill=color, anchor="w",
                           font=("Segoe UI", 9))
-            lx += 120
+            lx += 105
             if len(pts) < 2:
                 continue
             step = max(1, len(pts) // 1500)
@@ -580,12 +751,33 @@ def build_parser():
     ap.add_argument("--host", default=s["host"])
     ap.add_argument("--port", type=int, default=s["port"])
     ap.add_argument("--preset", default="Nominal 10 g")
+    ap.add_argument("--csv", metavar="PATH",
+                    help="drive the run from a trajectory CSV instead of a "
+                    "preset (--set then applies to CSV parameters)")
     ap.add_argument("--set", action="append", metavar="KEY=VALUE",
                     help="override a model parameter (repeatable)")
     ap.add_argument("--tolerance", type=float, default=s["tolerance_s"],
                     help="max |Witness - expected| transition delta, s")
     ap.add_argument("--time-scale", type=int, default=1,
                     help=argparse.SUPPRESS)  # fake-Witness tests only
+    ap.add_argument("--speed", type=int, default=1, metavar="N",
+                    help="send N sim ticks per 10 ms; ONLY for the local fake "
+                    "Witness (refused for non-loopback hosts)")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="build the frames, print the prediction and exit "
+                    "without connecting")
+    ap.add_argument("--att-final-tilt", type=float,
+                    default=att.DEFAULT_THRESHOLDS["final_tilt_max_deg"],
+                    metavar="DEG", help="max final tilt error (CSV runs)")
+    ap.add_argument("--att-final-error", type=float, default=None,
+                    metavar="DEG", help="max final attitude error with the "
+                    "heading offset removed (CSV runs; default off)")
+    ap.add_argument("--att-flight-tilt", type=float, default=None,
+                    metavar="DEG", help="max tilt error during Boost..Descent "
+                    "(CSV runs; default off)")
+    ap.add_argument("--att-latency-ms", type=int, default=0,
+                    help="compare Witness attitude with the truth this many "
+                    "ms before the last frame sent")
     ap.add_argument("--settle", type=float, default=1.5,
                     help="seconds to wait for telemetry before starting")
     ap.add_argument("--connect-timeout", type=float, default=5.0)

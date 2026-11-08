@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 import os
 import queue
 import socket
@@ -15,8 +16,10 @@ import threading
 import time
 from dataclasses import dataclass, field
 
+import attitude as att
 import hitl_protocol as hp
 import sim_model as sm
+import trajectory_csv as tc
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_RUNS_DIR = os.path.join(HERE, "runs")
@@ -24,6 +27,23 @@ HITL_ACTIVE_TIMEOUT_S = 2.0
 STATE_CONFIRM_PACKETS = 2
 BACKWARD_CONFIRM_PACKETS = 5
 TRANSITION_STATES = (hp.BOOST, hp.COAST, hp.DESCENT, hp.LANDED)
+LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
+
+
+def is_loopback(host: str | None) -> bool:
+    host = (host or "").strip().lower()
+    return host in LOOPBACK_HOSTS or host.startswith("127.")
+
+
+def expected_from_track(samples, track) -> dict:
+    """{state: sim s of entry} from a per-tick expected-state track."""
+    out = {}
+    prev = hp.PAD_IDLE
+    for s, st in zip(samples, track):
+        if st != prev:
+            out.setdefault(st, s.t_ms / 1000.0)
+            prev = st
+    return out
 
 
 @dataclass
@@ -48,7 +68,7 @@ class WitnessView:
 
 @dataclass
 class RunState:
-    params: sm.SimParams
+    params: object               # sm.SimParams or tc.CsvParams
     preset: str
     samples: list
     frames: list
@@ -76,6 +96,23 @@ class RunState:
     plot_wacc: list = field(default_factory=list)    # (sim s, Witness acc x)
     run_dir: str | None = None
     result: dict | None = None
+    # CSV trajectory runs: truth attitude and Witness attitude comparison.
+    source: str = "preset"
+    csv_report: dict | None = None
+    truth_quats: list | None = None
+    state_track: list | None = None   # expected Witness state per tick
+    request_debug: bool = False       # send 0x00E0 once HITL is active
+    debug_sent: bool = False
+    att_thresholds: dict = field(default_factory=dict)
+    att_latency_ms: int = 0
+    att_records: list = field(default_factory=list)
+    att_psi: float | None = None      # heading offset, rad
+    att_psi_source: str = ""
+    plot_tilt_truth: list = field(default_factory=list)  # (sim s, deg)
+    plot_tilt_w: list = field(default_factory=list)
+    plot_tilt_err: list = field(default_factory=list)
+    plot_att_err: list = field(default_factory=list)
+    attitude: dict | None = None      # attitude summary at the end
 
 
 class RunRecorder:
@@ -98,20 +135,28 @@ class RunRecorder:
                        "expected_transitions_s": {
                            hp.FLIGHT_STATES[k]: v
                            for k, v in run.expected.items()},
-                       "model_summary": sm.summarize(run.samples)},
+                       "model_summary": sm.summarize(run.samples),
+                       "source": run.source,
+                       "csv_report": run.csv_report,
+                       "attitude_thresholds": run.att_thresholds or None},
                       f, indent=2)
         self._sent = open(os.path.join(path, "sent.csv"), "w", newline="")
         self._sent_w = csv.writer(self._sent)
         self._sent_w.writerow(["wall_s", "sim_ms", "phase", "alt_msl_m",
                                "vel_mps", "low_g_x", "high_g_x", "gyro_x",
                                "pressure_pa", "gps_sats", "gps_fix",
-                               "battery_mv"])
+                               "battery_mv", "low_g_y", "low_g_z",
+                               "high_g_y", "high_g_z", "gyro_y", "gyro_z",
+                               "q_truth_x", "q_truth_y", "q_truth_z",
+                               "q_truth_w"])
         self._rx = open(os.path.join(path, "received.jsonl"), "w")
         self._log = open(os.path.join(path, "log.txt"), "w")
         self._nmea = open(os.path.join(path, "nmea.txt"), "w")
 
     def sent(self, wall_s, s: sm.SimSample):
         h = s.hitl
+        qt = getattr(s, "q_truth", None)
+        q = ["", "", "", ""] if qt is None else [f"{c:.7f}" for c in qt]
         with self._lock:
             if self._sent.closed:
                 return
@@ -119,7 +164,10 @@ class RunRecorder:
                 f"{wall_s:.4f}", s.t_ms, s.phase, f"{s.alt_msl_m:.2f}",
                 f"{s.vel_mps:.2f}", f"{h.low_g[0]:.4f}", f"{h.high_g[0]:.4f}",
                 f"{h.gyro_dps[0]:.3f}", f"{h.pressure_pa:.1f}", h.satellites,
-                h.fix_quality, f"{h.battery_mv:.0f}"])
+                h.fix_quality, f"{h.battery_mv:.0f}", f"{h.low_g[1]:.4f}",
+                f"{h.low_g[2]:.4f}", f"{h.high_g[1]:.4f}",
+                f"{h.high_g[2]:.4f}", f"{h.gyro_dps[1]:.3f}",
+                f"{h.gyro_dps[2]:.3f}", *q])
 
     def packet(self, wall_s, sim_ms, pkt):
         with self._lock:
@@ -134,10 +182,13 @@ class RunRecorder:
             if not f.closed:
                 f.write(f"{wall_s:10.3f} sim={sim_ms / 1000:8.2f} {line}\n")
 
-    def finish(self, result: dict):
+    def finish(self, result: dict, att_records=None):
         with self._lock:
             for f in (self._sent, self._rx, self._log, self._nmea):
                 f.close()
+        if att_records is not None:
+            write_attitude_csv(os.path.join(self.dir, "attitude.csv"),
+                               att_records)
         with open(os.path.join(self.dir, "transitions.csv"), "w",
                   newline="") as f:
             w = csv.writer(f)
@@ -148,6 +199,70 @@ class RunRecorder:
                             r["delta_s"], r["result"]])
         with open(os.path.join(self.dir, "summary.json"), "w") as f:
             json.dump(result, f, indent=2)
+
+
+# Column layout loaded directly by Horizon's Attitude tab (replay). The
+# first 12 columns are fixed; the rest are extra diagnostics.
+ATT_CSV_HEADER = ("time_s", "packet_id", "witness_qx", "witness_qy",
+                  "witness_qz", "witness_qw", "truth_qx", "truth_qy",
+                  "truth_qz", "truth_qw", "flight_state", "hitl_active")
+ATT_CSV_EXTRA = ("wall_s", "packet", "flight_state_name", "expected_state",
+                 "valid", "truth_tilt_deg", "witness_tilt_deg",
+                 "tilt_err_deg", "nose_err_deg", "att_err_deg")
+
+
+def _cell(v):
+    if v is None:
+        return ""
+    if isinstance(v, bool):
+        return int(v)
+    if isinstance(v, float):
+        return f"{v:.4f}"
+    return v
+
+
+def write_attitude_csv(path, records):
+    """One row per 0x02/0xE0 packet: Witness vs truth quaternion.
+
+    time_s is sim time (s) of the truth sample paired with the packet.
+    packet_id is decimal (2 = 0x02, 224 = 0xE0). witness_q* is the raw
+    reported quaternion (all zero while unavailable). truth_q* uses the same
+    convention: Hamilton, BODY -> ENU WORLD, body +X = nose, x,y,z,w.
+    flight_state is the Witness state code 0-4 (empty if not yet known);
+    hitl_active is the status bit of that packet (0/1).
+    """
+    with open(path, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(list(ATT_CSV_HEADER) + list(ATT_CSV_EXTRA))
+        for r in records:
+            qw = r["q_witness_raw"] if r["valid"] else (0.0, 0.0, 0.0, 0.0)
+            st = r.get("witness_state_code")
+            row = [f"{r['sim_s']:.3f}", r["packet_id"]]
+            row += [f"{c:.7f}" for c in qw]
+            row += [f"{c:.7f}" for c in r["q_truth"]]
+            row += ["" if st is None else st, int(bool(r.get("hitl_active")))]
+            row += [_cell(r.get(k)) for k in (
+                "wall_s", "packet", "witness_state", "phase", "valid",
+                "truth_tilt_deg", "witness_tilt_deg", "tilt_err_deg",
+                "nose_err_deg", "att_err_deg")]
+            w.writerow(row)
+
+
+def finish_attitude(run: RunState):
+    """Lock a heading reference if none was found, then summarise."""
+    if run.truth_quats is None:
+        return None
+    recs = run.att_records
+    psi, source = run.att_psi, run.att_psi_source
+    if psi is None:
+        first = next((r for r in recs if r["valid"]), None)
+        if first is not None:
+            psi = att.heading_offset_rad(first["q_truth"], first["q_witness"])
+            source = (f"first valid packet, sim {first['sim_s']:.2f} s "
+                      "(Boost not seen with valid quaternions)")
+    att.compute_records(recs, psi)
+    run.attitude = att.summarize(recs, psi, run.att_thresholds, source)
+    return run.attitude
 
 
 def evaluate(run: RunState) -> dict:
@@ -201,8 +316,15 @@ def evaluate(run: RunState) -> dict:
     if run.aborted:
         passed = False
         problems.append("run aborted: " + (run.abort_reason or "stopped"))
+    warnings = list(run.warnings)
+    if run.attitude is not None:
+        if not run.attitude["passed"]:
+            passed = False
+        problems += ["attitude: " + p for p in run.attitude["problems"]]
+        warnings += ["attitude: " + w for w in run.attitude["warnings"]]
     return {"passed": passed, "rows": rows, "order_ok": order_ok,
-            "problems": problems, "warnings": list(run.warnings),
+            "problems": problems, "warnings": warnings,
+            "attitude": run.attitude, "source": run.source,
             "tolerance_s": run.tolerance_s, "frames_sent": run.frames_sent,
             "late_ticks": run.late_ticks, "preset": run.preset,
             "observed_sequence": [hp.FLIGHT_STATES[s] for s in run.sequence]}
@@ -223,6 +345,8 @@ def format_table(result: dict) -> str:
         lines.append("PROBLEM: " + p)
     for w in result["warnings"]:
         lines.append("WARNING: " + w)
+    if result.get("attitude"):
+        lines.append(att.format_summary(result["attitude"]))
     lines.append(("PASS" if result["passed"] else "FAIL")
                  + f" (tolerance {result['tolerance_s']:.2f} s, "
                  f"{result['frames_sent']} frames sent)")
@@ -251,6 +375,7 @@ class HitlSession:
         self._pending_sim = 0.0
         self._hitl_off_count = 0
         self._entered = False
+        self._host = None
         self.t0 = time.monotonic()
 
     # ---------------------------------------------------------------- util
@@ -279,6 +404,7 @@ class HitlSession:
         if self._sock is not None:
             raise RuntimeError("already connected")
         sock = socket.create_connection((host, int(port)), timeout=timeout)
+        self._host = host
         sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         sock.settimeout(0.2)
         self._sock = sock
@@ -422,8 +548,74 @@ class HitlSession:
                 v.accel_x_g = pkt["accel_g"][0]
                 if run is not None and run.running:
                     run.plot_wacc.append((self._sim_s(), pkt["accel_g"][0]))
+        if pid in (hp.ID_STATE, hp.ID_WITNESS_DEBUG) and run is not None \
+                and run.streaming and run.truth_quats is not None:
+            self._attitude_packet(run, pkt)
         if pid in hp.TELEMETRY_STATUS_PACKETS:
             self._on_status(pkt["status"], pkt["uptime_ms"])
+
+    def _attitude_packet(self, run: RunState, pkt: dict):
+        """Pair a Witness quaternion with the truth at the current sim time.
+
+        The truth index is the last frame sent (minus att_latency_ms), so
+        USB/ser2net/network latency shows up as a small apparent lag.
+        """
+        n = len(run.truth_quats)
+        idx = run.sim_ms // sm.TICK_MS - run.att_latency_ms // sm.TICK_MS
+        idx = max(0, min(n - 1, idx))
+        qt = run.truth_quats[idx]
+        raw = tuple(float(c) for c in pkt["quat_xyzw"])
+        valid = att.is_valid(raw)
+        sim_s = idx * sm.DT_S
+        wstate = self.view.flight_state
+        rec = {"wall_s": round(self.now(), 4), "sim_s": sim_s,
+               "packet": pkt["name"], "packet_id": pkt["id"],
+               "witness_state_code": pkt.get("status", {}).get("flight_state"),
+               "hitl_active": bool(pkt.get("status", {}).get("hitl_active")),
+               "witness_state": None if wstate is None
+               else hp.FLIGHT_STATES[wstate],
+               "phase": hp.FLIGHT_STATES[run.state_track[idx]]
+               if run.state_track else "",
+               "valid": valid, "q_truth": qt, "q_witness_raw": raw,
+               "q_witness": att.qnormalize(raw) if valid else raw,
+               "truth_tilt_deg": att.tilt_from_vertical_deg(qt),
+               "witness_tilt_deg": None, "tilt_err_deg": None,
+               "nose_err_deg": None, "att_err_deg": None}
+        if valid:
+            qw = rec["q_witness"]
+            rec["witness_tilt_deg"] = att.tilt_from_vertical_deg(qw)
+            rec["tilt_err_deg"] = abs(rec["truth_tilt_deg"]
+                                      - rec["witness_tilt_deg"])
+            if run.att_psi is None and wstate is not None and \
+                    wstate >= hp.BOOST:
+                # Use the last valid packet from before Boost was reported:
+                # the vehicle is still on the pad, so packet latency cannot
+                # alias the boost roll (about world Z while the nose is
+                # vertical) into the heading offset.
+                ref = next((r for r in reversed(run.att_records)
+                            if r["valid"] and r.get("witness_state_code")
+                            == hp.PAD_IDLE), None)
+                if ref is not None:
+                    run.att_psi = att.heading_offset_rad(ref["q_truth"],
+                                                         ref["q_witness"])
+                    run.att_psi_source = (
+                        f"locked when Boost was detected (sim {sim_s:.2f} s) "
+                        f"from the last pad packet, sim {ref['sim_s']:.2f} s")
+                else:
+                    run.att_psi = att.heading_offset_rad(qt, qw)
+                    run.att_psi_source = (f"locked when Boost was detected, "
+                                          f"sim {sim_s:.2f} s")
+                self.log(f"attitude heading offset "
+                         f"{math.degrees(run.att_psi):.1f} deg "
+                         f"({run.att_psi_source})")
+            if run.att_psi is not None:
+                rec["att_err_deg"] = att.attitude_error_deg(qt, qw,
+                                                            run.att_psi)
+                rec["nose_err_deg"] = att.nose_error_deg(qt, qw, run.att_psi)
+                run.plot_att_err.append((sim_s, rec["att_err_deg"]))
+            run.plot_tilt_w.append((sim_s, rec["witness_tilt_deg"]))
+            run.plot_tilt_err.append((sim_s, rec["tilt_err_deg"]))
+        run.att_records.append(rec)
 
     def _on_status(self, status: dict, uptime_ms: int):
         run = self.run
@@ -492,8 +684,14 @@ class HitlSession:
             run.observed[state] = sim_s
 
     # ----------------------------------------------------------------- run
-    def prepare_run(self, params: sm.SimParams, preset: str = "custom",
-                    tolerance_s: float = 1.0, time_scale: int = 1) -> RunState:
+    def prepare_run(self, params, preset: str = "custom",
+                    tolerance_s: float = 1.0, time_scale: int = 1,
+                    att_thresholds: dict | None = None,
+                    att_latency_ms: int = 0) -> RunState:
+        """Build the frames for a preset (SimParams) or CSV (CsvParams)."""
+        if isinstance(params, tc.CsvParams):
+            return self._prepare_csv(params, preset, tolerance_s, time_scale,
+                                     att_thresholds, att_latency_ms)
         samples = sm.generate(params)
         frames = [hp.encode_hitl(s.hitl) for s in samples]
         expected = sm.predict_transitions(samples)
@@ -502,11 +700,44 @@ class HitlSession:
                         tolerance_s=tolerance_s,
                         time_scale=max(1, int(time_scale)))
 
+    def _prepare_csv(self, params, preset, tolerance_s, time_scale,
+                     att_thresholds, att_latency_ms) -> RunState:
+        build = tc.build(params)
+        samples = build.samples
+        frames = [hp.encode_hitl(s.hitl) for s in samples]
+        track = sm.predict_state_track(samples)
+        run = RunState(params=params, preset=preset, samples=samples,
+                       frames=frames,
+                       expected=expected_from_track(samples, track),
+                       tolerance_s=tolerance_s,
+                       time_scale=max(1, int(time_scale)), source="csv",
+                       csv_report=build.report,
+                       truth_quats=[s.q_truth for s in samples],
+                       state_track=track, request_debug=True,
+                       att_thresholds=dict(att_thresholds or {}),
+                       att_latency_ms=int(att_latency_ms))
+        run.plot_tilt_truth = [(s.t_ms / 1000,
+                                att.tilt_from_vertical_deg(s.q_truth))
+                               for s in samples[::10]]
+        baro = build.report["baro"]
+        if baro["below_ms5607_range_windows_sim_s"]:
+            run.warnings.append(
+                "simulated pressure is below the MS5607 10 mbar range for "
+                f"{baro['below_ms5607_range_s']:.1f} s (sim "
+                + ", ".join(f"{a:.1f}-{b:.1f} s" for a, b in
+                            baro["below_ms5607_range_windows_sim_s"])
+                + "); sent anyway, but the real sensor could not measure it")
+        return run
+
     def start_run(self, run: RunState, abort_on_no_hitl: bool = False):
         if not self.connected:
             raise ConnectionError("not connected")
         if self.run is not None and self.run.running:
             raise RuntimeError("a run is already in progress")
+        if run.time_scale != 1 and not is_loopback(self._host):
+            # Witness integrates with its own clock: hardware is real time.
+            raise ValueError("speed/time-scale factors are only allowed "
+                             "against a local fake Witness (127.0.0.1)")
         if self.view.flight_state not in (None, hp.PAD_IDLE):
             self._warn("Witness is not in Pad idle; it will reject HITL "
                        "ENTER (reboot Witness to return to Pad idle)")
@@ -581,6 +812,10 @@ class HitlSession:
                         self._recorder.sent(self.now(), s)
                     i += 1
                 tick += 1
+                if run.request_debug and not run.debug_sent and \
+                        run.hitl_seen:
+                    run.debug_sent = True
+                    self.send_command(hp.CMD_WITNESS_DEBUG_START)
                 if not run.hitl_seen and not warned_hitl and \
                         self.now() - wall0 > HITL_ACTIVE_TIMEOUT_S:
                     warned_hitl = True
@@ -602,9 +837,15 @@ class HitlSession:
             time.sleep(0.6 if not run.aborted else 0.3)
             run.running = False
             run.finished = True
+            try:
+                finish_attitude(run)
+            except Exception as exc:  # never lose the run over a metric
+                self.log(f"attitude summary failed: {exc!r}")
             run.result = evaluate(run)
             if self._recorder:
-                self._recorder.finish(run.result)
+                self._recorder.finish(
+                    run.result, run.att_records
+                    if run.truth_quats is not None else None)
                 self.log(f"run saved to {self._recorder.dir}")
                 self._recorder = None
             self._event("run", "finished")

@@ -17,8 +17,16 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(hp.encode_command(hp.CMD_HITL_EXIT),
                          bytes.fromhex("05 00 00 00 00 00 00 48 58 0A"))
 
+    def test_debug_start_bytes(self):
+        self.assertEqual(hp.encode_command(hp.CMD_WITNESS_DEBUG_START),
+                         bytes.fromhex("05 00 00 00 00 00 00 00 E0 0A"))
+
+    def test_only_three_commands_allowed(self):
+        self.assertEqual(set(hp.ALLOWED_COMMANDS),
+                         {0x4849, 0x4858, 0x00E0})
+
     def test_destructive_commands_refused(self):
-        for cmd in (0x6868, 0x6869, 0x7301, 0x00E0, 0x0051):
+        for cmd in (0x6868, 0x6869, 0x7300, 0x7301, 0x7304, 0x0051, 0x00E1):
             with self.assertRaises(ValueError):
                 hp.encode_command(cmd)
 

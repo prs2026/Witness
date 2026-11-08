@@ -9,6 +9,15 @@ frames interleaved with ESP-IDF style log text, NMEA lines and junk bytes.
 Telemetry encoding here is written independently of hitl_protocol's decoder
 so the tests cross-check the two. The fake uses the 0x0C sim time as its state
 machine clock so the tests can run faster than real time.
+
+Attitude (optional, on by default): after ``init_after_s`` of HITL input on
+the pad the fake aligns its quaternion to the measured specific force by the
+shortest arc (body +X up -> world +Z, like Witness) and adds an arbitrary
+heading ``heading_offset_deg``; afterwards it integrates the received gyro,
+q <- q * exp(omega dt), Hamilton, BODY -> ENU WORLD. The quaternion is
+reported (x, y, z, w float32) in 0x02 at 1 Hz and in 0xE0 at 10 Hz once the
+0x00E0 debug-start command has been received. Before initialisation the
+quaternion fields are all zero, as on Witness.
 """
 
 from __future__ import annotations
@@ -61,12 +70,78 @@ def make_state(status: bytes, uptime: int, lat, lon, gps_alt, baro_alt,
     return out
 
 
+def make_state_q(status: bytes, uptime: int, quat, lat, lon, gps_alt,
+                 baro_alt, batt, sats) -> bytes:
+    body = struct.pack(">ffff", *quat) + bytes(24)  # position, velocity 0
+    body += be_i24(round(lat * 1e4)) + be_i24(round(lon * 1e4))
+    body += struct.pack(">ffHB", gps_alt, baro_alt, int(batt), int(sats))
+    out = b"\x02" + status + struct.pack(">I", uptime) + body + b"\x0a"
+    assert len(out) == 65
+    return out
+
+
+def make_debug(status: bytes, uptime: int, quat, last, baro_alt) -> bytes:
+    """0xE0 Witness debug packet, 103 bytes (GROUND_STATION_PROTOCOL.md)."""
+    i16 = (lambda v: struct.pack(">h", max(-32768, min(32767,  # noqa: E731
+                                                       round(v)))))
+    out = b"\xe0" + status + struct.pack(">I", uptime)
+    out += struct.pack(">bH", 30, int(last["batt"]))
+    out += b"".join(be_i24(round(a / 0.00004)) for a in last["low_g"])
+    out += struct.pack(">ffff", *quat)                 # offset 19
+    out += bytes(24)                                   # position, velocity
+    out += b"".join(i16(a / 0.000488) for a in last["low_g"])     # 59
+    out += i16(0)                                      # IMU temp
+    out += b"".join(i16(a / 0.010417) for a in last.get(
+        "high_g", last["low_g"]))                      # 67
+    out += b"".join(i16(g / 0.07) for g in last["gyro_dps"])      # 73
+    out += int(last["pressure_pa"]).to_bytes(3, "big")             # 79
+    out += i16(2000) + struct.pack(">f", baro_alt)     # 82, 84
+    out += be_i24(round(last["lat"] * 1e4)) + be_i24(round(last["lon"] * 1e4))
+    out += struct.pack(">If", 0, last["gps_alt"]) + b"\x0a"
+    assert len(out) == 103, len(out)
+    return out
+
+
+def _qmul(a, b):
+    ax, ay, az, aw = a
+    bx, by, bz, bw = b
+    return (aw * bx + ax * bw + ay * bz - az * by,
+            aw * by - ax * bz + ay * bw + az * bx,
+            aw * bz + ax * by - ay * bx + az * bw,
+            aw * bw - ax * bx - ay * by - az * bz)
+
+
+def _align(acc, heading_deg):
+    """Shortest arc taking the measured up direction (body) to world +Z."""
+    n = math.sqrt(sum(a * a for a in acc))
+    u = [a / n for a in acc]
+    # cross(u, z) = (u_y, -u_x, 0), w = 1 + u_z
+    q = (u[1], -u[0], 0.0, 1.0 + u[2])
+    m = math.sqrt(sum(c * c for c in q))
+    q = tuple(c / m for c in q)
+    h = math.radians(heading_deg) / 2
+    return _qmul((0.0, 0.0, math.sin(h), math.cos(h)), q)
+
+
+def _integrate(q, gyro_dps, dt):
+    w = [math.radians(g) for g in gyro_dps]
+    ang = math.sqrt(sum(c * c for c in w)) * dt
+    if ang < 1e-12:
+        return q
+    k = math.sin(ang / 2) / (ang / dt)
+    dq = (w[0] * k, w[1] * k, w[2] * k, math.cos(ang / 2))
+    q = _qmul(q, dq)
+    m = math.sqrt(sum(c * c for c in q))
+    return tuple(c / m for c in q)
+
+
 def parse_hitl(f: bytes) -> dict:
     """Independent 0x0C parser (frame offsets = payload offsets + 1)."""
     h = lambda o: struct.unpack_from(">h", f, 1 + o)[0]  # noqa: E731
     return {
         "sim_time_ms": struct.unpack_from(">I", f, 3)[0],
         "low_g": [h(o) * 0.000488 for o in (6, 8, 10)],
+        "high_g": [h(o) * 0.010417 for o in (12, 14, 16)],
         "high_g": [h(o) * 0.010417 for o in (12, 14, 16)],
         "gyro_dps": [h(o) * 0.070 for o in (18, 20, 22)],
         "pressure_pa": int.from_bytes(f[27:30], "big"),
@@ -80,9 +155,17 @@ def parse_hitl(f: bytes) -> dict:
 
 
 class FakeWitness:
-    def __init__(self, set_hitl_bit: bool = True, start_state: int = 0):
+    def __init__(self, set_hitl_bit: bool = True, start_state: int = 0,
+                 attitude: bool = True, heading_offset_deg: float = 37.0,
+                 init_after_s: float = 2.0):
         self.set_hitl_bit = set_hitl_bit
         self.start_state = start_state
+        self.attitude = attitude
+        self.heading_offset_deg = heading_offset_deg
+        self.init_after_s = init_after_s
+        self.debug_enabled = False
+        self.quat = (0.0, 0.0, 0.0, 0.0)  # latest reported attitude
+        self.debug_packets = 0
         self.srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.srv.bind(("127.0.0.1", 0))
@@ -128,7 +211,10 @@ class FakeWitness:
         t_start = time.monotonic()
         st = {"state": self.start_state, "hitl": False, "last_hitl": 0.0,
               "fsm": sim_model.ReferenceStateMachine(), "last": None,
-              "hb": 0}
+              "hb": 0, "q": None, "q_first_ms": None, "q_last_ms": None,
+              "acc_sum": [0.0, 0.0, 0.0], "acc_n": 0}
+        self.debug_enabled = False
+        self.quat = (0.0, 0.0, 0.0, 0.0)
         st["fsm"].state = self.start_state
         st["fsm"]._observed_state = self.start_state
 
@@ -190,19 +276,25 @@ class FakeWitness:
             last = st["last"] or {"low_g": [1, 0, 0], "gyro_dps": [0, 0, 0],
                                   "pressure_pa": 85000, "lat": 0, "lon": 0,
                                   "gps_alt": 0.0, "sats": 0, "batt": 7400}
+            quat = st["q"] or (0.0, 0.0, 0.0, 0.0)
             if now >= next_sensor:
                 next_sensor += 0.1
                 send(make_sensors(status, uptime(), last["low_g"],
                                   last["gyro_dps"]))
+                if self.debug_enabled:
+                    self.debug_packets += 1
+                    send(make_debug(status, uptime(), quat, last,
+                                    sim_model.hp.pressure_altitude_m(
+                                        last["pressure_pa"])))
             if now >= next_slow:
                 next_slow += 1.0
                 st["hb"] += 1
                 baro = sim_model.hp.pressure_altitude_m(last["pressure_pa"])
                 send(make_heartbeat(status, uptime()))
                 send(b"$GPGGA,000000.00,,,,,0,00,99.99,,,,,,*66\r\n")
-                send(make_state(status, uptime(), last["lat"], last["lon"],
-                                last["gps_alt"], baro, last["batt"],
-                                last["sats"]))
+                send(make_state_q(status, uptime(), quat, last["lat"],
+                                  last["lon"], last["gps_alt"], baro,
+                                  last["batt"], last["sats"]))
                 send(b"\xff\x01\x02")  # truncated junk candidate
 
     def _command(self, cmd, st, log):
@@ -218,6 +310,9 @@ class FakeWitness:
             if st["hitl"]:
                 log("hitl: HITL mode exited")
             st["hitl"] = False
+        elif cmd == 0x00E0:
+            self.debug_enabled = True
+            log("sensors: Witness debug packets enabled at 10 Hz")
         else:
             log(f"cmd: unexpected command 0x{cmd:04X}")
 
@@ -227,6 +322,8 @@ class FakeWitness:
         self.hitl_frames += 1
         st["last_hitl"] = time.monotonic()
         st["last"] = d
+        if self.attitude:
+            self._attitude(d, st)
         fsm = st["fsm"]
         before = fsm.state
         fsm.update((d["sim_time_ms"] + 10) * 1000, d["high_g"][0],
@@ -238,6 +335,32 @@ class FakeWitness:
                                      fsm.state))
             log(f"flight_state: {STATE_NAMES[before]} -> "
                 f"{STATE_NAMES[fsm.state]}")
+
+
+def _attitude_update(self, d, st):
+    ms = d["sim_time_ms"]
+    if st["q"] is None:
+        if st["state"] != 0:
+            return
+        if st["q_first_ms"] is None:
+            st["q_first_ms"] = ms
+        for i in range(3):
+            st["acc_sum"][i] += d["low_g"][i]
+        st["acc_n"] += 1
+        if (ms - st["q_first_ms"]) / 1000 >= self.init_after_s:
+            st["q"] = _align([a / st["acc_n"] for a in st["acc_sum"]],
+                             self.heading_offset_deg)
+            st["q_last_ms"] = ms
+    else:
+        dt = (ms - st["q_last_ms"]) / 1000
+        st["q_last_ms"] = ms
+        if 0 < dt < 1.0:
+            st["q"] = _integrate(st["q"], d["gyro_dps"], dt)
+    if st["q"] is not None:
+        self.quat = st["q"]
+
+
+FakeWitness._attitude = _attitude_update
 
 
 if __name__ == "__main__":

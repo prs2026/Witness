@@ -8,7 +8,9 @@ an echo of everything the host sends; the decoder yields text lines separately
 and marks echoed 0x0C HITL frames so callers can ignore them.
 
 The authoritative layout lives in Software/Witness/softwarev1/main/comms.h.
-This tool may only ever transmit HITL ENTER, HITL EXIT and 0x0C sensor frames.
+This tool may only ever transmit HITL ENTER, HITL EXIT, Witness debug start
+(0x00E0, 10 Hz 0xE0 packets for attitude verification) and 0x0C sensor
+frames.
 """
 
 from __future__ import annotations
@@ -61,9 +63,12 @@ TELEMETRY_STATUS_PACKETS = (ID_SENSORS, ID_STATE, ID_WITNESS_DEBUG,
 
 CMD_HITL_ENTER = 0x4849
 CMD_HITL_EXIT = 0x4858
-# Safety: the only commands this tool will ever encode. Mass storage (0x6868)
-# and log erase (0x6869) are deliberately impossible to build here.
-ALLOWED_COMMANDS = {CMD_HITL_ENTER: "HITL ENTER", CMD_HITL_EXIT: "HITL EXIT"}
+CMD_WITNESS_DEBUG_START = 0x00E0
+# Safety: the only commands this tool will ever encode. Mass storage (0x6868),
+# log erase (0x6869) and flight-state commands (0x7300-0x7304) are
+# deliberately impossible to build here.
+ALLOWED_COMMANDS = {CMD_HITL_ENTER: "HITL ENTER", CMD_HITL_EXIT: "HITL EXIT",
+                    CMD_WITNESS_DEBUG_START: "WITNESS DEBUG START"}
 
 FLIGHT_STATES = ("Pad idle", "Boost", "Coast", "Descent", "Landed")
 PAD_IDLE, BOOST, COAST, DESCENT, LANDED = range(5)
@@ -162,7 +167,7 @@ def latlon_count(deg: float) -> int:
 # ---------------------------------------------------------------------------
 
 def encode_command(command: int) -> bytes:
-    """Canonical 10-byte command frame; only HITL ENTER/EXIT are permitted."""
+    """Canonical 10-byte command frame; only ALLOWED_COMMANDS are permitted."""
     if command not in ALLOWED_COMMANDS:
         raise ValueError(
             f"command 0x{command:04X} is not permitted by the HITL tool")

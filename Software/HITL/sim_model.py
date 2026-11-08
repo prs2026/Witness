@@ -406,6 +406,17 @@ def predict_transitions(samples) -> dict:
             for ts, _frm, to in fsm.transitions}
 
 
+def predict_state_track(samples) -> list:
+    """Expected Witness flight state after each sample (same feed as above)."""
+    fsm = ReferenceStateMachine()
+    out = []
+    for s in samples:
+        frame = hp.encode_hitl(s.hitl)
+        out.append(fsm.update_from_hitl((s.t_ms + TICK_MS) * 1000,
+                                        hp.decode_hitl(frame)))
+    return out
+
+
 def summarize(samples) -> dict:
     apogee = max(samples, key=lambda s: s.alt_msl_m) if samples else None
     site = samples[0].alt_msl_m if samples else 0.0
