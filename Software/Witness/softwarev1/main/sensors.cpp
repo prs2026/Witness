@@ -621,11 +621,21 @@ esp_err_t Sensors::initialize_lsm6dsv320x()
     if (result != ESP_OK) {
         return result;
     }
+    // Filters and full scales are written while both sensors are still in
+    // power-down (ODR = 0 after reset), as the datasheet requires for FS_G.
     result = write_register(kRegCtrl8, kLowGAccelFullScale);
     if (result != ESP_OK) {
         return result;
     }
+    result = write_register(kRegCtrl9, kLowGAccelFilterConfiguration);
+    if (result != ESP_OK) {
+        return result;
+    }
     result = write_register(kRegCtrl6, kGyroFullScale);
+    if (result != ESP_OK) {
+        return result;
+    }
+    result = write_register(kRegCtrl7, kGyroFilterConfiguration);
     if (result != ESP_OK) {
         return result;
     }

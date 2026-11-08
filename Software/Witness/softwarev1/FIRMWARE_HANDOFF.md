@@ -154,8 +154,9 @@ the writer has frozen.
 
 Configuration constants live principally in `sensors.h` and the device headers:
 
-- IMU SPI mode 3 at 10 MHz. Low-g accelerometer: +/-16 g, configured 120 Hz;
-  high-g accelerometer: +/-320 g, configured 960 Hz; gyro: +/-2000 dps, 120 Hz.
+- IMU SPI mode 3 at 10 MHz. Low-g accelerometer: +/-16 g, 960 Hz with on-chip
+  LPF2 at 21.3 Hz (anti-aliased for the 100 Hz read); high-g accelerometer:
+  +/-320 g, 960 Hz; gyro: +/-2000 dps, 120 Hz, LPF1 off (see below).
   Polling at 100 Hz does not retrieve every high-g sample; there is no FIFO
   streaming implementation here.
 - MS5607 SPI mode 3 at 10 MHz, pressure and temperature OSR 4096. Its polling
@@ -230,21 +231,42 @@ attitudes never mix. If Boost is declared before any window was accepted (for
 example a launch command right after boot), the quaternion stays zero for the
 whole flight.
 
-On-chip filtering (checked 2026-11-08 against ST's official driver header
-`lsm6dsv320x_reg.h`, github.com/STMicroelectronics/lsm6dsv320x-pid): gyro LPF1
-is enabled by CTRL7 (0x16) bit 0 `lpf1_g_en` with bandwidth CTRL6 (0x15) bits
-6:4 `lpf1_g_bw`; accel LPF2 is CTRL9 (0x18) bit 3 `lpf2_xl_en` with CTRL8 (0x17)
-bits 7:5 `hp_lpf2_xl_bw`. The cutoff and delay for each bandwidth code are only
-in the datasheet, which could not be retrieved (st.com timed out), so **both
-stay at their reset values (off)** and the 120 Hz ODRs are unchanged. A linear
-low-pass would not fix this problem anyway: with unity DC gain it preserves the
-area of a spike, so the integrated angle error stays the same, only smeared; a
-nonlinear median removes it. Configured registers, consistent with the header
-fields: CTRL6 = 0x04 (2000 dps), CTRL8 = 0x03 (16 g), CTRL1 = CTRL2 = 0x06
-(120 Hz), CTRL1_XL_HG (0x4E) = 0xA4 (regout enable, 960 Hz, 320 g).
+On-chip filtering, from the LSM6DSV320X datasheet (DS14623 Rev 3; register
+bits also match ST's `lsm6dsv320x_reg.h`):
+
+| Register | Value | Meaning | Source |
+|---|---|---|---|
+| CTRL1 (10h) | 0x09 | low-g ODR 960 Hz, high performance | Table 22 codes |
+| CTRL8 (17h) | 0x63 | LPF2 ODR/45 = 21.3 Hz, +/-16 g | Tables 69, 71 |
+| CTRL9 (18h) | 0x08 | LPF2_XL_EN, low-pass path | Table 72 |
+| CTRL2 (11h) | 0x06 | gyro ODR 120 Hz, high performance | Section 6.1.3 |
+| CTRL6 (15h) | 0x0C | bit 3 = 1 (required), +/-2000 dps | Table 64 |
+| CTRL7 (16h) | 0x00 | gyro LPF1 off | Table 67 |
+| CTRL1_XL_HG (4Eh) | 0xA4 | high-g output on, 960 Hz, +/-320 g | |
+
+CTRL6 bit 3 "must be set to 1 for the correct operation of the device"; older
+firmware wrote 0x04 with it clear. With LPF1 off the gyro's fixed LPF2 cutoff
+at 120 Hz ODR is 49.4 Hz (Table 23).
+
+Gyro LPF1 was measured on the bench (2026-11-08, same session, board still,
+LoRa radio transmitting) and makes the radio interference worse, so it stays
+off:
+
+| Gyro configuration | z sd (dps) | z mean (dps) | Attitude init |
+|---|---|---|---|
+| 120 Hz, LPF1 off, CTRL6 0x04 (old) | 76 | -13 | yes, ~27 s |
+| 120 Hz, LPF1 off, CTRL6 0x0C (current) | 84 | -9 | yes, ~20 s; half as many samples > 3 dps |
+| 120 Hz, LPF1 code 110 (24.2 Hz) | 114 | -38 | no |
+| 960 Hz, LPF1 code 110 (28.7 Hz) | 177 | -60 | no |
+
+The interference reaches the gyro's analog front end, so digital filtering
+rectifies it into bias rather than removing it; the estimator's running median
+handles isolated spikes instead. Revisit LPF1 after the board-level radio
+coupling is fixed. The interference level itself varies over time (an earlier
+baseline measured 44 dps z sd), so compare only same-session numbers.
 
 Timestamps: real IMU steps use `esp_timer` immediately before the LSM6 read;
-the LSM6 runs at 120 Hz ODR, so the sample itself may be up to about 8 ms older
+the gyro runs at 120 Hz ODR, so the sample itself may be up to about 8 ms older
 than that time. In HITL the step time is the start of the sensor pass that
 consumed the newest `0x0C` frame (`sim_time_ms` is not used). Frames arrive
 asynchronously at about 100 Hz; a pass with no new frame is skipped and the next

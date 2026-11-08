@@ -65,10 +65,36 @@ public:
     // LSM6DSV320X SPI and sampling configuration.
     static constexpr int kSpiClockFrequencyHz = 10'000'000;
     static constexpr std::uint8_t kSpiMode = 3;
-    static constexpr std::uint8_t kLowGAccelOutputDataRate = 0x06;  // 120 Hz
-    static constexpr std::uint8_t kLowGAccelFullScale = 0x03;       // +/-16 g
-    static constexpr std::uint8_t kGyroOutputDataRate = 0x06;       // 120 Hz
-    static constexpr std::uint8_t kGyroFullScale = 0x04;            // +/-2000 dps
+    // On-chip filtering, per datasheet DS14623 Rev 3 (LSM6DSV320X).
+    // Low-g accelerometer: 960 Hz internal rate with LPF2 at ODR/45 = 21.3 Hz,
+    // read at 100 Hz, so it is band-limited below the 50 Hz Nyquist rate of
+    // the read loop (true anti-aliasing; LPF1 alone is ODR/2).
+    //   CTRL1 (10h) ODR_XL = 1001 -> 960 Hz, OP_MODE_XL = 000 high performance.
+    //   CTRL8 (17h) HP_LPF2_XL_BW = 011 -> ODR/45 (Table 71), FS_XL = 11
+    //               -> +/-16 g. Bits 4:2 must be 0 (Table 69).
+    //   CTRL9 (18h) LPF2_XL_EN = 1 (bit 3), low-pass path (HP_SLOPE_XL_EN = 0);
+    //               other bits 0 (Table 72).
+    // Gyroscope: 120 Hz, LPF1 OFF (its fixed LPF2 is 49.4 Hz at 120 Hz,
+    // Table 23).
+    //   CTRL2 (11h) ODR_G = 0110 -> 120 Hz, OP_MODE_G = 000 high performance.
+    //   CTRL6 (15h) bit 3 = 1 (required by Table 64; previously written 0),
+    //               FS_G = 100 -> +/-2000 dps, LPF1_G_BW unused, bit 7 = 0.
+    //   CTRL7 (16h) LPF1_G_EN = 0.
+    // Gyro LPF1 was tested on the bench 2026-11-08 with the LoRa radio on, in
+    // the same session: 120 Hz + LPF1 code 110 (24.2 Hz, Table 66) raised z
+    // noise from 76 to 114 dps sd and the mean offset from -13 to -38 dps;
+    // 960 Hz + LPF1 code 110 (28.7 Hz) raised it to 177 dps sd and -60 dps,
+    // and the attitude estimator never initialized. The interference couples
+    // into the gyro's analog front end, so on-chip digital filtering
+    // rectifies it into bias instead of removing it. The estimator's running
+    // median handles the isolated spikes instead. Revisit LPF1 once the
+    // board-level radio coupling is fixed.
+    static constexpr std::uint8_t kLowGAccelOutputDataRate = 0x09;      // 960 Hz
+    static constexpr std::uint8_t kLowGAccelFullScale = 0x63;           // LPF2 ODR/45, +/-16 g
+    static constexpr std::uint8_t kLowGAccelFilterConfiguration = 0x08; // CTRL9 LPF2_XL_EN
+    static constexpr std::uint8_t kGyroOutputDataRate = 0x06;           // 120 Hz
+    static constexpr std::uint8_t kGyroFullScale = 0x0C;                // bit 3, +/-2000 dps
+    static constexpr std::uint8_t kGyroFilterConfiguration = 0x00;      // CTRL7: LPF1 off
     static constexpr std::uint8_t kHighGAccelOutputDataRate = 0x04; // 960 Hz
     static constexpr std::uint8_t kHighGAccelFullScale = 0x04;      // +/-320 g
 
@@ -82,13 +108,7 @@ public:
     //   CTRL9 0x18 lpf2_xl_en bit 3, hp_slope_xl_en bit 4.
     //   CTRL1_XL_HG 0x4E fs_xl_hg[2:0] (0x4 = 320 g), odr_xl_hg[5:3]
     //   (0x4 = 960 Hz), xl_hg_regout_en bit 7.
-    // The values written below match those fields. The gyro LPF1 and accel
-    // LPF2 are deliberately left at reset (disabled): the cutoff and delay
-    // for each lpf1_g_bw / hp_lpf2_xl_bw code are only in the datasheet,
-    // which could not be retrieved, so no bandwidth code is guessed. A linear
-    // low-pass also cannot remove the measured interference spikes from the
-    // attitude: it preserves their area (DC gain 1), so the integrated angle
-    // error is unchanged; the estimator's running median handles them.
+    // The driver header fields agree with the datasheet tables cited above.
 
     struct Sample {
         std::int16_t low_g_accel_raw[3]{};
@@ -181,7 +201,9 @@ private:
     static constexpr std::uint8_t kRegCtrl2 = 0x11;
     static constexpr std::uint8_t kRegCtrl3 = 0x12;
     static constexpr std::uint8_t kRegCtrl6 = 0x15;
+    static constexpr std::uint8_t kRegCtrl7 = 0x16;
     static constexpr std::uint8_t kRegCtrl8 = 0x17;
+    static constexpr std::uint8_t kRegCtrl9 = 0x18;
     static constexpr std::uint8_t kRegStatus = 0x1E;
     static constexpr std::uint8_t kRegOutputStart = 0x20;
     static constexpr std::uint8_t kRegHighGOutputStart = 0x34;

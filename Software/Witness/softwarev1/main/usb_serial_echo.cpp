@@ -391,6 +391,12 @@ void UsbSerialEcho::process_canonical_binary_command(
         (void)sensors_.exit_hitl(hitl::Source::Usb);
         return;
     }
+    if (command == IRIS_COMMAND_WITNESS_DEBUG_START) {
+        // Canonical 05 .. 00 E0 0A, as the HITL tool sends it. The compact
+        // handler has no 0x00E0 form, so without this the request was ignored.
+        process_protocol_command(command);
+        return;
+    }
     process_compact_binary_command(
         data[kCommandFrameOffset], data[kCommandFrameOffset + 1U]);
 }
