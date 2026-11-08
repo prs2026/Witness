@@ -14,7 +14,11 @@ with the user before changing them:
 
 - `HW_RADIO_ENABLED` is **1** in `main/hardware_pins.h`. Radio code is present,
   and initialization/service are enabled for the end-to-end setup.
-- `app_main()` starts **UART1**, RX GPIO4 and TX GPIO5, for the PX1120S GPS.
+- `app_main()` starts **UART1** for the GPS (PX1120S or u-blox M8, auto-detected).
+  `HW_MCU_UART_SWAP_RX_TX` in `main/hardware_pins.h` is currently **1**: ESP32 RX
+  is GPIO5 and TX is GPIO4, which is what the fitted u-blox harness needed on
+  2026-11-08. The normal wiring (0) is RX GPIO4, TX GPIO5; the earlier PX1120S
+  streamed on that. Zero UART bytes from boot onward points at this setting.
   Its operational baud is **115200**, 8N1, without flow control.
 - GPS I2C sources remain in `main/`, but are **not compiled or started**.
 - Automatic flight transitions are enabled. Binary sensor logging is enabled
@@ -46,7 +50,7 @@ source when it differs from an older conversation, workbook, or prose document.
 | [main/can_link.h](main/can_link.h), [main/can_link.cpp](main/can_link.cpp), [main/twai_driver.cpp](main/twai_driver.cpp) | Iris CAN link: command/heartbeat transmit, fragmentation and reassembly via [Intercomm](../../Intercomm/README.md) |
 | [main/spi_data_forwarder.cpp](main/spi_data_forwarder.cpp) | Queued USB output, latest-frame radio cache and immediate radio queue |
 | [main/uart_driver.cpp](main/uart_driver.cpp) | UART receive task, raw logging, USB mirroring and GPS parser integration |
-| [main/px1120s_gps.cpp](main/px1120s_gps.cpp), [main/nmea_gps.cpp](main/nmea_gps.cpp) | GPS startup configuration and independent streaming NMEA parser |
+| [main/gps_receiver.cpp](main/gps_receiver.cpp), [main/nmea_gps.cpp](main/nmea_gps.cpp) | GPS identification (PX1120S / u-blox M8) and startup configuration; independent streaming NMEA parser. `px1120s_gps.*` remains only for the inactive I2C path |
 | [main/ra01.cpp](main/ra01.cpp) | SX1262-style radio commands, transmission and continuous receive |
 | [main/w25n01kv.cpp](main/w25n01kv.cpp) | External SPI NAND driver |
 | [main/flash_logger.cpp](main/flash_logger.cpp) | Sensor-record capture, prelaunch ring, UART/text storage and session exports |
@@ -110,7 +114,7 @@ Use macros from `hardware_pins.h`, not new literal GPIO assignments in drivers.
 | MS5607 | CS 21 |
 | Radio | CS 16, RESET 8, BUSY 39, RF enable 40, DIO1 7, DIO2 6, DIO3 2 |
 | SPI2 external NAND | SCLK 12, IO0/MOSI 11, IO1/MISO 13, IO2 14, IO3 9, CS 10 |
-| UART1 breakout | ESP32 RX 4, TX 5 |
+| UART1 breakout | ESP32 RX 4, TX 5; swapped to RX 5, TX 4 while `HW_MCU_UART_SWAP_RX_TX` is 1 (currently) |
 | Inactive GPS I2C aliases | SDA 4, SCL 5; cannot run concurrently with UART1 |
 | Built-in USB | D- 19, D+ 20 |
 | Battery divider | VSENSE GPIO1, ADC1 channel 0 |
@@ -293,26 +297,47 @@ from RMC/ZDA. No-fix GGA immediately invalidates a fix; fixes expire after 3000 
 Invalid or stale state/debug GPS fields are zero, which is not a unique invalid
 sentinel because zero coordinates and altitude can also be legitimate.
 
-`Px1120sGps` performs boot delay, navigation-mode query, airborne configuration
-and mode verification. It uses fixed 115200 baud and SRAM-only settings by
-default; it no longer hunts baud rates or commands the GPS to change baud.
-Checksum-valid no-fix NMEA is enough to prove the link and proceed past an
-unanswered initial mode query, but only mode readback confirms configuration.
+`GpsReceiver` ([main/gps_receiver.h](main/gps_receiver.h)) identifies the fitted
+receiver, then configures it in receiver RAM on every boot (no receiver flash
+writes). Both are set to their airborne 4 g dynamics and their maximum update
+rate, with NMEA reduced to GGA + RMC so the higher rate fits 115200 baud:
 
-| Operation | Complete binary frame in hex |
-|---|---|
-| Query navigation mode | `A0 A1 00 02 64 18 7C 0D 0A` |
-| Set airborne in SRAM | `A0 A1 00 04 64 17 05 00 76 0D 0A` |
-| Expected airborne readback | `A0 A1 00 03 64 8B 05 EA 0D 0A` |
+| Receiver | Identified by | Dynamics | Rate | Maximum for the part |
+|---|---|---|---|---|
+| SkyTraq PX1120S | SkyTraq binary reply to `64 18` | mode 5, airborne (4 g rated) | 25 Hz | 25 Hz; 50/100 Hz only on PX1120S-H |
+| u-blox NEO-M8N | any UBX reply to the `MON-VER` poll | `dynModel` 8, airborne <4 g | 10 Hz | 10 Hz concurrent GNSS; 18 Hz single GNSS |
 
-Last bench report: UART reception was stable at 115200, but airborne verification
-timed out. That does not prove the GPS rejected the command or entered airborne
-mode. The ESP32 TX GPIO5 to GPS RX path and possible evaluation-board USB-UART
-contention were suggested checks, not established causes. The sample NMEA also
-reported fix quality 0 and zero satellites. Do not mark airborne setup or a GPS
-position fix as hardware-verified on the strength of the successful parser tests.
-Five-second `GPS RX` diagnostics report baud, byte count, GGA count, fix freshness
-and idle time. Configuration failure leaves collection enabled.
+Identification, after a 1.5 s boot delay:
+
+1. At 115200, send both polls (each family ignores the other's) up to three times.
+2. A checksum-valid reply picks the model. If none arrives but valid NMEA does,
+   the link is left untouched and the PX1120S is assumed (its mode query has
+   gone unanswered before); readback still decides success.
+3. Only a **silent** link is retried at 9600, the u-blox factory rate. A u-blox
+   found there gets `CFG-PRT` (UART1, 115200, UBX+NMEA); the host follows after
+   150 ms and confirms with another `MON-VER` poll.
+4. Configure, then read back. PX1120S: navigation mode and update rate. u-blox:
+   `CFG-NAV5` dynamic model and `CFG-RATE` period. Missing PX1120S ACKs are
+   tolerated; u-blox ACKs are required.
+
+Failure of any step leaves raw logging running; an unidentified receiver leaves
+the host at 115200. Log lines: `GPS identified as <model> at <baud>`,
+`GPS UART host rate now <baud>`, `<model> airborne 4 g mode and <N> Hz GGA+RMC
+confirmed`, or `<model> startup failed: <reason>`. Frames are listed in
+[GROUND_STATION_PROTOCOL.md](GROUND_STATION_PROTOCOL.md) section 6.
+
+**NAND budget at the higher rates.** Raw UART bytes are logged in every flight
+state, into a 5,222,400-byte allocation per session. GGA + RMC is about 150 bytes
+per fix, so the allocation lasts about 23 min with the PX1120S at 25 Hz and about
+58 min with the u-blox at 10 Hz (versus about 3 h at the old 1 Hz full NMEA set).
+A long pad wait can fill the GPS stream before launch; that stream then stops and
+sets the flash-log fault bit while the other streams continue. Lower
+`kSkytraqUpdateRateHz` or raise `kUbloxMeasurementPeriodMs` for long pad times.
+
+Bench status: on 2026-11-07 the PX1120S confirmed airborne mode with the previous
+firmware. The rate and NMEA changes, and the whole u-blox path, are covered by
+host tests only and are not yet verified on hardware. Five-second `GPS RX`
+diagnostics report baud, byte count, GGA count, fix freshness and idle time.
 
 ## Flash storage and export
 
@@ -434,6 +459,10 @@ Host tests are standalone C++17 programs, not an integrated CTest suite. With
 g++ -std=c++17 -Wall -Wextra -Werror -I main tests/nmea_gps_test.cpp main/nmea_gps.cpp -o build/nmea_gps_test.exe
 if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 & .\build\nmea_gps_test.exe
+
+g++ -std=c++17 -Wall -Wextra -Werror -I main tests/gps_receiver_test.cpp main/gps_receiver.cpp -o build/gps_receiver_test.exe
+if ($LASTEXITCODE -ne 0) { throw "compile failed" }
+& .\build\gps_receiver_test.exe
 
 g++ -std=c++17 -Wall -Wextra -Werror -I main tests/px1120s_gps_test.cpp main/px1120s_gps.cpp -o build/px1120s_gps_test.exe
 if ($LASTEXITCODE -ne 0) { throw "compile failed" }

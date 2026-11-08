@@ -22,11 +22,19 @@
 #define HW_PIN_RAD_RF_ENABLE  GPIO_NUM_40
 
 // Broken-out MCU UART1 interface (115200 baud, 8N1 by default).
+// Normal wiring is ESP32 RX = GPIO4, TX = GPIO5. Set to 1 to exchange them for
+// a GPS harness or breakout whose RX/TX are crossed the other way.
+#define HW_MCU_UART_SWAP_RX_TX 1
+#if HW_MCU_UART_SWAP_RX_TX
+#define HW_PIN_MCU_UART_TX    GPIO_NUM_4
+#define HW_PIN_MCU_UART_RX    GPIO_NUM_5
+#else
 #define HW_PIN_MCU_UART_TX    GPIO_NUM_5
 #define HW_PIN_MCU_UART_RX    GPIO_NUM_4
+#endif
 // GPS I2C reuses the same broken-out pair. UART1 must not run concurrently.
-#define HW_PIN_GPS_I2C_SDA    HW_PIN_MCU_UART_RX
-#define HW_PIN_GPS_I2C_SCL    HW_PIN_MCU_UART_TX
+#define HW_PIN_GPS_I2C_SDA    GPIO_NUM_4
+#define HW_PIN_GPS_I2C_SCL    GPIO_NUM_5
 // Set to 0 on reduced boards to skip all radio initialization and service.
 #define HW_RADIO_ENABLED      1
 

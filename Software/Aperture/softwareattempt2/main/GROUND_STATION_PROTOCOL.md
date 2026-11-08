@@ -351,20 +351,26 @@ GPS uses UART1; the I2C driver is not started or included in the build.
 
 | Setting | Value |
 |---|---|
-| ESP32 RX | GPIO4 <- GPS TX |
-| ESP32 TX | GPIO5 -> GPS RX |
+| ESP32 RX | GPIO4 <- GPS TX (GPIO5 while `HW_MCU_UART_SWAP_RX_TX` is 1, as currently built) |
+| ESP32 TX | GPIO5 -> GPS RX (GPIO4 while swapped) |
 | Ground | Shared with receiver |
 | Logic voltage | 3.3 V |
 | Operational baud | 115200, 8N1, no flow control |
 
-The UART task retains startup airborne-mode configuration at a fixed 115200
-baud (`Px1120sGps::kBaudRate`). It never sends a receiver baud-change command
-or probes another baud rate. Checksum-valid GGA, including no-fix reports,
-allows airborne configuration to proceed even if the initial mode query gets
-no binary response. Successful mode readback is still required for confirmation.
-A five-second `GPS RX` diagnostic reports host baud, total bytes, valid GGA
-sentence count, fix validity and time since the last UART byte. A failed startup
-configuration does not stop raw collection, sensors, heartbeat or flash logging.
+At startup `GpsReceiver` (`main/gps_receiver.h`) identifies the receiver as a
+SkyTraq PX1120S or a u-blox NEO-M8N by which binary protocol answers a poll,
+then sets airborne 4 g dynamics, the receiver's maximum update rate, and NMEA
+output of GGA + RMC only. A receiver already streaming NMEA at 115200 is never
+baud-probed; only a silent link is retried at 9600 (the u-blox factory rate),
+and a u-blox found there is switched to 115200. A five-second `GPS RX`
+diagnostic reports host baud, total bytes, valid GGA sentence count, fix
+validity and time since the last UART byte. A failed startup configuration does
+not stop raw collection, sensors, heartbeat or flash logging.
+
+| Receiver | Dynamics | Update rate | NMEA output |
+|---|---|---|---|
+| PX1120S | navigation mode 5, airborne (4 g rated) | 25 Hz (part maximum) | GGA + RMC |
+| NEO-M8N | `dynModel` 8, airborne <4 g | 10 Hz (concurrent-GNSS maximum) | GGA + RMC |
 
 Checksum-validated NMEA GGA sentences (including GP/GN talkers) populate
 latitude, longitude and GPS MSL altitude in state (0x02) and Witness debug (0xE0)
@@ -381,25 +387,39 @@ a unique invalid marker: a legitimate zero coordinate/altitude has the same
 representation. Bad checksums are discarded and cannot refresh the fix age.
 Raw UART bytes are logged unchanged regardless of fix validity.
 
-Settings are in `main/px1120s_gps.h`: `kConfigureAtStartup`,
-`kNavigationMode` (5 = airborne), `kSaveSettingsToFlash` (false = SRAM only),
-startup delay, reply timeout and retry count. Defaults reapply the configuration
-on every boot without writing receiver flash. The PX1120S datasheet specifies
-a 4 g dynamics capability; its binary protocol selects `airborne` rather than
-a separate numeric `4 g` profile. This does not change the physical receiver's
-dynamics rating.
+Settings are in `main/gps_receiver.h`: `kConfigureAtStartup`,
+`kSkytraqAirborneMode`, `kSkytraqUpdateRateHz`, `kUbloxAirborne4gModel`,
+`kUbloxMeasurementPeriodMs`, startup delay, reply timeout and retry count. All
+settings go to receiver RAM and are reapplied on every boot without writing
+receiver flash. The PX1120S datasheet specifies a 4 g dynamics capability; its
+binary protocol selects `airborne` rather than a separate numeric `4 g` profile.
 
 SkyTraq binary frames use `A0 A1`, a two-byte big-endian payload length, the
-payload, its XOR checksum, and `0D 0A`. Startup commands with SRAM-only attributes:
+payload, its XOR checksum, and `0D 0A`. PX1120S commands (SRAM-only attributes):
 
-| Action | Complete frame (hex) |
-|---|---|
-| Query navigation mode | `A0 A1 00 02 64 18 7C 0D 0A` |
-| Set airborne navigation | `A0 A1 00 04 64 17 05 00 76 0D 0A` |
-| Expected airborne readback | `A0 A1 00 03 64 8B 05 EA 0D 0A` |
+| Action | Complete frame (hex) | Reply |
+|---|---|---|
+| Query navigation mode (also the identification poll) | `A0 A1 00 02 64 18 7C 0D 0A` | `A0 A1 00 03 64 8B 05 EA 0D 0A` when airborne |
+| Set airborne navigation | `A0 A1 00 04 64 17 05 00 76 0D 0A` | ACK `83 64 17` |
+| NMEA output GGA + RMC every fix | `A0 A1 00 09 08 01 00 00 00 01 00 00 00 08 0D 0A` | ACK `83 08` |
+| Position update rate 25 Hz | `A0 A1 00 03 0E 19 00 17 0D 0A` | ACK `83 0E` |
+| Query update rate | `A0 A1 00 01 10 10 0D 0A` | `A0 A1 00 02 86 19 9F 0D 0A` at 25 Hz |
 
-Reference: [SkyTraq AN0037 binary message protocol](https://www.skytraq.com.tw/homesite/AN0037.pdf),
-commands `0x64/0x17`, `0x64/0x18`, and response `0x64/0x8B`.
+u-blox UBX frames use `B5 62`, class, id, a little-endian payload length, the
+payload and a two-byte Fletcher checksum. NEO-M8N commands (RAM only):
+
+| Action | Complete frame (hex) | Reply |
+|---|---|---|
+| Identification poll `MON-VER` | `B5 62 0A 04 00 00 0E 34` | any valid UBX frame |
+| `CFG-PRT` UART1 115200, UBX+NMEA (only when found at 9600) | `B5 62 06 00 14 00 01 00 00 00 D0 08 00 00 00 C2 01 00 03 00 03 00 00 00 00 00 BC 5E` | host follows after 150 ms |
+| `CFG-MSG` GLL / GSA / GSV / VTG off | `B5 62 06 01 03 00 F0 01 00 FB 11`, `… F0 02 00 FC 13`, `… F0 03 00 FD 15`, `… F0 05 00 FF 19` | `ACK-ACK` each |
+| `CFG-MSG` GGA / RMC on every fix | `B5 62 06 01 03 00 F0 00 01 FB 10`, `… F0 04 01 FF 18` | `ACK-ACK` each |
+| `CFG-NAV5` dynamic model 8 (mask 0x0001) | `B5 62 06 24 24 00 01 00 08 00` + 32 zero bytes + `57 F8` | `ACK-ACK` |
+| `CFG-RATE` 100 ms, 1 cycle, GPS time | `B5 62 06 08 06 00 64 00 01 00 01 00 7A 12` | `ACK-ACK` |
+| Readback | `CFG-NAV5` and `CFG-RATE` polls (empty payload) | `dynModel` 8, `measRate` 100 |
+
+References: [SkyTraq AN0037 binary message protocol](https://www.skytraq.com.tw/homesite/AN0037.pdf)
+and the u-blox M8 receiver description (UBX-13003221).
 The supplied [PX1120S manual](c4dba7.pdf) lists the receiver's dynamics rating
 and factory baud rate on PDF page 3.
 

@@ -228,8 +228,10 @@ void UartDriver::run()
     std::uint32_t last_rx_ms = 0;
     std::uint32_t last_diagnostic_ms = 0;
     auto last_gps_status = gps_.status();
-    if (last_gps_status == Px1120sGps::Status::Configuring)
-        ESP_LOGI(kTag, "PX1120S startup: configuring airborne navigation; UART fixed at %lu baud",
+    auto last_gps_model = gps_.model();
+    auto last_gps_baud = gps_.baud();
+    if (last_gps_status == GpsReceiver::Status::Configuring)
+        ESP_LOGI(kTag, "GPS startup: identifying PX1120S or u-blox M8 at %lu baud",
                  static_cast<unsigned long>(kBaudRate));
     for (;;) {
         gps_.service(static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL));
@@ -348,14 +350,28 @@ void UartDriver::run()
             ESP_LOGW(kTag, "UART receive failed");
         }
 
+        if (gps_.baud() != last_gps_baud) {
+            last_gps_baud = gps_.baud();
+            ESP_LOGI(kTag, "GPS UART host rate now %lu baud",
+                     static_cast<unsigned long>(last_gps_baud));
+        }
+        if (gps_.model() != last_gps_model) {
+            last_gps_model = gps_.model();
+            ESP_LOGI(kTag, "GPS identified as %s at %lu baud%s", gps_.model_name(),
+                     static_cast<unsigned long>(gps_.baud()),
+                     gps_.model_assumed() ? " (assumed from NMEA; no binary reply)" : "");
+        }
         if (gps_.status() != last_gps_status) {
             last_gps_status = gps_.status();
-            if (last_gps_status == Px1120sGps::Status::Ready) {
-                ESP_LOGI(kTag, "PX1120S airborne mode %u confirmed at %lu baud (4 g receiver)",
-                         Px1120sGps::kNavigationMode, static_cast<unsigned long>(kBaudRate));
-            } else if (last_gps_status == Px1120sGps::Status::Failed) {
-                ESP_LOGW(kTag, "PX1120S startup failed: %s; raw logging continues at %lu baud",
-                         gps_.failure_reason(), static_cast<unsigned long>(kBaudRate));
+            if (last_gps_status == GpsReceiver::Status::Ready) {
+                ESP_LOGI(kTag, "%s airborne 4 g mode and %lu Hz GGA+RMC confirmed at %lu baud",
+                         gps_.model_name(),
+                         static_cast<unsigned long>(gps_.update_rate_hz()),
+                         static_cast<unsigned long>(gps_.baud()));
+            } else if (last_gps_status == GpsReceiver::Status::Failed) {
+                ESP_LOGW(kTag, "%s startup failed: %s; raw logging continues at %lu baud",
+                         gps_.model_name(), gps_.failure_reason(),
+                         static_cast<unsigned long>(gps_.baud()));
             }
         }
 
