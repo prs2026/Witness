@@ -28,7 +28,7 @@
 #define HW_PIN_GPS_I2C_SDA    HW_PIN_MCU_UART_RX
 #define HW_PIN_GPS_I2C_SCL    HW_PIN_MCU_UART_TX
 // Set to 0 on reduced boards to skip all radio initialization and service.
-#define HW_RADIO_ENABLED      0
+#define HW_RADIO_ENABLED      1
 
 // SPI2 interface.
 #define HW_PIN_SPI2_IO3       GPIO_NUM_9
@@ -64,6 +64,7 @@
 // CAN transceiver.
 #define HW_PIN_CAN_TX         GPIO_NUM_37
 #define HW_PIN_CAN_RX         GPIO_NUM_36
+#define HW_CAN_BITRATE        500000U
 
 
 

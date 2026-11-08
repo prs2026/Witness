@@ -169,6 +169,13 @@ esp_err_t UsbSerialEcho::initialize()
     usb_serial_jtag_vfs_use_driver();
 #endif
 
+    // CAN failure does not prevent direct USB/UART control or power monitoring.
+    const esp_err_t can_result = can_link_.initialize();
+    if (can_result != ESP_OK) {
+        ESP_LOGE(kLogTag, "CAN initialization failed: %s",
+                 esp_err_to_name(can_result));
+    }
+
     // Application logs use the same USB endpoint as the binary protocol.
     // Suppress them after initialization so they cannot split or corrupt a
     // telemetry frame. Received ASCII commands are still echoed explicitly.
@@ -198,6 +205,7 @@ void UsbSerialEcho::poll()
     }
 
     const std::int64_t now_us = esp_timer_get_time();
+    poll_can();
     poll_uart1();
     poll_heartbeat(now_us);
     poll_current_monitor(now_us);
@@ -508,6 +516,27 @@ void UsbSerialEcho::poll_uart1()
     } while (bytes_read == static_cast<int>(sizeof(buffer)));
 }
 
+void UsbSerialEcho::poll_can()
+{
+    can_link_.poll();
+    std::array<std::uint8_t, 103> packet{};
+    std::size_t length = 0;
+    while (can_link_.receive_packet(packet.data(), length)) {
+        if (packet[0] == IRIS_PACKET_ID_COMMAND &&
+            length == IRIS_PACKET_COMMAND_FRAME_LENGTH) {
+            process_binary_command_packet(packet.data(), CommandSource::can);
+        } else if (packet[0] == IRIS_PACKET_ID_HEARTBEAT && length == 8 &&
+                   packet[7] == IRIS_PACKET_EOF_VALUE) {
+            fc_status_[0] = packet[1];
+            fc_status_[1] = packet[2];
+            fc_uptime_ms_ = (static_cast<std::uint32_t>(packet[3]) << 24U) |
+                (static_cast<std::uint32_t>(packet[4]) << 16U) |
+                (static_cast<std::uint32_t>(packet[5]) << 8U) | packet[6];
+            fc_last_received_us_ = esp_timer_get_time();
+        }
+    }
+}
+
 void UsbSerialEcho::consume_uart1_bytes(
     const std::uint8_t *const data,
     const std::size_t length)
@@ -634,6 +663,8 @@ void UsbSerialEcho::send_command_response(
 
     if (destination == CommandSource::usb) {
         write_usb_packet(packet.data(), packet.size());
+    } else if (destination == CommandSource::can) {
+        (void)can_link_.queue_packet(packet.data(), packet.size());
     } else {
         write_uart1_packet(packet.data(), packet.size());
     }
@@ -645,9 +676,13 @@ void UsbSerialEcho::send_camera_report(const std::int64_t now_us)
     packet[0] = IRIS_PACKET_ID_CAMERA;
     std::uint8_t *const data = packet.data() + IRIS_PACKET_ID_LENGTH;
 
-    // FC fields are unavailable on Iris. This MCU owns the IRIS/camera fields.
-    store_u16_be(data + IRIS_PACKET_CAMERA_FC_STATUS_OFFSET, 0);
-    store_u32_be(data + IRIS_PACKET_CAMERA_FC_UPTIME_OFFSET, 0);
+    // Retain the last witnessed FC values only while its heartbeat is fresh.
+    const bool fc_fresh = fc_last_received_us_ != 0 &&
+        now_us - fc_last_received_us_ <= 3000000;
+    data[IRIS_PACKET_CAMERA_FC_STATUS_OFFSET] = fc_fresh ? fc_status_[0] : 0;
+    data[IRIS_PACKET_CAMERA_FC_STATUS_OFFSET + 1U] = fc_fresh ? fc_status_[1] : 0;
+    store_u32_be(data + IRIS_PACKET_CAMERA_FC_UPTIME_OFFSET,
+                 fc_fresh ? fc_uptime_ms_ : 0);
 
     std::uint8_t status_flags = iris_status_flags_;
     if (current_sample_error_ || valid_current_samples_ == 0) {
@@ -749,6 +784,7 @@ void UsbSerialEcho::write_packet(
     const std::uint8_t *data,
     const std::size_t length)
 {
+    (void)can_link_.queue_packet(data, length);
     write_usb_packet(data, length);
     write_uart1_packet(data, length);
 }

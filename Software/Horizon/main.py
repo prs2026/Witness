@@ -45,13 +45,9 @@ NO_SERIAL_PORT = "(no port)"
 
 # Commands currently defined by comms.h. Most command packets are sent as:
 # ID (0x05) | status (2) | uptime (4) | command (2) | EOF (0x0A).
-# Mass-storage and log-erasure use their legacy compact three-byte forms.
+# Every shortcut uses a full frame so it works directly or through Aperture.
 COMMAND_PACKET_ID = 0x05
 COMMAND_PACKET_EOF = 0x0A
-COMPACT_COMMAND_PACKETS = {
-    0x6868: bytes((COMMAND_PACKET_ID, 0x68, 0x68)),
-    0x6869: bytes((COMMAND_PACKET_ID, 0x68, 0x69)),
-}
 QUICK_COMMANDS = (
     ("CH1 Off", 0x0030, False),
     ("CH1 On", 0x0031, False),
@@ -62,6 +58,8 @@ QUICK_COMMANDS = (
     ("5V Reg Off", 0x0050, False),
     ("5V Reg On", 0x0051, False),
     ("Witness Debug 10 Hz", 0x00E0, False),
+    ("Iris Debug 10 Hz", 0x00E1, False),
+    ("Iris Ping", 0x0022, False),
     ("USB Mass Storage", 0x6868, False),
     ("Erase Logs", 0x6869, True),
     ("State: Pad", 0x7300, False),
@@ -125,7 +123,7 @@ def float_vector(data: bytes, count: int) -> list[float]:
 FILTERED_ACCEL_G_PER_COUNT = 0.000040
 GYRO_DPS_PER_LSB = 0.070
 BATTERY_V_PER_COUNT = 0.001
-CURRENT_A_PER_COUNT = 0.1
+CURRENT_A_PER_COUNT = 0.02
 GPS_DEGREES_PER_COUNT = 0.0001
 LSM6_TEMPERATURE_OFFSET_C = 25.0
 LSM6_TEMPERATURE_C_PER_COUNT = 1.0 / 256.0
@@ -161,7 +159,7 @@ def parse_packet(packet_id: int, payload: bytes):
     if packet_id == 0x03 and len(payload) == 17:
         result = {"packet": "camera", "fc_status": number(payload[0:2]), "fc_uptime": number(payload[2:6]),
                 "status": number(payload[6:8]), "uptime": number(payload[8:12]),
-                "current_sense": [round(payload[i] * CURRENT_A_PER_COUNT, 1) for i in (12, 13, 14)],
+                "current_sense": [round(payload[i] * CURRENT_A_PER_COUNT, 2) for i in (12, 13, 14)],
                 "iris_battery_voltage": round(number(payload[15:17]) * BATTERY_V_PER_COUNT, 3)}
         return result
     if packet_id == 0xFF and len(payload) == 6:
@@ -207,7 +205,7 @@ def parse_packet(packet_id: int, payload: bytes):
             "packet": "iris_debug", "status": number(payload[0:2]),
             "uptime": number(payload[2:6]), "mcu_temperature": signed_number(payload[6:7]),
             "iris_battery_voltage": round(number(payload[7:9]) * BATTERY_V_PER_COUNT, 3),
-            "current_sense": [round(payload[i] * CURRENT_A_PER_COUNT, 1) for i in (9, 10, 11)],
+            "current_sense": [round(payload[i] * CURRENT_A_PER_COUNT, 2) for i in (9, 10, 11)],
         }
     return None
 
@@ -873,9 +871,6 @@ class SerialMonitor(tk.Tk):
 
     @staticmethod
     def build_quick_command_packet(opcode):
-        compact_packet = COMPACT_COMMAND_PACKETS.get(opcode)
-        if compact_packet is not None:
-            return compact_packet
         return SerialMonitor.build_command_packet(opcode)
 
     def send_quick_command(self, name, opcode, confirm=False):

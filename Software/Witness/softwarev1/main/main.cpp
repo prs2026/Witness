@@ -1,4 +1,5 @@
 #include "command_bridge.h"
+#include "can_link.h"
 #include "esp_err.h"
 #include "flash_logger.h"
 #include "flight_state_machine.h"
@@ -19,7 +20,8 @@ extern "C" void app_main(void)
     static Heartbeat heartbeat(spi_data_forwarder, witness_status);
     static UartDriver gps_uart(spi_data_forwarder, UART_NUM_1,
                                HW_PIN_MCU_UART_TX, HW_PIN_MCU_UART_RX);
-    static CommandBridge command_bridge(gps_uart, spi_data_forwarder);
+    static CanLink iris_can(spi_data_forwarder, witness_status);
+    static CommandBridge command_bridge(iris_can, spi_data_forwarder);
     static Sensors sensors(
         spi_data_forwarder,
         witness_status,
@@ -36,6 +38,10 @@ extern "C" void app_main(void)
         command_bridge);
 
     ESP_ERROR_CHECK(spi_data_forwarder.start());
+    const esp_err_t can_result = iris_can.start();
+    if (can_result != ESP_OK)
+        ESP_LOGW("main", "Iris CAN start failed: %s; GPS and sensing continue",
+                 esp_err_to_name(can_result));
     ESP_ERROR_CHECK(command_bridge.start());
     ESP_ERROR_CHECK(usb_serial_echo.start());
     // Install the diagnostic log sink before the remaining subsystems start so

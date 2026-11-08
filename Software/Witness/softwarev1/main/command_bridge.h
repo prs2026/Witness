@@ -8,14 +8,14 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 
-class UartDriver;
+class CanLink;
 class SpiDataForwarder;
 
 // Common command egress for commands received by USB now and by the radio in
-// the future. Commands are kept byte-for-byte intact on UART1.
+// the future. Commands use the Iris CAN link; GPS UART1 is never used here.
 class CommandBridge final {
 public:
-    CommandBridge(UartDriver &gps, SpiDataForwarder &data_forwarder);
+    CommandBridge(CanLink &iris, SpiDataForwarder &data_forwarder);
 
     CommandBridge(const CommandBridge &) = delete;
     CommandBridge &operator=(const CommandBridge &) = delete;
@@ -44,7 +44,7 @@ private:
         const std::uint8_t *data,
         std::size_t length);
 
-    UartDriver &gps_;
+    CanLink &iris_;
     SpiDataForwarder &data_forwarder_;
     static constexpr std::size_t kQueueDepth = 8;
 

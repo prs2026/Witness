@@ -1,7 +1,7 @@
 #pragma once
 
-// AMA command and telemetry protocol definitions from
-// "AMA_comms_standard.xlsx".
+// Shared AMA command and telemetry protocol. Keep the four comms.h copies
+// identical; workbook values may describe an older protocol revision.
 //
 // Every transport uses the same canonical application packet:
 //
@@ -19,6 +19,11 @@
 
 #define IRIS_COMMAND_ARGUMENT_LENGTH 0U
 
+#define IRIS_COMMAND_STATUS_FLAG_SET 0x20U
+#define IRIS_COMMAND_STATUS_FLAG_CLEAR 0x21U
+#define IRIS_COMMAND_PING 0x22U
+#define IRIS_COMMAND_PONG 0x23U
+
 #define IRIS_COMMAND_CH1_LOAD_OFF 0x30U
 #define IRIS_COMMAND_CH1_LOAD_ON 0x31U
 #define IRIS_COMMAND_CH2_LOAD_OFF 0x32U
@@ -29,16 +34,39 @@
 #define IRIS_COMMAND_5V_REGULATOR_OFF 0x50U
 #define IRIS_COMMAND_5V_REGULATOR_ON 0x51U
 
+#define IRIS_COMMAND_IRIS_DEBUG_START 0xE1U
+
 // Enables the 10 Hz Witness Debug packet stream (packet ID 0xE0).
 #define IRIS_COMMAND_WITNESS_DEBUG_START 0xE0U
+// Packet ID 0x05 followed by this big-endian value switches USB to a
+// read-only log-export disk until reset.
+#define IRIS_COMMAND_MASS_STORAGE_START 0x6868U
+// Protected destructive command: erase every stored flash log session.
+#define IRIS_COMMAND_ERASE_LOG_SESSIONS 0x6869U
+// Three-byte state command: 0x05, 0x73, then one of these state values.
+#define IRIS_COMMAND_SET_FLIGHT_STATE 0x73U
+#define IRIS_FLIGHT_STATE_PAD_IDLE 0x00U
+#define IRIS_FLIGHT_STATE_BOOST 0x01U
+#define IRIS_FLIGHT_STATE_COAST 0x02U
+#define IRIS_FLIGHT_STATE_DESCENT 0x03U
+#define IRIS_FLIGHT_STATE_LANDED 0x04U
+
+// Producer-defined IRIS status-byte flags.
+#define IRIS_STATUS_CURRENT_MONITOR_ERROR_FLAG 0x01U
+#define IRIS_STATUS_BATTERY_MONITOR_ERROR_FLAG 0x02U
+#define IRIS_STATUS_COMMAND_CONTROLLED_FLAG 0x04U
+#define IRIS_STATUS_OUT1_ENABLED_FLAG 0x08U
+#define IRIS_STATUS_OUT2_ENABLED_FLAG 0x10U
+#define IRIS_STATUS_OUT3_ENABLED_FLAG 0x20U
+#define IRIS_STATUS_5V_ENABLED_FLAG 0x40U
 
 // ---------------------------------------------------------------------------
 // Canonical field catalog
 // ---------------------------------------------------------------------------
 
-// Witness status: two raw flag bytes. The following masks define every bit in
-// byte 0. Byte 1 is reserved and must be transmitted as zero. Flags are active
-// high; this is not a scaled numeric quantity.
+// Witness status: two raw bytes. Byte 0 contains the following active-high
+// flags. Bits 0..2 of byte 1 contain the current flight state; the remaining
+// bits of byte 1 are reserved and must be zero.
 #define IRIS_FIELD_WITNESS_STATUS_LENGTH 2U
 // Byte 0, bit 0: toggles once per heartbeat period.
 #define IRIS_WITNESS_STATUS_HEARTBEAT_MASK (1U << 0)
@@ -56,9 +84,12 @@
 #define IRIS_WITNESS_STATUS_BAROMETER_READY_MASK (1U << 6)
 // Byte 0, bit 7: flash initialized, but logging later stopped on an error.
 #define IRIS_WITNESS_STATUS_FLASH_LOG_FAILED_MASK (1U << 7)
-// Status byte 1 (logical bits 8 through 15) is reserved and always zero.
-#define IRIS_WITNESS_STATUS_RESERVED_BYTE_OFFSET 1U
-#define IRIS_WITNESS_STATUS_RESERVED_BYTE_VALUE 0U
+// Status byte 1, bits 0..2: flight state encoded using IRIS_FLIGHT_STATE_*.
+#define IRIS_WITNESS_STATUS_FLIGHT_STATE_BYTE_OFFSET 1U
+#define IRIS_WITNESS_STATUS_FLIGHT_STATE_SHIFT 0U
+#define IRIS_WITNESS_STATUS_FLIGHT_STATE_MASK 0x07U
+// Status byte 1, bits 3..7: reserved and transmitted as zero.
+#define IRIS_WITNESS_STATUS_RESERVED_MASK 0xF8U
 
 // Witness uptime: big-endian uint32, milliseconds since boot. The counter
 // wraps after approximately 49.7 days.
@@ -154,8 +185,9 @@
 // GPS altitude: big-endian IEEE-754 float32, meters above mean sea level.
 #define IRIS_FIELD_GPS_ALTITUDE_LENGTH 4U
 
-// Channel current: unsigned uint8, 0.1 ampere/count (100 mA/count).
-// Representable range is 0.0 to 25.5 A.
+// Channel current: unsigned uint8, 0.02 ampere/count (20 mA/count).
+// Representable range is 0.00 to 5.10 A. Camera reports one-second peaks;
+// IRIS debug reports the most recent sample.
 #define IRIS_FIELD_CH1_CURRENT_LENGTH 1U
 #define IRIS_FIELD_CH2_CURRENT_LENGTH 1U
 #define IRIS_FIELD_CH3_CURRENT_LENGTH 1U
@@ -175,7 +207,7 @@
 #define IRIS_FIELD_LSM6_TEMPERATURE_OFFSET_CENTICELSIUS 2500
 #define IRIS_FIELD_MS5607_PRESSURE_PASCALS_PER_COUNT 1U
 #define IRIS_FIELD_MS5607_TEMPERATURE_CENTICELSIUS_PER_COUNT 1U
-#define IRIS_FIELD_CURRENT_MILLIAMPS_PER_COUNT 100U
+#define IRIS_FIELD_CURRENT_MILLIAMPS_PER_COUNT 20U
 
 // ---------------------------------------------------------------------------
 // Common packet definitions
@@ -186,9 +218,11 @@
 #define IRIS_PACKET_EOF_LENGTH 1U
 #define IRIS_PACKET_TRANSPORT_CRC_LENGTH 0U
 #define IRIS_CAN_FRAME_DATA_LENGTH 8U
+// Intercomm/can_transport.h reserves sequence/index/total header bytes.
+#define IRIS_CAN_FRAGMENT_PAYLOAD_LENGTH 5U
 #define IRIS_CAN_FRAME_COUNT(application_packet_length) \
-    (((application_packet_length) + IRIS_CAN_FRAME_DATA_LENGTH - 1U) / \
-     IRIS_CAN_FRAME_DATA_LENGTH)
+    (((application_packet_length) + IRIS_CAN_FRAGMENT_PAYLOAD_LENGTH - 1U) / \
+     IRIS_CAN_FRAGMENT_PAYLOAD_LENGTH)
 // Packet-level status and uptime aliases use the Witness encodings documented
 // above: two raw flag bytes and big-endian uint32 milliseconds, respectively.
 #define IRIS_PACKET_STATUS_LENGTH IRIS_FIELD_WITNESS_STATUS_LENGTH
@@ -629,12 +663,12 @@
 #if IRIS_PACKET_IRIS_DEBUG_FRAME_LENGTH != 14U
 #error "IRIS debug application packet must be 14 bytes"
 #endif
-#if IRIS_PACKET_SENSORS_CAN_FRAME_COUNT != 3U || \
-    IRIS_PACKET_STATE_CAN_FRAME_COUNT != 8U || \
-    IRIS_PACKET_CAMERA_CAN_FRAME_COUNT != 3U || \
+#if IRIS_PACKET_SENSORS_CAN_FRAME_COUNT != 5U || \
+    IRIS_PACKET_STATE_CAN_FRAME_COUNT != 13U || \
+    IRIS_PACKET_CAMERA_CAN_FRAME_COUNT != 4U || \
     IRIS_PACKET_COMMAND_CAN_FRAME_COUNT != 2U || \
-    IRIS_PACKET_HEARTBEAT_CAN_FRAME_COUNT != 1U || \
-    IRIS_PACKET_WITNESS_DEBUG_CAN_FRAME_COUNT != 13U || \
-    IRIS_PACKET_IRIS_DEBUG_CAN_FRAME_COUNT != 2U
-#error "CAN fragmentation counts must match the communications workbook"
+    IRIS_PACKET_HEARTBEAT_CAN_FRAME_COUNT != 2U || \
+    IRIS_PACKET_WITNESS_DEBUG_CAN_FRAME_COUNT != 21U || \
+    IRIS_PACKET_IRIS_DEBUG_CAN_FRAME_COUNT != 3U
+#error "CAN fragmentation counts must match the shared five-byte transport"
 #endif

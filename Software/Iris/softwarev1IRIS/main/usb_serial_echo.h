@@ -5,6 +5,7 @@
 #include <cstdint>
 
 #include "comms.h"
+#include "can_link.h"
 #include "driver/gpio.h"
 #include "esp_err.h"
 #include "hardware.h"
@@ -30,6 +31,7 @@ private:
     enum class CommandSource : std::uint8_t {
         usb,
         uart1,
+        can,
     };
 
     static constexpr std::size_t kBufferSize = 512;
@@ -51,6 +53,7 @@ private:
         CommandSource source);
     void send_command_response(CommandSource destination, std::uint16_t command);
     void poll_uart1();
+    void poll_can();
     void consume_uart1_bytes(const std::uint8_t *data, std::size_t length);
     void process_command();
     bool process_set_command();
@@ -67,6 +70,10 @@ private:
 
     Mcp23008 &gpio_expander_;
     Pac1931 &current_monitor_;
+    CanLink can_link_;
+    std::array<std::uint8_t, 2> fc_status_{};
+    std::uint32_t fc_uptime_ms_ = 0;
+    std::int64_t fc_last_received_us_ = 0;
     bool initialized_ = false;
     char command_buffer_[kCommandBufferSize]{};
     std::size_t command_length_ = 0;

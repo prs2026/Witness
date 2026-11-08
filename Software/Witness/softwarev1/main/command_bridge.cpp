@@ -5,12 +5,35 @@
 #include "comms.h"
 #include "freertos/FreeRTOS.h"
 #include "spi_data_forwarder.h"
-#include "uart_driver.h"
+#include "can_link.h"
+#include "esp_timer.h"
+
+namespace {
+bool canonical_command(const std::uint8_t *data, std::size_t length,
+                       std::uint8_t *out)
+{
+    if (data == nullptr || data[0] != IRIS_PACKET_ID_COMMAND) return false;
+    if (length == IRIS_PACKET_COMMAND_FRAME_LENGTH) {
+        if (data[length - 1] != IRIS_PACKET_EOF_VALUE) return false;
+        std::memcpy(out, data, length);
+        return true;
+    }
+    if (length != 3) return false;
+    std::memset(out, 0, IRIS_PACKET_COMMAND_FRAME_LENGTH);
+    out[0] = IRIS_PACKET_ID_COMMAND;
+    const std::uint32_t uptime = esp_timer_get_time() / 1000U;
+    for (unsigned i = 0; i < 4; ++i) out[3 + i] = uptime >> (24U - 8U * i);
+    out[7] = data[1];
+    out[8] = data[2];
+    out[9] = IRIS_PACKET_EOF_VALUE;
+    return true;
+}
+}
 
 CommandBridge::CommandBridge(
-    UartDriver &gps,
+    CanLink &iris,
     SpiDataForwarder &data_forwarder)
-    : gps_(gps),
+    : iris_(iris),
       data_forwarder_(data_forwarder)
 {
 }
@@ -30,9 +53,12 @@ esp_err_t CommandBridge::submit_usb_command(
     const std::uint8_t *const data,
     const std::size_t length)
 {
-    const esp_err_t transport_result = forward_command(data, length);
+    std::uint8_t canonical[IRIS_PACKET_COMMAND_FRAME_LENGTH]{};
+    if (length == 0 || !canonical_command(data, length, canonical))
+        return ESP_ERR_INVALID_ARG;
+    const esp_err_t transport_result = forward_command(canonical, sizeof(canonical));
     const esp_err_t radio_result =
-        data_forwarder_.queue_immediate_radio_packet(data, length);
+        data_forwarder_.queue_immediate_radio_packet(canonical, sizeof(canonical));
     return transport_result != ESP_OK ? transport_result : radio_result;
 }
 
@@ -40,20 +66,17 @@ esp_err_t CommandBridge::submit_radio_command(
     const std::uint8_t *const data,
     const std::size_t length)
 {
-    const esp_err_t transport_result = forward_command(data, length);
+    std::uint8_t canonical[IRIS_PACKET_COMMAND_FRAME_LENGTH]{};
+    if (length == 0 || !canonical_command(data, length, canonical))
+        return ESP_ERR_INVALID_ARG;
+    const esp_err_t transport_result = forward_command(canonical, sizeof(canonical));
 
     if (radio_command_queue_ == nullptr) {
         return transport_result == ESP_OK ? ESP_ERR_INVALID_STATE : transport_result;
     }
-    if (data == nullptr || length == 0U ||
-        length > IRIS_PACKET_COMMAND_FRAME_LENGTH ||
-        data[0] != IRIS_PACKET_ID_COMMAND) {
-        return transport_result == ESP_OK ? ESP_ERR_INVALID_ARG : transport_result;
-    }
-
     QueuedCommand command{};
-    command.length = static_cast<std::uint8_t>(length);
-    std::memcpy(command.data, data, length);
+    command.length = sizeof(canonical);
+    std::memcpy(command.data, canonical, sizeof(canonical));
     const esp_err_t queue_result =
         xQueueSend(radio_command_queue_, &command, 0) == pdTRUE
             ? ESP_OK
@@ -90,5 +113,5 @@ esp_err_t CommandBridge::forward_command(
         return ESP_ERR_INVALID_ARG;
     }
 
-    return gps_.transmit(data, length, pdMS_TO_TICKS(100));
+    return iris_.send_command(data, length);
 }

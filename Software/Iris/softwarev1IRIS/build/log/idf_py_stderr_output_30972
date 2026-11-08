@@ -1,0 +1,37 @@
+Command: ninja all
+fatal: detected dubious ownership in repository at 'C:/esp/v6.1/esp-idf'
+'C:/esp/v6.1/esp-idf' is owned by:
+	POLARISFW/Ejfso (S-1-5-21-1891524161-411446397-2409941128-1001)
+but the current user is:
+	POLARISFW/CodexSandboxOffline (S-1-5-21-1891524161-411446397-2409941128-1003)
+To add an exception for this directory, call:
+
+	git config --global --add safe.directory C:/esp/v6.1/esp-idf
+Loading defaults file C:/Users/Ejfso/Documents/GitHub/witness/Software/Iris/softwarev1IRIS/sdkconfig.defaults...
+Default value for GDMA_CTRL_FUNC_IN_IRAM in sdkconfig is y but it is n according to Kconfig.
+Using default value from sdkconfig (y).
+Default value for MBEDTLS_HARDWARE_RSA_DS_PERIPHERAL in sdkconfig is y but it is n according to Kconfig.
+Using default value from sdkconfig (y).
+NOTE: Kconfig parser version: 1
+NOTE: Kconfig defaults policy: use sdkconfig
+NOTE: Status: Finished with notifications
+NOTE: C:/esp/v6.1/esp-idf/components/mbedtls/Kconfig:1554: MBEDTLS_HARDWARE_RSA_DS_PERIPHERAL: Kconfig default value: n, sdkconfig default value: y
+NOTE: C:/esp/v6.1/esp-idf/components/esp_driver_dma/Kconfig:3: GDMA_CTRL_FUNC_IN_IRAM: Kconfig default value: n, sdkconfig default value: y
+HINT: This area reports issues with default values of the config options.
+For more information, please visit https://docs.espressif.com/projects/esp-idf-kconfig/en/latest/kconfiglib/configuration-report.html#default-value-mismatch
+Traceback (most recent call last):
+  File "C:\esp\v6.1\esp-idf\components\esp_rom\gen_gdbinit.py", line 72, in <module>
+    gdbinit_lines = generate_gdbinit_rom_add_symbols(target)
+  File "C:\esp\v6.1\esp-idf\components\esp_rom\gen_gdbinit.py", line 31, in generate_gdbinit_rom_add_symbols
+    raise OSError(
+        'ESP_ROM_ELF_DIR environment variable is not defined. Please try to run IDF "install" and "export" scripts.'
+    )
+OSError: ESP_ROM_ELF_DIR environment variable is not defined. Please try to run IDF "install" and "export" scripts.
+CMake Warning at C:/esp/v6.1/esp-idf/tools/cmake/gdbinit.cmake:58 (message):
+  Error while generating esp_rom gdbinit
+Call Stack (most recent call first):
+  C:/esp/v6.1/esp-idf/tools/cmake/project.cmake:452 (__generate_gdbinit)
+  C:/esp/v6.1/esp-idf/tools/cmake/project.cmake:1101 (__project_info)
+  CMakeLists.txt:13 (project)
+
+
