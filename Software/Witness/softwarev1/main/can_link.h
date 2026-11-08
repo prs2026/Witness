@@ -21,6 +21,7 @@ private:
     static void task_entry(void *context);
     void run();
     void send_packet(const std::uint8_t *data, std::size_t length);
+    void pump_transmit();
     void receive_packets();
     TwaiDriver driver_;
     SpiDataForwarder &forwarder_;
@@ -29,4 +30,8 @@ private:
     TaskHandle_t task_ = nullptr;
     intercomm::Reassembler receiver_{intercomm::kIrisToWitnessId};
     std::uint8_t sequence_ = 0;
+    std::array<std::uint8_t, intercomm::kMaxPacketLength> pending_{};
+    std::size_t pending_length_ = 0;
+    std::size_t pending_fragment_ = 0;
+    std::int64_t pending_deadline_us_ = 0;
 };

@@ -7,7 +7,7 @@
 // Keep all physical board connections here so application code does not use
 // raw GPIO numbers.
 #define IRIS_PIN_VSENSE GPIO_NUM_0
-// The PCB net labels at U5 are reversed: the TCAN1044 TXD input is on the
+// The PCB net labels at U5 are reversed: the TCAN3414 TXD input is on the
 // net named CANRX (GPIO3), and its RXD output is on CAN_TX (GPIO1). These
 // definitions describe the TWAI signal direction, not the schematic net name.
 #define IRIS_PIN_CAN_TX GPIO_NUM_3
@@ -30,8 +30,9 @@
 #define IRIS_UART1_PORT UART_NUM_1
 #define IRIS_UART1_BAUD_RATE 115200U
 
-// ESP32-C3 TWAI controller connected to the TCAN1044A-Q1. The transceiver's
-// STB input is strapped low on the board, selecting normal mode.
+// ESP32-C3 Classical CAN controller connected to the 3.3 V TCAN3414.
+// STB (pin 8) is strapped low; SHDN (pin 5) may use its internal pulldown.
+// Both ESP32 peers use Classical CAN, not CAN FD, despite transceiver FD support.
 #define IRIS_TWAI_BITRATE 500000U
 
 // Battery voltage monitor on GPIO0/ADC1 channel 0. The battery is connected

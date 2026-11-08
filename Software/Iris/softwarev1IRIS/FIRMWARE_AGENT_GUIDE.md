@@ -13,7 +13,7 @@ below are authoritative.
   not create separate FreeRTOS tasks.
 - Primary transport: built-in USB Serial/JTAG.
 - Secondary transport: UART1 at 115200 baud.
-- Active peripherals: GPIO, I2C0, ADC1 and UART1.
+- Active peripherals: GPIO, I2C0, ADC1, UART1 and TWAI/Classical CAN.
 - Wi-Fi, Bluetooth and other Espressif RF stacks are intentionally excluded.
 
 The main application controls four switched outputs, drives red and blue
@@ -31,7 +31,9 @@ voltage, accepts commands and emits binary telemetry.
 | `main/mcp23008.*` | MCP23008 GPIO-expander driver and shared I2C bus creation |
 | `main/pac1931.*` | PAC193x current-monitor sampling and conversion |
 | `main/battery_voltage.*` | Calibrated ADC battery-voltage measurement |
-| `main/twai_driver.*` | Dormant TWAI/CAN driver; not part of the current build |
+| `main/twai_driver.*` | Active interrupt-driven TWAI driver with bounded queues and bus-off recovery |
+| `main/can_link.*` | Nonblocking packet queue, CAN fragmentation and reassembly |
+| `../../../Intercomm/can_transport.h` | Shared Witness/Iris CAN transport codec |
 | `main/CMakeLists.txt` | Active application sources and ESP-IDF dependencies |
 | `sdkconfig.defaults` | Scheduler, flash, RF and USB-console defaults |
 
@@ -43,7 +45,7 @@ voltage, accepts commands and emits binary telemetry.
 2. Configures OUT1, OUT2, OUT3, 5V_EN and the blue LED as low outputs.
 3. Adds the PAC193x device to the MCP23008's I2C bus.
 4. Initializes the calibrated ADC battery monitor.
-5. Initializes the red LED, UART1 and USB Serial/JTAG.
+5. Initializes the red LED, UART1, USB Serial/JTAG and CAN (CAN failure is nonfatal).
 6. Enters a permanent loop which reads battery voltage at its configured
    interval, calls `UsbSerialEcho::poll()`, then calls `vTaskDelay(1)`.
 
@@ -78,7 +80,7 @@ The authoritative definitions are in `main/hardware.h`.
 | UART0 TX | GPIO21 |
 
 The CAN definitions intentionally follow signal direction. The PCB net names
-at the TCAN1044 are reversed: the transceiver TXD input is on the net labeled
+at the TCAN3414 are reversed: the transceiver TXD input is on the net labeled
 CANRX (GPIO3), while RXD is on CAN_TX (GPIO1).
 
 ### MCP23008 outputs
@@ -133,8 +135,8 @@ channel as OUT1, OUT2 or OUT3.
 Heartbeat pulses temporarily invert each LED from its commanded steady state,
 then restore that state. The blue LED is driven through the MCP23008.
 
-Every generated application packet is written to both USB Serial/JTAG and
-UART1 by `write_packet()`.
+Every generated telemetry packet is written to USB Serial/JTAG and UART1,
+and queued for CAN by `write_packet()`. Ping responses return to their source.
 
 ## 6. Binary protocol
 
@@ -159,8 +161,8 @@ enabled, `0xE1`. It sends `0x05` only as a command response.
 | Frame offset | Length | Meaning |
 |---:|---:|---|
 | 0 | 1 | Packet ID `0x03` |
-| 1 | 2 | FC/Witness status; currently zero |
-| 3 | 4 | FC/Witness uptime; currently zero |
+| 1 | 2 | FC/Witness status from latest CAN heartbeat; zero when stale |
+| 3 | 4 | FC/Witness uptime from latest CAN heartbeat; zero when stale |
 | 7 | 2 | IRIS status; flags in first byte, second byte zero |
 | 9 | 4 | IRIS uptime in ms |
 | 13 | 1 | Channel 1 peak current |
@@ -240,7 +242,7 @@ Example: enable OUT1 with zero status and uptime:
 05 00 00 00 00 00 00 00 31 0A
 ```
 
-The same fixed frame is accepted on USB and UART1. UART1 ignores bytes until
+The same fixed frame is accepted on USB, UART1 and reassembled CAN. UART1 ignores bytes until
 it sees `0x05`, then collects exactly ten bytes. USB input is echoed back
 before parsing. A malformed frame is silently ignored after collection.
 
@@ -281,18 +283,38 @@ Because application log levels are disabled after initialization to protect
 the binary USB stream, ASCII command success/error log messages are normally
 not visible after startup. Input echo remains visible.
 
-## 8. UART1 and CAN status
+## 8. UART1 and CAN transport
 
 UART1 is active at 115200, 8 data bits, no parity, one stop bit and no flow
 control. Generated `0x03` and `0xE1` packets are duplicated to UART1. UART1 RX
 accepts only canonical 10-byte `0x05` commands; arbitrary UART data is not
 bridged to USB.
 
-`twai_driver.cpp` implements a newer ESP-IDF on-chip TWAI driver with software
-RX/TX queues and bus-off recovery, and the pin/bitrate constants remain in
-`hardware.h`. However, `twai_driver.cpp` is absent from `main/CMakeLists.txt`,
-the component does not request `esp_twai`, and `app_main` does not instantiate
-the driver. CAN is therefore inactive in the current firmware.
+CAN is active at 500 kbit/s using the ESP-IDF `esp_driver_twai` component.
+The TCAN3414 is a 3.3 V transceiver; STB pin 8 must remain low and SHDN pin 5
+low (its internal pulldown permits an unconnected pin). TX is GPIO3 and RX
+GPIO1. CANH/CANL and a common ground join Witness; terminate only the two bus ends.
+The fitted 120-ohm resistor is R39 on the existing board schematic.
+
+Standard identifier `0x120` carries Witness-to-Iris packets; `0x121` carries
+Iris-to-Witness packets. Each Classical CAN frame contains sequence, zero-based
+fragment index, total canonical packet length, then up to five packet bytes.
+The final frame uses its exact DLC with no padding. Reassembly rejects wrong
+identifiers, extended/remote frames, malformed DLC, inconsistent totals,
+out-of-order fragments and transfers older than 250 ms. The canonical packet
+ID, length and EOF are validated before commands execute. The codec lives in
+`Intercomm/can_transport.h` at the Software root, shared with Witness.
+
+The existing direct application loop polls CAN; it creates no application task.
+Its eight-packet queue retains complete packets under hardware backpressure;
+an exhausted queue drops the new packet. The driver retries a failed frame
+at most three times, counts failed TX/RX drops and initiates bus-off recovery.
+This is bounded best-effort transport, without an application delivery ACK.
+Camera and debug telemetry travel to Witness, while commands arrive from it.
+CAN ping produces a CAN-only pong. Witness heartbeat status/uptime fill camera
+FC fields while the most recent heartbeat is at most three seconds old;
+otherwise both FC fields return to zero. Incoming CAN traffic is not echoed
+back onto CAN, preventing routing loops.
 
 ## 9. Build configuration
 
@@ -320,13 +342,14 @@ The checked-in Linux flashing script uses:
 ./flashit.sh
 ```
 
-It currently assumes `/dev/ttyACM1` and an external ARM64 `esptool` path, so
-edit it for the host before use. `openserial.sh` starts minicom on
+Both `flashit.sh` and `flashit.ps1` default to `rfc2217://prs2026hitl:7000`
+and flash the configured 4 MB ESP32-C3 image. The shell script accepts a port
+as its first argument; PowerShell accepts `-Port` and `-Python`.
+USB data is read independently at raw TCP `prs2026hitl:7100`.
+`openserial.sh` starts minicom on
 `/dev/ttyUSB0` at 115200 and may also need adjustment.
 
-`flashit copy.ps1` targets an RFC2217 endpoint and specifies `--flash_size
-2MB`; that conflicts with the ESP32-C3FH4 4 MB project configuration. Do not
-use that script unchanged. The normal image offsets are bootloader `0x0`,
+`flashit copy.ps1` delegates to `flashit.ps1`. The normal image offsets are bootloader `0x0`,
 partition table `0x8000` and application `0x10000`.
 
 ## 10. Maintenance rules and known traps
@@ -351,7 +374,6 @@ partition table `0x8000` and application `0x10000`.
    telemetry reports zero with the battery error flag set.
 10. The active application has no custom RTOS tasks. Preserve the nonblocking
     polling model unless a deliberate architecture change is requested.
-11. CAN source files are currently dormant. Adding them to CMake is not enough;
-    the application also needs explicit initialization, polling and packet
-    framing decisions.
+11. Keep the shared CAN codec and both peers compatible; its three-byte
+    fragment header is distinct from the canonical application frame.
 

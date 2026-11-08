@@ -27,13 +27,13 @@ public:
         std::size_t length);
 
     // Called by the radio polling code for each complete received command.
-    // The command is queued for UART transmission and local processing.
+    // The command is queued for CAN transmission and local processing.
     esp_err_t submit_radio_command(
         const std::uint8_t *data,
         std::size_t length);
 
     // Retrieves a radio command queued for local interpretation. This does not
-    // affect the UART copy, which is queued when the command is submitted.
+    // affect the CAN copy, which is queued when the command is submitted.
     bool receive_radio_command(
         std::uint8_t *data,
         std::size_t capacity,
@@ -55,3 +55,4 @@ private:
 
     QueueHandle_t radio_command_queue_ = nullptr;
 };
+

@@ -211,4 +211,6 @@ C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/build/esp-id
 C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/build/esp-idf/fatfs/libfatfs.a
 C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/build/esp-idf/espressif__tinyusb/libespressif__tinyusb.a
 C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/build/esp-idf/main/libmain.a
+C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/build/esp-idf/esp_driver_ledc/libesp_driver_ledc.a
+C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/build/esp-idf/esp_driver_twai/libesp_driver_twai.a
 C:/Users/Ejfso/Documents/GitHub/witness/Software/Witness/softwarev1/build/esp-idf/espressif__esp_tinyusb/libespressif__esp_tinyusb.a

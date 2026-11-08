@@ -1,0 +1,39 @@
+{
+  "host": "prs2026hitl",
+  "ping_requested": false,
+  "results": [
+    {
+      "board": "iris",
+      "port": 7100,
+      "closed": true,
+      "bytes": 46,
+      "packets": {},
+      "iris_pongs": 0,
+      "last": {}
+    },
+    {
+      "board": "aperture",
+      "port": 7101,
+      "bytes": 5164,
+      "packets": {},
+      "iris_pongs": 0,
+      "last": {}
+    },
+    {
+      "board": "witness",
+      "port": 7102,
+      "bytes": 2016,
+      "packets": {
+        "01": 50,
+        "02": 5,
+        "FF": 5
+      },
+      "iris_pongs": 0,
+      "last": {
+        "01": "01 6e 00 00 04 2a 2a ff f0 6b 00 5c 43 00 18 29 00 5e 00 09 00 7a 0a",
+        "02": "02 6f 00 00 04 27 0a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 38 73 ad 13 1c 0a",
+        "FF": "ff 6e 00 00 04 27 0a 0a"
+      }
+    }
+  ]
+}

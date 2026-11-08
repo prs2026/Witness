@@ -19,7 +19,8 @@ with the user before changing them:
 - GPS I2C sources remain in `main/`, but are **not compiled or started**.
 - Automatic flight transitions are enabled. Binary sensor logging is enabled
   only in Boost, Coast and Descent; idle samples go to a RAM prelaunch ring.
-- The heartbeat buzzer is enabled at 2700 Hz. It can sound on the desk.
+- The heartbeat buzzer is currently **disabled** for bench work
+  (`HEARTBEAT_BUZZER_ENABLED 0` in `heartbeat.cpp`). Set it to 1 before flight.
 - The current `sdkconfig` selects a 2 MB boot-flash image configuration, despite
   the board header identifying an ESP32-S3FN8. Do not conflate boot flash with
   the separate 128 MiB logging NAND, or change image geometry casually.
@@ -251,12 +252,7 @@ The protected erase is a magic opcode, **not authentication or a confirmation
 dialog**. Radio can invoke destructive commands too. Do not transmit erase or
 export commands merely to inspect or test the system.
 
-`CommandBridge` forwards every accepted `05` command unchanged to the current
-UART1 instance. This is currently the GPS port, not a separate external device
-link. USB commands can additionally enter the immediate radio queue. Radio
-commands are forwarded to UART first, then queued for execution by the USB
-command task. Canonical packets with invalid EOF may be forwarded unchanged
-while local execution rejects them. Forwarding and validation are not equivalent.
+`CommandBridge` validates canonical commands and normalizes legacy three-byte commands to complete 10-byte frames before forwarding to Iris CAN. UART1 is exclusively the GPS receiver. USB commands can additionally enter the immediate radio queue; radio commands are queued for local interpretation independently of CAN availability. Invalid EOF/length commands are rejected before forwarding.
 
 Radio local handlers support debug enable, export, erase and state setting.
 Load opcodes `30..35` and regulator opcodes `50..51` are external-device commands,
@@ -467,9 +463,8 @@ workspace. Do not copy stale absolute tool paths into project source files.
    prelaunch-to-live queueing and the bounded-memory export reader.
 4. Changing nominal packet rates does not change flash sampling rates. Changing
    the sensor task rate also affects battery divisors and scheduler granularity.
-5. Keep command bridging separate from local validation and actuation. Commands
-   currently share UART1 with the GPS; check that architecture before extending
-   external-device control.
+5. Keep command bridging separate from local validation and actuation. External-device
+   commands go to Iris over CAN (`can_link.cpp`); UART1 belongs to the GPS only.
 6. Treat missing radio as nonfatal, but do not assume missing IMU is nonfatal.
 7. Update `GROUND_STATION_PROTOCOL.md` with `comms.h` changes, and deliberately
    synchronize the workbook when requested. Do not revive obsolete LoRa/CAN
@@ -477,5 +472,6 @@ workspace. Do not copy stale absolute tool paths into project source files.
 8. Inspect the worktree and preserve unrelated changes. Generated build outputs
    and temporary PDF tooling have appeared in repository status; do not clean,
    reset or delete them as a side effect of firmware work.
+
 
 

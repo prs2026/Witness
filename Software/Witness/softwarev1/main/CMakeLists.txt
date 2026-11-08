@@ -1,6 +1,10 @@
 idf_component_register(SRCS "can_link.cpp" "twai_driver.cpp" "command_bridge.cpp" "uart_driver.cpp" "nmea_gps.cpp" "px1120s_gps.cpp" "flight_state_machine.cpp" "w25n01kv.cpp" "ra01.cpp" "flash_logger.cpp" "ms5607.cpp" "sensors.cpp" "spi_data_forwarder.cpp" "heartbeat.cpp" "main.cpp" "usb_serial_echo.cpp" "usb_mass_storage.cpp"
-                    INCLUDE_DIRS "."
-                    PRIV_REQUIRES esp_driver_twai)
+                    INCLUDE_DIRS "." "../../../Intercomm"
+                    # An explicit list disables main's implicit dependency on
+                    # every component, so name each one the sources include.
+                    PRIV_REQUIRES esp_adc esp_driver_gpio esp_driver_ledc esp_driver_spi
+                                  esp_driver_twai esp_driver_uart esp_driver_usb_serial_jtag
+                                  esp_timer vfs espressif__esp_tinyusb espressif__tinyusb)
 
 # Enable TinyUSB's MSC class without its internal-flash/SD backend; this
 # component provides the external-NAND callbacks itself.

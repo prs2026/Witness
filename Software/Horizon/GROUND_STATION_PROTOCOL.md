@@ -1,12 +1,3 @@
-> Shared protocol update: canonical packet layouts and scales are identical in all
-> four `comms.h` copies. Iris currents use **20 mA/count** (0.02 A/count).
-> The Witness–Iris command/telemetry link uses classical CAN at 500 kbit/s,
-> not the GPS UART. See [CAN transport](../Intercomm/README.md). UART1
-> remains dedicated to GPS. Witness radio is disabled in the checked-in
-> configuration; its configured frequency is 926 MHz when enabled.
-> Some implementation notes below describe the preceding UART bridge revision;
-> use the current firmware handoff and CAN transport document for routing.
-
 # Witness Ground-Station Communications Standard
 
 This document describes the protocol implemented by the Witness firmware. The
@@ -39,11 +30,12 @@ Packet lengths include the packet ID and EOF:
 |---:|---|---:|---:|---|---|
 | `0x01` | Sensor | 21 | 23 | 10 Hz | latest frame at 1 Hz |
 | `0x02` | Estimated state | 62 | 64 | 1 Hz | latest frame at 1 Hz |
-| `0x03` | Camera telemetry | 17 | 19 | not currently produced | 1 Hz when available |
+| `0x03` | Camera telemetry | 17 | 19 | Iris CAN, 1 Hz | latest frame at 1 Hz |
 | `0x05` | Command | 8 | 10 | received externally | immediate; latest local frame at 1 Hz |
 | `0xE0` | Witness debug | 101 | 103 | 10 Hz after debug enable | latest frame at 1 Hz |
-| `0xE1` | IRIS debug | 12 | 14 | not currently produced | 1 Hz when available |
+| `0xE1` | IRIS debug | 12 | 14 | Iris CAN, 10 Hz after debug enable | latest frame at 1 Hz |
 | `0xFF` | Heartbeat | 6 | 8 | 1 Hz | latest frame at 1 Hz |
+| `0xF0` | Ground-station status | 11 | 13 | Aperture USB, 1 Hz | never transmitted |
 
 All offsets in the packet tables below are absolute frame offsets: packet ID
 is byte 0, the first payload byte is byte 1, and EOF is the last byte.
@@ -154,8 +146,7 @@ samples, converted to the defined 40 micro-g/count format.
 | 61 | 2 | Witness/FC battery voltage, uint16 mV |
 | 63 | 1 | EOF `0x0A` |
 
-Currently only status, uptime, barometric altitude, and battery voltage are
-populated. GPS position and altitude come from UART1 NMEA GGA fixes; estimator fields remain zero.
+Status, uptime, barometric altitude, battery voltage, and valid UART1 GPS fixes are populated; estimator fields remain zero.
 
 ### `0x03` Camera telemetry packet, 19 bytes
 
@@ -172,10 +163,7 @@ populated. GPS position and altitude come from UART1 NMEA GGA fixes; estimator f
 | 16 | 2 | IRIS battery voltage, mV |
 | 18 | 1 | EOF `0x0A` |
 
-IRIS status byte 0 flags are current-monitor fault (bit 0), battery fault
-(bit 1), command flag (bit 2), OUT1/2/3 enabled (bits 3/4/5), and 5 V enabled
-(bit 6). Bit 7 and status byte 1 are reserved. Camera currents are one-second
-peaks; IRIS debug currents are the latest samples.
+IRIS status flags are defined in `comms.h`: monitor error, battery error, command flag, OUT1/2/3 enabled, and 5 V enabled.
 
 ### `0x05` Command packet, 10 bytes
 
@@ -212,7 +200,7 @@ Command values currently defined:
 
 The last three commands also have legacy compact USB forms described in
 section 7. Canonical commands received from USB or LoRa are retransmitted
-byte-for-byte through the external UART1 command path. The firmware does not rewrite their status or uptime.
+byte-for-byte through the Iris CAN link. The firmware does not rewrite their status or uptime.
 Radio commands are additionally interpreted locally.
 
 ### `0xFF` Heartbeat packet, 8 bytes
@@ -223,6 +211,14 @@ Radio commands are additionally interpreted locally.
 | 1 | 2 | Witness status |
 | 3 | 4 | Witness uptime, ms |
 | 7 | 1 | EOF `0x0A` |
+
+### `0xF0` Ground-station status packet, 13 bytes
+
+Aperture emits this frame only over USB once per second. It is never sent over
+LoRa. Frame offsets: ID `0xF0` at byte 0, last valid LoRa RSSI as signed dBm at
+byte 1, big-endian station uptime in milliseconds at bytes 2..5, six reserved
+zero bytes at 6..11, and EOF `0x0A` at byte 12. Before a valid receive, RSSI is
+`-127 dBm`.
 
 ### `0xE0` Witness debug packet, 103 bytes
 
@@ -268,13 +264,14 @@ MCU temperature, estimator fields, and GPS Unix time remain zero. GPS latitude, 
 
 ## 5. LoRa/RA-01 settings
 
-The RA-01/SX1262 link currently uses:
+Witness radio is disabled in the checked-in configuration (`HW_RADIO_ENABLED=0`).
+When enabled, the RA-01/SX1262 link uses:
 
 | Setting | Value |
 |---|---|
 | Packet type | LoRa |
 | RF frequency | 926,000,000 Hz |
-| Witness TX power | -8 dBm (Aperture uses -2 dBm) |
+| TX power | -8 dBm (Witness), -2 dBm (Aperture) |
 | Spreading factor | SF7 |
 | Bandwidth | 125 kHz |
 | Coding rate | 4/5 |
@@ -312,14 +309,41 @@ all radio output use only the per-packet latest-frame schedule.
 
 Every valid received radio packet up to the canonical maximum of 103 bytes is
 forwarded unchanged to USB. A received packet beginning with `0x05` is also
-queued unchanged for UART1 transmission and local interpretation. Debug enable,
+queued unchanged for Iris CAN transmission and local interpretation. Debug enable,
 mass storage, log erase, and flight-state commands execute locally. Load and
 5 V regulator commands have no Witness-local hardware action because they are
-implemented by the external device. The PX1120S itself does not understand these
+implemented by the external device. The GPS UART never receives these
 AMA load/regulator commands. SX1262 packets with a CRC error are
 discarded.
 
-## 6. GPS UART1 interface and logging
+## 6. Iris CAN and GPS UART1 interfaces
+
+### Iris CAN device link
+
+Iris and Witness use TCAN3414-compatible transceivers with the ESP32 Classical
+CAN controller at **500 kbit/s**, standard 11-bit identifiers. Witness TX is
+GPIO37 and RX GPIO36. Iris TX is GPIO3 and RX GPIO1. Witness-to-Iris uses
+`0x120`; Iris-to-Witness uses `0x121`. CAN FD is not used.
+
+Each CAN data frame carries `[sequence, fragment_index, canonical_length]`
+followed by up to five consecutive application-frame bytes. Indices start at
+zero; every fragment repeats the sequence and total length. DLC is exactly
+three plus the bytes carried. Reassembly requires ordered fragments, matching
+sequence/length, and completion within 250 ms. The common implementation is
+`Software/Intercomm/can_transport.h`; packets retain their canonical ID and EOF.
+
+USB compact commands are normalized to canonical 10-byte command frames;
+malformed commands are rejected before forwarding. Commands go to Iris through
+CAN, never to the GPS UART. Iris replies and camera/debug telemetry are mirrored
+to Witness USB and cached for the normal radio schedule; replies are not echoed
+back to CAN. Witness sends a 1 Hz heartbeat over CAN, and Iris uses its status
+and uptime in camera telemetry, clearing those FC fields after 3 s without a
+fresh heartbeat. Iris current fields use **20 mA/count**, with a 5.10 A maximum.
+Camera currents are one-second peaks; debug currents are latest samples.
+
+Both bus ends require 120 ohm termination and a common ground. TCAN3414 STB must
+be low and SHDN low or left at its specified internal pull-down for normal mode;
+these boards ground STB and have no MCU standby-control signal.
 
 GPS uses UART1 again; the I2C driver is not started or included in the build.
 
@@ -341,7 +365,7 @@ sentence count, fix validity and time since the last UART byte. A failed startup
 configuration does not stop raw collection, sensors, heartbeat or flash logging.
 
 Checksum-validated NMEA GGA sentences (including GP/GN talkers) populate
-latitude, longitude and GPS MSL altitude in state (0x02) and Witness debug (0x06)
+latitude, longitude and GPS MSL altitude in state (0x02) and Witness debug (0xE0)
 packets. Arbitrarily fragmented UART reads are supported. Coordinates convert
 from NMEA degrees/minutes and hemisphere into signed decimal degrees, then are
 rounded to the canonical signed int24 scale of 0.0001 degree/count.
@@ -427,7 +451,7 @@ USB also accepts a newline-terminated ASCII-hex representation:
 ```
 
 The spaces are part of the ASCII representation. They are removed during hex
-decoding, and the ten decoded bytes are queued for UART1. A terminal's "send hex"
+decoding, and the ten decoded bytes are queued for Iris CAN. A terminal's "send hex"
 mode should instead send the ten binary bytes with no extra newline.
 
 Legacy compact binary commands are accepted after a 20 ms idle interval:
@@ -439,7 +463,7 @@ Legacy compact binary commands are accepted after a 20 ms idle interval:
 ```
 
 The same compact commands may be typed as ASCII hex followed by Enter. `TX 05
-...` is another accepted ASCII form and queues the decoded bytes for UART1.
+...` is another accepted ASCII form and queues the decoded bytes for Iris CAN.
 
 USB input is echoed back byte-for-byte. A ground station using the same USB
 connection for commands and telemetry must therefore recognize or suppress its
@@ -466,6 +490,7 @@ FRAME_LENGTH = {
     0xE0: 103,
     0xE1: 14,
     0xFF: 8,
+    0xF0: 13,
 }
 
 def extract_frames(buffer: bytearray):
@@ -501,3 +526,15 @@ sync word plus application CRC would be more robust.
 7. By default, expect the newest available frame of every produced packet type
    as its own LoRa payload at 1 Hz. Packet `0x02` remains a complete 64-byte
    payload.
+
+
+
+## Aperture host input
+
+Aperture accepts only full canonical 10-byte binary command frames. ASCII-hex
+and compact forms in section 7 apply to a direct Witness USB connection. Horizon
+shortcuts emit full frames for both routes. Aperture transparently forwards
+received LoRa payloads unchanged to USB. CAN fragment headers are never carried
+over LoRa or exposed to the host.
+
+Shared CAN transport reference: [Intercomm](../Intercomm/README.md).

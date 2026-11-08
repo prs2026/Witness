@@ -2,7 +2,7 @@
 
 // Set to 0 to disable heartbeat buzzing. GPIO48 remains configured as an
 // output and held low. The frequency controls the passive-buzzer PWM tone.
-#define HEARTBEAT_BUZZER_ENABLED 1
+#define HEARTBEAT_BUZZER_ENABLED 0
 #define HEARTBEAT_BUZZER_FREQUENCY_HZ 2700
 
 #include <cstdint>

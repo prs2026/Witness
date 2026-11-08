@@ -51,17 +51,46 @@ void CanLink::task_entry(void *context) { static_cast<CanLink *>(context)->run()
 
 void CanLink::send_packet(const std::uint8_t *data, const std::size_t length)
 {
-    const std::uint8_t sequence = sequence_++;
-    for (std::size_t i = 0; i < intercomm::fragment_count(length); ++i) {
+    if (pending_length_ != 0 || length > pending_.size()) return;
+    std::memcpy(pending_.data(), data, length);
+    pending_length_ = length;
+    pending_fragment_ = 0;
+    ++sequence_;
+    pending_deadline_us_ = esp_timer_get_time() + 200000;
+    pump_transmit();
+}
+
+void CanLink::pump_transmit()
+{
+    if (pending_length_ == 0) return;
+    if (esp_timer_get_time() >= pending_deadline_us_) {
+        ESP_LOGW(kTag, "CAN packet expired before all fragments could be queued");
+        pending_length_ = 0;
+        return;
+    }
+    while (pending_fragment_ < intercomm::fragment_count(pending_length_)) {
         intercomm::Frame fragment{};
-        if (!intercomm::encode_fragment(data, length, sequence, i, fragment)) return;
+        if (!intercomm::encode_fragment(pending_.data(), pending_length_,
+                                       sequence_, pending_fragment_, fragment)) {
+            pending_length_ = 0;
+            return;
+        }
         TwaiDriver::Frame frame{};
         frame.identifier = intercomm::kWitnessToIrisId;
         frame.data = fragment.data;
         frame.length = fragment.length;
-        // Do not block sensor/GPS tasks or retry an entire actuation command.
-        if (driver_.transmit(frame) != ESP_OK) return;
+        // Retain the cursor across transient queue congestion. Never replay
+        // an already submitted fragment or an entire actuation command.
+        const esp_err_t result = driver_.transmit(frame);
+        if (result == ESP_ERR_TIMEOUT) return;
+        if (result != ESP_OK) {
+            ESP_LOGW(kTag, "CAN packet submission failed: %s", esp_err_to_name(result));
+            pending_length_ = 0;
+            return;
+        }
+        ++pending_fragment_;
     }
+    pending_length_ = 0;
 }
 
 void CanLink::receive_packets()
@@ -94,11 +123,12 @@ void CanLink::run()
     while (true) {
         (void)driver_.poll();
         receive_packets();
+        pump_transmit();
         Command command{};
-        if (xQueueReceive(commands_, &command, 0) == pdTRUE)
+        if (pending_length_ == 0 && xQueueReceive(commands_, &command, 0) == pdTRUE)
             send_packet(command.data, sizeof(command.data));
         const std::int64_t now = esp_timer_get_time();
-        if (now >= next_heartbeat) {
+        if (pending_length_ == 0 && now >= next_heartbeat) {
             std::uint8_t heartbeat[IRIS_PACKET_HEARTBEAT_FRAME_LENGTH]{};
             heartbeat[0] = IRIS_PACKET_ID_HEARTBEAT;
             status_.write(heartbeat + 1);
