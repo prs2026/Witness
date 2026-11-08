@@ -43,6 +43,7 @@ source when it differs from an older conversation, workbook, or prose document.
 | [main/heartbeat.cpp](main/heartbeat.cpp) | Heartbeat packets, red LED pulse and state-specific PWM beeps |
 | [main/usb_serial_echo.cpp](main/usb_serial_echo.cpp) | USB echo, command parsing, local command execution and export switch |
 | [main/command_bridge.cpp](main/command_bridge.cpp) | Forwarding USB/radio commands to Iris CAN and queueing radio commands for local execution |
+| [main/can_link.h](main/can_link.h), [main/can_link.cpp](main/can_link.cpp), [main/twai_driver.cpp](main/twai_driver.cpp) | Iris CAN link: command/heartbeat transmit, fragmentation and reassembly via [Intercomm](../../Intercomm/README.md) |
 | [main/spi_data_forwarder.cpp](main/spi_data_forwarder.cpp) | Queued USB output, latest-frame radio cache and immediate radio queue |
 | [main/uart_driver.cpp](main/uart_driver.cpp) | UART receive task, raw logging, USB mirroring and GPS parser integration |
 | [main/px1120s_gps.cpp](main/px1120s_gps.cpp), [main/nmea_gps.cpp](main/nmea_gps.cpp) | GPS startup configuration and independent streaming NMEA parser |

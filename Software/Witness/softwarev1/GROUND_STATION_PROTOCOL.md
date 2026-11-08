@@ -264,8 +264,8 @@ MCU temperature, estimator fields, and GPS Unix time remain zero. GPS latitude, 
 
 ## 5. LoRa/RA-01 settings
 
-Witness radio is disabled in the checked-in configuration (`HW_RADIO_ENABLED=0`).
-When enabled, the RA-01/SX1262 link uses:
+Witness radio is enabled in the checked-in configuration (`HW_RADIO_ENABLED=1`).
+The RA-01/SX1262 link uses:
 
 | Setting | Value |
 |---|---|
@@ -345,7 +345,9 @@ Both bus ends require 120 ohm termination and a common ground. TCAN3414 STB must
 be low and SHDN low or left at its specified internal pull-down for normal mode;
 these boards ground STB and have no MCU standby-control signal.
 
-GPS uses UART1 again; the I2C driver is not started or included in the build.
+### GPS UART1 receiver
+
+GPS uses UART1; the I2C driver is not started or included in the build.
 
 | Setting | Value |
 |---|---|
@@ -536,3 +538,5 @@ and compact forms in section 7 apply to a direct Witness USB connection. Horizon
 shortcuts emit full frames for both routes. Aperture transparently forwards
 received LoRa payloads unchanged to USB. CAN fragment headers are never carried
 over LoRa or exposed to the host.
+
+Shared CAN transport reference: [Intercomm](../../Intercomm/README.md).
