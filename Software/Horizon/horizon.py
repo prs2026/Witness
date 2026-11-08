@@ -26,7 +26,9 @@ Disconnect also disables that input's auto-connect. No network range is scanned.
 Horizon does not open the AIM USB device. Logs go in logs/: Witness JSONL,
 Featherweight raw BIN plus diagnostic/packet JSONL, and AIM MQTT JSONL.
 
-Flight View opens first. Use the Layout Editor tab to edit a separate draft,
+Flight View opens first. The Attitude tab draws the Witness quaternion as a 3D
+rocket (live from the feed, or replaying a converter/HITL CSV); see README.md.
+Use the Layout Editor tab to edit a separate draft,
 then Apply to update the dashboard or Save JSON to reuse it. Applying resets
 graph history, not receiver connections or logs. You can also load a layout or
 start with: python horizon.py --flight-layout path/to/layout.json
@@ -39,6 +41,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from aim_tab import AimMqttTab
+from attitude_view import AttitudeTab
 from flight_data import DEFAULT_LAYOUT
 from flight_view import FlightView
 from flight_editor import FlightLayoutEditor
@@ -62,8 +65,8 @@ class HorizonGroundStation(tk.Tk):
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill="both", expand=True, padx=4, pady=(2, 4))
         self.flight = FlightView(self.notebook, layout_path=flight_layout)
-        self.witness = WitnessTab(self.notebook, log_dir=log_dir,
-                                 on_record=lambda record: self.flight.data.accept_record("witness", record))
+        self.attitude = AttitudeTab(self.notebook)
+        self.witness = WitnessTab(self.notebook, log_dir=log_dir, on_record=self._witness_record)
         self.featherweight = FeatherweightTab(self.notebook, log_dir=log_dir,
                                              on_record=lambda record: self.flight.data.accept_record("featherweight", record))
         self.aim = AimMqttTab(self.notebook, log_dir=log_dir, host=DEFAULT_AIM_MQTT_HOST,
@@ -71,17 +74,23 @@ class HorizonGroundStation(tk.Tk):
                               base_path=DEFAULT_AIM_MQTT_BASE_PATH, on_sample=self.flight.data.accept_aim,
                               broker_enabled=broker_enabled, broker_port=broker_port)
         self.layout_editor = FlightLayoutEditor(self.notebook, self.flight)
-        for tab, title in ((self.flight, "Flight View"), (self.witness, "Witness"), (self.featherweight, "Featherweight GPS"),
-                           (self.aim, "AIM XTRA MQTT"), (self.layout_editor, "Layout Editor")):
+        for tab, title in ((self.flight, "Flight View"), (self.attitude, "Attitude"), (self.witness, "Witness"),
+                           (self.featherweight, "Featherweight GPS"), (self.aim, "AIM XTRA MQTT"),
+                           (self.layout_editor, "Layout Editor")):
             self.notebook.add(tab, text=title)
         for tab in (self.witness, self.featherweight, self.aim):
             tab.set_auto_connect(auto_connect)
         self.protocol("WM_DELETE_WINDOW", self.close)
 
+    def _witness_record(self, record):
+        self.flight.data.accept_record("witness", record)
+        self.attitude.accept_record(record)
+
     def close(self):
         for tab in (self.witness, self.featherweight, self.aim):
             tab.close()
         self.flight.close()
+        self.attitude.close()
         self.destroy()
 
 

@@ -125,6 +125,42 @@ AIM gyro traces are estimates from quaternion differences in degrees per second,
 
 AIM fields whose publisher units remain unverified, including GPS altitude and Z acceleration, retain their raw labeling and separate graph axes where configured. Do not compare raw-unit and physical-unit values as if their units were identical. See [flight_view.py](flight_view.py), [aim_altitude.py](aim_altitude.py), and [aim_orientation.py](aim_orientation.py) for the detailed assumptions.
 
+## Attitude tab
+
+**Attitude** (next to Flight View, which is unchanged) draws the Witness orientation quaternion as a 3D wireframe rocket on a Tk canvas: body tube, nose cone and four fins. The fin on body +Y and a stripe along the body are orange so roll is visible. The view also shows a body-axis triad (`xb` = nose, `yb`, `zb`), world ENU axes (E, N, U) and a ground grid. **Iso**, **From East**, **From North** and **From Above** set the camera, and dragging the view orbits it. Below the view is a strip chart of qx/qy/qz/qw and tilt. **Conventions...** summarises the definitions below.
+
+**Live mode** (default, or **Live feed**) uses the same Witness decoded feed as Flight View. A fresh `0xE0` debug quaternion is used when one has arrived in the last 2.5 s (10 Hz over USB after command `0x00E0`; the LoRa downlink relays it at most 1 Hz). Otherwise Horizon uses the newest 1 Hz `0x02` state quaternion. The readouts show the source (`0xE0`/`0x02` and feed source name), sample age (red and `STALE` after 3 s, `SNAPSHOT` for a relay replay), flight state, HITL flag (red when active) and GPS lock from the latest Witness status. The strip chart shows the last 30 to 600 s of host receive time; `0x02` samples are not added to it while `0xE0` is fresh.
+
+**File mode** (**Load CSV...**) replays a CSV with **Play/Pause**, a speed selector and a scrub bar. Between samples it slerps if they are no more than 3 median sample intervals apart (minimum 0.25 s); across a longer gap it holds the previous sample. Time going backwards (a reboot or looped replay) is shifted forward so samples stay in file order. Accepted columns (case-insensitive):
+
+| Purpose | Column names |
+|---|---|
+| Time, seconds | `time_s`, `time`, `t`, `t_s`, `time_seconds` (converter), `sim_time_s`, `host_time_s`, `timestamp_s` |
+| Time, milliseconds | `time_ms`, `t_ms`, `uptime_ms`, `uptime`, `sim_time_ms` (used if no seconds column; otherwise row number x 0.1 s) |
+| Witness estimate | First complete set of `Pqx,Pqy,Pqz,Pqw`, `Pq_x..`, `Pquat_x..` or `Porientation_x..`, with prefix `P` = `witness_`, `est_`, `estimate_`, `wit_` or none. The converter writes `orientation_x,orientation_y,orientation_z,orientation_w`. |
+| Truth (optional) | The same patterns with prefix `truth_`, `true_`, `sim_` or `ref_`, for example `truth_qx,truth_qy,truth_qz,truth_qw` |
+| Status (optional) | `flight_state`, `hitl_active`, `gps_locked`, or raw `status` (uint16); `packet_id` or `source` as a label |
+
+The recommended HITL attitude file layout is `time_s,packet_id,witness_qx,witness_qy,witness_qz,witness_qw,truth_qx,truth_qy,truth_qz,truth_qw,flight_state,hitl_active`. In converter CSVs, rows without orientation (heartbeat, sensors, etc.) are skipped. If any `0xE0` rows carry orientation, only those rows are used.
+
+When a truth quaternion is present, truth is drawn as a blue dashed ghost and as dashed strip-chart traces. Readouts add truth tilt, **tilt error** (estimate minus truth) and **attitude error**: the full rotation angle between truth and the estimate after a constant heading offset (rotation about U) is removed. By default the offset is estimated at the first sample where both are valid. **Align heading here** re-estimates it at the current replay time, and **Auto align** reverts. With **Heading-align estimate** checked, the estimate rocket is drawn rotated by the offset so it overlays the ghost.
+
+### Conventions
+
+- Quaternion order is x, y, z, w (scalar last, as on the wire). It is a Hamilton quaternion that rotates BODY vectors into WORLD (`v_world = q v_body q*`), per `comms.h`. WORLD is ENU: +X east, +Y north, +Z up. BODY +X is the nose; upright on the pad, body +X points to world +Z.
+- All four components zero means attitude is not available. The tab shows `ATTITUDE NOT AVAILABLE` and draws no rocket. Non-finite or missing values are treated the same way. Other quaternions are normalised for display, and `|q|` is flagged `CHECK NORM` when it differs from 1 by more than 0.01.
+- **Tilt from vertical** is the angle between body +X and world +Z (0 = upright, 180 = nose down). It does not depend on heading.
+- **Nose azimuth** is the compass bearing of the nose's horizontal projection: 0 = north, 90 = east. It is meaningless when the rocket is nearly vertical (shown grey under 1 degree of tilt).
+- **Spin about nose** is the twist about the nose, right-handed, relative to the upright reference `(0, -0.7071, 0, 0.7071)`: body +Y north, +Z west. That reference is what the firmware's shortest-arc tilt alignment gives for a vertical rocket. It is computed as the swing-twist split of `q * q_ref^-1` about world +Z and is defined everywhere except nose straight down.
+- **ZYX yaw/pitch/roll** is the intrinsic Z-Y'-X'' sequence of body relative to ENU, `R = Rz(yaw) Ry(pitch) Rx(roll)`, each angle right-handed. Yaw is measured from east toward north, and pitch > 0 means nose down. An upright rocket is at pitch -90 degrees, this sequence's gimbal lock. Near vertical, roll is folded into yaw and marked `gimbal lock`, so use tilt/azimuth/spin for flight.
+
+### Limitations
+
+- Heading is not observable on Witness (no magnetometer). Its initial heading is arbitrary, so nose azimuth, spin, yaw and roll include an unknown constant offset. For a vertical rocket, heading and spin are the same rotation. Only tilt is absolute.
+- The `0x02` quaternion is 1 Hz. The 10 Hz `0xE0` stream must be enabled with command `0x00E0` from the Witness monitor (Horizon sends no commands). Over LoRa, `0xE0` is relayed at 1 Hz at most. Fast motion between 1 Hz samples is not visible, and live mode does not interpolate.
+- Live age is host receive time and includes link latency. File time is the CSV's own time base. For converter CSVs that is device uptime.
+- The drawing is an orthographic wireframe with simple depth ordering, not a rendered model, and is not to scale.
+
 ## Layout Editor
 
 Use **Layout Editor** to customize the dashboard without editing JSON by hand:
@@ -235,6 +271,7 @@ Commands are sent from the Witness monitor, not Horizon. All command shortcuts, 
 | `ground_tabs.py`, `ground_receivers.py`, `featherweight.py` | Witness feed and Featherweight reception |
 | `flight_view.py`, `flight_render.py`, `flight_data.py` | Dashboard controls, drawing, validated layouts, histories |
 | `flight_editor.py` | Draft layout editing and JSON save/load |
+| `attitude_view.py`, `attitude_data.py`, `attitude_math.py` | Attitude tab drawing, live/CSV sample handling, pure quaternion math |
 | `aim_altitude.py`, `aim_orientation.py` | Derived AIM altitude, velocity, and angular rates |
 | `main.py`, `witness_link.py`, `witness_test_source.py` | Witness monitor, local relay, test playback |
 | `converter.py`, `viewer.py` | Postflight conversion and analysis |
