@@ -18,6 +18,10 @@ from aim_orientation import AimAngularRateEstimator
 from aim_altitude import AimAltitudeEstimator
 
 DEFAULT_LAYOUT = Path(__file__).resolve().parent / "flight_view_default.json"
+# number: numeric value; state: Witness flight state name; continuity: 0/1
+# OPEN/CONTINUITY; flag: a 0/1 bit shown literally (e.g. GPS lock); hitl:
+# Witness HITL bit (1 = SIMULATED sensors, shown as a warning).
+DISPLAY_FORMATS = ("number", "state", "continuity", "flag", "hitl")
 COLORS = ("#004b80", "#803900", "#006020", "#5b267d", "#990000", "#555000")
 
 
@@ -144,8 +148,8 @@ def validate_layout(document):
         traces = row.get("traces")
         if not isinstance(traces, list) or not 1 <= len(traces) <= 8:
             raise ValueError(f"{name}: expected 1 to 8 traces")
-        if is_readout and len(traces) > (3 if group == "flight" else 2 if group == "power" else 1):
-            raise ValueError("Flight readouts allow 3 values, power allows 2, other readouts allow 1")
+        if is_readout and len(traces) > (3 if group == "flight" else 2):
+            raise ValueError("Flight readouts allow 3 values; state, GPS and power readouts allow 2")
         parsed = []
         for ti, trace in enumerate(traces):
             _keys(trace, "label input packet field source color scale offset match unit enabled note format axis", name + " trace")
@@ -184,8 +188,8 @@ def validate_layout(document):
             if not isinstance(note, str) or len(note) > 80:
                 raise ValueError("note must be text of at most 80 characters")
             display_format = trace.get("format", "number")
-            if display_format not in ("number", "state", "continuity"):
-                raise ValueError("format must be number, state, or continuity")
+            if display_format not in DISPLAY_FORMATS:
+                raise ValueError("format must be number, state, continuity, flag, or hitl")
             parsed.append(Trace(
                 _text(trace.get("label"), "trace label", 80), kind,
                 packet, _text(trace.get("field"), "field"),
@@ -276,6 +280,10 @@ class FlightData:
                 value = packet.get(key)
                 if type(value) is int:
                     fields[f"{key}.flight_state"] = value & 7
+                    if not (key == "status" and packet.get("packet") in ("camera", "iris_debug")):
+                        # Witness status byte 1: bit 3 GPS locked, bit 4 HITL active.
+                        fields[f"{key}.gps_locked"] = (value >> 3) & 1
+                        fields[f"{key}.hitl_active"] = (value >> 4) & 1
                     for bit in range(8):
                         fields[f"{key}.byte0.bit{bit}"] = (value >> (8 + bit)) & 1
         received = record.get("received_mono")

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Fixed, non-scrolling launch dashboard. W=Witness, A=AIM, F=Featherweight. A baro~ is standard pressure altitude in m, interpreting AIM pressure as Pa with 101325 Pa reference; A~ vertical velocity is delta barometric altitude / delta publisher timestamp in m/s, positive up. These are estimates, not AIM calibrated/fused outputs. A GPS remains raw on the right altitude axis and GPS readout (publisher units unverified). Altitudes are not zeroed by Set pad. Horizontal distance uses the first valid position. Invalid data holds the last valid readout with original age and an INVALID flag, with gaps in plots. FW tracker and local/GS batteries stay separate. Zero battery readings are invalid. AIM acceleration AZ stays on a separate raw axis; AX~/AY~/AZ~ gyro traces are quaternion-derived deg/s estimates. Window selector preserves history. See flight_view.py for configuration.",
+  "description": "Fixed, non-scrolling launch dashboard. W=Witness, A=AIM, F=Featherweight. A baro~ is standard pressure altitude in m, interpreting AIM pressure as Pa with 101325 Pa reference; A~ vertical velocity is delta barometric altitude / delta publisher timestamp in m/s, positive up. These are estimates, not AIM calibrated/fused outputs. A GPS remains raw on the right altitude axis and GPS readout (publisher units unverified). Altitudes are not zeroed by Set pad. Horizontal distance uses the first valid position. Invalid data holds the last valid readout with original age and an INVALID flag, with gaps in plots. FW tracker and local/GS batteries stay separate. Zero battery readings are invalid. AIM acceleration AZ stays on a separate raw axis; AX~/AY~/AZ~ gyro traces are quaternion-derived deg/s estimates. Window selector preserves history. The Witness GPS row shows satellites used beside the status GPS lock bit (1 = fresh fix). The state row adds the Witness HITL bit: HITL ACTIVE means simulated sensors, never flight data. See flight_view.py for configuration.",
   "title": "Horizon Flight View",
   "window_seconds": 120,
   "auto_scale": true,
@@ -383,25 +383,49 @@
           "field": "status.flight_state",
           "color": "#171717",
           "format": "state"
+        },
+        {
+          "label": "HITL",
+          "input": "witness",
+          "packet": [
+            "state",
+            "witness_debug",
+            "sensors",
+            "heartbeat"
+          ],
+          "field": "status.hitl_active",
+          "color": "#990000",
+          "format": "hitl",
+          "note": "Status byte 1 bit 4: 1 = HITL, sensor values are simulated"
         }
       ]
     },
     {
       "group": "gps",
-      "title": "Witness GPS satellites",
+      "title": "Witness",
       "unit": "sats",
       "traces": [
         {
-          "label": "W",
+          "label": "GPS sats",
+          "input": "witness",
+          "packet": "state",
+          "field": "gps_satellites",
+          "color": "#171717",
+          "note": "Satellites used (GGA field 7); 0 when the fix is stale"
+        },
+        {
+          "label": "lock",
           "input": "witness",
           "packet": [
             "state",
-            "witness_debug"
+            "witness_debug",
+            "sensors",
+            "heartbeat"
           ],
-          "field": "(unmapped)",
+          "field": "status.gps_locked",
           "color": "#171717",
-          "enabled": false,
-          "note": "Not in Witness telemetry"
+          "format": "flag",
+          "note": "Status byte 1 bit 3: 1 = fresh GPS fix"
         }
       ]
     },

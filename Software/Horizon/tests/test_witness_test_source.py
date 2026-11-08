@@ -40,7 +40,7 @@ class SourceTests(unittest.TestCase):
         self.assertTrue(all(p["longitude"] < 0 for p in states))
 
     def test_demo_wire_lengths_and_engineering_units(self):
-        expected = {0x01: 23, 0x02: 64, 0x03: 19, 0xFF: 8, 0xF0: 13, 0xE0: 103, 0xE1: 14}
+        expected = {0x01: 23, 0x02: 65, 0x03: 19, 0xFF: 8, 0xF0: 13, 0xE0: 103, 0xE1: 14}
         frames = demo_packets(7000)
         self.assertEqual({key: len(frame) for key, frame in frames.items()}, expected)
         packet = parse_packet(0xE0, frames[0xE0][1:-1])

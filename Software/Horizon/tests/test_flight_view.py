@@ -417,7 +417,9 @@ class FlightGuiTests(unittest.TestCase):
                              if flight.canvas.type(item) == "text"]
                     self.assertIn("PAD IDLE", texts)
                     self.assertIn("TEST_flight", texts)
-                    self.assertIn("N/A", texts)
+                    # Witness GPS: satellites with the status-byte lock bit beside it.
+                    self.assertRegex(" | ".join(texts), r"GPS sats \d+!?(  | \| )lock [01]")
+                    self.assertTrue(any(value.startswith("HITL off") for value in texts))
                     self.assertTrue(any("RSSI" in value for value in texts))
                     self.assertTrue(any('FW tracker battery' in value for value in texts))
                     self.assertTrue(any('FW local / GS battery' in value for value in texts))

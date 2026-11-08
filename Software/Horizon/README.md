@@ -102,6 +102,9 @@ Featherweight is read directly in its Horizon tab. Tracker battery voltage and l
 
 Flight View is a single, non-scrolling launch display. It places key flight numbers and state on the left, up to six graphs in the center, and GPS/power readouts on the right. Text is dark on white backgrounds. Battery readouts use three decimal places; AIM CPU/ejection batteries share a row. Default AIM continuity placeholders are removed.
 
+- **Witness GPS** (GPS panel, row titled `Witness`) shows the state packet's satellite count beside the status GPS lock bit, for example `GPS sats 7  lock 1` (compact) or `GPS sats 7` | `lock 1` (large windows). `lock` is a literal `1` (fresh fix) or `0`. Satellites are those used in the solution and read 0 when the fix is stale. Each value keeps its own `!` age/invalid marker.
+- **HITL** (state area, under the flight state) shows `HITL ACTIVE - SIMULATED SENSORS` in red whenever Witness reports status byte 1 bit 4, and the banner adds `HITL - SIMULATED SENSORS`. A held HITL value stays red even when old, so a simulated run is never mistaken for flight data. Otherwise the line reads `HITL off - real sensors (...)`.
+
 The **Flight controls** menu provides layout loading/saving, Pause/Resume, Clear plots, Set pad, a graph time-window selector, fullscreen, and display details. F11 toggles fullscreen; Escape exits it.
 
 - Pause freezes the display, not telemetry reception or logging.
@@ -132,7 +135,9 @@ Use **Layout Editor** to customize the dashboard without editing JSON by hand:
 4. Choose **Apply to Flight View** to validate and apply the draft. Confirming resets graph history and source bindings; connections and logging continue.
 5. Choose **Save JSON as...** to keep the setup. Saving and applying are separate operations.
 
-The editor may scroll; Flight View never does. A fixed dashboard supports at most six graphs in two columns and three rows, with up to three flight readout rows, one state row, six GPS rows, and ten power rows. Validation rejects layouts exceeding these limits.
+The editor may scroll; Flight View never does. A fixed dashboard supports at most six graphs in two columns and three rows, with up to three flight readout rows, one state row, six GPS rows, and ten power rows. Flight rows hold up to three values; state, GPS and power rows hold up to two. Validation rejects layouts exceeding these limits.
+
+Display formats are `number`, `state` (flight-state name), `continuity`, `flag` (a 0/1 bit shown literally, used for GPS lock) and `hitl` (the HITL warning line; use it as the state row's second value). Witness status fields available to traces are `status.flight_state`, `status.gps_locked` and `status.hitl_active` (and the `fc_status.*` equivalents on camera packets), plus `status.byte0.bit0` to `bit7`. Layouts saved before this change still load, but their `Witness GPS satellites` placeholder stays N/A and they have no HITL line until edited or replaced with the default.
 
 Trace mapping uses `input`, `packet`, and `field`. AIM packet names are relative MQTT topics such as `pressure_payload/v1`. Array field names use indexes such as `gyro[0]`. A source of `*` binds an available live source; use an exact source name to avoid choosing a different device. A filter such as `{"unit_type": "TRACKER"}` selects Featherweight tracker records. Displayed values are `decoded_value * scale + offset`.
 
@@ -160,7 +165,7 @@ For the example ballistic flight:
 
 `--test-speed 2` runs replay at twice normal speed. Without `--test-once`, the scenario repeats and its device uptimes repeat too. Test bytes pass through the normal Witness decoder and local telemetry feed; they are not transmitted to hardware. Witness test mode disables automatic USB opening and labels test traffic. Horizon’s other enabled inputs can still receive real data, so turn those inputs off if you want an isolated demonstration.
 
-Replay JSON has `version: 1`, `duration_ms`, and a `frames` list containing ordered `at_ms` times and hexadecimal byte strings. See [test_data/example_packets.json](test_data/example_packets.json) and [witness_test_source.py](witness_test_source.py).
+Replay JSON has `version: 1`, `duration_ms`, and a `frames` list containing ordered `at_ms` times and hexadecimal byte strings. See [test_data/example_packets.json](test_data/example_packets.json) and [witness_test_source.py](witness_test_source.py). The built-in scenario and both example files use 65-byte state frames. GPS has no fix at first (0 satellites, lock 0), then locks, and some samples have 10 satellites so a `0x0A` byte appears inside the payload. None of them set the HITL bit.
 
 ## Logs and postflight analysis
 
@@ -187,13 +192,23 @@ Convert a Witness binary log and open it for plotting:
 
 The converter detects raw Witness application streams and 48-byte `WL` flash records from Witness mass storage. It does not decode Featherweight BIN captures or AIM JSONL logs. CSV `time_seconds` derives from device uptime, not host receipt time. The viewer opens with a summary and lets you select traces, including flight state and individual status bits.
 
+Witness status rows get `status_byte0`, `status_byte1`, `flight_state`, `flight_state_name`, `gps_locked` (byte 1 bit 3) and `hitl_active` (byte 1 bit 4). State rows also get `gps_satellites`; it is blank for legacy 64-byte state frames. The viewer plots `gps_locked`, `hitl_active` and the `status_byte1_bit3_gps_locked` / `status_byte1_bit4_hitl_active` bit traces on a 0..1 axis. For CSVs converted before these columns existed, it derives `gps_locked` and `hitl_active` from `status`. The summary line reports how many records had HITL active. Echoed `0x0C` HITL input packets are skipped and are not counted as discarded bytes.
+
 ## Firmware protocol references
 
 [GROUND_STATION_PROTOCOL.md](GROUND_STATION_PROTOCOL.md) describes the Witness wire protocol and ground-station status packets; [comms.h](comms.h) contains the local field definitions. Application frames use packet ID, a payload whose size depends on that ID, and final `0x0A`. Multi-byte values are big-endian. `0x0A` can occur inside payloads, so splitting the stream on newlines is not valid deframing.
 
 The monitor and converter also accept captured sensor payloads of 23 bytes alongside the 21-byte documented form. Check the deployed firmware revision before changing lengths or scaling. Witness flash `WL` records are a different format from application frames.
 
+The state packet (`0x02`) is a 65-byte frame: ID, a 63-byte payload, then EOF at frame offset 64. The payload is status, uptime, orientation, position, velocity, latitude, longitude, GPS altitude, barometric altitude, battery voltage (uint16 mV at frame offset 61) and GPS satellites (uint8 at frame offset 63). Witness status byte 1 (the low byte of `status`) holds the flight state in bits 2:0, GPS locked in bit 3 and HITL active in bit 4; bits 7:5 are reserved. These bits appear in the sensor, state, command, debug and heartbeat packets, and in camera `fc_status`. The Witness monitor shows the satellites as `GPS sats: 7  lock 1`. Its status decoders add `GPS lock` and `HITL (SIM)` indicators, with HITL shown in red.
+
+**Legacy 64-byte state frames.** Older firmware and logs use a 64-byte state frame with no satellite byte. There is no version field, so both decoders try the 65-byte form first. It is chosen when frame offset 64 is `0x0A`, even if offset 63 is also `0x0A` (10 satellites). The 64-byte form is chosen only when offset 63 is `0x0A` and offset 64 is not. No packet ID is `0x0A`, so a legacy frame followed by any valid packet is unambiguous. To avoid cutting a split read short, the live monitor waits for the 65th byte before deciding. A legacy frame at the very end of a stream is therefore decoded only once another byte arrives. Two rare cases can still be misread: a stray `0x0A` noise byte straight after a legacy frame (read as a 65-byte frame with 10 satellites), and a corrupted 65-byte frame with 10 satellites and a bad EOF (read as legacy, then resynchronized). The converter also accepts a legacy-looking frame at the end of a file.
+
+`0x0C` is the 47-byte HITL sensor-input packet sent from host to Witness over USB, and Witness may echo it. Horizon's monitor and converter recognize it by its fixed length and EOF and skip it. It is never decoded or forwarded as telemetry. The monitor console logs `HOST_ECHO` on the first echo and then on every 100th.
+
 Commands are sent from the Witness monitor, not Horizon. All command shortcuts, including USB mass storage and log erase, use full 10-byte canonical frames so they can cross the Aperture LoRa bridge. Erasing logs is destructive; do not use it as a connectivity test. Other command shortcuts use the monitor’s framed command encoder. This guide does not describe how to build or flash device firmware.
+
+`HITL Enter (USB, pad only)` sends `0x4849` and `HITL EXIT -> real sensors` sends `0x4858`. Each button sends one command when pressed; nothing is sent automatically. Witness accepts HITL entry only over USB in Pad Idle. It leaves HITL after an exit command, a reboot, or one second without `0x0C` input. The monitor does not generate `0x0C` sensor input itself.
 
 ## Troubleshooting
 

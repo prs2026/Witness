@@ -70,14 +70,23 @@ STATUS_BYTE1_BIT_FIELDS = (
     "status_byte1_bit0_flight_state_bit0",
     "status_byte1_bit1_flight_state_bit1",
     "status_byte1_bit2_flight_state_bit2",
-    "status_byte1_bit3_reserved",
-    "status_byte1_bit4_reserved",
+    "status_byte1_bit3_gps_locked",
+    "status_byte1_bit4_hitl_active",
     "status_byte1_bit5_reserved",
     "status_byte1_bit6_reserved",
     "status_byte1_bit7_reserved",
 )
 
 STATUS_BIT_FIELDS = STATUS_BYTE0_BIT_FIELDS + STATUS_BYTE1_BIT_FIELDS
+
+# Converter columns decoded from Witness status byte 1 (bit 3, bit 4). Older
+# CSVs without them get them derived from status/status_byte1 on load.
+STATUS_FLAG_COLUMNS = {
+    "gps_locked": 0x08,
+    "hitl_active": 0x10,
+}
+# Columns drawn on a fixed 0..1 axis.
+BINARY_COLUMNS = frozenset(STATUS_BIT_FIELDS) | frozenset(STATUS_FLAG_COLUMNS)
 
 
 def numeric_value(text: str | None) -> float | None:
@@ -334,6 +343,39 @@ def add_status_bit_traces(
             fieldnames.append(field)
 
 
+def add_status_flag_columns(
+        rows: list[dict[str, str]], fieldnames: list[str],
+) -> None:
+    """Fill gps_locked/hitl_active from status byte 1 where they are blank."""
+    populated_fields: set[str] = set()
+    for row in rows:
+        _status_byte0, status_byte1 = witness_status_bytes(row)
+        for field, mask in STATUS_FLAG_COLUMNS.items():
+            if (row.get(field) or "").strip():
+                populated_fields.add(field)
+                continue
+            if status_byte1 is None:
+                continue
+            row[field] = "1" if status_byte1 & mask else "0"
+            populated_fields.add(field)
+    for field in STATUS_FLAG_COLUMNS:
+        if field in populated_fields and field not in fieldnames:
+            fieldnames.append(field)
+
+
+def hitl_record_count(rows: list[dict[str, str]]) -> int:
+    """Number of records whose Witness status reports HITL (simulated) mode."""
+    count = 0
+    for row in rows:
+        value = numeric_value(row.get("hitl_active"))
+        if value is None:
+            _status_byte0, status_byte1 = witness_status_bytes(row)
+            value = None if status_byte1 is None else status_byte1 & 0x10
+        if value:
+            count += 1
+    return count
+
+
 def calculate_summary(rows: list[dict[str, str]]) -> dict[str, str]:
     altitude_samples: list[tuple[float, float | None]] = []
     acceleration_samples: list[tuple[float | None, float, str]] = []
@@ -442,11 +484,16 @@ def calculate_summary(rows: list[dict[str, str]]) -> dict[str, str]:
     else:
         flight_state_text = "Not available in this log"
 
+    hitl_records = hitl_record_count(rows)
     return {
         "max_altitude": altitude_text,
         "launch_time": launch_text,
         "max_acceleration": acceleration_text,
         "flight_state": flight_state_text,
+        "hitl": (
+            f"HITL ACTIVE in {hitl_records:,} record(s): simulated sensor data"
+            if hitl_records else "No HITL records"
+        ),
     }
 
 
@@ -692,6 +739,7 @@ class CsvGraphViewer(tk.Tk):
         paired_state_log = add_paired_wl_flight_state(path, rows, fieldnames)
         add_derived_flight_state(rows, fieldnames)
         add_status_bit_traces(rows, fieldnames)
+        add_status_flag_columns(rows, fieldnames)
 
         numeric_columns: list[str] = []
         numeric_data: dict[str, list[float | None]] = {}
@@ -759,6 +807,8 @@ class CsvGraphViewer(tk.Tk):
             summary_details += f" | flight state from {paired_state_log.name}"
         elif any(row.get("packet_id") == "WL" for row in rows):
             summary_details += " | WL v1 does not contain flight state"
+        if summary["hitl"].startswith("HITL ACTIVE"):
+            summary_details += f" | {summary['hitl']}"
         self.summary_details_var.set(summary_details)
         self.notebook.select(self.summary_tab)
         self.draw_graphs()
@@ -850,7 +900,7 @@ class CsvGraphViewer(tk.Tk):
         if x_max <= x_min:
             x_min -= 0.5
             x_max += 0.5
-        if column in STATUS_BIT_FIELDS:
+        if column in BINARY_COLUMNS:
             y_start = 0.0
             y_end = 1.0
             y_step = 1.0

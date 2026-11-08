@@ -6,8 +6,12 @@ save/load. Draft edits do not affect live telemetry until explicitly applied.
 The compact Flight controls menu contains layout, pause, clear, pad, time-window,
 fullscreen and display-details actions. Live/test/stale warnings remain visible
 beside it. No separate title/footer rows take space away from the dashboard.
-Power readouts may contain two traces (left/right in listed order); the default
-pairs AIM CPU/ejection batteries. Voltage fields display three decimal places.
+Power and GPS readouts may contain two traces (left/right in listed order); the
+default pairs AIM CPU/ejection batteries and Witness GPS satellites with the GPS
+lock bit ("GPS sats 7  lock 1"). The single state row may add a second trace
+with format hitl (Witness status.hitl_active): it is drawn under the flight
+state, and HITL ACTIVE - SIMULATED SENSORS also appears in the banner.
+Voltage fields display three decimal places.
   version: 1; title; window_seconds; refresh_ms; columns; max_points; gap_seconds
   auto_scale: true (default) fits each Y axis to all visible valid samples;
     false honors explicit left-axis y_range limits. Bounds do not force zero
@@ -16,7 +20,8 @@ pairs AIM CPU/ejection batteries. Voltage fields display three decimal places.
   readouts: [{group: flight|state|gps|power, title, unit, traces: [...]}]
   trace: {label, input: witness|featherweight|aim, packet: name or [names], field,
           source: "*", color: "#RRGGBB", scale: 1, offset: 0, match: {},
-          enabled: true, note: "", format: number|state|continuity, unit: override,
+          enabled: true, note: "", format: number|state|continuity|flag|hitl,
+          unit: override,
           axis: left|right}
 
 Default six plots occupy the center 2x3 grid; flight readouts/state stay left,
@@ -235,13 +240,14 @@ class FlightView(ttk.Frame):
                 for trace, history in zip(row.traces, data) if trace.enabled]
         fresh = sum(h.quality == "LIVE" and h.received is not None and end - h.received < 2 for _, h in flat)
         simulated = any(h.source.startswith("TEST_") for _, h in flat)
+        hitl = any(trace.format == "hitl" and h.latest == 1 for trace, h in flat)
         state = "PAUSED - DISPLAY FROZEN; receiving/logging continues" if self.paused else (
             f"LIVE - {fresh}/{len(flat)} readings fresh" if fresh else "WAITING / STALE - no fresh live readings")
-        warning = "TEST DATA | " if simulated else ""
+        warning = ("HITL - SIMULATED SENSORS | " if hitl else "") + ("TEST DATA | " if simulated else "")
         if self.load_error:
             warning = "LAYOUT ERROR (fallback active) | " + warning
         self.banner.configure(text=f"{warning}{state} | {self.data.layout.window_seconds:g}s",
-                              background="#fff2a8" if self.paused or simulated or self.load_error else "#d8efdf" if fresh else "#ffd5cf")
+                              background="#fff2a8" if self.paused or simulated or hitl or self.load_error else "#d8efdf" if fresh else "#ffd5cf")
         self.renderer.draw(self.data.layout, histories, end, self.wall_offset)
 
     def _poll(self):

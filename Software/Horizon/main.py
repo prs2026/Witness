@@ -67,6 +67,11 @@ QUICK_COMMANDS = (
     ("State: Coast", 0x7302, False),
     ("State: Descent", 0x7303, False),
     ("State: Landed", 0x7304, False),
+    # HITL: Witness accepts ENTER only over USB in Pad Idle and then uses host
+    # 0x0C sensor packets. These buttons send one command each; the monitor
+    # never sends HITL commands or 0x0C packets automatically.
+    ("HITL Enter (USB, pad only)", 0x4849, False),
+    ("HITL EXIT -> real sensors", 0x4858, False),
 )
 
 STATUS_FLAG_LABELS = (
@@ -86,6 +91,24 @@ FLIGHT_STATE_LABELS = (
     (0x03, "Descent"),
     (0x04, "Landed"),
 )
+# Witness status byte 1 (low byte of the combined 16-bit status value).
+FLIGHT_STATE_MASK = 0x07
+GPS_LOCKED_MASK = 0x08   # bit 3: fresh GPS fix
+HITL_ACTIVE_MASK = 0x10  # bit 4: HITL active, sensor values are simulated
+STATUS_BYTE1_FLAG_LABELS = (
+    (GPS_LOCKED_MASK, "GPS lock"),
+    (HITL_ACTIVE_MASK, "HITL (SIM)"),
+)
+
+
+def status_gps_locked(status: int) -> int:
+    return 1 if status & GPS_LOCKED_MASK else 0
+
+
+def status_hitl_active(status: int) -> int:
+    return 1 if status & HITL_ACTIVE_MASK else 0
+
+
 CAMERA_STATUS_FLAG_LABELS = (
     (0x01, "Current error"),
     (0x02, "Battery invalid"),
@@ -146,8 +169,10 @@ def parse_packet(packet_id: int, payload: bytes):
         if len(payload) == 23:
             result["sensor_trailing_u16"] = number(payload[21:23])
         return result
-    if packet_id == 0x02 and len(payload) == 62:
-        return {"packet": "state", "status": number(payload[0:2]), "uptime": number(payload[2:6]),
+    if packet_id == 0x02 and len(payload) in (63, 62):
+        # 63-byte payload (65-byte frame) is current; 62 is the legacy form
+        # without GPS satellites. See PacketDecoder for how they are told apart.
+        result = {"packet": "state", "status": number(payload[0:2]), "uptime": number(payload[2:6]),
                 "orientation": float_vector(payload[6:22], 4),
                 "position": float_vector(payload[22:34], 3),
                 "velocity": float_vector(payload[34:46], 3),
@@ -156,6 +181,9 @@ def parse_packet(packet_id: int, payload: bytes):
                 "gps_altitude": round(float32(payload[52:56]), 6),
                 "barometric_altitude": round(float32(payload[56:60]), 6),
                 "witness_battery_voltage": round(number(payload[60:62]) * BATTERY_V_PER_COUNT, 3)}
+        if len(payload) == 63:
+            result["gps_satellites"] = payload[62]
+        return result
     if packet_id == 0x03 and len(payload) == 17:
         result = {"packet": "camera", "fc_status": number(payload[0:2]), "fc_uptime": number(payload[2:6]),
                 "status": number(payload[6:8]), "uptime": number(payload[8:12]),
@@ -215,20 +243,34 @@ class PacketDecoder:
     # Sensor frames in the supplied capture are 25 bytes total: ID + 23-byte
     # payload + EOF.  Keep the 21-byte header-defined form as a fallback so
     # older producers remain readable while the firmware/header are reconciled.
-    payload_lengths = {0x01: (23, 21), 0x02: (62,), 0x03: (17,), 0xFF: (6,),
+    # State: 63-byte payload (65-byte frame, with GPS satellites) is current;
+    # 62 bytes is the legacy 64-byte frame from older firmware/logs.
+    payload_lengths = {0x01: (23, 21), 0x02: (63, 62), 0x03: (17,), 0xFF: (6,),
                        0xF0: (11,), 0x05: (8,), 0xE0: (101,), 0xE1: (12,)}
+    # Host -> Witness packets that Witness may echo on USB. They are deframed
+    # (fixed length + EOF) and skipped, never decoded or shown as telemetry.
+    # 0x0C = HITL sensor input, 47-byte frame.
+    host_payload_lengths = {0x0C: (45,)}
+    # Packets whose shorter (legacy) payload is accepted only once the longer
+    # candidate's EOF position has arrived and is not 0x0A. A state frame
+    # with 10 satellites has 0x0A at frame offset 63, so a split read must not
+    # be mistaken for a complete legacy frame.
+    confirm_shorter = frozenset((0x02,))
     eof = 0x0A
 
-    def __init__(self, on_packet, on_error=None):
+    def __init__(self, on_packet, on_error=None, on_host_packet=None):
         self.buffer = bytearray()
         self.on_packet = on_packet
         self.on_error = on_error or (lambda _message: None)
+        self.on_host_packet = on_host_packet or (lambda _packet_id, _count: None)
+        self.frame_lengths = {**self.payload_lengths, **self.host_payload_lengths}
+        self.host_packet_count = 0
 
     def find_valid_frame(self, start=0):
         """Return the next offset whose fixed-length frame has a valid EOF."""
         for offset in range(start, len(self.buffer)):
             packet_id = self.buffer[offset]
-            payload_lengths = self.payload_lengths.get(packet_id)
+            payload_lengths = self.frame_lengths.get(packet_id)
             if payload_lengths is None:
                 continue
             for payload_length in payload_lengths:
@@ -239,12 +281,16 @@ class PacketDecoder:
 
     def frame_payload_length(self, packet_id: int):
         """Return the matching payload length, or None if more bytes are needed."""
-        payload_lengths = self.payload_lengths.get(packet_id)
+        payload_lengths = self.frame_lengths.get(packet_id)
         if payload_lengths is None:
             return None
-        for payload_length in payload_lengths:
+        for index, payload_length in enumerate(payload_lengths):
             eof_index = 1 + payload_length
             if len(self.buffer) > eof_index and self.buffer[eof_index] == self.eof:
+                if index and packet_id in self.confirm_shorter:
+                    longest = 1 + max(payload_lengths)
+                    if len(self.buffer) <= longest:
+                        return None  # Wait: the longer form may still complete.
                 return payload_length
         return None
 
@@ -253,7 +299,7 @@ class PacketDecoder:
         while self.buffer:
             try:
                 packet_id = self.buffer[0]
-                if packet_id not in self.payload_lengths:
+                if packet_id not in self.frame_lengths:
                     next_frame = self.find_valid_frame(1)
                     discard_count = next_frame if next_frame is not None else 1
                     self.on_error(
@@ -267,7 +313,7 @@ class PacketDecoder:
                     # Do not reject a split frame. For the sensor packet this
                     # also allows us to wait for the longer observed form
                     # before deciding that its EOF is bad.
-                    maximum_length = max(self.payload_lengths[packet_id])
+                    maximum_length = max(self.frame_lengths[packet_id])
                     if len(self.buffer) < 1 + maximum_length + 1:
                         return
                     payload_length = maximum_length
@@ -289,6 +335,10 @@ class PacketDecoder:
                         # The current frame is invalid, but leave later bytes
                         # buffered so a split TCP read can complete a frame.
                         del self.buffer[:1]
+                    continue
+                if packet_id in self.host_payload_lengths:
+                    self.host_packet_count += 1
+                    self.on_host_packet(packet_id, self.host_packet_count)
                     continue
                 parsed = parse_packet(packet_id, frame)
                 if parsed:
@@ -535,6 +585,8 @@ class SerialMonitor(tk.Tk):
                 ("gps_altitude", "GPS altitude"),
                 ("barometric_altitude", "Barometric altitude (MS5607)"),
                 ("witness_battery_voltage", "Witness battery voltage [V]"),
+                # Shown as "<sats>  lock <0|1>": lock is status byte 1 bit 3.
+                ("gps_satellites", "GPS sats"),
             ],
             "camera": [
                 ("fc_status", "FC status"), ("fc_uptime", "FC uptime"),
@@ -672,10 +724,25 @@ class SerialMonitor(tk.Tk):
             relief="solid", borderwidth=1,
         )
         invalid_label.grid(row=1, column=2, sticky="nsew", padx=1, pady=1)
+        ttk.Label(decoder, text="Byte 1 bit 3: GPS lock; bit 4: HITL").pack(
+            anchor="w", pady=(3, 0)
+        )
+        byte1_frame = ttk.Frame(decoder)
+        byte1_frame.pack(anchor="w")
+        byte1_labels = []
+        for index, (mask, text) in enumerate(STATUS_BYTE1_FLAG_LABELS):
+            label = tk.Label(
+                byte1_frame, text=f"{text} 0", width=13, height=1,
+                background="#f7f7f7", foreground="#777777",
+                relief="solid", borderwidth=1,
+            )
+            label.grid(row=0, column=index, sticky="nsew", padx=1, pady=1)
+            byte1_labels.append((mask, text, label))
         self.status_indicators[key] = {
             "flags": flag_labels,
             "states": state_labels,
             "invalid": invalid_label,
+            "byte1_flags": byte1_labels,
             "camera": False,
         }
 
@@ -937,6 +1004,9 @@ class SerialMonitor(tk.Tk):
                 labels.extend(indicators["states"].values())
                 labels.append(indicators["invalid"])
                 indicators["invalid"].configure(text="Invalid")
+            for _mask, text, label in indicators.get("byte1_flags", ()):
+                label.configure(text=f"{text} 0")
+                labels.append(label)
             for label in labels:
                 label.configure(background="#f7f7f7", foreground="#777777", relief="solid")
 
@@ -991,7 +1061,8 @@ class SerialMonitor(tk.Tk):
             self.events.put(("test_event", (token, kind, payload)))
         decoder = PacketDecoder(
             lambda packet: self.on_decoded_packet(source, packet, test_token=token),
-            lambda message: event("decoder_error", (source, message)))
+            lambda message: event("decoder_error", (source, message)),
+            lambda packet_id, count: event("host_packet", (source, packet_id, count)))
         def receive(data):
             # Backpressure is safe for an offline source; keep the GUI queue bounded.
             while self.events.qsize() >= 1000:
@@ -1131,6 +1202,7 @@ class SerialMonitor(tk.Tk):
         decoder = PacketDecoder(
             lambda p: self.on_decoded_packet(port_name, p),
             lambda message: self.events.put(("decoder_error", (port_name, message))),
+            lambda packet_id, count: self.events.put(("host_packet", (port_name, packet_id, count))),
         )
         while not self.stop_event.is_set() and self.serials.get(port_name) is serial_port:
             try:
@@ -1150,6 +1222,7 @@ class SerialMonitor(tk.Tk):
         decoder = PacketDecoder(
             lambda p: self.on_decoded_packet(source_name, p),
             lambda message: self.events.put(("decoder_error", (source_name, message))),
+            lambda packet_id, count: self.events.put(("host_packet", (source_name, packet_id, count))),
         )
         while not self.stop_event.is_set() and self.tcp_sockets.get(source_name) is tcp_socket:
             try:
@@ -1206,6 +1279,14 @@ class SerialMonitor(tk.Tk):
                 elif kind == "decoder_error":
                     port_name, message = payload
                     self.console_write(f"BAD_PACKET[{port_name}] {message}")
+                elif kind == "host_packet":
+                    # Echoed host->Witness packet (0x0C HITL input): framed
+                    # and skipped, never shown as telemetry. Log sparsely.
+                    port_name, packet_id, count = payload
+                    if count == 1 or count % 100 == 0:
+                        self.console_write(
+                            f"HOST_ECHO[{port_name}] skipped 0x{packet_id:02x} host packet "
+                            f"(HITL input; {count} so far)")
                 elif kind == "bytes":
                     port_name, data = payload
                     self.console_write(f"RX[{port_name}]  {data.hex(' ')}")
@@ -1260,6 +1341,14 @@ class SerialMonitor(tk.Tk):
             return f"0b{value:016b}"
         return str(value)
 
+    @staticmethod
+    def format_gps_satellites(packet):
+        """Satellite count with the status-byte GPS lock flag beside it."""
+        satellites = packet.get("gps_satellites")
+        status = packet.get("status")
+        lock = status_gps_locked(status) if isinstance(status, int) else "?"
+        return f"{'null' if satellites is None else satellites}  lock {lock}"
+
     def update_status_decoder(self, key, value):
         indicators = self.status_indicators.get(key)
         if indicators is None or not isinstance(value, int):
@@ -1293,6 +1382,16 @@ class SerialMonitor(tk.Tk):
             foreground="#111111" if invalid else "#777777",
             relief="sunken" if invalid else "solid",
         )
+        for mask, text, label in indicators.get("byte1_flags", ()):
+            active = bool(value & mask)
+            # HITL active is a warning (simulated sensors), GPS lock is good.
+            active_color = "#fb6a4a" if mask == HITL_ACTIVE_MASK else "#74c476"
+            label.configure(
+                text=f"{text} {int(active)}",
+                background=active_color if active else "#f7f7f7",
+                foreground="#111111" if active else "#777777",
+                relief="sunken" if active else "solid",
+            )
 
     @classmethod
     def format_packet(cls, packet):
@@ -1320,7 +1419,10 @@ class SerialMonitor(tk.Tk):
             if field != "packet":
                 key = f"{kind}.{packet['packet']}.{field}"
                 if key in self.values:
-                    self.values[key].set(self.format_display_value(field, value))
+                    if field == "gps_satellites" and packet["packet"] == "state":
+                        self.values[key].set(self.format_gps_satellites(packet))
+                    else:
+                        self.values[key].set(self.format_display_value(field, value))
                     if field == "status" or field.endswith("_status"):
                         self.update_status_decoder(key, value)
                     if isinstance(value, (int, float, list, tuple)):

@@ -127,7 +127,11 @@ def demo_packets(at_ms):
     else:
         state, altitude, velocity, acceleration = 4, 0, 0, 1
     flags = 0x6E | (int(seconds) % 2)
-    header = _integer((flags << 8) | state, 2) + _integer(at_ms, 4)
+    # GPS: no fix for the first 2 s, then satellites 4..12 (10 puts 0x0A inside
+    # the state payload) with status byte 1 bit 3 (GPS locked) set.
+    satellites = 0 if seconds < 2 else min(12, 4 + int(seconds) // 3)
+    gps_locked = 0x08 if satellites else 0
+    header = _integer((flags << 8) | gps_locked | state, 2) + _integer(at_ms, 4)
     accel = (0.05 * math.sin(seconds), 0.04 * math.cos(seconds), acceleration)
     accel_bytes = _vector(accel, 0.000040, 3)
     gyro = _vector((3 * math.sin(seconds), -2 * math.cos(seconds), 0.5), 0.070, 2)
@@ -153,7 +157,7 @@ def demo_packets(at_ms):
     payloads = {
         0x01: header + accel_bytes + gyro,
         0x02: header + orientation + position + velocity_bytes + latitude + longitude
-              + gps_altitude + barometric_altitude + battery,
+              + gps_altitude + barometric_altitude + battery + bytes((satellites,)),
         0x03: header + iris_header + currents + iris_battery,
         0xFF: header,
         0xF0: _integer(-65 - 10 * math.sin(seconds / 5), 1, signed=True) + _integer(at_ms, 4) + bytes(6),

@@ -117,6 +117,9 @@ class TelemetryView(ttk.Frame):
                     fields[f"{status_field}.flight_state"] = state
                     names = ("Pad idle", "Boost", "Coast", "Descent", "Landed")
                     fields[f"{status_field}.flight_state_name"] = names[state] if state < 5 else "Reserved/invalid"
+                    # Status byte 1 bit 3: GPS locked; bit 4: HITL active (simulated sensors).
+                    fields[f"{status_field}.gps_locked"] = (status >> 3) & 1
+                    fields[f"{status_field}.hitl_active"] = (status >> 4) & 1
         source = record["source"]
         if source not in self._sources:
             self.add_source(source)

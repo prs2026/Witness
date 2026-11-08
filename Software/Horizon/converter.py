@@ -8,6 +8,12 @@ The converter auto-detects both raw application-packet streams and the fixed
 48-byte ``WL`` records exported by Witness flash mass storage. Neither format
 contains host receive timestamps, so ``time_seconds`` is derived from device
 uptime.
+
+State packets (0x02) are 65-byte frames with ``gps_satellites``. Legacy 64-byte
+state frames from older firmware (no satellite byte) are still accepted: the
+65-byte form is tried first and the 64-byte form is used only when frame
+offset 64 is not 0x0A (or the file ends). See ``frame_payload_length``.
+Echoed host-to-Witness HITL input packets (0x0C, 47 bytes) are skipped.
 """
 
 from __future__ import annotations
@@ -33,11 +39,17 @@ PACKET_NAMES = {
     0xF0: "ground_station_status",
 }
 
+# Host -> Witness HITL sensor input. Witness may echo it on USB; it is framed
+# (fixed length + EOF) and skipped so it is never misparsed as telemetry.
+HOST_PAYLOAD_LENGTHS = {
+    0x0C: (45,),
+}
+
 # The current capture format uses a 23-byte sensor payload.  The 21-byte form
 # declared by comms.h is also accepted for compatibility.
 PAYLOAD_LENGTHS = {
     0x01: (23, 21),
-    0x02: (62,),
+    0x02: (63, 62),  # 65-byte frame with GPS satellites; legacy 64-byte frame
     0x03: (17,),
     0x05: (8,),
     0xFF: (6,),
@@ -105,8 +117,8 @@ def parse_packet(packet_id: int, payload: bytes) -> dict[str, Any] | None:
             packet["sensor_trailing_u16"] = unsigned(payload[21:23])
         return packet
 
-    if packet_id == 0x02 and len(payload) == 62:
-        return {
+    if packet_id == 0x02 and len(payload) in (63, 62):
+        packet = {
             "packet": "state",
             "status": unsigned(payload[0:2]),
             "uptime": unsigned(payload[2:6]),
@@ -119,6 +131,10 @@ def parse_packet(packet_id: int, payload: bytes) -> dict[str, Any] | None:
             "barometric_altitude": float32(payload[56:60]),
             "witness_battery_voltage": unsigned(payload[60:62]) * BATTERY_V_PER_COUNT,
         }
+        # Legacy 62-byte payloads leave gps_satellites blank in the CSV.
+        if len(payload) == 63:
+            packet["gps_satellites"] = payload[62]
+        return packet
 
     if packet_id == 0x03 and len(payload) == 17:
         return {
@@ -278,6 +294,9 @@ def flatten_packet(packet: dict[str, Any]) -> dict[str, Any]:
         flat["flight_state_name"] = FLIGHT_STATE_NAMES.get(
             state, f"Reserved ({state})"
         )
+        # Status byte 1 bit 3: fresh GPS fix; bit 4: HITL (simulated sensors).
+        flat["gps_locked"] = (status_byte1 >> 3) & 0x01
+        flat["hitl_active"] = (status_byte1 >> 4) & 0x01
     return flat
 
 
@@ -365,6 +384,23 @@ def decode_flash_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
     return rows, discarded
 
 
+def frame_payload_length(data: bytes, offset: int, lengths: tuple[int, ...]) -> int | None:
+    """Return the first candidate payload length whose EOF byte is 0x0A.
+
+    Candidates are listed longest first. For the state packet this means a
+    65-byte frame wins whenever frame offset 64 is 0x0A, even if offset 63 is
+    also 0x0A (10 satellites). The legacy 64-byte frame is chosen only when
+    offset 63 is 0x0A and offset 64 is not (or the data ends). No packet ID is
+    0x0A, so a legacy frame followed by any valid packet is unambiguous; the
+    remaining false match needs a stray 0x0A byte right after a legacy frame.
+    """
+    for candidate_length in lengths:
+        eof_index = offset + 1 + candidate_length
+        if eof_index < len(data) and data[eof_index] == EOF:
+            return candidate_length
+    return None
+
+
 def decode_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
     """Decode either a flash-record file or a possibly noisy packet stream."""
     if is_flash_record_log(data):
@@ -377,18 +413,21 @@ def decode_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
 
     while offset < len(data):
         packet_id = data[offset]
+        host_lengths = HOST_PAYLOAD_LENGTHS.get(packet_id)
+        if host_lengths is not None:
+            payload_length = frame_payload_length(data, offset, host_lengths)
+            if payload_length is not None:
+                # Skip the echoed host packet whole; it is not telemetry and
+                # is not counted as discarded noise.
+                offset += 1 + payload_length + 1
+                continue
         lengths = PAYLOAD_LENGTHS.get(packet_id)
         if lengths is None:
             offset += 1
             discarded += 1
             continue
 
-        payload_length = None
-        for candidate_length in lengths:
-            eof_index = offset + 1 + candidate_length
-            if eof_index < len(data) and data[eof_index] == EOF:
-                payload_length = candidate_length
-                break
+        payload_length = frame_payload_length(data, offset, lengths)
 
         if payload_length is None:
             offset += 1
