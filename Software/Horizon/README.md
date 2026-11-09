@@ -233,6 +233,19 @@ Convert a Witness binary log and open it for plotting:
 
 The converter detects raw Witness application streams and 48-byte `WL` flash records from Witness mass storage. Files named `I*.BIN` are decoded as the store-v3 IMU stream (24-byte records: low-g and high-g accelerations in g, gyro in dps, flight state, HITL and freshness flags, and `missing_before` from the 8-bit sequence; time is unwrapped from the 32-bit microsecond counter). `--format {auto,imu,flash,wire}` overrides detection. It does not decode Featherweight BIN captures or AIM JSONL logs. CSV `time_seconds` derives from device uptime, not host receipt time. The viewer opens with a summary and lets you select traces, including flight state and individual status bits.
 
+### Downloading Witness logs through the bench Pi
+
+`witness_download.py` fetches the flash logs from a Witness plugged into the bench Pi, from this computer. It uses the normal USB export: it sends `05 68 68` to the Witness raw TCP data port (default 7100, so close Horizon first), waits for the read-only `WITNESSLOGS` disk to appear on the Pi, and reads it over SSH with `witness_pi_agent.py`. That reader is piped to `python3 -`, so nothing is installed or mounted on the Pi. Files are saved under `logs/witness_<timestamp>/`.
+
+```powershell
+.\.venv\Scripts\python.exe witness_download.py setup        # once: udev rule so the Pi user can read the disk (asks for the Pi sudo password)
+.\.venv\Scripts\python.exe witness_download.py list
+.\.venv\Scripts\python.exe witness_download.py get --latest --skip-gps --convert --view --restart
+.\.venv\Scripts\python.exe witness_download.py get I0000012.BIN S0000012.TXT
+```
+
+`setup` installs `/etc/udev/rules.d/99-witness-logs.rules`, giving group `plugdev` read access to the Witness disk (USB 303a:4012). `--convert` runs `converter.py` on each `.BIN` except the raw GPS `U*.BIN`, and `--view` opens the first CSV (IMU first) in `viewer.py`. Witness stays in export mode, with no logging and no USB serial, until it is power cycled. `--restart` power-cycles Pi USB hub 2 afterwards (the allowed passwordless `uhubctl -l 2 -a 2`), which resets every board on that hub. SSH options: `--host` (default `prs2026hitl`), `--user` and `--key`, or `WITNESS_PI_HOST` / `WITNESS_PI_USER` / `WITNESS_PI_KEY`, otherwise your `~/.ssh/config`. Large files go at the speed of the Witness USB full-speed disk; the GPS ring can be about 45 MB, so `--skip-gps` is useful.
+
 Witness status rows get `status_byte0`, `status_byte1`, `flight_state`, `flight_state_name`, `gps_locked` (byte 1 bit 3) and `hitl_active` (byte 1 bit 4). State rows also get `gps_satellites`; it is blank for legacy 64-byte state frames. The viewer plots `gps_locked`, `hitl_active` and the `status_byte1_bit3_gps_locked` / `status_byte1_bit4_hitl_active` bit traces on a 0..1 axis. For CSVs converted before these columns existed, it derives `gps_locked` and `hitl_active` from `status`. The summary line reports how many records had HITL active. Echoed `0x0C` HITL input packets are skipped and are not counted as discarded bytes.
 
 ## Firmware protocol references
@@ -280,6 +293,7 @@ Commands are sent from the Witness monitor, not Horizon. All command shortcuts, 
 | `aim_altitude.py`, `aim_orientation.py` | Derived AIM altitude, velocity, and angular rates |
 | `main.py`, `witness_link.py`, `witness_test_source.py` | Witness monitor, local relay, test playback |
 | `converter.py`, `viewer.py` | Postflight conversion and analysis |
+| `witness_download.py`, `witness_pi_agent.py` | Download Witness flash logs through the bench Pi |
 
 Run the regression suite from this folder:
 
