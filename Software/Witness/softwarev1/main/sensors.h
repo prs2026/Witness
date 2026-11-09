@@ -6,6 +6,7 @@
 #include <cstdint>
 
 #include "attitude_estimator.h"
+#include "imu_calibration.h"
 #include "comms.h"
 #include "driver/spi_master.h"
 #include "esp_adc/adc_cali.h"
@@ -176,6 +177,10 @@ public:
     bool submit_hitl_sample(const hitl::Sample &sample);
     bool hitl_active() const;
 
+    // IMU calibration command from USB (argument: IRIS_IMU_CALIBRATION_*).
+    // Thread-safe; the capture runs in the sensor task and logs its result.
+    esp_err_t request_calibration(std::uint8_t argument);
+
 private:
     static_assert(kTaskRateHz > 0 && (1000U % kTaskRateHz) == 0,
                   "Sensors task rate must divide evenly into 1000 ms");
@@ -311,7 +316,19 @@ private:
     esp_err_t read_fifo_words(std::size_t words);
     void push_fifo_word(const std::uint8_t *word);
     void finish_fifo_slot();
-    void apply_imu_sample(const ImuSample &sample);
+    // feed_capture: count this sample toward a running calibration capture
+    // (once per FIFO sample, not for the per-pass copy of the newest one).
+    void apply_imu_sample(const ImuSample &sample, bool feed_capture = false);
+    // Sensor task: starts/finishes calibration captures and applies requests.
+    void service_calibration();
+    void finish_calibration_capture();
+    void log_calibration(const char *prefix) const;
+    // Telemetry IMU values in wire counts: the stored calibration applied,
+    // and for the gyro also the estimator's live pad bias (which tracks
+    // warm-up drift; it freezes at launch). Raw counts stay in the NAND log.
+    void output_counts(std::int16_t gyro[3], std::int16_t low_g[3],
+                       std::int16_t high_g[3]) const;
+    static std::int16_t to_counts(float value, float units_per_count);
     esp_err_t queue_sensor_packet();
     esp_err_t queue_state_packet();
     esp_err_t queue_debug_packet();
@@ -411,6 +428,19 @@ private:
     double imu_clock_us_ = 0.0;
     bool imu_clock_valid_ = false;
     std::int8_t imu_freq_fine_ = 0;
+
+    // IMU calibration (sensor task, except the request atomic). Corrections
+    // apply to engineering units for the estimator, packets and flight state
+    // machine; the NAND IMU log keeps raw counts.
+    static constexpr std::uint32_t kGyroCalibrationSamples = 4U * kImuSampleRateHz;
+    static constexpr std::uint32_t kFaceCalibrationSamples = 2U * kImuSampleRateHz;
+    enum class CalibrationCapture : std::uint8_t { None, Gyro, Face };
+    std::atomic<std::uint8_t> calibration_request_{0};
+    imu_calibration::Calibration calibration_{};
+    imu_calibration::Limits calibration_limits_{};
+    imu_calibration::Accumulator calibration_capture_{};
+    imu_calibration::SixFaceSolver calibration_faces_{};
+    CalibrationCapture calibration_capture_kind_ = CalibrationCapture::None;
     std::uint32_t attitude_updates_since_report_ = 0;
     std::uint64_t attitude_report_start_us_ = 0;
     std::uint32_t loop_overruns_ = 0;

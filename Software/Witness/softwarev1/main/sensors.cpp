@@ -1,5 +1,6 @@
 #include "sensors.h"
 #include "flash_logger.h"
+#include "imu_calibration_store.h"
 #include "task_cores.h"
 #include "uart_driver.h"
 
@@ -7,6 +8,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 
 #include "command_bridge.h"
@@ -209,6 +211,20 @@ esp_err_t Sensors::start()
     if (result != ESP_OK) {
         release_resources();
         return result;
+    }
+
+    {
+        const esp_err_t load_result = imu_calibration::load(calibration_);
+        if (load_result == ESP_OK) {
+            log_calibration("IMU calibration loaded from NVS");
+        } else {
+            calibration_ = imu_calibration::Calibration{};
+            ESP_LOGW(kLogTag,
+                     "no IMU calibration stored (%s); IMU readings are "
+                     "uncorrected. Calibrate with 05 43 47 (gyro) and six "
+                     "05 43 41 face captures",
+                     esp_err_to_name(load_result));
+        }
     }
 
     fifo_tx_ = static_cast<std::uint8_t *>(heap_caps_calloc(
@@ -840,7 +856,7 @@ void Sensors::push_fifo_word(const std::uint8_t *word)
     }
 }
 
-void Sensors::apply_imu_sample(const ImuSample &sample)
+void Sensors::apply_imu_sample(const ImuSample &sample, const bool feed_capture)
 {
     working_sample_.gyro_ready = sample.has_gyro;
     working_sample_.low_g_accel_ready = sample.has_low_g;
@@ -856,6 +872,16 @@ void Sensors::apply_imu_sample(const ImuSample &sample)
         working_sample_.high_g_accel_mg[axis] =
             static_cast<float>(sample.high_g[axis]) * kHighGAccelSensitivityMg;
     }
+    // Calibration captures see uncorrected values; everything else is
+    // corrected. Raw counts (and so the NAND IMU log) stay uncorrected.
+    if (feed_capture && calibration_capture_kind_ != CalibrationCapture::None) {
+        calibration_capture_.add(working_sample_.gyro_mdps,
+                                 working_sample_.low_g_accel_mg,
+                                 working_sample_.high_g_accel_mg);
+    }
+    imu_calibration::apply(calibration_, working_sample_.gyro_mdps,
+                           working_sample_.low_g_accel_mg,
+                           working_sample_.high_g_accel_mg);
     if (sample.has_gyro) has_gyro_sample_ = true;
     if (sample.has_low_g) has_low_g_accel_sample_ = true;
     if (sample.has_high_g) has_high_g_accel_sample_ = true;
@@ -974,7 +1000,11 @@ esp_err_t Sensors::queue_sensor_packet()
         &payload[IRIS_PACKET_SENSORS_UPTIME_OFFSET], uptime_milliseconds);
 
     // The estimator does not provide filtered acceleration yet, so the packet's
-    // filtered-acceleration slots carry the latest low-g raw samples.
+    // filtered-acceleration slots carry the latest (calibrated) low-g samples.
+    std::int16_t gyro_counts[3]{};
+    std::int16_t low_counts[3]{};
+    std::int16_t high_counts[3]{};
+    output_counts(gyro_counts, low_counts, high_counts);
     for (std::size_t axis = 0; axis < IRIS_PACKET_VECTOR_COMPONENTS; ++axis) {
         write_i24_be(
             &payload[IRIS_PACKET_SENSORS_ACCEL_OFFSET +
@@ -984,7 +1014,7 @@ esp_err_t Sensors::queue_sensor_packet()
         write_i16_be(
             &payload[IRIS_PACKET_SENSORS_GYRO_OFFSET +
                      axis * IRIS_PACKET_SENSORS_GYRO_COMPONENT_LENGTH],
-            working_sample_.gyro_raw[axis]);
+            gyro_counts[axis]);
     }
 
     return data_forwarder_.queue_packet(
@@ -1061,20 +1091,18 @@ esp_err_t Sensors::queue_debug_packet()
         IRIS_PACKET_WITNESS_DEBUG_GYRO_Z_OFFSET,
     };
 
+    std::int16_t gyro_counts[3]{};
+    std::int16_t low_counts[3]{};
+    std::int16_t high_counts[3]{};
+    output_counts(gyro_counts, low_counts, high_counts);
     for (std::size_t axis = 0; axis < IRIS_PACKET_VECTOR_COMPONENTS; ++axis) {
         write_i24_be(
             &payload[kFilteredAccelOffsets[axis]],
             encode_filtered_acceleration(
                 working_sample_.low_g_accel_mg[axis]));
-        write_i16_be(
-            &payload[kLowAccelOffsets[axis]],
-            working_sample_.low_g_accel_raw[axis]);
-        write_i16_be(
-            &payload[kHighAccelOffsets[axis]],
-            working_sample_.high_g_accel_raw[axis]);
-        write_i16_be(
-            &payload[kGyroOffsets[axis]],
-            working_sample_.gyro_raw[axis]);
+        write_i16_be(&payload[kLowAccelOffsets[axis]], low_counts[axis]);
+        write_i16_be(&payload[kHighAccelOffsets[axis]], high_counts[axis]);
+        write_i16_be(&payload[kGyroOffsets[axis]], gyro_counts[axis]);
     }
 
     write_i16_be(
@@ -1319,6 +1347,231 @@ bool Sensors::service_radio_transmit_completion()
                  esp_err_to_name(error));
     }
     return radio_.transmit_in_progress();
+}
+
+esp_err_t Sensors::request_calibration(const std::uint8_t argument)
+{
+    switch (argument) {
+    case IRIS_IMU_CALIBRATION_GYRO:
+    case IRIS_IMU_CALIBRATION_FACE:
+    case IRIS_IMU_CALIBRATION_CLEAR:
+    case IRIS_IMU_CALIBRATION_STATUS:
+        break;
+    default:
+        ESP_LOGW(kLogTag, "IMU calibration command 0x%02X unknown", argument);
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (argument != IRIS_IMU_CALIBRATION_STATUS &&
+        flight_state_machine_.state() != FlightStateMachine::State::PadIdle) {
+        ESP_LOGW(kLogTag, "IMU calibration rejected: requires pad idle");
+        return ESP_ERR_INVALID_STATE;
+    }
+    if (hitl_active()) {
+        ESP_LOGW(kLogTag, "IMU calibration rejected: HITL active");
+        return ESP_ERR_INVALID_STATE;
+    }
+    calibration_request_.store(argument);
+    return ESP_OK;
+}
+
+std::int16_t Sensors::to_counts(const float value, const float units_per_count)
+{
+    const float counts = std::round(value / units_per_count);
+    if (counts >= 32767.0F) return 32767;
+    if (counts <= -32768.0F) return -32768;
+    return static_cast<std::int16_t>(counts);
+}
+
+void Sensors::output_counts(std::int16_t gyro[3], std::int16_t low_g[3],
+                            std::int16_t high_g[3]) const
+{
+    attitude::Vector3 live_bias{};
+    if (!hitl_in_use_ && attitude_.valid()) {
+        live_bias = attitude_.gyro_bias_rad_s();
+    }
+    const float live[3] = {live_bias.x, live_bias.y, live_bias.z};
+    for (std::size_t axis = 0; axis < 3; ++axis) {
+        if (hitl_in_use_) {
+            // Simulated input is passed through unchanged.
+            gyro[axis] = working_sample_.gyro_raw[axis];
+            low_g[axis] = working_sample_.low_g_accel_raw[axis];
+            high_g[axis] = working_sample_.high_g_accel_raw[axis];
+            continue;
+        }
+        gyro[axis] = to_counts(
+            working_sample_.gyro_mdps[axis] - live[axis] / kMilliDegreesToRadians,
+            kGyroSensitivityMdps);
+        low_g[axis] = to_counts(working_sample_.low_g_accel_mg[axis],
+                                kLowGAccelSensitivityMg);
+        high_g[axis] = to_counts(working_sample_.high_g_accel_mg[axis],
+                                 kHighGAccelSensitivityMg);
+    }
+}
+
+void Sensors::log_calibration(const char *prefix) const
+{
+    const imu_calibration::Calibration &c = calibration_;
+    if (c.gyro_valid) {
+        ESP_LOGI(kLogTag, "%s: gyro bias %.3f %.3f %.3f dps", prefix,
+                 static_cast<double>(c.gyro_bias_mdps[0]) / 1000.0,
+                 static_cast<double>(c.gyro_bias_mdps[1]) / 1000.0,
+                 static_cast<double>(c.gyro_bias_mdps[2]) / 1000.0);
+    } else {
+        ESP_LOGI(kLogTag, "%s: gyro bias not calibrated", prefix);
+    }
+    if (c.accel_valid) {
+        ESP_LOGI(kLogTag,
+                 "%s: low-g offset %.1f %.1f %.1f mg, scale %.4f %.4f %.4f; "
+                 "high-g offset %.0f %.0f %.0f mg",
+                 prefix, static_cast<double>(c.accel_offset_mg[0]),
+                 static_cast<double>(c.accel_offset_mg[1]),
+                 static_cast<double>(c.accel_offset_mg[2]),
+                 static_cast<double>(c.accel_scale[0]),
+                 static_cast<double>(c.accel_scale[1]),
+                 static_cast<double>(c.accel_scale[2]),
+                 static_cast<double>(c.high_g_offset_mg[0]),
+                 static_cast<double>(c.high_g_offset_mg[1]),
+                 static_cast<double>(c.high_g_offset_mg[2]));
+    } else {
+        ESP_LOGI(kLogTag, "%s: accelerometers not calibrated", prefix);
+    }
+}
+
+void Sensors::service_calibration()
+{
+    if (calibration_capture_kind_ != CalibrationCapture::None) {
+        if (flight_state_machine_.state() != FlightStateMachine::State::PadIdle) {
+            calibration_capture_kind_ = CalibrationCapture::None;
+            ESP_LOGW(kLogTag, "IMU calibration capture aborted: left pad idle");
+        } else if (calibration_capture_.count() >=
+                   (calibration_capture_kind_ == CalibrationCapture::Gyro
+                        ? kGyroCalibrationSamples
+                        : kFaceCalibrationSamples)) {
+            finish_calibration_capture();
+        }
+    }
+
+    const std::uint8_t request = calibration_request_.exchange(0);
+    if (request == 0) {
+        return;
+    }
+    if (request == IRIS_IMU_CALIBRATION_STATUS) {
+        log_calibration("IMU calibration");
+        std::size_t faces = calibration_faces_.face_count();
+        ESP_LOGI(kLogTag, "IMU calibration: %u of 6 faces captured this boot",
+                 static_cast<unsigned>(faces));
+        return;
+    }
+    if (calibration_capture_kind_ != CalibrationCapture::None) {
+        ESP_LOGW(kLogTag, "IMU calibration command ignored: a capture is running");
+        return;
+    }
+    if (request == IRIS_IMU_CALIBRATION_CLEAR) {
+        calibration_ = imu_calibration::Calibration{};
+        calibration_faces_.reset();
+        const esp_err_t result = imu_calibration::erase_async();
+        ESP_LOGW(kLogTag, "IMU calibration cleared; readings are uncorrected%s",
+                 result == ESP_OK ? "" : " (NVS erase not started)");
+        return;
+    }
+    calibration_capture_.reset();
+    calibration_capture_kind_ = request == IRIS_IMU_CALIBRATION_GYRO
+                                    ? CalibrationCapture::Gyro
+                                    : CalibrationCapture::Face;
+    ESP_LOGI(kLogTag, "IMU calibration: capturing %s for %lu ms; keep the board still",
+             calibration_capture_kind_ == CalibrationCapture::Gyro ? "gyro bias"
+                                                                   : "one face",
+             static_cast<unsigned long>(
+                 (calibration_capture_kind_ == CalibrationCapture::Gyro
+                      ? kGyroCalibrationSamples
+                      : kFaceCalibrationSamples) *
+                 1000U / kImuSampleRateHz));
+}
+
+void Sensors::finish_calibration_capture()
+{
+    using imu_calibration::Status;
+    const CalibrationCapture kind = calibration_capture_kind_;
+    calibration_capture_kind_ = CalibrationCapture::None;
+
+    if (kind == CalibrationCapture::Gyro) {
+        imu_calibration::Calibration updated = calibration_;
+        const Status status = imu_calibration::solve_gyro(
+            calibration_capture_, calibration_limits_, kGyroCalibrationSamples / 2U,
+            updated);
+        if (status != Status::Ok) {
+            ESP_LOGW(kLogTag, "IMU gyro calibration failed: %s",
+                     imu_calibration::status_name(status));
+            return;
+        }
+        calibration_ = updated;
+        // The estimator learned the old bias; restart it on corrected data.
+        attitude_.reset();
+        log_calibration("IMU gyro calibration done");
+        if (imu_calibration::save_async(calibration_) != ESP_OK) {
+            ESP_LOGE(kLogTag, "IMU calibration NVS save not started");
+        }
+        return;
+    }
+
+    float low[3]{};
+    float high[3]{};
+    float sd[3]{};
+    calibration_capture_.low_g_mean(low);
+    calibration_capture_.high_g_mean(high);
+    calibration_capture_.low_g_sd(sd);
+    for (std::size_t axis = 0; axis < 3; ++axis) {
+        if (sd[axis] > calibration_limits_.max_accel_sd_mg) {
+            ESP_LOGW(kLogTag, "IMU face capture failed: %s",
+                     imu_calibration::status_name(Status::NotStill));
+            return;
+        }
+    }
+    std::size_t face = 0;
+    const Status status =
+        calibration_faces_.add_face(low, high, calibration_limits_, face);
+    if (status != Status::Ok) {
+        ESP_LOGW(kLogTag, "IMU face capture failed: %s (mean %.0f %.0f %.0f mg)",
+                 imu_calibration::status_name(status), static_cast<double>(low[0]),
+                 static_cast<double>(low[1]), static_cast<double>(low[2]));
+        return;
+    }
+    char missing[24] = {};
+    std::size_t length = 0;
+    for (std::size_t f = 0; f < imu_calibration::SixFaceSolver::kFaces; ++f) {
+        if (!calibration_faces_.has_face(f)) {
+            length += static_cast<std::size_t>(std::snprintf(
+                missing + length, sizeof(missing) - length, "%s%s",
+                length == 0 ? "" : " ", imu_calibration::face_name(f)));
+        }
+    }
+    ESP_LOGI(kLogTag,
+             "IMU face %s captured (low-g %.1f %.1f %.1f mg, high-g %.0f %.0f "
+             "%.0f mg); %u of 6%s%s",
+             imu_calibration::face_name(face), static_cast<double>(low[0]),
+             static_cast<double>(low[1]), static_cast<double>(low[2]),
+             static_cast<double>(high[0]), static_cast<double>(high[1]),
+             static_cast<double>(high[2]),
+             static_cast<unsigned>(calibration_faces_.face_count()),
+             length == 0 ? "" : ", missing ", missing);
+    if (!calibration_faces_.complete()) {
+        return;
+    }
+    imu_calibration::Calibration updated = calibration_;
+    const Status solved = calibration_faces_.solve(calibration_limits_, updated);
+    if (solved != Status::Ok) {
+        ESP_LOGW(kLogTag, "IMU accelerometer calibration failed: %s; recapture faces",
+                 imu_calibration::status_name(solved));
+        calibration_faces_.reset();
+        return;
+    }
+    calibration_ = updated;
+    calibration_faces_.reset();
+    attitude_.reset();
+    log_calibration("IMU accelerometer calibration done");
+    if (imu_calibration::save_async(calibration_) != ESP_OK) {
+        ESP_LOGE(kLogTag, "IMU calibration NVS save not started");
+    }
 }
 
 void Sensors::log_imu_sample(const std::uint64_t timestamp_us, const bool hitl)
@@ -1613,6 +1866,13 @@ void Sensors::run()
         // the previous rate; in HITL each new 0x0C frame is one sample.
         // NAND IMU stream: every pass with a new IMU (or HITL) sample. The
         // logger decides what to keep (prelaunch ring, 100 Hz after apogee).
+        if (!hitl) {
+            service_calibration();
+        } else if (calibration_capture_kind_ != CalibrationCapture::None) {
+            calibration_capture_kind_ = CalibrationCapture::None;
+            ESP_LOGW(kLogTag, "IMU calibration capture aborted: HITL active");
+        }
+
         if (hitl) {
             if (lsm_result == ESP_OK) {
                 log_imu_sample(imu_timestamp_us, true);
@@ -1625,7 +1885,7 @@ void Sensors::run()
             const bool low_g_ready = working_sample_.low_g_accel_ready;
             const bool high_g_ready = working_sample_.high_g_accel_ready;
             for (std::size_t i = 0; i < imu_batch_count_; ++i) {
-                apply_imu_sample(imu_batch_[i]);
+                apply_imu_sample(imu_batch_[i], true);
                 log_imu_sample(imu_batch_[i].timestamp_us, false);
                 if (imu_batch_[i].has_gyro) {
                     update_attitude(imu_batch_[i].timestamp_us);

@@ -56,6 +56,17 @@
 // or no 0x0C packet for IRIS_HITL_INPUT_TIMEOUT_MS returns to real sensors.
 #define IRIS_COMMAND_HITL_ENTER 0x4849U
 #define IRIS_COMMAND_HITL_EXIT 0x4858U
+// IMU calibration (USB only, Pad Idle, real sensors): 0x05, 0x43, then one of
+// these arguments. GYRO captures 2 s still and stores the gyro bias; FACE
+// captures 2 s on one face (+/-X, +/-Y, +/-Z, any order) and, after all six,
+// solves and stores accelerometer offset/scale and high-g offset; CLEAR erases
+// the stored calibration; STATUS logs it. Results are ESP log lines (tag
+// sensors) and persist in NVS across reboots.
+#define IRIS_COMMAND_IMU_CALIBRATION 0x43U
+#define IRIS_IMU_CALIBRATION_GYRO 0x47U   /* 'G' */
+#define IRIS_IMU_CALIBRATION_FACE 0x41U   /* 'A' */
+#define IRIS_IMU_CALIBRATION_CLEAR 0x58U  /* 'X' */
+#define IRIS_IMU_CALIBRATION_STATUS 0x53U /* 'S' */
 #define IRIS_HITL_INPUT_TIMEOUT_MS 1000U
 
 // Producer-defined IRIS status-byte flags.

@@ -421,6 +421,8 @@ void UsbSerialEcho::process_compact_binary_command(
         erase_log_sessions();
     } else if (command == IRIS_COMMAND_SET_FLIGHT_STATE) {
         set_flight_state(argument);
+    } else if (command == IRIS_COMMAND_IMU_CALIBRATION) {
+        (void)sensors_.request_calibration(argument);
     } else if (command == static_cast<std::uint8_t>(IRIS_COMMAND_HITL_ENTER >> 8) &&
                (argument == static_cast<std::uint8_t>(IRIS_COMMAND_HITL_ENTER) ||
                 argument == static_cast<std::uint8_t>(IRIS_COMMAND_HITL_EXIT))) {

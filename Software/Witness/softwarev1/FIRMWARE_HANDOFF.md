@@ -192,6 +192,53 @@ Unix time also remain zero in debug output.
 GPS coordinates, altitude and satellite count are supplied separately by the
 UART GPS snapshot (or the HITL sample), not by `Sensors::Sample`.
 
+## IMU calibration
+
+Bench measurement 2026-11-08 (board still, 40 s, radio on): gyro offsets of
+about +0.6 to +0.9 dps on x and -0.4 to -0.9 dps on z, y near zero, and the
+low-g accelerometer reading 0.992 g instead of 1 g. The x offset also drifts
+while the board warms up (0.49-1.05 dps seen within minutes).
+
+Two layers remove them (`main/imu_calibration.{h,cpp}`, pure and
+host-tested; `main/imu_calibration_store.{h,cpp}`, NVS):
+
+1. **Stored calibration** (NVS namespace `imu_cal`, survives reboot): gyro
+   bias, low-g per-axis offset and scale, high-g per-axis offset. Applied to the
+   engineering values the estimator, flight state machine and telemetry use
+   (`Sensors::apply_imu_sample`). Captures use uncorrected values.
+2. **Live pad gyro bias**: the attitude estimator keeps estimating the residual
+   bias from stationary windows in Pad Idle (it freezes at launch). Telemetry
+   gyro (`0x01`, `0xE0`) also subtracts it, so warm-up drift does not show; the
+   estimator's own input is not, to avoid a feedback loop.
+
+The NAND IMU stream (`I*.BIN`) and HITL data stay **raw/uncorrected**; the
+calibration in force is printed at boot and after each change (captured in
+`S*.TXT`). Telemetry `0xE0` low-g/high-g fields are now calibrated counts.
+
+Commands (USB, Pad Idle, real sensors; `comms.h`
+`IRIS_COMMAND_IMU_CALIBRATION`):
+
+| Command | Action |
+|---|---|
+| `05 43 47` | Gyro bias: 4 s still capture, median per axis (robust to spikes), spread limit 3 dps; resets the estimator and saves |
+| `05 43 41` | One face: 2 s still capture; classified by dominant axis (+X, -X, +Y, -Y, +Z, -Z, any order, up to ~14 deg off square). After all six, solves and saves |
+| `05 43 58` | Clears the stored calibration and NVS entry |
+| `05 43 53` | Logs the calibration and faces captured this boot |
+
+Face solve: Gauss-Newton fit of per-axis offset and scale so every corrected
+face has magnitude exactly 1 g (so tilted faces do not bias the scale), from
+the opposite-face estimate; limits: offset <= 300 mg, scale 0.9-1.1. High-g
+offset = mean (high-g - corrected low-g) over the faces. Results log as
+`IMU face <F> captured ...`, `IMU accelerometer calibration done: ...` or a
+`failed: <reason>` line. Guided host tool:
+`python tools/imu_calibrate.py [--tcp HOST:PORT | --serial COMx]` (close Horizon
+first; `--status`, `--clear`, `--gyro-only`).
+
+Bench after the gyro calibration (same 40 s still test): telemetry gyro means
+-0.04 / +0.01 / -0.36 dps (were +0.91 / -0.05 / -0.89), medians within 3
+counts (0.21 dps). The six-face accelerometer calibration needs the board
+turned by hand and has not been run yet; until then |a| stays 0.992 g.
+
 ## Attitude estimator
 
 `attitude::Estimator` ([main/attitude_estimator.h](main/attitude_estimator.h))
@@ -525,6 +572,7 @@ the bench; append CR/LF. Hex shown here is text unless sent as actual binary.
 | `05 73 00` through `05 73 04` | Sets flight state; `01` from Pad Idle is a launch trigger |
 | `05 68 68` | Freezes logs and switches USB to read-only mass storage until reset |
 | `05 68 69` | Destructively erases all stored sessions and creates a fresh session |
+| `05 43 47` / `05 43 41` / `05 43 58` / `05 43 53` | IMU calibration: gyro, face, clear, status (USB, Pad Idle; see "IMU calibration") |
 | `05 00 00 00 00 00 00 48 49 0A` (canonical only) | Enter HITL mode; USB and Pad Idle only |
 | `05 00 00 00 00 00 00 48 58 0A` (canonical only) | Exit HITL mode |
 | `TX 05 ...` | Bridges decoded command bytes to CAN/radio; do not assume it performs the same local actions as the non-TX form |
@@ -851,11 +899,18 @@ if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 g++ -std=c++17 -Wall -Wextra -Werror -I main tests/attitude_estimator_test.cpp main/attitude_estimator.cpp -o build/attitude_estimator_test.exe
 if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 & .\build\attitude_estimator_test.exe
+
+g++ -std=c++17 -Wall -Wextra -Werror -I main tests/imu_calibration_test.cpp main/imu_calibration.cpp -o build/imu_calibration_test.exe
+if ($LASTEXITCODE -ne 0) { throw "compile failed" }
+& .\build\imu_calibration_test.exe
 ```
 
-This PC has no host `g++`; the attitude, HITL, NMEA and GPS-receiver tests were
-last run (2026-11-08) on a Linux host with `-fsanitize=undefined`
-(AddressSanitizer unavailable there).
+This PC has host `g++` 16.2 from WinLibs (installed with
+`winget install BrechtSanders.WinLibs.POSIX.UCRT`; it lives under
+`%LOCALAPPDATA%\Microsoft\WinGet\Packages\BrechtSanders.WinLibs*\mingw64\bin`,
+add that to `PATH`). All seven tests above passed there on 2026-11-08.
+esp-clang under `C:\Espressif\tools` targets the ESP chips only and cannot
+build host tests.
 
 The tests exercise parsing, fixed-baud configuration protocol handling, HITL
 decoding/framing/state rules and the inactive mailbox implementation using

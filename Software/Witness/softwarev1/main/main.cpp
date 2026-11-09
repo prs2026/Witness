@@ -5,6 +5,7 @@
 #include "flash_logger.h"
 #include "flight_state_machine.h"
 #include "heartbeat.h"
+#include "imu_calibration_store.h"
 #include "hardware_pins.h"
 #include "uart_driver.h"
 #include "sensors.h"
@@ -54,6 +55,14 @@ extern "C" void app_main(void)
         ESP_LOGW("main", "GPS UART1 start failed: %s; other logging continues",
                  esp_err_to_name(gps_result));
     sensors.set_imu_log_sink(&flash_logger);
+    {
+        // IMU calibration lives in NVS; without it the IMU runs uncorrected.
+        const esp_err_t nvs_result = imu_calibration::init_storage();
+        if (nvs_result != ESP_OK) {
+            ESP_LOGE("main", "NVS init failed: %s; IMU calibration unavailable",
+                     esp_err_to_name(nvs_result));
+        }
+    }
     ESP_ERROR_CHECK(sensors.start());
     ESP_ERROR_CHECK(heartbeat.start());
     static CpuLoadMonitor cpu_load;

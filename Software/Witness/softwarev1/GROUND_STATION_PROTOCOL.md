@@ -597,7 +597,17 @@ Legacy compact binary commands are accepted after a 20 ms idle interval:
 05 68 68       enter mass storage
 05 68 69       erase stored sessions
 05 73 00..04   set flight state
+05 43 47       IMU calibration: capture gyro bias (4 s, board still)
+05 43 41       IMU calibration: capture one face (2 s); six faces solve the accels
+05 43 58       IMU calibration: clear
+05 43 53       IMU calibration: log status
 ```
+
+IMU calibration commands are USB-only and accepted only in Pad Idle with real
+sensors. The calibration is stored in Witness NVS. Telemetry IMU values (`0x01`
+gyro and filtered acceleration, `0xE0` low-g, high-g and gyro) are calibrated
+counts; the gyro also has the attitude estimator's live pad bias removed. The
+NAND `I*.BIN` stream keeps raw counts.
 
 HITL enter/exit (`0x4849`/`0x4858`) are accepted only as canonical 10-byte
 frames (binary or ASCII hex), not in compact form.
