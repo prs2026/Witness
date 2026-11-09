@@ -861,7 +861,7 @@ comments and file/class names are not sufficient identification.
 The logger uses a **custom append-only NAND store**, not a mounted writable FAT
 filesystem. On successful initialization it tests a reserved good block by
 erase/write/read comparison, scans sessions and creates a new session. Store
-version 3 (2026-11-08) is built for **one flight at a time**: two slots, A and
+version 4 (2026-11-08) is built for **one flight at a time**: two slots, A and
 B, of 502 blocks each, plus 20 reserved blocks at the top of the chip. Each
 slot:
 
@@ -871,19 +871,72 @@ slot:
 | 1-96 | `I<gen>.BIN` | IMU stream, 24-byte records (below) |
 | 97-136 | `S<gen>.BIN` | 48-byte sensor records at 50 Hz (about 35.8 min) |
 | 137-160 | `S<gen>.TXT` | Captured ESP log text, circular (keeps the newest) |
-| 161-501 | `U<gen>.BIN` | Raw GPS UART bytes, circular (see GPS section) |
+| 161-280 | `P<gen>.BIN` | Packet stream, circular (below) |
+| 281-501 | `U<gen>.BIN` | Raw GPS UART bytes, circular (see GPS section) |
+
+Store version 3 had no packet stream and 341 GPS blocks (161-501). Its
+sessions still export through that layout (`FlashLogger::file_layout` by
+version), so a v3 flight survives the upgrade until a v4 flight replaces it.
 
 Slot choice at boot: the slot holding the newest *flight* (marker written) is
 kept and the other slot is reused; with no flight on the chip, the empty or
 older slot is reused. The flight marker is written when the first logged state
 (Boost) begins, so pad-only power cycles never overwrite the last flight, and
 the next flight overwrites the flight before it. Every page starts with a
-12-byte header (magic, type, version 3, payload length, u32 page sequence).
-Older store versions are not exported.
+12-byte header (magic, type, store version, payload length, u32 page sequence).
+Store versions before 3 are not exported.
+
+**Circular streams and launch.** The text, packet and GPS streams wrap freely
+on the pad, so a long pad wait never fills them. When the flight marker is
+written, at the first logged state (Boost), each ring is launch-protected:
+nothing written after that point is overwritten. A ring that comes back round
+to its launch point stops, with `ring full since launch; stopped to keep the
+flight`. That warning is not a failure and does not set the flash fault bit.
+After launch the packet ring holds about 32 min, the GPS ring (221 blocks,
+about 28.8 MB) about 2.1 h at 25 Hz GGA+RMC, and the text about 5 h.
+
+**Packet stream (`P*.BIN`).** It records every packet in four classes:
+- Witness's own `0x02` state packet at 100 Hz. It is built in the sensor task
+  every 10 ms for the log only; USB and radio keep 1 Hz.
+- Every packet reassembled from CAN (from Iris), whether or not it is
+  forwarded.
+- Every packet sent to Iris over CAN (commands, the 1 Hz heartbeat).
+- Every command received over the radio.
+
+`FlashLogger::log_packet()` never blocks. Its queue holds 128 packets, and
+drops are counted and warned at flush (`packet log queue full: N packets
+dropped so far`). Records are big-endian:
+
+| Offset | Bytes | Field |
+|---:|---:|---|
+| 0 | 4 | uint32 esp_timer microseconds (wraps every 71.6 min) |
+| 4 | 1 | Source: 1 Witness state, 2 CAN in, 3 CAN out, 4 radio in |
+| 5 | 1 | Frame length N |
+| 6 | N | Complete frame, ID through EOF `0x0A` |
+
+Horizon `converter.py` decodes it (`P*.BIN`, or `--format packets`) with the
+normal packet parser. There is one row per frame, with `log_source` and
+`time_seconds`.
+
+Bench check on 2026-11-08, with a commanded flight and Iris on CAN:
+- 9,171 state packets over 92 s, 100.01 Hz with a 10.00 ms median.
+- Iris camera packets at about 1 Hz (CAN in).
+- The heartbeat and forwarded commands (CAN out).
+- No queue drops and no undecodable bytes.
+
+Before the 10 s status lines were moved off the sensor task (they are now
+formatted there and printed by a core-0 `sensor_log` task), printing them
+stalled the loop 16-28 ms and skipped 1-2 state samples every 10 s.
+
+Cost: about 14 KB of RAM for the queue (free heap was about 64 KB in that
+check). Core 1 measured 45% busy, up from about 38%. Most of the increase is in
+the FIFO-read and sample-processing timings, which this change did not touch;
+the cause is not confirmed.
 
 | Export filename example | Contents |
 |---|---|
 | `I0000001.BIN` | 24-byte IMU records (decode with Horizon `converter.py`) |
+| `P0000001.BIN` | Packet stream: state at 100 Hz, CAN in/out, radio commands (decode with `converter.py`) |
 | `S0000001.BIN` | Fixed 48-byte sensor records; not canonical telemetry packets |
 | `S0000001.TXT` | Captured ESP logging output after the application log hook is installed |
 | `U0000001.BIN` | Exact raw UART bytes, including NMEA and binary responses; no added timestamps or framing |
@@ -919,8 +972,9 @@ Data can flush earlier when staging fills. Power loss can lose unflushed data;
 this store is not a transactional general-purpose filesystem. The text queue is
 bounded and long log messages are truncated to fit its entries.
 Exhausting one linear allocation (IMU or sensor records) marks that stream full
-and sets the flash fault flag without stopping the other allocations. The text
-and GPS streams are circular and never fill. A fatal writer I/O error stops all
+and sets the flash fault flag without stopping the other allocations. The text,
+packet and GPS streams are circular and never fill on the pad (after launch see
+"Circular streams and launch"). A fatal writer I/O error stops all
 capture.
 
 Flash-log-failed (status bit 7) history, 2026-11-08: the bit latched about an

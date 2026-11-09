@@ -51,6 +51,8 @@ public:
     // rate. 25 Hz suits both GPS options: a 25 Hz receiver (PX1120S) gets
     // every fix used, a 10 Hz one (u-blox M8) appears on every 2nd-3rd tick.
     static constexpr std::uint32_t kPositionUpdateRateHz = 25;
+    // State packets are logged to NAND at 100 Hz (USB/radio keep 1 Hz).
+    static constexpr std::uint32_t kStateLogRateHz = 100;
     static constexpr std::uint32_t kPacketRateHz = 10;
     static constexpr std::uint32_t kStatePacketRateHz = 1;
     static constexpr std::uint32_t kDebugPacketRateHz = 10;
@@ -354,6 +356,9 @@ private:
     static std::int16_t to_counts(float value, float units_per_count);
     esp_err_t queue_sensor_packet();
     esp_err_t queue_state_packet();
+    void build_state_payload(std::uint8_t *payload);
+    // NAND packet stream: the full 0x02 frame every kStateLogPeriod.
+    void log_state_packet();
     esp_err_t queue_debug_packet();
     esp_err_t read_battery_voltage();
     void poll_radio_commands();
@@ -470,6 +475,19 @@ private:
     std::uint64_t position_report_us_ = 0;
     std::uint32_t position_last_gps_ms_ = 0;
     bool position_baro_pending_ = false;
+    std::uint64_t state_log_last_us_ = 0;
+
+    // 10 s status lines are formatted here but printed by a low-priority
+    // core-0 task: pushing them through the ESP log (USB console and NAND
+    // text capture) took 16-28 ms of the core-1 loop and skipped 100 Hz
+    // state log samples every 10 s.
+    static constexpr std::size_t kDeferredLogLength = 400;
+    struct DeferredLog {
+        char text[kDeferredLogLength];
+    };
+    QueueHandle_t deferred_log_queue_ = nullptr;
+    static void deferred_log_task_entry(void *context);
+    void defer_log(const char *format, ...) __attribute__((format(printf, 2, 3)));
     // HITL frames arrive at about 100 Hz, so selection only, no low-pass.
     accel_filter::FilteredAccel hitl_filtered_accel_{};
     imu_calibration::Limits calibration_limits_{};

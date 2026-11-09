@@ -148,6 +148,8 @@ def describe(name: str) -> str:
         return "sensor records (48-byte WL)"
     if upper.startswith("S") and upper.endswith(".TXT"):
         return "diagnostic log text"
+    if upper.startswith("P") and upper.endswith(".BIN"):
+        return "packets: state 100 Hz, CAN in/out, radio commands"
     if upper.startswith("U") and upper.endswith(".BIN"):
         return "raw GPS UART bytes"
     return ""

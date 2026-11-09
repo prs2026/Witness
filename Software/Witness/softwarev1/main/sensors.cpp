@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstdarg>
 #include <cstdio>
 #include <cstring>
 
@@ -271,6 +272,14 @@ esp_err_t Sensors::start()
     if (result != ESP_OK) {
         release_resources();
         return result;
+    }
+
+    deferred_log_queue_ = xQueueCreate(4, sizeof(DeferredLog));
+    if (deferred_log_queue_ == nullptr ||
+        xTaskCreatePinnedToCore(deferred_log_task_entry, "sensor_log", 3072, this, 1,
+                                nullptr, task_cores::kSystem) != pdPASS) {
+        release_resources();
+        return ESP_ERR_NO_MEM;
     }
 
     if (xTaskCreatePinnedToCore(
@@ -1033,6 +1042,25 @@ esp_err_t Sensors::queue_sensor_packet()
 esp_err_t Sensors::queue_state_packet()
 {
     std::uint8_t payload[IRIS_PACKET_STATE_DATA_LENGTH]{};
+    build_state_payload(payload);
+    return data_forwarder_.queue_packet(
+        IRIS_PACKET_ID_STATE, payload, sizeof(payload));
+}
+
+void Sensors::log_state_packet()
+{
+    if (imu_log_sink_ == nullptr) return;
+    std::uint8_t frame[IRIS_PACKET_ID_LENGTH + IRIS_PACKET_STATE_DATA_LENGTH +
+                       IRIS_PACKET_EOF_LENGTH]{};
+    frame[0] = IRIS_PACKET_ID_STATE;
+    build_state_payload(frame + IRIS_PACKET_ID_LENGTH);
+    frame[sizeof(frame) - 1] = IRIS_PACKET_EOF_VALUE;
+    (void)imu_log_sink_->log_packet(FlashLogger::kPacketSourceState, frame, sizeof(frame));
+}
+
+void Sensors::build_state_payload(std::uint8_t *payload)
+{
+    std::memset(payload, 0, IRIS_PACKET_STATE_DATA_LENGTH);
     const auto gps = current_gps_fix();
     write_i24_be(&payload[IRIS_PACKET_STATE_LATITUDE_OFFSET],
         static_cast<std::int32_t>(std::lround(gps.latitude_degrees * IRIS_FIELD_GPS_COORDINATE_SCALE)));
@@ -1071,9 +1099,6 @@ esp_err_t Sensors::queue_state_packet()
     }
     // Reported from the latest GGA even without a fix; zero when stale.
     payload[IRIS_PACKET_STATE_GPS_SATELLITES_OFFSET] = gps.satellites;
-
-    return data_forwarder_.queue_packet(
-        IRIS_PACKET_ID_STATE, payload, sizeof(payload));
 }
 
 esp_err_t Sensors::queue_debug_packet()
@@ -1517,7 +1542,7 @@ void Sensors::report_position(const std::uint64_t now_us)
     float v[3];
     position_filter_.position(p);
     position_filter_.velocity(v);
-    ESP_LOGI(kLogTag,
+    defer_log(
              "position: ENU %.1f %.1f %.1f m, velocity %.1f %.1f %.1f m/s, Mach %.2f, "
              "alt MSL %.0f m; baro %lu used/%lu gated/%lu rejected, sigma %.1f m; "
              "GPS %lu used/%lu rejected%s; %s",
@@ -1535,6 +1560,30 @@ void Sensors::report_position(const std::uint64_t now_us)
              !position_filter_.initialized() ? "waiting for attitude"
              : position_filter_.still()      ? "pad hold"
                                              : "integrating");
+}
+
+void Sensors::defer_log(const char *format, ...)
+{
+    DeferredLog entry{};
+    va_list arguments;
+    va_start(arguments, format);
+    std::vsnprintf(entry.text, sizeof(entry.text), format, arguments);
+    va_end(arguments);
+    if (deferred_log_queue_ == nullptr ||
+        xQueueSend(deferred_log_queue_, &entry, 0) != pdTRUE) {
+        // Never block the sensor loop for a status line.
+    }
+}
+
+void Sensors::deferred_log_task_entry(void *context)
+{
+    auto *self = static_cast<Sensors *>(context);
+    DeferredLog entry{};
+    for (;;) {
+        if (xQueueReceive(self->deferred_log_queue_, &entry, portMAX_DELAY) == pdTRUE) {
+            ESP_LOGI(kLogTag, "%s", entry.text);
+        }
+    }
 }
 
 void Sensors::process_imu_batch()
@@ -1825,7 +1874,7 @@ void Sensors::report_attitude_rate(const std::uint64_t now_us)
     const double rate_hz = static_cast<double>(attitude_updates_since_report_) *
                            1e6 / static_cast<double>(elapsed_us);
     const attitude::Quaternion q = attitude_.quaternion();
-    ESP_LOGI(kLogTag,
+    defer_log(
              "attitude: %.1f Hz, max dt %.1f ms, gaps %lu, late %lu, "
              "spikes rejected %lu, windows %lu ok/%lu accel/%lu gyro "
              "rejected, overruns %lu, max pass %lu us, radio TX %lu "
@@ -1846,7 +1895,7 @@ void Sensors::report_attitude_rate(const std::uint64_t now_us)
              static_cast<double>(attitude_.tilt_from_vertical_deg()),
              static_cast<double>(q.x), static_cast<double>(q.y),
              static_cast<double>(q.z), static_cast<double>(q.w));
-    ESP_LOGI(kLogTag,
+    defer_log(
              "imu fifo: %.1f Hz, overruns %lu, partial slots %lu, "
              "unknown words %lu, max backlog %lu words; filtered accel "
              "%s, %lu switches to high-g, peak %.2f g; core-1 time: FIFO read "
@@ -2080,6 +2129,14 @@ void Sensors::run()
             position_baro_pending_ = true;
         }
         service_position(pass_start_us);
+        if (pass_start_us - state_log_last_us_ >= 1'000'000ULL / kStateLogRateHz) {
+            // Advance by whole periods so the long-run rate is exact.
+            state_log_last_us_ =
+                pass_start_us - state_log_last_us_ > 4ULL * 1'000'000ULL / kStateLogRateHz
+                    ? pass_start_us
+                    : state_log_last_us_ + 1'000'000ULL / kStateLogRateHz;
+            log_state_packet();
+        }
 
         if (lsm_result == ESP_OK &&
             (now - last_sensor_packet_time) >= kPacketPeriod) {

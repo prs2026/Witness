@@ -447,6 +447,7 @@ void UsbSerialEcho::process_radio_command(
     if (data == nullptr || data[0] != IRIS_PACKET_ID_COMMAND) {
         return;
     }
+    (void)flash_logger_.log_packet(FlashLogger::kPacketSourceRadioRx, data, length);
 
     std::uint16_t command = 0;
     if (length == 3U) {

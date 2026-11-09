@@ -49,6 +49,7 @@ extern "C" void app_main(void)
     // Install the diagnostic log sink before the remaining subsystems start so
     // their initialization output is included in this boot's TXT file.
     ESP_ERROR_CHECK(flash_logger.start());
+    iris_can.set_log_sink(&flash_logger);
     gps_uart.set_log_sink(flash_logger);
     const esp_err_t gps_result = gps_uart.start();
     if (gps_result != ESP_OK)

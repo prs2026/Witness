@@ -558,14 +558,21 @@ all accepted bytes before publishing the files. GPS data arriving after
 capture stops is not part of the exported snapshot. Sudden power loss can lose
 the bytes still buffered in RAM; use the export command before disconnecting.
 
-New sessions use storage layout version 3, built for one flight at a time:
-two slots of 502 blocks. Each holds 96 NAND blocks for the 24-byte IMU stream
-(`I*.BIN`, 960 Hz until Descent, then 96 Hz), 40 for sensor data, 24 for
-diagnostics and 341 (about 44.7 MB) for external GPS data. The GPS section is
-circular: when full it overwrites its oldest block, so a long pad wait loses
-only the oldest pad bytes. The slot holding the newest flight is kept until the
-next flight; pad-only power cycles reuse the other slot. Older store versions
-are not exported. No format or erase is required to upgrade. Buffer overflow or
+New sessions use storage layout version 4, built for one flight at a time:
+two slots of 502 blocks. Each holds:
+- 96 NAND blocks for the 24-byte IMU stream (`I*.BIN`, 960 Hz until Descent,
+  then 96 Hz);
+- 40 for sensor data;
+- 24 for diagnostics;
+- 120 for the packet stream (`P*.BIN`: Witness state packets at 100 Hz, every
+  packet sent or received over CAN, and radio commands);
+- 221 (about 28.8 MB) for external GPS data.
+
+The diagnostic, packet and GPS sections are circular on the pad, so a long pad
+wait loses only the oldest pad data. From launch on they keep everything
+written since launch. The slot holding the newest flight is kept until the
+next flight; pad-only power cycles reuse the other slot. Version 3 sessions
+(no packet stream) still export; older versions do not. No format or erase is required to upgrade. Buffer overflow or
 flash write failure sets the existing flash-log-failed status bit. When the IMU,
 sensor or diagnostic allocation fills, that stream stops with a diagnostic and
 the other streams continue. These are

@@ -18,7 +18,7 @@ class Sensors;
 class WitnessStatus;
 class FlightStateMachine;
 
-// Append-only log store for the raw SPI NAND (store version 3).
+// Append-only log store for the raw SPI NAND (store version 4).
 //
 // The usable NAND (1,004 blocks) is two session slots, A and B, of 502 blocks.
 // Each slot holds one boot's session:
@@ -27,9 +27,17 @@ class FlightStateMachine;
 //   blocks 1-96    I*.BIN  IMU stream: 24-byte records, 960 Hz until Descent,
 //                  then every 10th record (96 Hz); prelaunch 2 s included
 //   blocks 97-136  S*.BIN  sensor stream: 48-byte WL records at 50 Hz
-//   blocks 137-160 S*.TXT  diagnostic text
-//   blocks 161-501 U*.BIN  raw GPS UART bytes in a circular buffer that
-//                  overwrites its oldest block when full
+//   blocks 137-160 S*.TXT  diagnostic text (circular)
+//   blocks 161-280 P*.BIN  packet stream (circular): Witness state packets at
+//                  100 Hz and every packet sent or received over CAN, plus
+//                  radio commands; records [u32 us][u8 source][u8 length]
+//                  [complete frame], big-endian
+//   blocks 281-501 U*.BIN  raw GPS UART bytes (circular)
+//
+// Circular streams wrap freely on the pad. From launch (the flight marker)
+// they stop overwriting: everything written since launch is kept, and the
+// stream stops when it would overwrite the launch point.
+// Store version 3 sessions (no packet stream, 341 GPS blocks) still export.
 //
 // The flight marker is written once, when sensor logging first starts
 // (Boost). A new session always takes the slot that does NOT hold the newest
@@ -47,6 +55,17 @@ public:
     static constexpr std::uint32_t kCaptureTaskStackSize = 3072;
     static constexpr std::size_t kMaximumExportFiles = 48;
     static constexpr std::size_t kUartReceiveBufferSize = 32768;
+
+    // Packet stream sources (record byte 4).
+    static constexpr std::uint8_t kPacketSourceState = 1;   // Witness 0x02, 100 Hz
+    static constexpr std::uint8_t kPacketSourceCanRx = 2;   // from Iris over CAN
+    static constexpr std::uint8_t kPacketSourceCanTx = 3;   // to Iris over CAN
+    static constexpr std::uint8_t kPacketSourceRadioRx = 4; // LoRa command
+    static constexpr std::size_t kPacketRecordHeader = 6;   // u32 us, source, length
+    static constexpr std::size_t kMaxPacketFrame = 103;     // intercomm limit
+    // Any task may call this; never blocks (a full queue drops and counts).
+    esp_err_t log_packet(std::uint8_t source, const std::uint8_t *frame,
+                         std::size_t length);
 
     // IMU stream: one record per fresh IMU sample from the sensor loop.
     static constexpr std::uint32_t kImuRateHz = 960;
@@ -144,13 +163,20 @@ private:
     static constexpr std::uint32_t kImuBlocks = 96;
     static constexpr std::uint32_t kBinaryBlocks = 40;
     static constexpr std::uint32_t kTextBlocks = 24;
+    // 120 blocks = 15.6 MB, about 32 min at ~8 KB/s (state at 100 Hz plus CAN).
+    static constexpr std::uint32_t kPacketBlocks = 120;
     static constexpr std::uint32_t kUartBlocks =
+        kBlocksPerSlot - kHeaderBlocks - kImuBlocks - kBinaryBlocks - kTextBlocks -
+        kPacketBlocks;
+    // Store version 3 layout (read-only, for exporting older sessions).
+    static constexpr std::uint8_t kLegacyStoreVersion = 3;
+    static constexpr std::uint32_t kV3UartBlocks =
         kBlocksPerSlot - kHeaderBlocks - kImuBlocks - kBinaryBlocks - kTextBlocks;
     static constexpr std::uint32_t kFlightMarkerPage = 1;  // within block 0
     static constexpr std::uint32_t kSessionMagic = 0x574C5331U; // WLS1
     static constexpr std::uint32_t kFlightMagic = 0x574C4654U;  // WLFT
     static constexpr std::uint32_t kPageMagic = 0x574C5047U;    // WLPG
-    static constexpr std::uint8_t kStoreVersion = 3;
+    static constexpr std::uint8_t kStoreVersion = 4;
     static constexpr std::uint8_t kBinaryType = 1;
     static constexpr std::uint8_t kTextType = 2;
     static constexpr std::uint8_t kUart1Type = 3;
@@ -159,7 +185,7 @@ private:
     // state, so a long pad wait must not leave no room for the flight).
     static constexpr bool is_ring_type(std::uint8_t type)
     {
-        return type == kUart1Type || type == kTextType;
+        return type == kUart1Type || type == kTextType || type == kPacketType;
     }
     // A new session erases only the first block of each stream, so the rest
     // of a slot still holds valid pages from older sessions. The page
@@ -176,6 +202,8 @@ private:
         return sequence_tag(generation) << kSequenceTagShift;
     }
     static constexpr std::uint8_t kImuType = 4;
+    static constexpr std::uint8_t kPacketType = 5;
+    static constexpr std::size_t kPacketQueueDepth = 128;
     static constexpr std::uint16_t kRecordMagic = 0x574C;       // WL
     static constexpr std::uint8_t kRecordVersion = 1;
 
@@ -188,6 +216,11 @@ private:
         std::uint8_t data[kRecordSize];
     };
 
+    struct PacketRecord {
+        std::uint8_t length;  // header + frame bytes
+        std::uint8_t data[kPacketRecordHeader + kMaxPacketFrame];
+    };
+
     struct Writer {
         std::uint8_t type;
         std::uint32_t first_block;
@@ -197,6 +230,10 @@ private:
         bool ring = false;       // wrap and overwrite instead of stopping
         bool full = false;
         bool wrapped = false;
+        // Ring streams after launch: pages written since the launch point;
+        // the stream stops once it would overwrite that point.
+        bool launch_protected = false;
+        std::uint32_t pages_since_launch = 0;
         std::uint32_t sequence = 0;
     };
     struct FileLayout {
@@ -206,9 +243,11 @@ private:
     struct SlotInfo {
         bool valid = false;
         bool flight = false;
+        std::uint8_t version = 0;
         std::uint32_t generation = 0;
     };
-    static FileLayout file_layout(std::uint8_t slot, std::uint8_t type);
+    static FileLayout file_layout(std::uint8_t slot, std::uint8_t type,
+                                  std::uint8_t version = kStoreVersion);
     static std::uint32_t slot_base(std::uint8_t slot) { return slot * kBlocksPerSlot; }
 
     static_assert(kLogRateHz > 0 && (1000U % kLogRateHz) == 0);
@@ -244,7 +283,11 @@ private:
     esp_err_t append_imu_bytes(const std::uint8_t *data);
     esp_err_t drain_binary_records();
     esp_err_t drain_imu_records();
-    esp_err_t scan_file(std::uint8_t slot, std::uint8_t type, bool ring,
+    esp_err_t drain_packet_records();
+    esp_err_t flush_packets();
+    void protect_rings_from_launch();
+    esp_err_t scan_file(std::uint8_t slot, std::uint8_t type, std::uint8_t version,
+                        bool ring,
                         std::uint32_t generation, bool &tagged,
                         std::uint32_t &size, std::uint32_t &start_page);
     esp_err_t read_file_data(std::size_t file_index,
@@ -269,6 +312,11 @@ private:
     QueueHandle_t text_queue_ = nullptr;
     QueueHandle_t binary_record_queue_ = nullptr;
     QueueHandle_t imu_record_queue_ = nullptr;
+    QueueHandle_t packet_queue_ = nullptr;
+    std::atomic<bool> capture_packets_{false};
+    std::atomic<std::uint32_t> packets_dropped_{0};
+    std::uint8_t packet_buffer_[2 * kPagePayloadSize]{};
+    std::size_t packet_buffer_used_ = 0;
     StreamBufferHandle_t uart_queue_ = nullptr;
     SemaphoreHandle_t uart_capture_mutex_ = nullptr;
     bool capture_uart_ = true; // protected by uart_capture_mutex_
@@ -311,6 +359,7 @@ private:
     Writer imu_writer_{};
     Writer text_writer_{};
     Writer uart_writer_{};
+    Writer packet_writer_{};
     ExportFile export_files_[kMaximumExportFiles]{};
     std::size_t export_file_count_ = 0;
     // USB hosts read files in small sequential chunks. Retaining the current
