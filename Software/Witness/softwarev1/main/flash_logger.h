@@ -26,12 +26,12 @@ class FlightStateMachine;
 //   block 0        session header (page 0) and flight marker (page 1)
 //   blocks 1-96    I*.BIN  IMU stream: 24-byte records, 960 Hz until Descent,
 //                  then every 10th record (96 Hz); prelaunch 2 s included
-//   blocks 97-136  S*.BIN  sensor stream: 24-byte WL v2 records at 100 Hz
+//   blocks 97-136  S*.BIN  sensor stream: 24-byte WL v2 records at 50 Hz
 //                  (status, uptime, pressure and temperatures only; IMU
 //                  samples are in I*.BIN, altitude/battery in P*.BIN)
 //   blocks 137-160 S*.TXT  diagnostic text (circular)
 //   blocks 161-280 P*.BIN  packet stream (circular): Witness state packets at
-//                  100 Hz and every packet sent or received over CAN, plus
+//                  50 Hz and every packet sent or received over CAN, plus
 //                  radio commands; records [u32 us][u8 source][u8 length]
 //                  [complete frame], big-endian
 //   blocks 281-501 U*.BIN  raw GPS UART bytes (circular)
@@ -50,7 +50,9 @@ class FlashLogger final {
 public:
     static constexpr UBaseType_t kTaskPriority = 3;
     static constexpr UBaseType_t kCaptureTaskPriority = 4;
-    static constexpr std::uint32_t kLogRateHz = 100;
+    // 50 Hz: the MS5607 converts pressure at about 50 Hz, so faster records
+    // only repeat it.
+    static constexpr std::uint32_t kLogRateHz = 50;
     static constexpr std::uint32_t kPrelaunchBufferSeconds = 2;
     static constexpr std::uint32_t kFlushIntervalMs = 1000;
     static constexpr std::uint32_t kTaskStackSize = 7168;
@@ -59,7 +61,7 @@ public:
     static constexpr std::size_t kUartReceiveBufferSize = 32768;
 
     // Packet stream sources (record byte 4).
-    static constexpr std::uint8_t kPacketSourceState = 1;   // Witness 0x02, 100 Hz
+    static constexpr std::uint8_t kPacketSourceState = 1;   // Witness 0x02, 50 Hz
     static constexpr std::uint8_t kPacketSourceCanRx = 2;   // from Iris over CAN
     static constexpr std::uint8_t kPacketSourceCanTx = 3;   // to Iris over CAN
     static constexpr std::uint8_t kPacketSourceRadioRx = 4; // LoRa command
@@ -165,7 +167,7 @@ private:
     static constexpr std::uint32_t kImuBlocks = 96;
     static constexpr std::uint32_t kBinaryBlocks = 40;
     static constexpr std::uint32_t kTextBlocks = 24;
-    // 120 blocks = 15.6 MB, about 32 min at ~8 KB/s (state at 100 Hz plus CAN).
+    // 120 blocks = 15.6 MB, about 70 min at ~3.6 KB/s (state at 50 Hz plus CAN).
     static constexpr std::uint32_t kPacketBlocks = 120;
     static constexpr std::uint32_t kUartBlocks =
         kBlocksPerSlot - kHeaderBlocks - kImuBlocks - kBinaryBlocks - kTextBlocks -

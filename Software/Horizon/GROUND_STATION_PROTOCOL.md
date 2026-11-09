@@ -562,10 +562,10 @@ New sessions use storage layout version 4, built for one flight at a time:
 two slots of 502 blocks. Each holds:
 - 96 NAND blocks for the 24-byte IMU stream (`I*.BIN`, 960 Hz until Descent,
   then 96 Hz);
-- 40 for sensor data (24-byte WL v2 records at 100 Hz: status, uptime, pressure
+- 40 for sensor data (24-byte WL v2 records at 50 Hz: status, uptime, pressure
   and temperatures; the IMU samples and altitude/battery live in the I*/P* streams);
 - 24 for diagnostics;
-- 120 for the packet stream (`P*.BIN`: Witness state packets at 100 Hz, every
+- 120 for the packet stream (`P*.BIN`: Witness state packets at 50 Hz, every
   packet sent or received over CAN, and radio commands);
 - 221 (about 28.8 MB) for external GPS data.
 

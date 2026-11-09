@@ -485,9 +485,9 @@ esp_err_t FlashLogger::append_bytes(Writer &writer, const std::uint8_t *data, st
     return ESP_OK;
 }
 
-// WL record v2 (24 bytes, big-endian), 100 Hz. Only what no other stream
+// WL record v2 (24 bytes, big-endian), 50 Hz. Only what no other stream
 // has: IMU samples are in I*.BIN (960 Hz) and baro altitude, battery, GPS,
-// attitude and position in the 100 Hz state packets of P*.BIN.
+// attitude and position in the 50 Hz state packets of P*.BIN.
 //   0 magic "WL", 2 version 2, 3-4 Witness status bytes 0 and 1 (byte 1
 //   carries the flight state), 5 reserved, 6 u32 sequence, 10 u32 uptime ms,
 //   14 int16 LSM6 temperature raw, 16 int32 pressure Pa (centi-mbar),

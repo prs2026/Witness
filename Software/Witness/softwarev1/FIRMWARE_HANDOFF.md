@@ -111,7 +111,7 @@ Tick-rate audit (100 to 500 Hz, then 1000 Hz, 2026-11-08; the notes below are
 from the 500 Hz step and still hold at 1 kHz). Millisecond-specified periods keep
 their length, except the sensor loop, now 2 ms (500 Hz, 2 ticks,
 `static_assert`ed in `sensors.h`; was 10 ms),
-flash capture 10 ms (100 Hz since the WL v2 record), sensor/state/debug packets, radio
+flash capture 20 ms (50 Hz, the barometer's rate), sensor/state/debug packets, radio
 schedule, heartbeat, USB 20 ms binary idle boundary, HITL 1000 ms timeout
 (millisecond clock) and the 1 s flash flush. Changes: the UART read wait and the
 CAN service loop's `vTaskDelay(1)` now wake every 2 ms instead of 10 ms (lower
@@ -127,7 +127,7 @@ BUSY spin.
 | Task | Priority | Stack bytes | Cadence or role |
 |---|---:|---:|---|
 | `sensors` | 4 | 8192 | Core 1. 500 Hz deadline-scheduled (2 ticks); drains the 960 Hz LSM6 FIFO, attitude, sole active SPI3 application service loop |
-| `flash_capture` | 4 | 3072 | 100 Hz sensor snapshots (WL v2) and prelaunch ring |
+| `flash_capture` | 4 | 3072 | 50 Hz sensor snapshots (WL v2) and prelaunch ring |
 | `flash_logger` | 3 | 7168 | Queue draining and NAND writes; default 1 s flush interval |
 | `uart1` | 3 | 4096 | Blocking UART reads, parsing and raw byte dispatch |
 | `usb_serial_echo` | 3 | 3072 | USB input and local/radio command handling |
@@ -325,7 +325,7 @@ a linear Kalman filter with a constant-acceleration kinematic model:
   rejected; pad hold|integrating`.
 
 The estimate is not logged to NAND. Every input is, though (I*.BIN IMU,
-S*.BIN pressure at 100 Hz, U*.BIN raw NMEA), so a flight can be re-filtered
+S*.BIN pressure at 50 Hz, U*.BIN raw NMEA), so a flight can be re-filtered
 offline.
 
 Host test (simulated 11 g, 4 s boost to Mach 1.3, coast and descent, with a
@@ -869,7 +869,7 @@ slot:
 |---|---|---|
 | 0 | - | Session header (page 0) and flight marker (page 1, magic `WLFT`) |
 | 1-96 | `I<gen>.BIN` | IMU stream, 24-byte records (below) |
-| 97-136 | `S<gen>.BIN` | 24-byte WL v2 sensor records at 100 Hz (about 35.8 min) |
+| 97-136 | `S<gen>.BIN` | 24-byte WL v2 sensor records at 50 Hz (about 72 min) |
 | 137-160 | `S<gen>.TXT` | Captured ESP log text, circular (keeps the newest) |
 | 161-280 | `P<gen>.BIN` | Packet stream, circular (below) |
 | 281-501 | `U<gen>.BIN` | Raw GPS UART bytes, circular (see GPS section) |
@@ -892,12 +892,13 @@ written, at the first logged state (Boost), each ring is launch-protected:
 nothing written after that point is overwritten. A ring that comes back round
 to its launch point stops, with `ring full since launch; stopped to keep the
 flight`. That warning is not a failure and does not set the flash fault bit.
-After launch the packet ring holds about 32 min, the GPS ring (221 blocks,
+After launch the packet ring holds about 70 min (state at 50 Hz plus CAN, ~3.6 KB/s), the GPS ring (221 blocks,
 about 28.8 MB) about 2.1 h at 25 Hz GGA+RMC, and the text about 5 h.
 
 **Packet stream (`P*.BIN`).** It records every packet in four classes:
-- Witness's own `0x02` state packet at 100 Hz. It is built in the sensor task
-  every 10 ms for the log only; USB and radio keep 1 Hz.
+- Witness's own `0x02` state packet at 50 Hz, the barometer's rate
+  (`Sensors::kStateLogRateHz`). It is built in the sensor task every 20 ms for
+  the log only; USB and radio keep 1 Hz.
 - Every packet reassembled from CAN (from Iris), whether or not it is
   forwarded.
 - Every packet sent to Iris over CAN (commands, the 1 Hz heartbeat).
@@ -936,7 +937,7 @@ the cause is not confirmed.
 | Export filename example | Contents |
 |---|---|
 | `I0000001.BIN` | 24-byte IMU records (decode with Horizon `converter.py`) |
-| `P0000001.BIN` | Packet stream: state at 100 Hz, CAN in/out, radio commands (decode with `converter.py`) |
+| `P0000001.BIN` | Packet stream: state at 50 Hz, CAN in/out, radio commands (decode with `converter.py`) |
 | `S0000001.BIN` | Fixed 24-byte WL v2 sensor records; not canonical telemetry packets |
 | `S0000001.TXT` | Captured ESP logging output after the application log hook is installed |
 | `U0000001.BIN` | Exact raw UART bytes, including NMEA and binary responses; no added timestamps or framing |
@@ -957,8 +958,8 @@ Big-endian record layout (`FlashLogger::make_imu_record()`):
 | 22 | 1 | Status: bits 0-2 flight state, 0x08 HITL, 0x10/0x20/0x40 low-g/high-g/gyro fresh, 0x80 filtered accel from high-g |
 | 23 | 1 | uint8 record sequence (wraps at 256; gaps reveal drops) |
 
-Sensor capture is independent of the USB packet rates. It samples at 100 Hz,
-holds the most recent 200 records in a two-second Pad Idle ring, and on entry
+Sensor capture is independent of the USB packet rates. It samples at 50 Hz,
+holds the most recent 100 records in a two-second Pad Idle ring, and on entry
 to an enabled logging state queues the oldest prelaunch record first, followed
 by live records. A separate writer drains that queue while capture continues.
 The 256-record queue accommodates the snapshot and a finite live backlog;
@@ -1007,11 +1008,12 @@ every stream has stopped or that a healthy initialization guarantees logging.
 The exported sensor record layout is independent of `comms.h`. Multi-byte fields
 are big-endian; the source of truth is `FlashLogger::serialize_record()`:
 
-Record version 2 (2026-11-09) is 24 bytes at 100 Hz. It keeps only what no
+Record version 2 (2026-11-09) is 24 bytes at 50 Hz, the rate at which the
+MS5607 delivers new pressure (100 Hz only repeated it). It keeps only what no
 other stream logs:
 - the raw low-g, high-g and gyro samples are in I*.BIN at 960 Hz;
 - barometric altitude, battery, GPS, attitude, position and velocity are in
-  the 100 Hz state packets in P*.BIN.
+  the 50 Hz state packets in P*.BIN.
 
 | Offset | Bytes | Field |
 |---:|---:|---|
@@ -1026,14 +1028,15 @@ other stream logs:
 | 16 | 4 | Signed int32 pressure in centi-mbar (numerically Pa) |
 | 20 | 4 | Signed int32 MS5607 temperature in centi-Celsius |
 
-The barometer converts pressure at about 50 Hz, so about half of consecutive
-records repeat the previous pressure. Version 1 (48 bytes at 50 Hz: status
+At 50 Hz about 6% of consecutive records repeat the previous pressure (it
+was 52% at 100 Hz). Version 1 (48 bytes at 50 Hz: status
 byte 0 only, sequence, uptime, raw low-g/high-g/gyro, IMU temperature,
 pressure, baro temperature, float32 baro altitude, uint32 battery mV) is
 still decoded by `converter.py`. The size comes from the version byte.
 
-Bench, commanded flight on 2026-11-09: 3,201 records over 32.0 s at 100.0 Hz,
-no sequence gaps, and flight state decoded from the record.
+Bench, commanded flight on 2026-11-09 at 50 Hz: 1,600 records at 50.03 Hz with
+no sequence gaps, and 50.02 Hz state packets in P*.BIN. The only gap is
+70 ms at boot.
 
 Changing the binary record requires a deliberate version/decoder migration.
 

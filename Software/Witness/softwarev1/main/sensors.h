@@ -51,8 +51,9 @@ public:
     // rate. 25 Hz suits both GPS options: a 25 Hz receiver (PX1120S) gets
     // every fix used, a 10 Hz one (u-blox M8) appears on every 2nd-3rd tick.
     static constexpr std::uint32_t kPositionUpdateRateHz = 25;
-    // State packets are logged to NAND at 100 Hz (USB/radio keep 1 Hz).
-    static constexpr std::uint32_t kStateLogRateHz = 100;
+    // State packets are logged to NAND at 50 Hz, the barometer's rate (USB and
+    // radio keep 1 Hz).
+    static constexpr std::uint32_t kStateLogRateHz = 50;
     static constexpr std::uint32_t kPacketRateHz = 10;
     static constexpr std::uint32_t kStatePacketRateHz = 1;
     static constexpr std::uint32_t kDebugPacketRateHz = 10;
