@@ -8,6 +8,7 @@
 #include "attitude_estimator.h"
 #include "accel_filter.h"
 #include "imu_calibration.h"
+#include "position_filter.h"
 #include "comms.h"
 #include "driver/spi_master.h"
 #include "esp_adc/adc_cali.h"
@@ -45,6 +46,11 @@ public:
     // Filtered-acceleration low-pass cutoff (2nd-order Butterworth on the
     // 960 Hz stream; about 2.5 ms group delay). 0 disables the filter.
     static constexpr float kFilteredAccelCutoffHz = 100.0F;
+    // Position Kalman filter (position_filter.h): predict on every IMU
+    // sample, update with the newest baro reading and any new GPS fix at this
+    // rate. 25 Hz suits both GPS options: a 25 Hz receiver (PX1120S) gets
+    // every fix used, a 10 Hz one (u-blox M8) appears on every 2nd-3rd tick.
+    static constexpr std::uint32_t kPositionUpdateRateHz = 25;
     static constexpr std::uint32_t kPacketRateHz = 10;
     static constexpr std::uint32_t kStatePacketRateHz = 1;
     static constexpr std::uint32_t kDebugPacketRateHz = 10;
@@ -331,6 +337,11 @@ private:
     // acceleration, NAND IMU log and attitude. working_sample_ ends on the
     // newest sample, before the flight state machine and packets use it.
     void process_imu_batch();
+    // Position filter: predict from the filtered acceleration rotated to ENU
+    // (needs a valid attitude), and the 25 Hz baro/GPS update.
+    void predict_position(std::uint64_t timestamp_us);
+    void service_position(std::uint64_t now_us);
+    void report_position(std::uint64_t now_us);
     // Sensor task: starts/finishes calibration captures and applies requests.
     void service_calibration();
     void finish_calibration_capture();
@@ -453,6 +464,12 @@ private:
     std::atomic<std::uint8_t> calibration_request_{0};
     imu_calibration::Calibration calibration_{};
     accel_filter::FilteredAccel filtered_accel_{};
+    position::Filter position_filter_{};
+    std::uint64_t position_last_predict_us_ = 0;
+    std::uint64_t position_last_update_us_ = 0;
+    std::uint64_t position_report_us_ = 0;
+    std::uint32_t position_last_gps_ms_ = 0;
+    bool position_baro_pending_ = false;
     // HITL frames arrive at about 100 Hz, so selection only, no low-pass.
     accel_filter::FilteredAccel hitl_filtered_accel_{};
     imu_calibration::Limits calibration_limits_{};
@@ -465,4 +482,10 @@ private:
     std::uint32_t max_pass_us_ = 0;
     std::uint32_t radio_tx_started_ = 0;
     std::uint32_t radio_tx_failed_ = 0;
+    // Packet queue failures are counted and summarized at most every 10 s;
+    // logging each one filled the NAND text log (and its failure bit).
+    std::uint32_t packet_queue_failures_ = 0;
+    std::uint32_t packet_queue_failures_reported_ = 0;
+    TickType_t packet_queue_last_report_ = 0;
+    void note_packet_queue_result(const char *name, esp_err_t result, TickType_t now);
 };

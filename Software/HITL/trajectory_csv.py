@@ -576,7 +576,7 @@ def build(params: CsvParams, trajectory: Trajectory | None = None) -> CsvBuild:
     gyro_sat_ticks = 0
     pressures = []
     sim_times = []
-    cos_lat = max(math.cos(math.radians(p.lat_deg)), 1e-6)
+    m_per_deg_lat, m_per_deg_lon = sm.meters_per_degree(p.lat_deg)
     for k in range(n_ticks):
         tau = taus[k]
         if tau <= 0.0:
@@ -664,8 +664,8 @@ def build(params: CsvParams, trajectory: Trajectory | None = None) -> CsvBuild:
         sim_s = k * DT_S
         sim_times.append(sim_s)
         if p.gps_fix:
-            lat = p.lat_deg + pos[1] / 111_320.0
-            lon = p.lon_deg + pos[0] / (111_320.0 * cos_lat)
+            lat = p.lat_deg + pos[1] / m_per_deg_lat
+            lon = p.lon_deg + pos[0] / m_per_deg_lon
             gps_alt, sats, fix = alt_msl, p.gps_sats, 1
         else:
             lat = lon = gps_alt = 0.0

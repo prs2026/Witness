@@ -418,6 +418,9 @@ bool Sensors::service_hitl(const std::uint32_t now_ms, bool &new_sample)
         reset_sensor_sample();
         filtered_accel_.reset();
         hitl_filtered_accel_.reset();
+        position_filter_.reset();
+        position_last_predict_us_ = 0;
+        position_baro_pending_ = false;
         // Never carry an attitude across a real/simulated source change.
         attitude_.reset();
         ESP_LOGI(kLogTag, "attitude reset: sensor source is now %s",
@@ -1053,6 +1056,19 @@ esp_err_t Sensors::queue_state_packet()
                      IRIS_PACKET_STATE_ORIENTATION_Z_OFFSET,
                      IRIS_PACKET_STATE_ORIENTATION_W_OFFSET,
                      attitude_.quaternion());
+    {
+        // Position filter: ENU metres / m/s relative to the pad.
+        float p[3];
+        float v[3];
+        position_filter_.position(p);
+        position_filter_.velocity(v);
+        write_float_be(&payload[IRIS_PACKET_STATE_POSITION_X_OFFSET], p[0]);
+        write_float_be(&payload[IRIS_PACKET_STATE_POSITION_Y_OFFSET], p[1]);
+        write_float_be(&payload[IRIS_PACKET_STATE_POSITION_Z_OFFSET], p[2]);
+        write_float_be(&payload[IRIS_PACKET_STATE_VELOCITY_X_OFFSET], v[0]);
+        write_float_be(&payload[IRIS_PACKET_STATE_VELOCITY_Y_OFFSET], v[1]);
+        write_float_be(&payload[IRIS_PACKET_STATE_VELOCITY_Z_OFFSET], v[2]);
+    }
     // Reported from the latest GGA even without a fix; zero when stale.
     payload[IRIS_PACKET_STATE_GPS_SATELLITES_OFFSET] = gps.satellites;
 
@@ -1153,6 +1169,18 @@ esp_err_t Sensors::queue_debug_packet()
                      IRIS_PACKET_WITNESS_DEBUG_ORIENTATION_Z_OFFSET,
                      IRIS_PACKET_WITNESS_DEBUG_ORIENTATION_W_OFFSET,
                      attitude_.quaternion());
+    {
+        float p[3];
+        float v[3];
+        position_filter_.position(p);
+        position_filter_.velocity(v);
+        write_float_be(&payload[IRIS_PACKET_WITNESS_DEBUG_POSITION_X_OFFSET], p[0]);
+        write_float_be(&payload[IRIS_PACKET_WITNESS_DEBUG_POSITION_Y_OFFSET], p[1]);
+        write_float_be(&payload[IRIS_PACKET_WITNESS_DEBUG_POSITION_Z_OFFSET], p[2]);
+        write_float_be(&payload[IRIS_PACKET_WITNESS_DEBUG_VELOCITY_X_OFFSET], v[0]);
+        write_float_be(&payload[IRIS_PACKET_WITNESS_DEBUG_VELOCITY_Y_OFFSET], v[1]);
+        write_float_be(&payload[IRIS_PACKET_WITNESS_DEBUG_VELOCITY_Z_OFFSET], v[2]);
+    }
     // MCU temperature, the other estimator outputs and GPS Unix time remain zero.
     return data_forwarder_.queue_packet(
         IRIS_PACKET_ID_WITNESS_DEBUG, payload, sizeof(payload));
@@ -1414,6 +1442,101 @@ void Sensors::output_counts(std::int16_t gyro[3], std::int16_t low_g[3],
     }
 }
 
+void Sensors::predict_position(const std::uint64_t timestamp_us)
+{
+    if (!attitude_.valid()) {
+        position_last_predict_us_ = 0;  // no world frame yet
+        return;
+    }
+    const std::uint64_t previous = position_last_predict_us_;
+    position_last_predict_us_ = timestamp_us;
+    if (previous == 0 || timestamp_us <= previous) {
+        return;
+    }
+    const float dt_s = static_cast<float>(timestamp_us - previous) * 1e-6F;
+    // Body specific force (m/s^2) rotated BODY -> ENU by the attitude
+    // quaternion: v' = v + 2w (u x v) + 2 u x (u x v).
+    constexpr float kMgToMps2 = position::kGravity / 1000.0F;
+    const float vx = working_sample_.filtered_accel_mg[0] * kMgToMps2;
+    const float vy = working_sample_.filtered_accel_mg[1] * kMgToMps2;
+    const float vz = working_sample_.filtered_accel_mg[2] * kMgToMps2;
+    const attitude::Quaternion q = attitude_.quaternion();
+    const float tx = 2.0F * (q.y * vz - q.z * vy);
+    const float ty = 2.0F * (q.z * vx - q.x * vz);
+    const float tz = 2.0F * (q.x * vy - q.y * vx);
+    const float world[3] = {
+        vx + q.w * tx + (q.y * tz - q.z * ty),
+        vy + q.w * ty + (q.z * tx - q.x * tz),
+        vz + q.w * tz + (q.x * ty - q.y * tx),
+    };
+    position_filter_.predict(world, dt_s,
+                             static_cast<position::Phase>(flight_state_machine_.state()));
+}
+
+void Sensors::service_position(const std::uint64_t now_us)
+{
+    constexpr std::uint64_t kPeriodUs = 1'000'000ULL / kPositionUpdateRateHz;
+    if (position_last_update_us_ != 0 && now_us - position_last_update_us_ < kPeriodUs) {
+        return;
+    }
+    position_last_update_us_ =
+        position_last_update_us_ == 0 || now_us - position_last_update_us_ > 4 * kPeriodUs
+            ? now_us
+            : position_last_update_us_ + kPeriodUs;
+    if (!position_filter_.initialized()) {
+        return;  // no predict yet (attitude not initialized)
+    }
+    const auto phase = static_cast<position::Phase>(flight_state_machine_.state());
+    if (position_baro_pending_) {
+        position_baro_pending_ = false;
+        // MS5607 pressure is in centi-mbar, i.e. pascals.
+        (void)position_filter_.update_baro(
+            working_sample_.barometric_altitude_meters,
+            static_cast<float>(working_sample_.pressure_centi_mbar), phase);
+    }
+    const NmeaGps::Fix fix = current_gps_fix();
+    if (fix.valid && fix.received_ms != position_last_gps_ms_) {
+        position_last_gps_ms_ = fix.received_ms;
+        (void)position_filter_.update_gps(fix.latitude_degrees, fix.longitude_degrees,
+                                          fix.altitude_meters, fix.satellites, phase);
+    }
+    position_filter_.update_constraints(phase);
+}
+
+void Sensors::report_position(const std::uint64_t now_us)
+{
+    if (position_report_us_ == 0) {
+        position_report_us_ = now_us;
+        return;
+    }
+    if (now_us - position_report_us_ < kAttitudeReportIntervalMs * 1000ULL) {
+        return;
+    }
+    position_report_us_ = now_us;
+    float p[3];
+    float v[3];
+    position_filter_.position(p);
+    position_filter_.velocity(v);
+    ESP_LOGI(kLogTag,
+             "position: ENU %.1f %.1f %.1f m, velocity %.1f %.1f %.1f m/s, Mach %.2f, "
+             "alt MSL %.0f m; baro %lu used/%lu gated/%lu rejected, sigma %.1f m; "
+             "GPS %lu used/%lu rejected%s; %s",
+             static_cast<double>(p[0]), static_cast<double>(p[1]), static_cast<double>(p[2]),
+             static_cast<double>(v[0]), static_cast<double>(v[1]), static_cast<double>(v[2]),
+             static_cast<double>(position_filter_.mach()),
+             static_cast<double>(position_filter_.altitude_msl_m()),
+             static_cast<unsigned long>(position_filter_.baro_updates()),
+             static_cast<unsigned long>(position_filter_.baro_gated_count()),
+             static_cast<unsigned long>(position_filter_.baro_rejects()),
+             static_cast<double>(position_filter_.last_baro_sigma_m()),
+             static_cast<unsigned long>(position_filter_.gps_updates()),
+             static_cast<unsigned long>(position_filter_.gps_rejects()),
+             position_filter_.gps_origin_set() ? "" : " (no GPS origin)",
+             !position_filter_.initialized() ? "waiting for attitude"
+             : position_filter_.still()      ? "pad hold"
+                                             : "integrating");
+}
+
 void Sensors::process_imu_batch()
 {
     const bool gyro_ready = working_sample_.gyro_ready;
@@ -1429,10 +1552,33 @@ void Sensors::process_imu_batch()
         if (imu_batch_[i].has_gyro) {
             update_attitude(imu_batch_[i].timestamp_us);
         }
+        predict_position(imu_batch_[i].timestamp_us);
     }
     working_sample_.gyro_ready = gyro_ready;
     working_sample_.low_g_accel_ready = low_g_ready;
     working_sample_.high_g_accel_ready = high_g_ready;
+}
+
+void Sensors::note_packet_queue_result(const char *name, const esp_err_t result,
+                                       const TickType_t now)
+{
+    if (result != ESP_OK) {
+        ++packet_queue_failures_;
+        if (packet_queue_failures_ - packet_queue_failures_reported_ == 1U &&
+            now - packet_queue_last_report_ >= pdMS_TO_TICKS(10000)) {
+            ESP_LOGE(kLogTag, "%s packet queue failed: %s (further failures are "
+                     "summarized every 10 s)", name, esp_err_to_name(result));
+            packet_queue_failures_reported_ = packet_queue_failures_;
+            packet_queue_last_report_ = now;
+        }
+    }
+    if (packet_queue_failures_ != packet_queue_failures_reported_ &&
+        now - packet_queue_last_report_ >= pdMS_TO_TICKS(10000)) {
+        ESP_LOGW(kLogTag, "telemetry packet queue: %lu failures in total",
+                 static_cast<unsigned long>(packet_queue_failures_));
+        packet_queue_failures_reported_ = packet_queue_failures_;
+        packet_queue_last_report_ = now;
+    }
 }
 
 void Sensors::log_calibration(const char *prefix) const
@@ -1925,37 +2071,30 @@ void Sensors::run()
             if (lsm_result == ESP_OK) {
                 log_imu_sample(imu_timestamp_us, true);
                 update_attitude(imu_timestamp_us);
+                predict_position(imu_timestamp_us);
             }
         }
         // Real IMU samples were processed right after the FIFO read
         // (process_imu_batch).
+        if (ms5607_updated && barometer_healthy) {
+            position_baro_pending_ = true;
+        }
+        service_position(pass_start_us);
 
         if (lsm_result == ESP_OK &&
             (now - last_sensor_packet_time) >= kPacketPeriod) {
-            const esp_err_t queue_result = queue_sensor_packet();
-            if (queue_result != ESP_OK) {
-                ESP_LOGE(kLogTag, "sensor packet queue failed: %s",
-                         esp_err_to_name(queue_result));
-            }
+            note_packet_queue_result("sensor", queue_sensor_packet(), now);
             last_sensor_packet_time = now;
         }
 
         if ((now - last_state_packet_time) >= kStatePacketPeriod) {
-            const esp_err_t queue_result = queue_state_packet();
-            if (queue_result != ESP_OK) {
-                ESP_LOGE(kLogTag, "state packet queue failed: %s",
-                         esp_err_to_name(queue_result));
-            }
+            note_packet_queue_result("state", queue_state_packet(), now);
             last_state_packet_time = now;
         }
 
         if (debug_packet_output_enabled_.load() &&
             (now - last_debug_packet_time) >= kDebugPacketPeriod) {
-            const esp_err_t queue_result = queue_debug_packet();
-            if (queue_result != ESP_OK) {
-                ESP_LOGE(kLogTag, "debug packet queue failed: %s",
-                         esp_err_to_name(queue_result));
-            }
+            note_packet_queue_result("debug", queue_debug_packet(), now);
             last_debug_packet_time = now;
         }
 
@@ -1971,6 +2110,7 @@ void Sensors::run()
             max_pass_us_ = static_cast<std::uint32_t>(pass_us);
         }
         report_attitude_rate(pass_end_us);
+        report_position(pass_end_us);
 
         // Deadline scheduling: wake every kTaskPeriod (1/kTaskRateHz)
         // measured from the previous deadline, not from the end of this pass.

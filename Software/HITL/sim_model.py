@@ -19,6 +19,19 @@ from dataclasses import dataclass
 
 import hitl_protocol as hp
 
+
+def meters_per_degree(lat_deg: float) -> tuple[float, float]:
+    """WGS-84 metres per degree of latitude and of longitude at lat_deg.
+
+    Real GPS reports WGS-84 coordinates and Witness converts them with these
+    same formulas, so simulated fixes must use them too (a 111,320 m/deg
+    sphere put a 0.37% north scale error into HITL runs).
+    """
+    phi = math.radians(lat_deg)
+    lat_m = 111132.92 - 559.82 * math.cos(2 * phi) + 1.175 * math.cos(4 * phi)
+    lon_m = 111412.84 * math.cos(phi) - 93.5 * math.cos(3 * phi)
+    return lat_m, max(lon_m, 1e-6)
+
 G0 = 9.80665
 DT_S = 0.01
 TICK_MS = 10
@@ -246,9 +259,9 @@ class FlightSim:
                         or t < p.gps_dropout_end_s))
         has_fix = p.gps_fix and not dropout
         if has_fix:
-            lat = p.lat_deg + self.gps_n / 111_320.0
-            lon = p.lon_deg + self.gps_e / (
-                111_320.0 * max(math.cos(math.radians(p.lat_deg)), 1e-6))
+            m_lat, m_lon = meters_per_degree(p.lat_deg)
+            lat = p.lat_deg + self.gps_n / m_lat
+            lon = p.lon_deg + self.gps_e / m_lon
             gps_alt = self.alt + self._noise(1.0)
             sats, fix = p.gps_sats, 1
         else:
