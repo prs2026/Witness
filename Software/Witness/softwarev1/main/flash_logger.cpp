@@ -275,7 +275,8 @@ esp_err_t FlashLogger::scan_sessions(bool build_exports) {
                           type == kTextType ? "TXT" : "BIN");
             file.generation = info[slot].generation; file.slot = slot; file.type = type;
             file.store_version = kStoreVersion;
-            const esp_err_t r = scan_file(slot, type, type == kUart1Type,
+            const esp_err_t r = scan_file(slot, type, is_ring_type(type),
+                                          info[slot].generation, file.tagged,
                                           file.size, file.start_page);
             if (r != ESP_OK) return r;
             ++export_file_count_;
@@ -301,12 +302,13 @@ esp_err_t FlashLogger::create_session() {
         Writer w{};
         w.type = type; w.first_block = layout.first_block; w.block_count = layout.block_count;
         w.page_index = 0; w.last_erased_block = layout.first_block; w.ring = ring;
+        w.sequence = sequence_base(current_generation_);
         return w;
     };
     imu_writer_ = writer(kImuType, false);
     binary_writer_ = writer(kBinaryType, false);
-    text_writer_ = writer(kTextType, false);
-    uart_writer_ = writer(kUart1Type, true);
+    text_writer_ = writer(kTextType, is_ring_type(kTextType));
+    uart_writer_ = writer(kUart1Type, is_ring_type(kUart1Type));
     flight_marker_written_ = false;
     flight_marker_pending_.store(false);
     return ESP_OK;
@@ -387,7 +389,8 @@ esp_err_t FlashLogger::append_bytes(Writer &writer, const std::uint8_t *data, st
             writer.page_index = 0;
             if (!writer.wrapped) {
                 writer.wrapped = true;
-                ESP_LOGW(kLogTag, "GPS log ring wrapped; oldest GPS data is now overwritten");
+                ESP_LOGW(kLogTag, "%s log ring wrapped; its oldest data is now overwritten",
+                         writer.type == kTextType ? "text" : "GPS");
             }
         }
         const std::uint32_t block = writer.first_block + writer.page_index / W25n01kv::kPagesPerBlock;
@@ -554,33 +557,43 @@ esp_err_t FlashLogger::drain_uart_records(const bool flush)
 }
 
 esp_err_t FlashLogger::scan_file(const std::uint8_t slot, const std::uint8_t type,
-                                 const bool ring, std::uint32_t &size,
+                                 const bool ring, const std::uint32_t generation,
+                                 bool &tagged, std::uint32_t &size,
                                  std::uint32_t &start_page)
 {
-    size = 0;
-    start_page = 0;
     const auto layout = file_layout(slot, type);
     const std::uint32_t capacity = layout.block_count * W25n01kv::kPagesPerBlock;
-    bool found = false;
-    std::uint32_t oldest_sequence = 0;
+    const std::uint32_t tag = sequence_tag(generation);
     std::uint8_t h[kPageHeaderSize]{};
-    for (std::uint32_t index = 0; index < capacity; ++index) {
-        esp_err_t r = flash_.read(layout.first_block * W25n01kv::kPagesPerBlock + index, 0, h, sizeof(h));
-        if (r != ESP_OK) return r;
-        const std::uint16_t n = read_u16_be(h + 6);
-        const bool valid = read_u32_be(h) == kPageMagic && h[4] == type &&
-                           h[5] == kStoreVersion && n <= kPagePayloadSize;
-        if (!valid) {
-            if (!ring) break;  // linear files end at the first unwritten page
-            continue;
+    // Pass 1 counts only this session's pages. A file with none of them was
+    // written before tagging (or is empty); pass 2 then reads it untagged, as
+    // before, so sessions recorded by older firmware stay exportable.
+    for (int pass = 0; pass < 2; ++pass) {
+        tagged = pass == 0;
+        size = 0;
+        start_page = 0;
+        bool found = false;
+        std::uint32_t oldest_sequence = 0;
+        for (std::uint32_t index = 0; index < capacity; ++index) {
+            esp_err_t r = flash_.read(layout.first_block * W25n01kv::kPagesPerBlock + index, 0, h, sizeof(h));
+            if (r != ESP_OK) return r;
+            const std::uint16_t n = read_u16_be(h + 6);
+            const std::uint32_t sequence = read_u32_be(h + 8);
+            const bool valid = read_u32_be(h) == kPageMagic && h[4] == type &&
+                               h[5] == kStoreVersion && n <= kPagePayloadSize &&
+                               (!tagged || (sequence >> kSequenceTagShift) == tag);
+            if (!valid) {
+                if (!ring) break;  // linear files end at the first page not theirs
+                continue;
+            }
+            size += n;
+            if (!found || static_cast<std::int32_t>(sequence - oldest_sequence) < 0) {
+                oldest_sequence = sequence;
+                start_page = index;
+                found = true;
+            }
         }
-        size += n;
-        const std::uint32_t sequence = read_u32_be(h + 8);
-        if (!found || static_cast<std::int32_t>(sequence - oldest_sequence) < 0) {
-            oldest_sequence = sequence;
-            start_page = index;
-            found = true;
-        }
+        if (found) break;
     }
     return ESP_OK;
 }
@@ -602,7 +615,7 @@ esp_err_t FlashLogger::load_export_page(
     const ExportFile &file = export_files_[file_index];
     const auto layout = file_layout(file.slot, file.type);
     const std::uint32_t capacity = layout.block_count * W25n01kv::kPagesPerBlock;
-    const bool ring = file.type == kUart1Type;
+    const bool ring = is_ring_type(file.type);
     // A ring file is read oldest page first, wrapping, skipping the erased
     // pages around the write position.
     for (; step < capacity; ++step) {
@@ -615,7 +628,10 @@ esp_err_t FlashLogger::load_export_page(
         const bool valid = read_u32_be(export_read_page_) == kPageMagic &&
                            export_read_page_[4] == file.type &&
                            export_read_page_[5] == file.store_version &&
-                           payload_length <= kPagePayloadSize;
+                           payload_length <= kPagePayloadSize &&
+                           (!file.tagged ||
+                            (read_u32_be(export_read_page_ + 8) >> kSequenceTagShift) ==
+                                sequence_tag(file.generation));
         if (!valid) {
             if (!ring) return ESP_ERR_INVALID_RESPONSE;
             continue;

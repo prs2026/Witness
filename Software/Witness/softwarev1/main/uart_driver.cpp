@@ -278,7 +278,7 @@ void UartDriver::run()
                 serial_forwarder_.queue_raw_bytes(
                     receive_buffer.data(), received);
             if (forward_result != ESP_OK &&
-                receive_time - last_usb_warning >= pdMS_TO_TICKS(1000)) {
+                receive_time - last_usb_warning >= pdMS_TO_TICKS(10000)) {
                 last_usb_warning = receive_time;
                 ESP_LOGW(
                     kTag,

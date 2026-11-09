@@ -83,6 +83,9 @@ public:
         std::uint8_t type;
         std::uint8_t store_version;
         std::uint32_t start_page;      // first page in reading order (ring files)
+        // Pages carry the session tag (see kSequenceTagShift); false only for
+        // ring files written before tagging, which are read untagged.
+        bool tagged;
     };
 
     FlashLogger(Sensors &sensors,
@@ -151,6 +154,27 @@ private:
     static constexpr std::uint8_t kBinaryType = 1;
     static constexpr std::uint8_t kTextType = 2;
     static constexpr std::uint8_t kUart1Type = 3;
+    // Circular streams overwrite their oldest block instead of filling up:
+    // raw GPS and the diagnostic text (it is written from power-on in every
+    // state, so a long pad wait must not leave no room for the flight).
+    static constexpr bool is_ring_type(std::uint8_t type)
+    {
+        return type == kUart1Type || type == kTextType;
+    }
+    // A new session erases only the first block of each stream, so the rest
+    // of a slot still holds valid pages from older sessions. The page
+    // sequence number therefore carries the session generation in its top
+    // 12 bits (20 bits count pages: 2 GB per stream), and the scan and
+    // export ignore pages from any other session.
+    static constexpr unsigned kSequenceTagShift = 20;
+    static constexpr std::uint32_t sequence_tag(std::uint32_t generation)
+    {
+        return generation & 0xFFFU;
+    }
+    static constexpr std::uint32_t sequence_base(std::uint32_t generation)
+    {
+        return sequence_tag(generation) << kSequenceTagShift;
+    }
     static constexpr std::uint8_t kImuType = 4;
     static constexpr std::uint16_t kRecordMagic = 0x574C;       // WL
     static constexpr std::uint8_t kRecordVersion = 1;
@@ -221,6 +245,7 @@ private:
     esp_err_t drain_binary_records();
     esp_err_t drain_imu_records();
     esp_err_t scan_file(std::uint8_t slot, std::uint8_t type, bool ring,
+                        std::uint32_t generation, bool &tagged,
                         std::uint32_t &size, std::uint32_t &start_page);
     esp_err_t read_file_data(std::size_t file_index,
                              std::uint32_t offset,
