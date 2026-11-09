@@ -209,25 +209,42 @@ STATUS_LAMPS = (
 
 
 class HitlApp:
+    """The HITL bench GUI.
+
+    Standalone (``parent`` is None) it owns ``root``: window title, size and
+    close button. Embedded (witnessOS passes a ``parent`` frame) it only
+    builds its widgets inside ``parent`` and the host calls ``shutdown()``.
+    """
+
     def __init__(self, root, settings: dict | None = None,
                  settings_path: str = SETTINGS_PATH,
-                 runs_dir: str | None = hs.DEFAULT_RUNS_DIR):
+                 runs_dir: str | None = hs.DEFAULT_RUNS_DIR, parent=None):
         import tkinter as tk
         from tkinter import ttk
         from tkinter.scrolledtext import ScrolledText
         self.tk = tk
         self.root = root
+        self.standalone = parent is None
+        self.container = root if parent is None else parent
         self.settings_path = settings_path
         self.settings = settings or load_settings(settings_path)
         self.session = hs.HitlSession(runs_dir=runs_dir)
         self._shown_run = None
         self._closing = False
-        root.title("Witness HITL")
-        root.geometry("1280x860")
-        root.protocol("WM_DELETE_WINDOW", self.on_close)
+        self._plot_sig = None
+        self._plot_job = None
+        if self.standalone:
+            root.title("Witness HITL")
+            sw, sh = root.winfo_screenwidth(), root.winfo_screenheight()
+            root.geometry(f"{min(1280, sw - 40)}x{min(860, sh - 80)}")
+            root.minsize(560, 380)
+            root.protocol("WM_DELETE_WINDOW", self.on_close)
+        top = self.container
 
-        # --- connection bar
-        bar = ttk.Frame(root, padding=4)
+        # --- connection bar (two rows so the window can be narrow)
+        self.bar = bar_box = ttk.Frame(top, padding=4)
+        bar_box.pack(side="top", fill="x")
+        bar = ttk.Frame(bar_box)
         bar.pack(side="top", fill="x")
         ttk.Label(bar, text="Host").pack(side="left")
         self.host_var = tk.StringVar(value=self.settings["host"])
@@ -242,27 +259,31 @@ class HitlApp:
         self.conn_label.pack(side="left")
         self.bytes_label = ttk.Label(bar, text="rx 0 / tx 0 B")
         self.bytes_label.pack(side="left", padx=8)
-        ttk.Separator(bar, orient="vertical").pack(side="left", fill="y",
-                                                   padx=6)
-        self.btn_enter = ttk.Button(bar, text="Enter HITL",
+        bar2 = ttk.Frame(bar_box)
+        bar2.pack(side="top", fill="x", pady=(4, 0))
+        self.btn_enter = ttk.Button(bar2, text="Enter HITL",
                                     command=self.enter_hitl)
-        self.btn_start = ttk.Button(bar, text="Start sim",
+        self.btn_start = ttk.Button(bar2, text="Start sim",
                                     command=self.start_sim)
-        self.btn_stop = ttk.Button(bar, text="Stop", command=self.stop_sim)
-        self.btn_exit = ttk.Button(bar, text="Exit HITL",
+        self.btn_stop = ttk.Button(bar2, text="Stop", command=self.stop_sim)
+        self.btn_exit = ttk.Button(bar2, text="Exit HITL",
                                    command=self.exit_hitl)
         for b in (self.btn_enter, self.btn_start, self.btn_stop,
                   self.btn_exit):
             b.pack(side="left", padx=2)
-        ttk.Label(bar, text="Tolerance s").pack(side="left", padx=(8, 0))
+        ttk.Label(bar2, text="Tolerance s").pack(side="left", padx=(8, 0))
         self.tol_var = tk.StringVar(value=str(self.settings["tolerance_s"]))
-        ttk.Entry(bar, textvariable=self.tol_var, width=5).pack(side="left")
+        ttk.Entry(bar2, textvariable=self.tol_var, width=5).pack(side="left")
 
-        self.banner = tk.Label(root, text="", bg="#b00020", fg="white",
-                               font=("Segoe UI", 11, "bold"))
+        self.banner = tk.Label(top, text="", bg="#b00020", fg="white",
+                               font=("Segoe UI", 11, "bold"), anchor="w",
+                               justify="left", wraplength=600)
+        self.banner.bind("<Configure>", lambda e: self.banner.configure(
+            wraplength=max(200, e.width - 8)))
 
-        main = ttk.PanedWindow(root, orient="horizontal")
+        main = ttk.PanedWindow(top, orient="horizontal")
         main.pack(fill="both", expand=True)
+        self.main_pane = main
 
         # --- left: preset + parameters
         left = ttk.Frame(main, padding=4)
@@ -277,7 +298,7 @@ class HitlApp:
         cb.bind("<<ComboboxSelected>>", lambda e: self.load_preset())
         csv_row = ttk.Frame(left)
         csv_row.pack(fill="x", pady=(4, 0))
-        ttk.Button(csv_row, text="Load CSV\u2026",
+        ttk.Button(csv_row, text="Load CSV…",
                    command=self.load_csv).pack(side="left")
         self.csv_label = ttk.Label(csv_row, text="(preset source)",
                                    width=26)
@@ -290,9 +311,19 @@ class HitlApp:
         ttk.Entry(att_row, textvariable=self.att_tilt_var,
                   width=6).pack(side="left", padx=4)
         self.csv_path = None
+        # Packed bottom-up first so the scrolling parameter list, not the
+        # Predict button or its text, gives way when the window is short.
+        self.predict_label = ttk.Label(left, text="", justify="left",
+                                       wraplength=280)
+        self.predict_label.pack(side="bottom", anchor="w", fill="x")
+        ttk.Button(left, text="Predict transitions",
+                   command=self.predict).pack(side="bottom", fill="x")
+        left.bind("<Configure>", lambda e: self.predict_label.configure(
+            wraplength=max(120, e.width - 10)))
         pf_outer = ttk.LabelFrame(left, text="Parameters", padding=2)
         pf_outer.pack(fill="both", expand=True, pady=4)
-        canvas = tk.Canvas(pf_outer, width=270, highlightthickness=0)
+        canvas = tk.Canvas(pf_outer, width=250, height=120,
+                           highlightthickness=0)
         sb = ttk.Scrollbar(pf_outer, orient="vertical", command=canvas.yview)
         pf = ttk.Frame(canvas)
         pf.bind("<Configure>", lambda e: canvas.configure(
@@ -301,26 +332,22 @@ class HitlApp:
         canvas.configure(yscrollcommand=sb.set)
         canvas.pack(side="left", fill="both", expand=True)
         sb.pack(side="right", fill="y")
+        self.param_canvas = canvas
         self.param_frame = pf
         self.param_cls = None
         self.param_vars = {}
         self.param_types = {}
         self._build_param_grid(sm.SimParams)
-        ttk.Button(left, text="Predict transitions",
-                   command=self.predict).pack(fill="x")
-        self.predict_label = ttk.Label(left, text="", justify="left",
-                                       wraplength=280)
-        self.predict_label.pack(anchor="w", fill="x")
 
         # --- right: status, plot, table, log
         right = ttk.Frame(main, padding=4)
         main.add(right, weight=1)
         st = ttk.Frame(right)
         st.pack(fill="x")
-        self.state_label = tk.Label(st, text="State: ?", width=18,
+        self.state_label = tk.Label(st, text="State: ?", width=14,
                                     font=("Segoe UI", 16, "bold"),
                                     anchor="w")
-        self.state_label.pack(side="left")
+        self.state_label.pack(side="left", anchor="n")
         lamps = ttk.Frame(st)
         lamps.pack(side="left", padx=6)
         self.lamps = []
@@ -331,29 +358,39 @@ class HitlApp:
             ttk.Label(lamps, text=name).grid(row=i // 5, column=(i % 5) * 2 + 1,
                                             sticky="w", padx=(0, 8))
             self.lamps.append((c, oval))
-        self.info_label = ttk.Label(right, text="", font=("Consolas", 10))
+        self.info_label = ttk.Label(right, text="", font=("Consolas", 10),
+                                    anchor="w", justify="left",
+                                    wraplength=600)
         self.info_label.pack(fill="x")
+        right.bind("<Configure>", lambda e: self.info_label.configure(
+            wraplength=max(200, e.width - 10)))
 
-        self.plot = tk.Canvas(right, height=300, bg="white")
-        self.plot.pack(fill="both", expand=True, pady=4)
+        # Plot and table/log share a draggable vertical split.
+        vsplit = ttk.PanedWindow(right, orient="vertical")
+        vsplit.pack(fill="both", expand=True, pady=(4, 0))
+        self.plot = tk.Canvas(vsplit, height=220, width=320, bg="white",
+                              highlightthickness=0)
+        vsplit.add(self.plot, weight=3)
+        self.plot.bind("<Configure>", lambda e: self._schedule_plot())
 
-        lower = ttk.Frame(right)
-        lower.pack(fill="both", expand=True)
+        lower = ttk.Frame(vsplit)
+        vsplit.add(lower, weight=2)
         cols = ("state", "expected", "witness", "delta", "result")
         self.table = ttk.Treeview(lower, columns=cols, show="headings",
                                   height=5)
-        for c, w in zip(cols, (90, 90, 90, 80, 90)):
+        for c, w in zip(cols, (80, 70, 70, 60, 80)):
             self.table.heading(c, text=c.capitalize())
-            self.table.column(c, width=w, anchor="center")
+            self.table.column(c, width=w, minwidth=50, anchor="center",
+                              stretch=False)
         self.table.pack(side="left", fill="y")
-        self.logbox = ScrolledText(lower, height=12, font=("Consolas", 9),
-                                   state="disabled")
+        self.logbox = ScrolledText(lower, height=6, width=24,
+                                   font=("Consolas", 9), state="disabled")
         self.logbox.pack(side="left", fill="both", expand=True, padx=(4, 0))
 
         self.load_preset()
         self._refresh_buttons()
-        self.root.after(100, self.poll)
-        self.root.after(250, self.redraw_plot)
+        self._poll_id = self.root.after(100, self.poll)
+        self._redraw_id = self.root.after(250, self.redraw_plot)
 
     # ------------------------------------------------------------ params
     def _build_param_grid(self, cls):
@@ -553,20 +590,30 @@ class HitlApp:
         except (OSError, RuntimeError, ValueError) as exc:
             self.append_log(f"[tool] {exc}")
 
-    def on_close(self):
+    def shutdown(self):
+        """Stop timers and disconnect (stops any run / sends EXIT)."""
         self._closing = True
+        for job in (self._poll_id, self._redraw_id, self._plot_job):
+            if job is not None:
+                try:
+                    self.root.after_cancel(job)
+                except Exception:
+                    pass
+        if self.session.connected:
+            self.session.disconnect()
+
+    def on_close(self):
         try:
-            if self.session.connected:
-                self.session.disconnect()  # stops run / sends EXIT
+            self.shutdown()
         finally:
-            self.root.destroy()
+            if self.standalone:
+                self.root.destroy()
 
     # ----------------------------------------------------------- display
     def show_banner(self, text):
         self.banner.config(text=text)
         if not self.banner.winfo_ismapped():
-            self.banner.pack(side="top", fill="x", after=self.root.
-                             winfo_children()[0])
+            self.banner.pack(side="top", fill="x", after=self.bar)
 
     def hide_banner(self):
         self.banner.pack_forget()
@@ -664,83 +711,191 @@ class HitlApp:
         if run is not None:
             self._fill_table(run.expected, run.observed, run.tolerance_s)
         self._refresh_buttons()
-        self.root.after(100, self.poll)
+        self._poll_id = self.root.after(100, self.poll)
 
-    def redraw_plot(self):
+    def _schedule_plot(self):
+        """Redraw soon after a resize (debounced), independent of the timer."""
         if self._closing:
             return
-        run = self.session.run
+        if self._plot_job is not None:
+            self.root.after_cancel(self._plot_job)
+        self._plot_job = self.root.after(60, self._redraw_now)
+
+    def _redraw_now(self):
+        self._plot_job = None
+        self._plot_sig = None
+        self._draw_plot()
+
+    def redraw_plot(self):
+        """Periodic redraw; skipped while hidden or when nothing changed."""
+        if self._closing:
+            return
+        try:
+            self._draw_plot()
+        finally:
+            self._redraw_id = self.root.after(250, self.redraw_plot)
+
+    def _draw_plot(self):
         c = self.plot
+        if self._closing or not c.winfo_ismapped():
+            return
+        run = self.session.run
+        w = max(c.winfo_width(), 120)
+        h = max(c.winfo_height(), 80)
+        sig = (w, h, id(run)) + (() if run is None else (
+            run.sim_ms, len(run.plot_baro), len(run.plot_wacc),
+            len(run.plot_tilt_w), len(run.plot_tilt_err),
+            len(run.plot_att_err)))
+        if sig == self._plot_sig:
+            return
+        self._plot_sig = sig
         c.delete("all")
-        w = max(c.winfo_width(), 200)
-        h = max(c.winfo_height(), 160)
-        if run is not None:
-            t_end = max(run.samples[-1].t_ms / 1000 if run.samples else 1, 1)
-            panels = 3 if run.truth_quats is not None else 2
-            ph = h // panels
-            alts = [a for _t, a in run.plot_true] + \
-                [a for _t, a in run.plot_baro]
-            accs = [a for _t, a in run.plot_accel] + \
-                [a for _t, a in run.plot_wacc]
-            self._draw_series(c, 0, ph, w, t_end, alts, "Altitude MSL (m)",
-                              [(run.plot_true, "#1f5fbf", "sim true"),
-                               (run.plot_baro, "#d2691e", "Witness baro")])
-            self._draw_series(c, ph, ph, w, t_end, accs,
-                              "X accel (g)",
-                              [(run.plot_accel, "#1f5fbf", "sim low-g X"),
-                               (run.plot_wacc, "#d2691e", "Witness accel X")])
-            if panels == 3:
-                now = run.sim_ms / 1000
-                truth = [pt for pt in run.plot_tilt_truth if pt[0] <= now]
-                series = [(truth, "#1f5fbf", "truth tilt"),
-                          (run.plot_tilt_w, "#d2691e", "Witness tilt"),
-                          (run.plot_tilt_err, "#2e8b57", "tilt err"),
-                          (run.plot_att_err, "#b00020", "att err")]
-                vals = [v for pts, _c, _l in series for _t, v in pts]
-                title = "Tilt / attitude error (deg)"
-                if run.att_records and not run.plot_tilt_w:
-                    title += "  - Witness attitude not available (all zero)"
-                self._draw_series(c, 2 * ph, h - 2 * ph, w, t_end, vals,
-                                  title, series)
-            x = 50 + (w - 60) * min(run.sim_ms / 1000 / t_end, 1)
-            c.create_line(x, 0, x, h, fill="#bbb", dash=(2, 2))
-        else:
+        if run is None:
             c.create_text(w / 2, h / 2, text="Start a sim to plot",
                           fill="#888")
-        self.root.after(250, self.redraw_plot)
+            return
+        t_end = max(run.samples[-1].t_ms / 1000 if run.samples else 1, 1)
+        panels = 3 if run.truth_quats is not None else 2
+        ph = h / panels
+        now = run.sim_ms / 1000
+        specs = [
+            ("Altitude MSL (m)",
+             [(run.plot_true, "#1f5fbf", "sim true"),
+              (run.plot_baro, "#d2691e", "Witness baro")]),
+            ("X accel (g)",
+             [(run.plot_accel, "#1f5fbf", "sim low-g X"),
+              (run.plot_wacc, "#d2691e", "Witness accel X")]),
+        ]
+        if panels == 3:
+            truth = [pt for pt in run.plot_tilt_truth if pt[0] <= now]
+            title = "Tilt / attitude error (deg)"
+            if run.att_records and not run.plot_tilt_w:
+                title += " - Witness attitude not available (all zero)"
+            specs.append((title, [(truth, "#1f5fbf", "truth tilt"),
+                                  (run.plot_tilt_w, "#d2691e", "Witness tilt"),
+                                  (run.plot_tilt_err, "#2e8b57", "tilt err"),
+                                  (run.plot_att_err, "#b00020", "att err")]))
+        for i, (title, series) in enumerate(specs):
+            y0 = round(i * ph)
+            y1 = round((i + 1) * ph)
+            self._draw_series(c, y0, y1 - y0, w, t_end, title, series,
+                              cursor_t=min(now, t_end))
 
     @staticmethod
-    def _draw_series(c, y0, hh, w, t_end, values, title, series):
-        left, right, top, bot = 50, w - 10, y0 + 16, y0 + hh - 16
-        c.create_text(left, y0 + 8, text=title, anchor="w",
-                      font=("Segoe UI", 9, "bold"))
-        c.create_rectangle(left, top, right, bot, outline="#ccc")
-        if not values:
-            return
-        lo, hi = min(values), max(values)
+    def _draw_series(c, y0, hh, w, t_end, title, series, cursor_t=None):
+        """One panel: title + wrapped legend, nice y/x ticks, clipped data."""
+        import tkinter.font as tkfont
+        font = tkfont.nametofont("TkDefaultFont")
+        ls = font.metrics("linespace")
+        values = [v for pts, _c, _l in series for _t, v in pts]
+        if values:
+            lo, hi = min(values), max(values)
+        else:
+            lo, hi = 0.0, 1.0
         if hi - lo < 1e-6:
             lo, hi = lo - 1, hi + 1
         pad = (hi - lo) * 0.05
         lo, hi = lo - pad, hi + pad
-        c.create_text(left - 4, top, text=f"{hi:.0f}" if hi > 50
-                      else f"{hi:.1f}", anchor="e", font=("Segoe UI", 8))
-        c.create_text(left - 4, bot, text=f"{lo:.0f}" if hi > 50
-                      else f"{lo:.1f}", anchor="e", font=("Segoe UI", 8))
-        c.create_text(right, bot + 8, text=f"{t_end:.0f} s", anchor="e",
-                      font=("Segoe UI", 8))
-        lx = left + 190
-        for pts, color, label in series:
-            c.create_text(lx, y0 + 8, text=label, fill=color, anchor="w",
-                          font=("Segoe UI", 9))
-            lx += 105
+
+        # Header: title then legend entries, wrapping onto extra lines.
+        x, line = 6, 0
+        items = [(title, "#222", True)] + [(lab, col, False)
+                                          for _p, col, lab in series]
+        placed = []
+        for text, color, bold in items:
+            tw = font.measure(text) + (14 if not bold else 6)
+            if x + tw > w - 6 and x > 6:
+                x, line = 6, line + 1
+            placed.append((x, line, text, color, bold))
+            x += tw + 10
+        header_h = (line + 1) * ls + 4
+        plot_h_est = hh - header_h - ls - 8
+        y_ticks = _nice_ticks(lo, hi, max(2, int(plot_h_est // (ls * 1.8))))
+        lo, hi = min(lo, y_ticks[0]), max(hi, y_ticks[-1])
+        y_step = y_ticks[1] - y_ticks[0] if len(y_ticks) > 1 else 1.0
+        labels = [_tick_label(v, y_step) for v in y_ticks]
+        left = max(36, max(font.measure(s) for s in labels) + 10)
+        right = w - 10
+        top = y0 + header_h
+        bot = y0 + hh - ls - 6
+        for px, ln, text, color, bold in placed:
+            ty = y0 + 2 + ln * ls + ls / 2
+            if bold:
+                c.create_text(px, ty, text=text, anchor="w", fill=color,
+                              font=("Segoe UI", 9, "bold"))
+            else:
+                c.create_line(px, ty, px + 10, ty, fill=color, width=2)
+                c.create_text(px + 14, ty, text=text, anchor="w", fill=color,
+                              font=("Segoe UI", 9))
+        if bot - top < 12 or right - left < 30:
+            return  # too small to plot legibly; header still shown
+        c.create_rectangle(left, top, right, bot, outline="#bbb")
+
+        def ys(v):
+            return bot - (bot - top) * (v - lo) / (hi - lo)
+
+        def xs(t):
+            return left + (right - left) * min(max(t / t_end, 0.0), 1.0)
+        last_label_y = None
+        for v, s in zip(y_ticks, labels):
+            y = ys(v)
+            if y < top - 0.5 or y > bot + 0.5:
+                continue
+            c.create_line(left, y, right, y, fill="#eee")
+            if last_label_y is None or abs(last_label_y - y) >= ls:
+                c.create_text(left - 4, y, text=s, anchor="e",
+                              font=("Segoe UI", 8), fill="#555")
+                last_label_y = y
+        x_ticks = [t for t in _nice_ticks(
+            0, t_end, max(2, int((right - left) // 70))) if 0 <= t <= t_end]
+        x_step = x_ticks[1] - x_ticks[0] if len(x_ticks) > 1 else t_end
+        last_right = -1e9
+        for t in x_ticks:
+            x = xs(t)
+            c.create_line(x, top, x, bot, fill="#f2f2f2")
+            s = _tick_label(t, x_step) + (" s" if t == x_ticks[-1] else "")
+            half = font.measure(s) / 2
+            if x - half > last_right + 6 and x + half <= w:
+                c.create_text(x, bot + 2, text=s, anchor="n",
+                              font=("Segoe UI", 8), fill="#555")
+                last_right = x + half
+        for pts, color, _label in series:
             if len(pts) < 2:
                 continue
-            step = max(1, len(pts) // 1500)
+            step = max(1, len(pts) // max(200, 2 * int(right - left)))
             coords = []
             for t, v in pts[::step]:
-                coords.append(left + (right - left) * min(t / t_end, 1))
-                coords.append(bot - (bot - top) * (v - lo) / (hi - lo))
+                coords.append(xs(t))
+                coords.append(min(max(ys(v), top), bot))
             c.create_line(*coords, fill=color, width=1.5)
+        if cursor_t is not None:
+            x = xs(cursor_t)
+            c.create_line(x, top, x, bot, fill="#999", dash=(2, 2))
+
+
+def _nice_ticks(lo: float, hi: float, target: int = 5) -> list:
+    """Round tick values covering [lo, hi] with about ``target`` intervals."""
+    import math
+    span = hi - lo
+    if not math.isfinite(span) or span <= 0:
+        return [lo, lo + 1.0]
+    rough = span / max(1, target)
+    mag = 10.0 ** math.floor(math.log10(rough))
+    step = next(m for m in (1, 2, 5, 10) if rough / mag <= m) * mag
+    i0, i1 = math.floor(lo / step + 1e-9), math.ceil(hi / step - 1e-9)
+    if i1 - i0 > 200:
+        i1 = i0 + 200
+    return [i * step for i in range(i0, i1 + 1)]
+
+
+def _tick_label(v: float, step: float) -> str:
+    import math
+    if abs(v) < step * 1e-6:
+        return "0"
+    if step >= 1:
+        return f"{v:.0f}"
+    decimals = min(6, max(0, -math.floor(math.log10(step))))
+    return f"{v:.{decimals}f}"
 
 
 def build_parser():
