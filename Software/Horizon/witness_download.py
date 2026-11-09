@@ -121,7 +121,12 @@ def ensure_disk(pi: Pi, args) -> None:
 
 
 def list_files(pi: Pi) -> list[dict]:
-    code, out, err = pi.agent_text("list")
+    # A freshly attached disk is root-owned until udev applies the rule.
+    for _attempt in range(5):
+        code, out, err = pi.agent_text("list")
+        if code != 4:
+            break
+        time.sleep(1)
     if code != 0:
         raise DownloadError(err.strip() or f"list failed ({code})")
     return [json.loads(line) for line in out.splitlines() if line.strip()]
@@ -149,8 +154,9 @@ def describe(name: str) -> str:
 
 
 def generation(name: str) -> int:
-    match = re.search(r"(\d+)", name)
-    return int(match.group(1)) if match else -1
+    """Session generation: Witness names files <type><7 hex digits>.<ext>."""
+    match = re.match(r"[A-Za-z]([0-9A-Fa-f]{7})\.", name)
+    return int(match.group(1), 16) if match else -1
 
 
 def download(pi: Pi, name: str, size: int, destination: Path) -> None:

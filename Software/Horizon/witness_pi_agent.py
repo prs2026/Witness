@@ -22,7 +22,8 @@ import struct
 import sys
 
 # Witness MSC: VID 303a PID 4012, product "Witness Read-Only Logs".
-BY_ID_PATTERNS = ("/dev/disk/by-id/usb-Witness_*",)
+BY_ID_PATTERNS = ("/dev/disk/by-id/usb-WITNESS_*", "/dev/disk/by-id/usb-Witness_*",
+                  "/dev/disk/by-label/WITNESSLOGS")
 MODEL_NAMES = ("READ-ONLY LOGS", "Read-Only Logs")
 
 
