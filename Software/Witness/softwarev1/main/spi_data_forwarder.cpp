@@ -1,4 +1,5 @@
 #include "spi_data_forwarder.h"
+#include "task_cores.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -22,24 +23,26 @@ esp_err_t SpiDataForwarder::start()
         return ESP_ERR_NO_MEM;
     }
 
-    if (xTaskCreate(
+    if (xTaskCreatePinnedToCore(
             forward_task_entry,
             "data_forwarder",
             kTaskStackSize,
             this,
             kForwardTaskPriority,
-            &forward_task_handle_) != pdPASS) {
+            &forward_task_handle_,
+            task_cores::kSystem) != pdPASS) {
         forward_task_handle_ = nullptr;
         return ESP_ERR_NO_MEM;
     }
 
-    if (xTaskCreate(
+    if (xTaskCreatePinnedToCore(
             spi_task_entry,
             "spi_interface",
             kTaskStackSize,
             this,
             kSpiTaskPriority,
-            &spi_task_handle_) != pdPASS) {
+            &spi_task_handle_,
+            task_cores::kSystem) != pdPASS) {
         spi_task_handle_ = nullptr;
         return ESP_ERR_NO_MEM;
     }

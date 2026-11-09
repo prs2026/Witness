@@ -1,4 +1,6 @@
 #include "sensors.h"
+#include "flash_logger.h"
+#include "task_cores.h"
 #include "uart_driver.h"
 
 #include <array>
@@ -12,6 +14,7 @@
 
 #include "comms.h"
 #include "esp_adc/adc_cali_scheme.h"
+#include "esp_heap_caps.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "flight_state_machine.h"
@@ -208,6 +211,15 @@ esp_err_t Sensors::start()
         return result;
     }
 
+    fifo_tx_ = static_cast<std::uint8_t *>(heap_caps_calloc(
+        1, kMaximumSpiTransfer, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL));
+    fifo_rx_ = static_cast<std::uint8_t *>(heap_caps_calloc(
+        1, kMaximumSpiTransfer, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL));
+    if (fifo_tx_ == nullptr || fifo_rx_ == nullptr) {
+        release_resources();
+        return ESP_ERR_NO_MEM;
+    }
+
     result = initialize_lsm6dsv320x();
     if (result != ESP_OK) {
         release_resources();
@@ -245,13 +257,14 @@ esp_err_t Sensors::start()
         return result;
     }
 
-    if (xTaskCreate(
+    if (xTaskCreatePinnedToCore(
             task_entry,
             "sensors",
             kTaskStackSize,
             this,
             kTaskPriority,
-            &task_handle_) != pdPASS) {
+            &task_handle_,
+            task_cores::kEstimation) != pdPASS) {
         task_handle_ = nullptr;
         release_resources();
         return ESP_ERR_NO_MEM;
@@ -653,7 +666,46 @@ esp_err_t Sensors::initialize_lsm6dsv320x()
     if (result != ESP_OK) {
         return result;
     }
-    return write_register(kRegCtrl2, kGyroOutputDataRate);
+    result = write_register(kRegCtrl2, kGyroOutputDataRate);
+    if (result != ESP_OK) {
+        return result;
+    }
+
+    // FIFO: batch gyro, low-g and high-g at 960 Hz in continuous mode. The
+    // sensor task drains it every pass; samples are timed by the sensor clock.
+    result = write_register(kRegFifoCtrl4, kFifoBypass);
+    if (result != ESP_OK) {
+        return result;
+    }
+    result = write_register(kRegCounterBdr1, kFifoHighGBatch);
+    if (result != ESP_OK) {
+        return result;
+    }
+    result = write_register(kRegFifoCtrl3, kFifoBatchRates);
+    if (result != ESP_OK) {
+        return result;
+    }
+    std::uint8_t freq_fine = 0;
+    result = read_registers(kRegInternalFreqFine, &freq_fine, 1);
+    if (result != ESP_OK) {
+        return result;
+    }
+    imu_freq_fine_ = static_cast<std::int8_t>(freq_fine);
+    imu_period_us_ =
+        1e6 / (static_cast<double>(kImuSampleRateHz) *
+               (1.0 + 0.0013 * static_cast<double>(imu_freq_fine_)));
+    imu_clock_valid_ = false;
+
+    result = write_register(kRegFifoCtrl4, kFifoContinuous);
+    if (result == ESP_OK) {
+        ESP_LOGI(kLogTag,
+                 "LSM6 7.68 kHz ODR, gyro LPF1 407 Hz, low-g LPF2 384 Hz, "
+                 "high-g 960 Hz; FIFO batching at %lu Hz nominal, %.2f Hz "
+                 "actual (FREQ_FINE %d)",
+                 static_cast<unsigned long>(kImuSampleRateHz),
+                 1e6 / imu_period_us_, static_cast<int>(imu_freq_fine_));
+    }
+    return result;
 }
 
 esp_err_t Sensors::read_registers(
@@ -676,7 +728,7 @@ esp_err_t Sensors::read_registers(
     transaction.tx_buffer = transmit;
     transaction.rx_buffer = receive;
 
-    const esp_err_t result = spi_device_transmit(spi_device_, &transaction);
+    const esp_err_t result = spi_device_polling_transmit(spi_device_, &transaction);
     if (result == ESP_OK) {
         std::memcpy(data, &receive[1], length);
     }
@@ -700,7 +752,7 @@ esp_err_t Sensors::write_registers(
     spi_transaction_t transaction{};
     transaction.length = (length + 1) * 8;
     transaction.tx_buffer = transmit;
-    return spi_device_transmit(spi_device_, &transaction);
+    return spi_device_polling_transmit(spi_device_, &transaction);
 }
 
 esp_err_t Sensors::write_register(
@@ -710,74 +762,203 @@ esp_err_t Sensors::write_register(
     return write_registers(register_address, &value, 1);
 }
 
+esp_err_t Sensors::read_fifo_words(const std::size_t words)
+{
+    // One burst from FIFO_DATA_OUT_TAG: with IF_INC the address rolls back
+    // from 7Eh to 78h, so consecutive 7-byte words stream out.
+    const std::size_t length = words * kFifoWordSize;
+    fifo_tx_[0] = kRegFifoDataOutTag | kReadCommand;
+    spi_transaction_t transaction{};
+    transaction.length = (length + 1) * 8;
+    transaction.rxlength = transaction.length;
+    transaction.tx_buffer = fifo_tx_;
+    transaction.rx_buffer = fifo_rx_;
+    return spi_device_polling_transmit(spi_device_, &transaction);
+}
+
+void Sensors::finish_fifo_slot()
+{
+    if (!fifo_slot_open_) {
+        return;
+    }
+    fifo_slot_open_ = false;
+    if (!fifo_slot_.has_gyro || !fifo_slot_.has_low_g ||
+        !fifo_slot_.has_high_g) {
+        ++fifo_partial_slots_;
+    }
+    // Missing channels hold their previous value.
+    for (std::size_t axis = 0; axis < 3; ++axis) {
+        if (!fifo_slot_.has_gyro) fifo_slot_.gyro[axis] = last_imu_.gyro[axis];
+        if (!fifo_slot_.has_low_g) fifo_slot_.low_g[axis] = last_imu_.low_g[axis];
+        if (!fifo_slot_.has_high_g) fifo_slot_.high_g[axis] = last_imu_.high_g[axis];
+    }
+    last_imu_ = fifo_slot_;
+    if (imu_batch_count_ < imu_batch_.size()) {
+        imu_batch_[imu_batch_count_++] = fifo_slot_;
+    }
+}
+
+void Sensors::push_fifo_word(const std::uint8_t *word)
+{
+    const std::uint8_t tag = word[0] >> 3;
+    const std::uint8_t tag_count = (word[0] >> 1) & 0x03U;
+    std::int16_t *target = nullptr;
+    bool *present = nullptr;
+    switch (tag) {
+    case kFifoTagGyro:
+        target = fifo_slot_.gyro;
+        present = &fifo_slot_.has_gyro;
+        break;
+    case kFifoTagLowG:
+        target = fifo_slot_.low_g;
+        present = &fifo_slot_.has_low_g;
+        break;
+    case kFifoTagHighG:
+        target = fifo_slot_.high_g;
+        present = &fifo_slot_.has_high_g;
+        break;
+    default:
+        ++fifo_bad_words_;
+        return;
+    }
+    // A new TAG_CNT, or a repeat of a channel already in the slot, starts
+    // the next time slot.
+    if (fifo_slot_open_ && (tag_count != fifo_slot_.tag_count || *present)) {
+        finish_fifo_slot();
+    }
+    if (!fifo_slot_open_) {
+        fifo_slot_ = ImuSample{};
+        fifo_slot_.tag_count = tag_count;
+        fifo_slot_open_ = true;
+    }
+    for (std::size_t axis = 0; axis < 3; ++axis) {
+        target[axis] = decode_i16(&word[1 + axis * 2]);
+    }
+    *present = true;
+    if (fifo_slot_.has_gyro && fifo_slot_.has_low_g && fifo_slot_.has_high_g) {
+        finish_fifo_slot();
+    }
+}
+
+void Sensors::apply_imu_sample(const ImuSample &sample)
+{
+    working_sample_.gyro_ready = sample.has_gyro;
+    working_sample_.low_g_accel_ready = sample.has_low_g;
+    working_sample_.high_g_accel_ready = sample.has_high_g;
+    for (std::size_t axis = 0; axis < 3; ++axis) {
+        working_sample_.gyro_raw[axis] = sample.gyro[axis];
+        working_sample_.gyro_mdps[axis] =
+            static_cast<float>(sample.gyro[axis]) * kGyroSensitivityMdps;
+        working_sample_.low_g_accel_raw[axis] = sample.low_g[axis];
+        working_sample_.low_g_accel_mg[axis] =
+            static_cast<float>(sample.low_g[axis]) * kLowGAccelSensitivityMg;
+        working_sample_.high_g_accel_raw[axis] = sample.high_g[axis];
+        working_sample_.high_g_accel_mg[axis] =
+            static_cast<float>(sample.high_g[axis]) * kHighGAccelSensitivityMg;
+    }
+    if (sample.has_gyro) has_gyro_sample_ = true;
+    if (sample.has_low_g) has_low_g_accel_sample_ = true;
+    if (sample.has_high_g) has_high_g_accel_sample_ = true;
+}
+
 esp_err_t Sensors::fetch_lsm6dsv320x()
 {
-    std::uint8_t status = 0;
-    esp_err_t result = read_registers(kRegStatus, &status, 1);
+    imu_batch_count_ = 0;
+
+    std::uint8_t fifo_status[2]{};
+    esp_err_t result = read_registers(kRegFifoStatus1, fifo_status, 2);
     if (result != ESP_OK) {
         return result;
     }
+    if ((fifo_status[1] & kFifoStatusOverrun) != 0) {
+        // Samples were lost; the slot in progress no longer lines up.
+        ++fifo_overruns_;
+        fifo_slot_open_ = false;
+        imu_clock_valid_ = false;
+    }
+    std::size_t words =
+        static_cast<std::size_t>(fifo_status[0]) |
+        (static_cast<std::size_t>(fifo_status[1] & kFifoStatusDiff8) << 8);
+    if (words > fifo_max_words_) {
+        fifo_max_words_ = static_cast<std::uint32_t>(words);
+    }
+    // Leave whatever does not fit this pass's batch in the FIFO.
+    const std::size_t word_limit = kMaxImuSamplesPerPass * 3U;
+    if (words > word_limit) {
+        words = word_limit;
+    }
 
-    working_sample_.low_g_accel_ready =
-        (status & kStatusLowGAccelReady) != 0;
-    working_sample_.gyro_ready = (status & kStatusGyroReady) != 0;
-    working_sample_.temperature_ready =
-        (status & kStatusTemperatureReady) != 0;
-    working_sample_.high_g_accel_ready =
-        (status & kStatusHighGAccelReady) != 0;
-
-    if (working_sample_.temperature_ready || working_sample_.gyro_ready ||
-        working_sample_.low_g_accel_ready) {
-        std::uint8_t output[14]{};
-        result = read_registers(kRegOutputStart, output, sizeof(output));
+    while (words > 0) {
+        const std::size_t burst =
+            words < kFifoWordsPerBurst ? words : kFifoWordsPerBurst;
+        result = read_fifo_words(burst);
         if (result != ESP_OK) {
             return result;
         }
-
-        if (working_sample_.temperature_ready) {
-            working_sample_.temperature_raw = decode_i16(&output[0]);
-            working_sample_.temperature_celsius =
-                static_cast<float>(working_sample_.temperature_raw) / 256.0F +
-                25.0F;
+        for (std::size_t i = 0; i < burst; ++i) {
+            push_fifo_word(&fifo_rx_[1 + i * kFifoWordSize]);
         }
-        if (working_sample_.gyro_ready) {
-            for (std::size_t axis = 0; axis < 3; ++axis) {
-                working_sample_.gyro_raw[axis] =
-                    decode_i16(&output[2 + axis * 2]);
-                working_sample_.gyro_mdps[axis] =
-                    static_cast<float>(working_sample_.gyro_raw[axis]) *
-                    kGyroSensitivityMdps;
-            }
-            has_gyro_sample_ = true;
-        }
-        if (working_sample_.low_g_accel_ready) {
-            for (std::size_t axis = 0; axis < 3; ++axis) {
-                working_sample_.low_g_accel_raw[axis] =
-                    decode_i16(&output[8 + axis * 2]);
-                working_sample_.low_g_accel_mg[axis] =
-                    static_cast<float>(working_sample_.low_g_accel_raw[axis]) *
-                    kLowGAccelSensitivityMg;
-            }
-            has_low_g_accel_sample_ = true;
-        }
+        words -= burst;
     }
 
-    if (working_sample_.high_g_accel_ready) {
-        std::uint8_t output[6]{};
-        result = read_registers(kRegHighGOutputStart, output, sizeof(output));
+    // Timestamps: a sample clock advancing one sensor period per sample. The
+    // newest sample is nominally "now"; the clock is steered 1/16 of the way
+    // toward that each pass, and snaps to it after a startup, overrun or
+    // error above 5 ms, so read jitter does not become dt jitter.
+    if (imu_batch_count_ > 0) {
+        const double now_us = static_cast<double>(esp_timer_get_time());
+        const double count = static_cast<double>(imu_batch_count_);
+        double offset_us = 0.0;
+        if (imu_clock_valid_) {
+            const double error_us =
+                now_us - (imu_clock_us_ + count * imu_period_us_);
+            offset_us = (error_us > 5000.0 || error_us < -5000.0)
+                            ? error_us
+                            : error_us / 16.0;
+        } else {
+            imu_clock_us_ = now_us - count * imu_period_us_;
+            imu_clock_valid_ = true;
+        }
+        for (std::size_t i = 0; i < imu_batch_count_; ++i) {
+            const double step = static_cast<double>(i + 1U);
+            imu_batch_[i].timestamp_us = static_cast<std::uint64_t>(
+                imu_clock_us_ + step * imu_period_us_ +
+                offset_us * step / count + 0.5);
+        }
+        imu_clock_us_ += count * imu_period_us_ + offset_us;
+    }
+    fifo_samples_ += static_cast<std::uint32_t>(imu_batch_count_);
+
+    bool any_gyro = false;
+    bool any_low_g = false;
+    bool any_high_g = false;
+    for (std::size_t i = 0; i < imu_batch_count_; ++i) {
+        any_gyro = any_gyro || imu_batch_[i].has_gyro;
+        any_low_g = any_low_g || imu_batch_[i].has_low_g;
+        any_high_g = any_high_g || imu_batch_[i].has_high_g;
+    }
+    if (imu_batch_count_ > 0) {
+        // The packets and the flight state machine see the newest sample.
+        apply_imu_sample(imu_batch_[imu_batch_count_ - 1U]);
+    }
+    working_sample_.gyro_ready = any_gyro;
+    working_sample_.low_g_accel_ready = any_low_g;
+    working_sample_.high_g_accel_ready = any_high_g;
+
+    // Temperature is not batched; read the output register at 10 Hz.
+    working_sample_.temperature_ready = false;
+    if (++temperature_counter_ >= kTemperatureDivider) {
+        temperature_counter_ = 0;
+        std::uint8_t temperature[2]{};
+        result = read_registers(kRegOutputStart, temperature, 2);
         if (result != ESP_OK) {
             return result;
         }
-        for (std::size_t axis = 0; axis < 3; ++axis) {
-            working_sample_.high_g_accel_raw[axis] =
-                decode_i16(&output[axis * 2]);
-            working_sample_.high_g_accel_mg[axis] =
-                static_cast<float>(working_sample_.high_g_accel_raw[axis]) *
-                kHighGAccelSensitivityMg;
-        }
-        has_high_g_accel_sample_ = true;
+        working_sample_.temperature_raw = decode_i16(temperature);
+        working_sample_.temperature_celsius =
+            static_cast<float>(working_sample_.temperature_raw) / 256.0F + 25.0F;
+        working_sample_.temperature_ready = true;
     }
-
     return ESP_OK;
 }
 
@@ -1140,6 +1321,20 @@ bool Sensors::service_radio_transmit_completion()
     return radio_.transmit_in_progress();
 }
 
+void Sensors::log_imu_sample(const std::uint64_t timestamp_us, const bool hitl)
+{
+    if (imu_log_sink_ == nullptr) return;
+    std::uint8_t status = static_cast<std::uint8_t>(flight_state_machine_.state()) &
+                          FlashLogger::kImuStateMask;
+    if (hitl) status |= FlashLogger::kImuHitlFlag;
+    if (hitl || working_sample_.low_g_accel_ready) status |= FlashLogger::kImuLowGFreshFlag;
+    if (hitl || working_sample_.high_g_accel_ready) status |= FlashLogger::kImuHighGFreshFlag;
+    if (hitl || working_sample_.gyro_ready) status |= FlashLogger::kImuGyroFreshFlag;
+    (void)imu_log_sink_->log_imu_record(FlashLogger::make_imu_record(
+        static_cast<std::uint32_t>(timestamp_us), working_sample_.low_g_accel_raw,
+        working_sample_.high_g_accel_raw, working_sample_.gyro_raw, status));
+}
+
 void Sensors::update_attitude(const std::uint64_t timestamp_us)
 {
     if (!has_gyro_sample_ || !has_low_g_accel_sample_) {
@@ -1224,6 +1419,17 @@ void Sensors::report_attitude_rate(const std::uint64_t now_us)
              static_cast<double>(attitude_.tilt_from_vertical_deg()),
              static_cast<double>(q.x), static_cast<double>(q.y),
              static_cast<double>(q.z), static_cast<double>(q.w));
+    ESP_LOGI(kLogTag,
+             "imu fifo: %.1f Hz, overruns %lu, partial slots %lu, "
+             "unknown words %lu, max backlog %lu words",
+             static_cast<double>(fifo_samples_) * 1e6 /
+                 static_cast<double>(elapsed_us),
+             static_cast<unsigned long>(fifo_overruns_),
+             static_cast<unsigned long>(fifo_partial_slots_),
+             static_cast<unsigned long>(fifo_bad_words_),
+             static_cast<unsigned long>(fifo_max_words_));
+    fifo_samples_ = 0;
+    fifo_max_words_ = 0;
     attitude_updates_since_report_ = 0;
     attitude_report_start_us_ = now_us;
     attitude_.reset_max_dt();
@@ -1405,8 +1611,29 @@ void Sensors::run()
         // Step the estimator once per fresh gyro sample. A pass that finds no
         // new sample (loop faster than the gyro ODR) must not re-integrate
         // the previous rate; in HITL each new 0x0C frame is one sample.
-        if (lsm_result == ESP_OK && (hitl || working_sample_.gyro_ready)) {
-            update_attitude(imu_timestamp_us);
+        // NAND IMU stream: every pass with a new IMU (or HITL) sample. The
+        // logger decides what to keep (prelaunch ring, 100 Hz after apogee).
+        if (hitl) {
+            if (lsm_result == ESP_OK) {
+                log_imu_sample(imu_timestamp_us, true);
+                update_attitude(imu_timestamp_us);
+            }
+        } else if (lsm_result == ESP_OK && imu_batch_count_ > 0) {
+            // Every 960 Hz FIFO sample, oldest first. working_sample_ ends on
+            // the newest sample, as the packets above already used it.
+            const bool gyro_ready = working_sample_.gyro_ready;
+            const bool low_g_ready = working_sample_.low_g_accel_ready;
+            const bool high_g_ready = working_sample_.high_g_accel_ready;
+            for (std::size_t i = 0; i < imu_batch_count_; ++i) {
+                apply_imu_sample(imu_batch_[i]);
+                log_imu_sample(imu_batch_[i].timestamp_us, false);
+                if (imu_batch_[i].has_gyro) {
+                    update_attitude(imu_batch_[i].timestamp_us);
+                }
+            }
+            working_sample_.gyro_ready = gyro_ready;
+            working_sample_.low_g_accel_ready = low_g_ready;
+            working_sample_.high_g_accel_ready = high_g_ready;
         }
 
         if (lsm_result == ESP_OK &&
@@ -1479,6 +1706,14 @@ void Sensors::release_resources()
     if (spi_device_ != nullptr) {
         spi_bus_remove_device(spi_device_);
         spi_device_ = nullptr;
+    }
+    if (fifo_tx_ != nullptr) {
+        heap_caps_free(fifo_tx_);
+        fifo_tx_ = nullptr;
+    }
+    if (fifo_rx_ != nullptr) {
+        heap_caps_free(fifo_rx_);
+        fifo_rx_ = nullptr;
     }
     if (owns_spi_bus_) {
         spi_bus_free(kSpiHost);

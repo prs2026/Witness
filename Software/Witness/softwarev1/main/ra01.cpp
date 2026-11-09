@@ -390,7 +390,7 @@ esp_err_t Ra01::write_command(const std::uint8_t command,
     spi_transaction_t transaction{};
     transaction.length = (length + 1U) * 8U;
     transaction.tx_buffer = buffer.data();
-    return spi_device_transmit(spi_device_, &transaction);
+    return spi_device_polling_transmit(spi_device_, &transaction);
 }
 
 esp_err_t Ra01::write_buffer(const std::uint8_t *data, const std::size_t length)
@@ -405,7 +405,7 @@ esp_err_t Ra01::write_buffer(const std::uint8_t *data, const std::size_t length)
     spi_transaction_t transaction{};
     transaction.length = (length + 2U) * 8U;
     transaction.tx_buffer = buffer.data();
-    return spi_device_transmit(spi_device_, &transaction);
+    return spi_device_polling_transmit(spi_device_, &transaction);
 }
 
 esp_err_t Ra01::read_command(const std::uint8_t command, std::uint8_t *data,
@@ -422,7 +422,7 @@ esp_err_t Ra01::read_command(const std::uint8_t command, std::uint8_t *data,
     transaction.rxlength = transaction.length;
     transaction.tx_buffer = tx.data();
     transaction.rx_buffer = rx.data();
-    result = spi_device_transmit(spi_device_, &transaction);
+    result = spi_device_polling_transmit(spi_device_, &transaction);
     if (result == ESP_OK) std::copy(rx.begin() + 2,
                                     rx.begin() + 2 + length, data);
     return result;
@@ -444,7 +444,7 @@ esp_err_t Ra01::read_buffer(const std::uint8_t offset, std::uint8_t *data,
     transaction.rxlength = transaction.length;
     transaction.tx_buffer = tx.data();
     transaction.rx_buffer = rx.data();
-    result = spi_device_transmit(spi_device_, &transaction);
+    result = spi_device_polling_transmit(spi_device_, &transaction);
     if (result == ESP_OK) std::copy(rx.begin() + 3,
                                     rx.begin() + 3 + length, data);
     return result;

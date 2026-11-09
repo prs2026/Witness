@@ -146,7 +146,7 @@ esp_err_t Ms5607::send_command(const std::uint8_t command)
     spi_transaction_t transaction{};
     transaction.length = 8;
     transaction.tx_buffer = &command;
-    return spi_device_transmit(spi_device_, &transaction);
+    return spi_device_polling_transmit(spi_device_, &transaction);
 }
 
 esp_err_t Ms5607::read_command(
@@ -166,7 +166,7 @@ esp_err_t Ms5607::read_command(
     transaction.tx_buffer = transmit;
     transaction.rx_buffer = receive;
 
-    const esp_err_t result = spi_device_transmit(spi_device_, &transaction);
+    const esp_err_t result = spi_device_polling_transmit(spi_device_, &transaction);
     if (result == ESP_OK) {
         std::memcpy(data, &receive[1], length);
     }

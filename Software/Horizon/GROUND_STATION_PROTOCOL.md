@@ -552,14 +552,17 @@ all accepted bytes before publishing the files. GPS data arriving after
 capture stops is not part of the exported snapshot. Sudden power loss can lose
 the bytes still buffered in RAM; use the export command before disconnecting.
 
-New sessions use storage layout version 2: 10 NAND blocks for sensor data,
-40 for external GPS data and 12 for diagnostics, retaining 16 rotating sessions.
-The GPS allocation holds up to 5,222,400 raw bytes per session; recording duration
-depends on the receiver's actual output rate.
-Old version-1 sensor and diagnostic sessions remain readable. No format or
-erase is required to upgrade. Buffer overflow or flash write failure sets the
-existing flash-log-failed status bit. When a file's allocation fills, that
-stream stops with a diagnostic and the other streams continue. These are
+New sessions use storage layout version 3, built for one flight at a time:
+two slots of 502 blocks. Each holds 96 NAND blocks for the 24-byte IMU stream
+(`I*.BIN`, 960 Hz until Descent, then 96 Hz), 40 for sensor data, 24 for
+diagnostics and 341 (about 44.7 MB) for external GPS data. The GPS section is
+circular: when full it overwrites its oldest block, so a long pad wait loses
+only the oldest pad bytes. The slot holding the newest flight is kept until the
+next flight; pad-only power cycles reuse the other slot. Older store versions
+are not exported. No format or erase is required to upgrade. Buffer overflow or
+flash write failure sets the existing flash-log-failed status bit. When the IMU,
+sensor or diagnostic allocation fills, that stream stops with a diagnostic and
+the other streams continue. These are
 finite buffers, not an unlimited lossless recorder.
 
 Radio initialization failure disables radio RX/TX for the rest of the boot,

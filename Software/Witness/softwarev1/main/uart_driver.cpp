@@ -1,4 +1,5 @@
 #include "uart_driver.h"
+#include "task_cores.h"
 
 #include <algorithm>
 #include <array>
@@ -65,13 +66,14 @@ esp_err_t UartDriver::start()
         return result;
     }
 
-    if (xTaskCreate(
+    if (xTaskCreatePinnedToCore(
             task_entry,
             port_ == UART_NUM_1 ? "uart1" : "uart2",
             kTaskStackSize,
             this,
             kTaskPriority,
-            &task_handle_) != pdPASS) {
+            &task_handle_,
+            task_cores::kSystem) != pdPASS) {
         task_handle_ = nullptr;
         (void)shutdown();
         return ESP_ERR_NO_MEM;

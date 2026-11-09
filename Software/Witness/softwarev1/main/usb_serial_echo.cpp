@@ -1,4 +1,5 @@
 #include "usb_serial_echo.h"
+#include "task_cores.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -122,13 +123,14 @@ esp_err_t UsbSerialEcho::start()
     usb_serial_jtag_vfs_use_driver();
 #endif
 
-    const BaseType_t task_created = xTaskCreate(
+    const BaseType_t task_created = xTaskCreatePinnedToCore(
         task_entry,
         "usb_serial_echo",
         kTaskStackSize,
         this,
         kTaskPriority,
-        &task_handle_);
+        &task_handle_,
+        task_cores::kSystem);
 
     if (task_created != pdPASS) {
         task_handle_ = nullptr;

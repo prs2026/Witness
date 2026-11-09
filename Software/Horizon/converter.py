@@ -63,6 +63,15 @@ PAYLOAD_LENGTHS = {
 FLASH_RECORD_MAGIC = b"WL"
 FLASH_RECORD_VERSION = 1
 FLASH_RECORD_SIZE = 48
+# Witness flash store v3 IMU stream (I*.BIN): 24-byte records, no magic.
+# u32 timestamp_us (low 32 bits of esp_timer), int16 low-g xyz, int16 high-g
+# xyz, int16 gyro xyz (native counts), u8 status, u8 sequence (wraps at 256).
+IMU_RECORD_SIZE = 24
+IMU_STATUS_STATE_MASK = 0x07
+IMU_STATUS_HITL = 0x08
+IMU_STATUS_LOW_G_FRESH = 0x10
+IMU_STATUS_HIGH_G_FRESH = 0x20
+IMU_STATUS_GYRO_FRESH = 0x40
 
 FILTERED_ACCEL_G_PER_COUNT = 0.000040
 GYRO_DPS_PER_COUNT = 0.070
@@ -401,6 +410,65 @@ def frame_payload_length(data: bytes, offset: int, lengths: tuple[int, ...]) -> 
     return None
 
 
+def decode_imu_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
+    """Decode a store-v3 I*.BIN IMU stream into rows.
+
+    time_seconds is relative to the first record, unwrapping the 32-bit
+    microsecond counter. ``missing_before`` counts records lost before this
+    one, from the 8-bit sequence (it cannot see gaps of 256 or more).
+    """
+    rows: list[dict[str, Any]] = []
+    discarded = len(data) % IMU_RECORD_SIZE
+    first_us = None
+    previous_raw = None
+    wraps = 0
+    previous_sequence = None
+    for offset in range(0, len(data) - discarded, IMU_RECORD_SIZE):
+        record = data[offset:offset + IMU_RECORD_SIZE]
+        raw_us = unsigned(record[0:4])
+        if previous_raw is not None and raw_us < previous_raw:
+            wraps += 1
+        previous_raw = raw_us
+        timestamp_us = raw_us + (wraps << 32)
+        if first_us is None:
+            first_us = timestamp_us
+        status = record[22]
+        sequence = record[23]
+        missing = 0 if previous_sequence is None else (sequence - previous_sequence - 1) % 256
+        previous_sequence = sequence
+        state = status & IMU_STATUS_STATE_MASK
+        low = [signed(record[i:i + 2]) * LSM6_LOW_ACCEL_G_PER_COUNT for i in (4, 6, 8)]
+        high = [signed(record[i:i + 2]) * LSM6_HIGH_ACCEL_G_PER_COUNT for i in (10, 12, 14)]
+        gyro = [signed(record[i:i + 2]) * GYRO_DPS_PER_COUNT for i in (16, 18, 20)]
+        rows.append({
+            "packet_index": len(rows),
+            "byte_offset": offset,
+            "packet_id": "IMU",
+            "packet_type": "imu_sample",
+            "frame_length": IMU_RECORD_SIZE,
+            "time_seconds": round((timestamp_us - first_us) / 1e6, 6),
+            "timestamp_us": timestamp_us,
+            "sequence": sequence,
+            "missing_before": missing,
+            "flight_state": state,
+            "flight_state_name": FLIGHT_STATE_NAMES.get(state, f"Reserved ({state})"),
+            "hitl_active": int(bool(status & IMU_STATUS_HITL)),
+            "low_g_fresh": int(bool(status & IMU_STATUS_LOW_G_FRESH)),
+            "high_g_fresh": int(bool(status & IMU_STATUS_HIGH_G_FRESH)),
+            "gyro_fresh": int(bool(status & IMU_STATUS_GYRO_FRESH)),
+            "low_accel_x_g": low[0], "low_accel_y_g": low[1], "low_accel_z_g": low[2],
+            "high_accel_x_g": high[0], "high_accel_y_g": high[1], "high_accel_z_g": high[2],
+            "gyro_x_dps": gyro[0], "gyro_y_dps": gyro[1], "gyro_z_dps": gyro[2],
+            "raw_packet_hex": record.hex(" "),
+        })
+    return rows, discarded
+
+
+def is_imu_log_name(path: Path) -> bool:
+    """Witness exports the IMU stream as I<generation>.BIN."""
+    return path.name.upper().startswith("I") and path.suffix.upper() == ".BIN"
+
+
 def decode_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
     """Decode either a flash-record file or a possibly noisy packet stream."""
     if is_flash_record_log(data):
@@ -501,6 +569,10 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "-o", "--output", type=Path,
         help="output CSV path (default: input filename with a .csv extension)",
     )
+    parser.add_argument(
+        "--format", choices=("auto", "imu", "flash", "wire"), default="auto",
+        help="input format; auto treats I*.BIN as the Witness IMU stream",
+    )
     return parser
 
 
@@ -515,10 +587,18 @@ def main() -> int:
 
     try:
         data = input_path.read_bytes()
-        input_format = (
-            "Witness flash records" if is_flash_record_log(data) else "wire packets"
-        )
-        rows, discarded = decode_log(data)
+        imu = args.format == "imu" or (args.format == "auto" and is_imu_log_name(input_path))
+        if imu:
+            input_format = "Witness IMU records (24-byte, store v3)"
+            rows, discarded = decode_imu_log(data)
+        elif args.format == "flash" or (args.format == "auto" and is_flash_record_log(data)):
+            input_format = "Witness flash records"
+            rows, discarded = decode_flash_log(data)
+        else:
+            input_format = (
+                "Witness flash records" if is_flash_record_log(data) else "wire packets"
+            )
+            rows, discarded = decode_log(data)
         write_csv(rows, output_path)
     except OSError as exc:
         print(f"error: {exc}", file=sys.stderr)

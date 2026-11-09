@@ -20,6 +20,7 @@
 #include "ra01.h"
 
 class SpiDataForwarder;
+class FlashLogger;
 class WitnessStatus;
 class CommandBridge;
 class FlightStateMachine;
@@ -28,17 +29,25 @@ class UartDriver;
 class Sensors final {
 public:
     // Task configuration. kTaskRateHz must divide configTICK_RATE_HZ (1 kHz,
-    // the ESP-IDF maximum) so each pass is a whole number of ticks. The IMU
-    // read and attitude step run every pass; the estimator steps only when the
-    // gyro has a new sample, so its rate is min(kTaskRateHz, gyro ODR).
+    // the ESP-IDF maximum) so each pass is a whole number of ticks. Each pass
+    // drains the LSM6 FIFO, which the sensor fills at kImuSampleRateHz with
+    // its own clock, so the estimator and the NAND IMU log step once per
+    // FIFO sample (960 Hz) regardless of loop jitter.
     static constexpr UBaseType_t kTaskPriority = 4;
     static constexpr std::uint32_t kTaskRateHz = 500;
+    // IMU sample rate: the FIFO batch data rate (BDR) for gyro, low-g and
+    // high-g. 960 Hz is an exact 1/8 of the 7.68 kHz ODR, so every batched
+    // sample is one filtered output sample; 1 kHz would need HAODR (8 kHz ODR,
+    // different filter tables) or software polling with tick jitter.
+    static constexpr std::uint32_t kImuSampleRateHz = 960;
     static constexpr std::uint32_t kPacketRateHz = 10;
     static constexpr std::uint32_t kStatePacketRateHz = 1;
     static constexpr std::uint32_t kDebugPacketRateHz = 10;
     static constexpr std::uint32_t kBatterySampleRateHz = 10;
-    // Float formatting in the attitude log lines needs more than 4 KiB.
-    static constexpr std::uint32_t kTaskStackSize = 6144;
+    // Float formatting in the attitude log lines needs more than 4 KiB; the
+    // rest is headroom for the planned Kalman filter on this core-1 task
+    // (about 4 KiB was free at 6 KiB with the 500 Hz loop).
+    static constexpr std::uint32_t kTaskStackSize = 8192;
 
     // Independent LoRa downlink rates. Each transmission uses the most recent
     // canonical frame generated at the packet's normal producer/USB rate.
@@ -69,21 +78,28 @@ public:
     static constexpr int kSpiClockFrequencyHz = 10'000'000;
     static constexpr std::uint8_t kSpiMode = 3;
     // On-chip filtering, per datasheet DS14623 Rev 3 (LSM6DSV320X).
-    // Low-g accelerometer: 960 Hz internal rate with LPF2 at ODR/45 = 21.3 Hz,
-    // read at 100 Hz, so it is band-limited below the 50 Hz Nyquist rate of
-    // the read loop (true anti-aliasing; LPF1 alone is ODR/2).
-    //   CTRL1 (10h) ODR_XL = 1001 -> 960 Hz, OP_MODE_XL = 000 high performance.
-    //   CTRL8 (17h) HP_LPF2_XL_BW = 011 -> ODR/45 (Table 71), FS_XL = 11
-    //               -> +/-16 g. Bits 4:2 must be 0 (Table 69).
+    // Both UI sensors run at the maximum 7.68 kHz ODR (high-performance mode),
+    // are low-pass filtered on chip, and are batched into the FIFO at 960 Hz
+    // (FIFO_CTRL3 BDR), i.e. every 8th filtered sample. The filters are set
+    // below the 480 Hz Nyquist rate of that 960 Hz stream.
+    // Low-g accelerometer:
+    //   CTRL1 (10h) ODR_XL = 1100 -> 7.68 kHz, OP_MODE_XL = 000 high perf.
+    //   CTRL8 (17h) HP_LPF2_XL_BW = 010 -> ODR/20 = 384 Hz (Table 71),
+    //               FS_XL = 11 -> +/-16 g. Bits 4:2 must be 0 (Table 69).
     //   CTRL9 (18h) LPF2_XL_EN = 1 (bit 3), low-pass path (HP_SLOPE_XL_EN = 0);
-    //               other bits 0 (Table 72).
-    // Gyroscope: 120 Hz, LPF1 OFF (its fixed LPF2 is 49.4 Hz at 120 Hz,
-    // Table 23).
-    //   CTRL2 (11h) ODR_G = 0110 -> 120 Hz, OP_MODE_G = 000 high performance.
-    //   CTRL6 (15h) bit 3 = 1 (required by Table 64; previously written 0),
-    //               FS_G = 100 -> +/-2000 dps, LPF1_G_BW unused, bit 7 = 0.
-    //   CTRL7 (16h) LPF1_G_EN = 0.
-    // Gyro LPF1 was tested on the bench 2026-11-08 with the LoRa radio on, in
+    //               other bits 0 (Table 72). (ODR/10 would be 768 Hz.)
+    // Gyroscope:
+    //   CTRL2 (11h) ODR_G = 1100 -> 7.68 kHz, OP_MODE_G = 000 high perf.
+    //   CTRL6 (15h) LPF1_G_BW = 011 -> LPF1+LPF2 407 Hz at 7.68 kHz
+    //               (Table 66), bit 3 = 1 (Table 64), FS_G = 100 -> 2000 dps.
+    //   CTRL7 (16h) LPF1_G_EN = 1.
+    //   Without LPF1 the fixed LPF2 alone is 537 Hz at 7.68 kHz (Table 23),
+    //   above the 480 Hz Nyquist rate, so it would alias; no LPF1 code gives
+    //   ~532 Hz (7.68 kHz column: 281/213/156/407/102/58/28.8/14.4 Hz).
+    //   To run LPF2-only (537 Hz), set kGyroFilterConfiguration to 0x00.
+    // High-g accelerometer: 960 Hz ODR. It has no selectable digital filter,
+    // so it runs at the sample rate instead of being decimated from 7.68 kHz.
+    // Earlier gyro LPF1 note (960 Hz ODR, 2026-11-08): LPF1 was tested on the bench 2026-11-08 with the LoRa radio on, in
     // the same session: 120 Hz + LPF1 code 110 (24.2 Hz, Table 66) raised z
     // noise from 76 to 114 dps sd and the mean offset from -13 to -38 dps;
     // 960 Hz + LPF1 code 110 (28.7 Hz) raised it to 177 dps sd and -60 dps,
@@ -92,14 +108,11 @@ public:
     // rectifies it into bias instead of removing it. The estimator's running
     // median handles the isolated spikes instead. Revisit LPF1 once the
     // board-level radio coupling is fixed.
-    static constexpr std::uint8_t kLowGAccelOutputDataRate = 0x09;      // 960 Hz
-    static constexpr std::uint8_t kLowGAccelFullScale = 0x63;           // LPF2 ODR/45, +/-16 g
+    static constexpr std::uint8_t kLowGAccelOutputDataRate = 0x0C;      // 7.68 kHz
+    static constexpr std::uint8_t kLowGAccelFullScale = 0x43;           // LPF2 ODR/20, +/-16 g
     static constexpr std::uint8_t kLowGAccelFilterConfiguration = 0x08; // CTRL9 LPF2_XL_EN
-    // Gyro for the 500 Hz estimator: 960 Hz ODR so every 2 ms pass has a fresh
-    // sample, LPF1 code 100 -> 100 Hz LPF1+LPF2 bandwidth at 960 Hz (Table 66),
-    // below the 250 Hz Nyquist rate of a 500 Hz read.
-    static constexpr std::uint8_t kGyroOutputDataRate = 0x09;           // 960 Hz
-    static constexpr std::uint8_t kGyroFullScale = 0x4C;                // LPF1 100, bit 3, +/-2000 dps
+    static constexpr std::uint8_t kGyroOutputDataRate = 0x0C;           // 7.68 kHz
+    static constexpr std::uint8_t kGyroFullScale = 0x3C;                // LPF1 011 (407 Hz), bit 3, +/-2000 dps
     static constexpr std::uint8_t kGyroFilterConfiguration = 0x01;      // CTRL7: LPF1 on
     static constexpr std::uint8_t kHighGAccelOutputDataRate = 0x04; // 960 Hz
     static constexpr std::uint8_t kHighGAccelFullScale = 0x04;      // +/-320 g
@@ -149,6 +162,8 @@ public:
     Sensors &operator=(const Sensors &) = delete;
 
     esp_err_t start();
+    // NAND IMU stream: one record per fresh IMU sample. Set before start().
+    void set_imu_log_sink(FlashLogger *logger) { imu_log_sink_ = logger; }
     esp_err_t latest_sample(Sample &sample, TickType_t timeout = 0) const;
     esp_err_t handle_command(std::uint16_t command);
     void set_radio_transmission_enabled(bool enabled);
@@ -215,6 +230,33 @@ private:
     static constexpr std::uint8_t kRegOutputStart = 0x20;
     static constexpr std::uint8_t kRegHighGOutputStart = 0x34;
     static constexpr std::uint8_t kRegHighGCtrl1 = 0x4E;
+    static constexpr std::uint8_t kRegFifoCtrl3 = 0x09;
+    static constexpr std::uint8_t kRegFifoCtrl4 = 0x0A;
+    static constexpr std::uint8_t kRegCounterBdr1 = 0x0B;
+    static constexpr std::uint8_t kRegFifoStatus1 = 0x1B;
+    static constexpr std::uint8_t kRegFifoDataOutTag = 0x78;
+    static constexpr std::uint8_t kRegInternalFreqFine = 0x4F;
+
+    // FIFO (datasheet section 6.5, registers 9.6-9.10, 9.25-9.26, 9.90).
+    static constexpr std::uint8_t kFifoBatchRates = 0x99;   // BDR_GY = BDR_XL = 960 Hz
+    static constexpr std::uint8_t kFifoContinuous = 0x06;   // FIFO_MODE 110, no temp/ts
+    static constexpr std::uint8_t kFifoBypass = 0x00;       // clears the FIFO
+    static constexpr std::uint8_t kFifoHighGBatch = 0x08;   // XL_HG_BATCH_EN
+    static constexpr std::uint8_t kFifoStatusDiff8 = 0x01;  // FIFO_STATUS2 DIFF_FIFO_8
+    static constexpr std::uint8_t kFifoStatusOverrun = 0x08; // FIFO_OVR_LATCHED
+    static constexpr std::uint8_t kFifoTagGyro = 0x01;
+    static constexpr std::uint8_t kFifoTagLowG = 0x02;
+    static constexpr std::uint8_t kFifoTagHighG = 0x1D;
+    static constexpr std::size_t kFifoWordSize = 7;         // tag + 3 x int16
+    // Words per SPI burst (tag-address rollover with IF_INC), bounded by the
+    // bus max_transfer_sz. 36 words = 12 samples = 12.5 ms of data.
+    static constexpr std::size_t kFifoWordsPerBurst = 36;
+    // Samples one pass can hand to the estimator; the rest stay in the FIFO
+    // (1.5 KB, about 73 samples or 76 ms) for the next pass.
+    static constexpr std::size_t kMaxImuSamplesPerPass = 48;
+    static constexpr std::uint32_t kTemperatureDivider = kTaskRateHz / 10U;
+    static_assert(kFifoWordsPerBurst * kFifoWordSize + 1 <= kMaximumSpiTransfer,
+                  "FIFO burst must fit the SPI transfer limit");
 
     static constexpr std::uint8_t kExpectedWhoAmI = 0x73;
     static constexpr std::uint8_t kReadCommand = 0x80;
@@ -253,7 +295,23 @@ private:
         const std::uint8_t *data,
         std::size_t length);
     esp_err_t write_register(std::uint8_t register_address, std::uint8_t value);
+    // One 960 Hz FIFO time slot: gyro, low-g and high-g words that share a
+    // TAG_CNT. Missing channels keep the previous value (fresh flag clear).
+    struct ImuSample {
+        std::int16_t gyro[3]{};
+        std::int16_t low_g[3]{};
+        std::int16_t high_g[3]{};
+        bool has_gyro = false;
+        bool has_low_g = false;
+        bool has_high_g = false;
+        std::uint8_t tag_count = 0;
+        std::uint64_t timestamp_us = 0;
+    };
     esp_err_t fetch_lsm6dsv320x();
+    esp_err_t read_fifo_words(std::size_t words);
+    void push_fifo_word(const std::uint8_t *word);
+    void finish_fifo_slot();
+    void apply_imu_sample(const ImuSample &sample);
     esp_err_t queue_sensor_packet();
     esp_err_t queue_state_packet();
     esp_err_t queue_debug_packet();
@@ -314,19 +372,45 @@ private:
     std::uint32_t hitl_last_summary_ms_ = 0;
 
     // Attitude estimator and 100 Hz loop diagnostics (sensor task only).
-    // Estimator timing scales with the loop: nominal step 1/kTaskRateHz,
+    // Estimator timing scales with the IMU rate: nominal step 1/kImuSampleRateHz,
     // "late" at 1.5x, and a stationary window needs at least half its samples.
     static attitude::Config attitude_config()
     {
         attitude::Config config{};
-        config.nominal_dt_us = 1'000'000U / kTaskRateHz;
+        config.nominal_dt_us = 1'000'000U / kImuSampleRateHz;
         config.late_dt_us = config.nominal_dt_us + config.nominal_dt_us / 2U;
-        config.window_min_samples = kTaskRateHz / 2U;
+        config.window_min_samples = kImuSampleRateHz / 2U;
         return config;
     }
-    static_assert(kTaskRateHz <= attitude::Estimator::kMaxWindowSamples,
+    static_assert(kImuSampleRateHz <= attitude::Estimator::kMaxWindowSamples,
                   "A 1 s stationary window must fit the estimator's buffer");
+
     attitude::Estimator attitude_{attitude_config()};
+    FlashLogger *imu_log_sink_ = nullptr;
+    void log_imu_sample(std::uint64_t timestamp_us, bool hitl);
+
+    // FIFO drain state (sensor task only). DMA-capable SPI buffers.
+    std::uint8_t *fifo_tx_ = nullptr;
+    std::uint8_t *fifo_rx_ = nullptr;
+    ImuSample fifo_slot_{};
+    bool fifo_slot_open_ = false;
+    ImuSample last_imu_{};
+    std::array<ImuSample, kMaxImuSamplesPerPass> imu_batch_{};
+    std::size_t imu_batch_count_ = 0;
+    std::uint32_t temperature_counter_ = 0;
+    std::uint32_t fifo_samples_ = 0;
+    std::uint32_t fifo_overruns_ = 0;
+    std::uint32_t fifo_bad_words_ = 0;
+    std::uint32_t fifo_partial_slots_ = 0;
+    std::uint32_t fifo_max_words_ = 0;
+    // Sample clock. The sensor ODR differs from nominal by
+    // 0.13% x INTERNAL_FREQ_FINE (this part: about -2.5%), so samples are
+    // spaced at the measured period and the clock is steered slowly toward
+    // esp_timer read times, keeping dt smooth while its sum tracks real time.
+    double imu_period_us_ = 1e6 / static_cast<double>(kImuSampleRateHz);
+    double imu_clock_us_ = 0.0;
+    bool imu_clock_valid_ = false;
+    std::int8_t imu_freq_fine_ = 0;
     std::uint32_t attitude_updates_since_report_ = 0;
     std::uint64_t attitude_report_start_us_ = 0;
     std::uint32_t loop_overruns_ = 0;
