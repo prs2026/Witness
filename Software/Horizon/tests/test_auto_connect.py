@@ -1,5 +1,6 @@
 """Automatic connection tests use synthetic ports and loopback/fake receivers only."""
 
+import gc
 import json
 from pathlib import Path
 import tempfile
@@ -140,6 +141,18 @@ class RetryTests(unittest.TestCase):
 
 
 class AutoGuiTests(unittest.TestCase):
+    def tearDown(self):
+        # The closed Tk apps are cyclic garbage now. Collect them here, on
+        # the Tk thread, before the apps' background port scans (real
+        # pyserial enumeration) allocate enough to trigger the cyclic GC in
+        # their own thread, where each tkinter Variable.__del__ blocks about
+        # a second ("main thread is not in main loop").
+        gc.collect()
+        for thread in threading.enumerate():
+            if thread.name.startswith("discover-"):
+                thread.join(10)
+        gc.collect()
+
     def make_horizon(self, directory, **kwargs):
         import tkinter as tk
         from horizon import HorizonGroundStation

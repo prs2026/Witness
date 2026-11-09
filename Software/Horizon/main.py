@@ -30,6 +30,7 @@ from witness_link import WitnessPublisher
 from nmea_capture import NmeaExtractor, summarize_gga
 from witness_test_source import builtin_scenario, load_scenario, play_scenario, validate_speed
 from serial_discovery import RETRY_SECONDS, SerialDiscovery, SerialOpenJob
+from viewer import decimate_minmax, elide, nice_ticks, tick_text
 
 
 ROOT = Path(__file__).resolve().parent
@@ -351,11 +352,22 @@ class PacketDecoder:
                 del self.buffer[0]
 
 
-class SerialMonitor(tk.Tk):
-    def __init__(self, *, test_mode=False, test_source="", test_speed=1.0, test_loop=True, auto_connect=True):
-        super().__init__()
-        self.title("Witness Communications Monitor")
-        self.geometry("920x720")
+WINDOW_TITLE = "Witness Communications Monitor"
+
+
+class MonitorBase:
+    """The monitor's widgets and logic.
+
+    SerialMonitor runs it as its own window (python main.py). MonitorPanel
+    embeds the same monitor in another window as a frame (witnessOS).
+    """
+
+    standalone = True
+    on_title = None
+
+    def _init_monitor(self, *, test_mode=False, test_source="", test_speed=1.0, test_loop=True,
+                      auto_connect=True, start_feed=True, feed_port=None):
+        self._closed = False
         self.serials = {}
         self.tcp_sockets = {}
         self.discovery = SerialDiscovery("witness")
@@ -403,21 +415,28 @@ class SerialMonitor(tk.Tk):
         self.graph_interval_s = 0.1
         self._last_graph_draw = 0.0
         self._graphs_dirty = False
-        self.publisher = WitnessPublisher(DEFAULT_WITNESS_FEED_HOST, DEFAULT_WITNESS_FEED_PORT)
+        self._graph_job = None
+        self._graph_size = (0, 0)
+        self.publisher = WitnessPublisher(
+            DEFAULT_WITNESS_FEED_HOST, DEFAULT_WITNESS_FEED_PORT if feed_port is None else feed_port)
         self.feed_status = tk.StringVar(value="Horizon feed: starting...")
         self.build_ui()
-        try:
-            self.publisher.start()
-            self.feed_status.set(f"Horizon feed: {self.publisher.host}:{self.publisher.port} (receive only)")
-        except OSError as exc:
-            self.feed_status.set(f"Horizon feed unavailable: {exc}")
-            self.console_write(f"FEED_ERROR {exc}; Witness input still works")
+        if start_feed:
+            try:
+                self.publisher.start()
+                self.feed_status.set(f"Horizon feed: {self.publisher.host}:{self.publisher.port} (receive only)")
+            except OSError as exc:
+                self.feed_status.set(f"Horizon feed unavailable: {exc}")
+                self.console_write(f"FEED_ERROR {exc}; Witness input still works")
+        else:
+            self.feed_status.set("Horizon feed: off")
         self.refresh_ports()
         self._auto_after = self.after(250, self._auto_poll)
-        self.after(50, self.process_events)
-        self.after(100, self.draw_graphs)
-        self.after(100, self.update_age_indicators)
-        self.protocol("WM_DELETE_WINDOW", self.close)
+        self._events_after = self.after(50, self.process_events)
+        self._graph_job = self.after(100, self.draw_graphs)
+        self._age_after = self.after(100, self.update_age_indicators)
+        if self.standalone:
+            self.protocol("WM_DELETE_WINDOW", self.close)
         if test_mode:
             self._test_start_id = self.after(0, self._start_requested_test)
 
@@ -480,6 +499,7 @@ class SerialMonitor(tk.Tk):
         self.test_status_label = tk.Label(test_controls, textvariable=self.test_status,
                                          anchor="w", justify="left", wraplength=800)
         self.test_status_label.grid(row=1, column=0, columnspan=7, sticky="ew", pady=(3, 0))
+        self._status_background = self.test_status_label.cget("background")
         test_controls.bind("<Configure>", lambda event: self.test_status_label.configure(
             wraplength=max(120, event.width - 16)))
         ttk.Label(self, textvariable=self.feed_status, wraplength=800).pack(fill="x", padx=8, pady=(0, 5))
@@ -489,7 +509,7 @@ class SerialMonitor(tk.Tk):
         notebook = ttk.Notebook(main_pane)
         telemetry_page = ttk.Frame(notebook)
         notebook.add(telemetry_page, text="Telemetry")
-        telemetry_canvas = tk.Canvas(telemetry_page, highlightthickness=0)
+        telemetry_canvas = tk.Canvas(telemetry_page, highlightthickness=0, width=320, height=200)
         telemetry_scrollbar = ttk.Scrollbar(telemetry_page, orient="vertical",
                                             command=telemetry_canvas.yview)
         self.telemetry_frame = ttk.Frame(telemetry_canvas, padding=8)
@@ -511,15 +531,10 @@ class SerialMonitor(tk.Tk):
                 telemetry_window, width=event.width
             ),
         )
-        telemetry_canvas.bind("<Enter>", lambda _event: telemetry_canvas.bind_all(
-            "<MouseWheel>", lambda event: telemetry_canvas.yview_scroll(
-                int(-event.delta / 120), "units"
-            )
-        ))
-        telemetry_canvas.bind("<Leave>", lambda _event: telemetry_canvas.unbind_all("<MouseWheel>"))
         self.graph_frame = ttk.Frame(notebook, padding=8)
         notebook.add(self.graph_frame, text="Graphs")
         self.make_sections(self.telemetry_frame, "packet")
+        self.bind_scroll_wheel(telemetry_canvas)
         graph_controls = ttk.Frame(self.graph_frame)
         graph_controls.pack(fill="x", pady=(0, 5))
         ttk.Button(graph_controls, text="Clear graph history", command=self.clear_history).pack(side="left")
@@ -530,14 +545,21 @@ class SerialMonitor(tk.Tk):
             side="left", padx=(4, 0)
         )
         ttk.Label(graph_controls, text="Select fields using the checkboxes on the Telemetry tab.").pack(side="left", padx=10)
-        self.graph_canvas = tk.Canvas(self.graph_frame, background="white", height=500,
+        graph_area = ttk.Frame(self.graph_frame)
+        graph_area.pack(fill="both", expand=True)
+        self.graph_canvas = tk.Canvas(graph_area, background="white", height=240, width=320,
                                       highlightthickness=1, highlightbackground="#b0b0b0")
-        self.graph_canvas.pack(fill="both", expand=True)
-        self.graph_canvas.bind("<Configure>", lambda _event: self.draw_graphs())
+        graph_scrollbar = ttk.Scrollbar(graph_area, orient="vertical", command=self.graph_canvas.yview)
+        self.graph_canvas.configure(yscrollcommand=graph_scrollbar.set)
+        graph_scrollbar.pack(side="right", fill="y")
+        self.graph_canvas.pack(side="left", fill="both", expand=True)
+        self.graph_canvas.bind("<Configure>", self._graph_configured)
+        self.graph_canvas.bind("<Map>", lambda _event: self.schedule_graph_draw())
+        self.bind_scroll_wheel(self.graph_canvas)
 
         console_frame = ttk.LabelFrame(main_pane, text="Console", padding=5)
         self.console = scrolledtext.ScrolledText(
-            console_frame, height=9, wrap="word", state="disabled",
+            console_frame, height=6, wrap="word", state="disabled",
             font=("Consolas", 9)
         )
         self.console.pack(fill="both", expand=True)
@@ -766,7 +788,10 @@ class SerialMonitor(tk.Tk):
         if not sections:
             return
         # Value columns remain fixed-width; only the number of tiles changes.
-        tile_width = 290
+        # Tiles are as wide as the widest section needs (its status-flag
+        # grid), so a column is never squeezed and its flags clipped; a
+        # narrow window just gets fewer columns.
+        tile_width = max(290, max(section.winfo_reqwidth() for section in sections) + 8)
         columns = max(1, min(len(sections), parent.winfo_width() // tile_width))
         if columns == 0:
             columns = 1
@@ -873,9 +898,9 @@ class SerialMonitor(tk.Tk):
         if self._test_display:
             self._clear_telemetry()
             self._test_display = False
-            self.title("Witness Communications Monitor")
+            self.set_window_title(WINDOW_TITLE)
             self.test_status.set("Live mode. Test values cleared.")
-            self.test_status_label.configure(background=self.cget("background"))
+            self.test_status_label.configure(background=self._status_background)
         self.serials[port] = stream
         self.log_files[port] = log_file
         self.stop_event.clear()
@@ -1053,7 +1078,7 @@ class SerialMonitor(tk.Tk):
         self._test_stop = stop = threading.Event()
         self._test_source = source = "TEST_" + "".join(
             char if char.isalnum() or char in "_-" else "_" for char in scenario.name)[:100]
-        self.title("Witness Communications Monitor [TEST DATA]")
+        self.set_window_title(WINDOW_TITLE + " [TEST DATA]")
         self.test_status_label.configure(background="#fff2a8")
         self.test_status.set(f"TEST DATA: {scenario.name} at {speed:g}x; source {source}. No hardware writes.")
         self.status_label.configure(text="TEST MODE - simulated input")
@@ -1168,8 +1193,8 @@ class SerialMonitor(tk.Tk):
             self._clear_telemetry()
             self._test_display = False
             self.test_status.set("Live mode. Test values cleared; source file remains available for replay.")
-            self.test_status_label.configure(background=self.cget("background"))
-            self.title("Witness Communications Monitor")
+            self.test_status_label.configure(background=self._status_background)
+            self.set_window_title(WINDOW_TITLE)
         try:
             if ports:
                 import serial
@@ -1317,7 +1342,8 @@ class SerialMonitor(tk.Tk):
             # Never ~1 ms: Tk's update() keeps running timers that are already
             # due, so a 1 ms reschedule under a steady stream would never let
             # update() return (one tick already drains up to 20,000 events).
-            self.after(15 if not self.events.empty() else 50, self.process_events)
+            if not self._closed:
+                self._events_after = self.after(15 if not self.events.empty() else 50, self.process_events)
 
     def _console_stamp(self, line):
         timestamp = _dt.datetime.now().strftime("%H:%M:%S.%f")[:-3]
@@ -1462,7 +1488,8 @@ class SerialMonitor(tk.Tk):
             else:
                 background = "#ff8a80"
             label.configure(text=f"{age:.1f}s", background=background)
-        self.after(100, self.update_age_indicators)
+        if not self._closed:
+            self._age_after = self.after(100, self.update_age_indicators)
 
     @staticmethod
     def format_display_value(field, value):
@@ -1663,88 +1690,189 @@ class SerialMonitor(tk.Tk):
         except (OSError, json.JSONDecodeError, ValueError) as exc:
             messagebox.showerror("Load graph setup", f"Could not load setup:\n{exc}")
 
+    GRAPH_COLORS = ("#1565c0", "#c62828", "#2e7d32", "#6a1b9a", "#ef6c00")
+    GRAPH_MIN_HEIGHT = 210
+    GRAPH_MAX_HEIGHT = 330
+
+    def _graph_configured(self, event):
+        size = (event.width, event.height)
+        if size != self._graph_size:
+            self._graph_size = size
+            self.schedule_graph_draw()
+
+    def schedule_graph_draw(self):
+        """Redraw the graphs shortly (debounced, e.g. while resizing)."""
+        if self._closed:
+            return
+        if self._graph_job is not None:
+            try:
+                self.after_cancel(self._graph_job)
+            except tk.TclError:
+                pass
+        self._graph_job = self.after(60, self.draw_graphs)
+
+    @staticmethod
+    def _component_names(count):
+        if count == 3:
+            return ["x", "y", "z"]
+        if count == 4:
+            return ["x", "y", "z", "w"]
+        return [f"[{index}]" for index in range(count)]
+
+    @staticmethod
+    def _time_label(timestamp, step):
+        text = _dt.datetime.fromtimestamp(timestamp).strftime("%H:%M:%S.%f")
+        if step >= 1:
+            return text[:8]
+        decimals = 1 if step >= 0.1 else 2 if step >= 0.01 else 3
+        return text[:9 + decimals]
+
     def draw_graphs(self):
-        if not hasattr(self, "graph_canvas"):
+        """Draw every selected field: one graph each, sized to the view.
+
+        Graphs fill the canvas when few are selected and scroll (scrollbar
+        or wheel) when many are. Axes use round ticks; labels that would
+        overlap are skipped; vector components get a coloured legend.
+        Skipped while the Graphs tab is hidden (drawn again when shown).
+        """
+        self._graph_job = None
+        if not hasattr(self, "graph_canvas") or self._closed:
             return
         canvas = self.graph_canvas
+        if not canvas.winfo_ismapped():
+            self._graphs_dirty = True
+            return
         canvas.delete("all")
         selected = [key for key, variable in self.check_vars.items() if variable.get()]
-        width = max(canvas.winfo_width(), 500)
-        graph_height = 275
+        width = canvas.winfo_width()
+        if width <= 1:
+            width = canvas.winfo_reqwidth()
+        view_height = max(canvas.winfo_height(), 1)
         if not selected:
-            canvas.create_text(width // 2, 40, text="No fields selected", fill="#555555")
+            canvas.configure(scrollregion=(0, 0, width, view_height))
+            canvas.create_text(width // 2, 40, text="No fields selected", fill="#555555",
+                               width=max(100, width - 20))
             return
+        graph_height = max(self.GRAPH_MIN_HEIGHT,
+                           min(self.GRAPH_MAX_HEIGHT, view_height // len(selected)))
         canvas.configure(scrollregion=(0, 0, width, graph_height * len(selected)))
-        colors = ("#1565c0", "#c62828", "#2e7d32", "#6a1b9a", "#ef6c00")
         for graph_index, key in enumerate(selected):
-            top = graph_index * graph_height
-            samples = self.history.get(key, [])
-            canvas.create_rectangle(5, top + 5, width - 5, top + graph_height - 45,
-                                    outline="#cccccc")
-            canvas.create_text(14, top + 16, anchor="w", text=key, fill="#222222")
-            if not samples:
-                canvas.create_text(width // 2, top + 85, text="Waiting for data", fill="#777777")
-                continue
-            times = [sample[0] for sample in samples]
-            values = [sample[1] for sample in samples]
-            components = len(values[-1]) if isinstance(values[-1], (list, tuple)) else 1
-            flat = [float(component) for value in values
-                    for component in (value if isinstance(value, (list, tuple)) else [value])]
-            minimum, maximum = min(flat), max(flat)
-            if minimum == maximum:
-                minimum -= 0.5
-                maximum += 0.5
-            # Use half-number increments for the value axis. This keeps the
-            # grid predictable instead of basing it directly on raw extrema.
-            value_step = max(0.5, ((maximum - minimum) / 4.0 / 0.5).__ceil__() * 0.5)
-            minimum = (minimum // value_step) * value_step
-            maximum = ((maximum + value_step - 1e-12) // value_step) * value_step
-            if maximum <= minimum:
-                maximum = minimum + value_step
-            left, right = 70, width - 15
-            top_plot, bottom_plot = top + 30, top + graph_height - 95
-            time_span = max(times[-1] - times[0], 0.001)
-            time_step = max(0.5, ((time_span / 4.0 / 0.5).__ceil__()) * 0.5)
+            self._draw_graph(canvas, key, self.history.get(key, []),
+                             graph_index * graph_height, width, graph_height)
 
-            # Horizontal value grid and labels.
-            value = minimum
-            while value <= maximum + value_step * 0.01:
-                y = bottom_plot - (value - minimum) / (maximum - minimum) * (bottom_plot - top_plot)
-                canvas.create_line(left, y, right, y, fill="#e1e1e1")
-                canvas.create_text(left - 5, y, anchor="e", text=f"{value:.4g}", fill="#555555")
-                value += value_step
+    def _draw_graph(self, canvas, key, samples, top, width, height):
+        import tkinter.font as tkfont
+        font = tkfont.nametofont("TkDefaultFont")
+        line = font.metrics("linespace")
+        width = max(int(width), 200)
+        bottom = top + height
+        canvas.create_rectangle(4, top + 4, width - 4, bottom - 4, outline="#cccccc")
+        title = elide(key, width - 28, font.measure)
+        header_y = top + 8 + line / 2
+        canvas.create_text(14, header_y, anchor="w", text=title, fill="#222222")
+        if not samples:
+            canvas.create_text(width // 2, top + height // 2, text="Waiting for data", fill="#777777")
+            return
+        times = [sample[0] for sample in samples]
+        values = [sample[1] for sample in samples]
+        components = len(values[-1]) if isinstance(values[-1], (list, tuple)) else 1
+        series = [[] for _ in range(components)]
+        for timestamp, value in samples:
+            parts = value if isinstance(value, (list, tuple)) else [value]
+            for component in range(min(components, len(parts))):
+                try:
+                    number = float(parts[component])
+                except (TypeError, ValueError):
+                    continue
+                if number == number and abs(number) != float("inf"):
+                    series[component].append((timestamp, number))
+        flat = [number for points in series for _t, number in points]
+        if not flat:
+            canvas.create_text(width // 2, top + height // 2, text="No numeric data", fill="#777777")
+            return
 
-            # Vertical time grid and wall-clock labels.
-            elapsed = 0.0
-            while elapsed <= time_span + time_step * 0.01:
-                x = left + min(elapsed / time_span, 1.0) * (right - left)
-                canvas.create_line(x, top_plot, x, bottom_plot, fill="#e1e1e1")
-                tick_time = _dt.datetime.fromtimestamp(times[0] + elapsed)
-                tick_label = tick_time.strftime("%H:%M:%S.%f")[:-3]
-                canvas.create_text(x, bottom_plot + 14, anchor="n", text=tick_label, fill="#555555")
-                elapsed += time_step
+        # Legend for vector components, right-aligned on the header line
+        # when it fits beside the title.
+        if components > 1:
+            names = self._component_names(components)
+            legend_width = sum(font.measure(name) + 26 for name in names)
+            if font.measure(title) + legend_width + 40 <= width - 28:
+                x = width - 14 - legend_width
+                for component, name in enumerate(names):
+                    color = self.GRAPH_COLORS[component % len(self.GRAPH_COLORS)]
+                    canvas.create_line(x, header_y, x + 12, header_y, fill=color, width=2)
+                    canvas.create_text(x + 16, header_y, anchor="w", text=name, fill=color)
+                    x += font.measure(name) + 26
 
-            for component in range(components):
-                points = []
-                for timestamp, value in samples:
-                    numeric = value[component] if isinstance(value, (list, tuple)) else value
-                    x = left + (timestamp - times[0]) / time_span * (right - left)
-                    y = bottom_plot - (float(numeric) - minimum) / (maximum - minimum) * (bottom_plot - top_plot)
-                    points.extend((x, y))
-                if len(points) >= 4:
-                    canvas.create_line(*points, fill=colors[component % len(colors)], width=2)
-            start_label = _dt.datetime.fromtimestamp(times[0]).strftime("%H:%M:%S.%f")[:-3]
-            end_label = _dt.datetime.fromtimestamp(times[-1]).strftime("%H:%M:%S.%f")[:-3]
-            # Ensure the exact endpoints remain visible even when the final
-            # timestamp does not land on a grid interval.
-            canvas.create_text(left, bottom_plot + 30, anchor="w", text=start_label, fill="#555555")
-            canvas.create_text(right, bottom_plot + 30, anchor="e", text=end_label, fill="#555555")
-            latest = samples[-1][1] if samples else "--"
-            latest_field = key.rsplit(".", 1)[-1]
-            latest = self.format_display_value(latest_field, latest)
-            canvas.create_text(left, top + graph_height - 22, anchor="w",
-                               text=f"Latest: {latest}", fill="#222222",
-                               width=max(200, right - left))
+        plot_top = top + 14 + line
+        plot_bottom = bottom - (3 * line + 22)
+        plot_height = plot_bottom - plot_top
+        low, high = min(flat), max(flat)
+        if high <= low:
+            pad = max(0.5, abs(low) * 0.05)
+            low, high = low - pad, high + pad
+        target = max(2, min(8, int(plot_height // (line * 1.6))))
+        value_step, value_ticks = nice_ticks(low, high, target)
+        low, high = value_ticks[0], value_ticks[-1]
+        if high <= low:
+            high = low + value_step
+        labels = [tick_text(value, value_step) for value in value_ticks]
+        left = max(48, max(font.measure(text) for text in labels) + 16)
+        right = width - 16
+        if plot_height < 16 or right - left < 40:
+            return
+
+        def to_y(value):
+            return plot_bottom - (value - low) / (high - low) * plot_height
+
+        last_y = None
+        for value, text in zip(value_ticks, labels):
+            y = to_y(value)
+            canvas.create_line(left, y, right, y, fill="#e6e6e6")
+            if last_y is None or abs(last_y - y) >= line:
+                canvas.create_text(left - 6, y, anchor="e", text=text, fill="#555555")
+                last_y = y
+
+        start, end = times[0], times[-1]
+        span = max(end - start, 0.001)
+        time_target = max(2, min(8, int((right - left) // 110)))
+        time_step, time_ticks = nice_ticks(start, start + span, time_target, inside=True)
+        label_right = -1e9
+        for tick in time_ticks:
+            x = left + (tick - start) / span * (right - left)
+            canvas.create_line(x, plot_top, x, plot_bottom, fill="#eeeeee")
+            text = self._time_label(tick, time_step)
+            half = font.measure(text) / 2
+            if x - half >= label_right + 8 and x + half <= width - 6:
+                canvas.create_text(x, plot_bottom + 4, anchor="n", text=text, fill="#555555")
+                label_right = x + half
+        canvas.create_rectangle(left, plot_top, right, plot_bottom, outline="#bbbbbb")
+
+        for component, points in enumerate(series):
+            reduced = decimate_minmax(points, start, start + span, int(right - left))
+            coordinates = []
+            for timestamp, number in reduced:
+                coordinates.append(left + (timestamp - start) / span * (right - left))
+                coordinates.append(to_y(number))
+            color = self.GRAPH_COLORS[component % len(self.GRAPH_COLORS)]
+            if len(coordinates) >= 4:
+                canvas.create_line(*coordinates, fill=color, width=1.5)
+            elif coordinates:
+                x, y = coordinates
+                canvas.create_oval(x - 3, y - 3, x + 3, y + 3, fill=color, outline=color)
+
+        # Exact first/last sample times, then the latest value (one line,
+        # shortened rather than spilling into the next graph).
+        endpoints_y = plot_bottom + 8 + line
+        start_label = _dt.datetime.fromtimestamp(start).strftime("%H:%M:%S.%f")[:-3]
+        end_label = _dt.datetime.fromtimestamp(end).strftime("%H:%M:%S.%f")[:-3]
+        if font.measure(start_label) + font.measure(end_label) + 20 <= right - left:
+            canvas.create_text(left, endpoints_y, anchor="nw", text=start_label, fill="#555555")
+        canvas.create_text(right, endpoints_y, anchor="ne", text=end_label, fill="#555555")
+        latest_field = key.rsplit(".", 1)[-1]
+        latest = self.format_display_value(latest_field, values[-1])
+        canvas.create_text(14, endpoints_y + line + 2, anchor="nw", fill="#222222",
+                           text=elide(f"Latest: {latest}", width - 28, font.measure))
 
     def disconnect(self):
         if self._auto_job is not None:
@@ -1782,15 +1910,121 @@ class SerialMonitor(tk.Tk):
         self.connect_button.configure(text="Connect")
         self.status_label.configure(text="Disconnected")
 
+    def set_window_title(self, text):
+        if self.standalone:
+            self.title(text)
+        elif self.on_title is not None:
+            self.on_title(text)
+
+    def bind_scroll_wheel(self, canvas):
+        """Wheel-scroll ``canvas`` from anywhere over it or its contents.
+
+        Binds the canvas and every descendant instead of bind_all, so the
+        monitor never takes over the wheel of a host app. At either end the
+        event passes on (e.g. to an outer scroller). Widget bindings (not
+        bind_class) so Tk drops them, and the monitor, when it is destroyed.
+        """
+
+        def scroll(event, direction=None):
+            if direction is None:
+                if not event.delta:
+                    return None
+                direction = -1 if event.delta > 0 else 1
+            first, last = canvas.yview()
+            if (direction < 0 and first <= 0.0) or (direction > 0 and last >= 1.0):
+                return None
+            canvas.yview_scroll(direction, "units")
+            return "break"
+
+        def add(widget):
+            widget.bind("<MouseWheel>", scroll, add="+")
+            widget.bind("<Button-4>", lambda event: scroll(event, -1), add="+")
+            widget.bind("<Button-5>", lambda event: scroll(event, 1), add="+")
+            for child in widget.winfo_children():
+                add(child)
+
+        add(canvas)
+
+    def stream_feeder(self, source_name):
+        """Return feed(bytes) that decodes a byte stream owned by someone else.
+
+        Used to mirror a connection another tool holds (witnessOS shares the
+        HITL bench's Witness TCP connection, since ser2net serves one client).
+        Decoding, publishing and display are exactly as for read_tcp. Call
+        feed from one thread at a time; nothing is ever sent to Witness.
+        """
+        nmea = NmeaExtractor()
+        decoder = PacketDecoder(
+            lambda p: self.on_decoded_packet(source_name, p),
+            lambda message: self.events.put(("decoder_error", (source_name, message))),
+            lambda packet_id, count: self.events.put(("host_packet", (source_name, packet_id, count))),
+        )
+
+        def feed(data):
+            if self._closed:
+                return
+            self.events.put(("bytes", (source_name, bytes(data))))
+            decoder.feed(data)
+            self._queue_nmea(source_name, nmea, data)
+
+        return feed
+
     def close(self):
-        if self._auto_after is not None:
-            self.after_cancel(self._auto_after)
-        if self._test_start_id is not None:
-            self.after_cancel(self._test_start_id)
+        self._closed = True
+        for job in (self._auto_after, self._test_start_id, self._events_after,
+                    self._age_after, self._graph_job):
+            if job is not None:
+                try:
+                    self.after_cancel(job)
+                except tk.TclError:
+                    pass
         self.stop_test()
         self.disconnect()
         self.publisher.close()
-        self.destroy()
+        if self.standalone:
+            self.destroy()
+        self._release_tk_variables()
+
+    def _release_tk_variables(self):
+        """Free the monitor's Tk variables now, on the Tk thread.
+
+        The monitor is kept alive by reference cycles (bound-method
+        callbacks), so otherwise its ~200 Variables are freed whenever the
+        cyclic GC runs, possibly on a worker thread, where each Variable's
+        cleanup blocks for about a second ("main thread is not in main loop").
+        """
+        for mapping in (self.values, self.check_vars):
+            mapping.clear()
+        for name, value in list(vars(self).items()):
+            if isinstance(value, tk.Variable):
+                delattr(self, name)
+
+
+class SerialMonitor(MonitorBase, tk.Tk):
+    """The monitor in its own window."""
+
+    def __init__(self, **options):
+        tk.Tk.__init__(self)
+        self.title(WINDOW_TITLE)
+        self.geometry(f"{min(920, self.winfo_screenwidth() - 40)}x"
+                      f"{min(720, self.winfo_screenheight() - 80)}")
+        self._init_monitor(**options)
+
+
+class MonitorPanel(MonitorBase, ttk.Frame):
+    """The monitor as a frame inside another window (witnessOS).
+
+    The host owns the window: it calls close() on exit (which stops inputs,
+    the test source and the feed but leaves the window to the host) and
+    gets title changes through ``on_title``.
+    """
+
+    standalone = False
+
+    def __init__(self, master, *, on_title=None, **options):
+        ttk.Frame.__init__(self, master)
+        self.on_title = on_title
+        self._init_monitor(**options)
 
 
 def command_line(argv=None):

@@ -96,5 +96,117 @@ class PanelTests(unittest.TestCase):
             os.rmdir(tmp)
 
 
+class LayoutModelTests(unittest.TestCase):
+    def test_add_overlay_move_remove(self):
+        layout = viewer.GraphLayout()
+        a, b, c = (0, "alt"), (1, "alt"), (0, "accel")
+        layout.add([a, c])                      # two new graphs
+        self.assertEqual(layout.graphs, [[a], [c]])
+        layout.add([b], target=0)               # overlay on graph 0
+        layout.add([b], target=0)               # duplicates ignored
+        self.assertEqual(layout.graphs, [[a, b], [c]])
+        layout.move(0, b, 1)                    # legend dragged to graph 1
+        self.assertEqual(layout.graphs, [[a], [c, b]])
+        layout.move(0, a, 1)                    # emptied graph disappears
+        self.assertEqual(layout.graphs, [[c, b, a]])
+        layout.move(0, a, None)                 # dragged to the new-graph area
+        self.assertEqual(layout.graphs, [[c, b], [a]])
+        layout.remove_dataset(1)
+        self.assertEqual(layout.graphs, [[c], [a]])
+        layout.remove_series(0, c)
+        self.assertEqual(layout.graphs, [[a]])
+
+    def test_move_onto_graph_already_showing_it_merges(self):
+        layout = viewer.GraphLayout()
+        a = (0, "x")
+        layout.add([a])
+        layout.add([a])
+        layout.move(1, a, 0)
+        self.assertEqual(layout.graphs, [[a]])
+
+    def test_unique_label(self):
+        self.assertEqual(viewer.unique_label("a.csv", []), "a.csv")
+        self.assertEqual(viewer.unique_label("a.csv", ["a.csv", "a.csv (2)"]),
+                         "a.csv (3)")
+
+    def test_sync_time_prefers_witness_uptime(self):
+        self.assertEqual(viewer.sync_time_seconds(
+            {"uptime": "15528", "time_seconds": "0.5"}), 15.528)
+        self.assertEqual(viewer.sync_time_seconds(
+            {"fc_uptime": "2000", "time_seconds": ""}), 2.0)
+        self.assertEqual(viewer.sync_time_seconds({"time_seconds": "3.25"}), 3.25)
+        self.assertIsNone(viewer.sync_time_seconds({}))
+
+
+class OverlayPanelTests(unittest.TestCase):
+    def setUp(self):
+        try:
+            import tkinter as tk
+            self.root = tk.Tk()
+        except Exception as exc:  # pragma: no cover - environment specific
+            self.skipTest(f"Tk unavailable: {exc}")
+        self.tmp = tempfile.mkdtemp()
+
+    def tearDown(self):
+        self.root.destroy()
+        import shutil
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def write(self, name, start_ms, scale):
+        path = Path(self.tmp) / name
+        with path.open("w", newline="") as f:
+            f.write("packet_type,uptime,time_seconds,altitude\n")
+            for i in range(200):
+                f.write(f"state,{start_ms + i * 50},{i * 0.05},{i * scale}\n")
+        return path
+
+    def test_two_csvs_overlay_on_uptime(self):
+        a = self.write("a.csv", 10_000, 1.0)
+        b = self.write("b.csv", 12_000, 2.0)
+        titles = []
+        panel = viewer.CsvViewerPanel(self.root, on_title=titles.append)
+        panel.pack(fill="both", expand=True)
+        self.root.geometry("900x600")
+        self.assertTrue(panel.load_csv(a))
+        self.assertTrue(panel.add_csv(b))
+        self.assertEqual(titles[-1], "Horizon CSV Viewer - a.csv + 1 more")
+        self.assertEqual(panel.x_axis_combo.get(), viewer.SYNC_X)
+        ids = list(panel.datasets)
+        # Tree is grouped by CSV with the columns underneath.
+        self.assertEqual(panel.trace_tree.get_children(), tuple(f"d{i}" for i in ids))
+        self.assertIn(f"d{ids[1]}|altitude", panel.trace_tree.get_children(f"d{ids[1]}"))
+        # The first CSV auto-plots one graph per column (time columns skipped).
+        self.assertEqual(panel.layout.graphs, [[(ids[0], "altitude")]])
+        panel.drop(("traces", [(ids[1], "altitude")]), ("graph", 0))
+        self.assertEqual(panel.layout.graphs,
+                         [[(ids[0], "altitude"), (ids[1], "altitude")]])
+        # Points sit on Witness uptime: b starts 2 s after a.
+        pa = panel.series_points((ids[0], "altitude"))
+        pb = panel.series_points((ids[1], "altitude"))
+        self.assertAlmostEqual(pa[0][0], 10.0)
+        self.assertAlmostEqual(pb[0][0], 12.0)
+        # Per-CSV offset shifts that CSV only.
+        panel.trace_tree.selection_set(f"d{ids[1]}")
+        panel.offset_var.set("-2")
+        panel.apply_offset()
+        self.assertAlmostEqual(panel.series_points((ids[1], "altitude"))[0][0], 10.0)
+        panel.notebook.select(panel.plot_tab)
+        for _ in range(5):
+            self.root.update()
+        panel.draw_graphs()
+        self.root.update()
+        self.assertEqual(len(panel._legend_items), 2)
+        self.assertEqual(panel.graph_at(5), 0)
+        self.assertIsNone(panel.graph_at(panel._drop_top + 5))
+        # Legend dragged to the new-graph area, then back to the list.
+        panel.drop(("legend", 0, (ids[1], "altitude")), ("new",))
+        self.assertEqual(len(panel.layout), 2)
+        panel.drop(("legend", 1, (ids[1], "altitude")), ("list",))
+        self.assertEqual(panel.layout.graphs, [[(ids[0], "altitude")]])
+        panel.remove_dataset(ids[0])
+        self.assertEqual(panel.layout.graphs, [])
+        self.assertEqual(panel.csv_path, b)
+
+
 if __name__ == "__main__":
     unittest.main()

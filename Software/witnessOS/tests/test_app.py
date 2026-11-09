@@ -99,24 +99,29 @@ class TkTests(unittest.TestCase):
         self.assertIsNone(router.target_for(text, 1))
 
     def test_app_builds_all_tabs_loads_csv_and_closes(self):
+        import socket
         import witnessos
+        from witness_link import decode_record
         csv_path = Path(self.tmp) / "flight.csv"
-        with csv_path.open("w", newline="") as f:
-            f.write("time_seconds,barometric_altitude,packet_type,status\n")
-            for i in range(2000):
-                f.write(f"{i * 0.01:.2f},{(i % 500) * 1.5:.1f},state,"
-                        f"{0x4201 if i > 100 else 0x4200}\n")
-        engine = witnessos.RelayEngine(feed_port=0, log_dir=None)
+        csv_b = Path(self.tmp) / "second.csv"
+        for path, scale in ((csv_path, 1.5), (csv_b, 2.0)):
+            with path.open("w", newline="") as f:
+                f.write("time_seconds,uptime,barometric_altitude,packet_type,status\n")
+                for i in range(2000):
+                    f.write(f"{i * 0.01:.2f},{i * 10},{(i % 500) * scale:.1f},state,"
+                            f"{0x4201 if i > 100 else 0x4200}\n")
         app = witnessos.WitnessOS(
-            self.root, csv_file=csv_path,
+            self.root, csv_files=[csv_path, csv_b],
             hitl_settings={"host": "127.0.0.1", "port": 1,
                            "preset": "Nominal 10 g", "tolerance_s": 1.0},
             hitl_settings_path=os.path.join(self.tmp, "s.json"),
-            hitl_runs_dir=self.tmp, relay_engine=engine)
+            hitl_runs_dir=self.tmp,
+            monitor_options={"auto_connect": False, "feed_port": 0})
         self.pump()
         self.assertEqual(self.root.nametowidget(app.notebook.select()),
                          app.frames["viewer"])
         self.assertEqual(app.viewer.csv_path, csv_path)
+        self.assertEqual(len(app.viewer.datasets), 2)
         app.viewer.notebook.select(app.viewer.plot_tab)
         for size in ("1200x800", "500x350"):
             self.root.geometry(size)
@@ -129,14 +134,38 @@ class TkTests(unittest.TestCase):
         self.pump()
         self.assertTrue(app.viewer._drawn)
         self.assertGreater(len(app.viewer.canvas.find_all()), 10)
-        self.assertIsNotNone(engine.publisher)
-        app.relay.source_var.set("hitl")
-        app.relay.toggle_connect()
-        self.assertIs(app.hitl.session.rx_tap.__class__,
-                      (lambda: None).__class__)
-        app.close()
-        self.assertIsNone(engine.publisher)
+
+        # The monitor tab is Horizon main.py's monitor; it mirrors the HITL
+        # connection by default and publishes what it decodes.
+        monitor = app.monitor.monitor
+        self.assertTrue(app.monitor.mirroring)
+        self.assertIs(app.hitl.session.rx_tap, app.monitor._tap)
+        client = socket.create_connection(("127.0.0.1", monitor.publisher.port))
+        client.settimeout(3)
+        try:
+            frame = bytes([0xFF]) + (0x0001).to_bytes(2, "big") \
+                + (4242).to_bytes(4, "big") + b"\n"
+            app.hitl.session.rx_tap(frame)
+            app.select("monitor")
+            for _ in range(20):
+                self.pump(2)
+                if monitor.values["packet.heartbeat.uptime"].get() == "4242":
+                    break
+            self.assertEqual(monitor.values["packet.heartbeat.uptime"].get(), "4242")
+            record = decode_record(client.makefile("rb").readline())
+            self.assertEqual(record["source"], "HITL")
+            self.assertEqual(record["packet"]["uptime"], 4242)
+        finally:
+            client.close()
+        # Graphs tab of the monitor: select a field and draw without errors.
+        monitor.check_vars["packet.heartbeat.uptime"].set(True)
+        monitor.draw_graphs()
+        self.pump()
+        app.monitor.mirror_var.set(False)
+        app.monitor._mirror_changed()
         self.assertIsNone(app.hitl.session.rx_tap)
+        app.close()
+        self.assertTrue(monitor._closed)
 
 
 if __name__ == "__main__":

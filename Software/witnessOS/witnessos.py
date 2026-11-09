@@ -2,14 +2,17 @@
 
     python witnessos.py                  # all three tabs
     python witnessos.py flight.csv       # open a converted CSV in the viewer
-    python witnessos.py --tab relay      # start on a given tab
+    python witnessos.py a.csv b.csv      # overlay several CSVs
+    python witnessos.py --tab monitor    # start on a given tab
     python witnessos.py --no-feed        # do not start the Horizon feed
+    python witnessos.py --no-auto-connect  # monitor: no automatic USB opens
 
 Tabs (each reuses the original tool by import):
   HITL bench     Software/HITL/hitl_gui.py   (HitlApp embedded in a frame)
   CSV viewer     Software/Horizon/viewer.py  (CsvViewerPanel)
-  Witness relay  Witness bytes -> Horizon JSON feed, using Horizon/main.py's
-                 PacketDecoder and witness_link.WitnessPublisher
+  Witness monitor  Software/Horizon/main.py   (MonitorPanel: the monitor's
+                 telemetry readout, graphs, console, commands and Horizon
+                 JSON feed), plus mirroring of the HITL tab's connection
 
 The standalone tools and their CLIs (hitl_gui.py --headless, viewer.py,
 main.py, converter.py) are unchanged in behaviour and still run on their own.
@@ -28,26 +31,25 @@ from tkinter import ttk
 import hitl_gui
 import hitl_session as hs
 import viewer
-from wos_relay import RelayEngine
-from wos_relay_tab import RelayTab
+from wos_monitor_tab import MonitorTab
 from wos_widgets import ScrollableFrame, WheelRouter
 
 APP_NAME = "witnessOS"
-TABS = ("hitl", "viewer", "relay")
+TABS = ("hitl", "viewer", "monitor")
 TAB_TITLES = {"hitl": "HITL bench", "viewer": "CSV viewer",
-              "relay": "Witness relay"}
+              "monitor": "Witness monitor"}
+TAB_ALIASES = {"relay": "monitor"}
 
 
 class WitnessOS:
     """Owns the root window, the notebook and the three tool panels."""
 
-    def __init__(self, root, *, csv_file: Path | None = None,
+    def __init__(self, root, *, csv_files=None,
                  start_tab: str = "hitl",
                  hitl_settings: dict | None = None,
                  hitl_settings_path: str = hitl_gui.SETTINGS_PATH,
                  hitl_runs_dir: str | None = hs.DEFAULT_RUNS_DIR,
-                 relay_engine: RelayEngine | None = None,
-                 start_feed: bool = True):
+                 monitor_options: dict | None = None):
         self.root = root
         self._closed = False
         self._viewer_title = ""
@@ -72,17 +74,22 @@ class WitnessOS:
             runs_dir=hitl_runs_dir, parent=self.frames["hitl"].inner)
         self.router.register(self.hitl.param_canvas)
 
+        csv_files = [Path(p) for p in (csv_files or [])]
         self.viewer = viewer.CsvViewerPanel(
-            self.frames["viewer"].inner, csv_file, on_title=self._viewer_titled)
+            self.frames["viewer"].inner, csv_files or None,
+            on_title=self._viewer_titled)
         self.viewer.pack(fill="both", expand=True)
 
-        self.relay = RelayTab(self.frames["relay"].inner,
-                              hitl_session=self.hitl.session,
-                              engine=relay_engine, start_feed=start_feed)
-        self.relay.pack(fill="both", expand=True)
+        self._monitor_title = ""
+        self.monitor = MonitorTab(self.frames["monitor"].inner,
+                                  hitl_session=self.hitl.session,
+                                  on_title=self._monitor_titled,
+                                  **(monitor_options or {}))
+        self.monitor.pack(fill="both", expand=True)
 
         self.notebook.bind("<<NotebookTabChanged>>", self._tab_changed)
-        self.select(start_tab if csv_file is None else "viewer")
+        start_tab = TAB_ALIASES.get(start_tab, start_tab)
+        self.select("viewer" if csv_files else start_tab)
 
     def select(self, key: str):
         self.notebook.select(self.frames[key])
@@ -95,6 +102,11 @@ class WitnessOS:
         self._viewer_title = text
         self._tab_changed()
 
+    def _monitor_titled(self, text: str):
+        self._monitor_title = ("" if text == "Witness Communications Monitor"
+                               else text)
+        self._tab_changed()
+
     def _tab_changed(self, _event=None):
         try:
             key = self.current_tab()
@@ -103,6 +115,8 @@ class WitnessOS:
         suffix = TAB_TITLES[key]
         if key == "viewer" and self._viewer_title:
             suffix = self._viewer_title
+        elif key == "monitor" and self._monitor_title:
+            suffix = self._monitor_title
         self.root.title(f"{APP_NAME} - {suffix}")
         # A tab hidden while the window was resized redraws on show.
         if key == "hitl":
@@ -115,7 +129,7 @@ class WitnessOS:
             return
         self._closed = True
         try:
-            self.relay.close()
+            self.monitor.close()
         finally:
             try:
                 self.hitl.shutdown()  # stops any run, sends HITL EXIT
@@ -125,20 +139,24 @@ class WitnessOS:
 
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("csv_file", nargs="?", type=Path,
-                    help="converted CSV to open in the viewer tab")
-    ap.add_argument("--tab", choices=TABS, default="hitl",
-                    help="tab to show first")
+    ap.add_argument("csv_files", nargs="*", type=Path,
+                    help="converted CSV(s) to open (overlaid) in the viewer")
+    ap.add_argument("--tab", choices=TABS + tuple(TAB_ALIASES),
+                    default="hitl", help="tab to show first")
     ap.add_argument("--no-feed", action="store_true",
                     help="do not start the Horizon Witness feed at launch")
+    ap.add_argument("--no-auto-connect", action="store_true",
+                    help="monitor: do not open Witness USB ports "
+                    "automatically")
     return ap
 
 
 def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
     root = tk.Tk()
-    WitnessOS(root, csv_file=args.csv_file, start_tab=args.tab,
-              start_feed=not args.no_feed)
+    WitnessOS(root, csv_files=args.csv_files, start_tab=args.tab,
+              monitor_options={"start_feed": not args.no_feed,
+                               "auto_connect": not args.no_auto_connect})
     root.mainloop()
     return 0
 
