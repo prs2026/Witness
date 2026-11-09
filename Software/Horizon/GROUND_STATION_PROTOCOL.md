@@ -58,7 +58,7 @@ is byte 0, the first payload byte is byte 1, and EOF is the last byte.
 | LSM6 temperature | `int16` BE | degrees C = 25 + raw / 256 |
 | MS5607 pressure | `uint24` BE | pascals = raw |
 | MS5607 temperature | `int16` BE | degrees C = raw / 100 |
-| MS5607 altitude | float32 BE | meters relative to 1013.25 mbar |
+| MS5607 altitude | float32 BE | geometric meters, ISA (all layers to 47 km) relative to 1013.25 mbar |
 | Latitude/longitude | `int24` BE | degrees = raw / 10,000; north/east positive |
 | GPS time | `uint32` BE | Unix seconds |
 | GPS altitude | float32 BE | meters above mean sea level |
@@ -161,8 +161,10 @@ delay) on the 960 Hz sample stream and sent in the 40 micro-g/count format
 | 64 | 1 | EOF `0x0A` |
 
 Status, uptime, the orientation quaternion, barometric altitude, battery
-voltage, valid UART1 GPS fixes and the satellite count are populated; position
-and velocity remain zero. Satellites come from the most recent checksum-valid
+voltage, valid UART1 GPS fixes and the satellite count are populated. Position
+and velocity come from the position Kalman filter: ENU metres and m/s, origin
+at the pad, zero until the attitude is initialized and held at zero while the
+vehicle sits still on the pad. Satellites come from the most recent checksum-valid
 GGA within 3 s and are reported even when that GGA has no fix (position fields
 are then zero); they are 0 when stale.
 
@@ -280,7 +282,8 @@ zero bytes at 6..11, and EOF `0x0A` at byte 12. Before a valid receive, RSSI is
 | 98 | 4 | GPS altitude, float32 m MSL |
 | 102 | 1 | EOF `0x0A` |
 
-MCU temperature, position, velocity and GPS Unix time remain zero. The
+Position and velocity are the Kalman filter estimate, as in `0x02`. MCU
+temperature and GPS Unix time remain zero. The
 quaternion is populated exactly as in `0x02` (same convention; all zero until
 the estimator is initialized), so enabling debug output with command `0x00E0`
 gives 10 Hz quaternions on USB (LoRa still sends the newest debug frame at its
