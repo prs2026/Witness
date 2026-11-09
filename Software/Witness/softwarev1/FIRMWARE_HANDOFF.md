@@ -85,16 +85,20 @@ and is retried from the sensor task. IMU or battery ADC startup failure currentl
 causes `Sensors::start()` to fail and therefore aborts through `ESP_ERROR_CHECK`.
 
 All application tasks use `xTaskCreate`, not explicit core pinning. There is one
-FreeRTOS scheduler frequency, **500 Hz (2 ms tick)**, configured by
+FreeRTOS scheduler frequency, **1000 Hz (1 ms tick)**, configured by
 `CONFIG_FREERTOS_HZ` in `sdkconfig.defaults` and the active (gitignored)
 `sdkconfig`; ESP-IDF prefers an existing `sdkconfig` over the defaults, so
 change both. It is not independently set per core or per task. Iris and
-Aperture remain at 100 Hz. A task's requested millisecond timeout is quantized
-to the 2 ms tick (`pdMS_TO_TICKS` truncates); UART's 2 ms read wait is now one
-real tick instead of being clamped up to 10 ms.
+Aperture remain at 100 Hz. 1000 Hz is the ESP-IDF maximum (`FREERTOS_HZ`
+Kconfig `range 1 1000`); a faster tick needs a patched ESP-IDF, and a faster
+loop should instead be driven by the LSM6 data-ready interrupt (INT1, GPIO41)
+or its FIFO. A task's requested millisecond timeout is quantized to the 1 ms
+tick (`pdMS_TO_TICKS` truncates).
 
-Tick-rate audit (100 to 500 Hz, 2026-11-08). Millisecond-specified periods keep
-their length: sensor loop 10 ms (5 ticks, `static_assert`ed in `sensors.h`),
+Tick-rate audit (100 to 500 Hz, then 1000 Hz, 2026-11-08; the notes below are
+from the 500 Hz step and still hold at 1 kHz). Millisecond-specified periods keep
+their length, except the sensor loop, now 2 ms (500 Hz, 2 ticks,
+`static_assert`ed in `sensors.h`; was 10 ms),
 flash capture 20 ms (10 ticks, still 50 Hz), sensor/state/debug packets, radio
 schedule, heartbeat, USB 20 ms binary idle boundary, HITL 1000 ms timeout
 (millisecond clock) and the 1 s flash flush. Changes: the UART read wait and the
@@ -110,7 +114,7 @@ BUSY spin.
 
 | Task | Priority | Stack bytes | Cadence or role |
 |---|---:|---:|---|
-| `sensors` | 4 | 6144 | 100 Hz deadline-scheduled (5 ticks); IMU, attitude, sole active SPI3 application service loop |
+| `sensors` | 4 | 6144 | 500 Hz deadline-scheduled (2 ticks); IMU, attitude, sole active SPI3 application service loop |
 | `flash_capture` | 4 | 3072 | 50 Hz sensor snapshots and prelaunch ring |
 | `flash_logger` | 3 | 7168 | Queue draining and NAND writes; default 1 s flush interval |
 | `uart1` | 3 | 4096 | Blocking UART reads, parsing and raw byte dispatch |
@@ -155,14 +159,14 @@ the writer has frozen.
 Configuration constants live principally in `sensors.h` and the device headers:
 
 - IMU SPI mode 3 at 10 MHz. Low-g accelerometer: +/-16 g, 960 Hz with on-chip
-  LPF2 at 21.3 Hz (anti-aliased for the 100 Hz read); high-g accelerometer:
-  +/-320 g, 960 Hz; gyro: +/-2000 dps, 120 Hz, LPF1 off (see below).
-  Polling at 100 Hz does not retrieve every high-g sample; there is no FIFO
-  streaming implementation here.
+  LPF2 at 21.3 Hz; high-g accelerometer: +/-320 g, 960 Hz; gyro: +/-2000 dps,
+  960 Hz with LPF1 code 100 (100 Hz bandwidth, below the 250 Hz Nyquist rate of
+  the 500 Hz read; see "500 Hz sensor loop"). Polling at 500 Hz does not
+  retrieve every 960 Hz sample; there is no FIFO streaming implementation here.
 - MS5607 SPI mode 3 at 10 MHz, pressure and temperature OSR 4096. Its polling
   state machine alternates conversions with a 9100 us conversion time. Altitude
   uses the configured sea-level reference of 1013.25 mbar, not a launch-site zero.
-- Battery sampling: 10 Hz, derived as a divisor of the 100 Hz sensor loop.
+- Battery sampling: 10 Hz, derived as a divisor of the 500 Hz sensor loop.
   Sixteen ADC readings are averaged, with 12 dB attenuation and a 15k/5k divider
   (battery voltage is four times the ADC-pin voltage). Wire units are millivolts.
 - Sensor telemetry: 10 Hz. State telemetry: 1 Hz. Witness debug: 10 Hz only after
@@ -213,7 +217,10 @@ in-flight attitude with the radio transmitting.
 
 Spike rejection: the integration path uses a per-axis running median of 5 gyro
 samples (`Config::gyro_median_length`, 1 = off, 3 or 5), so the attitude lags by
-2 samples (20 ms at 100 Hz) and each sample is integrated with its own dt.
+2 samples (4 ms at 500 Hz; was 20 ms at 100 Hz) and each sample is integrated
+with its own dt. At 500 Hz a median of 5 spans only 10 ms, so an interference
+burst lasting more than 2 samples (4 ms) is no longer removed; LPF1 also spreads
+a burst over several samples.
 Runs of 1-2 outlier samples are removed; monotonic ramps (tested 0..500 dps)
 pass exactly, and steps lasting 3 or more samples (tested 1000 dps) pass
 unchanged, only delayed. Median of 3 would pass the observed 2-sample runs.
@@ -294,7 +301,7 @@ overruns O, max pass P us, radio TX N (failed F), <valid|held|not initialized>,
 tilt T deg, q xyzw [...]`. R is attitude updates per second over the interval;
 max dt and max pass reset each report, the counters are cumulative. A spike is
 counted when a raw sample differs from the median output by more than 10 dps on
-any axis. `overruns` counts passes whose 10 ms deadline had already passed when
+any axis. `overruns` counts passes whose 2 ms deadline had already passed when
 the loop reached `xTaskDelayUntil`. If the line keeps saying `not initialized`,
 the `gyro rejected` count shows the interference exceeded the window limits.
 
@@ -320,9 +327,50 @@ The pad final drift is small with or without the filter because each accepted
 window restores the attitude; the filter keeps the within-window excursion
 (max) small. The coast column shows what interference does in flight.
 
-## 100 Hz sensor loop
+## 500 Hz sensor loop
 
-The sensor task wakes every `kTaskPeriod` (5 ticks = 10 ms) with
+Raised from 100 Hz on 2026-11-08 (`Sensors::kTaskRateHz = 500`, 1 kHz tick).
+The estimator steps once per fresh gyro sample (`gyro_ready`), so its rate is
+min(loop, gyro ODR); its timing comes from `Sensors::attitude_config()`
+(nominal 2 ms, late above 3 ms, a stationary window needs 250 samples; the
+window buffer holds 1024). HITL still steps once per 0x0C frame (100 Hz from
+the tool).
+
+Bench, real IMU, radio transmitting (10 s reports): 499.7-500.0 Hz, max dt
+8.1-8.5 ms with about 8 late steps per 10 s, about 15 deadline overruns per
+10 s, max pass 2.7-2.9 ms against the 2 ms budget, no watchdog or reset,
+attitude initialized and its tilt agreed with the accelerometer (93.5 vs 93.7
+deg). Not yet run: a HITL flight at 500 Hz (the tool sends 100 Hz frames), a
+long soak, or a flight-rate gyro test.
+
+Flash logging at 500 Hz (48-byte records, 42 per 2 KiB page; sensor records
+are written in Boost, Coast and Descent only):
+
+| Case | Records | Fits? |
+|---|---|---|
+| Current allocation, 10 blocks per session (26,880 records) at 50 Hz | - | 537.6 s |
+| Same allocation at 500 Hz | - | 53.8 s |
+| a3241569 trajectory at 500 Hz, Boost to Landed (406 s) | 203,000 | ~76 blocks |
+| Same, 500 Hz ascent (119 s) then 50 Hz descent (287 s) | 73,950 | ~28 blocks |
+| Whole chip (1,004 blocks) at 500 Hz | 2.7 M | ~90 min |
+
+So 500 Hz logging needs a store change: fewer session slots (8 slots of ~125
+blocks fits the full flight at 500 Hz), a rebalanced slot (more sensor, fewer
+UART/text blocks) with 500 Hz only until Descent, and/or a compact IMU-only
+record (~24 bytes) with barometer/battery at 50 Hz. NAND bandwidth is not a
+limit (about 12 page programs/s). RAM is: the capture queue (256 records) would
+hold only 0.5 s at 500 Hz and the 2 s prelaunch ring grows from 100 to 1,000
+records (48 KB); check free heap before enlarging them. Capture should then be
+fed by the sensor task per sample rather than a separately timed task.
+
+Known issues at 500 Hz: (1) the 2 ms budget is exceeded by some passes (battery
+ADC, radio TX start, log formatting); moving the battery ADC out of the SPI3
+task would help; (2) a 960 Hz gyro with LPF1 made radio interference worse in
+the earlier bench test (see the LPF1 table), so recheck gyro noise with the
+radio on whenever interference is present; (3) the spike median covers less
+time (above); (4) the loop takes roughly 15-25 % of one core.
+
+The sensor task wakes every `kTaskPeriod` (2 ticks = 2 ms) with
 `xTaskDelayUntil`, so periods are measured from the previous deadline, not from
 the end of a pass. Each pass first services HITL, reads the IMU (timestamped),
 the barometer and the battery divisor, updates the flight state machine and the

@@ -27,9 +27,12 @@ class UartDriver;
 
 class Sensors final {
 public:
-    // Task configuration. kTaskRateHz must divide evenly into 1000 ms.
+    // Task configuration. kTaskRateHz must divide configTICK_RATE_HZ (1 kHz,
+    // the ESP-IDF maximum) so each pass is a whole number of ticks. The IMU
+    // read and attitude step run every pass; the estimator steps only when the
+    // gyro has a new sample, so its rate is min(kTaskRateHz, gyro ODR).
     static constexpr UBaseType_t kTaskPriority = 4;
-    static constexpr std::uint32_t kTaskRateHz = 100;
+    static constexpr std::uint32_t kTaskRateHz = 500;
     static constexpr std::uint32_t kPacketRateHz = 10;
     static constexpr std::uint32_t kStatePacketRateHz = 1;
     static constexpr std::uint32_t kDebugPacketRateHz = 10;
@@ -92,9 +95,12 @@ public:
     static constexpr std::uint8_t kLowGAccelOutputDataRate = 0x09;      // 960 Hz
     static constexpr std::uint8_t kLowGAccelFullScale = 0x63;           // LPF2 ODR/45, +/-16 g
     static constexpr std::uint8_t kLowGAccelFilterConfiguration = 0x08; // CTRL9 LPF2_XL_EN
-    static constexpr std::uint8_t kGyroOutputDataRate = 0x06;           // 120 Hz
-    static constexpr std::uint8_t kGyroFullScale = 0x0C;                // bit 3, +/-2000 dps
-    static constexpr std::uint8_t kGyroFilterConfiguration = 0x00;      // CTRL7: LPF1 off
+    // Gyro for the 500 Hz estimator: 960 Hz ODR so every 2 ms pass has a fresh
+    // sample, LPF1 code 100 -> 100 Hz LPF1+LPF2 bandwidth at 960 Hz (Table 66),
+    // below the 250 Hz Nyquist rate of a 500 Hz read.
+    static constexpr std::uint8_t kGyroOutputDataRate = 0x09;           // 960 Hz
+    static constexpr std::uint8_t kGyroFullScale = 0x4C;                // LPF1 100, bit 3, +/-2000 dps
+    static constexpr std::uint8_t kGyroFilterConfiguration = 0x01;      // CTRL7: LPF1 on
     static constexpr std::uint8_t kHighGAccelOutputDataRate = 0x04; // 960 Hz
     static constexpr std::uint8_t kHighGAccelFullScale = 0x04;      // +/-320 g
 
@@ -158,8 +164,8 @@ public:
 private:
     static_assert(kTaskRateHz > 0 && (1000U % kTaskRateHz) == 0,
                   "Sensors task rate must divide evenly into 1000 ms");
-    // The 100 Hz IMU/attitude loop is a whole number of scheduler ticks
-    // (5 ticks at the 500 Hz CONFIG_FREERTOS_HZ).
+    // The IMU/attitude loop is a whole number of scheduler ticks
+    // (2 ticks for 500 Hz at the 1 kHz CONFIG_FREERTOS_HZ).
     static_assert((configTICK_RATE_HZ % kTaskRateHz) == 0,
                   "Scheduler tick rate must be a multiple of the sensor rate");
     static_assert(kPacketRateHz > 0 && (1000U % kPacketRateHz) == 0,
@@ -176,7 +182,8 @@ private:
             (kTaskRateHz % kBatterySampleRateHz) == 0,
         "Battery sample rate must be an integer divisor of the sensor rate");
     static constexpr TickType_t kTaskPeriod =
-        pdMS_TO_TICKS(1000U / kTaskRateHz);
+        static_cast<TickType_t>(configTICK_RATE_HZ / kTaskRateHz);
+    static_assert(kTaskPeriod >= 1, "Sensor loop cannot run faster than the tick");
     static constexpr TickType_t kPacketPeriod =
         pdMS_TO_TICKS(1000U / kPacketRateHz);
     static constexpr TickType_t kStatePacketPeriod =
@@ -307,7 +314,19 @@ private:
     std::uint32_t hitl_last_summary_ms_ = 0;
 
     // Attitude estimator and 100 Hz loop diagnostics (sensor task only).
-    attitude::Estimator attitude_{};
+    // Estimator timing scales with the loop: nominal step 1/kTaskRateHz,
+    // "late" at 1.5x, and a stationary window needs at least half its samples.
+    static attitude::Config attitude_config()
+    {
+        attitude::Config config{};
+        config.nominal_dt_us = 1'000'000U / kTaskRateHz;
+        config.late_dt_us = config.nominal_dt_us + config.nominal_dt_us / 2U;
+        config.window_min_samples = kTaskRateHz / 2U;
+        return config;
+    }
+    static_assert(kTaskRateHz <= attitude::Estimator::kMaxWindowSamples,
+                  "A 1 s stationary window must fit the estimator's buffer");
+    attitude::Estimator attitude_{attitude_config()};
     std::uint32_t attitude_updates_since_report_ = 0;
     std::uint64_t attitude_report_start_us_ = 0;
     std::uint32_t loop_overruns_ = 0;

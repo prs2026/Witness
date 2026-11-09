@@ -1402,7 +1402,10 @@ void Sensors::run()
             publish_sample();
         }
 
-        if (lsm_result == ESP_OK) {
+        // Step the estimator once per fresh gyro sample. A pass that finds no
+        // new sample (loop faster than the gyro ODR) must not re-integrate
+        // the previous rate; in HITL each new 0x0C frame is one sample.
+        if (lsm_result == ESP_OK && (hitl || working_sample_.gyro_ready)) {
             update_attitude(imu_timestamp_us);
         }
 
@@ -1448,7 +1451,7 @@ void Sensors::run()
         }
         report_attitude_rate(pass_end_us);
 
-        // Deadline scheduling: wake every kTaskPeriod (5 ticks = 10 ms)
+        // Deadline scheduling: wake every kTaskPeriod (1/kTaskRateHz)
         // measured from the previous deadline, not from the end of this pass.
         if (xTaskDelayUntil(&next_wake_time, kTaskPeriod) == pdFALSE) {
             ++loop_overruns_;

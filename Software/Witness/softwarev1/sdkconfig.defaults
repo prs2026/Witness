@@ -1,6 +1,6 @@
 # FreeRTOS uses one 500 Hz (2 ms) scheduler tick rate across both ESP32-S3 cores.
 # The sensor task runs its 100 Hz IMU/attitude loop as a 5-tick period.
-CONFIG_FREERTOS_HZ=500
+CONFIG_FREERTOS_HZ=1000
 
 # Route the primary diagnostic console through the built-in USB Serial/JTAG port.
 # CONFIG_ESP_CONSOLE_UART_DEFAULT is not set

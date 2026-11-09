@@ -107,7 +107,7 @@ struct StepResult {
 
 class Estimator final {
 public:
-    static constexpr std::size_t kMaxWindowSamples = 200U;
+    static constexpr std::size_t kMaxWindowSamples = 1024U;
     static constexpr std::size_t kMaxMedianLength = 5U;
 
     explicit Estimator(const Config &config = Config{});
