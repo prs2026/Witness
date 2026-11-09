@@ -210,12 +210,17 @@ Logs are written under `logs/` next to the scripts:
 | File family | Contents |
 |---|---|
 | `serial_*.bin`, `TCP_*.bin` | Witness monitor raw transport bytes |
-| `debug_*.log` | Witness monitor console and parse diagnostics |
+| `debug_*.log` | Witness monitor console and parse diagnostics (every line, even ones the on-screen console skips) |
+| `nmea_<source>_*.csv` | GPS NMEA sentences the Witness monitor found in the stream: `received_utc,checksum_ok,sentence` |
 | `test_*.bin` | Simulated Witness bytes |
 | `horizon_witness_*.jsonl` | Decoded Witness feed records and diagnostics |
 | `horizon_featherweight_*.bin`, `horizon_featherweight_*.jsonl` | Featherweight bytes and decoded/diagnostic records |
 | `aim_mqtt_*.jsonl` | AIM message payloads, decoded fields, and connection diagnostics |
 | `mqtt_broker_*.log` | Embedded broker lifecycle and warnings/errors |
+
+The Witness monitor picks GPS NMEA sentences (`$GNGGA`, `$GNRMC`, ...) out of the mixed Witness stream and checks each `*hh` checksum. Valid and damaged sentences both go to the NMEA CSV (`checksum_ok` 1 or 0); a damaged one is usually a sentence with a telemetry frame spliced into it. A status line under the feed status shows the counts per input and the latest GGA fix, satellites and altitude.
+
+The monitor keeps up with fast streams: each GUI tick drains every queued event, keeps every graph sample at its arrival time, and redraws the labels and graphs (at most 10 times a second) from the newest packet of each type. The on-screen console keeps its newest 2,000 lines and, in a burst, skips lines with a note; the debug log keeps everything.
 
 Broker diagnostic logs rotate at 5 MB with two backups per run. This does not limit the other telemetry log files or remove logs from previous runs; monitor disk space. Broker logs are not a replacement for the AIM message log.
 

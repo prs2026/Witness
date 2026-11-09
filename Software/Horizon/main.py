@@ -27,6 +27,7 @@ from tkinter import filedialog, messagebox, scrolledtext, ttk
 
 from ground_settings import WITNESS_FEED_HOST, WITNESS_FEED_PORT
 from witness_link import WitnessPublisher
+from nmea_capture import NmeaExtractor, summarize_gga
 from witness_test_source import builtin_scenario, load_scenario, play_scenario, validate_speed
 from serial_discovery import RETRY_SECONDS, SerialDiscovery, SerialOpenJob
 
@@ -376,6 +377,10 @@ class SerialMonitor(tk.Tk):
         self.test_status = tk.StringVar(value="Test source: blank = built-in 60s simulated flight. No hardware writes.")
         self.events = queue.Queue()
         self.log_files = {}
+        self.nmea_files = {}
+        self.nmea_counts = {}       # source -> [valid, bad]
+        self.nmea_last_gga = {}
+        self.nmea_status = tk.StringVar(value="NMEA: none received")
         self.debug_log_file = None
         self.values = {}
         self.check_vars = {}
@@ -389,6 +394,15 @@ class SerialMonitor(tk.Tk):
         self.command_history_index = 0
         self.command_history_draft = ""
         self.max_history = 300
+        # Event-pump limits. Workers can produce events far faster than Tk
+        # can display them one at a time, so each tick drains the queue,
+        # keeps every graph sample, and redraws only the newest state.
+        self.max_events_per_tick = 20000
+        self.max_console_lines = 2000
+        self.max_console_lines_per_tick = 400
+        self.graph_interval_s = 0.1
+        self._last_graph_draw = 0.0
+        self._graphs_dirty = False
         self.publisher = WitnessPublisher(DEFAULT_WITNESS_FEED_HOST, DEFAULT_WITNESS_FEED_PORT)
         self.feed_status = tk.StringVar(value="Horizon feed: starting...")
         self.build_ui()
@@ -469,6 +483,7 @@ class SerialMonitor(tk.Tk):
         test_controls.bind("<Configure>", lambda event: self.test_status_label.configure(
             wraplength=max(120, event.width - 16)))
         ttk.Label(self, textvariable=self.feed_status, wraplength=800).pack(fill="x", padx=8, pady=(0, 5))
+        ttk.Label(self, textvariable=self.nmea_status, wraplength=800).pack(fill="x", padx=8, pady=(0, 5))
         main_pane = ttk.PanedWindow(self, orient=tk.VERTICAL)
         main_pane.pack(fill="both", expand=True, padx=8, pady=(0, 8))
         notebook = ttk.Notebook(main_pane)
@@ -1057,6 +1072,7 @@ class SerialMonitor(tk.Tk):
         return True
 
     def read_test(self, scenario, source, token, stop, raw_log, speed, loop):
+        nmea = NmeaExtractor()
         def event(kind, payload):
             self.events.put(("test_event", (token, kind, payload)))
         decoder = PacketDecoder(
@@ -1074,6 +1090,8 @@ class SerialMonitor(tk.Tk):
             raw_log.flush()
             event("bytes", (source, data))
             decoder.feed(data)
+            for sentence, ok in nmea.feed(data):
+                event("nmea", (source, sentence, ok, time.time()))
         def reset_decoder():
             if decoder.buffer:
                 event("decoder_error", (source, f"test loop discarded {len(decoder.buffer)} trailing bytes"))
@@ -1189,16 +1207,27 @@ class SerialMonitor(tk.Tk):
 
     def on_decoded_packet(self, source, packet, *, test_token=None):
         # Called by input workers: export immediately, independent of GUI backlog.
+        # The arrival time travels with the packet so graphs plot when it was
+        # received, not when the GUI got round to it.
+        received_at = time.time()
         try:
-            self.publisher.publish(source, packet, received_at=time.time())
+            self.publisher.publish(source, packet, received_at=received_at)
         except Exception as exc:
             self.events.put(("decoder_error", (source, f"Horizon feed: {exc}")))
         if test_token is None:
-            self.events.put(("packet", (source, packet)))
+            self.events.put(("packet", (source, packet, received_at)))
         else:
-            self.events.put(("test_event", (test_token, "packet", (source, packet))))
+            self.events.put(("test_event", (test_token, "packet", (source, packet, received_at))))
+
+    def _queue_nmea(self, source, extractor, data):
+        sentences = extractor.feed(data)
+        if sentences:
+            received_at = time.time()
+            for sentence, ok in sentences:
+                self.events.put(("nmea", (source, sentence, ok, received_at)))
 
     def read_serial(self, port_name, serial_port):
+        nmea = NmeaExtractor()
         decoder = PacketDecoder(
             lambda p: self.on_decoded_packet(port_name, p),
             lambda message: self.events.put(("decoder_error", (port_name, message))),
@@ -1214,11 +1243,13 @@ class SerialMonitor(tk.Tk):
                         log_file.flush()
                     self.events.put(("bytes", (port_name, bytes(data))))
                     decoder.feed(data)
+                    self._queue_nmea(port_name, nmea, data)
             except Exception as exc:
                 self.events.put(("error", (port_name, str(exc), serial_port)))
                 break
 
     def read_tcp(self, source_name, tcp_socket):
+        nmea = NmeaExtractor()
         decoder = PacketDecoder(
             lambda p: self.on_decoded_packet(source_name, p),
             lambda message: self.events.put(("decoder_error", (source_name, message))),
@@ -1236,6 +1267,7 @@ class SerialMonitor(tk.Tk):
                     log_file.flush()
                 self.events.put(("bytes", (source_name, bytes(data))))
                 decoder.feed(data)
+                self._queue_nmea(source_name, nmea, data)
             except socket.timeout:
                 continue
             except Exception as exc:
@@ -1243,69 +1275,168 @@ class SerialMonitor(tk.Tk):
                 break
 
     def process_events(self):
-        deadline = time.monotonic() + 0.02
-        while time.monotonic() < deadline:
-            try:
-                kind, payload = self.events.get_nowait()
-                if kind == "test_event":
-                    token, kind, payload = payload
-                    if token is not self._test_token:
-                        continue
-                    if kind == "test_done":
-                        self.stop_test(result=payload)
-                        continue
-                elif self.test_active:
-                    # Ignore any late events from a previously disconnected live
-                    # input; never mix those values with this test run.
-                    continue
-                if kind == "error":
-                    port_name, message, stream = payload
-                    inputs = self.serials if port_name in self.serials else self.tcp_sockets
-                    if inputs.get(port_name) is not stream:
-                        continue  # A late failure from a replaced/disconnected worker.
-                    inputs.pop(port_name)
-                    stream.close()
-                    log_file = self.log_files.pop(port_name, None)
-                    if log_file is not None:
-                        log_file.close()
-                    self.refresh_command_targets()
-                    if not self.serials and not self.tcp_sockets:
-                        self.connect_button.configure(text="Connect")
-                    self.status_label.configure(text=f"Serial error on {port_name}: {message}")
-                    self.console_write(f"ERROR[{port_name}] {message}")
-                    if not self.serials and not self.tcp_sockets and self.debug_log_file is not None:
-                        self.debug_log_file.close()
-                        self.debug_log_file = None
-                elif kind == "decoder_error":
-                    port_name, message = payload
-                    self.console_write(f"BAD_PACKET[{port_name}] {message}")
-                elif kind == "host_packet":
-                    # Echoed host->Witness packet (0x0C HITL input): framed
-                    # and skipped, never shown as telemetry. Log sparsely.
-                    port_name, packet_id, count = payload
-                    if count == 1 or count % 100 == 0:
-                        self.console_write(
-                            f"HOST_ECHO[{port_name}] skipped 0x{packet_id:02x} host packet "
-                            f"(HITL input; {count} so far)")
-                elif kind == "bytes":
-                    port_name, data = payload
-                    self.console_write(f"RX[{port_name}]  {data.hex(' ')}")
-                else:
-                    port_name, packet = payload
-                    if port_name in self.serials:
-                        self.discovery.remember(port_name)
-                    self.update_values("packet", packet)
-                    self.console_write(f"PACKET[{port_name}] {self.format_packet(packet)}")
-            except queue.Empty:
-                break
-            except Exception as exc:
-                # A malformed packet or display value must never terminate the
-                # Tk event pump. Keep the failure visible in the debug log.
+        """Drain every queued event, then update the display once.
+
+        Older code did all display work per event inside a 20 ms budget, so a
+        fast stream queued faster than it drained and the monitor fell
+        further behind real time. Now each tick takes everything waiting:
+        graph history keeps every sample (stamped with its arrival time),
+        console lines are written in one batch, and labels, status
+        indicators and graphs show only the newest packet of each type.
+        """
+        latest = {}              # packet type -> (port, packet), newest wins
+        ports_seen = set()
+        console_lines = []
+        handled = 0
+        try:
+            while handled < self.max_events_per_tick:
                 try:
-                    self.console_write(f"GUI_ERROR {exc}")
-                except Exception:
-                    pass
-        self.after(50, self.process_events)
+                    kind, payload = self.events.get_nowait()
+                except queue.Empty:
+                    break
+                handled += 1
+                try:
+                    self._handle_event(kind, payload, latest, ports_seen, console_lines)
+                except Exception as exc:
+                    # A malformed packet or display value must never terminate
+                    # the Tk event pump. Keep the failure visible in the log.
+                    console_lines.append(self._console_stamp(f"GUI_ERROR {exc}"))
+            for port_name in ports_seen:
+                if port_name in self.serials:
+                    self.discovery.remember(port_name)
+            for port_name, packet in latest.values():
+                try:
+                    self.update_values("packet", packet, record=False, draw=False)
+                except Exception as exc:
+                    console_lines.append(self._console_stamp(f"GUI_ERROR {exc}"))
+            self._write_console_lines(console_lines)
+            self._refresh_nmea_status()
+            self._maybe_draw_graphs()
+        finally:
+            # Come back sooner while a backlog remains; otherwise idle at 50 ms.
+            # Never ~1 ms: Tk's update() keeps running timers that are already
+            # due, so a 1 ms reschedule under a steady stream would never let
+            # update() return (one tick already drains up to 20,000 events).
+            self.after(15 if not self.events.empty() else 50, self.process_events)
+
+    def _console_stamp(self, line):
+        timestamp = _dt.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        return f"[{timestamp}] {line}"
+
+    def _handle_event(self, kind, payload, latest, ports_seen, console_lines):
+        """Apply one queued event. Display work is deferred to the caller."""
+        if kind == "test_event":
+            token, kind, payload = payload
+            if token is not self._test_token:
+                return
+            if kind == "test_done":
+                self._write_console_lines(console_lines)
+                console_lines.clear()
+                self.stop_test(result=payload)
+                return
+        elif self.test_active:
+            # Ignore any late events from a previously disconnected live
+            # input; never mix those values with this test run.
+            return
+        if kind == "packet":
+            port_name, packet = payload[0], payload[1]
+            received_at = payload[2] if len(payload) > 2 else time.time()
+            ports_seen.add(port_name)
+            self.record_history("packet", packet, received_at)
+            latest[packet.get("packet")] = (port_name, packet)
+            console_lines.append(self._console_stamp(
+                f"PACKET[{port_name}] {self.format_packet(packet)}"))
+            return
+        if kind == "nmea":
+            self._handle_nmea(*payload)
+            return
+        if kind == "bytes":
+            port_name, data = payload
+            console_lines.append(self._console_stamp(f"RX[{port_name}]  {data.hex(' ')}"))
+            return
+        if kind == "decoder_error":
+            port_name, message = payload
+            console_lines.append(self._console_stamp(f"BAD_PACKET[{port_name}] {message}"))
+            return
+        if kind == "host_packet":
+            # Echoed host->Witness packet (0x0C HITL input): framed
+            # and skipped, never shown as telemetry. Log sparsely.
+            port_name, packet_id, count = payload
+            if count == 1 or count % 100 == 0:
+                console_lines.append(self._console_stamp(
+                    f"HOST_ECHO[{port_name}] skipped 0x{packet_id:02x} host packet "
+                    f"(HITL input; {count} so far)"))
+            return
+        if kind == "error":
+            # Rare and stateful: flush what came before so the log stays in order.
+            self._write_console_lines(console_lines)
+            console_lines.clear()
+            self._handle_input_error(payload)
+            return
+
+    def _nmea_file(self, source):
+        handle = self.nmea_files.get(source)
+        if handle is None:
+            LOG_DIR.mkdir(parents=True, exist_ok=True)
+            stamp = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+            safe = "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in source)
+            handle = (LOG_DIR / f"nmea_{safe}_{stamp}.csv").open("a", encoding="ascii", newline="")
+            if handle.tell() == 0:
+                handle.write("received_utc,checksum_ok,sentence\n")
+            self.nmea_files[source] = handle
+        return handle
+
+    def _handle_nmea(self, source, sentence, ok, received_at):
+        """Log one NMEA sentence (valid or damaged) and refresh the summary."""
+        counts = self.nmea_counts.setdefault(source, [0, 0])
+        counts[0 if ok else 1] += 1
+        handle = self._nmea_file(source)
+        stamp = _dt.datetime.fromtimestamp(received_at, _dt.timezone.utc).isoformat(timespec="milliseconds")
+        handle.write(f"{stamp},{int(ok)},{sentence}\n")
+        self._nmea_dirty = True
+        if ok:
+            gga = summarize_gga(sentence)
+            if gga:
+                self.nmea_last_gga[source] = gga
+
+    def _refresh_nmea_status(self):
+        if not getattr(self, "_nmea_dirty", False):
+            return
+        self._nmea_dirty = False
+        parts = []
+        for source, (valid, bad) in self.nmea_counts.items():
+            text = f"{source}: {valid} sentences ({bad} damaged)"
+            if source in self.nmea_last_gga:
+                text += f", last {self.nmea_last_gga[source]}"
+            parts.append(text)
+        self.nmea_status.set("NMEA " + "; ".join(parts) + f" - logged to {LOG_DIR.name}/nmea_*.csv")
+        for handle in self.nmea_files.values():
+            handle.flush()
+
+    def _close_nmea_file(self, source):
+        handle = self.nmea_files.pop(source, None)
+        if handle is not None:
+            handle.close()
+
+    def _handle_input_error(self, payload):
+        port_name, message, stream = payload
+        inputs = self.serials if port_name in self.serials else self.tcp_sockets
+        if inputs.get(port_name) is not stream:
+            return  # A late failure from a replaced/disconnected worker.
+        inputs.pop(port_name)
+        stream.close()
+        log_file = self.log_files.pop(port_name, None)
+        if log_file is not None:
+            log_file.close()
+        self._close_nmea_file(port_name)
+        self.refresh_command_targets()
+        if not self.serials and not self.tcp_sockets:
+            self.connect_button.configure(text="Connect")
+        self.status_label.configure(text=f"Serial error on {port_name}: {message}")
+        self.console_write(f"ERROR[{port_name}] {message}")
+        if not self.serials and not self.tcp_sockets and self.debug_log_file is not None:
+            self.debug_log_file.close()
+            self.debug_log_file = None
 
     def update_age_indicators(self):
         if self.publisher.error:
@@ -1402,17 +1533,50 @@ class SerialMonitor(tk.Tk):
         return f"{packet['packet']}: {fields}"
 
     def console_write(self, line):
-        timestamp = _dt.datetime.now().strftime("%H:%M:%S.%f")[:-3]
-        formatted = f"[{timestamp}] {line}"
+        self._write_console_lines([self._console_stamp(line)])
+
+    def _write_console_lines(self, lines):
+        """Append already-stamped lines: all to the debug log, a bounded tail to the console."""
+        if not lines:
+            return
         if self.debug_log_file is not None:
-            self.debug_log_file.write(formatted + "\n")
+            self.debug_log_file.write("\n".join(lines) + "\n")
             self.debug_log_file.flush()
+        shown = lines
+        if len(lines) > self.max_console_lines_per_tick:
+            skipped = len(lines) - self.max_console_lines_per_tick
+            shown = [self._console_stamp(
+                f"CONSOLE skipped {skipped} line(s) to keep up; all are in the debug log")]
+            shown += lines[-self.max_console_lines_per_tick:]
         self.console.configure(state="normal")
-        self.console.insert("end", formatted + "\n")
+        self.console.insert("end", "\n".join(shown) + "\n")
+        # Keep the widget bounded: an ever-growing Text slows every insert.
+        excess = int(self.console.index("end-1c").split(".")[0]) - 1 - self.max_console_lines
+        if excess > 0:
+            self.console.delete("1.0", f"{excess + 1}.0")
         self.console.see("end")
         self.console.configure(state="disabled")
 
-    def update_values(self, kind, packet):
+    def record_history(self, kind, packet, received_at):
+        """Add one packet's numeric fields to the graph history at its arrival time."""
+        name = packet.get("packet")
+        for field, value in packet.items():
+            if field == "packet" or not isinstance(value, (int, float, list, tuple)):
+                continue
+            key = f"{kind}.{name}.{field}"
+            if key not in self.values:
+                continue
+            samples = self.history.setdefault(key, [])
+            samples.append((received_at, value))
+            if len(samples) > self.max_history:
+                del samples[:-self.max_history]
+        self._graphs_dirty = True
+
+    def update_values(self, kind, packet, *, record=True, draw=True):
+        """Show a packet's fields. The event pump records history separately
+        and calls this only for the newest packet of each type per tick."""
+        if record:
+            self.record_history(kind, packet, time.time())
         packet_key = f"{kind}.{packet['packet']}"
         self.last_packet_time[packet_key] = time.monotonic()
         for field, value in packet.items():
@@ -1425,10 +1589,18 @@ class SerialMonitor(tk.Tk):
                         self.values[key].set(self.format_display_value(field, value))
                     if field == "status" or field.endswith("_status"):
                         self.update_status_decoder(key, value)
-                    if isinstance(value, (int, float, list, tuple)):
-                        samples = self.history.setdefault(key, [])
-                        samples.append((_dt.datetime.now().timestamp(), value))
-                        del samples[:-self.max_history]
+        if draw:
+            self.draw_graphs()
+
+    def _maybe_draw_graphs(self):
+        """Redraw at most every graph_interval_s, and only when data changed."""
+        if not self._graphs_dirty:
+            return
+        now = time.monotonic()
+        if now - self._last_graph_draw < self.graph_interval_s:
+            return
+        self._last_graph_draw = now
+        self._graphs_dirty = False
         self.draw_graphs()
 
     def clear_history(self):
@@ -1599,6 +1771,11 @@ class SerialMonitor(tk.Tk):
             except Exception:
                 pass
         self.log_files.clear()
+        for source in list(self.nmea_files):
+            try:
+                self._close_nmea_file(source)
+            except Exception:
+                pass
         if self.debug_log_file is not None:
             self.debug_log_file.close()
             self.debug_log_file = None
