@@ -1,0 +1,7 @@
+{
+  "trajectory": "eayftrajectory.csv",
+  "description": "PANDORA vibration drive files, EAYF_CONFIG_1: nominal flight, launch to apogee, as predicted (see vibration_audio.txt)",
+  "thrust": "vibration_flight_thrust.ogg",
+  "lateral": "vibration_flight_lateral.ogg",
+  "full_scale_g": 150.67
+}

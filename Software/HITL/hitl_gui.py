@@ -152,6 +152,8 @@ def run_headless(args) -> int:
           f"{summary['apogee_t_s']:.1f} s")
     if run.csv_report:
         print(tc.format_report(run.csv_report))
+        for line in hs.HitlSession.imu_summary(run):
+            print(line)
     print("Expected: " + (", ".join(
         f"{hp.FLIGHT_STATES[k]} {v:.2f} s"
         for k, v in sorted(run.expected.items(), key=lambda kv: kv[1]))
@@ -610,6 +612,8 @@ class HitlApp:
         if run.csv_report:
             for line in tc.format_report(run.csv_report).splitlines():
                 self.append_log("[csv] " + line)
+            for line in hs.HitlSession.imu_summary(run):
+                self.append_log("[imu] " + line)
         self.hide_banner()
         self._safe(lambda: self.session.start_run(run))
         self._refresh_buttons()

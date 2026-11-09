@@ -382,6 +382,10 @@ class CsvParams:
     # *_noise_g/dps fields above then only affect the 100 Hz 0x0C IMU fields,
     # which Witness ignores while 0x0E frames arrive.
     imu_synthesis: bool = True
+    # Vibration profile: "" = the profile made for this trajectory
+    # (vibration/<csv stem>/profile.json) if there is one, else none;
+    # "none" = no vibration; or a profile folder under vibration/.
+    vibration_profile: str = ""
     vibration_scale: float = 1.0      # 0 = no vibration
     imu_noise_scale: float = 1.0      # 1 = datasheet noise density
     imu_offset_scale: float = 1.0     # 1 = datasheet worst-case zero levels

@@ -80,11 +80,36 @@ class SynthesisTests(unittest.TestCase):
         self.assertAlmostEqual(s.high_g[-1, 0] * ims.HIGH_G_PER_COUNT, 30.0, delta=0.02)
         self.assertGreater(s.report["raw_clipped_fraction"]["low_g"][0], 0.99)
 
-    def test_vibration_starts_at_launch(self):
+    def test_profiles_belong_to_their_trajectory(self):
+        prof = ims.find_profile("trajectories/eayftrajectory.csv")
+        self.assertIsNotNone(prof)
+        self.assertEqual(prof["name"], "eayftrajectory")
+        self.assertAlmostEqual(prof["full_scale_g"], 150.67)
+        self.assertTrue(os.path.isfile(prof["thrust_path"]))
+        self.assertTrue(os.path.isfile(prof["lateral_path"]))
+        # Other trajectories get no vibration unless one is chosen explicitly.
+        self.assertIsNone(ims.find_profile("trajectories/a3241569-trajectory.csv"))
+        self.assertIsNone(ims.find_profile("trajectories/eayftrajectory.csv", "none"))
+        self.assertEqual(ims.find_profile("x.csv", "eayftrajectory")["name"], "eayftrajectory")
+        with self.assertRaises(ValueError):
+            ims.find_profile("x.csv", "no-such-profile")
+
+    def test_no_profile_means_no_vibration(self):
         t = np.arange(0, 8.0, 0.01)
         f = np.tile([1.0, 0.0, 0.0], (len(t), 1))
         s = ims.synthesize(t, f, np.zeros((len(t), 3)), 4.0,
                            ims.ImuSynthParams(noise_scale=0.0, offset_scale=0.0))
+        self.assertLess(float(np.abs(s.high_g[:, 1]).max()) * ims.HIGH_G_PER_COUNT, 0.02)
+        self.assertNotIn("vibration_start_s", s.report)
+
+    def test_vibration_starts_at_launch(self):
+        t = np.arange(0, 8.0, 0.01)
+        f = np.tile([1.0, 0.0, 0.0], (len(t), 1))
+        prof = ims.find_profile("eayftrajectory.csv")
+        s = ims.synthesize(t, f, np.zeros((len(t), 3)), 4.0,
+                           ims.ImuSynthParams(noise_scale=0.0, offset_scale=0.0,
+                                              vibration_thrust_path=prof["thrust_path"],
+                                              vibration_lateral_path=prof["lateral_path"]))
         hg = s.high_g * ims.HIGH_G_PER_COUNT
         before = s.time_s < 3.9
         after = s.time_s > 4.5

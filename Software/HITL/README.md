@@ -323,20 +323,22 @@ GUI plots are decimated to about 1500 points per series.
 ## 960 Hz IMU synthesis
 
 CSV runs synthesize the IMU data Witness would really see, on the desktop
-(`imu_synth.py`; needs `pip install numpy scipy soundfile`), and send it as
-960 Hz `0x0E` frames. Witness runs its filtered acceleration, attitude,
+(`imu_synth.py`), and send it as 960 Hz `0x0E` frames. This needs numpy, scipy
+and soundfile **in the Python that runs the tool**. Without them the run
+refuses to start, and the error gives the exact install command for that
+interpreter, for example the ESP-IDF venv's Python. Set `imu_synthesis=false`
+for the old 100 Hz IMU values instead. Witness runs its filtered acceleration, attitude,
 position filter and IMU log on these, at the real rate. The 100 Hz `0x0C`
 frames still carry the barometer, GPS, temperature and battery.
 
 Per channel, at the sensor's internal 7.68 kHz:
 
 1. The 100 Hz truth (body specific force and rate) is linearly interpolated.
-2. **Vibration** is added to the accelerometers only, from launch.
-   `vibration/vibration_flight_thrust.ogg` goes on body x. The lateral
-   recording goes on y, and the same recording delayed 0.137 s goes on z.
-   These are 48 kHz recordings scaled by 150.67 g full scale
-   (`vibration/vibration_audio.txt`), anti-alias resampled to 7.68 kHz. They
-   cover launch to apogee (89 s).
+2. **Vibration** is added to the accelerometers only, from launch, when the
+   trajectory has a vibration profile (below). The thrust recording goes on
+   body x. The lateral recording goes on y, and the same recording delayed
+   0.137 s goes on z. The 48 kHz recordings are scaled by the profile's full
+   scale and anti-alias resampled to 7.68 kHz.
 3. **Datasheet worst-case errors** (LSM6DSV320X DS14623 Table 3) are applied
    with a random sign per axis, from the seed:
    - zero-rate level ±1 dps;
@@ -361,6 +363,7 @@ Parameters (`--set KEY=VALUE`):
 | Parameter | Default | Effect |
 |---|---|---|
 | `imu_synthesis` | `true` | `false` falls back to 100 Hz IMU values in `0x0C` |
+| `vibration_profile` | `""` | `""`: the profile made for this trajectory, if there is one; `none`: no vibration; or a profile folder name under `vibration/` |
 | `vibration_scale` | 1.0 | 0 disables the vibration |
 | `imu_noise_scale` | 1.0 | 1 is the datasheet noise density |
 | `imu_offset_scale` | 1.0 | 1 is the datasheet worst-case zero levels |
@@ -368,6 +371,24 @@ Parameters (`--set KEY=VALUE`):
 Synthesis takes about 1.5 s for the 436 s bundled run (418,800 samples). Pad
 noise at 960 Hz comes out as low-g 1.22 mg, gyro 0.083 dps and high-g 21 mg
 sd. In boost the low-g x saturates and the high-g x spans about −53 to +70 g.
+
+**Vibration profiles belong to one trajectory.** A profile is a folder
+`vibration/<trajectory file name without .csv>/` holding `profile.json` and
+the recordings. `profile.json` gives the `thrust` and `lateral` file names and
+`full_scale_g` (the g that sample value 1.0 represents). A CSV run picks up the
+folder named after its trajectory automatically. A trajectory with no profile
+folder gets no vibration, unless `--set vibration_profile=<folder>` names one
+on purpose.
+
+| Profile | For | Content |
+|---|---|---|
+| `vibration/eayftrajectory/` | `trajectories/eayftrajectory.csv` | PANDORA EAYF_CONFIG_1 thrust and lateral flight vibration, launch to apogee (89 s; the trajectory's apogee is at 88.8 s), 150.67 g full scale, 25.2 g RMS in its loudest second (`vibration_audio.txt`) |
+
+To add one, create `vibration/<trajectory stem>/`, copy in the two recordings
+and write `profile.json` like the existing one. Each run's log line and
+`summary.json`/`params.json` record which profile was used. The headless and
+GUI runs print it, for example `vibration: profile 'eayftrajectory'` or
+`vibration: none (no profile for this trajectory)`.
 
 **Parachute deployment event** (default off):
 - `deployment_spin_dps` adds a pitch rate (above 2000 dps it saturates the
@@ -409,6 +430,15 @@ SSH settings are `pi_user`, `pi_key` and `pi_host` in `hitl_settings.json`
 (untracked), or the `WITNESS_PI_USER` / `_KEY` / `_HOST` environment
 variables. Set `fetch_fc_logs: false`, or pass `--no-fetch-logs`, to skip the
 fetch, and `fetch_restart_hub: false` to skip the power cycle.
+
+The fetch is skipped, with a log line, in two cases:
+- the run was stopped or aborted (it would otherwise export logs and reset
+  boards after you pressed Stop);
+- no Pi user is set (SSH would otherwise try your Windows user name and fail,
+  leaving Witness in export mode).
+
+If Witness is ever left in export mode, power-cycle the hub
+(`sudo uhubctl -l 2 -a 2` on the Pi) or replug it.
 
 Bench results, 2026-11-09 (`a3241569-trajectory.csv`, worst-case noise,
 offsets and vibration):

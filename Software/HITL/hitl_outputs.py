@@ -325,9 +325,13 @@ def regenerate(run_dir: str) -> dict:
     if getattr(params, "imu_synthesis", False):
         try:
             import imu_synth as ims
+            prof = ims.find_profile(params.csv_path, getattr(params, "vibration_profile", ""))
             run.imu_stream = ims.from_samples(build.samples, ims.ImuSynthParams(
                 seed=params.seed, vibration_scale=params.vibration_scale,
-                noise_scale=params.imu_noise_scale, offset_scale=params.imu_offset_scale))
+                noise_scale=params.imu_noise_scale, offset_scale=params.imu_offset_scale,
+                vibration_thrust_path=prof["thrust_path"] if prof else "",
+                vibration_lateral_path=prof["lateral_path"] if prof else "",
+                vibration_full_scale_g=prof["full_scale_g"] if prof else 150.67))
         except ImportError:
             pass
     with open(os.path.join(run_dir, "received.jsonl")) as f:

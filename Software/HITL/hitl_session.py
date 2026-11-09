@@ -758,21 +758,37 @@ class HitlSession:
         return run
 
     def _prepare_imu(self, run: RunState, params):
-        """Synthesizes the 960 Hz IMU stream and encodes its 0x0E frames."""
+        """Synthesizes the 960 Hz IMU stream and encodes its 0x0E frames.
+
+        Raises ValueError (shown before the run starts) when the synthesis
+        packages are missing from this interpreter, instead of silently
+        falling back to 100 Hz IMU values.
+        """
+        import sys
         try:
             import imu_synth as ims
             reason = ims.available()
         except ImportError as exc:
-            reason = f"{exc.name} is not installed (pip install numpy scipy soundfile)"
+            reason = f"{exc.name} is not installed"
         if reason:
-            run.warnings.append(f"960 Hz IMU synthesis off: {reason}; Witness "
-                                "gets the 100 Hz 0x0C IMU values instead")
-            return
+            raise ValueError(
+                f"960 Hz IMU synthesis needs numpy, scipy and soundfile: {reason} "
+                f"in {sys.executable}. Install them with: \"{sys.executable}\" -m pip "
+                "install numpy scipy soundfile (or set imu_synthesis=false for "
+                "100 Hz IMU values)")
         import numpy as np
+        profile = ims.find_profile(params.csv_path, getattr(params, "vibration_profile", ""))
         stream = ims.from_samples(run.samples, ims.ImuSynthParams(
             seed=params.seed, vibration_scale=params.vibration_scale,
             noise_scale=params.imu_noise_scale,
-            offset_scale=params.imu_offset_scale))
+            offset_scale=params.imu_offset_scale,
+            vibration_thrust_path=profile["thrust_path"] if profile else "",
+            vibration_lateral_path=profile["lateral_path"] if profile else "",
+            vibration_full_scale_g=profile["full_scale_g"] if profile else 150.67))
+        stream.report["vibration_profile"] = (
+            {k: profile[k] for k in ("name", "dir", "thrust", "lateral", "full_scale_g",
+                                     "description") if k in profile}
+            if profile else None)
         run.imu_stream = stream
         run.imu_report = stream.report
         n = len(stream) - len(stream) % hp.IMU_BATCH_SAMPLES
@@ -783,6 +799,22 @@ class HitlSession:
                 bytes((hp.ID_HITL_IMU,)) + (j & 0xFFFFFFFF).to_bytes(4, "big")
                 + block[j:j + hp.IMU_BATCH_SAMPLES].tobytes() + bytes((hp.EOF,)))
             run.imu_due_ms.append(float(stream.time_s[j + hp.IMU_BATCH_SAMPLES - 1]) * 1000.0)
+
+    @staticmethod
+    def imu_summary(run: RunState) -> list[str]:
+        """One-line descriptions of the 960 Hz synthesis for logs."""
+        rep = run.imu_report
+        if not rep:
+            return ["960 Hz IMU synthesis off (imu_synthesis=false): 100 Hz 0x0C IMU values"]
+        prof = rep.get("vibration_profile")
+        p = rep.get("params", {})
+        vib = ("vibration: none (no profile for this trajectory)" if not prof else
+               f"vibration: profile {prof['name']!r} x{p.get('vibration_scale', 1.0):g} "
+               f"({prof['thrust']} / {prof['lateral']}, {prof['full_scale_g']:g} g full "
+               f"scale, from {rep.get('vibration_start_s', 0):.2f} s for "
+               f"{rep.get('vibration_duration_s', 0):.1f} s)")
+        return [f"960 Hz IMU synthesis: {rep['samples']} samples, noise x{p.get('noise_scale', 1):g}, "
+                f"offsets x{p.get('offset_scale', 1):g}; {vib}"]
 
     def start_run(self, run: RunState, abort_on_no_hitl: bool = False):
         if not self.connected:
@@ -919,7 +951,13 @@ class HitlSession:
                 self.log(f"run saved to {self._recorder.dir}")
                 self._recorder = None
                 cfg = self.fc_log_config
-                if cfg.get("enabled") and run.run_dir and \
+                if cfg.get("enabled") and run.aborted:
+                    self.log("FC log fetch skipped: the run was stopped or aborted")
+                elif cfg.get("enabled") and not cfg.get("pi_user") and \
+                        not is_loopback(self._host):
+                    self.log("FC log fetch skipped: no Pi user set (pi_user / pi_key in "
+                             "hitl_settings.json, or WITNESS_PI_USER / WITNESS_PI_KEY)")
+                elif cfg.get("enabled") and run.run_dir and \
                         not is_loopback(self._host) and self.connected:
                     import hitl_outputs
                     fc = hitl_outputs.fetch_fc_logs(self, run, cfg, self.log)
