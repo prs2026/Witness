@@ -184,8 +184,38 @@ Configuration constants live principally in `sensors.h` and the device headers:
 - Sensor telemetry: 10 Hz. State telemetry: 1 Hz. Witness debug: 10 Hz only after
   enabling it. Heartbeat: 1 Hz.
 
-The `filtered_accel` wire field is currently encoded from low-g acceleration;
-its name does not imply that a high/low-g blending filter has been implemented.
+Filtered acceleration (`main/accel_filter.{h,cpp}`, host test
+`tests/accel_filter_test.cpp`) is computed for every 960 Hz FIFO sample from
+the calibrated accelerometers:
+
+- **Source selection:** low-g (+/-16 g, 0.49 mg/count) normally. On the
+  first sample where any axis of either sensor reaches 15 g, all three axes
+  switch to high-g (+/-320 g, 10.4 mg/count) on that same sample. The trigger
+  uses both sensors because the chip filters the low-g after its ADC clips, so
+  a clipped low-g reading can stay below full scale. It switches back once
+  every axis of both sensors has stayed below 13 g for 10 samples (about
+  10 ms), so it cannot chatter.
+- **Low-pass:** 2nd-order Butterworth at 100 Hz
+  (`Sensors::kFilteredAccelCutoffHz`; 0 disables it), bilinear transform with
+  pre-warping, about 2.5 ms group delay. It runs on the selected signal and
+  keeps its state across a switch, so switching adds no step (the test checks
+  the output matches the same filter fed the unclipped truth to within 1 mg).
+  It starts in steady state, so there is no start-up transient.
+- **Uses:** `filtered_accel` in `0x01` and `0xE0`, and the flight state
+  machine's launch detection (`axial_acceleration_g` = filtered x). Burnout
+  detection still uses calibrated low-g x. NAND IMU status bit 7 (0x80) marks
+  samples where high-g was the source.
+- **HITL:** a second selector without the low-pass (frames arrive at about
+  100 Hz). Both reset on every real/HITL source change.
+
+Bench, board still, radio on: telemetry |a| noise 0.74 mg sd (1.29 mg before
+the filter), still low-g, 0 switches. The switch to high-g has only been tested
+on the host; it needs a real boost or a HITL run above 15 g. The `imu fifo`
+log line now ends `filtered accel <low-g|high-g>, N switches to high-g, peak P
+g; core-1 time: FIFO read R%, sample processing S%`. A one-off split measured
+sample processing as about 1.6% calibration plus filter, 2% NAND queue and
+7.6% attitude estimator (about 80 us per sample, the largest single cost),
+with core 1 at about 34% busy in total.
 The `0x02` and `0xE0` orientation quaternions come from the attitude estimator
 (next section); position and velocity are still zero. MCU temperature and GPS
 Unix time also remain zero in debug output.
@@ -777,7 +807,7 @@ Big-endian record layout (`FlashLogger::make_imu_record()`):
 | 4 | 6 | Three int16 low-g raw counts |
 | 10 | 6 | Three int16 high-g raw counts |
 | 16 | 6 | Three int16 gyro raw counts |
-| 22 | 1 | Status: bits 0-2 flight state, 0x08 HITL, 0x10/0x20/0x40 low-g/high-g/gyro fresh |
+| 22 | 1 | Status: bits 0-2 flight state, 0x08 HITL, 0x10/0x20/0x40 low-g/high-g/gyro fresh, 0x80 filtered accel from high-g |
 | 23 | 1 | uint8 record sequence (wraps at 256; gaps reveal drops) |
 
 Sensor capture is independent of the USB packet rates. It samples at 50 Hz,
@@ -903,12 +933,16 @@ if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 g++ -std=c++17 -Wall -Wextra -Werror -I main tests/imu_calibration_test.cpp main/imu_calibration.cpp -o build/imu_calibration_test.exe
 if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 & .\build\imu_calibration_test.exe
+
+g++ -std=c++17 -Wall -Wextra -Werror -I main tests/accel_filter_test.cpp main/accel_filter.cpp -o build/accel_filter_test.exe
+if ($LASTEXITCODE -ne 0) { throw "compile failed" }
+& .\build\accel_filter_test.exe
 ```
 
 This PC has host `g++` 16.2 from WinLibs (installed with
 `winget install BrechtSanders.WinLibs.POSIX.UCRT`; it lives under
 `%LOCALAPPDATA%\Microsoft\WinGet\Packages\BrechtSanders.WinLibs*\mingw64\bin`,
-add that to `PATH`). All seven tests above passed there on 2026-11-08.
+add that to `PATH`). All eight tests above passed there on 2026-11-08.
 esp-clang under `C:\Espressif\tools` targets the ESP chips only and cannot
 build host tests.
 

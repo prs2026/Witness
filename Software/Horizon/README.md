@@ -231,7 +231,7 @@ Convert a Witness binary log and open it for plotting:
 .\.venv\Scripts\python.exe viewer.py S0000434.csv
 ```
 
-The converter detects raw Witness application streams and 48-byte `WL` flash records from Witness mass storage. Files named `I*.BIN` are decoded as the store-v3 IMU stream (24-byte records: low-g and high-g accelerations in g, gyro in dps, flight state, HITL and freshness flags, and `missing_before` from the 8-bit sequence; time is unwrapped from the 32-bit microsecond counter). `--format {auto,imu,flash,wire}` overrides detection. It does not decode Featherweight BIN captures or AIM JSONL logs. CSV `time_seconds` derives from device uptime, not host receipt time. The viewer opens with a summary and lets you select traces, including flight state and individual status bits.
+The converter detects raw Witness application streams and 48-byte `WL` flash records from Witness mass storage. Files named `I*.BIN` are decoded as the store-v3 IMU stream (24-byte records: low-g and high-g accelerations in g, gyro in dps, flight state, HITL and freshness flags, `high_g_active` (the filtered acceleration came from the high-g sensor), and `missing_before` from the 8-bit sequence; in Descent, records are deliberately decimated 1 in 10, so `missing_before` reads 9 there; time is unwrapped from the 32-bit microsecond counter). `--format {auto,imu,flash,wire}` overrides detection. It does not decode Featherweight BIN captures or AIM JSONL logs. CSV `time_seconds` derives from device uptime, not host receipt time. The viewer opens with a summary and lets you select traces, including flight state and individual status bits.
 
 ### Downloading Witness logs through the bench Pi
 

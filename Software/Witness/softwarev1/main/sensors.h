@@ -6,6 +6,7 @@
 #include <cstdint>
 
 #include "attitude_estimator.h"
+#include "accel_filter.h"
 #include "imu_calibration.h"
 #include "comms.h"
 #include "driver/spi_master.h"
@@ -41,6 +42,9 @@ public:
     // sample is one filtered output sample; 1 kHz would need HAODR (8 kHz ODR,
     // different filter tables) or software polling with tick jitter.
     static constexpr std::uint32_t kImuSampleRateHz = 960;
+    // Filtered-acceleration low-pass cutoff (2nd-order Butterworth on the
+    // 960 Hz stream; about 2.5 ms group delay). 0 disables the filter.
+    static constexpr float kFilteredAccelCutoffHz = 100.0F;
     static constexpr std::uint32_t kPacketRateHz = 10;
     static constexpr std::uint32_t kStatePacketRateHz = 1;
     static constexpr std::uint32_t kDebugPacketRateHz = 10;
@@ -150,6 +154,10 @@ public:
         bool gyro_ready = false;
         bool temperature_ready = false;
         bool ms5607_ready = false;
+        // Filtered acceleration (accel_filter.h): low-g, or high-g while the
+        // low-g is near saturation, through a 100 Hz low-pass. mg.
+        float filtered_accel_mg[3]{};
+        bool high_g_accel_active = false;
     };
 
     Sensors(
@@ -319,6 +327,10 @@ private:
     // feed_capture: count this sample toward a running calibration capture
     // (once per FIFO sample, not for the per-pass copy of the newest one).
     void apply_imu_sample(const ImuSample &sample, bool feed_capture = false);
+    // Every FIFO sample of this pass, oldest first: calibration, filtered
+    // acceleration, NAND IMU log and attitude. working_sample_ ends on the
+    // newest sample, before the flight state machine and packets use it.
+    void process_imu_batch();
     // Sensor task: starts/finishes calibration captures and applies requests.
     void service_calibration();
     void finish_calibration_capture();
@@ -420,6 +432,9 @@ private:
     std::uint32_t fifo_bad_words_ = 0;
     std::uint32_t fifo_partial_slots_ = 0;
     std::uint32_t fifo_max_words_ = 0;
+    // Core-1 time per report interval: FIFO read and per-sample processing.
+    std::uint64_t imu_fetch_us_ = 0;
+    std::uint64_t imu_process_us_ = 0;
     // Sample clock. The sensor ODR differs from nominal by
     // 0.13% x INTERNAL_FREQ_FINE (this part: about -2.5%), so samples are
     // spaced at the measured period and the clock is steered slowly toward
@@ -437,6 +452,9 @@ private:
     enum class CalibrationCapture : std::uint8_t { None, Gyro, Face };
     std::atomic<std::uint8_t> calibration_request_{0};
     imu_calibration::Calibration calibration_{};
+    accel_filter::FilteredAccel filtered_accel_{};
+    // HITL frames arrive at about 100 Hz, so selection only, no low-pass.
+    accel_filter::FilteredAccel hitl_filtered_accel_{};
     imu_calibration::Limits calibration_limits_{};
     imu_calibration::Accumulator calibration_capture_{};
     imu_calibration::SixFaceSolver calibration_faces_{};

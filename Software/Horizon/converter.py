@@ -72,6 +72,7 @@ IMU_STATUS_HITL = 0x08
 IMU_STATUS_LOW_G_FRESH = 0x10
 IMU_STATUS_HIGH_G_FRESH = 0x20
 IMU_STATUS_GYRO_FRESH = 0x40
+IMU_STATUS_HIGH_G_ACTIVE = 0x80  # filtered accel taken from the high-g sensor
 
 FILTERED_ACCEL_G_PER_COUNT = 0.000040
 GYRO_DPS_PER_COUNT = 0.070
@@ -456,6 +457,7 @@ def decode_imu_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
             "low_g_fresh": int(bool(status & IMU_STATUS_LOW_G_FRESH)),
             "high_g_fresh": int(bool(status & IMU_STATUS_HIGH_G_FRESH)),
             "gyro_fresh": int(bool(status & IMU_STATUS_GYRO_FRESH)),
+            "high_g_active": int(bool(status & IMU_STATUS_HIGH_G_ACTIVE)),
             "low_accel_x_g": low[0], "low_accel_y_g": low[1], "low_accel_z_g": low[2],
             "high_accel_x_g": high[0], "high_accel_y_g": high[1], "high_accel_z_g": high[2],
             "gyro_x_dps": gyro[0], "gyro_y_dps": gyro[1], "gyro_z_dps": gyro[2],

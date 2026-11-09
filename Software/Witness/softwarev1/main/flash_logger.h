@@ -58,6 +58,9 @@ public:
     static constexpr std::uint8_t kImuLowGFreshFlag = 0x10;
     static constexpr std::uint8_t kImuHighGFreshFlag = 0x20;
     static constexpr std::uint8_t kImuGyroFreshFlag = 0x40;
+    // Filtered acceleration was taken from the high-g sensor (low-g near
+    // saturation) for this sample.
+    static constexpr std::uint8_t kImuHighGActiveFlag = 0x80;
 
     struct ImuRecord {
         std::uint8_t data[kImuRecordSize];

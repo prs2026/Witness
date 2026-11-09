@@ -128,9 +128,12 @@ Decode the flight state as `byte1 & 0x07`, not as the whole byte.
 | 20 | 2 | Gyro Z, signed int16 |
 | 22 | 1 | EOF `0x0A` |
 
-No acceleration filter is implemented yet. The firmware currently generates the
-"filtered acceleration" fields from the most recent low-g accelerometer
-samples, converted to the defined 40 micro-g/count format.
+Filtered acceleration is the calibrated low-g accelerometer. From the first
+sample where any axis of either accelerometer reaches 15 g, it is the high-g
+accelerometer instead, back to low-g once all axes stay below 13 g for about
+10 ms. It is low-pass filtered (2nd-order Butterworth, 100 Hz, about 2.5 ms
+delay) on the 960 Hz sample stream and sent in the 40 micro-g/count format
+(range about +/-335 g).
 
 ### `0x02` Estimated-state packet, 65 bytes
 

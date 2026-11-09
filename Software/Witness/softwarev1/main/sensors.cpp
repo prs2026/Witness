@@ -416,6 +416,8 @@ bool Sensors::service_hitl(const std::uint32_t now_ms, bool &new_sample)
         hitl_samples_since_summary_ = 0;
         hitl_last_summary_ms_ = now_ms;
         reset_sensor_sample();
+        filtered_accel_.reset();
+        hitl_filtered_accel_.reset();
         // Never carry an attitude across a real/simulated source change.
         attitude_.reset();
         ESP_LOGI(kLogTag, "attitude reset: sensor source is now %s",
@@ -457,6 +459,10 @@ void Sensors::apply_hitl_sample()
         working_sample_.high_g_accel_mg[axis] = input.high_g_accel_mg[axis];
         working_sample_.gyro_mdps[axis] = input.gyro_mdps[axis];
     }
+    hitl_filtered_accel_.step(working_sample_.low_g_accel_mg,
+                              working_sample_.high_g_accel_mg,
+                              working_sample_.filtered_accel_mg);
+    working_sample_.high_g_accel_active = hitl_filtered_accel_.high_g_active();
     working_sample_.temperature_raw = input.temperature_raw;
     working_sample_.temperature_celsius = input.temperature_celsius;
     working_sample_.pressure_centi_mbar =
@@ -999,8 +1005,8 @@ esp_err_t Sensors::queue_sensor_packet()
     write_u32_be(
         &payload[IRIS_PACKET_SENSORS_UPTIME_OFFSET], uptime_milliseconds);
 
-    // The estimator does not provide filtered acceleration yet, so the packet's
-    // filtered-acceleration slots carry the latest (calibrated) low-g samples.
+    // Filtered acceleration: calibrated low-g, or high-g while the low-g is
+    // near saturation, through the 100 Hz low-pass (accel_filter.h).
     std::int16_t gyro_counts[3]{};
     std::int16_t low_counts[3]{};
     std::int16_t high_counts[3]{};
@@ -1010,7 +1016,7 @@ esp_err_t Sensors::queue_sensor_packet()
             &payload[IRIS_PACKET_SENSORS_ACCEL_OFFSET +
                      axis * IRIS_PACKET_SENSORS_ACCEL_COMPONENT_LENGTH],
             encode_filtered_acceleration(
-                working_sample_.low_g_accel_mg[axis]));
+                working_sample_.filtered_accel_mg[axis]));
         write_i16_be(
             &payload[IRIS_PACKET_SENSORS_GYRO_OFFSET +
                      axis * IRIS_PACKET_SENSORS_GYRO_COMPONENT_LENGTH],
@@ -1099,7 +1105,7 @@ esp_err_t Sensors::queue_debug_packet()
         write_i24_be(
             &payload[kFilteredAccelOffsets[axis]],
             encode_filtered_acceleration(
-                working_sample_.low_g_accel_mg[axis]));
+                working_sample_.filtered_accel_mg[axis]));
         write_i16_be(&payload[kLowAccelOffsets[axis]], low_counts[axis]);
         write_i16_be(&payload[kHighAccelOffsets[axis]], high_counts[axis]);
         write_i16_be(&payload[kGyroOffsets[axis]], gyro_counts[axis]);
@@ -1408,6 +1414,27 @@ void Sensors::output_counts(std::int16_t gyro[3], std::int16_t low_g[3],
     }
 }
 
+void Sensors::process_imu_batch()
+{
+    const bool gyro_ready = working_sample_.gyro_ready;
+    const bool low_g_ready = working_sample_.low_g_accel_ready;
+    const bool high_g_ready = working_sample_.high_g_accel_ready;
+    for (std::size_t i = 0; i < imu_batch_count_; ++i) {
+        apply_imu_sample(imu_batch_[i], true);
+        filtered_accel_.step(working_sample_.low_g_accel_mg,
+                             working_sample_.high_g_accel_mg,
+                             working_sample_.filtered_accel_mg);
+        working_sample_.high_g_accel_active = filtered_accel_.high_g_active();
+        log_imu_sample(imu_batch_[i].timestamp_us, false);
+        if (imu_batch_[i].has_gyro) {
+            update_attitude(imu_batch_[i].timestamp_us);
+        }
+    }
+    working_sample_.gyro_ready = gyro_ready;
+    working_sample_.low_g_accel_ready = low_g_ready;
+    working_sample_.high_g_accel_ready = high_g_ready;
+}
+
 void Sensors::log_calibration(const char *prefix) const
 {
     const imu_calibration::Calibration &c = calibration_;
@@ -1583,6 +1610,7 @@ void Sensors::log_imu_sample(const std::uint64_t timestamp_us, const bool hitl)
     if (hitl || working_sample_.low_g_accel_ready) status |= FlashLogger::kImuLowGFreshFlag;
     if (hitl || working_sample_.high_g_accel_ready) status |= FlashLogger::kImuHighGFreshFlag;
     if (hitl || working_sample_.gyro_ready) status |= FlashLogger::kImuGyroFreshFlag;
+    if (working_sample_.high_g_accel_active) status |= FlashLogger::kImuHighGActiveFlag;
     (void)imu_log_sink_->log_imu_record(FlashLogger::make_imu_record(
         static_cast<std::uint32_t>(timestamp_us), working_sample_.low_g_accel_raw,
         working_sample_.high_g_accel_raw, working_sample_.gyro_raw, status));
@@ -1674,13 +1702,24 @@ void Sensors::report_attitude_rate(const std::uint64_t now_us)
              static_cast<double>(q.z), static_cast<double>(q.w));
     ESP_LOGI(kLogTag,
              "imu fifo: %.1f Hz, overruns %lu, partial slots %lu, "
-             "unknown words %lu, max backlog %lu words",
+             "unknown words %lu, max backlog %lu words; filtered accel "
+             "%s, %lu switches to high-g, peak %.2f g; core-1 time: FIFO read "
+             "%.1f%%, sample processing %.1f%%",
+
              static_cast<double>(fifo_samples_) * 1e6 /
                  static_cast<double>(elapsed_us),
              static_cast<unsigned long>(fifo_overruns_),
              static_cast<unsigned long>(fifo_partial_slots_),
              static_cast<unsigned long>(fifo_bad_words_),
-             static_cast<unsigned long>(fifo_max_words_));
+             static_cast<unsigned long>(fifo_max_words_),
+             filtered_accel_.high_g_active() ? "high-g" : "low-g",
+             static_cast<unsigned long>(filtered_accel_.switches_to_high()),
+             static_cast<double>(filtered_accel_.peak_mg()) / 1000.0,
+             100.0 * static_cast<double>(imu_fetch_us_) / static_cast<double>(elapsed_us),
+             100.0 * static_cast<double>(imu_process_us_) / static_cast<double>(elapsed_us));
+    imu_fetch_us_ = 0;
+    imu_process_us_ = 0;
+    filtered_accel_.reset_peak();
     fifo_samples_ = 0;
     fifo_max_words_ = 0;
     attitude_updates_since_report_ = 0;
@@ -1691,6 +1730,9 @@ void Sensors::report_attitude_rate(const std::uint64_t now_us)
 
 void Sensors::run()
 {
+    filtered_accel_.configure(kFilteredAccelCutoffHz,
+                              static_cast<float>(1e6 / imu_period_us_));
+    hitl_filtered_accel_.configure(0.0F, 0.0F);
     TickType_t next_wake_time = xTaskGetTickCount();
     TickType_t last_sensor_packet_time = next_wake_time;
     TickType_t last_state_packet_time = next_wake_time;
@@ -1733,7 +1775,14 @@ void Sensors::run()
             barometer_healthy = working_sample_.ms5607_ready;
         } else {
             imu_timestamp_us = static_cast<std::uint64_t>(esp_timer_get_time());
+            const std::int64_t fetch_start_us = esp_timer_get_time();
             lsm_result = fetch_lsm6dsv320x();
+            const std::int64_t process_start_us = esp_timer_get_time();
+            if (lsm_result == ESP_OK && imu_batch_count_ > 0) {
+                process_imu_batch();
+            }
+            imu_fetch_us_ += static_cast<std::uint64_t>(process_start_us - fetch_start_us);
+            imu_process_us_ += static_cast<std::uint64_t>(esp_timer_get_time() - process_start_us);
             witness_status_.set(
                 IRIS_WITNESS_STATUS_LOW_G_ACCEL_READY_MASK,
                 working_sample_.low_g_accel_ready);
@@ -1833,11 +1882,10 @@ void Sensors::run()
             observation.axial_acceleration_valid =
                 lsm_result == ESP_OK &&
                 (has_high_g_accel_sample_ || has_low_g_accel_sample_);
+            // Launch detection uses the filtered acceleration: low-g
+            // resolution below 15 g, the high-g sensor above it.
             observation.axial_acceleration_g =
-                (has_high_g_accel_sample_
-                     ? working_sample_.high_g_accel_mg[0]
-                     : working_sample_.low_g_accel_mg[0]) /
-                1000.0F;
+                working_sample_.filtered_accel_mg[0] / 1000.0F;
             observation.low_g_axial_acceleration_valid =
                 lsm_result == ESP_OK && has_low_g_accel_sample_;
             observation.low_g_axial_acceleration_g =
@@ -1878,23 +1926,9 @@ void Sensors::run()
                 log_imu_sample(imu_timestamp_us, true);
                 update_attitude(imu_timestamp_us);
             }
-        } else if (lsm_result == ESP_OK && imu_batch_count_ > 0) {
-            // Every 960 Hz FIFO sample, oldest first. working_sample_ ends on
-            // the newest sample, as the packets above already used it.
-            const bool gyro_ready = working_sample_.gyro_ready;
-            const bool low_g_ready = working_sample_.low_g_accel_ready;
-            const bool high_g_ready = working_sample_.high_g_accel_ready;
-            for (std::size_t i = 0; i < imu_batch_count_; ++i) {
-                apply_imu_sample(imu_batch_[i], true);
-                log_imu_sample(imu_batch_[i].timestamp_us, false);
-                if (imu_batch_[i].has_gyro) {
-                    update_attitude(imu_batch_[i].timestamp_us);
-                }
-            }
-            working_sample_.gyro_ready = gyro_ready;
-            working_sample_.low_g_accel_ready = low_g_ready;
-            working_sample_.high_g_accel_ready = high_g_ready;
         }
+        // Real IMU samples were processed right after the FIFO read
+        // (process_imu_batch).
 
         if (lsm_result == ESP_OK &&
             (now - last_sensor_packet_time) >= kPacketPeriod) {
