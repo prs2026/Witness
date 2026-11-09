@@ -376,6 +376,10 @@ class HitlSession:
         self._hitl_off_count = 0
         self._entered = False
         self._host = None
+        # Optional callable(bytes) given every chunk received from Witness,
+        # e.g. witnessOS mirroring this connection into the Horizon feed.
+        # Called on the reader thread; exceptions are swallowed.
+        self.rx_tap = None
         self.t0 = time.monotonic()
 
     # ---------------------------------------------------------------- util
@@ -488,6 +492,12 @@ class HitlSession:
                 break
             with self._lock:
                 self.view.rx_bytes += len(data)
+            tap = self.rx_tap
+            if tap is not None:
+                try:
+                    tap(data)
+                except Exception:  # never let a mirror break the run
+                    pass
             for kind, value in self._decoder.feed(data):
                 if kind == "packet":
                     self._on_packet(value)
