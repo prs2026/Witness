@@ -582,6 +582,86 @@ SYNC_SKIP_COLUMNS = frozenset(("uptime", "fc_uptime", "time_seconds"))
 DATASET_DASHES = ((), (7, 3), (2, 2), (9, 3, 2, 3), (4, 4))
 DROP_ZONE_HEIGHT = 64
 DRAG_THRESHOLD_PX = 6
+ZOOM_FACTOR = 0.8          # one Ctrl+wheel step in; its inverse zooms out
+PAN_FRACTION = 0.1         # one Shift+wheel step pans this share of the view
+MIN_ZOOM_DRAG_PX = 5       # a shorter drag across a plot is just a click
+
+
+def view_points(
+        points: list[tuple[float, float]], x_min: float, x_max: float,
+) -> list[tuple[float, float]]:
+    """The part of sorted ``points`` inside [x_min, x_max].
+
+    Where the line crosses either edge, a point interpolated onto the edge is
+    added, so a zoomed trace runs right to the plot border instead of
+    stopping at the last sample inside it.
+    """
+    if not points:
+        return []
+    first = bisect.bisect_left(points, x_min, key=lambda point: point[0])
+    last = bisect.bisect_right(points, x_max, key=lambda point: point[0])
+    inside = points[first:last]
+
+    def edge(a, b, x):
+        (xa, ya), (xb, yb) = a, b
+        if xb == xa:
+            return (x, ya)
+        return (x, ya + (yb - ya) * (x - xa) / (xb - xa))
+
+    out = []
+    if 0 < first < len(points):
+        out.append(edge(points[first - 1], points[first], x_min))
+    out.extend(inside)
+    if 0 < last < len(points):
+        out.append(edge(points[last - 1], points[last], x_max))
+    return out
+
+
+def zoom_range(view: tuple[float, float], full: tuple[float, float],
+               center: float, factor: float) -> tuple[float, float] | None:
+    """Scale ``view`` by ``factor`` about ``center``, kept inside ``full``.
+
+    Returns None when the result covers the full range (zoom reset).
+    """
+    low, high = view
+    full_low, full_high = full
+    new_low = center - (center - low) * factor
+    new_high = center + (high - center) * factor
+    span = new_high - new_low
+    full_span = full_high - full_low
+    if span >= full_span or span <= 0:
+        return None
+    if new_low < full_low:
+        new_low, new_high = full_low, full_low + span
+    if new_high > full_high:
+        new_low, new_high = full_high - span, full_high
+    return (new_low, new_high)
+
+
+def pan_range(view: tuple[float, float], full: tuple[float, float],
+              delta: float) -> tuple[float, float]:
+    """Shift ``view`` by ``delta`` without leaving ``full``."""
+    low, high = view
+    delta = max(full[0] - low, min(full[1] - high, delta))
+    return (low + delta, high + delta)
+
+
+def nearest_point(points: list[tuple[float, float]], x: float):
+    """The sample of sorted ``points`` whose x is closest to ``x``."""
+    if not points:
+        return None
+    index = bisect.bisect_left(points, x, key=lambda point: point[0])
+    candidates = points[max(0, index - 1):index + 1]
+    return min(candidates, key=lambda point: abs(point[0] - x))
+
+
+def value_text(value: float) -> str:
+    """Exact-looking readout of a CSV value (no float noise)."""
+    if value == int(value) and abs(value) < 1e15:
+        return str(int(value))
+    return f"{value:.10g}"
+
+
 
 
 def sync_time_seconds(row: dict[str, str]) -> float | None:
@@ -772,6 +852,9 @@ class CsvViewerPanel(ttk.Frame):
         self._press = None
         self._drag = None
         self._ghost = None
+        self.x_view: tuple[float, float] | None = None   # shared zoom
+        self._full_x: tuple[float, float] | None = None
+        self._zoom_press = None
         self.font = tkfont.nametofont("TkDefaultFont")
         self.bold_font = tkfont.Font(root=self, font=self.font)
         self.bold_font.configure(weight="bold")
@@ -949,12 +1032,17 @@ class CsvViewerPanel(ttk.Frame):
         self.packet_filter_combo.bind(
             "<<ComboboxSelected>>", lambda _event: self.on_axis_changed()
         )
-        ttk.Button(controls, text="Clear graphs", command=self.clear_graphs).pack(
-            side="left", padx=(10, 0))
-
-        self.summary_label = ttk.Label(self.plot_tab, text="", padding=(8, 0, 8, 5),
-                                       width=10)
-        self.summary_label.pack(fill="x")
+        # Status line with the graph buttons on its right, so the toolbar
+        # above stays narrow enough for small windows.
+        status = ttk.Frame(self.plot_tab, padding=(8, 0, 8, 5))
+        status.pack(fill="x")
+        ttk.Button(status, text="Clear graphs", command=self.clear_graphs).pack(
+            side="right", padx=(4, 0))
+        ttk.Button(status, text="Reset zoom", command=self.reset_zoom).pack(
+            side="right", padx=(4, 0))
+        ttk.Button(status, text="Zoom out", command=self.zoom_out).pack(side="right")
+        self.summary_label = ttk.Label(status, text="", width=10)
+        self.summary_label.pack(side="left", fill="x", expand=True)
 
         plot_panes = ttk.Panedwindow(self.plot_tab, orient="horizontal")
         plot_panes.pack(fill="both", expand=True, padx=8, pady=(0, 8))
@@ -971,7 +1059,10 @@ class CsvViewerPanel(ttk.Frame):
             trace_panel, foreground="#555555", justify="left", wraplength=200,
             text=("Drag traces onto a graph to overlay them, or below the "
                   "last graph for a new one. Double-click adds a graph. Drag "
-                  "a legend entry to another graph, or back here to remove it."))
+                  "a legend entry to another graph, or back here to remove it.\n"
+                  "Zoom (all graphs): drag across a plot, or Ctrl+wheel; "
+                  "Shift+wheel pans; double-click a plot to reset. Hover a "
+                  "plot for exact values."))
         self.help_label.pack(fill="x", padx=4, pady=(0, 4))
         trace_panel.bind("<Configure>", lambda event: self.help_label.configure(
             wraplength=max(120, event.width - 10)))
@@ -1037,6 +1128,11 @@ class CsvViewerPanel(ttk.Frame):
         self.canvas.bind("<MouseWheel>", lambda event: self._wheel(self.canvas, event))
         self.canvas.bind("<Button-4>", lambda event: self._wheel(self.canvas, event, -1))
         self.canvas.bind("<Button-5>", lambda event: self._wheel(self.canvas, event, 1))
+        self.canvas.bind("<Control-MouseWheel>", self._zoom_wheel)
+        self.canvas.bind("<Shift-MouseWheel>", self._pan_wheel)
+        self.canvas.bind("<Double-Button-1>", self._double_click)
+        self.canvas.bind("<Motion>", self._hover)
+        self.canvas.bind("<Leave>", self.clear_hover)
 
     def _on_destroy(self, event) -> None:
         if event.widget is not self:
@@ -1146,6 +1242,7 @@ class CsvViewerPanel(ttk.Frame):
 
     def clear_datasets(self) -> None:
         self.datasets.clear()
+        self.x_view = None
         self.layout.clear()
         self._points_cache = {}
         self.trace_tree.delete(*self.trace_tree.get_children())
@@ -1287,6 +1384,7 @@ class CsvViewerPanel(ttk.Frame):
 
     def on_axis_changed(self) -> None:
         self._points_cache = {}
+        self.x_view = None
         self.draw_graphs()
 
     # ----------------------------------------------------------- summary
@@ -1445,6 +1543,17 @@ class CsvViewerPanel(ttk.Frame):
             graphs.append({"index": index, "refs": refs, "series": series,
                            "labels": labels, "legend": legend,
                            "extra": extra * line})
+        lows = [points[0][0] for graph in graphs for _ref, points in graph["series"]
+                if points]
+        highs = [points[-1][0] for graph in graphs for _ref, points in graph["series"]
+                 if points]
+        self._full_x = (min(lows), max(highs)) if lows else None
+        if self.x_view is not None and self._full_x is not None:
+            low = max(self.x_view[0], self._full_x[0])
+            high = min(self.x_view[1], self._full_x[1])
+            self.x_view = (low, high) if high > low else None
+        elif self._full_x is None:
+            self.x_view = None
         base = graph_height_for(len(graphs), view_height - DROP_ZONE_HEIGHT)
         top = 0
         for graph in graphs:
@@ -1458,9 +1567,14 @@ class CsvViewerPanel(ttk.Frame):
             view_height, DROP_ZONE_HEIGHT)
         canvas.configure(scrollregion=(0, 0, width, top + drop_height))
         x_column = self.x_axis_combo.get()
+        zoom_text = ""
+        if self.x_view is not None:
+            zoom_text = (f" | zoom {value_text(round(self.x_view[0], 6))} to "
+                         f"{value_text(round(self.x_view[1], 6))}")
         self.summary_label.configure(text=(
             f"{len(self.datasets)} CSV(s) | {len(graphs)} graph(s), "
-            f"{sum(len(g['refs']) for g in graphs)} trace(s) | x = {x_column}"))
+            f"{sum(len(g['refs']) for g in graphs)} trace(s) | x = {x_column}"
+            + zoom_text))
         self._draw_drop_zone(width, top, drop_height, empty=not graphs)
         self.draw_visible()
 
@@ -1492,6 +1606,18 @@ class CsvViewerPanel(ttk.Frame):
             self._drawn.add(index)
             self.draw_graph(graph)
 
+    def series_style(self, graph: dict, series_index: int, ref) -> tuple[str, tuple]:
+        """(colour, dash) of one trace: per-graph colour when alone, else
+        one colour per trace and one dash pattern per CSV."""
+        if len(graph["refs"]) == 1:
+            return PLOT_COLORS[graph["index"] % len(PLOT_COLORS)], ()
+        return (PLOT_COLORS[series_index % len(PLOT_COLORS)],
+                DATASET_DASHES[ref[0] % len(DATASET_DASHES)])
+
+    def x_range(self) -> tuple[float, float] | None:
+        """The x range every graph shows: the zoom, else all plotted data."""
+        return self.x_view or self._full_x
+
     def draw_graph(self, graph: dict) -> None:
         canvas = self.canvas
         font = self.font
@@ -1502,6 +1628,7 @@ class CsvViewerPanel(ttk.Frame):
         bottom = top + graph["height"]
         series = [(ref, points) for ref, points in graph["series"]]
         x_column = self.x_axis_combo.get()
+        graph["geom"] = None
 
         canvas.create_rectangle(4, top + 4, width - 4, bottom - 4,
                                 outline="#c8c8c8", fill="#ffffff")
@@ -1510,12 +1637,24 @@ class CsvViewerPanel(ttk.Frame):
                                    tags=("close", f"g{index}"))
         self._close_items[close] = index
 
+        # Every graph shares one x range (the zoom, or all plotted data), so
+        # the time axes line up and zooming one graph zooms them all.
+        x_range = self.x_range()
+        if x_range is None:
+            x_min, x_max = 0.0, 1.0
+        else:
+            x_min, x_max = x_range
+        if x_max <= x_min:
+            x_min -= 0.5
+            x_max += 0.5
+        shown = [(ref, view_points(points, x_min, x_max)) for ref, points in series]
+
         # Header: a single trace keeps the name + statistics layout; several
         # traces get a wrapped, colour-keyed legend. Every name is draggable.
         header_y = top + 8 + line_height / 2
-        non_empty = [points for _ref, points in series if points]
+        non_empty = [points for _ref, points in shown if points]
         if len(series) == 1:
-            ref, points = series[0]
+            ref, points = shown[0]
             name = elide(graph["labels"][0], width - 60, self.bold_font.measure)
             item = canvas.create_text(14, header_y, anchor="w", text=name,
                                       fill="#222222", font=self.bold_font,
@@ -1526,6 +1665,8 @@ class CsvViewerPanel(ttk.Frame):
                 y_values = [point[1] for point in points]
                 stats = (f"n={len(points):,}  latest={points[-1][1]:.6g}  "
                          f"min={min(y_values):.6g}  max={max(y_values):.6g}")
+                if self.x_view is not None:
+                    stats = "in view: " + stats
                 if self.bold_font.measure(name) + 24 + font.measure(stats) <= width - 60:
                     canvas.create_text(width - 34, header_y, anchor="e", text=stats,
                                        fill="#444444", font=font)
@@ -1537,8 +1678,7 @@ class CsvViewerPanel(ttk.Frame):
         else:
             for series_index, ((ref, _points), label, (line, x)) in enumerate(
                     zip(series, graph["labels"], graph["legend"])):
-                color = PLOT_COLORS[series_index % len(PLOT_COLORS)]
-                dash = DATASET_DASHES[ref[0] % len(DATASET_DASHES)]
+                color, dash = self.series_style(graph, series_index, ref)
                 y = header_y + line * line_height
                 canvas.create_line(x, y, x + 14, y, fill=color, width=2, dash=dash)
                 item = canvas.create_text(
@@ -1551,18 +1691,17 @@ class CsvViewerPanel(ttk.Frame):
         plot_bottom = bottom - (2 * line_height + 12)
         plot_height = plot_bottom - plot_top
         if not non_empty:
+            message = ("No values in this time range" if self.x_view is not None
+                       and any(points for _ref, points in series)
+                       else f"No values for x = {x_column}")
             canvas.create_text(width / 2, (plot_top + plot_bottom) / 2,
-                               text=f"No values for x = {x_column}", fill="#777777")
+                               text=message, fill="#777777")
             return
 
-        x_min = min(points[0][0] for points in non_empty)
-        x_max = max(points[-1][0] for points in non_empty)
+        # The y axis fits the data in view, so zooming in on time also
+        # zooms in on the values.
         data_min = min(point[1] for points in non_empty for point in points)
         data_max = max(point[1] for points in non_empty for point in points)
-        if x_max <= x_min:
-            x_min -= 0.5
-            x_max += 0.5
-
         if all(ref[1] in BINARY_COLUMNS for ref, _points in series):
             y_step, y_ticks = 1.0, [0.0, 1.0]
             y_start, y_end = -0.1, 1.1
@@ -1612,7 +1751,10 @@ class CsvViewerPanel(ttk.Frame):
         canvas.create_rectangle(left, plot_top, right, plot_bottom,
                                 outline="#b8b8b8")
 
-        for series_index, (ref, points) in enumerate(series):
+        styles = []
+        for series_index, (ref, points) in enumerate(shown):
+            color, dash = self.series_style(graph, series_index, ref)
+            styles.append((color, dash))
             if not points:
                 continue
             reduced = decimate_minmax(points, x_min, x_max, int(right - left))
@@ -1620,12 +1762,6 @@ class CsvViewerPanel(ttk.Frame):
             for x_value, y_value in reduced:
                 coordinates.append(left + (x_value - x_min) / x_span * (right - left))
                 coordinates.append(to_y(y_value))
-            if len(series) == 1:
-                color = PLOT_COLORS[index % len(PLOT_COLORS)]
-                dash = ()
-            else:
-                color = PLOT_COLORS[series_index % len(PLOT_COLORS)]
-                dash = DATASET_DASHES[ref[0] % len(DATASET_DASHES)]
             if len(coordinates) >= 4:
                 canvas.create_line(*coordinates, fill=color, width=1.5, dash=dash)
             else:
@@ -1637,6 +1773,164 @@ class CsvViewerPanel(ttk.Frame):
             anchor="n", text=elide(x_column, right - left, font.measure),
             fill="#444444", font=font,
         )
+        # Geometry for hover readouts and zoom selection.
+        graph["geom"] = {
+            "left": left, "right": right, "top": plot_top, "bottom": plot_bottom,
+            "x_min": x_min, "x_max": x_max, "y_start": y_start, "y_end": y_end,
+            "styles": styles,
+        }
+
+    # ------------------------------------------------------ zoom & hover
+    def plot_hit(self, canvas_x: float, canvas_y: float):
+        """(graph, geom) when the point is inside a drawn graph's plot area."""
+        index = self.graph_at(canvas_y)
+        if index is None:
+            return None
+        graph = self._graphs[index]
+        geom = graph.get("geom")
+        if (geom is None or not geom["left"] <= canvas_x <= geom["right"]
+                or not geom["top"] <= canvas_y <= geom["bottom"]):
+            return None
+        return graph, geom
+
+    @staticmethod
+    def x_at(geom: dict, canvas_x: float) -> float:
+        fraction = (canvas_x - geom["left"]) / (geom["right"] - geom["left"])
+        return geom["x_min"] + fraction * (geom["x_max"] - geom["x_min"])
+
+    def set_x_view(self, view: tuple[float, float] | None) -> None:
+        """Zoom every graph to x in [low, high]; None shows everything."""
+        full = self._full_x
+        if view is not None and full is not None:
+            low, high = sorted(view)
+            low, high = max(low, full[0]), min(high, full[1])
+            if high - low <= 0 or (low <= full[0] and high >= full[1]):
+                view = None
+            else:
+                view = (low, high)
+        self.x_view = view
+        self.draw_graphs()
+
+    def zoom(self, factor: float, center: float | None = None) -> None:
+        full = self._full_x
+        if full is None:
+            return
+        view = self.x_view or full
+        if center is None:
+            center = (view[0] + view[1]) / 2
+        self.x_view = zoom_range(view, full, center, factor)
+        self.draw_graphs()
+
+    def zoom_out(self) -> None:
+        self.zoom(2.0)
+
+    def reset_zoom(self) -> None:
+        self.set_x_view(None)
+
+    def hover_readout(self, canvas_x: float, canvas_y: float) -> list[str] | None:
+        """Text of the hover box at a canvas point (None outside a plot)."""
+        rows = self._readout_rows(canvas_x, canvas_y)
+        return None if rows is None else [text for text, _color in rows]
+
+    def _readout_rows(self, canvas_x: float, canvas_y: float):
+        """(text, colour) rows: the cursor x, then each trace's nearest sample."""
+        hit = self.plot_hit(canvas_x, canvas_y)
+        if hit is None:
+            return None
+        graph, geom = hit
+        x_value = self.x_at(geom, canvas_x)
+        rows = [(f"{self.x_axis_combo.get()}: {x_value:.6g}", "#222222")]
+        for (ref, points), (color, _dash) in zip(graph["series"], geom["styles"]):
+            # A log that has ended (or not started) at this time is left out
+            # rather than showing its last sample from somewhere else.
+            if not points or not points[0][0] <= x_value <= points[-1][0]:
+                continue
+            sample = nearest_point(points, x_value)
+            rows.append((f"{self.series_label(ref)} = {value_text(sample[1])}"
+                         f"  @ {value_text(sample[0])}", color))
+        return rows
+
+    def clear_hover(self, _event=None) -> None:
+        self.canvas.delete("hover")
+
+    def _hover(self, event) -> None:
+        canvas = self.canvas
+        canvas.delete("hover")
+        if self._drag is not None or self._zoom_press is not None:
+            return
+        cx, cy = canvas.canvasx(event.x), canvas.canvasy(event.y)
+        hit = self.plot_hit(cx, cy)
+        if hit is None:
+            return
+        hovered, geom = hit
+        x_value = self.x_at(geom, cx)
+        hover = {"tags": ("hover",), "state": "disabled"}
+        # A synced crosshair and the nearest sample of every trace, in every
+        # drawn graph.
+        for graph in self._graphs:
+            g = graph.get("geom")
+            if g is None or graph["index"] not in self._drawn:
+                continue
+            span = g["x_max"] - g["x_min"]
+            if not g["x_min"] <= x_value <= g["x_max"]:
+                continue
+            x = g["left"] + (x_value - g["x_min"]) / span * (g["right"] - g["left"])
+            canvas.create_line(x, g["top"], x, g["bottom"], fill="#9e9e9e",
+                               dash=(3, 3), **hover)
+            for (ref, points), (color, _dash) in zip(graph["series"], g["styles"]):
+                if not points or not points[0][0] <= x_value <= points[-1][0]:
+                    continue
+                sample = nearest_point(points, x_value)
+                if not g["x_min"] <= sample[0] <= g["x_max"]:
+                    continue
+                sx = g["left"] + (sample[0] - g["x_min"]) / span * (g["right"] - g["left"])
+                height = g["bottom"] - g["top"]
+                sy = g["bottom"] - (sample[1] - g["y_start"]) / (
+                    g["y_end"] - g["y_start"]) * height
+                if g["top"] - 1 <= sy <= g["bottom"] + 1:
+                    canvas.create_oval(sx - 4, sy - 4, sx + 4, sy + 4, outline=color,
+                                       width=2, fill="white", tags=("hover", "hovermark"),
+                                       state="disabled")
+        rows = self._readout_rows(cx, cy) or []
+        if not rows:
+            return
+        line_height = self.font.metrics("linespace")
+        box_width = max(self.font.measure(text) for text, _color in rows) + 12
+        box_height = line_height * len(rows) + 8
+        x = cx + 16
+        if x + box_width > geom["right"]:
+            x = cx - 16 - box_width
+        x = max(4, x)
+        y = min(max(cy - box_height / 2, hovered["top"] + 4),
+                hovered["top"] + hovered["height"] - box_height - 4)
+        canvas.create_rectangle(x, y, x + box_width, y + box_height, fill="#fffff4",
+                                outline="#9e9e9e", **hover)
+        for row, (text, color) in enumerate(rows):
+            canvas.create_text(x + 6, y + 4 + row * line_height, anchor="nw", text=text,
+                               fill=color, font=self.font, **hover)
+        canvas.tag_raise("hovermark")  # sample markers stay visible over the box
+
+    def _zoom_wheel(self, event) -> str:
+        cx, cy = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        hit = self.plot_hit(cx, cy)
+        center = None if hit is None else self.x_at(hit[1], cx)
+        if event.delta:
+            self.zoom(ZOOM_FACTOR if event.delta > 0 else 1 / ZOOM_FACTOR, center)
+        return "break"
+
+    def _pan_wheel(self, event) -> str:
+        view, full = self.x_view, self._full_x
+        if view is not None and full is not None and event.delta:
+            step = (view[1] - view[0]) * PAN_FRACTION
+            self.x_view = pan_range(view, full, -step if event.delta > 0 else step)
+            self.draw_graphs()
+        return "break"
+
+    def _double_click(self, event):
+        if self.plot_hit(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)):
+            self.reset_zoom()
+            return "break"
+        return None
 
     # -------------------------------------------------------- drag & drop
     def graph_at(self, canvas_y: float) -> int | None:
@@ -1787,10 +2081,16 @@ class CsvViewerPanel(ttk.Frame):
 
     def _canvas_press(self, event):
         self._press = None
+        self._zoom_press = None
         current = self.canvas.find_withtag("current")
-        if not current:
+        item = current[0] if current else None
+        if item not in self._close_items and item not in self._legend_items:
+            cx, cy = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+            hit = self.plot_hit(cx, cy)
+            if hit is not None:
+                self.clear_hover()
+                self._zoom_press = (cx, hit[0])
             return
-        item = current[0]
         if item in self._close_items:
             self.layout.remove_graph(self._close_items[item])
             self.draw_graphs()
@@ -1799,6 +2099,20 @@ class CsvViewerPanel(ttk.Frame):
             self._press = (event.x_root, event.y_root, item, ())
 
     def _canvas_motion(self, event):
+        if self._zoom_press is not None:
+            start, graph = self._zoom_press
+            geom = graph.get("geom")
+            self.canvas.delete("zoomband")
+            if geom is not None:
+                x = min(max(self.canvas.canvasx(event.x), geom["left"]), geom["right"])
+                for g in self._graphs:   # show the span on every graph
+                    gg = g.get("geom")
+                    if gg is not None and g["index"] in self._drawn:
+                        self.canvas.create_rectangle(
+                            start, gg["top"], x, gg["bottom"], fill="#bbdefb",
+                            outline="#1565c0", stipple="gray25",
+                            tags=("zoomband",), state="disabled")
+            return
         if self._drag is not None:
             self._drag_motion(event)
             return
@@ -1811,6 +2125,16 @@ class CsvViewerPanel(ttk.Frame):
         self._drag_motion(event)
 
     def _canvas_release(self, event):
+        if self._zoom_press is not None:
+            start, graph = self._zoom_press
+            self._zoom_press = None
+            self.canvas.delete("zoomband")
+            geom = graph.get("geom")
+            end = self.canvas.canvasx(event.x)
+            if geom is not None and abs(end - start) >= MIN_ZOOM_DRAG_PX:
+                end = min(max(end, geom["left"]), geom["right"])
+                self.set_x_view((self.x_at(geom, start), self.x_at(geom, end)))
+            return
         if self._drag is not None:
             self._finish_drag(event)
         self._press = None
