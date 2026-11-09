@@ -182,7 +182,7 @@ void UsbSerialEcho::consume_input(
     for (std::size_t index = 0; index < length; ++index) {
         const std::uint8_t byte = data[index];
         if (!hitl_frames_.active()) {
-            if (byte != IRIS_PACKET_ID_HITL_SENSORS) {
+            if (byte != IRIS_PACKET_ID_HITL_SENSORS && byte != IRIS_PACKET_ID_HITL_IMU) {
                 continue;
             }
             // The boundary depends on the bytes before this one.
@@ -226,6 +226,17 @@ void UsbSerialEcho::echo_and_consume_commands(
 
 void UsbSerialEcho::handle_hitl_frame(const std::uint8_t *const frame)
 {
+    if (frame[0] == IRIS_PACKET_ID_HITL_IMU) {
+        hitl::ImuBatch batch{};
+        if (!hitl::decode_imu_frame(frame, hitl::kImuFrameLength, batch)) {
+            report_hitl_frame_error("0x0E decode failed");
+            return;
+        }
+        if (!sensors_.submit_hitl_imu_batch(batch)) {
+            ++hitl_ignored_frames_;
+        }
+        return;
+    }
     hitl::Sample sample{};
     if (!hitl::decode_frame(frame, hitl::kFrameLength, sample)) {
         report_hitl_frame_error("decode failed");

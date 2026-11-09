@@ -51,6 +51,7 @@ void Filter::predict(const float acceleration_world_mps2[3], const float dt_s,
                      const Phase phase)
 {
     initialized_ = true;
+    imu_ignored_ = false;
     if (!(dt_s > 0.0F) || dt_s > 0.1F) {
         return;  // gap: skip rather than integrate a bad interval
     }
@@ -77,6 +78,28 @@ void Filter::predict(const float acceleration_world_mps2[3], const float dt_s,
         const float p00 = s.P00 + 2.0F * dt_s * s.P01 + dt2 * s.P11 + q00;
         const float p01 = s.P01 + dt_s * s.P11 + q01;
         const float p11 = s.P11 + q11;
+        s.P00 = p00;
+        s.P01 = p01;
+        s.P11 = p11;
+    }
+}
+
+void Filter::predict_without_imu(const float dt_s, const Phase phase)
+{
+    initialized_ = true;
+    imu_ignored_ = true;
+    still_ = false;
+    (void)phase;
+    if (!(dt_s > 0.0F) || dt_s > 0.1F) {
+        return;
+    }
+    const float q = config_.no_imu_accel_noise_mps2 * config_.no_imu_accel_noise_mps2;
+    const float dt2 = dt_s * dt_s;
+    for (Axis &s : axes_) {
+        s.p += s.v * dt_s;
+        const float p00 = s.P00 + 2.0F * dt_s * s.P01 + dt2 * s.P11 + q * dt2 * dt_s / 3.0F;
+        const float p01 = s.P01 + dt_s * s.P11 + q * dt2 / 2.0F;
+        const float p11 = s.P11 + q * dt_s;
         s.P00 = p00;
         s.P01 = p01;
         s.P11 = p11;

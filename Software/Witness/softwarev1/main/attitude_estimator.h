@@ -37,6 +37,12 @@
 //    since ignition.
 //  - Boost, Coast, Descent: pure filtered, bias-corrected gyro integration.
 //  - Landed: integration stops and the attitude is held.
+//  - Gyro saturation in flight (any raw axis at or above
+//    gyro_saturation_rad_s for saturation_samples consecutive samples, as a
+//    parachute deployment can cause): the rate is unknown, so the attitude is
+//    unrecoverable. Integration stops, valid() becomes false (quaternion all
+//    zero) and lost() is set for the rest of the flight; only a new
+//    stationary window after returning to Pad Idle re-initializes it.
 namespace attitude {
 
 struct Quaternion {
@@ -88,6 +94,10 @@ struct Config {
     std::uint32_t max_dt_us = 50'000U;
     // dt above this (but not a gap) counts as a late step.
     std::uint32_t late_dt_us = 15'000U;
+    // Gyro saturation (full scale is +/-2000 dps; 1950 leaves margin for the
+    // on-chip filter rounding a clipped input just below full scale).
+    float gyro_saturation_rad_s = 1950.0F * kDpsToRadS;
+    std::uint32_t saturation_samples = 2U;
 };
 
 struct Step {
@@ -103,6 +113,7 @@ struct StepResult {
     bool window_rejected = false;   // A full window failed the checks.
     bool entered_landed = false;    // First step in Landed: log the hold.
     bool gap = false;               // dt rejected; not integrated.
+    bool lost_now = false;          // Gyro saturated in flight on this step.
 };
 
 class Estimator final {
@@ -117,6 +128,9 @@ public:
     void reset();
 
     bool valid() const { return valid_; }
+    // Attitude given up after gyro saturation in flight (see header comment).
+    bool lost() const { return lost_; }
+    std::uint32_t saturation_events() const { return saturation_events_; }
     // All-zero until valid().
     Quaternion quaternion() const { return valid_ ? q_ : Quaternion{}; }
     Vector3 gyro_bias_rad_s() const { return bias_; }
@@ -160,6 +174,9 @@ private:
     Quaternion q_{1.0F, 0.0F, 0.0F, 0.0F};
     Vector3 bias_{};
     bool valid_ = false;
+    bool lost_ = false;
+    std::uint32_t saturation_run_ = 0;
+    std::uint32_t saturation_events_ = 0;
     bool have_time_ = false;
     std::uint64_t last_timestamp_us_ = 0;
     FlightPhase phase_ = FlightPhase::PadIdle;

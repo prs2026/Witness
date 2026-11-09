@@ -319,6 +319,11 @@ a linear Kalman filter with a constant-acceleration kinematic model:
   qualification before Boost is kept. In Landed, a zero-velocity
   pseudo-measurement stops drift.
 - **HITL:** the filter resets on every real/HITL source change.
+- **After gyro saturation** (attitude lost, see "Attitude estimator"): the
+  accelerometer can no longer be rotated into ENU, so the filter predicts with
+  zero acceleration and 10 m/s^2 of process noise (`predict_without_imu`).
+  The barometer and GPS carry the estimate. The 10 s line then ends with `IMU
+  ignored (attitude lost)`.
 - **Outputs:** position and velocity in `0x02` and `0xE0` (float32, ENU m and
   m/s), and a 10 s log line: `position: ENU E N U m, velocity ..., Mach M,
   alt MSL A m; baro U used/G gated/R rejected, sigma S m; GPS U used/R
@@ -487,8 +492,23 @@ pass only the newest is used. The integrated time therefore tracks Witness
 wall-clock time, which equals simulation time only if the host streams in real
 time. Add the 20 ms median lag when comparing against a truth trajectory.
 
+Gyro saturation (2026-11-09): if any raw gyro axis reads at or above
+1950 dps (the full scale is +/-2000) for 2 consecutive samples in Boost, Coast
+or Descent, as a parachute deployment can cause, the true rate is unknown and
+the attitude cannot be recovered.
+- The estimator stops integrating and `valid()` becomes false, so `0x02` and
+  `0xE0` report an all-zero quaternion.
+- `lost()` stays set for the rest of the flight, including Landed.
+- Only a new stationary window after returning to Pad Idle re-initializes it.
+- One saturated sample (an interference spike) does not trigger it.
+- The position filter then ignores the IMU.
+- Log line (deferred, tag `sensors`): `gyro saturated (|rate| >= 1950 dps on an
+  axis for 2 samples): attitude tracking stopped for this flight; the position
+  filter now ignores the IMU`. The 10 s attitude line shows `lost (gyro
+  saturated)`.
+
 Limitations: no magnetometer (heading is relative to the initialization only);
-gyro saturates at +/-2000 dps (35 rad/s), beyond which attitude is wrong; no
+gyro saturation ends attitude tracking for the flight (above); no
 coning compensation or gyro scale/
 misalignment calibration; the bias is assumed constant in flight; slow pad
 rotation below 5 dps about the gravity vector (invisible to the accelerometer)
@@ -840,6 +860,23 @@ a spinlock and the USB task feeds it.
   Bytes consumed as frames are **not echoed** (saving ~4.7 KB/s at 100 Hz) and
   never reach `CommandBridge`; `TX 0C ...` is rejected. HITL `0x05` commands are
   still bridged to Iris and the immediate radio queue like other USB commands.
+- **960 Hz IMU (`0x0E`, 2026-11-09)**: 150-byte frames, each carrying a u32
+  first-sample index and 8 consecutive 960 Hz samples (int16 low-g, high-g,
+  gyro xyz, native counts). They're framed like `0x0C`; 0x0E is used because
+  0x0D is CR, which typed text commands contain. `Sensors::submit_hitl_imu_batch`
+  queues them under the HITL spinlock (256 samples). The sensor task drains
+  them into the same per-sample path as real FIFO samples
+  (`process_imu_batch(true)`: filtered accel, attitude, position predict, NAND
+  IMU log with the HITL flag), with calibration bypassed.
+  - Sample times come from the index (1/960 s apart), re-anchored if the index
+    goes backwards or jumps by more than 1 s.
+  - While `0x0E` frames arrive (any within 250 ms), the IMU fields of `0x0C`
+    are ignored. `0x0C` still supplies barometer, GPS, temperature and battery
+    at 100 Hz.
+  - Hosts that send only `0x0C` work as before.
+  - The noise, vibration and filtering are synthesized on the desktop
+    (`Software/HITL/imu_synth.py`); Witness receives only the 960 Hz
+    readings.
 - **Log lines** (tag `hitl` unless noted): `HITL mode entered from USB: ...`
   (W), `HITL enter rejected: received from radio; ...` (W),
   `HITL enter rejected: flight state is <state>; HITL requires pad idle` (W),

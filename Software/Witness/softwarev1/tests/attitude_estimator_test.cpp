@@ -424,6 +424,56 @@ void test_landed_hold()
     CHECK(std::fabs(est.tilt_from_vertical_deg() - 0.3F * 1.98F / kDegToRad) < 0.05F);
 }
 
+void test_gyro_saturation()
+{
+    const float sat = 2100.0F * kDegToRad;  // beyond the 1950 dps threshold
+    // One saturated sample (an interference spike) does not stop tracking.
+    {
+        Estimator est;
+        Feeder f{est};
+        initialized_upright(est, f);
+        f.run(Vector3{0.0F, 0.1F, 0.0F}, kZero, FlightPhase::Coast, 50);
+        f.run(Vector3{sat, 0.0F, 0.0F}, kZero, FlightPhase::Coast, 1);
+        f.run(Vector3{0.0F, 0.1F, 0.0F}, kZero, FlightPhase::Coast, 50);
+        CHECK(est.valid());
+        CHECK(!est.lost());
+    }
+    // Two in a row in flight: lost for the rest of the flight.
+    {
+        Estimator est;
+        Feeder f{est};
+        initialized_upright(est, f);
+        f.run(Vector3{0.0F, 0.1F, 0.0F}, kZero, FlightPhase::Descent, 50);
+        const std::uint32_t steps = est.steps();
+        f.run(Vector3{0.0F, -sat, 0.0F}, kZero, FlightPhase::Descent, 1);
+        CHECK(!est.lost());
+        f.run(Vector3{0.0F, -sat, 0.0F}, kZero, FlightPhase::Descent, 1);
+        CHECK(f.last.lost_now);
+        CHECK(est.lost());
+        CHECK(!est.valid());
+        CHECK(is_zero(est.quaternion()));
+        CHECK(est.saturation_events() == 1U);
+        // Quiet gyro afterwards (and Landed) does not bring it back.
+        f.run(kZero, kUpright, FlightPhase::Descent, 500);
+        f.run(kZero, kUpright, FlightPhase::Landed, 500);
+        CHECK(est.lost());
+        CHECK(is_zero(est.quaternion()));
+        CHECK(est.steps() <= steps + 2U);
+        // Back in Pad Idle: a stationary window re-initializes.
+        f.run(kZero, kUpright, FlightPhase::PadIdle, 150);
+        CHECK(!est.lost());
+        CHECK(est.valid());
+    }
+    // Saturation on the pad is left to the stationary windows.
+    {
+        Estimator est;
+        Feeder f{est};
+        initialized_upright(est, f);
+        f.run(Vector3{0.0F, 0.0F, sat}, kUpright, FlightPhase::PadIdle, 10);
+        CHECK(!est.lost());
+    }
+}
+
 void test_helpers()
 {
     for (const float t : {1e-6F, 5e-4F, 9.99e-4F, 1.001e-3F, 0.01F}) {
@@ -575,6 +625,7 @@ int main()
     test_pad_tilt_correction();
     test_pure_integration_in_flight();
     test_landed_hold();
+    test_gyro_saturation();
     test_helpers();
     test_bench_interference();
     if (failures != 0) {

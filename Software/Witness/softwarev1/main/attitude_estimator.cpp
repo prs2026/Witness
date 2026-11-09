@@ -64,6 +64,8 @@ void Estimator::reset()
     q_ = Quaternion{1.0F, 0.0F, 0.0F, 0.0F};
     bias_ = Vector3{};
     valid_ = false;
+    lost_ = false;
+    saturation_run_ = 0;
     have_time_ = false;
     last_timestamp_us_ = 0;
     phase_known_ = false;
@@ -122,6 +124,11 @@ StepResult Estimator::update(const Step &step)
     if (phase_ == FlightPhase::PadIdle && !first && previous != FlightPhase::PadIdle) {
         reset_window();
     }
+    if (lost_ && phase_ == FlightPhase::PadIdle) {
+        // Back on the pad: allow a new stationary window to initialize.
+        lost_ = false;
+        clear_filter();
+    }
 
     // Time step from the sample timestamps.
     std::uint32_t dt_us = 0;  // 0: do not integrate this sample.
@@ -145,6 +152,24 @@ StepResult Estimator::update(const Step &step)
     }
     have_time_ = true;
     last_timestamp_us_ = step.timestamp_us;
+
+    if (lost_) {
+        return result;  // Attitude given up after gyro saturation.
+    }
+    // Gyro saturation in flight: the true rate is unknown, so stop.
+    const float limit = config_.gyro_saturation_rad_s;
+    const bool saturated = std::fabs(step.gyro_rad_s.x) >= limit ||
+                           std::fabs(step.gyro_rad_s.y) >= limit ||
+                           std::fabs(step.gyro_rad_s.z) >= limit;
+    saturation_run_ = saturated ? saturation_run_ + 1U : 0U;
+    if (saturated && is_flight(phase_) &&
+        saturation_run_ >= config_.saturation_samples) {
+        lost_ = true;
+        valid_ = false;
+        ++saturation_events_;
+        result.lost_now = true;
+        return result;
+    }
 
     if (phase_ == FlightPhase::Landed) {
         return result;  // Hold the final attitude.

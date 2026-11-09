@@ -174,6 +174,7 @@ class FakeWitness:
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._serve, daemon=True)
         self.commands = []       # every command value received
+        self.imu_frames = 0      # 0x0E frames received
         self.hitl_frames = 0
         self.transitions = []    # (sim s, from, to)
         self.hitl_entries = 0
@@ -262,7 +263,12 @@ class FakeWitness:
                         self._hitl(parse_hitl(bytes(buf[:47])), st, log)
                         del buf[:47]
                         continue
-                elif buf[0] in (0x05, 0x0C):
+                elif buf[0] == 0x0E and len(buf) >= 150:
+                    if buf[149] == 0x0A:
+                        self.imu_frames += 1
+                        del buf[:150]
+                        continue
+                elif buf[0] in (0x05, 0x0C, 0x0E):
                     break  # incomplete
                 del buf[0]
             now = time.monotonic()

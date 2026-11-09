@@ -387,6 +387,80 @@ bool Sensors::submit_hitl_sample(const hitl::Sample &sample)
     return accepted;
 }
 
+bool Sensors::submit_hitl_imu_batch(const hitl::ImuBatch &batch)
+{
+    const std::uint32_t now_ms = uptime_ms();
+    portENTER_CRITICAL(&hitl_lock_);
+    const bool active = hitl_controller_.active();
+    if (active) {
+        for (std::size_t i = 0; i < hitl::kImuSamplesPerFrame; ++i) {
+            if (hitl_imu_count_ == kHitlImuQueueLength) {
+                hitl_imu_head_ = (hitl_imu_head_ + 1U) % kHitlImuQueueLength;
+                --hitl_imu_count_;
+                ++hitl_imu_overflows_;
+            }
+            HitlImuSlot &slot =
+                hitl_imu_queue_[(hitl_imu_head_ + hitl_imu_count_) % kHitlImuQueueLength];
+            slot.index = batch.first_index + static_cast<std::uint32_t>(i);
+            for (std::size_t axis = 0; axis < 3; ++axis) {
+                slot.low_g[axis] = batch.low_g[i][axis];
+                slot.high_g[axis] = batch.high_g[i][axis];
+                slot.gyro[axis] = batch.gyro[i][axis];
+            }
+            ++hitl_imu_count_;
+        }
+        hitl_imu_last_ms_ = now_ms;
+    }
+    portEXIT_CRITICAL(&hitl_lock_);
+    return active;
+}
+
+std::size_t Sensors::take_hitl_imu_samples(const std::uint64_t now_us)
+{
+    HitlImuSlot slots[kMaxImuSamplesPerPass];
+    std::size_t taken = 0;
+    std::uint32_t last_ms = 0;
+    portENTER_CRITICAL(&hitl_lock_);
+    while (hitl_imu_count_ > 0 && taken < kMaxImuSamplesPerPass) {
+        slots[taken++] = hitl_imu_queue_[hitl_imu_head_];
+        hitl_imu_head_ = (hitl_imu_head_ + 1U) % kHitlImuQueueLength;
+        --hitl_imu_count_;
+    }
+    last_ms = hitl_imu_last_ms_;
+    portEXIT_CRITICAL(&hitl_lock_);
+
+    // 0x0E is in use while batches keep arriving (and a run has started).
+    hitl_imu_streaming_ = last_ms != 0 &&
+                          static_cast<std::uint32_t>(now_us / 1000ULL) - last_ms < 250U;
+    imu_batch_count_ = 0;
+    constexpr double kPeriodUs = 1e6 / IRIS_PACKET_HITL_IMU_RATE_HZ;
+    for (std::size_t i = 0; i < taken; ++i) {
+        const HitlImuSlot &slot = slots[i];
+        // Sample time comes from the index: the host's sample clock, not the
+        // USB arrival time. A restart or a jump re-anchors the clock.
+        if (!hitl_imu_epoch_valid_ || slot.index < hitl_imu_next_index_ ||
+            slot.index > hitl_imu_next_index_ + IRIS_PACKET_HITL_IMU_RATE_HZ) {
+            hitl_imu_epoch_valid_ = true;
+            hitl_imu_epoch_us_ = now_us;
+            hitl_imu_epoch_index_ = slot.index;
+        } else if (slot.index != hitl_imu_next_index_) {
+            ++hitl_imu_gaps_;
+        }
+        hitl_imu_next_index_ = slot.index + 1U;
+        ImuSample &s = imu_batch_[imu_batch_count_++];
+        s = ImuSample{};
+        for (std::size_t axis = 0; axis < 3; ++axis) {
+            s.low_g[axis] = slot.low_g[axis];
+            s.high_g[axis] = slot.high_g[axis];
+            s.gyro[axis] = slot.gyro[axis];
+        }
+        s.has_gyro = s.has_low_g = s.has_high_g = true;
+        s.timestamp_us = hitl_imu_epoch_us_ + static_cast<std::uint64_t>(
+            static_cast<double>(slot.index - hitl_imu_epoch_index_) * kPeriodUs + 0.5);
+    }
+    return imu_batch_count_;
+}
+
 bool Sensors::hitl_active() const
 {
     portENTER_CRITICAL(&hitl_lock_);
@@ -430,6 +504,13 @@ bool Sensors::service_hitl(const std::uint32_t now_ms, bool &new_sample)
         position_filter_.reset();
         position_last_predict_us_ = 0;
         position_baro_pending_ = false;
+        portENTER_CRITICAL(&hitl_lock_);
+        hitl_imu_count_ = 0;
+        hitl_imu_head_ = 0;
+        hitl_imu_last_ms_ = 0;
+        portEXIT_CRITICAL(&hitl_lock_);
+        hitl_imu_streaming_ = false;
+        hitl_imu_epoch_valid_ = false;
         // Never carry an attitude across a real/simulated source change.
         attitude_.reset();
         ESP_LOGI(kLogTag, "attitude reset: sensor source is now %s",
@@ -874,7 +955,8 @@ void Sensors::push_fifo_word(const std::uint8_t *word)
     }
 }
 
-void Sensors::apply_imu_sample(const ImuSample &sample, const bool feed_capture)
+void Sensors::apply_imu_sample(const ImuSample &sample, const bool feed_capture,
+                               const bool calibrate)
 {
     working_sample_.gyro_ready = sample.has_gyro;
     working_sample_.low_g_accel_ready = sample.has_low_g;
@@ -897,9 +979,12 @@ void Sensors::apply_imu_sample(const ImuSample &sample, const bool feed_capture)
                                  working_sample_.low_g_accel_mg,
                                  working_sample_.high_g_accel_mg);
     }
-    imu_calibration::apply(calibration_, working_sample_.gyro_mdps,
-                           working_sample_.low_g_accel_mg,
-                           working_sample_.high_g_accel_mg);
+    if (calibrate) {
+        // HITL samples are already ideal (calibrated) sensor values.
+        imu_calibration::apply(calibration_, working_sample_.gyro_mdps,
+                               working_sample_.low_g_accel_mg,
+                               working_sample_.high_g_accel_mg);
+    }
     if (sample.has_gyro) has_gyro_sample_ = true;
     if (sample.has_low_g) has_low_g_accel_sample_ = true;
     if (sample.has_high_g) has_high_g_accel_sample_ = true;
@@ -1469,6 +1554,18 @@ void Sensors::output_counts(std::int16_t gyro[3], std::int16_t low_g[3],
 
 void Sensors::predict_position(const std::uint64_t timestamp_us)
 {
+    if (attitude_.lost()) {
+        // Gyro saturated in flight: no world frame for the accelerometer, so
+        // the filter predicts without the IMU and baro/GPS carry it.
+        const std::uint64_t previous = position_last_predict_us_;
+        position_last_predict_us_ = timestamp_us;
+        if (previous != 0 && timestamp_us > previous) {
+            position_filter_.predict_without_imu(
+                static_cast<float>(timestamp_us - previous) * 1e-6F,
+                static_cast<position::Phase>(flight_state_machine_.state()));
+        }
+        return;
+    }
     if (!attitude_.valid()) {
         position_last_predict_us_ = 0;  // no world frame yet
         return;
@@ -1558,6 +1655,7 @@ void Sensors::report_position(const std::uint64_t now_us)
              static_cast<unsigned long>(position_filter_.gps_rejects()),
              position_filter_.gps_origin_set() ? "" : " (no GPS origin)",
              !position_filter_.initialized() ? "waiting for attitude"
+             : position_filter_.imu_ignored() ? "IMU ignored (attitude lost)"
              : position_filter_.still()      ? "pad hold"
                                              : "integrating");
 }
@@ -1586,18 +1684,18 @@ void Sensors::deferred_log_task_entry(void *context)
     }
 }
 
-void Sensors::process_imu_batch()
+void Sensors::process_imu_batch(const bool hitl)
 {
     const bool gyro_ready = working_sample_.gyro_ready;
     const bool low_g_ready = working_sample_.low_g_accel_ready;
     const bool high_g_ready = working_sample_.high_g_accel_ready;
     for (std::size_t i = 0; i < imu_batch_count_; ++i) {
-        apply_imu_sample(imu_batch_[i], true);
+        apply_imu_sample(imu_batch_[i], !hitl, !hitl);
         filtered_accel_.step(working_sample_.low_g_accel_mg,
                              working_sample_.high_g_accel_mg,
                              working_sample_.filtered_accel_mg);
         working_sample_.high_g_accel_active = filtered_accel_.high_g_active();
-        log_imu_sample(imu_batch_[i].timestamp_us, false);
+        log_imu_sample(imu_batch_[i].timestamp_us, hitl);
         if (imu_batch_[i].has_gyro) {
             update_attitude(imu_batch_[i].timestamp_us);
         }
@@ -1828,6 +1926,11 @@ void Sensors::update_attitude(const std::uint64_t timestamp_us)
         static_cast<attitude::FlightPhase>(flight_state_machine_.state());
     const attitude::StepResult result = attitude_.update(step);
     ++attitude_updates_since_report_;
+    if (result.lost_now) {
+        defer_log("gyro saturated (|rate| >= %.0f dps on an axis for %lu samples): attitude "
+                  "tracking stopped for this flight; the position filter now ignores the IMU",
+                  1950.0, static_cast<unsigned long>(2));
+    }
 
     if (result.initialized_now) {
         const attitude::Vector3 bias = attitude_.gyro_bias_rad_s();
@@ -1890,8 +1993,9 @@ void Sensors::report_attitude_rate(const std::uint64_t now_us)
              static_cast<unsigned long>(max_pass_us_),
              static_cast<unsigned long>(radio_tx_started_),
              static_cast<unsigned long>(radio_tx_failed_),
-             attitude_.valid() ? (attitude_.landed_hold() ? "held" : "valid")
-                               : "not initialized",
+             attitude_.lost()    ? "lost (gyro saturated)"
+             : attitude_.valid() ? (attitude_.landed_hold() ? "held" : "valid")
+                                 : "not initialized",
              static_cast<double>(attitude_.tilt_from_vertical_deg()),
              static_cast<double>(q.x), static_cast<double>(q.y),
              static_cast<double>(q.z), static_cast<double>(q.w));
@@ -1966,6 +2070,11 @@ void Sensors::run()
                 lsm_result = ESP_OK;
                 ms5607_updated = true;
                 battery_updated = true;
+            }
+            // 960 Hz IMU samples from 0x0E replace the 0x0C IMU fields.
+            if (take_hitl_imu_samples(pass_start_us) > 0) {
+                process_imu_batch(true);
+                lsm_result = ESP_OK;
             }
             barometer_healthy = working_sample_.ms5607_ready;
         } else {
@@ -2116,7 +2225,8 @@ void Sensors::run()
             ESP_LOGW(kLogTag, "IMU calibration capture aborted: HITL active");
         }
 
-        if (hitl) {
+        if (hitl && !hitl_imu_streaming_) {
+            // 100 Hz 0x0C IMU path (hosts that do not send 0x0E).
             if (lsm_result == ESP_OK) {
                 log_imu_sample(imu_timestamp_us, true);
                 update_attitude(imu_timestamp_us);

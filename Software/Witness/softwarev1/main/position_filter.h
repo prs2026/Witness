@@ -61,6 +61,8 @@ struct Config {
     std::uint32_t max_consecutive_rejects = 25;
     // Pad stillness: |specific force| within this of 1 g.
     float still_band_g = 0.05F;
+    // Process noise when predicting without IMU (e.g. under a parachute).
+    float no_imu_accel_noise_mps2 = 10.0F;
 };
 
 enum class Phase : std::uint8_t {  // numerically FlightStateMachine::State
@@ -81,6 +83,11 @@ public:
     // acceleration_world_mps2: ENU specific force rotated to world, m/s^2
     // (gravity NOT removed; the filter subtracts it). dt in seconds.
     void predict(const float acceleration_world_mps2[3], float dt_s, Phase phase);
+    // Predict without IMU (attitude lost after gyro saturation): zero net
+    // acceleration and config.no_imu_accel_noise_mps2 of process noise, so
+    // the barometer and GPS carry the estimate.
+    void predict_without_imu(float dt_s, Phase phase);
+    bool imu_ignored() const { return imu_ignored_; }
 
     // Barometric altitude (any fixed reference, e.g. ISA from 1013.25 hPa)
     // and pressure. Returns true if it was used.
@@ -127,6 +134,7 @@ private:
     Axis axes_[3]{};
     bool initialized_ = false;
     bool still_ = true;
+    bool imu_ignored_ = false;
     bool baro_gated_ = false;
     float last_baro_sigma_m_ = 0.0F;
     // Pad references (tracked while still on the pad).

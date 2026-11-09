@@ -12,6 +12,10 @@
 namespace hitl {
 
 constexpr std::size_t kFrameLength = IRIS_PACKET_HITL_FRAME_LENGTH;
+constexpr std::size_t kImuFrameLength = IRIS_PACKET_HITL_IMU_FRAME_LENGTH;
+constexpr std::size_t kImuSamplesPerFrame = IRIS_PACKET_HITL_IMU_SAMPLES;
+constexpr std::size_t kMaxFrameLength =
+    kImuFrameLength > kFrameLength ? kImuFrameLength : kFrameLength;
 constexpr std::uint32_t kInputTimeoutMs = IRIS_HITL_INPUT_TIMEOUT_MS;
 
 // One decoded 0x0C frame: native counts exactly as sent, plus the engineering
@@ -48,7 +52,19 @@ struct Sample {
 // Decodes a complete frame: length 47, ID 0x0C and EOF 0x0A at offset 46.
 bool decode_frame(const std::uint8_t *frame, std::size_t length, Sample &sample);
 
-// Collects fixed-length 0x0C frames from a byte stream. The caller decides
+// One 0x0E frame: eight consecutive 960 Hz IMU samples in native counts.
+struct ImuBatch {
+    std::uint32_t first_index = 0;
+    std::int16_t low_g[kImuSamplesPerFrame][3]{};
+    std::int16_t high_g[kImuSamplesPerFrame][3]{};
+    std::int16_t gyro[kImuSamplesPerFrame][3]{};
+};
+// Decodes a complete 0x0E frame (length 150, EOF at the end).
+bool decode_imu_frame(const std::uint8_t *frame, std::size_t length, ImuBatch &batch);
+// Frame length for a HITL frame ID (0x0C or 0x0E), or 0 for anything else.
+std::size_t frame_length_for(std::uint8_t id);
+
+// Collects fixed-length 0x0C and 0x0E frames from a byte stream. The caller decides
 // whether a 0x0C byte starts a frame (only at a command boundary); once
 // started, every byte belongs to the frame until it completes or fails.
 class FrameAssembler final {
@@ -65,12 +81,15 @@ public:
     bool active() const { return length_ > 0U; }
     std::size_t length() const { return length_; }
     const std::uint8_t *frame() const { return buffer_; }
+    // Length of the frame just completed (valid after Result::Frame).
+    std::size_t frame_length() const { return expected_; }
     std::uint8_t rejected_eof() const { return rejected_eof_; }
     void reset() { length_ = 0U; }
 
 private:
-    std::uint8_t buffer_[kFrameLength]{};
+    std::uint8_t buffer_[kMaxFrameLength]{};
     std::size_t length_ = 0U;
+    std::size_t expected_ = 0U;
     std::uint8_t rejected_eof_ = 0U;
 };
 

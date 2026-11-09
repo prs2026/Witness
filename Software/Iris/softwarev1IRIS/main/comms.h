@@ -659,6 +659,32 @@
     (IRIS_PACKET_ID_LENGTH + IRIS_PACKET_HITL_DATA_LENGTH + \
      IRIS_PACKET_EOF_LENGTH)
 
+// ---------------------------------------------------------------------------
+// HITL IMU batch packet (0x0E), host -> Witness over USB only
+// ---------------------------------------------------------------------------
+// Eight consecutive IMU samples at IRIS_PACKET_HITL_IMU_RATE_HZ, so in HITL
+// the attitude estimator, filtered acceleration, position filter and NAND IMU
+// log run at the real sensor's 960 Hz instead of the 100 Hz 0x0C rate. While
+// these arrive, the IMU fields of 0x0C frames are ignored; 0x0C still supplies
+// barometer, GPS, temperature and battery. Sample indices count from 0 in each
+// HITL run. Native counts as in 0x0C. Never forwarded, so it is not included in
+// IRIS_PACKET_MAX_DATA_LENGTH.
+
+// 0x0E (ASCII SO): non-printing and never typed, unlike 0x0D (CR).
+#define IRIS_PACKET_ID_HITL_IMU 0x0EU
+#define IRIS_PACKET_HITL_IMU_RATE_HZ 960U
+#define IRIS_PACKET_HITL_IMU_SAMPLES 8U
+#define IRIS_PACKET_HITL_IMU_INDEX_OFFSET 0U           // uint32 first sample index
+#define IRIS_PACKET_HITL_IMU_SAMPLE_OFFSET 4U
+// Per sample: int16 low-g x,y,z, high-g x,y,z, gyro x,y,z.
+#define IRIS_PACKET_HITL_IMU_SAMPLE_LENGTH 18U
+#define IRIS_PACKET_HITL_IMU_DATA_LENGTH \
+    (IRIS_PACKET_HITL_IMU_SAMPLE_OFFSET + \
+     IRIS_PACKET_HITL_IMU_SAMPLES * IRIS_PACKET_HITL_IMU_SAMPLE_LENGTH)
+#define IRIS_PACKET_HITL_IMU_FRAME_LENGTH \
+    (IRIS_PACKET_ID_LENGTH + IRIS_PACKET_HITL_IMU_DATA_LENGTH + \
+     IRIS_PACKET_EOF_LENGTH)
+
 // Largest payload currently defined by the workbook. This excludes both the
 // packet ID and EOF delimiter.
 #define IRIS_PACKET_MAX_DATA_LENGTH IRIS_PACKET_WITNESS_DEBUG_DATA_LENGTH

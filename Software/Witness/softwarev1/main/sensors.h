@@ -192,6 +192,11 @@ public:
     esp_err_t exit_hitl(hitl::Source source);
     // Accepts a decoded 0x0C sample while HITL is active; false otherwise.
     bool submit_hitl_sample(const hitl::Sample &sample);
+    // Accepts eight 960 Hz IMU samples (0x0E) while HITL is active. While
+    // these keep arriving, they replace the 0x0C IMU fields: each sample runs
+    // through the same path as a real FIFO sample (filtered accel, attitude,
+    // position predict, NAND IMU log), without calibration.
+    bool submit_hitl_imu_batch(const hitl::ImuBatch &batch);
     bool hitl_active() const;
 
     // IMU calibration command from USB (argument: IRIS_IMU_CALIBRATION_*).
@@ -335,11 +340,14 @@ private:
     void finish_fifo_slot();
     // feed_capture: count this sample toward a running calibration capture
     // (once per FIFO sample, not for the per-pass copy of the newest one).
-    void apply_imu_sample(const ImuSample &sample, bool feed_capture = false);
+    void apply_imu_sample(const ImuSample &sample, bool feed_capture = false,
+                          bool calibrate = true);
     // Every FIFO sample of this pass, oldest first: calibration, filtered
     // acceleration, NAND IMU log and attitude. working_sample_ ends on the
     // newest sample, before the flight state machine and packets use it.
-    void process_imu_batch();
+    void process_imu_batch(bool hitl = false);
+    // HITL 0x0E: drains queued 960 Hz samples into imu_batch_ (sensor task).
+    std::size_t take_hitl_imu_samples(std::uint64_t now_us);
     // Position filter: predict from the filtered acceleration rotated to ENU
     // (needs a valid attitude), and the 25 Hz baro/GPS update.
     void predict_position(std::uint64_t timestamp_us);
@@ -411,6 +419,26 @@ private:
     mutable portMUX_TYPE hitl_lock_ = portMUX_INITIALIZER_UNLOCKED;
     hitl::Controller hitl_controller_{};
     hitl::Sample hitl_sample_{};
+    // 0x0E samples, filled by the USB task under hitl_lock_.
+    struct HitlImuSlot {
+        std::uint32_t index;
+        std::int16_t low_g[3];
+        std::int16_t high_g[3];
+        std::int16_t gyro[3];
+    };
+    static constexpr std::size_t kHitlImuQueueLength = 256;  // ~0.27 s
+    std::array<HitlImuSlot, kHitlImuQueueLength> hitl_imu_queue_{};
+    std::size_t hitl_imu_head_ = 0;
+    std::size_t hitl_imu_count_ = 0;
+    std::uint32_t hitl_imu_overflows_ = 0;
+    std::uint32_t hitl_imu_last_ms_ = 0;
+    // Sensor task: sample clock for 0x0E (index -> timestamp).
+    bool hitl_imu_streaming_ = false;
+    bool hitl_imu_epoch_valid_ = false;
+    std::uint64_t hitl_imu_epoch_us_ = 0;
+    std::uint32_t hitl_imu_epoch_index_ = 0;
+    std::uint32_t hitl_imu_next_index_ = 0;
+    std::uint32_t hitl_imu_gaps_ = 0;
     bool hitl_in_use_ = false;
     bool hitl_has_sample_ = false;
     std::uint32_t hitl_session_in_use_ = 0;

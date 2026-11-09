@@ -377,6 +377,24 @@ class CsvParams:
     gps_sats: int = 10
     gps_fix: bool = True
     battery_mv: float = 7800.0
+    # 960 Hz IMU synthesis (imu_synth.py): 7.68 kHz truth + vibration +
+    # datasheet noise, on-chip-style filtered and sent as 0x0E frames. The
+    # *_noise_g/dps fields above then only affect the 100 Hz 0x0C IMU fields,
+    # which Witness ignores while 0x0E frames arrive.
+    imu_synthesis: bool = True
+    vibration_scale: float = 1.0      # 0 = no vibration
+    imu_noise_scale: float = 1.0      # 1 = datasheet noise density
+    imu_offset_scale: float = 1.0     # 1 = datasheet worst-case zero levels
+    # Parachute deployment event (0 = none): from deployment_delay_s after the
+    # attitude hold starts (apogee), for deployment_duration_s, the body pitch
+    # rate gets deployment_spin_dps added (beyond the +/-2000 dps full scale
+    # it saturates the gyro) and body x gets deployment_shock_g. The truth
+    # attitude does not follow this tumble, so attitude comparison after it
+    # is not meaningful; Witness should report its attitude as lost.
+    deployment_spin_dps: float = 0.0
+    deployment_shock_g: float = 0.0
+    deployment_delay_s: float = 1.0
+    deployment_duration_s: float = 0.3
 
     @classmethod
     def from_dict(cls, data: dict) -> "CsvParams":
@@ -391,6 +409,13 @@ class CsvParams:
 class TrajSample(sm.SimSample):
     q_truth: tuple = att.IDENTITY     # (x, y, z, w) BODY -> WORLD
     tau_s: float = 0.0                # CSV time (negative on the pad)
+    # Noise-free body specific force (g) and body rate (dps) for this tick;
+    # imu_synth.py builds the 960 Hz sensor readings from these.
+    f_body_g: tuple = (0.0, 0.0, 0.0)
+    w_body_dps: tuple = (0.0, 0.0, 0.0)
+    # Truth position (m, ENU from the pad) and velocity (m/s, ENU).
+    pos_enu_m: tuple = (0.0, 0.0, 0.0)
+    vel_enu_mps: tuple = (0.0, 0.0, 0.0)
 
 
 @dataclass
@@ -629,6 +654,9 @@ def build(params: CsvParams, trajectory: Trajectory | None = None) -> CsvBuild:
         else:
             rv = att.to_rotvec(att.qmul(att.qconj(q_prev), q))
             w_dps = tuple(math.degrees(c) / DT_S for c in rv)
+        deploy = (p.deployment_spin_dps != 0.0 or p.deployment_shock_g != 0.0) and             t_hold + p.deployment_delay_s <= tau <             t_hold + p.deployment_delay_s + p.deployment_duration_s
+        if deploy:
+            w_dps = (w_dps[0], w_dps[1] + p.deployment_spin_dps, w_dps[2])
         q_prev = q
         for i in range(3):
             max_w[i] = max(max_w[i], abs(w_dps[i]))
@@ -642,6 +670,8 @@ def build(params: CsvParams, trajectory: Trajectory | None = None) -> CsvBuild:
         f_world = (a[0], a[1], a[2] + G0)
         fb = att.rotate_inv(q, f_world)
         fb = (fb[0] / G0, fb[1] / G0, fb[2] / G0)
+        if deploy:
+            fb = (fb[0] + p.deployment_shock_g, fb[1], fb[2])
         for i in range(3):
             max_f[i] = max(max_f[i], abs(fb[i]))
         max_f_mag = max(max_f_mag, att.norm3(fb))
@@ -677,7 +707,10 @@ def build(params: CsvParams, trajectory: Trajectory | None = None) -> CsvBuild:
             satellites=sats, fix_quality=fix, battery_mv=p.battery_mv)
         samples.append(TrajSample(
             t_ms=k * TICK_MS, phase=phase, alt_msl_m=alt_msl, vel_mps=v[2],
-            hitl=hitl, q_truth=att.qcanon(q), tau_s=tau))
+            hitl=hitl, q_truth=att.qcanon(q), tau_s=tau,
+            f_body_g=tuple(fb), w_body_dps=tuple(w_dps),
+            pos_enu_m=(pos[0] - pos0[0], pos[1] - pos0[1], pos[2] - pos0[2]),
+            vel_enu_mps=tuple(v)))
 
     report = _report(p, tr, samples, rail, t_apo, t_hold, pad, tau_end,
                      max_f, max_f_mag, max_w, max_w_mag, low_sat,

@@ -113,6 +113,15 @@ class RunState:
     plot_tilt_err: list = field(default_factory=list)
     plot_att_err: list = field(default_factory=list)
     attitude: dict | None = None      # attitude summary at the end
+    # 960 Hz IMU synthesis (CSV runs): 0x0E frames sent by simulation time.
+    imu_frames: list = field(default_factory=list)
+    imu_due_ms: list = field(default_factory=list)   # sim ms of each frame's last sample
+    imu_stream: object = None
+    imu_report: dict | None = None
+    imu_frames_sent: int = 0
+    # Witness 0xE0 estimates for the observed-vs-expected comparison.
+    debug_records: list = field(default_factory=list)  # (sim s, packet)
+    comparison: dict | None = None
 
 
 class RunRecorder:
@@ -376,6 +385,9 @@ class HitlSession:
         self._hitl_off_count = 0
         self._entered = False
         self._host = None
+        # End-of-run FC log fetch through the bench Pi (hitl_outputs.py):
+        # {"enabled", "pi_host", "pi_user", "pi_key", "restart", "wait_s"}.
+        self.fc_log_config: dict = {}
         # Optional callable(bytes) given every chunk received from Witness,
         # e.g. witnessOS mirroring this connection into the Horizon feed.
         # Called on the reader thread; exceptions are swallowed.
@@ -530,7 +542,7 @@ class HitlSession:
     def _on_packet(self, pkt: dict):
         pid = pkt["id"]
         run = self.run
-        if pid == hp.ID_HITL:
+        if pid in (hp.ID_HITL, hp.ID_HITL_IMU):
             with self._lock:
                 self.view.echo_frames += 1
             return  # our own echo; never interpreted
@@ -561,6 +573,10 @@ class HitlSession:
         if pid in (hp.ID_STATE, hp.ID_WITNESS_DEBUG) and run is not None \
                 and run.streaming and run.truth_quats is not None:
             self._attitude_packet(run, pkt)
+        # Only packets computed from simulated data (after EXIT Witness resets
+        # its estimators, so those would not be comparable).
+        if pid == hp.ID_WITNESS_DEBUG and run is not None and run.streaming                 and pkt["status"].get("hitl_active"):
+            run.debug_records.append((self._sim_s(), pkt))
         if pid in hp.TELEMETRY_STATUS_PACKETS:
             self._on_status(pkt["status"], pkt["uptime_ms"])
 
@@ -729,6 +745,8 @@ class HitlSession:
         run.plot_tilt_truth = [(s.t_ms / 1000,
                                 att.tilt_from_vertical_deg(s.q_truth))
                                for s in samples[::10]]
+        if getattr(params, "imu_synthesis", False):
+            self._prepare_imu(run, params)
         baro = build.report["baro"]
         if baro["below_ms5607_range_windows_sim_s"]:
             run.warnings.append(
@@ -738,6 +756,33 @@ class HitlSession:
                             baro["below_ms5607_range_windows_sim_s"])
                 + "); sent anyway, but the real sensor could not measure it")
         return run
+
+    def _prepare_imu(self, run: RunState, params):
+        """Synthesizes the 960 Hz IMU stream and encodes its 0x0E frames."""
+        try:
+            import imu_synth as ims
+            reason = ims.available()
+        except ImportError as exc:
+            reason = f"{exc.name} is not installed (pip install numpy scipy soundfile)"
+        if reason:
+            run.warnings.append(f"960 Hz IMU synthesis off: {reason}; Witness "
+                                "gets the 100 Hz 0x0C IMU values instead")
+            return
+        import numpy as np
+        stream = ims.from_samples(run.samples, ims.ImuSynthParams(
+            seed=params.seed, vibration_scale=params.vibration_scale,
+            noise_scale=params.imu_noise_scale,
+            offset_scale=params.imu_offset_scale))
+        run.imu_stream = stream
+        run.imu_report = stream.report
+        n = len(stream) - len(stream) % hp.IMU_BATCH_SAMPLES
+        block = np.concatenate([stream.low_g, stream.high_g, stream.gyro],
+                               axis=1).astype(">i2")   # per sample: low, high, gyro
+        for j in range(0, n, hp.IMU_BATCH_SAMPLES):
+            run.imu_frames.append(
+                bytes((hp.ID_HITL_IMU,)) + (j & 0xFFFFFFFF).to_bytes(4, "big")
+                + block[j:j + hp.IMU_BATCH_SAMPLES].tobytes() + bytes((hp.EOF,)))
+            run.imu_due_ms.append(float(stream.time_s[j + hp.IMU_BATCH_SAMPLES - 1]) * 1000.0)
 
     def start_run(self, run: RunState, abort_on_no_hitl: bool = False):
         if not self.connected:
@@ -801,6 +846,8 @@ class HitlSession:
             i = 0
             n = len(run.frames)
             warned_hitl = False
+            jj = 0                       # next 0x0E frame
+            n_imu = len(run.imu_frames)
             while i < n and not self._stop_run.is_set():
                 target = start + tick * period
                 delay = target - time.perf_counter()
@@ -811,8 +858,13 @@ class HitlSession:
                 for _ in range(per_tick):
                     if i >= n:
                         break
-                    self._send(run.frames[i])
                     s = run.samples[i]
+                    # 960 Hz samples up to this tick go out first.
+                    while jj < n_imu and run.imu_due_ms[jj] <= s.t_ms:
+                        self._send(run.imu_frames[jj])
+                        jj += 1
+                        run.imu_frames_sent += 1
+                    self._send(run.frames[i])
                     run.sim_ms = s.t_ms
                     run.frames_sent += 1
                     if i % 5 == 0:
@@ -853,9 +905,27 @@ class HitlSession:
                 self.log(f"attitude summary failed: {exc!r}")
             run.result = evaluate(run)
             if self._recorder:
+                try:
+                    import hitl_outputs
+                    run.comparison = hitl_outputs.write_comparison(
+                        run, self._recorder.dir)
+                    if run.comparison:
+                        run.result["comparison"] = run.comparison
+                except Exception as exc:  # never lose the run over a metric
+                    self.log(f"comparison outputs failed: {exc!r}")
                 self._recorder.finish(
                     run.result, run.att_records
                     if run.truth_quats is not None else None)
                 self.log(f"run saved to {self._recorder.dir}")
                 self._recorder = None
+                cfg = self.fc_log_config
+                if cfg.get("enabled") and run.run_dir and \
+                        not is_loopback(self._host) and self.connected:
+                    import hitl_outputs
+                    fc = hitl_outputs.fetch_fc_logs(self, run, cfg, self.log)
+                    run.result["fc_logs"] = fc
+                    if fc.get("flash_comparison"):
+                        run.result["comparison_flash"] = fc["flash_comparison"]
+                    with open(os.path.join(run.run_dir, "summary.json"), "w") as f:
+                        json.dump(run.result, f, indent=2)
             self._event("run", "finished")

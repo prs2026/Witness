@@ -33,6 +33,7 @@ Packet lengths include the packet ID and EOF:
 | `0x03` | Camera telemetry | 17 | 19 | Iris CAN, 1 Hz | latest frame at 1 Hz |
 | `0x05` | Command | 8 | 10 | received externally | immediate; latest local frame at 1 Hz |
 | `0x0C` | HITL sensor input | 45 | 47 | host to Witness over USB only, ~100 Hz | never transmitted |
+| `0x0E` | HITL IMU batch (8 samples at 960 Hz) | 148 | 150 | host to Witness over USB only, 120 Hz | never transmitted |
 | `0xE0` | Witness debug | 101 | 103 | 10 Hz after debug enable | latest frame at 1 Hz |
 | `0xE1` | IRIS debug | 12 | 14 | Iris CAN, 10 Hz after debug enable | latest frame at 1 Hz |
 | `0xFF` | Heartbeat | 6 | 8 | 1 Hz | latest frame at 1 Hz |
@@ -342,6 +343,15 @@ LoRa, CAN and logging continue.
   frames at a steady 100 Hz.
 - HITL commands are bridged to Iris like any other `0x05` command (Iris ignores
   them). `0x0C` packets are never forwarded to CAN or LoRa.
+- **`0x0E` HITL IMU batch** (optional, USB only): payload u32 index of the first
+  sample (counting from 0 in each run), then 8 samples of int16 low-g x,y,z,
+  high-g x,y,z, gyro x,y,z in the same counts as `0x0C`, followed by EOF
+  `0x0A`. The samples are consecutive at 960 Hz. While these arrive, Witness
+  runs its estimators and IMU log on them at 960 Hz and ignores the IMU fields
+  of `0x0C`.
+- Witness stops its attitude (all-zero quaternion) for the rest of a flight
+  once any gyro axis saturates (>= 1950 dps for 2 samples) in Boost, Coast or
+  Descent. Its position filter then ignores the IMU.
 
 ### `0x0C` HITL sensor input packet, 47 bytes (host to Witness, USB only)
 

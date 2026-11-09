@@ -353,6 +353,81 @@ void test_controller()
     assert(c.expire(0xFFFFFF00U + 1000U));      // Wrapped, 1000 ms later.
 }
 
+std::vector<std::uint8_t> imu_frame(std::uint32_t first_index, std::int16_t base)
+{
+    std::vector<std::uint8_t> f(hitl::kImuFrameLength, 0);
+    f[0] = IRIS_PACKET_ID_HITL_IMU;
+    put(f, 0, first_index, 4);
+    for (std::size_t i = 0; i < hitl::kImuSamplesPerFrame; ++i) {
+        for (std::size_t c = 0; c < 9; ++c) {
+            const auto v = static_cast<std::uint16_t>(
+                static_cast<std::int16_t>(base + 100 * static_cast<int>(i) + static_cast<int>(c)));
+            put(f, 4 + 18 * i + 2 * c, v, 2);
+        }
+    }
+    f.back() = IRIS_PACKET_EOF_VALUE;
+    return f;
+}
+
+void test_imu_batch()
+{
+    static_assert(hitl::kImuFrameLength == 150, "0x0D frame is 150 bytes");
+    assert(hitl::frame_length_for(IRIS_PACKET_ID_HITL_SENSORS) == 47);
+    assert(hitl::frame_length_for(IRIS_PACKET_ID_HITL_IMU) == 150);
+    assert(hitl::frame_length_for(0x05) == 0);
+
+    // Decode: index and every channel of every sample, including negatives.
+    const auto f = imu_frame(123456U, -200);
+    hitl::ImuBatch batch{};
+    assert(hitl::decode_imu_frame(f.data(), f.size(), batch));
+    assert(batch.first_index == 123456U);
+    assert(batch.low_g[0][0] == -200 && batch.low_g[0][2] == -198);
+    assert(batch.high_g[3][1] == -200 + 300 + 4);
+    assert(batch.gyro[7][2] == -200 + 700 + 8);
+    auto bad = f;
+    bad.back() = 0;
+    assert(!hitl::decode_imu_frame(bad.data(), bad.size(), batch));
+    assert(!hitl::decode_imu_frame(f.data(), f.size() - 1, batch));
+
+    // Assembler: 0x0C and 0x0D frames interleaved, each completed at its own
+    // length (base 1000 keeps 0x0A/0x0C/0x0E out of the IMU payload bytes).
+    std::vector<std::uint8_t> stream;
+    append(stream, imu_frame(0, 1000));
+    append(stream, clean_frame_at(5));
+    append(stream, imu_frame(8, 1000));
+    hitl::FrameAssembler a;
+    std::vector<std::pair<std::uint8_t, std::size_t>> got;
+    for (const auto byte : stream) {
+        if (a.push(byte) == hitl::FrameAssembler::Result::Frame) {
+            got.emplace_back(a.frame()[0], a.frame_length());
+        }
+    }
+    assert(got.size() == 3);
+    assert(got[0].first == IRIS_PACKET_ID_HITL_IMU && got[0].second == 150);
+    assert(got[1].first == IRIS_PACKET_ID_HITL_SENSORS && got[1].second == 47);
+    assert(got[2].first == IRIS_PACKET_ID_HITL_IMU && got[2].second == 150);
+
+    // A truncated 0x0E followed by a good 0x0C: the 0x0C is recovered by the
+    // resync (the bad frame's last byte is not 0x0A).
+    stream.clear();
+    auto cut = imu_frame(16, 1000);
+    cut.resize(60);
+    append(stream, cut);
+    append(stream, clean_frame_at(7));
+    std::vector<std::uint8_t> filler(150 - 60 - 47, 0x55);
+    append(stream, filler);
+    append(stream, clean_frame_at(9));
+    hitl::FrameAssembler b2;
+    std::size_t frames = 0, bad_eof = 0;
+    for (const auto byte : stream) {
+        const auto r = b2.push(byte);
+        frames += r == hitl::FrameAssembler::Result::Frame;
+        bad_eof += r == hitl::FrameAssembler::Result::BadEof;
+    }
+    assert(bad_eof >= 1);
+    assert(frames >= 1);  // at least the final 0x0C after the junk
+}
+
 }  // namespace
 
 int main()
@@ -360,5 +435,6 @@ int main()
     test_decode();
     test_assembler();
     test_controller();
+    test_imu_batch();
     std::puts("HITL input tests passed");
 }

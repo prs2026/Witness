@@ -42,7 +42,10 @@ def load_settings(path: str = SETTINGS_PATH) -> dict:
     settings = {"host": DEFAULT_HOST, "port": DEFAULT_PORT,
                 "preset": "Nominal 10 g", "tolerance_s": DEFAULT_TOLERANCE_S,
                 "csv_path": "", "att_final_tilt_deg": att.DEFAULT_THRESHOLDS[
-                    "final_tilt_max_deg"]}
+                    "final_tilt_max_deg"],
+                # FC flash logs fetched through the bench Pi after each run.
+                "fetch_fc_logs": True, "pi_host": "", "pi_user": "",
+                "pi_key": "", "fetch_restart_hub": True}
     try:
         with open(path) as f:
             data = json.load(f)
@@ -97,6 +100,17 @@ def attitude_thresholds(args) -> dict:
             "flight_tilt_max_deg": args.att_flight_tilt}
 
 
+def fc_log_config(settings: dict, enabled: bool = True) -> dict:
+    """FC log fetch settings; env WITNESS_PI_USER / _KEY / _HOST fill gaps."""
+    return {
+        "enabled": enabled and bool(settings.get("fetch_fc_logs", True)),
+        "pi_host": settings.get("pi_host") or os.environ.get("WITNESS_PI_HOST", ""),
+        "pi_user": settings.get("pi_user") or os.environ.get("WITNESS_PI_USER", ""),
+        "pi_key": settings.get("pi_key") or os.environ.get("WITNESS_PI_KEY", ""),
+        "restart": bool(settings.get("fetch_restart_hub", True)),
+    }
+
+
 def run_headless(args) -> int:
     scale = max(int(args.time_scale), int(args.speed or 1))
     if scale != 1 and not hs.is_loopback(args.host):
@@ -121,6 +135,7 @@ def run_headless(args) -> int:
         label = args.preset
     runs_dir = None if args.no_save else (args.runs_dir or hs.DEFAULT_RUNS_DIR)
     session = hs.HitlSession(runs_dir=runs_dir)
+    session.fc_log_config = fc_log_config(load_settings(), not args.no_fetch_logs)
     try:
         run = session.prepare_run(params, preset=label,
                                   tolerance_s=args.tolerance,
@@ -175,16 +190,33 @@ def run_headless(args) -> int:
             return 2
         while not session.wait_run(0.2):
             drain()
-            if not session.connected:
+            # The FC log fetch closes the connection on purpose after the run.
+            if not session.connected and run.streaming:
                 break
     except KeyboardInterrupt:
         session.stop_run("interrupted")
     finally:
-        session.wait_run(5)
+        session.wait_run(600 if session.fc_log_config.get("enabled") else 5)
         drain()
         session.disconnect(send_exit=False)
     result = run.result or hs.evaluate(run)
     print(hs.format_table(result))
+    if run.imu_report:
+        print(f"960 Hz IMU: {run.imu_frames_sent} 0x0E frames sent "
+              f"({run.imu_frames_sent * 8} samples)")
+    for key, title in (("comparison", "Witness 0xE0 (10 Hz) vs truth"),
+                       ("comparison_flash", "Flash state packets (50 Hz) vs truth")):
+        if result.get(key):
+            print(title + ":")
+            for phase, d in result[key].items():
+                att_txt = (f", attitude {d['attitude_rms_deg']:.2f} deg rms"
+                           if d.get("attitude_rms_deg") is not None else "")
+                print(f"  {phase:<9} up {d['up_rms_m']:.1f} m rms (max {d['up_max_m']:.1f}), "
+                      f"horizontal {d['horizontal_rms_m']:.1f} m rms, "
+                      f"speed {d['speed_rms_mps']:.1f} m/s rms{att_txt}")
+    fc = result.get("fc_logs")
+    if fc:
+        print(f"FC logs: {', '.join(fc['files']) if fc.get('ok') else 'failed: ' + str(fc.get('error'))}")
     if run.run_dir:
         print(f"Run saved to {run.run_dir}")
     return 0 if result["passed"] else 1
@@ -229,6 +261,8 @@ class HitlApp:
         self.settings_path = settings_path
         self.settings = settings or load_settings(settings_path)
         self.session = hs.HitlSession(runs_dir=runs_dir)
+        self.session.fc_log_config = fc_log_config(self.settings) \
+            if hasattr(self, "settings") else fc_log_config(load_settings())
         self._shown_run = None
         self._closing = False
         self._plot_sig = None
@@ -938,6 +972,9 @@ def build_parser():
     ap.add_argument("--connect-timeout", type=float, default=5.0)
     ap.add_argument("--runs-dir", default=None)
     ap.add_argument("--no-save", action="store_true")
+    ap.add_argument("--no-fetch-logs", action="store_true",
+                    help="do not download the FC flash logs through the bench Pi "
+                         "after the run (default: fetch, then power-cycle Pi USB hub 2)")
     ap.add_argument("--list-presets", action="store_true")
     ap.add_argument("-v", "--verbose", action="store_true")
     return ap
