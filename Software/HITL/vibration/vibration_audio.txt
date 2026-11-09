@@ -1,0 +1,10 @@
+PANDORA vibration drive files - EAYF_CONFIG_1
+Mono, 48000 Hz, Ogg Vorbis quality 10. Sample value 1.0 = the full scale below, in g. Play the
+specification file and set the amplifier so the table's accelerometer reads its g rms; the flight file
+then plays at its own level. Open loop the shaker's response shapes the spectrum: check it on the table.
+
+file                                 axis  seconds    g rms  full scale g  clipped  content
+vibration_spec_thrust.ogg          thrust     10.0    12.76        150.67        0  NSROC Level 2, stationary
+vibration_flight_thrust.ogg        thrust     89.0    25.23        150.67        0  nominal flight, launch to apogee, as predicted (g rms: its loudest second, at 6.3 s); maximax +21.1 dB on NSROC Level 2 at 20 Hz (worst band)
+vibration_spec_lateral.ogg        lateral     10.0    12.76        150.67        0  NSROC Level 2, stationary
+vibration_flight_lateral.ogg      lateral     89.0    25.23        150.67        0  nominal flight, launch to apogee, as predicted (g rms: its loudest second, at 6.3 s); maximax +21.1 dB on NSROC Level 2 at 20 Hz (worst band)

@@ -27,6 +27,9 @@ ID_STATE = 0x02
 ID_CAMERA = 0x03
 ID_COMMAND = 0x05
 ID_HITL = 0x0C
+ID_HITL_IMU = 0x0E   # not 0x0D: that is CR, part of every text line
+IMU_BATCH_SAMPLES = 8
+IMU_RATE_HZ = 960
 ID_WITNESS_DEBUG = 0xE0
 ID_IRIS_DEBUG = 0xE1
 ID_HEARTBEAT = 0xFF
@@ -37,6 +40,7 @@ FRAME_LENGTHS = {
     ID_CAMERA: 19,
     ID_COMMAND: 10,
     ID_HITL: 47,
+    ID_HITL_IMU: 150,   # only seen as an echo (the fake echoes everything)
     ID_WITNESS_DEBUG: 103,
     ID_IRIS_DEBUG: 14,
     ID_HEARTBEAT: 8,
@@ -48,6 +52,7 @@ PACKET_NAMES = {
     ID_CAMERA: "camera",
     ID_COMMAND: "command",
     ID_HITL: "hitl_echo",
+    ID_HITL_IMU: "hitl_imu_echo",
     ID_WITNESS_DEBUG: "witness_debug",
     ID_IRIS_DEBUG: "iris_debug",
     ID_HEARTBEAT: "heartbeat",
@@ -67,6 +72,10 @@ CMD_WITNESS_DEBUG_START = 0x00E0
 # Safety: the only commands this tool will ever encode. Mass storage (0x6868),
 # log erase (0x6869) and flight-state commands (0x7300-0x7304) are
 # deliberately impossible to build here.
+# Export logs as a USB disk. Deliberately NOT in ALLOWED_COMMANDS: only the
+# end-of-run FC log fetch sends it (hitl_outputs.fetch_fc_logs).
+CMD_MASS_STORAGE = 0x6868
+IMU_FRAME_LENGTH = 150
 ALLOWED_COMMANDS = {CMD_HITL_ENTER: "HITL ENTER", CMD_HITL_EXIT: "HITL EXIT",
                     CMD_WITNESS_DEBUG_START: "WITNESS DEBUG START"}
 
@@ -150,12 +159,33 @@ def f32(data: bytes, offset: int) -> float:
     return struct.unpack_from(">f", data, offset)[0]
 
 
+_ISA_ALT_LAYERS = (  # base geopotential m, base K, lapse K/m, base Pa
+    (0.0, 288.15, -0.0065, 101325.0), (11000.0, 216.65, 0.0, 22632.06),
+    (20000.0, 216.65, 0.001, 5474.889), (32000.0, 228.65, 0.0028, 868.0187),
+    (47000.0, 270.65, 0.0, 110.9063))
+
+
 def pressure_altitude_m(pressure_pa: float) -> float:
-    """Barometric altitude exactly as the Witness MS5607 path computes it."""
+    """Barometric altitude exactly as the Witness MS5607 path computes it.
+
+    Mirrors pressure_altitude.h: ISA layers to 47 km referenced to
+    1013.25 mbar, converted from geopotential to geometric altitude.
+    """
     mbar = pressure_pa / 100.0
     if mbar <= 0:
         return float("nan")
-    return 44330.0 * (1.0 - (mbar / SEA_LEVEL_PRESSURE_MBAR) ** 0.19029495)
+    pa = mbar * (101325.0 / (SEA_LEVEL_PRESSURE_MBAR * 100.0)) * 100.0
+    i = 0
+    while i + 1 < len(_ISA_ALT_LAYERS) and pa < _ISA_ALT_LAYERS[i + 1][3]:
+        i += 1
+    hb, tb, lapse, pb = _ISA_ALT_LAYERS[i]
+    k = 287.05287 / 9.80665
+    if lapse == 0.0:
+        h = hb - k * tb * math.log(pa / pb)
+    else:
+        h = hb + tb / lapse * ((pa / pb) ** (-lapse * k) - 1.0)
+    r = 6356766.0
+    return r * h / (r - h)
 
 
 def latlon_count(deg: float) -> int:
@@ -191,6 +221,22 @@ class HitlInput:
     satellites: int = 0
     fix_quality: int = 0
     battery_mv: int = 0
+
+
+def encode_imu_batch(first_index: int, low_g, high_g, gyro) -> bytes:
+    """Build a 150-byte 0x0E frame from eight samples of native counts.
+
+    low_g, high_g, gyro: 8 x 3 int16 counts (numpy arrays or sequences).
+    """
+    out = bytearray((ID_HITL_IMU,))
+    out += struct.pack(">I", int(first_index) & 0xFFFFFFFF)
+    for k in range(IMU_BATCH_SAMPLES):
+        for block in (low_g, high_g, gyro):
+            for axis in range(3):
+                out += struct.pack(">h", int(block[k][axis]))
+    out.append(EOF)
+    assert len(out) == IMU_FRAME_LENGTH == FRAME_LENGTHS[ID_HITL_IMU]
+    return bytes(out)
 
 
 def encode_hitl(sample: HitlInput) -> bytes:

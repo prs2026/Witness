@@ -60,6 +60,37 @@ constexpr float kGyroMdpsPerCount = static_cast<float>(
 
 }  // namespace
 
+std::size_t frame_length_for(const std::uint8_t id)
+{
+    return id == IRIS_PACKET_ID_HITL_SENSORS ? kFrameLength
+         : id == IRIS_PACKET_ID_HITL_IMU     ? kImuFrameLength
+                                             : 0U;
+}
+
+bool decode_imu_frame(const std::uint8_t *frame, const std::size_t length,
+                      ImuBatch &batch)
+{
+    if (frame == nullptr || length != kImuFrameLength ||
+        frame[0] != IRIS_PACKET_ID_HITL_IMU ||
+        frame[kImuFrameLength - 1U] != IRIS_PACKET_EOF_VALUE) {
+        return false;
+    }
+    const std::uint8_t *payload = frame + kId;
+    ImuBatch b{};
+    b.first_index = u32(payload + IRIS_PACKET_HITL_IMU_INDEX_OFFSET);
+    for (std::size_t i = 0; i < kImuSamplesPerFrame; ++i) {
+        const std::uint8_t *s = payload + IRIS_PACKET_HITL_IMU_SAMPLE_OFFSET +
+                                i * IRIS_PACKET_HITL_IMU_SAMPLE_LENGTH;
+        for (std::size_t axis = 0; axis < 3U; ++axis) {
+            b.low_g[i][axis] = i16(s + 2U * axis);
+            b.high_g[i][axis] = i16(s + 6U + 2U * axis);
+            b.gyro[i][axis] = i16(s + 12U + 2U * axis);
+        }
+    }
+    batch = b;
+    return true;
+}
+
 bool decode_frame(const std::uint8_t *frame, const std::size_t length,
                   Sample &sample)
 {
@@ -113,30 +144,40 @@ bool decode_frame(const std::uint8_t *frame, const std::size_t length,
 FrameAssembler::Result FrameAssembler::push(const std::uint8_t byte)
 {
     if (length_ == 0U) {
-        if (byte != IRIS_PACKET_ID_HITL_SENSORS) {
+        const std::size_t expected = frame_length_for(byte);
+        if (expected == 0U) {
             return Result::NotFramed;
         }
+        expected_ = expected;
         buffer_[length_++] = byte;
         return Result::Pending;
     }
     buffer_[length_++] = byte;
-    if (length_ < kFrameLength) {
+    if (length_ < expected_) {
         return Result::Pending;
     }
     if (byte == IRIS_PACKET_EOF_VALUE) {
         length_ = 0U;
         return Result::Frame;
     }
-    // Payload bytes may equal 0x0C, so a later 0x0C in the rejected bytes is
-    // the earliest place a real frame can start.
+    // Payload bytes may equal a frame ID, so a later 0x0C or 0x0E in the
+    // rejected bytes is the earliest place a real frame can start. Its own
+    // length then applies; bytes beyond it are left for later pushes.
     rejected_eof_ = byte;
+    const std::size_t received = length_;
     std::size_t start = 1U;
-    while (start < kFrameLength && buffer_[start] != IRIS_PACKET_ID_HITL_SENSORS) {
+    while (start < received && frame_length_for(buffer_[start]) == 0U) {
         ++start;
     }
-    length_ = kFrameLength - start;
+    length_ = received - start;
     if (length_ > 0U) {
         std::memmove(buffer_, buffer_ + start, length_);
+        expected_ = frame_length_for(buffer_[0]);
+        if (length_ >= expected_) {
+            // A shorter frame would already be complete inside the rejected
+            // bytes; it was corrupted with the rest, so drop it too.
+            length_ = 0U;
+        }
     }
     return Result::BadEof;
 }

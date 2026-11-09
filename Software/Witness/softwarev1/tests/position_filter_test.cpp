@@ -211,6 +211,30 @@ void test_gate_and_resync()
     CHECK(filter.baro_rejects() == 1);
 }
 
+void test_predict_without_imu()
+{
+    // Under a parachute at 20 m/s down with the IMU ignored: the baro alone
+    // brings the estimate to the right altitude and descent rate.
+    Filter filter;
+    const float still[3] = {0.0F, 0.0F, kG};
+    for (int n = 0; n < 960; ++n) filter.predict(still, 1.0F / 960.0F, Phase::Coast);
+    filter.update_baro(3000.0F, 70000.0F, Phase::Coast);  // reference
+    float truth = 0.0F;  // up from the reference point
+    for (int n = 0; n < 960 * 30; ++n) {
+        filter.predict_without_imu(1.0F / 960.0F, Phase::Descent);
+        truth -= 20.0F / 960.0F;
+        if (n % 38 == 0) filter.update_baro(3000.0F + truth, 80000.0F, Phase::Descent);
+    }
+    CHECK(filter.imu_ignored());
+    std::printf("no-IMU descent: up error %.2f m, vz %.2f m/s (truth -20)\n",
+                filter.up().p - truth, filter.up().v);
+    CHECK(std::fabs(filter.up().p - truth) < 3.0F);
+    CHECK(std::fabs(filter.up().v + 20.0F) < 1.5F);
+    // A normal predict clears the flag again.
+    filter.predict(still, 1.0F / 960.0F, Phase::Descent);
+    CHECK(!filter.imu_ignored());
+}
+
 }  // namespace
 
 int main()
@@ -219,6 +243,7 @@ int main()
     test_pad_hold();
     test_flights();
     test_gate_and_resync();
+    test_predict_without_imu();
     if (failures == 0) {
         std::printf("position_filter_test: all passed\n");
         return EXIT_SUCCESS;

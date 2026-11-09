@@ -424,6 +424,87 @@ void test_landed_hold()
     CHECK(std::fabs(est.tilt_from_vertical_deg() - 0.3F * 1.98F / kDegToRad) < 0.05F);
 }
 
+void test_bias_below_quantization()
+{
+    // 960 Hz, gyro counts of 70 mdps, ~1.2 counts of noise, and a bias that
+    // sits between counts. A median snaps to a count (up to 35 mdps off);
+    // the inlier mean must resolve it.
+    attitude::Config config{};
+    config.nominal_dt_us = 1042U;
+    config.late_dt_us = 1563U;
+    config.window_min_samples = 480U;
+    Estimator est(config);
+    Feeder f{est};
+    const float lsb = 0.070F * kDegToRad;
+    const float true_bias[3] = {0.535F * kDegToRad, -0.965F * kDegToRad, 0.0175F * kDegToRad};
+    for (int i = 0; i < 960 * 5; ++i) {
+        Vector3 w{};
+        float *c[3] = {&w.x, &w.y, &w.z};
+        for (int axis = 0; axis < 3; ++axis) {
+            const float raw = true_bias[axis] + gaussian(1.2F * lsb);
+            *c[axis] = std::round(raw / lsb) * lsb;
+        }
+        f.run(w, kUpright, FlightPhase::PadIdle, 1, 1042U);
+    }
+    CHECK(est.valid());
+    const Vector3 b = est.gyro_bias_rad_s();
+    const float err[3] = {b.x - true_bias[0], b.y - true_bias[1], b.z - true_bias[2]};
+    for (int axis = 0; axis < 3; ++axis) {
+        std::printf("quantized bias axis %d: error %.4f dps\n", axis, err[axis] / kDegToRad);
+        CHECK(std::fabs(err[axis]) < 0.005F * kDegToRad);
+    }
+}
+
+void test_gyro_saturation()
+{
+    const float sat = 2100.0F * kDegToRad;  // beyond the 1950 dps threshold
+    // One saturated sample (an interference spike) does not stop tracking.
+    {
+        Estimator est;
+        Feeder f{est};
+        initialized_upright(est, f);
+        f.run(Vector3{0.0F, 0.1F, 0.0F}, kZero, FlightPhase::Coast, 50);
+        f.run(Vector3{sat, 0.0F, 0.0F}, kZero, FlightPhase::Coast, 1);
+        f.run(Vector3{0.0F, 0.1F, 0.0F}, kZero, FlightPhase::Coast, 50);
+        CHECK(est.valid());
+        CHECK(!est.lost());
+    }
+    // Two in a row in flight: lost for the rest of the flight.
+    {
+        Estimator est;
+        Feeder f{est};
+        initialized_upright(est, f);
+        f.run(Vector3{0.0F, 0.1F, 0.0F}, kZero, FlightPhase::Descent, 50);
+        const std::uint32_t steps = est.steps();
+        f.run(Vector3{0.0F, -sat, 0.0F}, kZero, FlightPhase::Descent, 1);
+        CHECK(!est.lost());
+        f.run(Vector3{0.0F, -sat, 0.0F}, kZero, FlightPhase::Descent, 1);
+        CHECK(f.last.lost_now);
+        CHECK(est.lost());
+        CHECK(!est.valid());
+        CHECK(is_zero(est.quaternion()));
+        CHECK(est.saturation_events() == 1U);
+        // Quiet gyro afterwards (and Landed) does not bring it back.
+        f.run(kZero, kUpright, FlightPhase::Descent, 500);
+        f.run(kZero, kUpright, FlightPhase::Landed, 500);
+        CHECK(est.lost());
+        CHECK(is_zero(est.quaternion()));
+        CHECK(est.steps() <= steps + 2U);
+        // Back in Pad Idle: a stationary window re-initializes.
+        f.run(kZero, kUpright, FlightPhase::PadIdle, 150);
+        CHECK(!est.lost());
+        CHECK(est.valid());
+    }
+    // Saturation on the pad is left to the stationary windows.
+    {
+        Estimator est;
+        Feeder f{est};
+        initialized_upright(est, f);
+        f.run(Vector3{0.0F, 0.0F, sat}, kUpright, FlightPhase::PadIdle, 10);
+        CHECK(!est.lost());
+    }
+}
+
 void test_helpers()
 {
     for (const float t : {1e-6F, 5e-4F, 9.99e-4F, 1.001e-3F, 0.01F}) {
@@ -575,6 +656,8 @@ int main()
     test_pad_tilt_correction();
     test_pure_integration_in_flight();
     test_landed_hold();
+    test_bias_below_quantization();
+    test_gyro_saturation();
     test_helpers();
     test_bench_interference();
     if (failures != 0) {

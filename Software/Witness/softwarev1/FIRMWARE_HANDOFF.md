@@ -319,6 +319,11 @@ a linear Kalman filter with a constant-acceleration kinematic model:
   qualification before Boost is kept. In Landed, a zero-velocity
   pseudo-measurement stops drift.
 - **HITL:** the filter resets on every real/HITL source change.
+- **After gyro saturation** (attitude lost, see "Attitude estimator"): the
+  accelerometer can no longer be rotated into ENU, so the filter predicts with
+  zero acceleration and 10 m/s^2 of process noise (`predict_without_imu`).
+  The barometer and GPS carry the estimate. The 10 s line then ends with `IMU
+  ignored (attitude lost)`.
 - **Outputs:** position and velocity in `0x02` and `0xE0` (float32, ENU m and
   m/s), and a 10 s log line: `position: ENU E N U m, velocity ..., Mach M,
   alt MSL A m; baro U used/G gated/R rejected, sigma S m; GPS U used/R
@@ -394,7 +399,7 @@ in-flight attitude with the radio transmitting.
 
 | Phase | Behaviour |
 |---|---|
-| Pad Idle | Window membership comes from the accelerometer: every sample \|a\| in 0.95..1.05 g (any other sample, or a dt gap, restarts the window). A window completes after 1 s (at least 50 samples) and is **accepted** when: RMS of the per-axis accel standard deviations <= 0.02 g; per axis robust gyro sigma (1.4826 x MAD) <= 10 dps; at most 40% of samples have any axis more than 10 dps from that axis's median; and the per-axis median vector is <= 5 dps. The bias is the per-axis median. The first accepted window initializes the attitude (shortest arc from the mean accel). Later accepted windows set the bias, **restore the attitude to its value at the window start** (the board did not rotate, so gyro noise integrated over the window is discarded) and apply a tilt correction toward the window's mean accel (fraction window/2 s, about a horizontal axis, so heading is not changed). Every step is gyro propagated (median-filtered, bias-corrected), so non-stationary samples, including the >10 g, 300 ms launch-detection window, are kept and the attitude at the Boost transition already includes the motion since ignition. |
+| Pad Idle | Window membership comes from the accelerometer: every sample \|a\| in 0.95..1.05 g (any other sample, or a dt gap, restarts the window). A window completes after 1 s (at least 50 samples) and is **accepted** when: RMS of the per-axis accel standard deviations <= 0.02 g; per axis robust gyro sigma (1.4826 x MAD) <= 10 dps; at most 40% of samples have any axis more than 10 dps from that axis's median; and the per-axis median vector is <= 5 dps. The bias is the per-axis median refined by the mean of the samples within 3 robust sigmas of it, with the refinement clamped to one 70 mdps quantization step (`gyro_quantum_rad_s`). A median of quantized counts snaps to whole counts: with about 1.2 counts of noise it left up to 35 mdps of bias, which drifted a 300 s descent about 10 deg in HITL. The mean resolves below a count, and the clamp stops dense interference from pulling it further than one step. The first accepted window initializes the attitude (shortest arc from the mean accel). Later accepted windows set the bias, **restore the attitude to its value at the window start** (the board did not rotate, so gyro noise integrated over the window is discarded) and apply a tilt correction toward the window's mean accel (fraction window/2 s, about a horizontal axis, so heading is not changed). Every step is gyro propagated (median-filtered, bias-corrected), so non-stationary samples, including the >10 g, 300 ms launch-detection window, are kept and the attitude at the Boost transition already includes the motion since ignition. |
 | Boost, Coast, Descent | Pure median-filtered, bias-corrected gyro integration; no accelerometer use. |
 | Landed | Integration stops and the attitude is held ("attitude after flight"); logged once on entry. Re-entering Pad Idle by command resumes pad behaviour. |
 
@@ -487,8 +492,23 @@ pass only the newest is used. The integrated time therefore tracks Witness
 wall-clock time, which equals simulation time only if the host streams in real
 time. Add the 20 ms median lag when comparing against a truth trajectory.
 
+Gyro saturation (2026-11-09): if any raw gyro axis reads at or above
+1950 dps (the full scale is +/-2000) for 2 consecutive samples in Boost, Coast
+or Descent, as a parachute deployment can cause, the true rate is unknown and
+the attitude cannot be recovered.
+- The estimator stops integrating and `valid()` becomes false, so `0x02` and
+  `0xE0` report an all-zero quaternion.
+- `lost()` stays set for the rest of the flight, including Landed.
+- Only a new stationary window after returning to Pad Idle re-initializes it.
+- One saturated sample (an interference spike) does not trigger it.
+- The position filter then ignores the IMU.
+- Log line (deferred, tag `sensors`): `gyro saturated (|rate| >= 1950 dps on an
+  axis for 2 samples): attitude tracking stopped for this flight; the position
+  filter now ignores the IMU`. The 10 s attitude line shows `lost (gyro
+  saturated)`.
+
 Limitations: no magnetometer (heading is relative to the initialization only);
-gyro saturates at +/-2000 dps (35 rad/s), beyond which attitude is wrong; no
+gyro saturation ends attitude tracking for the flight (above); no
 coning compensation or gyro scale/
 misalignment calibration; the bias is assumed constant in flight; slow pad
 rotation below 5 dps about the gravity vector (invisible to the accelerometer)
@@ -527,9 +547,9 @@ Gaussian noise and a 0.4/-0.3/0.6 dps bias, at 15% ("radio off") and 90%
 
 | Case | Init | Bias error | Pad 60 s drift, final / max | Coast 10 s drift (pure integration) |
 |---|---|---|---|---|
-| radio off, median 5 | 1.01 s | 0.02-0.04 dps | <= 0.04 / 0.54-0.78 deg | 1.4-3.0 deg |
+| radio off, median 5 | 1.01 s | 0.012-0.029 dps (median alone: 0.02-0.04) | <= 0.04 / 0.51-0.79 deg | 1.4-2.9 deg |
 | radio off, no filter | 1.01 s | same | <= 0.02 / 2.8-3.5 deg | 6.8-14.7 deg |
-| radio on, median 5 | 1.01 s | 0.07-0.13 dps | <= 0.07 / 1.37-1.41 deg | 11.1-12.0 deg |
+| radio on, median 5 | 1.01 s | 0.065-0.19 dps (median alone: 0.07-0.13) | <= 0.07 / 1.44 deg | 10.4-11.7 deg |
 | radio on, no filter | 1.01 s | same | <= 0.01 / 7.1-7.2 deg | 56-58 deg |
 
 The pad final drift is small with or without the filter because each accepted
@@ -840,6 +860,23 @@ a spinlock and the USB task feeds it.
   Bytes consumed as frames are **not echoed** (saving ~4.7 KB/s at 100 Hz) and
   never reach `CommandBridge`; `TX 0C ...` is rejected. HITL `0x05` commands are
   still bridged to Iris and the immediate radio queue like other USB commands.
+- **960 Hz IMU (`0x0E`, 2026-11-09)**: 150-byte frames, each carrying a u32
+  first-sample index and 8 consecutive 960 Hz samples (int16 low-g, high-g,
+  gyro xyz, native counts). They're framed like `0x0C`; 0x0E is used because
+  0x0D is CR, which typed text commands contain. `Sensors::submit_hitl_imu_batch`
+  queues them under the HITL spinlock (256 samples). The sensor task drains
+  them into the same per-sample path as real FIFO samples
+  (`process_imu_batch(true)`: filtered accel, attitude, position predict, NAND
+  IMU log with the HITL flag), with calibration bypassed.
+  - Sample times come from the index (1/960 s apart), re-anchored if the index
+    goes backwards or jumps by more than 1 s.
+  - While `0x0E` frames arrive (any within 250 ms), the IMU fields of `0x0C`
+    are ignored. `0x0C` still supplies barometer, GPS, temperature and battery
+    at 100 Hz.
+  - Hosts that send only `0x0C` work as before.
+  - The noise, vibration and filtering are synthesized on the desktop
+    (`Software/HITL/imu_synth.py`); Witness receives only the 960 Hz
+    readings.
 - **Log lines** (tag `hitl` unless noted): `HITL mode entered from USB: ...`
   (W), `HITL enter rejected: received from radio; ...` (W),
   `HITL enter rejected: flight state is <state>; HITL requires pad idle` (W),

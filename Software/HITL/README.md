@@ -320,6 +320,128 @@ GUI plots are decimated to about 1500 points per series.
 - Heading is only compared relative to the offset locked at Boost.
 - Pressure outside the MS5607 range is sent but is not physical.
 
+## 960 Hz IMU synthesis
+
+CSV runs synthesize the IMU data Witness would really see, on the desktop
+(`imu_synth.py`; needs `pip install numpy scipy soundfile`), and send it as
+960 Hz `0x0E` frames. Witness runs its filtered acceleration, attitude,
+position filter and IMU log on these, at the real rate. The 100 Hz `0x0C`
+frames still carry the barometer, GPS, temperature and battery.
+
+Per channel, at the sensor's internal 7.68 kHz:
+
+1. The 100 Hz truth (body specific force and rate) is linearly interpolated.
+2. **Vibration** is added to the accelerometers only, from launch.
+   `vibration/vibration_flight_thrust.ogg` goes on body x. The lateral
+   recording goes on y, and the same recording delayed 0.137 s goes on z.
+   These are 48 kHz recordings scaled by 150.67 g full scale
+   (`vibration/vibration_audio.txt`), anti-alias resampled to 7.68 kHz. They
+   cover launch to apogee (89 s).
+3. **Datasheet worst-case errors** (LSM6DSV320X DS14623 Table 3) are applied
+   with a random sign per axis, from the seed:
+   - zero-rate level ±1 dps;
+   - low-g zero-g ±12 mg;
+   - high-g zero-g ±1.5 g;
+   - gyro sensitivity ±0.3%.
+
+   No accelerometer sensitivity tolerance is given, so none is applied.
+4. **White noise** at the datasheet densities is added: gyro 3.8 mdps/√Hz,
+   low-g 60 µg/√Hz, high-g 1000 µg/√Hz, which is 0.235 dps, 3.7 mg and 62 mg
+   RMS at 7.68 kHz.
+5. The value is **clipped at full scale** (±16 g, ±320 g, ±2000 dps), because
+   the ADC clips before the digital filter.
+6. A **2nd-order low-pass** at the bandwidths Witness configures is applied:
+   gyro LPF1+LPF2 407 Hz, low-g LPF2 384 Hz, high-g ~400 Hz. These are
+   Butterworth approximations; ST doesn't publish the filter structure.
+7. **Every 8th sample is kept** (960 Hz, the FIFO batch rate) and quantized to
+   int16 counts.
+
+Parameters (`--set KEY=VALUE`):
+
+| Parameter | Default | Effect |
+|---|---|---|
+| `imu_synthesis` | `true` | `false` falls back to 100 Hz IMU values in `0x0C` |
+| `vibration_scale` | 1.0 | 0 disables the vibration |
+| `imu_noise_scale` | 1.0 | 1 is the datasheet noise density |
+| `imu_offset_scale` | 1.0 | 1 is the datasheet worst-case zero levels |
+
+Synthesis takes about 1.5 s for the 436 s bundled run (418,800 samples). Pad
+noise at 960 Hz comes out as low-g 1.22 mg, gyro 0.083 dps and high-g 21 mg
+sd. In boost the low-g x saturates and the high-g x spans about −53 to +70 g.
+
+**Parachute deployment event** (default off):
+- `deployment_spin_dps` adds a pitch rate (above 2000 dps it saturates the
+  gyro) from `deployment_delay_s` (1 s) after the attitude hold starts at
+  apogee, for `deployment_duration_s` (0.3 s).
+- `deployment_shock_g` adds an axial shock over the same window.
+- The truth attitude does not follow the tumble. Witness is expected to report
+  its attitude as lost (all-zero quaternion) and carry position on the
+  barometer and GPS.
+
+## Run outputs and FC logs
+
+Each run directory (`runs/<timestamp>/`) holds:
+
+| File | Contents |
+|---|---|
+| `params.json`, `sent.csv`, `received.jsonl`, `log.txt`, `nmea.txt`, `transitions.csv`, `attitude.csv`, `summary.json` | As before |
+| `truth.csv` | Expected values per 100 Hz tick: phase, expected Witness state, truth position and velocity (ENU from the pad), altitude MSL, body specific force and rate, quaternion, tilt |
+| `comparison.csv` | Each Witness `0xE0` packet (10 Hz, while HITL is active) with the truth at the same sim time: observed vs expected position, velocity, altitude, tilt, flight state, and the errors (ENU, horizontal, speed, attitude) |
+| `imu960.npz` | The exact 960 Hz counts sent in `0x0E` frames, with time and scales |
+| `fc_logs/` | The Witness flash files of the run's session (I, S, P, U and the text log), converted to CSV |
+| `comparison_flash.csv` | The 50 Hz state packets from the flash `P*.BIN` matched to truth. Uptime is mapped to sim time through the `0xE0` packets. |
+
+`summary.json` gains `comparison` and `comparison_flash`, which hold the RMS
+and max of the up, horizontal, speed and attitude errors per expected phase.
+The headless run prints them. To rebuild the comparison files of a saved run:
+`python hitl_outputs.py runs/<timestamp>`.
+
+**FC log fetch** (hardware runs; on by default):
+1. After the run, the tool sends the export command `05 68 68` over its own
+   connection, then closes it.
+2. It reads the Witness USB disk on the bench Pi over SSH, using Horizon's
+   `witness_download.py` (see the Horizon README for the one-time udev setup).
+3. It downloads the newest session's files into `fc_logs/`.
+4. It power-cycles the Pi's USB hub 2, so Witness reboots into normal logging.
+   **This also resets Iris and Aperture.**
+
+SSH settings are `pi_user`, `pi_key` and `pi_host` in `hitl_settings.json`
+(untracked), or the `WITNESS_PI_USER` / `_KEY` / `_HOST` environment
+variables. Set `fetch_fc_logs: false`, or pass `--no-fetch-logs`, to skip the
+fetch, and `fetch_restart_hub: false` to skip the power cycle.
+
+Bench results, 2026-11-09 (`a3241569-trajectory.csv`, worst-case noise,
+offsets and vibration):
+
+| Run | Transitions | Up RMS, flash 50 Hz (boost / coast / descent) | Horizontal RMS, descent | Final attitude error |
+|---|---|---|---|---|
+| Nominal, before the bias fix (`runs/20261109-120942`) | all within 0.02 s | 3.8 / 4.8 / 2.1 m | 2.2 m | 10.6 deg (FAIL) |
+| Nominal, with the bias fix (`runs/20261109-123242`) | all within 0.02 s | 3.8 / 4.8 / 2.1 m | 1.9 m | 2.2 deg (PASS) |
+| Deployment, 2500 dps + 20 g (`runs/20261109-121755`) | all within 0.02 s | 4.5 / 7.7 / 3.3 m | 3.3 m | attitude lost at deployment (sim 112.57 s), as designed |
+
+Notes on these runs:
+- All 418,800 samples (52,350 `0x0E` frames) were sent, and Witness's
+  attitude ran at 960 Hz.
+- In the nominal runs Witness never logged a gyro saturation.
+- In the deployment run it logged `gyro saturated ... attitude tracking
+  stopped`, and from then on `IMU ignored (attitude lost)`, with position
+  carried by the barometer and GPS.
+- With the bias fix, the tilt error RMS is 0.96 deg on the pad, 1.05 deg in
+  coast, 1.67 deg in descent and 2.15 deg landed (before the fix: 0.94 / 1.25 /
+  6.92 / 10.56). About 1 deg of that is the worst-case 12 mg accelerometer
+  offset, visible already on the pad.
+- The live `0xE0` comparison (`comparison.csv`) shows larger up errors in boost
+  and coast than the flash comparison, because it is matched by receive time
+  and so includes the link latency. `comparison_flash.csv` is matched by
+  Witness uptime and is the better measure.
+
+The bias fix (2026-11-09): the pad gyro bias used to be the per-axis median of
+counts quantized at 0.07 dps. With about 1.2 counts of noise, that left up to
+about 0.035 dps of residual bias, which drifted the nominal run 10.6 deg by
+landing. It is now the median refined by the mean of the samples within 3
+robust sigmas of it, clamped to one quantization step (see the firmware
+handoff, "Attitude estimator").
+
 ## Safety rules
 
 - **Run HITL on the pad only.** Witness accepts HITL ENTER only over USB and
@@ -338,7 +460,11 @@ GUI plots are decimated to about 1500 points per series.
   - HITL ENTER `0x4849`;
   - HITL EXIT `0x4858`;
   - Witness debug start `0x00E0`, which the tool sends once per CSV run;
-  - 0x0C sensor frames.
+  - 0x0C sensor frames and 0x0E IMU batch frames.
+
+  The one exception is the end-of-run FC log fetch. It sends the export
+  command `05 68 68` directly, after the run, and then power-cycles Pi USB
+  hub 2 (`--no-fetch-logs` disables it).
 
   `encode_command` refuses every other value, including mass storage
   `0x6868`, log erase `0x6869` and flight-state commands `0x7300` to
@@ -354,7 +480,12 @@ rest of the wire protocol is in `Software/Horizon/GROUND_STATION_PROTOCOL.md`.
   EOF is checked at the last byte only. On a mismatch, the decoder resyncs one
   byte at a time.
 - **Frame lengths:** 0x01 = 23, 0x02 = 65, 0x03 = 19, 0x05 = 10, 0xE0 = 103,
-  0xE1 = 14, 0xFF = 8. The 0x0C echo is 47 and is ignored.
+  0xE1 = 14, 0xFF = 8. The 0x0C echo (47) and the 0x0E echo (150, fake only)
+  are ignored.
+- **0x0E HITL IMU batch:** 150 bytes. It holds a u32 first-sample index, then
+  8 samples of int16 low-g xyz, high-g xyz and gyro xyz (counts as in 0x0C),
+  then EOF. The samples are 960 Hz. Frames are sent by sim time, before each
+  tick's 0x0C.
 - **What else is on the stream:** ESP-IDF log lines (ANSI colour codes are
   stripped), raw NMEA, and an echo of every byte the host sends.
 - **Status:**
