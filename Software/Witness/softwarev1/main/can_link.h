@@ -5,6 +5,7 @@
 #include "freertos/queue.h"
 #include "freertos/task.h"
 
+class FlashLogger;
 class SpiDataForwarder;
 class WitnessStatus;
 
@@ -15,6 +16,8 @@ public:
         : forwarder_(forwarder), status_(status) {}
     esp_err_t start();
     esp_err_t send_command(const std::uint8_t *data, std::size_t length);
+    // NAND packet stream: every reassembled CAN packet in and out.
+    void set_log_sink(FlashLogger *logger) { logger_ = logger; }
 
 private:
     struct Command { std::uint8_t data[10]; };
@@ -27,6 +30,7 @@ private:
     SpiDataForwarder &forwarder_;
     WitnessStatus &status_;
     QueueHandle_t commands_ = nullptr;
+    FlashLogger *logger_ = nullptr;
     TaskHandle_t task_ = nullptr;
     intercomm::Reassembler receiver_{intercomm::kIrisToWitnessId};
     std::uint8_t sequence_ = 0;

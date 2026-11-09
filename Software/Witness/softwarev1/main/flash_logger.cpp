@@ -76,11 +76,12 @@ esp_err_t FlashLogger::start() {
     binary_record_queue_ =
         xQueueCreate(kRecordQueueDepth, sizeof(BinaryRecord));
     imu_record_queue_ = xQueueCreate(kImuQueueDepth, sizeof(ImuRecord));
+    packet_queue_ = xQueueCreate(kPacketQueueDepth, sizeof(PacketRecord));
     uart_capture_mutex_ = xSemaphoreCreateMutex();
     uart_queue_ = xStreamBufferCreate(kUartReceiveBufferSize, 1);
     frozen_semaphore_ = xSemaphoreCreateBinary();
     erase_semaphore_ = xSemaphoreCreateBinary();
-    if (!text_queue_ || !binary_record_queue_ || !imu_record_queue_ ||
+    if (!text_queue_ || !binary_record_queue_ || !imu_record_queue_ || !packet_queue_ ||
         !uart_capture_mutex_ || !uart_queue_ || !frozen_semaphore_ ||
         !erase_semaphore_)
         return ESP_ERR_NO_MEM;
@@ -122,6 +123,55 @@ esp_err_t FlashLogger::log_external_bytes(
     return result;
 }
 
+esp_err_t FlashLogger::log_packet(const std::uint8_t source,
+                                  const std::uint8_t *frame, const std::size_t length)
+{
+    if (!frame || length == 0 || length > kMaxPacketFrame) return ESP_ERR_INVALID_ARG;
+    if (!packet_queue_ || !capture_packets_.load()) return ESP_ERR_INVALID_STATE;
+    PacketRecord record{};
+    write_u32_be(record.data, static_cast<std::uint32_t>(esp_timer_get_time()));
+    record.data[4] = source;
+    record.data[5] = static_cast<std::uint8_t>(length);
+    std::memcpy(record.data + kPacketRecordHeader, frame, length);
+    record.length = static_cast<std::uint8_t>(kPacketRecordHeader + length);
+    if (xQueueSend(packet_queue_, &record, 0) != pdTRUE) {
+        packets_dropped_.fetch_add(1);
+        return ESP_ERR_NO_MEM;
+    }
+    return ESP_OK;
+}
+
+esp_err_t FlashLogger::drain_packet_records()
+{
+    PacketRecord record{};
+    while (xQueueReceive(packet_queue_, &record, 0) == pdTRUE) {
+        if (packet_buffer_used_ + record.length > sizeof(packet_buffer_)) {
+            const esp_err_t r = append_bytes(packet_writer_, packet_buffer_, packet_buffer_used_);
+            if (r != ESP_OK) return r;
+            packet_buffer_used_ = 0;
+        }
+        std::memcpy(packet_buffer_ + packet_buffer_used_, record.data, record.length);
+        packet_buffer_used_ += record.length;
+    }
+    return ESP_OK;
+}
+
+esp_err_t FlashLogger::flush_packets()
+{
+    if (!packet_buffer_used_) return ESP_OK;
+    const esp_err_t r = append_bytes(packet_writer_, packet_buffer_, packet_buffer_used_);
+    if (r == ESP_OK) packet_buffer_used_ = 0;
+    return r;
+}
+
+void FlashLogger::protect_rings_from_launch()
+{
+    for (Writer *writer : {&text_writer_, &uart_writer_, &packet_writer_}) {
+        writer->launch_protected = true;
+        writer->pages_since_launch = 0;
+    }
+}
+
 esp_err_t FlashLogger::log_imu_record(ImuRecord record)
 {
     if (!imu_record_queue_ || !capture_imu_records_.load()) return ESP_ERR_INVALID_STATE;
@@ -141,14 +191,22 @@ void FlashLogger::set_uart_capture_enabled(const bool enabled)
 }
 
 FlashLogger::FileLayout FlashLogger::file_layout(const std::uint8_t slot,
-                                                 const std::uint8_t type)
+                                                 const std::uint8_t type,
+                                                 const std::uint8_t version)
 {
     const std::uint32_t base = slot_base(slot) + kHeaderBlocks;
+    const std::uint32_t after_text = base + kImuBlocks + kBinaryBlocks + kTextBlocks;
     switch (type) {
         case kImuType: return {base, kImuBlocks};
         case kBinaryType: return {base + kImuBlocks, kBinaryBlocks};
         case kTextType: return {base + kImuBlocks + kBinaryBlocks, kTextBlocks};
-        default: return {base + kImuBlocks + kBinaryBlocks + kTextBlocks, kUartBlocks};
+        case kPacketType:
+            return version == kLegacyStoreVersion ? FileLayout{after_text, 0}
+                                                  : FileLayout{after_text, kPacketBlocks};
+        default:
+            return version == kLegacyStoreVersion
+                       ? FileLayout{after_text, kV3UartBlocks}
+                       : FileLayout{after_text + kPacketBlocks, kUartBlocks};
     }
 }
 
@@ -217,8 +275,10 @@ esp_err_t FlashLogger::read_slot_info(const std::uint8_t slot, SlotInfo &info)
     std::uint8_t header[9]{};
     esp_err_t r = flash_.read(first_page, 0, header, sizeof(header));
     if (r != ESP_OK) return r;
-    if (read_u32_be(header) != kSessionMagic || header[8] != kStoreVersion) return ESP_OK;
+    if (read_u32_be(header) != kSessionMagic ||
+        (header[8] != kStoreVersion && header[8] != kLegacyStoreVersion)) return ESP_OK;
     info.valid = true;
+    info.version = header[8];
     info.generation = read_u32_be(header + 4);
     std::uint8_t marker[8]{};
     r = flash_.read(first_page + kFlightMarkerPage, 0, marker, sizeof(marker));
@@ -266,16 +326,21 @@ esp_err_t FlashLogger::scan_sessions(bool build_exports) {
     if (!build_exports) return ESP_OK;
     for (std::uint8_t slot = 0; slot < kSlotCount; ++slot) {
         if (!info[slot].valid) continue;
-        for (std::uint8_t type : {kImuType, kBinaryType, kTextType, kUart1Type}) {
+        for (std::uint8_t type : {kImuType, kBinaryType, kTextType, kPacketType, kUart1Type}) {
+            if (type == kPacketType && info[slot].version == kLegacyStoreVersion) continue;
             if (export_file_count_ == kMaximumExportFiles) return ESP_ERR_NO_MEM;
             ExportFile &file = export_files_[export_file_count_];
-            const char prefix = type == kImuType ? 'I' : type == kUart1Type ? 'U' : 'S';
+            const char prefix = type == kImuType     ? 'I'
+                                : type == kUart1Type  ? 'U'
+                                : type == kPacketType ? 'P'
+                                                      : 'S';
             std::snprintf(file.name, sizeof(file.name), "%c%07lX.%s", prefix,
                           static_cast<unsigned long>(info[slot].generation),
                           type == kTextType ? "TXT" : "BIN");
             file.generation = info[slot].generation; file.slot = slot; file.type = type;
-            file.store_version = kStoreVersion;
-            const esp_err_t r = scan_file(slot, type, type == kUart1Type,
+            file.store_version = info[slot].version;
+            const esp_err_t r = scan_file(slot, type, info[slot].version, is_ring_type(type),
+                                          info[slot].generation, file.tagged,
                                           file.size, file.start_page);
             if (r != ESP_OK) return r;
             ++export_file_count_;
@@ -287,7 +352,7 @@ esp_err_t FlashLogger::scan_sessions(bool build_exports) {
 esp_err_t FlashLogger::create_session() {
     const std::uint32_t base = slot_base(current_slot_);
     esp_err_t r = flash_.erase_block(base);  // header and flight marker
-    for (std::uint8_t type : {kImuType, kBinaryType, kTextType, kUart1Type}) {
+    for (std::uint8_t type : {kImuType, kBinaryType, kTextType, kPacketType, kUart1Type}) {
         if (r == ESP_OK) r = flash_.erase_block(file_layout(current_slot_, type).first_block);
     }
     if (r != ESP_OK) return r;
@@ -301,12 +366,15 @@ esp_err_t FlashLogger::create_session() {
         Writer w{};
         w.type = type; w.first_block = layout.first_block; w.block_count = layout.block_count;
         w.page_index = 0; w.last_erased_block = layout.first_block; w.ring = ring;
+        w.sequence = sequence_base(current_generation_);
         return w;
     };
     imu_writer_ = writer(kImuType, false);
     binary_writer_ = writer(kBinaryType, false);
-    text_writer_ = writer(kTextType, false);
-    uart_writer_ = writer(kUart1Type, true);
+    text_writer_ = writer(kTextType, is_ring_type(kTextType));
+    uart_writer_ = writer(kUart1Type, is_ring_type(kUart1Type));
+    packet_writer_ = writer(kPacketType, is_ring_type(kPacketType));
+    packet_buffer_used_ = 0;
     flight_marker_written_ = false;
     flight_marker_pending_.store(false);
     return ESP_OK;
@@ -321,6 +389,7 @@ esp_err_t FlashLogger::write_flight_marker()
     const esp_err_t r = flash_.program(page, 0, marker, sizeof(marker));
     if (r == ESP_OK) {
         flight_marker_written_ = true;
+        protect_rings_from_launch();
         ESP_LOGI(kLogTag, "flight marked in slot %c; this session is kept until the next flight",
                  'A' + current_slot_);
     }
@@ -381,13 +450,22 @@ esp_err_t FlashLogger::append_bytes(Writer &writer, const std::uint8_t *data, st
         return ESP_OK;
     }
     while (length) {
+        if (writer.ring && writer.launch_protected &&
+            writer.pages_since_launch >= capacity) {
+            // Everything since launch fills the ring; keep it all.
+            writer.full = true;
+            ESP_LOGW(kLogTag, "log type %u: ring full since launch; stopped to keep the flight",
+                     writer.type);
+            return ESP_OK;
+        }
         if (writer.page_index >= capacity) {
             if (!writer.ring) return ESP_ERR_NO_MEM;
             // Circular stream: overwrite from the start, oldest block first.
             writer.page_index = 0;
             if (!writer.wrapped) {
                 writer.wrapped = true;
-                ESP_LOGW(kLogTag, "GPS log ring wrapped; oldest GPS data is now overwritten");
+                ESP_LOGW(kLogTag, "%s log ring wrapped; its oldest data is now overwritten",
+                         writer.type == kTextType ? "text" : "GPS");
             }
         }
         const std::uint32_t block = writer.first_block + writer.page_index / W25n01kv::kPagesPerBlock;
@@ -405,6 +483,7 @@ esp_err_t FlashLogger::append_bytes(Writer &writer, const std::uint8_t *data, st
         esp_err_t r = flash_.program(absolute_page, 0, page, sizeof(page));
         if (r != ESP_OK) return r;
         ++writer.page_index; data += chunk; length -= chunk;
+        if (writer.launch_protected) ++writer.pages_since_launch;
     }
     return ESP_OK;
 }
@@ -554,33 +633,44 @@ esp_err_t FlashLogger::drain_uart_records(const bool flush)
 }
 
 esp_err_t FlashLogger::scan_file(const std::uint8_t slot, const std::uint8_t type,
-                                 const bool ring, std::uint32_t &size,
+                                 const std::uint8_t version,
+                                 const bool ring, const std::uint32_t generation,
+                                 bool &tagged, std::uint32_t &size,
                                  std::uint32_t &start_page)
 {
-    size = 0;
-    start_page = 0;
-    const auto layout = file_layout(slot, type);
+    const auto layout = file_layout(slot, type, version);
     const std::uint32_t capacity = layout.block_count * W25n01kv::kPagesPerBlock;
-    bool found = false;
-    std::uint32_t oldest_sequence = 0;
+    const std::uint32_t tag = sequence_tag(generation);
     std::uint8_t h[kPageHeaderSize]{};
-    for (std::uint32_t index = 0; index < capacity; ++index) {
-        esp_err_t r = flash_.read(layout.first_block * W25n01kv::kPagesPerBlock + index, 0, h, sizeof(h));
-        if (r != ESP_OK) return r;
-        const std::uint16_t n = read_u16_be(h + 6);
-        const bool valid = read_u32_be(h) == kPageMagic && h[4] == type &&
-                           h[5] == kStoreVersion && n <= kPagePayloadSize;
-        if (!valid) {
-            if (!ring) break;  // linear files end at the first unwritten page
-            continue;
+    // Pass 1 counts only this session's pages. A file with none of them was
+    // written before tagging (or is empty); pass 2 then reads it untagged, as
+    // before, so sessions recorded by older firmware stay exportable.
+    for (int pass = 0; pass < 2; ++pass) {
+        tagged = pass == 0;
+        size = 0;
+        start_page = 0;
+        bool found = false;
+        std::uint32_t oldest_sequence = 0;
+        for (std::uint32_t index = 0; index < capacity; ++index) {
+            esp_err_t r = flash_.read(layout.first_block * W25n01kv::kPagesPerBlock + index, 0, h, sizeof(h));
+            if (r != ESP_OK) return r;
+            const std::uint16_t n = read_u16_be(h + 6);
+            const std::uint32_t sequence = read_u32_be(h + 8);
+            const bool valid = read_u32_be(h) == kPageMagic && h[4] == type &&
+                               h[5] == version && n <= kPagePayloadSize &&
+                               (!tagged || (sequence >> kSequenceTagShift) == tag);
+            if (!valid) {
+                if (!ring) break;  // linear files end at the first page not theirs
+                continue;
+            }
+            size += n;
+            if (!found || static_cast<std::int32_t>(sequence - oldest_sequence) < 0) {
+                oldest_sequence = sequence;
+                start_page = index;
+                found = true;
+            }
         }
-        size += n;
-        const std::uint32_t sequence = read_u32_be(h + 8);
-        if (!found || static_cast<std::int32_t>(sequence - oldest_sequence) < 0) {
-            oldest_sequence = sequence;
-            start_page = index;
-            found = true;
-        }
+        if (found) break;
     }
     return ESP_OK;
 }
@@ -600,9 +690,9 @@ esp_err_t FlashLogger::load_export_page(
     const std::uint32_t logical_offset)
 {
     const ExportFile &file = export_files_[file_index];
-    const auto layout = file_layout(file.slot, file.type);
+    const auto layout = file_layout(file.slot, file.type, file.store_version);
     const std::uint32_t capacity = layout.block_count * W25n01kv::kPagesPerBlock;
-    const bool ring = file.type == kUart1Type;
+    const bool ring = is_ring_type(file.type);
     // A ring file is read oldest page first, wrapping, skipping the erased
     // pages around the write position.
     for (; step < capacity; ++step) {
@@ -615,7 +705,10 @@ esp_err_t FlashLogger::load_export_page(
         const bool valid = read_u32_be(export_read_page_) == kPageMagic &&
                            export_read_page_[4] == file.type &&
                            export_read_page_[5] == file.store_version &&
-                           payload_length <= kPagePayloadSize;
+                           payload_length <= kPagePayloadSize &&
+                           (!file.tagged ||
+                            (read_u32_be(export_read_page_ + 8) >> kSequenceTagShift) ==
+                                sequence_tag(file.generation));
         if (!valid) {
             if (!ring) return ESP_ERR_INVALID_RESPONSE;
             continue;
@@ -784,18 +877,21 @@ void FlashLogger::run() {
         capture_logs_.store(false); task_handle_ = nullptr; vTaskDelete(nullptr); return;
     }
     capture_imu_records_.store(true);
+    capture_packets_.store(true);
     witness_status_.set(IRIS_WITNESS_STATUS_FLASH_INIT_FAILED_MASK, false);
     witness_status_.set(IRIS_WITNESS_STATUS_FLASH_LOG_FAILED_MASK, false);
     ESP_LOGI(kLogTag,
              "session %lu in slot %c (store v%u); blocks: IMU %lu, sensors %lu, text %lu, "
-             "GPS ring %lu; flush interval %lu ms",
+             "packets %lu, GPS ring %lu; flush interval %lu ms",
              static_cast<unsigned long>(current_generation_), 'A' + current_slot_,
              kStoreVersion, static_cast<unsigned long>(kImuBlocks),
              static_cast<unsigned long>(kBinaryBlocks), static_cast<unsigned long>(kTextBlocks),
+             static_cast<unsigned long>(kPacketBlocks),
              static_cast<unsigned long>(kUartBlocks), static_cast<unsigned long>(kFlushIntervalMs));
     TickType_t next = xTaskGetTickCount();
     TickType_t last_flush = next;
     std::uint32_t reported_drops = 0;
+    std::uint32_t reported_packet_drops = 0;
     for (;;) {
         if (erase_requested_.exchange(false)) {
             set_uart_capture_enabled(false);
@@ -823,6 +919,7 @@ void FlashLogger::run() {
             set_uart_capture_enabled(false);
             capture_binary_records_.store(false);
             capture_imu_records_.store(false);
+            capture_packets_.store(false);
             // Drain once to release any producer waiting for queue space, wait
             // for the capture task to observe the stop flag, then drain again
             // so the exported file includes every record captured beforehand.
@@ -836,6 +933,8 @@ void FlashLogger::run() {
                 r = write_flight_marker();
             if (r == ESP_OK) r = flush_binary();
             if (r == ESP_OK) r = flush_imu();
+            if (r == ESP_OK) r = drain_packet_records();
+            if (r == ESP_OK) r = flush_packets();
             if (r == ESP_OK) r = flush_text();
             if (r == ESP_OK) r = drain_uart_records(true);
             if (r == ESP_OK) r = scan_sessions(true);
@@ -848,14 +947,22 @@ void FlashLogger::run() {
         if (r == ESP_OK) r = drain_imu_records();
         if (r == ESP_OK && flight_marker_pending_.load() && !flight_marker_written_)
             r = write_flight_marker();
+        if (r == ESP_OK) r = drain_packet_records();
         if (r == ESP_OK) r = drain_uart_records(false);
         const TickType_t now = xTaskGetTickCount();
         if (r == ESP_OK && now - last_flush >= pdMS_TO_TICKS(kFlushIntervalMs)) {
             r = flush_binary();
             if (r == ESP_OK) r = flush_imu();
+            if (r == ESP_OK) r = flush_packets();
             if (r == ESP_OK) r = flush_text();
             if (r == ESP_OK) r = drain_uart_records(true);
             last_flush = now;
+            const std::uint32_t packet_drops = packets_dropped_.load();
+            if (packet_drops != reported_packet_drops) {
+                ESP_LOGW(kLogTag, "packet log queue full: %lu packets dropped so far",
+                         static_cast<unsigned long>(packet_drops));
+                reported_packet_drops = packet_drops;
+            }
             const std::uint32_t drops = imu_records_dropped_.load();
             if (drops != reported_drops) {
                 ESP_LOGW(kLogTag, "IMU log queue full: %lu records dropped so far",
@@ -867,6 +974,7 @@ void FlashLogger::run() {
             set_uart_capture_enabled(false);
             capture_binary_records_.store(false);
             capture_imu_records_.store(false);
+            capture_packets_.store(false);
             witness_status_.set(IRIS_WITNESS_STATUS_FLASH_LOG_FAILED_MASK, true);
             ESP_LOGE(kLogTag, "flash logging stopped: %s", esp_err_to_name(r));
             capture_logs_.store(false); task_handle_ = nullptr; vTaskDelete(nullptr); return;

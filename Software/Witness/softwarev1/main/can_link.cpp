@@ -5,6 +5,7 @@
 #include "comms.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "flash_logger.h"
 #include "spi_data_forwarder.h"
 #include "witness_status.h"
 
@@ -55,6 +56,7 @@ void CanLink::send_packet(const std::uint8_t *data, const std::size_t length)
     if (pending_length_ != 0 || length > pending_.size()) return;
     std::memcpy(pending_.data(), data, length);
     pending_length_ = length;
+    if (logger_) (void)logger_->log_packet(FlashLogger::kPacketSourceCanTx, data, length);
     pending_fragment_ = 0;
     ++sequence_;
     pending_deadline_us_ = esp_timer_get_time() + 200000;
@@ -107,6 +109,8 @@ void CanLink::receive_packets()
         if (!receiver_.accept(fragment, esp_timer_get_time() / 1000U)) continue;
         const auto *data = receiver_.data();
         const auto length = receiver_.size();
+        // Everything that arrives, forwarded or not.
+        if (logger_) (void)logger_->log_packet(FlashLogger::kPacketSourceCanRx, data, length);
         const bool allowed =
             (data[0] == IRIS_PACKET_ID_CAMERA && length == IRIS_PACKET_CAMERA_FRAME_LENGTH) ||
             (data[0] == IRIS_PACKET_ID_IRIS_DEBUG && length == IRIS_PACKET_IRIS_DEBUG_FRAME_LENGTH) ||

@@ -6,6 +6,11 @@
 #include <cstring>
 
 #include "driver/usb_serial_jtag.h"
+#include "esp_log.h"
+
+namespace {
+constexpr const char *kLogTag = "data_forwarder";
+}  // namespace
 
 esp_err_t SpiDataForwarder::start()
 {
@@ -242,17 +247,36 @@ void SpiDataForwarder::forward_packet(const Packet &packet)
                        IRIS_PACKET_EOF_LENGTH;
     }
     std::size_t forwarded = 0;
+    if (!usb_serial_jtag_is_connected()) {
+        usb_stalled_ = true;
+    }
     while (forwarded < frame_length && output_enabled_.load()) {
         const int bytes_written = usb_serial_jtag_write_bytes(
             frame + forwarded,
             frame_length - forwarded,
-            pdMS_TO_TICKS(20));
+            usb_stalled_ ? 0 : pdMS_TO_TICKS(20));
 
         if (bytes_written > 0) {
             forwarded += static_cast<std::size_t>(bytes_written);
+            usb_stalled_ = false;
         } else {
-            taskYIELD();
+            // Nobody is draining USB: drop this packet (the receiver
+            // resynchronizes on the next frame) instead of retrying forever,
+            // which used to block the forwarder and fill its queue.
+            usb_stalled_ = true;
+            ++usb_packets_dropped_;
+            break;
         }
+    }
+
+    const TickType_t now = xTaskGetTickCount();
+    if (usb_packets_dropped_ != usb_drops_reported_ &&
+        now - usb_last_drop_report_ >= pdMS_TO_TICKS(10000)) {
+        ESP_LOGI(kLogTag, "USB output not drained (no host or no reader): "
+                 "%lu packets dropped so far",
+                 static_cast<unsigned long>(usb_packets_dropped_));
+        usb_drops_reported_ = usb_packets_dropped_;
+        usb_last_drop_report_ = now;
     }
 }
 

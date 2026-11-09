@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstdarg>
 #include <cstdio>
 #include <cstring>
 
@@ -273,6 +274,14 @@ esp_err_t Sensors::start()
         return result;
     }
 
+    deferred_log_queue_ = xQueueCreate(4, sizeof(DeferredLog));
+    if (deferred_log_queue_ == nullptr ||
+        xTaskCreatePinnedToCore(deferred_log_task_entry, "sensor_log", 3072, this, 1,
+                                nullptr, task_cores::kSystem) != pdPASS) {
+        release_resources();
+        return ESP_ERR_NO_MEM;
+    }
+
     if (xTaskCreatePinnedToCore(
             task_entry,
             "sensors",
@@ -416,6 +425,11 @@ bool Sensors::service_hitl(const std::uint32_t now_ms, bool &new_sample)
         hitl_samples_since_summary_ = 0;
         hitl_last_summary_ms_ = now_ms;
         reset_sensor_sample();
+        filtered_accel_.reset();
+        hitl_filtered_accel_.reset();
+        position_filter_.reset();
+        position_last_predict_us_ = 0;
+        position_baro_pending_ = false;
         // Never carry an attitude across a real/simulated source change.
         attitude_.reset();
         ESP_LOGI(kLogTag, "attitude reset: sensor source is now %s",
@@ -457,6 +471,10 @@ void Sensors::apply_hitl_sample()
         working_sample_.high_g_accel_mg[axis] = input.high_g_accel_mg[axis];
         working_sample_.gyro_mdps[axis] = input.gyro_mdps[axis];
     }
+    hitl_filtered_accel_.step(working_sample_.low_g_accel_mg,
+                              working_sample_.high_g_accel_mg,
+                              working_sample_.filtered_accel_mg);
+    working_sample_.high_g_accel_active = hitl_filtered_accel_.high_g_active();
     working_sample_.temperature_raw = input.temperature_raw;
     working_sample_.temperature_celsius = input.temperature_celsius;
     working_sample_.pressure_centi_mbar =
@@ -999,8 +1017,8 @@ esp_err_t Sensors::queue_sensor_packet()
     write_u32_be(
         &payload[IRIS_PACKET_SENSORS_UPTIME_OFFSET], uptime_milliseconds);
 
-    // The estimator does not provide filtered acceleration yet, so the packet's
-    // filtered-acceleration slots carry the latest (calibrated) low-g samples.
+    // Filtered acceleration: calibrated low-g, or high-g while the low-g is
+    // near saturation, through the 100 Hz low-pass (accel_filter.h).
     std::int16_t gyro_counts[3]{};
     std::int16_t low_counts[3]{};
     std::int16_t high_counts[3]{};
@@ -1010,7 +1028,7 @@ esp_err_t Sensors::queue_sensor_packet()
             &payload[IRIS_PACKET_SENSORS_ACCEL_OFFSET +
                      axis * IRIS_PACKET_SENSORS_ACCEL_COMPONENT_LENGTH],
             encode_filtered_acceleration(
-                working_sample_.low_g_accel_mg[axis]));
+                working_sample_.filtered_accel_mg[axis]));
         write_i16_be(
             &payload[IRIS_PACKET_SENSORS_GYRO_OFFSET +
                      axis * IRIS_PACKET_SENSORS_GYRO_COMPONENT_LENGTH],
@@ -1024,6 +1042,25 @@ esp_err_t Sensors::queue_sensor_packet()
 esp_err_t Sensors::queue_state_packet()
 {
     std::uint8_t payload[IRIS_PACKET_STATE_DATA_LENGTH]{};
+    build_state_payload(payload);
+    return data_forwarder_.queue_packet(
+        IRIS_PACKET_ID_STATE, payload, sizeof(payload));
+}
+
+void Sensors::log_state_packet()
+{
+    if (imu_log_sink_ == nullptr) return;
+    std::uint8_t frame[IRIS_PACKET_ID_LENGTH + IRIS_PACKET_STATE_DATA_LENGTH +
+                       IRIS_PACKET_EOF_LENGTH]{};
+    frame[0] = IRIS_PACKET_ID_STATE;
+    build_state_payload(frame + IRIS_PACKET_ID_LENGTH);
+    frame[sizeof(frame) - 1] = IRIS_PACKET_EOF_VALUE;
+    (void)imu_log_sink_->log_packet(FlashLogger::kPacketSourceState, frame, sizeof(frame));
+}
+
+void Sensors::build_state_payload(std::uint8_t *payload)
+{
+    std::memset(payload, 0, IRIS_PACKET_STATE_DATA_LENGTH);
     const auto gps = current_gps_fix();
     write_i24_be(&payload[IRIS_PACKET_STATE_LATITUDE_OFFSET],
         static_cast<std::int32_t>(std::lround(gps.latitude_degrees * IRIS_FIELD_GPS_COORDINATE_SCALE)));
@@ -1047,11 +1084,21 @@ esp_err_t Sensors::queue_state_packet()
                      IRIS_PACKET_STATE_ORIENTATION_Z_OFFSET,
                      IRIS_PACKET_STATE_ORIENTATION_W_OFFSET,
                      attitude_.quaternion());
+    {
+        // Position filter: ENU metres / m/s relative to the pad.
+        float p[3];
+        float v[3];
+        position_filter_.position(p);
+        position_filter_.velocity(v);
+        write_float_be(&payload[IRIS_PACKET_STATE_POSITION_X_OFFSET], p[0]);
+        write_float_be(&payload[IRIS_PACKET_STATE_POSITION_Y_OFFSET], p[1]);
+        write_float_be(&payload[IRIS_PACKET_STATE_POSITION_Z_OFFSET], p[2]);
+        write_float_be(&payload[IRIS_PACKET_STATE_VELOCITY_X_OFFSET], v[0]);
+        write_float_be(&payload[IRIS_PACKET_STATE_VELOCITY_Y_OFFSET], v[1]);
+        write_float_be(&payload[IRIS_PACKET_STATE_VELOCITY_Z_OFFSET], v[2]);
+    }
     // Reported from the latest GGA even without a fix; zero when stale.
     payload[IRIS_PACKET_STATE_GPS_SATELLITES_OFFSET] = gps.satellites;
-
-    return data_forwarder_.queue_packet(
-        IRIS_PACKET_ID_STATE, payload, sizeof(payload));
 }
 
 esp_err_t Sensors::queue_debug_packet()
@@ -1099,7 +1146,7 @@ esp_err_t Sensors::queue_debug_packet()
         write_i24_be(
             &payload[kFilteredAccelOffsets[axis]],
             encode_filtered_acceleration(
-                working_sample_.low_g_accel_mg[axis]));
+                working_sample_.filtered_accel_mg[axis]));
         write_i16_be(&payload[kLowAccelOffsets[axis]], low_counts[axis]);
         write_i16_be(&payload[kHighAccelOffsets[axis]], high_counts[axis]);
         write_i16_be(&payload[kGyroOffsets[axis]], gyro_counts[axis]);
@@ -1147,6 +1194,18 @@ esp_err_t Sensors::queue_debug_packet()
                      IRIS_PACKET_WITNESS_DEBUG_ORIENTATION_Z_OFFSET,
                      IRIS_PACKET_WITNESS_DEBUG_ORIENTATION_W_OFFSET,
                      attitude_.quaternion());
+    {
+        float p[3];
+        float v[3];
+        position_filter_.position(p);
+        position_filter_.velocity(v);
+        write_float_be(&payload[IRIS_PACKET_WITNESS_DEBUG_POSITION_X_OFFSET], p[0]);
+        write_float_be(&payload[IRIS_PACKET_WITNESS_DEBUG_POSITION_Y_OFFSET], p[1]);
+        write_float_be(&payload[IRIS_PACKET_WITNESS_DEBUG_POSITION_Z_OFFSET], p[2]);
+        write_float_be(&payload[IRIS_PACKET_WITNESS_DEBUG_VELOCITY_X_OFFSET], v[0]);
+        write_float_be(&payload[IRIS_PACKET_WITNESS_DEBUG_VELOCITY_Y_OFFSET], v[1]);
+        write_float_be(&payload[IRIS_PACKET_WITNESS_DEBUG_VELOCITY_Z_OFFSET], v[2]);
+    }
     // MCU temperature, the other estimator outputs and GPS Unix time remain zero.
     return data_forwarder_.queue_packet(
         IRIS_PACKET_ID_WITNESS_DEBUG, payload, sizeof(payload));
@@ -1408,6 +1467,169 @@ void Sensors::output_counts(std::int16_t gyro[3], std::int16_t low_g[3],
     }
 }
 
+void Sensors::predict_position(const std::uint64_t timestamp_us)
+{
+    if (!attitude_.valid()) {
+        position_last_predict_us_ = 0;  // no world frame yet
+        return;
+    }
+    const std::uint64_t previous = position_last_predict_us_;
+    position_last_predict_us_ = timestamp_us;
+    if (previous == 0 || timestamp_us <= previous) {
+        return;
+    }
+    const float dt_s = static_cast<float>(timestamp_us - previous) * 1e-6F;
+    // Body specific force (m/s^2) rotated BODY -> ENU by the attitude
+    // quaternion: v' = v + 2w (u x v) + 2 u x (u x v).
+    constexpr float kMgToMps2 = position::kGravity / 1000.0F;
+    const float vx = working_sample_.filtered_accel_mg[0] * kMgToMps2;
+    const float vy = working_sample_.filtered_accel_mg[1] * kMgToMps2;
+    const float vz = working_sample_.filtered_accel_mg[2] * kMgToMps2;
+    const attitude::Quaternion q = attitude_.quaternion();
+    const float tx = 2.0F * (q.y * vz - q.z * vy);
+    const float ty = 2.0F * (q.z * vx - q.x * vz);
+    const float tz = 2.0F * (q.x * vy - q.y * vx);
+    const float world[3] = {
+        vx + q.w * tx + (q.y * tz - q.z * ty),
+        vy + q.w * ty + (q.z * tx - q.x * tz),
+        vz + q.w * tz + (q.x * ty - q.y * tx),
+    };
+    position_filter_.predict(world, dt_s,
+                             static_cast<position::Phase>(flight_state_machine_.state()));
+}
+
+void Sensors::service_position(const std::uint64_t now_us)
+{
+    constexpr std::uint64_t kPeriodUs = 1'000'000ULL / kPositionUpdateRateHz;
+    if (position_last_update_us_ != 0 && now_us - position_last_update_us_ < kPeriodUs) {
+        return;
+    }
+    position_last_update_us_ =
+        position_last_update_us_ == 0 || now_us - position_last_update_us_ > 4 * kPeriodUs
+            ? now_us
+            : position_last_update_us_ + kPeriodUs;
+    if (!position_filter_.initialized()) {
+        return;  // no predict yet (attitude not initialized)
+    }
+    const auto phase = static_cast<position::Phase>(flight_state_machine_.state());
+    if (position_baro_pending_) {
+        position_baro_pending_ = false;
+        // MS5607 pressure is in centi-mbar, i.e. pascals.
+        (void)position_filter_.update_baro(
+            working_sample_.barometric_altitude_meters,
+            static_cast<float>(working_sample_.pressure_centi_mbar), phase);
+    }
+    const NmeaGps::Fix fix = current_gps_fix();
+    if (fix.valid && fix.received_ms != position_last_gps_ms_) {
+        position_last_gps_ms_ = fix.received_ms;
+        (void)position_filter_.update_gps(fix.latitude_degrees, fix.longitude_degrees,
+                                          fix.altitude_meters, fix.satellites, phase);
+    }
+    position_filter_.update_constraints(phase);
+}
+
+void Sensors::report_position(const std::uint64_t now_us)
+{
+    if (position_report_us_ == 0) {
+        position_report_us_ = now_us;
+        return;
+    }
+    if (now_us - position_report_us_ < kAttitudeReportIntervalMs * 1000ULL) {
+        return;
+    }
+    position_report_us_ = now_us;
+    float p[3];
+    float v[3];
+    position_filter_.position(p);
+    position_filter_.velocity(v);
+    defer_log(
+             "position: ENU %.1f %.1f %.1f m, velocity %.1f %.1f %.1f m/s, Mach %.2f, "
+             "alt MSL %.0f m; baro %lu used/%lu gated/%lu rejected, sigma %.1f m; "
+             "GPS %lu used/%lu rejected%s; %s",
+             static_cast<double>(p[0]), static_cast<double>(p[1]), static_cast<double>(p[2]),
+             static_cast<double>(v[0]), static_cast<double>(v[1]), static_cast<double>(v[2]),
+             static_cast<double>(position_filter_.mach()),
+             static_cast<double>(position_filter_.altitude_msl_m()),
+             static_cast<unsigned long>(position_filter_.baro_updates()),
+             static_cast<unsigned long>(position_filter_.baro_gated_count()),
+             static_cast<unsigned long>(position_filter_.baro_rejects()),
+             static_cast<double>(position_filter_.last_baro_sigma_m()),
+             static_cast<unsigned long>(position_filter_.gps_updates()),
+             static_cast<unsigned long>(position_filter_.gps_rejects()),
+             position_filter_.gps_origin_set() ? "" : " (no GPS origin)",
+             !position_filter_.initialized() ? "waiting for attitude"
+             : position_filter_.still()      ? "pad hold"
+                                             : "integrating");
+}
+
+void Sensors::defer_log(const char *format, ...)
+{
+    DeferredLog entry{};
+    va_list arguments;
+    va_start(arguments, format);
+    std::vsnprintf(entry.text, sizeof(entry.text), format, arguments);
+    va_end(arguments);
+    if (deferred_log_queue_ == nullptr ||
+        xQueueSend(deferred_log_queue_, &entry, 0) != pdTRUE) {
+        // Never block the sensor loop for a status line.
+    }
+}
+
+void Sensors::deferred_log_task_entry(void *context)
+{
+    auto *self = static_cast<Sensors *>(context);
+    DeferredLog entry{};
+    for (;;) {
+        if (xQueueReceive(self->deferred_log_queue_, &entry, portMAX_DELAY) == pdTRUE) {
+            ESP_LOGI(kLogTag, "%s", entry.text);
+        }
+    }
+}
+
+void Sensors::process_imu_batch()
+{
+    const bool gyro_ready = working_sample_.gyro_ready;
+    const bool low_g_ready = working_sample_.low_g_accel_ready;
+    const bool high_g_ready = working_sample_.high_g_accel_ready;
+    for (std::size_t i = 0; i < imu_batch_count_; ++i) {
+        apply_imu_sample(imu_batch_[i], true);
+        filtered_accel_.step(working_sample_.low_g_accel_mg,
+                             working_sample_.high_g_accel_mg,
+                             working_sample_.filtered_accel_mg);
+        working_sample_.high_g_accel_active = filtered_accel_.high_g_active();
+        log_imu_sample(imu_batch_[i].timestamp_us, false);
+        if (imu_batch_[i].has_gyro) {
+            update_attitude(imu_batch_[i].timestamp_us);
+        }
+        predict_position(imu_batch_[i].timestamp_us);
+    }
+    working_sample_.gyro_ready = gyro_ready;
+    working_sample_.low_g_accel_ready = low_g_ready;
+    working_sample_.high_g_accel_ready = high_g_ready;
+}
+
+void Sensors::note_packet_queue_result(const char *name, const esp_err_t result,
+                                       const TickType_t now)
+{
+    if (result != ESP_OK) {
+        ++packet_queue_failures_;
+        if (packet_queue_failures_ - packet_queue_failures_reported_ == 1U &&
+            now - packet_queue_last_report_ >= pdMS_TO_TICKS(10000)) {
+            ESP_LOGE(kLogTag, "%s packet queue failed: %s (further failures are "
+                     "summarized every 10 s)", name, esp_err_to_name(result));
+            packet_queue_failures_reported_ = packet_queue_failures_;
+            packet_queue_last_report_ = now;
+        }
+    }
+    if (packet_queue_failures_ != packet_queue_failures_reported_ &&
+        now - packet_queue_last_report_ >= pdMS_TO_TICKS(10000)) {
+        ESP_LOGW(kLogTag, "telemetry packet queue: %lu failures in total",
+                 static_cast<unsigned long>(packet_queue_failures_));
+        packet_queue_failures_reported_ = packet_queue_failures_;
+        packet_queue_last_report_ = now;
+    }
+}
+
 void Sensors::log_calibration(const char *prefix) const
 {
     const imu_calibration::Calibration &c = calibration_;
@@ -1583,6 +1805,7 @@ void Sensors::log_imu_sample(const std::uint64_t timestamp_us, const bool hitl)
     if (hitl || working_sample_.low_g_accel_ready) status |= FlashLogger::kImuLowGFreshFlag;
     if (hitl || working_sample_.high_g_accel_ready) status |= FlashLogger::kImuHighGFreshFlag;
     if (hitl || working_sample_.gyro_ready) status |= FlashLogger::kImuGyroFreshFlag;
+    if (working_sample_.high_g_accel_active) status |= FlashLogger::kImuHighGActiveFlag;
     (void)imu_log_sink_->log_imu_record(FlashLogger::make_imu_record(
         static_cast<std::uint32_t>(timestamp_us), working_sample_.low_g_accel_raw,
         working_sample_.high_g_accel_raw, working_sample_.gyro_raw, status));
@@ -1651,7 +1874,7 @@ void Sensors::report_attitude_rate(const std::uint64_t now_us)
     const double rate_hz = static_cast<double>(attitude_updates_since_report_) *
                            1e6 / static_cast<double>(elapsed_us);
     const attitude::Quaternion q = attitude_.quaternion();
-    ESP_LOGI(kLogTag,
+    defer_log(
              "attitude: %.1f Hz, max dt %.1f ms, gaps %lu, late %lu, "
              "spikes rejected %lu, windows %lu ok/%lu accel/%lu gyro "
              "rejected, overruns %lu, max pass %lu us, radio TX %lu "
@@ -1672,15 +1895,26 @@ void Sensors::report_attitude_rate(const std::uint64_t now_us)
              static_cast<double>(attitude_.tilt_from_vertical_deg()),
              static_cast<double>(q.x), static_cast<double>(q.y),
              static_cast<double>(q.z), static_cast<double>(q.w));
-    ESP_LOGI(kLogTag,
+    defer_log(
              "imu fifo: %.1f Hz, overruns %lu, partial slots %lu, "
-             "unknown words %lu, max backlog %lu words",
+             "unknown words %lu, max backlog %lu words; filtered accel "
+             "%s, %lu switches to high-g, peak %.2f g; core-1 time: FIFO read "
+             "%.1f%%, sample processing %.1f%%",
+
              static_cast<double>(fifo_samples_) * 1e6 /
                  static_cast<double>(elapsed_us),
              static_cast<unsigned long>(fifo_overruns_),
              static_cast<unsigned long>(fifo_partial_slots_),
              static_cast<unsigned long>(fifo_bad_words_),
-             static_cast<unsigned long>(fifo_max_words_));
+             static_cast<unsigned long>(fifo_max_words_),
+             filtered_accel_.high_g_active() ? "high-g" : "low-g",
+             static_cast<unsigned long>(filtered_accel_.switches_to_high()),
+             static_cast<double>(filtered_accel_.peak_mg()) / 1000.0,
+             100.0 * static_cast<double>(imu_fetch_us_) / static_cast<double>(elapsed_us),
+             100.0 * static_cast<double>(imu_process_us_) / static_cast<double>(elapsed_us));
+    imu_fetch_us_ = 0;
+    imu_process_us_ = 0;
+    filtered_accel_.reset_peak();
     fifo_samples_ = 0;
     fifo_max_words_ = 0;
     attitude_updates_since_report_ = 0;
@@ -1691,6 +1925,9 @@ void Sensors::report_attitude_rate(const std::uint64_t now_us)
 
 void Sensors::run()
 {
+    filtered_accel_.configure(kFilteredAccelCutoffHz,
+                              static_cast<float>(1e6 / imu_period_us_));
+    hitl_filtered_accel_.configure(0.0F, 0.0F);
     TickType_t next_wake_time = xTaskGetTickCount();
     TickType_t last_sensor_packet_time = next_wake_time;
     TickType_t last_state_packet_time = next_wake_time;
@@ -1733,7 +1970,14 @@ void Sensors::run()
             barometer_healthy = working_sample_.ms5607_ready;
         } else {
             imu_timestamp_us = static_cast<std::uint64_t>(esp_timer_get_time());
+            const std::int64_t fetch_start_us = esp_timer_get_time();
             lsm_result = fetch_lsm6dsv320x();
+            const std::int64_t process_start_us = esp_timer_get_time();
+            if (lsm_result == ESP_OK && imu_batch_count_ > 0) {
+                process_imu_batch();
+            }
+            imu_fetch_us_ += static_cast<std::uint64_t>(process_start_us - fetch_start_us);
+            imu_process_us_ += static_cast<std::uint64_t>(esp_timer_get_time() - process_start_us);
             witness_status_.set(
                 IRIS_WITNESS_STATUS_LOW_G_ACCEL_READY_MASK,
                 working_sample_.low_g_accel_ready);
@@ -1833,11 +2077,10 @@ void Sensors::run()
             observation.axial_acceleration_valid =
                 lsm_result == ESP_OK &&
                 (has_high_g_accel_sample_ || has_low_g_accel_sample_);
+            // Launch detection uses the filtered acceleration: low-g
+            // resolution below 15 g, the high-g sensor above it.
             observation.axial_acceleration_g =
-                (has_high_g_accel_sample_
-                     ? working_sample_.high_g_accel_mg[0]
-                     : working_sample_.low_g_accel_mg[0]) /
-                1000.0F;
+                working_sample_.filtered_accel_mg[0] / 1000.0F;
             observation.low_g_axial_acceleration_valid =
                 lsm_result == ESP_OK && has_low_g_accel_sample_;
             observation.low_g_axial_acceleration_g =
@@ -1877,51 +2120,38 @@ void Sensors::run()
             if (lsm_result == ESP_OK) {
                 log_imu_sample(imu_timestamp_us, true);
                 update_attitude(imu_timestamp_us);
+                predict_position(imu_timestamp_us);
             }
-        } else if (lsm_result == ESP_OK && imu_batch_count_ > 0) {
-            // Every 960 Hz FIFO sample, oldest first. working_sample_ ends on
-            // the newest sample, as the packets above already used it.
-            const bool gyro_ready = working_sample_.gyro_ready;
-            const bool low_g_ready = working_sample_.low_g_accel_ready;
-            const bool high_g_ready = working_sample_.high_g_accel_ready;
-            for (std::size_t i = 0; i < imu_batch_count_; ++i) {
-                apply_imu_sample(imu_batch_[i], true);
-                log_imu_sample(imu_batch_[i].timestamp_us, false);
-                if (imu_batch_[i].has_gyro) {
-                    update_attitude(imu_batch_[i].timestamp_us);
-                }
-            }
-            working_sample_.gyro_ready = gyro_ready;
-            working_sample_.low_g_accel_ready = low_g_ready;
-            working_sample_.high_g_accel_ready = high_g_ready;
+        }
+        // Real IMU samples were processed right after the FIFO read
+        // (process_imu_batch).
+        if (ms5607_updated && barometer_healthy) {
+            position_baro_pending_ = true;
+        }
+        service_position(pass_start_us);
+        if (pass_start_us - state_log_last_us_ >= 1'000'000ULL / kStateLogRateHz) {
+            // Advance by whole periods so the long-run rate is exact.
+            state_log_last_us_ =
+                pass_start_us - state_log_last_us_ > 4ULL * 1'000'000ULL / kStateLogRateHz
+                    ? pass_start_us
+                    : state_log_last_us_ + 1'000'000ULL / kStateLogRateHz;
+            log_state_packet();
         }
 
         if (lsm_result == ESP_OK &&
             (now - last_sensor_packet_time) >= kPacketPeriod) {
-            const esp_err_t queue_result = queue_sensor_packet();
-            if (queue_result != ESP_OK) {
-                ESP_LOGE(kLogTag, "sensor packet queue failed: %s",
-                         esp_err_to_name(queue_result));
-            }
+            note_packet_queue_result("sensor", queue_sensor_packet(), now);
             last_sensor_packet_time = now;
         }
 
         if ((now - last_state_packet_time) >= kStatePacketPeriod) {
-            const esp_err_t queue_result = queue_state_packet();
-            if (queue_result != ESP_OK) {
-                ESP_LOGE(kLogTag, "state packet queue failed: %s",
-                         esp_err_to_name(queue_result));
-            }
+            note_packet_queue_result("state", queue_state_packet(), now);
             last_state_packet_time = now;
         }
 
         if (debug_packet_output_enabled_.load() &&
             (now - last_debug_packet_time) >= kDebugPacketPeriod) {
-            const esp_err_t queue_result = queue_debug_packet();
-            if (queue_result != ESP_OK) {
-                ESP_LOGE(kLogTag, "debug packet queue failed: %s",
-                         esp_err_to_name(queue_result));
-            }
+            note_packet_queue_result("debug", queue_debug_packet(), now);
             last_debug_packet_time = now;
         }
 
@@ -1937,6 +2167,7 @@ void Sensors::run()
             max_pass_us_ = static_cast<std::uint32_t>(pass_us);
         }
         report_attitude_rate(pass_end_us);
+        report_position(pass_end_us);
 
         // Deadline scheduling: wake every kTaskPeriod (1/kTaskRateHz)
         // measured from the previous deadline, not from the end of this pass.

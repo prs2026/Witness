@@ -113,6 +113,14 @@ private:
     TaskHandle_t forward_task_handle_ = nullptr;
     TaskHandle_t spi_task_handle_ = nullptr;
     std::atomic<bool> output_enabled_{true};
+    // USB output with no host reading (no cable in flight, or no ser2net
+    // client on the bench) must not stall the forwarder: after one 20 ms
+    // write timeout the link counts as stalled and packets are dropped
+    // without waiting until a write succeeds again.
+    bool usb_stalled_ = false;
+    std::uint32_t usb_packets_dropped_ = 0;
+    std::uint32_t usb_drops_reported_ = 0;
+    TickType_t usb_last_drop_report_ = 0;
     std::atomic<bool> radio_available_{false};
     std::array<RadioCacheSlot, kRadioPacketTypeCount> radio_cache_{{
         {IRIS_PACKET_ID_SENSORS},

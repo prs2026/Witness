@@ -177,15 +177,53 @@ Configuration constants live principally in `sensors.h` and the device headers:
   (see "960 Hz IMU path").
 - MS5607 SPI mode 3 at 10 MHz, pressure and temperature OSR 4096. Its polling
   state machine alternates conversions with a 9100 us conversion time. Altitude
-  uses the configured sea-level reference of 1013.25 mbar, not a launch-site zero.
+  uses the configured sea-level reference of 1013.25 mbar, not a launch-site zero,
+  converted with the full ISA (1976) layers to 47 km (`pressure_altitude.h`,
+  shared with HITL input). The single-layer troposphere formula used before
+  2026-11-08 read 0.2 km low at 15 km, 1.1 km low at 20 km and 4.6 km low at
+  30 km; the new conversion is within 1 m to 32 km. It returns geometric
+  altitude (h = r H / (r - H) from the ISA's geopotential H, r = 6,356,766 m),
+  the same kind GPS reports. Without that the barometer reads 45 m low at 17 km,
+  and the position filter rejected it against GPS. The MS5607 itself only
+  measures down to 10 mbar (about 31 km).
 - Battery sampling: 10 Hz, derived as a divisor of the 500 Hz sensor loop.
   Sixteen ADC readings are averaged, with 12 dB attenuation and a 15k/5k divider
   (battery voltage is four times the ADC-pin voltage). Wire units are millivolts.
 - Sensor telemetry: 10 Hz. State telemetry: 1 Hz. Witness debug: 10 Hz only after
   enabling it. Heartbeat: 1 Hz.
 
-The `filtered_accel` wire field is currently encoded from low-g acceleration;
-its name does not imply that a high/low-g blending filter has been implemented.
+Filtered acceleration (`main/accel_filter.{h,cpp}`, host test
+`tests/accel_filter_test.cpp`) is computed for every 960 Hz FIFO sample from
+the calibrated accelerometers:
+
+- **Source selection:** low-g (+/-16 g, 0.49 mg/count) normally. On the
+  first sample where any axis of either sensor reaches 15 g, all three axes
+  switch to high-g (+/-320 g, 10.4 mg/count) on that same sample. The trigger
+  uses both sensors because the chip filters the low-g after its ADC clips, so
+  a clipped low-g reading can stay below full scale. It switches back once
+  every axis of both sensors has stayed below 13 g for 10 samples (about
+  10 ms), so it cannot chatter.
+- **Low-pass:** 2nd-order Butterworth at 100 Hz
+  (`Sensors::kFilteredAccelCutoffHz`; 0 disables it), bilinear transform with
+  pre-warping, about 2.5 ms group delay. It runs on the selected signal and
+  keeps its state across a switch, so switching adds no step (the test checks
+  the output matches the same filter fed the unclipped truth to within 1 mg).
+  It starts in steady state, so there is no start-up transient.
+- **Uses:** `filtered_accel` in `0x01` and `0xE0`, and the flight state
+  machine's launch detection (`axial_acceleration_g` = filtered x). Burnout
+  detection still uses calibrated low-g x. NAND IMU status bit 7 (0x80) marks
+  samples where high-g was the source.
+- **HITL:** a second selector without the low-pass (frames arrive at about
+  100 Hz). Both reset on every real/HITL source change.
+
+Bench, board still, radio on: telemetry |a| noise 0.74 mg sd (1.29 mg before
+the filter), still low-g, 0 switches. The switch to high-g has only been tested
+on the host; it needs a real boost or a HITL run above 15 g. The `imu fifo`
+log line now ends `filtered accel <low-g|high-g>, N switches to high-g, peak P
+g; core-1 time: FIFO read R%, sample processing S%`. A one-off split measured
+sample processing as about 1.6% calibration plus filter, 2% NAND queue and
+7.6% attitude estimator (about 80 us per sample, the largest single cost),
+with core 1 at about 34% busy in total.
 The `0x02` and `0xE0` orientation quaternions come from the attitude estimator
 (next section); position and velocity are still zero. MCU temperature and GPS
 Unix time also remain zero in debug output.
@@ -238,6 +276,92 @@ Bench after the gyro calibration (same 40 s still test): telemetry gyro means
 -0.04 / +0.01 / -0.36 dps (were +0.91 / -0.05 / -0.89), medians within 3
 counts (0.21 dps). The six-face accelerometer calibration needs the board
 turned by hand and has not been run yet; until then |a| stays 0.992 g.
+
+## Position Kalman filter
+
+`main/position_filter.{h,cpp}` (pure, host test `tests/position_filter_test.cpp`)
+estimates position and velocity in ENU metres with the origin at the pad. It's
+a linear Kalman filter with a constant-acceleration kinematic model:
+
+- **Predict, every IMU sample (960 Hz; each 0x0C frame in HITL):** the
+  filtered acceleration (see "Filtered acceleration") is rotated body to ENU by
+  the attitude quaternion. Gravity is removed, and it drives p += v dt +
+  a dt^2/2, v += a dt. Process noise is white acceleration noise of
+  0.5 m/s^2 + 5% of |a| (attitude error turns part of the thrust sideways).
+  The model and measurements are per axis, so the 6-state filter runs as three
+  independent [p, v] filters (about 2.6% of core 1 at 960 Hz). Predict waits
+  for a valid attitude.
+- **Update, 25 Hz** (`Sensors::kPositionUpdateRateHz`): the newest
+  barometer reading, plus any GPS fix that has arrived since the last tick.
+  The PX1120S at 25 Hz gets every fix used; the u-blox M8 at 10 Hz appears
+  every 2nd or 3rd tick.
+  - **GPS:** E/N/U from latitude/longitude/altitude using WGS-84 metres per
+    degree at the origin. Sigma is 2.5 m horizontal and 5 m vertical, doubled
+    below 6 satellites. GGA has no HDOP or velocity, so it is position only.
+    The origin is set on the pad. A first fix in flight is aligned to the
+    current estimate.
+  - **Barometer:** U, relative to a pad reference that is tracked while still
+    on the pad.
+- **Barometer trust:**
+  - It is zero (no update) from Mach 0.8, and comes back below Mach 0.75.
+    Mach is the filter's speed over the ISA speed of sound at the estimated
+    altitude.
+  - Otherwise its sigma follows the altitude accuracy:
+    sigma_h = sqrt(0.5^2 + (10 Pa / (rho g))^2), with rho = p / (R T_ISA).
+    That is 0.97 m at sea level, 2.5 m at 10 km and 11.6 m at 20 km.
+  - Below the MS5607's 10 mbar floor the barometer is not used.
+- **Gating:** innovations beyond 5 sigma are rejected. After 25 consecutive
+  rejects, one is accepted so the filter can re-synchronize.
+- **Pad and landing:** while still on the pad (|specific force| within 5% of
+  1 g), zero position/velocity pseudo-measurements hold the state at the
+  origin, and the baro and GPS references track the pad. Once the
+  acceleration departs from 1 g it integrates freely, so the 0.3 s launch
+  qualification before Boost is kept. In Landed, a zero-velocity
+  pseudo-measurement stops drift.
+- **HITL:** the filter resets on every real/HITL source change.
+- **Outputs:** position and velocity in `0x02` and `0xE0` (float32, ENU m and
+  m/s), and a 10 s log line: `position: ENU E N U m, velocity ..., Mach M,
+  alt MSL A m; baro U used/G gated/R rejected, sigma S m; GPS U used/R
+  rejected; pad hold|integrating`.
+
+The estimate is not logged to NAND. Every input is, though (I*.BIN IMU,
+S*.BIN baro at 50 Hz, U*.BIN raw NMEA), so a flight can be re-filtered
+offline.
+
+Host test (simulated 11 g, 4 s boost to Mach 1.3, coast and descent, with a
+150 m transonic baro error injected between Mach 0.8 and 1.2): baro-only
+up error max 10.7 m and 0.2 m at apogee, with the transonic error never
+entering (557 gated updates); 10 Hz GPS 18.9 m max / 0.5 m at apogee; 25 Hz GPS
+13.0 m / 0.1 m. The motion before Boost is kept (1.35 m/s error out of about
+32 m/s).
+
+HITL on the bench (`a3241569-trajectory.csv`: 38 km apogee, Mach 4.2,
+pressure below the MS5607 range for 83 s):
+
+| Phase | Up RMS (max) | Horizontal RMS (max) |
+|---|---|---|
+| Pad idle | 0.1 m (0.2) | 0.0 m |
+| Boost | 3.2 m (4.6) | 2.2 m (5.7) |
+| Coast | 4.7 m (16.9) | 1.3 m (4.4) |
+| Descent | 2.0 m (11.3) | 1.3 m (4.9) |
+
+At apogee: 37,966.8 m against 37,967.1 m true. Final position within 1 m of
+truth. Counters: baro 5,002 used, 2,206 gated (above Mach 0.8), 0 rejected;
+GPS 9,285 used, 0 rejected (run `HITL/runs/20261108-223257`, scored against
+the trajectory truth). HITL GPS is noiseless, so the horizontal numbers show
+the filter tracking, not real GPS error. Two bugs this run exposed were fixed
+first. The baro altitude conversion was troposphere-only and geopotential
+(1,275 baro rejections at 9-16 km before). The HITL simulator converted GPS
+with a 111,320 m/deg sphere (a 43 m north offset over 11 km); it now uses
+WGS-84.
+
+Limitations: no GPS velocity (GGA only) and no GPS latency compensation
+(fixes are applied when parsed, typically tens of ms late). Accelerometer bias
+is not estimated. Heading comes from the attitude estimator's initialization,
+which has no magnetometer, so the horizontal frame is only as good as that
+heading; GPS corrects position but not the rotation of the integrated
+acceleration. The barometer pad reference uses the standard 1013.25 mbar
+sea-level pressure, so "alt MSL" is pressure altitude.
 
 ## Attitude estimator
 
@@ -737,7 +861,7 @@ comments and file/class names are not sufficient identification.
 The logger uses a **custom append-only NAND store**, not a mounted writable FAT
 filesystem. On successful initialization it tests a reserved good block by
 erase/write/read comparison, scans sessions and creates a new session. Store
-version 3 (2026-11-08) is built for **one flight at a time**: two slots, A and
+version 4 (2026-11-08) is built for **one flight at a time**: two slots, A and
 B, of 502 blocks each, plus 20 reserved blocks at the top of the chip. Each
 slot:
 
@@ -746,20 +870,73 @@ slot:
 | 0 | - | Session header (page 0) and flight marker (page 1, magic `WLFT`) |
 | 1-96 | `I<gen>.BIN` | IMU stream, 24-byte records (below) |
 | 97-136 | `S<gen>.BIN` | 48-byte sensor records at 50 Hz (about 35.8 min) |
-| 137-160 | `S<gen>.TXT` | Captured ESP log text |
-| 161-501 | `U<gen>.BIN` | Raw GPS UART bytes, circular (see GPS section) |
+| 137-160 | `S<gen>.TXT` | Captured ESP log text, circular (keeps the newest) |
+| 161-280 | `P<gen>.BIN` | Packet stream, circular (below) |
+| 281-501 | `U<gen>.BIN` | Raw GPS UART bytes, circular (see GPS section) |
+
+Store version 3 had no packet stream and 341 GPS blocks (161-501). Its
+sessions still export through that layout (`FlashLogger::file_layout` by
+version), so a v3 flight survives the upgrade until a v4 flight replaces it.
 
 Slot choice at boot: the slot holding the newest *flight* (marker written) is
 kept and the other slot is reused; with no flight on the chip, the empty or
 older slot is reused. The flight marker is written when the first logged state
 (Boost) begins, so pad-only power cycles never overwrite the last flight, and
 the next flight overwrites the flight before it. Every page starts with a
-12-byte header (magic, type, version 3, payload length, u32 page sequence).
-Older store versions are not exported.
+12-byte header (magic, type, store version, payload length, u32 page sequence).
+Store versions before 3 are not exported.
+
+**Circular streams and launch.** The text, packet and GPS streams wrap freely
+on the pad, so a long pad wait never fills them. When the flight marker is
+written, at the first logged state (Boost), each ring is launch-protected:
+nothing written after that point is overwritten. A ring that comes back round
+to its launch point stops, with `ring full since launch; stopped to keep the
+flight`. That warning is not a failure and does not set the flash fault bit.
+After launch the packet ring holds about 32 min, the GPS ring (221 blocks,
+about 28.8 MB) about 2.1 h at 25 Hz GGA+RMC, and the text about 5 h.
+
+**Packet stream (`P*.BIN`).** It records every packet in four classes:
+- Witness's own `0x02` state packet at 100 Hz. It is built in the sensor task
+  every 10 ms for the log only; USB and radio keep 1 Hz.
+- Every packet reassembled from CAN (from Iris), whether or not it is
+  forwarded.
+- Every packet sent to Iris over CAN (commands, the 1 Hz heartbeat).
+- Every command received over the radio.
+
+`FlashLogger::log_packet()` never blocks. Its queue holds 128 packets, and
+drops are counted and warned at flush (`packet log queue full: N packets
+dropped so far`). Records are big-endian:
+
+| Offset | Bytes | Field |
+|---:|---:|---|
+| 0 | 4 | uint32 esp_timer microseconds (wraps every 71.6 min) |
+| 4 | 1 | Source: 1 Witness state, 2 CAN in, 3 CAN out, 4 radio in |
+| 5 | 1 | Frame length N |
+| 6 | N | Complete frame, ID through EOF `0x0A` |
+
+Horizon `converter.py` decodes it (`P*.BIN`, or `--format packets`) with the
+normal packet parser. There is one row per frame, with `log_source` and
+`time_seconds`.
+
+Bench check on 2026-11-08, with a commanded flight and Iris on CAN:
+- 9,171 state packets over 92 s, 100.01 Hz with a 10.00 ms median.
+- Iris camera packets at about 1 Hz (CAN in).
+- The heartbeat and forwarded commands (CAN out).
+- No queue drops and no undecodable bytes.
+
+Before the 10 s status lines were moved off the sensor task (they are now
+formatted there and printed by a core-0 `sensor_log` task), printing them
+stalled the loop 16-28 ms and skipped 1-2 state samples every 10 s.
+
+Cost: about 14 KB of RAM for the queue (free heap was about 64 KB in that
+check). Core 1 measured 45% busy, up from about 38%. Most of the increase is in
+the FIFO-read and sample-processing timings, which this change did not touch;
+the cause is not confirmed.
 
 | Export filename example | Contents |
 |---|---|
 | `I0000001.BIN` | 24-byte IMU records (decode with Horizon `converter.py`) |
+| `P0000001.BIN` | Packet stream: state at 100 Hz, CAN in/out, radio commands (decode with `converter.py`) |
 | `S0000001.BIN` | Fixed 48-byte sensor records; not canonical telemetry packets |
 | `S0000001.TXT` | Captured ESP logging output after the application log hook is installed |
 | `U0000001.BIN` | Exact raw UART bytes, including NMEA and binary responses; no added timestamps or framing |
@@ -777,7 +954,7 @@ Big-endian record layout (`FlashLogger::make_imu_record()`):
 | 4 | 6 | Three int16 low-g raw counts |
 | 10 | 6 | Three int16 high-g raw counts |
 | 16 | 6 | Three int16 gyro raw counts |
-| 22 | 1 | Status: bits 0-2 flight state, 0x08 HITL, 0x10/0x20/0x40 low-g/high-g/gyro fresh |
+| 22 | 1 | Status: bits 0-2 flight state, 0x08 HITL, 0x10/0x20/0x40 low-g/high-g/gyro fresh, 0x80 filtered accel from high-g |
 | 23 | 1 | uint8 record sequence (wraps at 256; gaps reveal drops) |
 
 Sensor capture is independent of the USB packet rates. It samples at 50 Hz,
@@ -794,9 +971,37 @@ buffer. Sensor and text staging buffers are 4096 bytes; UART staging is two
 Data can flush earlier when staging fills. Power loss can lose unflushed data;
 this store is not a transactional general-purpose filesystem. The text queue is
 bounded and long log messages are truncated to fit its entries.
-Exhausting one file allocation marks that stream full and sets the flash fault
-flag without intentionally stopping the other allocations; a fatal writer I/O
-error stops all capture. Check which condition occurred before assuming that
+Exhausting one linear allocation (IMU or sensor records) marks that stream full
+and sets the flash fault flag without stopping the other allocations. The text,
+packet and GPS streams are circular and never fill on the pad (after launch see
+"Circular streams and launch"). A fatal writer I/O error stops all
+capture.
+
+Flash-log-failed (status bit 7) history, 2026-11-08: the bit latched about an
+hour after power-on on the bench and in HITL runs. The cause was USB
+backpressure, not the NAND. With no host reading USB (always the case in
+flight, and on the bench with no ser2net client), the telemetry forwarder
+retried each write forever. Its 16-packet queue filled, and every sensor, state
+and debug packet then logged `packet queue failed: ESP_ERR_NO_MEM`, 10-20
+lines/s and 77% of the text log at 890 B/s. The 3.1 MB text stream filled in
+about an hour, and a full stream sets the bit.
+
+Fixes:
+- The forwarder drops packets once USB stops draining (one 20 ms wait, then
+  no wait until a write succeeds) and logs `USB output not drained ... N
+  packets dropped so far` every 10 s.
+- Queue failures and UART forward warnings are summarized every 10 s.
+- Text is circular.
+
+The text log now runs at about 160 B/s with no USB client.
+
+Circular streams and session tags: a new session erases only the first
+block of each stream, so a slot still holds valid pages from older sessions.
+Each page's sequence number carries the session generation in its top 12 bits
+(`FlashLogger::sequence_base`), and the scan and export skip pages from other
+sessions. Before this, U*.BIN (since store v3) and the circular text exported
+stale pages from older sessions mixed into the current one. Files written
+before the tagging export untagged as before. Check which condition occurred before assuming that
 every stream has stopped or that a healthy initialization guarantees logging.
 
 The exported sensor record layout is independent of `comms.h`. Multi-byte fields
@@ -903,12 +1108,20 @@ if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 g++ -std=c++17 -Wall -Wextra -Werror -I main tests/imu_calibration_test.cpp main/imu_calibration.cpp -o build/imu_calibration_test.exe
 if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 & .\build\imu_calibration_test.exe
+
+g++ -std=c++17 -Wall -Wextra -Werror -I main tests/accel_filter_test.cpp main/accel_filter.cpp -o build/accel_filter_test.exe
+if ($LASTEXITCODE -ne 0) { throw "compile failed" }
+& .\build\accel_filter_test.exe
+
+g++ -std=c++17 -Wall -Wextra -Werror -I main tests/position_filter_test.cpp main/position_filter.cpp -o build/position_filter_test.exe
+if ($LASTEXITCODE -ne 0) { throw "compile failed" }
+& .\build\position_filter_test.exe
 ```
 
 This PC has host `g++` 16.2 from WinLibs (installed with
 `winget install BrechtSanders.WinLibs.POSIX.UCRT`; it lives under
 `%LOCALAPPDATA%\Microsoft\WinGet\Packages\BrechtSanders.WinLibs*\mingw64\bin`,
-add that to `PATH`). All seven tests above passed there on 2026-11-08.
+add that to `PATH`). All nine tests above passed there on 2026-11-08.
 esp-clang under `C:\Espressif\tools` targets the ESP chips only and cannot
 build host tests.
 

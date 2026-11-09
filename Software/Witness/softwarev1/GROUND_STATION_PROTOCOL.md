@@ -58,7 +58,7 @@ is byte 0, the first payload byte is byte 1, and EOF is the last byte.
 | LSM6 temperature | `int16` BE | degrees C = 25 + raw / 256 |
 | MS5607 pressure | `uint24` BE | pascals = raw |
 | MS5607 temperature | `int16` BE | degrees C = raw / 100 |
-| MS5607 altitude | float32 BE | meters relative to 1013.25 mbar |
+| MS5607 altitude | float32 BE | geometric meters, ISA (all layers to 47 km) relative to 1013.25 mbar |
 | Latitude/longitude | `int24` BE | degrees = raw / 10,000; north/east positive |
 | GPS time | `uint32` BE | Unix seconds |
 | GPS altitude | float32 BE | meters above mean sea level |
@@ -128,9 +128,12 @@ Decode the flight state as `byte1 & 0x07`, not as the whole byte.
 | 20 | 2 | Gyro Z, signed int16 |
 | 22 | 1 | EOF `0x0A` |
 
-No acceleration filter is implemented yet. The firmware currently generates the
-"filtered acceleration" fields from the most recent low-g accelerometer
-samples, converted to the defined 40 micro-g/count format.
+Filtered acceleration is the calibrated low-g accelerometer. From the first
+sample where any axis of either accelerometer reaches 15 g, it is the high-g
+accelerometer instead, back to low-g once all axes stay below 13 g for about
+10 ms. It is low-pass filtered (2nd-order Butterworth, 100 Hz, about 2.5 ms
+delay) on the 960 Hz sample stream and sent in the 40 micro-g/count format
+(range about +/-335 g).
 
 ### `0x02` Estimated-state packet, 65 bytes
 
@@ -158,8 +161,10 @@ samples, converted to the defined 40 micro-g/count format.
 | 64 | 1 | EOF `0x0A` |
 
 Status, uptime, the orientation quaternion, barometric altitude, battery
-voltage, valid UART1 GPS fixes and the satellite count are populated; position
-and velocity remain zero. Satellites come from the most recent checksum-valid
+voltage, valid UART1 GPS fixes and the satellite count are populated. Position
+and velocity come from the position Kalman filter: ENU metres and m/s, origin
+at the pad, zero until the attitude is initialized and held at zero while the
+vehicle sits still on the pad. Satellites come from the most recent checksum-valid
 GGA within 3 s and are reported even when that GGA has no fix (position fields
 are then zero); they are 0 when stale.
 
@@ -277,7 +282,8 @@ zero bytes at 6..11, and EOF `0x0A` at byte 12. Before a valid receive, RSSI is
 | 98 | 4 | GPS altitude, float32 m MSL |
 | 102 | 1 | EOF `0x0A` |
 
-MCU temperature, position, velocity and GPS Unix time remain zero. The
+Position and velocity are the Kalman filter estimate, as in `0x02`. MCU
+temperature and GPS Unix time remain zero. The
 quaternion is populated exactly as in `0x02` (same convention; all zero until
 the estimator is initialized), so enabling debug output with command `0x00E0`
 gives 10 Hz quaternions on USB (LoRa still sends the newest debug frame at its
@@ -552,14 +558,21 @@ all accepted bytes before publishing the files. GPS data arriving after
 capture stops is not part of the exported snapshot. Sudden power loss can lose
 the bytes still buffered in RAM; use the export command before disconnecting.
 
-New sessions use storage layout version 3, built for one flight at a time:
-two slots of 502 blocks. Each holds 96 NAND blocks for the 24-byte IMU stream
-(`I*.BIN`, 960 Hz until Descent, then 96 Hz), 40 for sensor data, 24 for
-diagnostics and 341 (about 44.7 MB) for external GPS data. The GPS section is
-circular: when full it overwrites its oldest block, so a long pad wait loses
-only the oldest pad bytes. The slot holding the newest flight is kept until the
-next flight; pad-only power cycles reuse the other slot. Older store versions
-are not exported. No format or erase is required to upgrade. Buffer overflow or
+New sessions use storage layout version 4, built for one flight at a time:
+two slots of 502 blocks. Each holds:
+- 96 NAND blocks for the 24-byte IMU stream (`I*.BIN`, 960 Hz until Descent,
+  then 96 Hz);
+- 40 for sensor data;
+- 24 for diagnostics;
+- 120 for the packet stream (`P*.BIN`: Witness state packets at 100 Hz, every
+  packet sent or received over CAN, and radio commands);
+- 221 (about 28.8 MB) for external GPS data.
+
+The diagnostic, packet and GPS sections are circular on the pad, so a long pad
+wait loses only the oldest pad data. From launch on they keep everything
+written since launch. The slot holding the newest flight is kept until the
+next flight; pad-only power cycles reuse the other slot. Version 3 sessions
+(no packet stream) still export; older versions do not. No format or erase is required to upgrade. Buffer overflow or
 flash write failure sets the existing flash-log-failed status bit. When the IMU,
 sensor or diagnostic allocation fills, that stream stops with a diagnostic and
 the other streams continue. These are

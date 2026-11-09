@@ -72,6 +72,7 @@ IMU_STATUS_HITL = 0x08
 IMU_STATUS_LOW_G_FRESH = 0x10
 IMU_STATUS_HIGH_G_FRESH = 0x20
 IMU_STATUS_GYRO_FRESH = 0x40
+IMU_STATUS_HIGH_G_ACTIVE = 0x80  # filtered accel taken from the high-g sensor
 
 FILTERED_ACCEL_G_PER_COUNT = 0.000040
 GYRO_DPS_PER_COUNT = 0.070
@@ -456,12 +457,74 @@ def decode_imu_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
             "low_g_fresh": int(bool(status & IMU_STATUS_LOW_G_FRESH)),
             "high_g_fresh": int(bool(status & IMU_STATUS_HIGH_G_FRESH)),
             "gyro_fresh": int(bool(status & IMU_STATUS_GYRO_FRESH)),
+            "high_g_active": int(bool(status & IMU_STATUS_HIGH_G_ACTIVE)),
             "low_accel_x_g": low[0], "low_accel_y_g": low[1], "low_accel_z_g": low[2],
             "high_accel_x_g": high[0], "high_accel_y_g": high[1], "high_accel_z_g": high[2],
             "gyro_x_dps": gyro[0], "gyro_y_dps": gyro[1], "gyro_z_dps": gyro[2],
             "raw_packet_hex": record.hex(" "),
         })
     return rows, discarded
+
+
+# Witness store-v4 packet stream (P*.BIN): records of
+# [u32 timestamp_us][u8 source][u8 length][complete frame], big-endian.
+PACKET_RECORD_HEADER = 6
+PACKET_SOURCES = {1: "witness_state", 2: "can_rx", 3: "can_tx", 4: "radio_rx"}
+
+
+def decode_packet_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
+    """Decode a P*.BIN packet stream into one row per logged frame.
+
+    time_seconds is relative to the first record (32-bit microseconds
+    unwrapped). Frames the wire parser does not know are kept with their
+    raw bytes; a corrupt record ends the scan and counts as discarded.
+    """
+    rows: list[dict[str, Any]] = []
+    offset = 0
+    first_us = None
+    previous_raw = None
+    wraps = 0
+    while offset + PACKET_RECORD_HEADER <= len(data):
+        raw_us = unsigned(data[offset:offset + 4])
+        source = data[offset + 4]
+        length = data[offset + 5]
+        start = offset + PACKET_RECORD_HEADER
+        frame = data[start:start + length]
+        if source not in PACKET_SOURCES or length < 2 or len(frame) != length \
+                or frame[-1] != 0x0A:
+            break
+        if previous_raw is not None and raw_us < previous_raw:
+            wraps += 1
+        previous_raw = raw_us
+        timestamp_us = raw_us + (wraps << 32)
+        if first_us is None:
+            first_us = timestamp_us
+        packet_id = frame[0]
+        try:
+            packet = parse_packet(packet_id, frame[1:-1])
+        except (IndexError, struct.error, ValueError):
+            packet = None
+        row: dict[str, Any] = {
+            "packet_index": len(rows),
+            "byte_offset": offset,
+            "packet_id": f"0x{packet_id:02X}",
+            "packet_type": packet["packet"] if packet else "unknown",
+            "frame_length": length,
+            "time_seconds": round((timestamp_us - first_us) / 1e6, 6),
+            "timestamp_us": timestamp_us,
+            "log_source": PACKET_SOURCES[source],
+        }
+        if packet:
+            row.update(flatten_packet(packet))
+        row["raw_packet_hex"] = frame.hex(" ")
+        rows.append(row)
+        offset = start + length
+    return rows, len(data) - offset
+
+
+def is_packet_log_name(path: Path) -> bool:
+    """Witness exports the packet stream as P<generation>.BIN."""
+    return path.name.upper().startswith("P") and path.suffix.upper() == ".BIN"
 
 
 def is_imu_log_name(path: Path) -> bool:
@@ -570,7 +633,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="output CSV path (default: input filename with a .csv extension)",
     )
     parser.add_argument(
-        "--format", choices=("auto", "imu", "flash", "wire"), default="auto",
+        "--format", choices=("auto", "imu", "packets", "flash", "wire"), default="auto",
         help="input format; auto treats I*.BIN as the Witness IMU stream",
     )
     return parser
@@ -588,9 +651,14 @@ def main() -> int:
     try:
         data = input_path.read_bytes()
         imu = args.format == "imu" or (args.format == "auto" and is_imu_log_name(input_path))
+        packets = args.format == "packets" or (
+            args.format == "auto" and is_packet_log_name(input_path))
         if imu:
-            input_format = "Witness IMU records (24-byte, store v3)"
+            input_format = "Witness IMU records (24-byte)"
             rows, discarded = decode_imu_log(data)
+        elif packets:
+            input_format = "Witness packet log (store v4 P*.BIN)"
+            rows, discarded = decode_packet_log(data)
         elif args.format == "flash" or (args.format == "auto" and is_flash_record_log(data)):
             input_format = "Witness flash records"
             rows, discarded = decode_flash_log(data)
