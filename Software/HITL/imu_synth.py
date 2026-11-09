@@ -5,7 +5,9 @@ Pipeline (per channel; runs on the desktop, never on the flight computer):
   100 Hz trajectory truth (body specific force in g, body rate in dps)
     -> linear interpolation to the sensor's 7.68 kHz internal rate
     + vibration (48 kHz flight recordings, anti-alias resampled to 7.68 kHz),
-      accelerometers only, from launch
+      accelerometers only, from launch. Vibration profiles belong to one
+      trajectory: vibration/<trajectory file stem>/profile.json names the
+      thrust and lateral recordings and their full scale (find_profile).
     + datasheet errors: zero offsets and gyro sensitivity error at their
       worst-case bounds (random sign per axis, from the seed)
     + white noise at the datasheet noise density (sigma = ND * sqrt(fs / 2))
@@ -42,6 +44,38 @@ from scipy import signal
 HERE = os.path.dirname(os.path.abspath(__file__))
 VIBRATION_DIR = os.path.join(HERE, "vibration")
 
+
+def find_profile(csv_path: str, choice: str = "") -> dict | None:
+    """The vibration profile for a trajectory, or None.
+
+    choice "" (default): vibration/<csv stem>/profile.json if it exists, so a
+    profile is only used with the trajectory it was made for. "none": no
+    vibration. Anything else: a profile folder (absolute, or under vibration/).
+    Returns {"name", "dir", "thrust_path", "lateral_path", "full_scale_g", ...}.
+    """
+    import json
+    choice = (choice or "").strip()
+    if choice.lower() == "none":
+        return None
+    if choice:
+        folder = choice if os.path.isabs(choice) else os.path.join(VIBRATION_DIR, choice)
+        if not os.path.isfile(os.path.join(folder, "profile.json")):
+            raise ValueError(f"vibration profile {choice!r}: no profile.json in {folder}")
+    else:
+        stem = os.path.splitext(os.path.basename(csv_path or ""))[0]
+        folder = os.path.join(VIBRATION_DIR, stem)
+        if not stem or not os.path.isfile(os.path.join(folder, "profile.json")):
+            return None
+    with open(os.path.join(folder, "profile.json")) as f:
+        data = json.load(f)
+    profile = dict(data)
+    profile["name"] = os.path.basename(os.path.normpath(folder))
+    profile["dir"] = folder
+    profile["thrust_path"] = os.path.join(folder, data["thrust"])
+    profile["lateral_path"] = os.path.join(folder, data["lateral"])
+    profile["full_scale_g"] = float(data["full_scale_g"])
+    return profile
+
 RAW_RATE_HZ = 7680
 OUT_RATE_HZ = 960
 DECIMATION = RAW_RATE_HZ // OUT_RATE_HZ  # 8
@@ -68,9 +102,10 @@ GYRO_SENSITIVITY_TOL = 0.003
 class ImuSynthParams:
     enabled: bool = True
     seed: int = 1
-    vibration_thrust_path: str = os.path.join(VIBRATION_DIR, "vibration_flight_thrust.ogg")
-    vibration_lateral_path: str = os.path.join(VIBRATION_DIR, "vibration_flight_lateral.ogg")
-    vibration_full_scale_g: float = 150.67   # sample value 1.0, vibration_audio.txt
+    # Vibration recordings (empty = no vibration); see find_profile().
+    vibration_thrust_path: str = ""
+    vibration_lateral_path: str = ""
+    vibration_full_scale_g: float = 150.67   # sample value 1.0
     vibration_scale: float = 1.0             # 0 disables vibration
     # The z axis uses the lateral recording delayed by this much, so y and z
     # carry the same spectrum and envelope but are not identical.
@@ -160,7 +195,8 @@ def synthesize(time_s, f_body_g, w_body_dps, launch_time_s: float | None,
                     "low_g_offset_g": low_offset.tolist(),
                     "high_g_offset_g": high_offset.tolist(),
                     "params": p.to_dict()}
-    if launch_time_s is not None and p.vibration_scale != 0.0:
+    if launch_time_s is not None and p.vibration_scale != 0.0 and \
+            p.vibration_thrust_path and p.vibration_lateral_path:
         thrust = load_vibration(p.vibration_thrust_path, p.vibration_full_scale_g)
         lateral = load_vibration(p.vibration_lateral_path, p.vibration_full_scale_g)
         start = int(round(launch_time_s * RAW_RATE_HZ))
