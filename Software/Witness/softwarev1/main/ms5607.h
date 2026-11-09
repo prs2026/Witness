@@ -5,6 +5,7 @@
 
 #include "driver/spi_master.h"
 #include "esp_err.h"
+#include "pressure_altitude.h"
 
 class Ms5607 final {
 public:
@@ -15,7 +16,7 @@ public:
     static constexpr std::uint8_t kTemperatureConversionCommand = 0x58; // OSR 4096
     static constexpr std::uint32_t kConversionTimeUs = 9'100;
     static constexpr std::uint32_t kResetDelayMs = 3;
-    static constexpr float kSeaLevelPressureMbar = 1013.25F;
+    static constexpr float kSeaLevelPressureMbar = kStandardSeaLevelPressureMbar;
 
     struct Sample {
         std::uint32_t pressure_raw = 0;

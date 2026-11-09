@@ -14,7 +14,11 @@ with the user before changing them:
 
 - `HW_RADIO_ENABLED` is **1** in `main/hardware_pins.h`. Radio code is present,
   and initialization/service are enabled for the end-to-end setup.
-- `app_main()` starts **UART1**, RX GPIO4 and TX GPIO5, for the PX1120S GPS.
+- `app_main()` starts **UART1** for the GPS (PX1120S or u-blox M8, auto-detected).
+  `HW_MCU_UART_SWAP_RX_TX` in `main/hardware_pins.h` is currently **1**: ESP32 RX
+  is GPIO5 and TX is GPIO4, which is what the fitted u-blox harness needed on
+  2026-11-08. The normal wiring (0) is RX GPIO4, TX GPIO5; the earlier PX1120S
+  streamed on that. Zero UART bytes from boot onward points at this setting.
   Its operational baud is **115200**, 8N1, without flow control.
 - GPS I2C sources remain in `main/`, but are **not compiled or started**.
 - Automatic flight transitions are enabled. Binary sensor logging is enabled
@@ -38,15 +42,18 @@ source when it differs from an older conversation, workbook, or prose document.
 | [GROUND_STATION_PROTOCOL.md](GROUND_STATION_PROTOCOL.md) | Ground-station framing, field tables and command examples |
 | [main/sensors.h](main/sensors.h), [main/sensors.cpp](main/sensors.cpp) | IMU driver, ADC, sensor task, radio scheduling and telemetry generation |
 | [main/ms5607.h](main/ms5607.h), [main/ms5607.cpp](main/ms5607.cpp) | Pressure sensor driver |
+| [main/attitude_estimator.h](main/attitude_estimator.h), [main/attitude_estimator.cpp](main/attitude_estimator.cpp) | Host-testable strapdown attitude estimator feeding the `0x02`/`0xE0` quaternion |
+| [main/pressure_altitude.h](main/pressure_altitude.h) | Pressure-to-altitude formula shared by the MS5607 driver and HITL |
+| [main/hitl_input.h](main/hitl_input.h), [main/hitl_input.cpp](main/hitl_input.cpp) | Host-testable HITL `0x0C` decoder, frame assembler and enter/exit/timeout state |
 | [main/flight_state_machine.h](main/flight_state_machine.h), [main/flight_state_machine.cpp](main/flight_state_machine.cpp) | Flight transitions and sensor-log state gate |
 | [main/witness_status.h](main/witness_status.h) | Atomic ownership of the two status bytes |
 | [main/heartbeat.cpp](main/heartbeat.cpp) | Heartbeat packets, red LED pulse and state-specific PWM beeps |
-| [main/usb_serial_echo.cpp](main/usb_serial_echo.cpp) | USB echo, command parsing, local command execution and export switch |
+| [main/usb_serial_echo.cpp](main/usb_serial_echo.cpp) | USB echo, command parsing, `0x0C` HITL framing, local command execution and export switch |
 | [main/command_bridge.cpp](main/command_bridge.cpp) | Forwarding USB/radio commands to Iris CAN and queueing radio commands for local execution |
 | [main/can_link.h](main/can_link.h), [main/can_link.cpp](main/can_link.cpp), [main/twai_driver.cpp](main/twai_driver.cpp) | Iris CAN link: command/heartbeat transmit, fragmentation and reassembly via [Intercomm](../../Intercomm/README.md) |
 | [main/spi_data_forwarder.cpp](main/spi_data_forwarder.cpp) | Queued USB output, latest-frame radio cache and immediate radio queue |
 | [main/uart_driver.cpp](main/uart_driver.cpp) | UART receive task, raw logging, USB mirroring and GPS parser integration |
-| [main/px1120s_gps.cpp](main/px1120s_gps.cpp), [main/nmea_gps.cpp](main/nmea_gps.cpp) | GPS startup configuration and independent streaming NMEA parser |
+| [main/gps_receiver.cpp](main/gps_receiver.cpp), [main/nmea_gps.cpp](main/nmea_gps.cpp) | GPS identification (PX1120S / u-blox M8) and startup configuration; independent streaming NMEA parser. `px1120s_gps.*` remains only for the inactive I2C path |
 | [main/ra01.cpp](main/ra01.cpp) | SX1262-style radio commands, transmission and continuous receive |
 | [main/w25n01kv.cpp](main/w25n01kv.cpp) | External SPI NAND driver |
 | [main/flash_logger.cpp](main/flash_logger.cpp) | Sensor-record capture, prelaunch ring, UART/text storage and session exports |
@@ -77,15 +84,49 @@ disables radio service until reboot. MS5607 initialization failure is nonfatal
 and is retried from the sensor task. IMU or battery ADC startup failure currently
 causes `Sensors::start()` to fail and therefore aborts through `ESP_ERROR_CHECK`.
 
-All application tasks use `xTaskCreate`, not explicit core pinning. There is one
-FreeRTOS scheduler frequency, **100 Hz**, configured by `CONFIG_FREERTOS_HZ` in
-`sdkconfig.defaults` and the active `sdkconfig`. It is not independently set per
-core or per task. A task's requested millisecond timeout is quantized to the
-10 ms scheduler tick; UART's nominal 2 ms wait is clamped to at least one tick.
+Tasks are pinned with `xTaskCreatePinnedToCore` using `main/task_cores.h`:
+the `sensors` task runs alone on **core 1** (`task_cores::kEstimation`, reserved
+for sensing, attitude and the planned Kalman filter); every other application
+task is on **core 0** (`kSystem`). Core-1 SPI3 users (IMU, MS5607, RA-01) use
+`spi_device_polling_transmit`, so they do not depend on an SPI interrupt
+serviced from core 0. `main/cpu_load.cpp` logs every 10 s (tag `cpu`) the busy
+share of each core (100 % minus its IDLE task) and the busiest tasks, from
+FreeRTOS run-time stats (`CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS`, esp_timer
+counter, enabled in `sdkconfig.defaults`). Bench, 2026-11-08, radio on, 960 Hz
+IMU path: core 0 about 11 % busy on the pad (13-14 % while logging in flight),
+core 1 about 28-30 %, heap free about 104 KB (minimum 101 KB), sensor stack
+6 KB free of 8 KB. Before pinning, the scheduler put nearly everything on core 0
+(32.5 % vs 3.3 %). There is one
+FreeRTOS scheduler frequency, **1000 Hz (1 ms tick)**, configured by
+`CONFIG_FREERTOS_HZ` in `sdkconfig.defaults` and the active (gitignored)
+`sdkconfig`; ESP-IDF prefers an existing `sdkconfig` over the defaults, so
+change both. It is not independently set per core or per task. Iris and
+Aperture remain at 100 Hz. 1000 Hz is the ESP-IDF maximum (`FREERTOS_HZ`
+Kconfig `range 1 1000`); a faster tick needs a patched ESP-IDF, and a faster
+loop should instead be driven by the LSM6 data-ready interrupt (INT1, GPIO41)
+or its FIFO. A task's requested millisecond timeout is quantized to the 1 ms
+tick (`pdMS_TO_TICKS` truncates).
+
+Tick-rate audit (100 to 500 Hz, then 1000 Hz, 2026-11-08; the notes below are
+from the 500 Hz step and still hold at 1 kHz). Millisecond-specified periods keep
+their length, except the sensor loop, now 2 ms (500 Hz, 2 ticks,
+`static_assert`ed in `sensors.h`; was 10 ms),
+flash capture 20 ms (10 ticks, still 50 Hz), sensor/state/debug packets, radio
+schedule, heartbeat, USB 20 ms binary idle boundary, HITL 1000 ms timeout
+(millisecond clock) and the 1 s flash flush. Changes: the UART read wait and the
+CAN service loop's `vTaskDelay(1)` now wake every 2 ms instead of 10 ms (lower
+latency; roughly 800 extra short wake-ups per second in total); the 75 ms Pad
+Idle chirp is 74 ms instead of 70 ms; the RA-01 2 ms reset pulse is a real tick
+instead of zero; the MS5607 PROM-reload wait is rounded up explicitly (at least
+4 ms instead of one 10 ms tick); NAND busy polling (`pdMS_TO_TICKS(1)` = 0, a
+yield) is unchanged. Estimated extra CPU: tick interrupts about 0.3% per core
+plus the extra wake-ups, roughly 1-2% of one core in total. The idle-task
+watchdog (5 s) is unaffected: no new busy loops longer than the 300 us radio
+BUSY spin.
 
 | Task | Priority | Stack bytes | Cadence or role |
 |---|---:|---:|---|
-| `sensors` | 4 | 4096 | Nominal 100 Hz; sole active SPI3 application service loop |
+| `sensors` | 4 | 8192 | Core 1. 500 Hz deadline-scheduled (2 ticks); drains the 960 Hz LSM6 FIFO, attitude, sole active SPI3 application service loop |
 | `flash_capture` | 4 | 3072 | 50 Hz sensor snapshots and prelaunch ring |
 | `flash_logger` | 3 | 7168 | Queue draining and NAND writes; default 1 s flush interval |
 | `uart1` | 3 | 4096 | Blocking UART reads, parsing and raw byte dispatch |
@@ -110,7 +151,7 @@ Use macros from `hardware_pins.h`, not new literal GPIO assignments in drivers.
 | MS5607 | CS 21 |
 | Radio | CS 16, RESET 8, BUSY 39, RF enable 40, DIO1 7, DIO2 6, DIO3 2 |
 | SPI2 external NAND | SCLK 12, IO0/MOSI 11, IO1/MISO 13, IO2 14, IO3 9, CS 10 |
-| UART1 breakout | ESP32 RX 4, TX 5 |
+| UART1 breakout | ESP32 RX 4, TX 5; swapped to RX 5, TX 4 while `HW_MCU_UART_SWAP_RX_TX` is 1 (currently) |
 | Inactive GPS I2C aliases | SDA 4, SCL 5; cannot run concurrently with UART1 |
 | Built-in USB | D- 19, D+ 20 |
 | Battery divider | VSENSE GPIO1, ADC1 channel 0 |
@@ -120,8 +161,8 @@ Use macros from `hardware_pins.h`, not new literal GPIO assignments in drivers.
 
 `Sensors` initializes SPI3 and serializes IMU, barometer and radio operations in
 its own task. Do not add an independent radio task that competes with those
-operations without explicitly redesigning bus ownership. Radio transmit waits
-are synchronous and can stretch the nominal sensor cadence when radio is enabled.
+operations without explicitly redesigning bus ownership. Radio transmission is
+non-blocking (see Radio behavior), so it no longer stretches the sensor cadence.
 `FlashLogger` owns its NAND instance on separate SPI2; export reads occur after
 the writer has frozen.
 
@@ -129,25 +170,306 @@ the writer has frozen.
 
 Configuration constants live principally in `sensors.h` and the device headers:
 
-- IMU SPI mode 3 at 10 MHz. Low-g accelerometer: +/-16 g, configured 120 Hz;
-  high-g accelerometer: +/-320 g, configured 960 Hz; gyro: +/-2000 dps, 120 Hz.
-  Polling at 100 Hz does not retrieve every high-g sample; there is no FIFO
-  streaming implementation here.
+- IMU SPI mode 3 at 10 MHz. Gyro (+/-2000 dps) and low-g accelerometer
+  (+/-16 g) run at the 7.68 kHz ODR with on-chip low-pass filters (gyro LPF1 +
+  LPF2 407 Hz, low-g LPF2 384 Hz); high-g accelerometer (+/-320 g) at 960 Hz.
+  All three are batched into the LSM6 FIFO at 960 Hz and every sample is used
+  (see "960 Hz IMU path").
 - MS5607 SPI mode 3 at 10 MHz, pressure and temperature OSR 4096. Its polling
   state machine alternates conversions with a 9100 us conversion time. Altitude
   uses the configured sea-level reference of 1013.25 mbar, not a launch-site zero.
-- Battery sampling: 10 Hz, derived as a divisor of the 100 Hz sensor loop.
+- Battery sampling: 10 Hz, derived as a divisor of the 500 Hz sensor loop.
   Sixteen ADC readings are averaged, with 12 dB attenuation and a 15k/5k divider
   (battery voltage is four times the ADC-pin voltage). Wire units are millivolts.
 - Sensor telemetry: 10 Hz. State telemetry: 1 Hz. Witness debug: 10 Hz only after
   enabling it. Heartbeat: 1 Hz.
 
 The `filtered_accel` wire field is currently encoded from low-g acceleration;
-its name does not imply that a fused estimator or a high/low-g blending filter
-has been implemented. State orientation, position and velocity are currently
-zero. MCU temperature and GPS Unix time also remain zero in debug output.
-GPS coordinates and altitude are supplied separately by the UART GPS snapshot,
-not by `Sensors::Sample`.
+its name does not imply that a high/low-g blending filter has been implemented.
+The `0x02` and `0xE0` orientation quaternions come from the attitude estimator
+(next section); position and velocity are still zero. MCU temperature and GPS
+Unix time also remain zero in debug output.
+GPS coordinates, altitude and satellite count are supplied separately by the
+UART GPS snapshot (or the HITL sample), not by `Sensors::Sample`.
+
+## IMU calibration
+
+Bench measurement 2026-11-08 (board still, 40 s, radio on): gyro offsets of
+about +0.6 to +0.9 dps on x and -0.4 to -0.9 dps on z, y near zero, and the
+low-g accelerometer reading 0.992 g instead of 1 g. The x offset also drifts
+while the board warms up (0.49-1.05 dps seen within minutes).
+
+Two layers remove them (`main/imu_calibration.{h,cpp}`, pure and
+host-tested; `main/imu_calibration_store.{h,cpp}`, NVS):
+
+1. **Stored calibration** (NVS namespace `imu_cal`, survives reboot): gyro
+   bias, low-g per-axis offset and scale, high-g per-axis offset. Applied to the
+   engineering values the estimator, flight state machine and telemetry use
+   (`Sensors::apply_imu_sample`). Captures use uncorrected values.
+2. **Live pad gyro bias**: the attitude estimator keeps estimating the residual
+   bias from stationary windows in Pad Idle (it freezes at launch). Telemetry
+   gyro (`0x01`, `0xE0`) also subtracts it, so warm-up drift does not show; the
+   estimator's own input is not, to avoid a feedback loop.
+
+The NAND IMU stream (`I*.BIN`) and HITL data stay **raw/uncorrected**; the
+calibration in force is printed at boot and after each change (captured in
+`S*.TXT`). Telemetry `0xE0` low-g/high-g fields are now calibrated counts.
+
+Commands (USB, Pad Idle, real sensors; `comms.h`
+`IRIS_COMMAND_IMU_CALIBRATION`):
+
+| Command | Action |
+|---|---|
+| `05 43 47` | Gyro bias: 4 s still capture, median per axis (robust to spikes), spread limit 3 dps; resets the estimator and saves |
+| `05 43 41` | One face: 2 s still capture; classified by dominant axis (+X, -X, +Y, -Y, +Z, -Z, any order, up to ~14 deg off square). After all six, solves and saves |
+| `05 43 58` | Clears the stored calibration and NVS entry |
+| `05 43 53` | Logs the calibration and faces captured this boot |
+
+Face solve: Gauss-Newton fit of per-axis offset and scale so every corrected
+face has magnitude exactly 1 g (so tilted faces do not bias the scale), from
+the opposite-face estimate; limits: offset <= 300 mg, scale 0.9-1.1. High-g
+offset = mean (high-g - corrected low-g) over the faces. Results log as
+`IMU face <F> captured ...`, `IMU accelerometer calibration done: ...` or a
+`failed: <reason>` line. Guided host tool:
+`python tools/imu_calibrate.py [--tcp HOST:PORT | --serial COMx]` (close Horizon
+first; `--status`, `--clear`, `--gyro-only`).
+
+Bench after the gyro calibration (same 40 s still test): telemetry gyro means
+-0.04 / +0.01 / -0.36 dps (were +0.91 / -0.05 / -0.89), medians within 3
+counts (0.21 dps). The six-face accelerometer calibration needs the board
+turned by hand and has not been run yet; until then |a| stays 0.992 g.
+
+## Attitude estimator
+
+`attitude::Estimator` ([main/attitude_estimator.h](main/attitude_estimator.h))
+is pure C++ with injected time; `Sensors::update_attitude()` feeds it once per
+sensor pass that has a successful IMU read (or a new HITL frame) with body gyro
+(rad/s, from `gyro_mdps`), body low-g specific force (g, from `low_g_accel_mg`),
+a microsecond timestamp and the current flight state (read after the flight
+state machine update of the same pass).
+
+Convention (fixed in the `comms.h` "Orientation quaternion" comment): Hamilton
+quaternion, wire order X, Y, Z, W, rotating BODY to WORLD. WORLD is ENU, +Z up;
+BODY is the LSM6 frame with +X along the nose. All four components zero means
+unavailable. Heading is unobservable; initialization uses the shortest-arc
+rotation from the measured specific-force direction to world +Z, so an
+exactly upright board gets body +Y = north and body +Z = west.
+
+**Gyro interference is a hardware problem.** On the bench (2026-11-08, board
+still on the desk) the LSM6 gyro shows impulsive spikes on all three axes at the
+same instants: with the radio on, standard deviations of 6.6 / 10.4 / 43.6 dps
+(x/y/z), spikes up to -358/+116 dps on z and 38% of samples above 10 dps; with
+`HW_RADIO_ENABLED=0` still 1.25 / 1.49 / 4.7 dps with isolated 1-2-sample spikes
+up to about 30 dps. The accelerometer is clean (|a| 0.9875..0.9923 g). The
+pattern follows LoRa transmissions, so the gyro supply rail or layout couples
+with the RA-01SH power amplifier (non-blocking TX made it visible, because the
+IMU is now also read while the PA is on). The software below reduces the
+effect but **cannot recover the true rate during a corrupted sample**; fix the
+hardware (gyro/LDO decoupling, PA supply isolation, layout) before relying on
+in-flight attitude with the radio transmitting.
+
+| Phase | Behaviour |
+|---|---|
+| Pad Idle | Window membership comes from the accelerometer: every sample \|a\| in 0.95..1.05 g (any other sample, or a dt gap, restarts the window). A window completes after 1 s (at least 50 samples) and is **accepted** when: RMS of the per-axis accel standard deviations <= 0.02 g; per axis robust gyro sigma (1.4826 x MAD) <= 10 dps; at most 40% of samples have any axis more than 10 dps from that axis's median; and the per-axis median vector is <= 5 dps. The bias is the per-axis median. The first accepted window initializes the attitude (shortest arc from the mean accel). Later accepted windows set the bias, **restore the attitude to its value at the window start** (the board did not rotate, so gyro noise integrated over the window is discarded) and apply a tilt correction toward the window's mean accel (fraction window/2 s, about a horizontal axis, so heading is not changed). Every step is gyro propagated (median-filtered, bias-corrected), so non-stationary samples, including the >10 g, 300 ms launch-detection window, are kept and the attitude at the Boost transition already includes the motion since ignition. |
+| Boost, Coast, Descent | Pure median-filtered, bias-corrected gyro integration; no accelerometer use. |
+| Landed | Integration stops and the attitude is held ("attitude after flight"); logged once on entry. Re-entering Pad Idle by command resumes pad behaviour. |
+
+Spike rejection: the integration path uses a per-axis running median of 5 gyro
+samples (`Config::gyro_median_length`, 1 = off, 3 or 5), so the attitude lags by
+2 samples (4 ms at 500 Hz; was 20 ms at 100 Hz) and each sample is integrated
+with its own dt. At 500 Hz a median of 5 spans only 10 ms, so an interference
+burst lasting more than 2 samples (4 ms) is no longer removed; LPF1 also spreads
+a burst over several samples.
+Runs of 1-2 outlier samples are removed; monotonic ramps (tested 0..500 dps)
+pass exactly, and steps lasting 3 or more samples (tested 1000 dps) pass
+unchanged, only delayed. Median of 3 would pass the observed 2-sample runs.
+Cost: the first 2 samples after a reset or after leaving Landed are never
+integrated, and the last 2 before entering Landed are dropped.
+
+Integration is the exact quaternion exponential of the rotation vector
+`(w_filtered - bias) * dt` (series form of sin(t/2)/t below 1e-3 rad),
+right-multiplied in the body frame and renormalized each step, using the actual
+timestamp difference. A dt <= 0 or > 50 ms is a gap: counted, that sample is not
+integrated (it still feeds the median), and it restarts a pad window. dt > 15 ms
+is counted as late but integrated. State is float. The estimator is reset (back
+to all-zero) on every HITL entry, exit or timeout so real and simulated
+attitudes never mix. If Boost is declared before any window was accepted (for
+example a launch command right after boot), the quaternion stays zero for the
+whole flight.
+
+On-chip filtering, from the LSM6DSV320X datasheet (DS14623 Rev 3; register
+bits also match ST's `lsm6dsv320x_reg.h`):
+
+| Register | Value | Meaning | Source |
+|---|---|---|---|
+| CTRL1 (10h) | 0x0C | low-g ODR 7.68 kHz, high performance | Table 22 codes |
+| CTRL8 (17h) | 0x43 | LPF2 ODR/20 = 384 Hz, +/-16 g | Tables 69, 71 |
+| CTRL9 (18h) | 0x08 | LPF2_XL_EN, low-pass path | Table 72 |
+| CTRL2 (11h) | 0x0C | gyro ODR 7.68 kHz, high performance | Section 6.1.3 |
+| CTRL6 (15h) | 0x3C | LPF1_G_BW 011 (LPF1+LPF2 407 Hz), bit 3 = 1, +/-2000 dps | Tables 64, 66 |
+| CTRL7 (16h) | 0x01 | gyro LPF1 on | Table 67 |
+| CTRL1_XL_HG (4Eh) | 0xA4 | high-g output on, 960 Hz, +/-320 g | Tables 147-150 |
+| FIFO_CTRL3 (09h) | 0x99 | BDR_GY = BDR_XL = 960 Hz | 9.7 |
+| COUNTER_BDR_REG1 (0Bh) | 0x08 | XL_HG_BATCH_EN | Table 43 |
+| FIFO_CTRL4 (0Ah) | 0x06 | continuous mode, no temperature or timestamp batching | Table 42 |
+
+CTRL6 bit 3 "must be set to 1 for the correct operation of the device"; older
+firmware wrote 0x04 with it clear.
+
+Filter choice for the 960 Hz stream (Nyquist 480 Hz). At 7.68 kHz the gyro's
+fixed LPF2 alone is 537 Hz (Table 23), above Nyquist, and no LPF1 code gives
+about 532 Hz (7.68 kHz column of Table 66: 281, 213, 156, 407, 102, 58, 28.8,
+14.4 Hz), so LPF1 code 011 (407 Hz) is used. For LPF2-only (537 Hz, aliasing
+480-537 Hz) set `kGyroFilterConfiguration` to 0x00. The low-g LPF2 options at
+7.68 kHz are ODR/10 = 768 Hz or ODR/20 = 384 Hz; 384 Hz is used. The high-g
+channel has no selectable filter, so it runs at 960 Hz rather than being
+decimated from 7.68 kHz. The 960 Hz BDR is exactly 1/8 of the ODR. 1 kHz would
+need HAODR mode (`HAODR_SEL` 01: 8 kHz ODR, different timing) or software
+polling at the 1 ms tick, which jitters and drifts against the sensor clock, so
+960 Hz is the better of the two.
+
+Earlier gyro LPF1 measurements (2026-11-08, 120 and 960 Hz ODR, same session,
+board still, LoRa radio transmitting) showed LPF1 making the radio interference
+worse; LPF1 is on now because the 960 Hz stream needs an anti-alias filter.
+Recheck gyro noise with the radio on at the new settings:
+
+| Gyro configuration | z sd (dps) | z mean (dps) | Attitude init |
+|---|---|---|---|
+| 120 Hz, LPF1 off, CTRL6 0x04 (old) | 76 | -13 | yes, ~27 s |
+| 120 Hz, LPF1 off, CTRL6 0x0C (current) | 84 | -9 | yes, ~20 s; half as many samples > 3 dps |
+| 120 Hz, LPF1 code 110 (24.2 Hz) | 114 | -38 | no |
+| 960 Hz, LPF1 code 110 (28.7 Hz) | 177 | -60 | no |
+
+The interference reaches the gyro's analog front end, so digital filtering
+rectifies it into bias rather than removing it; the estimator's running median
+handles isolated spikes instead. Revisit LPF1 after the board-level radio
+coupling is fixed. The interference level itself varies over time (an earlier
+baseline measured 44 dps z sd), so compare only same-session numbers.
+
+Timestamps: real IMU steps come from a sample clock that advances one sensor
+period per FIFO sample. The period is measured, not nominal: the LSM6 ODR
+differs from typical by 0.13 % x `INTERNAL_FREQ_FINE` (4Fh); this board runs
+about 2.5 % slow (about 936 Hz instead of 960). Each pass the newest sample is
+taken as nominally "now" (`esp_timer` after the FIFO read), and the clock is
+steered 1/16 of the way toward that, snapping to it at startup, after a FIFO
+overrun or after an error above 5 ms. dt therefore stays smooth (bench max dt
+1.1 ms, no late steps) while its sum tracks real time. A sample is about one
+FIFO drain interval (2 ms) older than its timestamp; that constant lag does not
+affect integration. In HITL the step time is the start of the sensor pass that
+consumed the newest `0x0C` frame (`sim_time_ms` is not used). Frames arrive
+asynchronously at about 100 Hz; a pass with no new frame is skipped and the next
+step spans about 20 ms (counted as late), and if two frames arrive within one
+pass only the newest is used. The integrated time therefore tracks Witness
+wall-clock time, which equals simulation time only if the host streams in real
+time. Add the 20 ms median lag when comparing against a truth trajectory.
+
+Limitations: no magnetometer (heading is relative to the initialization only);
+gyro saturates at +/-2000 dps (35 rad/s), beyond which attitude is wrong; no
+coning compensation or gyro scale/
+misalignment calibration; the bias is assumed constant in flight; slow pad
+rotation below 5 dps about the gravity vector (invisible to the accelerometer)
+for a 1 s window is treated as bias and undone; the spike filter cannot recover
+true rates during clustered interference; no accelerometer use after launch, so
+attitude error grows with flight time.
+
+Log lines (tag `sensors`): `attitude initialized: tilt T deg from vertical, gyro
+bias X Y Z dps`; `attitude reset: sensor source is now HITL 0x0C frames|the
+real IMU`; on entering Landed `attitude after flight: q xyzw [x y z w], tilt T
+deg from vertical, integrated N steps over S s (gaps G, late L)` (or `attitude
+after flight unavailable: ...`); and every 10 s `attitude: R Hz, max dt D ms,
+gaps G, late L, spikes rejected S, windows A ok/B accel/C gyro rejected,
+overruns O, max pass P us, radio TX N (failed F), <valid|held|not initialized>,
+tilt T deg, q xyzw [...]`. R is attitude updates per second over the interval;
+max dt and max pass reset each report, the counters are cumulative. A second
+line follows: `imu fifo: R Hz, overruns O, partial slots P, unknown words U, max
+backlog W words` (FIFO samples per second; latched FIFO overruns; time slots
+missing a channel; words with unexpected tags; largest DIFF_FIFO seen in the
+interval). A spike is
+counted when a raw sample differs from the median output by more than 10 dps on
+any axis. `overruns` counts passes whose 2 ms deadline had already passed when
+the loop reached `xTaskDelayUntil`. If the line keeps saying `not initialized`,
+the `gyro rejected` count shows the interference exceeded the window limits.
+
+Host test: `tests/attitude_estimator_test.cpp` (tilt initialization from eight
+orientations, bias estimation, rotating-board rejection, constant-rate
+integration at 100 Hz and with 6..16 ms jittered dt up to 1720 dps, 500 dps ramp,
+1000 dps 3/4-sample steps, 1/2-sample spike rejection, gaps, launch window, pad
+tilt correction, pure integration in flight, Landed hold, zero before
+initialization) plus a bench-interference model: the measured z sequence `0 -5
+-573 1384 541 77 -19 0 -33 94 177 -702 -2 697 6 8 -17 1` (counts) injected as
+bursts at random times (x/y scaled 0.15/0.24 with random sign) over 2-count
+Gaussian noise and a 0.4/-0.3/0.6 dps bias, at 15% ("radio off") and 90%
+("radio on") burst coverage, three seeds each. Results:
+
+| Case | Init | Bias error | Pad 60 s drift, final / max | Coast 10 s drift (pure integration) |
+|---|---|---|---|---|
+| radio off, median 5 | 1.01 s | 0.02-0.04 dps | <= 0.04 / 0.54-0.78 deg | 1.4-3.0 deg |
+| radio off, no filter | 1.01 s | same | <= 0.02 / 2.8-3.5 deg | 6.8-14.7 deg |
+| radio on, median 5 | 1.01 s | 0.07-0.13 dps | <= 0.07 / 1.37-1.41 deg | 11.1-12.0 deg |
+| radio on, no filter | 1.01 s | same | <= 0.01 / 7.1-7.2 deg | 56-58 deg |
+
+The pad final drift is small with or without the filter because each accepted
+window restores the attitude; the filter keeps the within-window excursion
+(max) small. The coast column shows what interference does in flight.
+
+## 960 Hz IMU path
+
+The sensor loop still runs at 500 Hz (`Sensors::kTaskRateHz`, 2 ticks of the
+1 kHz FreeRTOS tick, the ESP-IDF maximum), but IMU data no longer depends on
+it. The LSM6 batches gyro, low-g and high-g words into its 1.5 KB FIFO at
+960 Hz (`Sensors::kImuSampleRateHz`) on its own clock; each pass reads
+FIFO_STATUS1/2 and drains the waiting words in one SPI burst from
+FIFO_DATA_OUT_TAG (78h) (with IF_INC the address rolls back from 7Eh to 78h; up
+to 36 words per burst into DMA-capable buffers). Words are grouped into time
+slots by TAG_CNT; a slot is complete when it has all three channels, and a
+missing channel keeps its previous value (counted as a partial slot). Each
+sample, oldest first, is logged to the NAND IMU stream and steps the attitude
+estimator, whose timing comes from `Sensors::attitude_config()` (nominal
+1.04 ms, late above 1.56 ms, a stationary window needs 480 samples; the window
+buffer holds 1024). The flight state machine and the telemetry packets use the
+newest sample once per pass. Temperature is read from OUT_TEMP at 10 Hz. A late
+pass loses nothing: the FIFO holds about 76 ms. HITL still steps once per 0x0C
+frame (100 Hz from the tool).
+
+Bench, real IMU, radio transmitting, 2026-11-08 (10 s reports): 936-940 Hz
+(the part's ODR is about 2.5 % slow), FIFO overruns 0, partial slots 0,
+unknown words 0, maximum backlog 12-99 words, attitude max dt 1.1 ms with no gaps or late
+steps, about 13 loop deadline overruns per second with max pass 3.4-7.5 ms
+(these no longer lose samples), core 1 28-30 % busy. A commanded flight (Boost,
+Coast, Descent, Landed) logged the 1920-record prelaunch IMU dump and live
+records with no IMU queue drops. Not yet run: a HITL flight at the new rate, a
+long soak, a flight-rate gyro test, or a gyro noise comparison at the new
+filters.
+
+IMU logging capacity (store v3, 24-byte records, 84 per page after the
+12-byte page header, 96 blocks = 516,096 records per slot): 960 Hz until
+Descent, then every 10th record (96 Hz). A 20-minute flight with a 3-minute
+ascent is about 270,000 records (about 50 blocks); 960 Hz for the whole slot
+lasts about 9 minutes. NAND bandwidth is not a limit (about 11 page programs/s
+at 960 Hz).
+
+Known issues: (1) some passes exceed the 2 ms budget (battery ADC, radio TX
+start, log formatting); the FIFO absorbs this, but moving the battery ADC out
+of the SPI3 task would still help; (2) LPF1 made radio interference worse in
+the earlier bench test (see the LPF1 table), so recheck gyro noise with the
+radio on; (3) the 5-sample spike median now spans only about 5 ms.
+
+The sensor task wakes every `kTaskPeriod` (2 ticks = 2 ms) with
+`xTaskDelayUntil`, so periods are measured from the previous deadline, not from
+the end of a pass. Each pass first services HITL, reads the IMU (timestamped),
+the barometer and the battery divisor, updates the flight state machine and the
+attitude, queues telemetry, and only then services the radio. Before this
+change the loop measured about 70 Hz on the bench because `Ra01::transmit()`
+waited for TxDone (about 30-170 ms of LoRa airtime per frame, several frames per
+second) inside the loop. Now `Ra01::start_transmit()` loads the frame and issues
+SetTx (well under 1 ms of SPI), and `poll_transmit()` on later passes reads the
+IRQ only once DIO1 rises (or a 1.1 s host deadline passes), then clears it and
+restores continuous RX. While a frame is on the air the loop does not poll RX
+(the radio cannot receive while transmitting) and does not start another frame;
+the packet schedule and round-robin are otherwise unchanged. `wait_until_ready`
+spins up to 300 us on BUSY before falling back to a one-tick sleep, instead of
+sleeping a whole tick whenever BUSY is briefly high. The blocking
+`Ra01::transmit()` remains as a wrapper but is no longer used.
 
 ## Canonical communication format
 
@@ -161,9 +483,10 @@ tables use absolute frame offsets. Account for the initial ID byte.
 | ID | Packet | Payload bytes | Complete frame bytes |
 |---|---|---:|---:|
 | `01` | Sensors | 21 | 23 |
-| `02` | State | 62 | 64 |
+| `02` | State | 63 | 65 |
 | `03` | Camera telemetry | 17 | 19 |
 | `05` | Command | 8 | 10 |
+| `0C` | HITL sensor input (host to Witness, USB only, never forwarded) | 45 | 47 |
 | `E0` | Witness debug | 101 | 103 |
 | `E1` | IRIS debug | 12 | 14 |
 | `FF` | Heartbeat | 6 | 8 |
@@ -178,7 +501,7 @@ GPS coordinates are signed int24 at 0.0001 degree/count; GPS altitude is float32
 metres above mean sea level. See the field catalog in `comms.h` for every field.
 
 USB is deliberately a **mixed byte stream**: canonical binary telemetry, echoed
-host input, diagnostic text, raw GPS/NMEA and received radio payloads. A text
+host input (except `0C` HITL frames), diagnostic text, raw GPS/NMEA and received radio payloads. A text
 terminal displays binary telemetry as garbage, and a UART chunk boundary can
 allow a telemetry packet to appear between parts of a displayed NMEA sentence.
 GPS parsing and raw logging occur before USB mirroring, so USB interleaving does
@@ -209,8 +532,11 @@ terminal stall means sensor acquisition or GPS reception stopped.
 | 7 | Flash logging fault; also set on raw UART log buffer overflow |
 
 Byte 1 bits 0..2 contain the state enum: Pad Idle 0, Boost 1, Coast 2, Descent 3,
-Landed 4. Bits 3..7 are reserved zero. There is no GPS-fix or radio-ready status
-bit. Readiness flags should not be mistaken for a universal freshness guarantee.
+Landed 4. Bit 3 is GPS locked (a fresh GGA fix with quality >= 1 from UART or
+HITL), set each sensor-loop pass. Bit 4 is HITL active. Bits 5..7 are reserved
+zero. `WitnessStatus::set_state_flag()` owns bits 3/4; `flight_state()` returns
+only the state. There is no radio-ready bit. Readiness flags should not be
+mistaken for a universal freshness guarantee.
 
 The automatic transitions in `flight_state_machine.cpp` are:
 
@@ -246,6 +572,9 @@ the bench; append CR/LF. Hex shown here is text unless sent as actual binary.
 | `05 73 00` through `05 73 04` | Sets flight state; `01` from Pad Idle is a launch trigger |
 | `05 68 68` | Freezes logs and switches USB to read-only mass storage until reset |
 | `05 68 69` | Destructively erases all stored sessions and creates a fresh session |
+| `05 43 47` / `05 43 41` / `05 43 58` / `05 43 53` | IMU calibration: gyro, face, clear, status (USB, Pad Idle; see "IMU calibration") |
+| `05 00 00 00 00 00 00 48 49 0A` (canonical only) | Enter HITL mode; USB and Pad Idle only |
+| `05 00 00 00 00 00 00 48 58 0A` (canonical only) | Exit HITL mode |
 | `TX 05 ...` | Bridges decoded command bytes to CAN/radio; do not assume it performs the same local actions as the non-TX form |
 | `TX ID payload...` with another ID | Queues the future SPI command path; no hardware SPI transmission yet |
 
@@ -255,7 +584,8 @@ export commands merely to inspect or test the system.
 
 `CommandBridge` validates canonical commands and normalizes legacy three-byte commands to complete 10-byte frames before forwarding to Iris CAN. UART1 is exclusively the GPS receiver. USB commands can additionally enter the immediate radio queue; radio commands are queued for local interpretation independently of CAN availability. Invalid EOF/length commands are rejected before forwarding.
 
-Radio local handlers support debug enable, export, erase and state setting.
+Radio local handlers support debug enable, export, erase, state setting and
+HITL exit; HITL enter from radio is rejected and logged.
 Load opcodes `30..35` and regulator opcodes `50..51` are external-device commands,
 not implemented local output controls. For radio debug enable, use command value
 `00 E0` in the compact or canonical representation; do not infer arbitrary
@@ -271,8 +601,9 @@ hardware CRC and normal IQ. Read `ra01.cpp` for the complete setup.
 
 With `HW_RADIO_ENABLED=1` and successful initialization, the sensor task polls
 DIO1 for receive data, logs each received packet and a hex dump, mirrors it to
-USB, and submits `05` packets to `CommandBridge`. The radio returns to continuous
-receive after transmit. Init failure releases the device and does not schedule
+USB, and submits `05` packets to `CommandBridge`. Transmission is non-blocking
+(started in one pass, completed on a later pass when DIO1 signals TxDone; see
+"100 Hz sensor loop"). The radio returns to continuous receive after transmit. Init failure releases the device and does not schedule
 retries or stop sensing/logging.
 
 Per-type downlink rates are independently configured in `sensors.h`, currently
@@ -289,30 +620,112 @@ and debug packets carry the parsed coordinates instead.
 `NmeaGps` object accepts checksum-valid GGA sentences across arbitrary UART read
 boundaries, including GP/GN talkers, converts degrees/minutes and hemisphere to
 decimal degrees, and reads altitude in metres MSL. It does not derive Unix time
-from RMC/ZDA. No-fix GGA immediately invalidates a fix; fixes expire after 3000 ms.
+from RMC/ZDA. It also keeps GGA fix quality (field 6) and satellites used
+(field 7). No-fix GGA immediately invalidates the position but its satellite
+count is still reported; the GGA expires after 3000 ms (`NmeaGps::gga_fresh`).
 Invalid or stale state/debug GPS fields are zero, which is not a unique invalid
-sentinel because zero coordinates and altitude can also be legitimate.
+sentinel because zero coordinates and altitude can also be legitimate; use the
+GPS-locked status bit. State packet byte 63 carries satellites (0 when stale).
 
-`Px1120sGps` performs boot delay, navigation-mode query, airborne configuration
-and mode verification. It uses fixed 115200 baud and SRAM-only settings by
-default; it no longer hunts baud rates or commands the GPS to change baud.
-Checksum-valid no-fix NMEA is enough to prove the link and proceed past an
-unanswered initial mode query, but only mode readback confirms configuration.
+`GpsReceiver` ([main/gps_receiver.h](main/gps_receiver.h)) identifies the fitted
+receiver, then configures it in receiver RAM on every boot (no receiver flash
+writes). Both are set to their airborne 4 g dynamics and their maximum update
+rate, with NMEA reduced to GGA + RMC so the higher rate fits 115200 baud:
 
-| Operation | Complete binary frame in hex |
-|---|---|
-| Query navigation mode | `A0 A1 00 02 64 18 7C 0D 0A` |
-| Set airborne in SRAM | `A0 A1 00 04 64 17 05 00 76 0D 0A` |
-| Expected airborne readback | `A0 A1 00 03 64 8B 05 EA 0D 0A` |
+| Receiver | Identified by | Dynamics | Rate | Maximum for the part |
+|---|---|---|---|---|
+| SkyTraq PX1120S | SkyTraq binary reply to `64 18` | mode 5, airborne (4 g rated) | 25 Hz | 25 Hz; 50/100 Hz only on PX1120S-H |
+| u-blox NEO-M8N | any UBX reply to the `MON-VER` poll | `dynModel` 8, airborne <4 g | 10 Hz | 10 Hz concurrent GNSS; 18 Hz single GNSS |
 
-Last bench report: UART reception was stable at 115200, but airborne verification
-timed out. That does not prove the GPS rejected the command or entered airborne
-mode. The ESP32 TX GPIO5 to GPS RX path and possible evaluation-board USB-UART
-contention were suggested checks, not established causes. The sample NMEA also
-reported fix quality 0 and zero satellites. Do not mark airborne setup or a GPS
-position fix as hardware-verified on the strength of the successful parser tests.
-Five-second `GPS RX` diagnostics report baud, byte count, GGA count, fix freshness
-and idle time. Configuration failure leaves collection enabled.
+Identification, after a 1.5 s boot delay:
+
+1. At 115200, send both polls (each family ignores the other's) up to three times.
+2. A checksum-valid reply picks the model. If none arrives but valid NMEA does,
+   the link is left untouched and the PX1120S is assumed (its mode query has
+   gone unanswered before); readback still decides success.
+3. Only a **silent** link is retried at 9600, the u-blox factory rate. A u-blox
+   found there gets `CFG-PRT` (UART1, 115200, UBX+NMEA); the host follows after
+   150 ms and confirms with another `MON-VER` poll.
+4. Configure, then read back. PX1120S: navigation mode and update rate. u-blox:
+   `CFG-NAV5` dynamic model and `CFG-RATE` period. Missing PX1120S ACKs are
+   tolerated; u-blox ACKs are required.
+
+Failure of any step leaves raw logging running; an unidentified receiver leaves
+the host at 115200. Log lines: `GPS identified as <model> at <baud>`,
+`GPS UART host rate now <baud>`, `<model> airborne 4 g mode and <N> Hz GGA+RMC
+confirmed`, or `<model> startup failed: <reason>`. Frames are listed in
+[GROUND_STATION_PROTOCOL.md](GROUND_STATION_PROTOCOL.md) section 6.
+
+**NAND budget at the higher rates.** Raw UART bytes are logged in every flight
+state into a **circular** 341-block section (about 44.7 MB) per session. GGA +
+RMC is about 150 bytes per fix, so it holds about 3.3 h with the PX1120S at
+25 Hz. When full it erases and overwrites its oldest block (logged once as `GPS
+log ring wrapped`), so a long pad wait loses the oldest pad NMEA, never the
+flight. The export reads the ring oldest page first, by page sequence number.
+
+Bench status: on 2026-11-07 the PX1120S confirmed airborne mode with the previous
+firmware. The rate and NMEA changes, and the whole u-blox path, are covered by
+host tests only and are not yet verified on hardware. Five-second `GPS RX`
+diagnostics report baud, byte count, GGA count, fix freshness and idle time.
+
+## HITL mode
+
+Hardware-in-the-loop mode lets a USB host drive the flight software with
+simulated sensors. Pure logic (decode, framing, enter/exit/timeout with
+injected time) is in `hitl_input.*`; `Sensors` owns a `hitl::Controller` under
+a spinlock and the USB task feeds it.
+
+- **Enter** `0x4849`, canonical 10-byte frame only, accepted only from USB and
+  only in Pad Idle. Radio, compact form and other flight states are rejected
+  and logged. Reboot always starts with HITL off.
+- **Exit** `0x4858` from USB or radio, or automatically after
+  `IRIS_HITL_INPUT_TIMEOUT_MS` (1000 ms) without a valid `0x0C` frame, counted
+  from entry or the last frame. Exit does not change the flight state.
+- **Simulated**: low-g, high-g, gyro, IMU temperature, pressure (altitude via
+  `pressure_altitude.h`, the MS5607 formula), barometer temperature, GPS
+  position/altitude/satellites/quality and battery. While active the sensor
+  task does not read the LSM6, MS5607 or battery ADC; SPI3 radio RX/TX,
+  CAN, heartbeat and flash logging continue (flash records simulated data).
+- **Substitution**: `Sensors::service_hitl()` runs at the top of each sensor
+  pass. A new sample is copied into `working_sample_` and counts as one IMU,
+  barometer and battery update, so the flight state machine, `0x01`, `0x02`,
+  `0xE0`, `latest_sample()` and flash capture all use it.
+  `Sensors::current_gps_fix()` returns the simulated fix in place of
+  `UartDriver::latest_gps_fix()` for state, debug and the GPS-locked bit. The
+  UART parser and raw GPS logging keep running.
+- **Attitude**: the estimator is reset on enter, exit, timeout or re-entry and
+  then runs on the simulated gyro/low-g values exactly as on real data; the
+  quaternion is zero until the first accepted 1 s stationary window of
+  simulated samples, and lags by the 20 ms gyro median. The step time
+  is the sensor-pass time that consumed each frame (see "Attitude estimator").
+- **Readiness**: on enter, exit, timeout or re-entry the working sample and
+  all five readiness flags are cleared. Until the first frame (or, after
+  exit, the first real reading) readiness flags are clear, battery/barometer
+  are zero, GPS has no fix and 0 satellites, no `0x01` is sent and the flight
+  state machine gets no observation. In HITL each frame sets the four IMU
+  flags; the barometer flag follows pressure != 0.
+- **USB framing**: a `0x0C` byte starts a 47-byte frame unless a binary
+  `0x05` command is in progress. Text commands are printable, so a `0x0C` or
+  `0x05` byte discards any unterminated text line first; otherwise stale text
+  (seen on the bench as echoed boot log output with no newline, from the tty
+  being in default echo mode while ser2net reopens it) swallowed the next
+  binary command. The frame is
+  checked for EOF at byte 46; a bad EOF resynchronizes on the next `0x0C` in the
+  rejected bytes, and a partial frame idle for 20 ms is dropped. There is no CRC,
+  so a resync through payload bytes can rarely accept one misaligned frame.
+  Bytes consumed as frames are **not echoed** (saving ~4.7 KB/s at 100 Hz) and
+  never reach `CommandBridge`; `TX 0C ...` is rejected. HITL `0x05` commands are
+  still bridged to Iris and the immediate radio queue like other USB commands.
+- **Log lines** (tag `hitl` unless noted): `HITL mode entered from USB: ...`
+  (W), `HITL enter rejected: received from radio; ...` (W),
+  `HITL enter rejected: flight state is <state>; HITL requires pad idle` (W),
+  `HITL enter ignored: already active`, `HITL mode exited by <USB|radio>
+  command; real sensors restored`, `HITL exit from <src> ignored: HITL not
+  active`, `HITL input timeout: no valid 0x0C packet for 1000 ms; exiting HITL,
+  real sensors restored` (W), `first HITL sample received (sim time N ms)`, a
+  10 s `HITL active: N samples ...` summary, and in tag `serial_command`
+  rate-limited `0x0C HITL frame rejected: ...` and `N 0x0C HITL frame(s)
+  ignored: HITL mode is not active` warnings.
 
 ## Flash storage and export
 
@@ -323,17 +736,49 @@ comments and file/class names are not sufficient identification.
 
 The logger uses a **custom append-only NAND store**, not a mounted writable FAT
 filesystem. On successful initialization it tests a reserved good block by
-erase/write/read comparison, scans sessions, rotates to a new slot and creates
-a new session. There are 16 rotating slots of 62 blocks each, with 20 reserved
-blocks outside the slots. Store version 2 allocates 10 blocks for sensor records,
-40 for UART bytes and 12 for diagnostic text. Version 1 exports are also handled.
-Rotation reuses old storage; this is not unlimited retention.
+erase/write/read comparison, scans sessions and creates a new session. Store
+version 3 (2026-11-08) is built for **one flight at a time**: two slots, A and
+B, of 502 blocks each, plus 20 reserved blocks at the top of the chip. Each
+slot:
+
+| Blocks | Export | Contents |
+|---|---|---|
+| 0 | - | Session header (page 0) and flight marker (page 1, magic `WLFT`) |
+| 1-96 | `I<gen>.BIN` | IMU stream, 24-byte records (below) |
+| 97-136 | `S<gen>.BIN` | 48-byte sensor records at 50 Hz (about 35.8 min) |
+| 137-160 | `S<gen>.TXT` | Captured ESP log text |
+| 161-501 | `U<gen>.BIN` | Raw GPS UART bytes, circular (see GPS section) |
+
+Slot choice at boot: the slot holding the newest *flight* (marker written) is
+kept and the other slot is reused; with no flight on the chip, the empty or
+older slot is reused. The flight marker is written when the first logged state
+(Boost) begins, so pad-only power cycles never overwrite the last flight, and
+the next flight overwrites the flight before it. Every page starts with a
+12-byte header (magic, type, version 3, payload length, u32 page sequence).
+Older store versions are not exported.
 
 | Export filename example | Contents |
 |---|---|
+| `I0000001.BIN` | 24-byte IMU records (decode with Horizon `converter.py`) |
 | `S0000001.BIN` | Fixed 48-byte sensor records; not canonical telemetry packets |
 | `S0000001.TXT` | Captured ESP logging output after the application log hook is installed |
 | `U0000001.BIN` | Exact raw UART bytes, including NMEA and binary responses; no added timestamps or framing |
+
+IMU stream: the sensor task hands every FIFO sample to
+`FlashLogger::log_imu_record()` (non-blocking; a 2048-record queue, drops
+counted and warned at flush). In Pad Idle the writer keeps the last 2 s (1920
+records) in a RAM ring and dumps it when Boost begins; 960 Hz records are then
+kept through Coast, every 10th in Descent (96 Hz), and none in Landed.
+Big-endian record layout (`FlashLogger::make_imu_record()`):
+
+| Offset | Bytes | Field |
+|---:|---:|---|
+| 0 | 4 | uint32 sample time, low 32 bits of esp_timer microseconds (wraps every 71.6 min) |
+| 4 | 6 | Three int16 low-g raw counts |
+| 10 | 6 | Three int16 high-g raw counts |
+| 16 | 6 | Three int16 gyro raw counts |
+| 22 | 1 | Status: bits 0-2 flight state, 0x08 HITL, 0x10/0x20/0x40 low-g/high-g/gyro fresh |
+| 23 | 1 | uint8 record sequence (wraps at 256; gaps reveal drops) |
 
 Sensor capture is independent of the USB packet rates. It samples at 50 Hz,
 holds the most recent 100 records in a two-second Pad Idle ring, and on entry
@@ -435,6 +880,10 @@ g++ -std=c++17 -Wall -Wextra -Werror -I main tests/nmea_gps_test.cpp main/nmea_g
 if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 & .\build\nmea_gps_test.exe
 
+g++ -std=c++17 -Wall -Wextra -Werror -I main tests/gps_receiver_test.cpp main/gps_receiver.cpp -o build/gps_receiver_test.exe
+if ($LASTEXITCODE -ne 0) { throw "compile failed" }
+& .\build\gps_receiver_test.exe
+
 g++ -std=c++17 -Wall -Wextra -Werror -I main tests/px1120s_gps_test.cpp main/px1120s_gps.cpp -o build/px1120s_gps_test.exe
 if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 & .\build\px1120s_gps_test.exe
@@ -442,11 +891,34 @@ if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 g++ -std=c++17 -Wall -Wextra -Werror -I main tests/skytraq_i2c_mailbox_test.cpp main/skytraq_i2c_mailbox.cpp -o build/skytraq_i2c_mailbox_test.exe
 if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 & .\build\skytraq_i2c_mailbox_test.exe
+
+g++ -std=c++17 -Wall -Wextra -Werror -I main tests/hitl_input_test.cpp main/hitl_input.cpp -o build/hitl_input_test.exe
+if ($LASTEXITCODE -ne 0) { throw "compile failed" }
+& .\build\hitl_input_test.exe
+
+g++ -std=c++17 -Wall -Wextra -Werror -I main tests/attitude_estimator_test.cpp main/attitude_estimator.cpp -o build/attitude_estimator_test.exe
+if ($LASTEXITCODE -ne 0) { throw "compile failed" }
+& .\build\attitude_estimator_test.exe
+
+g++ -std=c++17 -Wall -Wextra -Werror -I main tests/imu_calibration_test.cpp main/imu_calibration.cpp -o build/imu_calibration_test.exe
+if ($LASTEXITCODE -ne 0) { throw "compile failed" }
+& .\build\imu_calibration_test.exe
 ```
 
-The tests exercise parsing, fixed-baud configuration protocol handling and the
-inactive mailbox implementation using fake transports. They do not validate
+This PC has host `g++` 16.2 from WinLibs (installed with
+`winget install BrechtSanders.WinLibs.POSIX.UCRT`; it lives under
+`%LOCALAPPDATA%\Microsoft\WinGet\Packages\BrechtSanders.WinLibs*\mingw64\bin`,
+add that to `PATH`). All seven tests above passed there on 2026-11-08.
+esp-clang under `C:\Espressif\tools` targets the ESP chips only and cannot
+build host tests.
+
+The tests exercise parsing, fixed-baud configuration protocol handling, HITL
+decoding/framing/state rules and the inactive mailbox implementation using
+fake transports. They do not validate
 RF, SPI timing, storage power-loss behavior, flight detection or physical wiring.
+The attitude test checks the estimator's math and phase logic only; the
+achieved 100 Hz rate and non-blocking radio TX have been built but not yet
+measured on hardware (read the 10 s `attitude:` log line).
 
 In the previous sandbox the full firmware built using Ninja directly after an
 ESP-IDF configure. ESP-IDF Git ownership warnings and offline registry checks

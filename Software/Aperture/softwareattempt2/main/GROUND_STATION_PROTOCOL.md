@@ -29,9 +29,10 @@ Packet lengths include the packet ID and EOF:
 | ID | Name | Payload bytes | Frame bytes | Local/USB rate | Default radio rate |
 |---:|---|---:|---:|---|---|
 | `0x01` | Sensor | 21 | 23 | 10 Hz | latest frame at 1 Hz |
-| `0x02` | Estimated state | 62 | 64 | 1 Hz | latest frame at 1 Hz |
+| `0x02` | Estimated state | 63 | 65 | 1 Hz | latest frame at 1 Hz |
 | `0x03` | Camera telemetry | 17 | 19 | Iris CAN, 1 Hz | latest frame at 1 Hz |
 | `0x05` | Command | 8 | 10 | received externally | immediate; latest local frame at 1 Hz |
+| `0x0C` | HITL sensor input | 45 | 47 | host to Witness over USB only, ~100 Hz | never transmitted |
 | `0xE0` | Witness debug | 101 | 103 | 10 Hz after debug enable | latest frame at 1 Hz |
 | `0xE1` | IRIS debug | 12 | 14 | Iris CAN, 10 Hz after debug enable | latest frame at 1 Hz |
 | `0xFF` | Heartbeat | 6 | 8 | 1 Hz | latest frame at 1 Hz |
@@ -48,7 +49,7 @@ is byte 0, the first payload byte is byte 1, and EOF is the last byte.
 | Witness/IRIS MCU temperature | `int8` | degrees C = raw |
 | Witness/IRIS battery | `uint16` BE | millivolts = raw |
 | Filtered acceleration | `int24` BE | g = raw x 0.000040 |
-| Quaternion X/Y/Z/W | float32 BE | unitless normalized quaternion |
+| Quaternion X/Y/Z/W | float32 BE | unitless normalized Hamilton quaternion, scalar last, body to ENU world; all zero = unavailable |
 | Position X/Y/Z | float32 BE | meters, estimator local frame |
 | Velocity X/Y/Z | float32 BE | meters/second, estimator local frame |
 | LSM6 low-g acceleration | `int16` BE | g = raw x 0.000488 |
@@ -61,6 +62,8 @@ is byte 0, the first payload byte is byte 1, and EOF is the last byte.
 | Latitude/longitude | `int24` BE | degrees = raw / 10,000; north/east positive |
 | GPS time | `uint32` BE | Unix seconds |
 | GPS altitude | float32 BE | meters above mean sea level |
+| GPS satellites | `uint8` | satellites used in the solution (NMEA GGA field 7) |
+| GPS fix quality | `uint8` | NMEA GGA field 6: 0 no fix, 1 GPS, 2 DGPS, ... |
 | Channel current | `uint8` | amperes = raw x 0.02 |
 | Command | `uint16` BE | enumeration; no scaling |
 
@@ -90,8 +93,15 @@ Status byte 0 contains active-high flags:
 | 6 | `0x40` | Valid MS5607 sample available |
 | 7 | `0x80` | Flash initialized but logging later failed |
 
-Status byte 1 bits 0 through 2 contain the flight state. Bits 3 through 7 are
-reserved and transmitted as zero.
+Status byte 1 bits 0 through 2 contain the flight state. Bits 3 and 4 are
+flags; bits 5 through 7 are reserved and transmitted as zero.
+
+| Bit | Mask | Meaning |
+|---:|---:|---|
+| 3 | `0x08` | GPS locked: a fresh GGA fix (quality >= 1, within 3 s) exists |
+| 4 | `0x10` | HITL mode active: sensor, GPS and battery values are simulated |
+
+Decode the flight state as `byte1 & 0x07`, not as the whole byte.
 
 | Value | Flight state |
 |---:|---|
@@ -118,11 +128,11 @@ reserved and transmitted as zero.
 | 20 | 2 | Gyro Z, signed int16 |
 | 22 | 1 | EOF `0x0A` |
 
-The estimator is not implemented yet. The firmware currently generates the
+No acceleration filter is implemented yet. The firmware currently generates the
 "filtered acceleration" fields from the most recent low-g accelerometer
 samples, converted to the defined 40 micro-g/count format.
 
-### `0x02` Estimated-state packet, 64 bytes
+### `0x02` Estimated-state packet, 65 bytes
 
 | Frame offset | Size | Field |
 |---:|---:|---|
@@ -144,9 +154,28 @@ samples, converted to the defined 40 micro-g/count format.
 | 53 | 4 | GPS altitude, float32 m MSL |
 | 57 | 4 | MS5607 barometric altitude, float32 m |
 | 61 | 2 | Witness/FC battery voltage, uint16 mV |
-| 63 | 1 | EOF `0x0A` |
+| 63 | 1 | GPS satellites used, uint8 |
+| 64 | 1 | EOF `0x0A` |
 
-Status, uptime, barometric altitude, battery voltage, and valid UART1 GPS fixes are populated; estimator fields remain zero.
+Status, uptime, the orientation quaternion, barometric altitude, battery
+voltage, valid UART1 GPS fixes and the satellite count are populated; position
+and velocity remain zero. Satellites come from the most recent checksum-valid
+GGA within 3 s and are reported even when that GGA has no fix (position fields
+are then zero); they are 0 when stale.
+
+Quaternion convention (`0x02` and `0xE0`): Hamilton quaternion sent X, Y, Z,
+W (scalar last), rotating BODY vectors into WORLD (`v_world = q v_body q^-1`).
+WORLD is local ENU (+X east, +Y north, +Z up). BODY is the LSM6 sensor frame,
+with +X along the rocket nose axis, so an upright rocket on the pad has body +X
+pointing to world +Z. **All four components zero means attitude is not
+available**: before the first accepted 1 s stationary window on the pad,
+after HITL entry/exit until a new window is accepted, or when no window was
+accepted before launch. Heading (rotation about world +Z) is not observable without a
+magnetometer; it is fixed arbitrarily by the shortest-arc tilt alignment at
+initialization (an exactly upright rocket gets body +Y = north, body +Z =
+west), so compare yaw only relative to that start. The attitude is gyro
+propagated on the pad with a gated accelerometer tilt correction, purely gyro
+integrated in Boost/Coast/Descent, and held constant from Landed onwards.
 
 ### `0x03` Camera telemetry packet, 19 bytes
 
@@ -194,6 +223,8 @@ Command values currently defined:
 | `0x0050` | 5 V regulator off |
 | `0x0051` | 5 V regulator on |
 | `0x00E0` | Enable Witness debug packets at 10 Hz |
+| `0x4849` | Enter HITL mode (USB only, Pad Idle only; see section 4a) |
+| `0x4858` | Exit HITL mode (USB or LoRa) |
 | `0x6868` | Enter read-only USB mass-storage mode |
 | `0x6869` | Erase all stored log sessions |
 | `0x7300` through `0x7304` | Set flight state using the values above |
@@ -246,7 +277,12 @@ zero bytes at 6..11, and EOF `0x0A` at byte 12. Before a valid receive, RSSI is
 | 98 | 4 | GPS altitude, float32 m MSL |
 | 102 | 1 | EOF `0x0A` |
 
-MCU temperature, estimator fields, and GPS Unix time remain zero. GPS latitude, longitude and MSL altitude come from UART1 NMEA GGA fixes.
+MCU temperature, position, velocity and GPS Unix time remain zero. The
+quaternion is populated exactly as in `0x02` (same convention; all zero until
+the estimator is initialized), so enabling debug output with command `0x00E0`
+gives 10 Hz quaternions on USB (LoRa still sends the newest debug frame at its
+1 Hz radio rate). GPS latitude, longitude and MSL altitude come from UART1 NMEA
+GGA fixes.
 
 ### `0xE1` IRIS debug packet, 14 bytes
 
@@ -261,6 +297,75 @@ MCU temperature, estimator fields, and GPS Unix time remain zero. GPS latitude, 
 | 11 | 1 | Channel 2 current, 0.02 A/count |
 | 12 | 1 | Channel 3 current, 0.02 A/count |
 | 13 | 1 | EOF `0x0A` |
+
+## 4a. HITL (hardware-in-the-loop) mode
+
+HITL replaces Witness's IMU, barometer, GPS and battery readings with values
+from host `0x0C` packets, so the flight state machine, telemetry and flash
+logging run on simulated data. Real IMU, barometer and battery reads stop;
+LoRa, CAN and logging continue.
+
+- **Enter**: canonical 10-byte command `0x4849` (for example
+  `05 00 00 00 00 00 00 48 49 0A`), accepted only from USB and only in Pad
+  Idle. From LoRa, in another flight state, or in compact `05 48 49` form it is
+  rejected and logged. Reboot always starts with HITL off.
+- **Exit**: canonical command `0x4858` from USB or LoRa, or automatically when
+  no valid `0x0C` packet arrives for 1000 ms (from entry or from the last
+  packet). Exit does not change the flight state; send `0x7300` to return to
+  Pad Idle if the simulation launched.
+- **Detect**: status byte 1 bit 4 (`0x10`) is set while HITL is active.
+- **Between enter and the first `0x0C` packet** all readiness flags (byte 0
+  bits 1, 2, 3, 5, 6) are clear, battery and barometer fields are zero, the
+  GPS reports no fix and 0 satellites, no `0x01` packet is produced and the
+  flight state machine receives no input. No real reading is mixed in. The
+  same reset happens on exit until real sensors produce new data.
+- While active, each `0x0C` packet sets the low-g, high-g, gyro and IMU
+  temperature ready flags; the barometer flag is set when pressure is non-zero.
+  Barometric altitude is computed from the pressure with the MS5607 formula.
+  The GPS fields feed state, debug and the GPS-locked bit exactly like a UART
+  GGA (quality 1..8 is a fix; satellites are reported without one).
+- The attitude estimator is reset on HITL entry and exit, then runs on the
+  `0x0C` gyro and low-g accelerometer counts exactly as on real data: the
+  quaternion stays all zero until a 1 s stationary window of simulated
+  samples is accepted in Pad Idle (every |a| 0.95..1.05 g, accel scatter
+  <= 0.02 g, gyro median <= 5 dps with at most 40% of samples more than 10 dps
+  from it). Its time step is the Witness time of the sensor pass that consumed
+  each frame (the `sim_time_ms` field is not used); a pass without a new frame
+  is skipped and the next step spans 20 ms. The gyro passes through a 5-sample
+  running median, so the reported attitude lags by 2 samples (20 ms). Send
+  frames at a steady 100 Hz.
+- HITL commands are bridged to Iris like any other `0x05` command (Iris ignores
+  them). `0x0C` packets are never forwarded to CAN or LoRa.
+
+### `0x0C` HITL sensor input packet, 47 bytes (host to Witness, USB only)
+
+| Frame offset | Size | Field |
+|---:|---:|---|
+| 0 | 1 | Packet ID `0x0C` |
+| 1 | 2 | Sender status, ignored |
+| 3 | 4 | Simulation time, uint32 ms (logged only) |
+| 7, 9, 11 | 2 each | LSM6 low-g X/Y/Z, int16, 0.488 mg/count |
+| 13, 15, 17 | 2 each | LSM6 high-g X/Y/Z, int16, 10.417 mg/count |
+| 19, 21, 23 | 2 each | LSM6 gyro X/Y/Z, int16, 70 mdps/count |
+| 25 | 2 | LSM6 temperature, int16, C = 25 + raw / 256 |
+| 27 | 3 | Pressure, uint24 Pa (0 = no barometer data) |
+| 30 | 2 | Barometer temperature, int16 centi-C |
+| 32 | 3 | Latitude, int24, 0.0001 degree |
+| 35 | 3 | Longitude, int24, 0.0001 degree |
+| 38 | 4 | GPS altitude, float32 m MSL |
+| 42 | 1 | GPS satellites used, uint8 |
+| 43 | 1 | GGA fix quality, uint8 (0 = no fix) |
+| 44 | 2 | Battery voltage, uint16 mV |
+| 46 | 1 | EOF `0x0A` |
+
+Send one complete frame per write, back to back at about 100 Hz (at least
+every 1000 ms to stay in HITL). Witness frames them by fixed length and checks
+EOF at byte 46; on a bad EOF it resynchronizes on the next `0x0C` byte. A `0x0C`
+byte starts a frame unless an unfinished binary `0x05` command is in
+progress; a `0x0C` or `0x05` byte discards any unterminated text line first.
+Send commands as complete canonical frames between `0x0C` frames. Bytes consumed as `0x0C` frames, valid or not,
+are **not echoed**; all other USB input is still echoed. Frames received while
+HITL is inactive are discarded with a rate-limited log line.
 
 ## 5. LoRa/RA-01 settings
 
@@ -295,10 +400,14 @@ Rates must be non-zero integer divisors of 1000 Hz.
 Only one scheduled frame is transmitted per sensor-task pass. Due packet types
 are serviced round-robin, so simultaneous deadlines do not permanently favor
 one ID. The requested rates are upper targets: LoRa airtime and immediate
-traffic can reduce the achieved aggregate rate. Between transmissions the
-radio is returned to continuous receive mode. DIO1 indicates RX completion,
-and all radio work is performed by the sensor task so SPI3 access does not race
-the sensors.
+traffic can reduce the achieved aggregate rate. Transmission is non-blocking:
+the sensor task loads the frame and issues SetTx, then checks DIO1 for TxDone on
+later 10 ms passes (about 170 ms of airtime for a 103-byte frame at SF7/125
+kHz), so radio traffic no longer slows the 100 Hz sensor loop. A new frame is
+started only after the previous one completes; reception is impossible while
+transmitting. After each transmission the radio is returned to continuous
+receive mode. DIO1 indicates RX or TX completion, and all radio work is
+performed by the sensor task so SPI3 access does not race the sensors.
 
 `SpiDataForwarder::kForwardExternalPacketsImmediately` controls the immediate
 forwarding path and defaults to `true`. With it enabled, complete command frames
@@ -310,7 +419,8 @@ all radio output use only the per-packet latest-frame schedule.
 Every valid received radio packet up to the canonical maximum of 103 bytes is
 forwarded unchanged to USB. A received packet beginning with `0x05` is also
 queued unchanged for Iris CAN transmission and local interpretation. Debug enable,
-mass storage, log erase, and flight-state commands execute locally. Load and
+mass storage, log erase, flight-state and HITL-exit commands execute locally;
+HITL enter is rejected over LoRa. Load and
 5 V regulator commands have no Witness-local hardware action because they are
 implemented by the external device. The GPS UART never receives these
 AMA load/regulator commands. SX1262 packets with a CRC error are
@@ -351,20 +461,26 @@ GPS uses UART1; the I2C driver is not started or included in the build.
 
 | Setting | Value |
 |---|---|
-| ESP32 RX | GPIO4 <- GPS TX |
-| ESP32 TX | GPIO5 -> GPS RX |
+| ESP32 RX | GPIO4 <- GPS TX (GPIO5 while `HW_MCU_UART_SWAP_RX_TX` is 1, as currently built) |
+| ESP32 TX | GPIO5 -> GPS RX (GPIO4 while swapped) |
 | Ground | Shared with receiver |
 | Logic voltage | 3.3 V |
 | Operational baud | 115200, 8N1, no flow control |
 
-The UART task retains startup airborne-mode configuration at a fixed 115200
-baud (`Px1120sGps::kBaudRate`). It never sends a receiver baud-change command
-or probes another baud rate. Checksum-valid GGA, including no-fix reports,
-allows airborne configuration to proceed even if the initial mode query gets
-no binary response. Successful mode readback is still required for confirmation.
-A five-second `GPS RX` diagnostic reports host baud, total bytes, valid GGA
-sentence count, fix validity and time since the last UART byte. A failed startup
-configuration does not stop raw collection, sensors, heartbeat or flash logging.
+At startup `GpsReceiver` (`main/gps_receiver.h`) identifies the receiver as a
+SkyTraq PX1120S or a u-blox NEO-M8N by which binary protocol answers a poll,
+then sets airborne 4 g dynamics, the receiver's maximum update rate, and NMEA
+output of GGA + RMC only. A receiver already streaming NMEA at 115200 is never
+baud-probed; only a silent link is retried at 9600 (the u-blox factory rate),
+and a u-blox found there is switched to 115200. A five-second `GPS RX`
+diagnostic reports host baud, total bytes, valid GGA sentence count, fix
+validity and time since the last UART byte. A failed startup configuration does
+not stop raw collection, sensors, heartbeat or flash logging.
+
+| Receiver | Dynamics | Update rate | NMEA output |
+|---|---|---|---|
+| PX1120S | navigation mode 5, airborne (4 g rated) | 25 Hz (part maximum) | GGA + RMC |
+| NEO-M8N | `dynModel` 8, airborne <4 g | 10 Hz (concurrent-GNSS maximum) | GGA + RMC |
 
 Checksum-validated NMEA GGA sentences (including GP/GN talkers) populate
 latitude, longitude and GPS MSL altitude in state (0x02) and Witness debug (0xE0)
@@ -374,32 +490,48 @@ rounded to the canonical signed int24 scale of 0.0001 degree/count.
 Altitude is big-endian float32 metres above mean sea level, not ellipsoid height.
 GPS Unix time remains zero (GGA contains no date).
 
-A no-fix GGA invalidates the current fix immediately. A fix also expires after
+A no-fix GGA invalidates the current fix immediately, but its satellite count
+is still reported. A GGA (and its fix) expires after
 `NmeaGps::kFixTimeoutMs` (3000 ms). Invalid/missing/stale fixes emit zero in all
-three GPS fields, without changing existing status-bit assignments. Zero is not
-a unique invalid marker: a legitimate zero coordinate/altitude has the same
-representation. Bad checksums are discarded and cannot refresh the fix age.
+three GPS position fields and clear status byte 1 bit 3 (GPS locked); stale
+GGA data also reports 0 satellites. Zero is not a unique invalid marker: a
+legitimate zero coordinate/altitude has the same representation; use the
+GPS-locked bit. Bad checksums are discarded and cannot refresh the fix age.
 Raw UART bytes are logged unchanged regardless of fix validity.
 
-Settings are in `main/px1120s_gps.h`: `kConfigureAtStartup`,
-`kNavigationMode` (5 = airborne), `kSaveSettingsToFlash` (false = SRAM only),
-startup delay, reply timeout and retry count. Defaults reapply the configuration
-on every boot without writing receiver flash. The PX1120S datasheet specifies
-a 4 g dynamics capability; its binary protocol selects `airborne` rather than
-a separate numeric `4 g` profile. This does not change the physical receiver's
-dynamics rating.
+Settings are in `main/gps_receiver.h`: `kConfigureAtStartup`,
+`kSkytraqAirborneMode`, `kSkytraqUpdateRateHz`, `kUbloxAirborne4gModel`,
+`kUbloxMeasurementPeriodMs`, startup delay, reply timeout and retry count. All
+settings go to receiver RAM and are reapplied on every boot without writing
+receiver flash. The PX1120S datasheet specifies a 4 g dynamics capability; its
+binary protocol selects `airborne` rather than a separate numeric `4 g` profile.
 
 SkyTraq binary frames use `A0 A1`, a two-byte big-endian payload length, the
-payload, its XOR checksum, and `0D 0A`. Startup commands with SRAM-only attributes:
+payload, its XOR checksum, and `0D 0A`. PX1120S commands (SRAM-only attributes):
 
-| Action | Complete frame (hex) |
-|---|---|
-| Query navigation mode | `A0 A1 00 02 64 18 7C 0D 0A` |
-| Set airborne navigation | `A0 A1 00 04 64 17 05 00 76 0D 0A` |
-| Expected airborne readback | `A0 A1 00 03 64 8B 05 EA 0D 0A` |
+| Action | Complete frame (hex) | Reply |
+|---|---|---|
+| Query navigation mode (also the identification poll) | `A0 A1 00 02 64 18 7C 0D 0A` | `A0 A1 00 03 64 8B 05 EA 0D 0A` when airborne |
+| Set airborne navigation | `A0 A1 00 04 64 17 05 00 76 0D 0A` | ACK `83 64 17` |
+| NMEA output GGA + RMC every fix | `A0 A1 00 09 08 01 00 00 00 01 00 00 00 08 0D 0A` | ACK `83 08` |
+| Position update rate 25 Hz | `A0 A1 00 03 0E 19 00 17 0D 0A` | ACK `83 0E` |
+| Query update rate | `A0 A1 00 01 10 10 0D 0A` | `A0 A1 00 02 86 19 9F 0D 0A` at 25 Hz |
 
-Reference: [SkyTraq AN0037 binary message protocol](https://www.skytraq.com.tw/homesite/AN0037.pdf),
-commands `0x64/0x17`, `0x64/0x18`, and response `0x64/0x8B`.
+u-blox UBX frames use `B5 62`, class, id, a little-endian payload length, the
+payload and a two-byte Fletcher checksum. NEO-M8N commands (RAM only):
+
+| Action | Complete frame (hex) | Reply |
+|---|---|---|
+| Identification poll `MON-VER` | `B5 62 0A 04 00 00 0E 34` | any valid UBX frame |
+| `CFG-PRT` UART1 115200, UBX+NMEA (only when found at 9600) | `B5 62 06 00 14 00 01 00 00 00 D0 08 00 00 00 C2 01 00 03 00 03 00 00 00 00 00 BC 5E` | host follows after 150 ms |
+| `CFG-MSG` GLL / GSA / GSV / VTG off | `B5 62 06 01 03 00 F0 01 00 FB 11`, `… F0 02 00 FC 13`, `… F0 03 00 FD 15`, `… F0 05 00 FF 19` | `ACK-ACK` each |
+| `CFG-MSG` GGA / RMC on every fix | `B5 62 06 01 03 00 F0 00 01 FB 10`, `… F0 04 01 FF 18` | `ACK-ACK` each |
+| `CFG-NAV5` dynamic model 8 (mask 0x0001) | `B5 62 06 24 24 00 01 00 08 00` + 32 zero bytes + `57 F8` | `ACK-ACK` |
+| `CFG-RATE` 100 ms, 1 cycle, GPS time | `B5 62 06 08 06 00 64 00 01 00 01 00 7A 12` | `ACK-ACK` |
+| Readback | `CFG-NAV5` and `CFG-RATE` polls (empty payload) | `dynModel` 8, `measRate` 100 |
+
+References: [SkyTraq AN0037 binary message protocol](https://www.skytraq.com.tw/homesite/AN0037.pdf)
+and the u-blox M8 receiver description (UBX-13003221).
 The supplied [PX1120S manual](c4dba7.pdf) lists the receiver's dynamics rating
 and factory baud rate on PDF page 3.
 
@@ -464,12 +596,16 @@ Legacy compact binary commands are accepted after a 20 ms idle interval:
 05 73 00..04   set flight state
 ```
 
+HITL enter/exit (`0x4849`/`0x4858`) are accepted only as canonical 10-byte
+frames (binary or ASCII hex), not in compact form.
+
 The same compact commands may be typed as ASCII hex followed by Enter. `TX 05
 ...` is another accepted ASCII form and queues the decoded bytes for Iris CAN.
 
-USB input is echoed back byte-for-byte. A ground station using the same USB
-connection for commands and telemetry must therefore recognize or suppress its
-own echoed command bytes.
+USB input is echoed back byte-for-byte, except bytes consumed as `0x0C` HITL
+frames (section 4a). A ground station using the same USB connection for
+commands and telemetry must therefore recognize or suppress its own echoed
+command bytes.
 
 ## 8. USB stream parsing
 
@@ -486,7 +622,7 @@ a candidate only when the fixed-length final byte is `0x0A`:
 ```python
 FRAME_LENGTH = {
     0x01: 23,
-    0x02: 64,
+    0x02: 65,
     0x03: 19,
     0x05: 10,
     0xE0: 103,
@@ -514,7 +650,8 @@ def extract_frames(buffer: bytearray):
 
 This is a resynchronizing parser, not a guarantee against false positives in a
 mixed byte stream. For flight use, a dedicated binary channel or an additional
-sync word plus application CRC would be more robust.
+sync word plus application CRC would be more robust. `0x0C` is input only and
+is never emitted by Witness, so it is absent from this table.
 
 ## 9. Ground-station transmit checklist
 
@@ -526,7 +663,7 @@ sync word plus application CRC would be more robust.
 6. Send exactly ten LoRa payload bytes; do not send ASCII hexadecimal text over
    LoRa.
 7. By default, expect the newest available frame of every produced packet type
-   as its own LoRa payload at 1 Hz. Packet `0x02` remains a complete 64-byte
+   as its own LoRa payload at 1 Hz. Packet `0x02` remains a complete 65-byte
    payload.
 
 

@@ -1,4 +1,5 @@
 #include "can_link.h"
+#include "task_cores.h"
 
 #include <cstring>
 #include "comms.h"
@@ -26,7 +27,7 @@ esp_err_t CanLink::start()
         commands_ = nullptr;
         return result;
     }
-    if (xTaskCreate(task_entry, "iris_can", 4096, this, 3, &task_) != pdPASS) {
+    if (xTaskCreatePinnedToCore(task_entry, "iris_can", 4096, this, 3, &task_, task_cores::kSystem) != pdPASS) {
         (void)driver_.shutdown();
         vQueueDelete(commands_);
         commands_ = nullptr;

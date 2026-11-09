@@ -18,9 +18,24 @@ class Sensors;
 class WitnessStatus;
 class FlightStateMachine;
 
-// Append-only log store for the raw SPI NAND. A read-only FAT volume is
-// generated from its export table by UsbMassStorage; a desktop OS never writes
-// FAT metadata directly to the NAND.
+// Append-only log store for the raw SPI NAND (store version 3).
+//
+// The usable NAND (1,004 blocks) is two session slots, A and B, of 502 blocks.
+// Each slot holds one boot's session:
+//
+//   block 0        session header (page 0) and flight marker (page 1)
+//   blocks 1-96    I*.BIN  IMU stream: 24-byte records, 960 Hz until Descent,
+//                  then every 10th record (96 Hz); prelaunch 2 s included
+//   blocks 97-136  S*.BIN  sensor stream: 48-byte WL records at 50 Hz
+//   blocks 137-160 S*.TXT  diagnostic text
+//   blocks 161-501 U*.BIN  raw GPS UART bytes in a circular buffer that
+//                  overwrites its oldest block when full
+//
+// The flight marker is written once, when sensor logging first starts
+// (Boost). A new session always takes the slot that does NOT hold the newest
+// flight, so bench power-ups keep reusing one slot and the last flight is kept
+// until another flight replaces it. A read-only FAT volume is generated from
+// the export table by UsbMassStorage; a desktop OS never writes the NAND.
 class FlashLogger final {
 public:
     static constexpr UBaseType_t kTaskPriority = 3;
@@ -33,6 +48,30 @@ public:
     static constexpr std::size_t kMaximumExportFiles = 48;
     static constexpr std::size_t kUartReceiveBufferSize = 32768;
 
+    // IMU stream: one record per fresh IMU sample from the sensor loop.
+    static constexpr std::uint32_t kImuRateHz = 960;
+    static constexpr std::uint32_t kImuDescentDecimation = 10; // 960 -> 96 Hz
+    static constexpr std::size_t kImuRecordSize = 24;
+    // IMU record status byte (offset 22).
+    static constexpr std::uint8_t kImuStateMask = 0x07;      // flight state
+    static constexpr std::uint8_t kImuHitlFlag = 0x08;
+    static constexpr std::uint8_t kImuLowGFreshFlag = 0x10;
+    static constexpr std::uint8_t kImuHighGFreshFlag = 0x20;
+    static constexpr std::uint8_t kImuGyroFreshFlag = 0x40;
+
+    struct ImuRecord {
+        std::uint8_t data[kImuRecordSize];
+    };
+
+    // Big-endian layout: u32 timestamp_us (esp_timer, low 32 bits), int16
+    // low-g xyz, int16 high-g xyz, int16 gyro xyz (native LSM6 counts), u8
+    // status (kImu* flags), u8 sequence (assigned by log_imu_record).
+    static ImuRecord make_imu_record(std::uint32_t timestamp_us,
+                                     const std::int16_t low_g[3],
+                                     const std::int16_t high_g[3],
+                                     const std::int16_t gyro[3],
+                                     std::uint8_t status);
+
     struct ExportFile {
         char name[13];                 // DOS 8.3 name, including terminator
         std::uint32_t size;
@@ -40,6 +79,7 @@ public:
         std::uint8_t slot;
         std::uint8_t type;
         std::uint8_t store_version;
+        std::uint32_t start_page;      // first page in reading order (ring files)
     };
 
     FlashLogger(Sensors &sensors,
@@ -55,11 +95,14 @@ public:
     esp_err_t log_uart_bytes(const std::uint8_t *data, std::size_t length) {
         return log_external_bytes(data, length);
     }
+    // Called from the sensor task once per fresh IMU sample. Never blocks;
+    // a full queue drops the record and counts it.
+    esp_err_t log_imu_record(ImuRecord record);
 
     // Flushes the current session and permanently freezes logging until reset.
     // This must complete before exposing the read-only USB disk.
     esp_err_t prepare_mass_storage(TickType_t timeout = portMAX_DELAY);
-    // Destructively erases all session blocks, then creates a fresh empty
+    // Destructively erases both session slots, then creates a fresh empty
     // session. NAND access remains owned by the logger task throughout.
     esp_err_t erase_all_sessions(TickType_t timeout = portMAX_DELAY);
     std::size_t export_file_count() const;
@@ -77,24 +120,35 @@ private:
     static constexpr std::size_t kRecordSize = 48;
     static constexpr std::size_t kPrelaunchRecordCount =
         kLogRateHz * kPrelaunchBufferSeconds;
+    static constexpr std::size_t kImuPrelaunchRecordCount =
+        kImuRateHz * kPrelaunchBufferSeconds;
     // Holds the complete prelaunch dump plus more than three seconds of new
     // live records while the NAND writer catches up.
     static constexpr std::size_t kRecordQueueDepth = 256;
-    static constexpr std::size_t kPageHeaderSize = 8;
+    // About two seconds of 960 Hz IMU records between writer passes.
+    static constexpr std::size_t kImuQueueDepth = 2048;
+    // magic(4) type(1) version(1) length(2) page sequence(4)
+    static constexpr std::size_t kPageHeaderSize = 12;
     static constexpr std::size_t kPagePayloadSize =
         W25n01kv::kPageDataSize - kPageHeaderSize;
     static constexpr std::uint32_t kReservedBlocks = 20;
-    static constexpr std::uint32_t kSessionCount = 16;
-    static constexpr std::uint32_t kBlocksPerSession = 62;
-    static constexpr std::uint32_t kBinaryBlocksPerSession = 10;
-    static constexpr std::uint32_t kUartBlocksPerSession = 40;
-    static constexpr std::uint32_t kTextBlocksPerSession = 12;
+    static constexpr std::uint32_t kSlotCount = 2;
+    static constexpr std::uint32_t kBlocksPerSlot = 502;
+    static constexpr std::uint32_t kHeaderBlocks = 1;
+    static constexpr std::uint32_t kImuBlocks = 96;
+    static constexpr std::uint32_t kBinaryBlocks = 40;
+    static constexpr std::uint32_t kTextBlocks = 24;
+    static constexpr std::uint32_t kUartBlocks =
+        kBlocksPerSlot - kHeaderBlocks - kImuBlocks - kBinaryBlocks - kTextBlocks;
+    static constexpr std::uint32_t kFlightMarkerPage = 1;  // within block 0
     static constexpr std::uint32_t kSessionMagic = 0x574C5331U; // WLS1
+    static constexpr std::uint32_t kFlightMagic = 0x574C4654U;  // WLFT
     static constexpr std::uint32_t kPageMagic = 0x574C5047U;    // WLPG
-    static constexpr std::uint8_t kStoreVersion = 2;
+    static constexpr std::uint8_t kStoreVersion = 3;
     static constexpr std::uint8_t kBinaryType = 1;
     static constexpr std::uint8_t kTextType = 2;
     static constexpr std::uint8_t kUart1Type = 3;
+    static constexpr std::uint8_t kImuType = 4;
     static constexpr std::uint16_t kRecordMagic = 0x574C;       // WL
     static constexpr std::uint8_t kRecordVersion = 1;
 
@@ -113,54 +167,64 @@ private:
         std::uint32_t block_count;
         std::uint32_t page_index;
         std::uint32_t last_erased_block;
+        bool ring = false;       // wrap and overwrite instead of stopping
         bool full = false;
+        bool wrapped = false;
+        std::uint32_t sequence = 0;
     };
     struct FileLayout {
         std::uint32_t first_block;
         std::uint32_t block_count;
-        std::uint32_t first_page;
     };
-    static FileLayout file_layout(std::uint8_t slot, std::uint8_t type,
-                                 std::uint8_t version);
+    struct SlotInfo {
+        bool valid = false;
+        bool flight = false;
+        std::uint32_t generation = 0;
+    };
+    static FileLayout file_layout(std::uint8_t slot, std::uint8_t type);
+    static std::uint32_t slot_base(std::uint8_t slot) { return slot * kBlocksPerSlot; }
 
     static_assert(kLogRateHz > 0 && (1000U % kLogRateHz) == 0);
     static_assert(kPrelaunchRecordCount > 0);
-    static_assert(kBinaryBlocksPerSession + kUartBlocksPerSession +
-                  kTextBlocksPerSession == kBlocksPerSession);
     static_assert(kRecordQueueDepth > kPrelaunchRecordCount);
     static_assert(kFlushIntervalMs == 500 || kFlushIntervalMs == 1000,
                   "Use a 0.5 s or 1 s NAND flush interval");
-    static_assert(kSessionCount * kBlocksPerSession <=
+    static_assert(kSlotCount * kBlocksPerSlot <=
                   W25n01kv::kBlockCount - kReservedBlocks);
+    static_assert(kUartBlocks > 0 && kUartBlocks < kBlocksPerSlot);
+    static_assert(kImuRateHz % kImuDescentDecimation == 0);
 
     static void task_entry(void *context);
     static void capture_task_entry(void *context);
     static int log_vprintf(const char *format, va_list arguments);
     static FlashLogger *log_sink_;
 
+    esp_err_t read_slot_info(std::uint8_t slot, SlotInfo &info);
     esp_err_t scan_sessions(bool build_export_table);
     esp_err_t run_startup_self_test();
     esp_err_t erase_session_blocks();
     esp_err_t create_session();
+    esp_err_t write_flight_marker();
     esp_err_t append_bytes(Writer &writer,
                            const std::uint8_t *data,
                            std::size_t length);
     esp_err_t flush_binary();
+    esp_err_t flush_imu();
     esp_err_t flush_text();
     esp_err_t drain_uart_records(bool flush);
     void set_uart_capture_enabled(bool enabled);
     esp_err_t append_record(const BinaryRecord &record);
+    esp_err_t append_imu_bytes(const std::uint8_t *data);
     esp_err_t drain_binary_records();
-    esp_err_t scan_file_size(std::uint8_t slot,
-                             std::uint8_t type,
-                             std::uint8_t version,
-                             std::uint32_t &size);
+    esp_err_t drain_imu_records();
+    esp_err_t scan_file(std::uint8_t slot, std::uint8_t type, bool ring,
+                        std::uint32_t &size, std::uint32_t &start_page);
     esp_err_t read_file_data(std::size_t file_index,
                              std::uint32_t offset,
                              std::uint8_t *destination,
                              std::size_t length);
     esp_err_t load_export_page(std::size_t file_index,
-                               std::uint32_t page_index,
+                               std::uint32_t step,
                                std::uint32_t logical_offset);
     void invalidate_export_read_cache();
     void serialize_record(std::uint8_t *destination);
@@ -176,6 +240,7 @@ private:
     TaskHandle_t capture_task_handle_ = nullptr;
     QueueHandle_t text_queue_ = nullptr;
     QueueHandle_t binary_record_queue_ = nullptr;
+    QueueHandle_t imu_record_queue_ = nullptr;
     StreamBufferHandle_t uart_queue_ = nullptr;
     SemaphoreHandle_t uart_capture_mutex_ = nullptr;
     bool capture_uart_ = true; // protected by uart_capture_mutex_
@@ -188,10 +253,15 @@ private:
     std::atomic<bool> erase_requested_{false};
     std::atomic<bool> frozen_{false};
     std::atomic<bool> capture_binary_records_{true};
+    std::atomic<bool> capture_imu_records_{false};
+    std::atomic<bool> flight_marker_pending_{false};
+    std::atomic<std::uint32_t> imu_records_dropped_{0};
     std::atomic<std::uint32_t> prelaunch_reset_generation_{0};
     esp_err_t erase_result_ = ESP_OK;
     std::uint8_t binary_buffer_[4096]{};
     std::size_t binary_buffer_used_ = 0;
+    std::uint8_t imu_buffer_[2 * kPagePayloadSize]{};
+    std::size_t imu_buffer_used_ = 0;
     std::uint8_t text_buffer_[4096]{};
     std::size_t text_buffer_used_ = 0;
     // Two complete NAND payloads avoid wasting a third page for 16 bytes.
@@ -201,7 +271,16 @@ private:
     std::size_t prelaunch_write_index_ = 0;
     std::size_t prelaunch_record_count_ = 0;
     bool prelaunch_dump_pending_ = true;
+    // IMU prelaunch ring, owned by the writer task.
+    ImuRecord imu_prelaunch_[kImuPrelaunchRecordCount]{};
+    std::size_t imu_prelaunch_write_ = 0;
+    std::size_t imu_prelaunch_count_ = 0;
+    bool imu_dump_pending_ = true;
+    std::uint32_t imu_descent_counter_ = 0;
+    std::uint8_t imu_sequence_ = 0;            // sensor task only
+    bool flight_marker_written_ = false;       // writer task only
     Writer binary_writer_{};
+    Writer imu_writer_{};
     Writer text_writer_{};
     Writer uart_writer_{};
     ExportFile export_files_[kMaximumExportFiles]{};
@@ -211,7 +290,7 @@ private:
     // its beginning, which otherwise eventually causes host-side timeouts.
     std::uint8_t export_read_page_[W25n01kv::kPageDataSize]{};
     std::size_t export_read_file_index_ = kMaximumExportFiles;
-    std::uint32_t export_read_page_index_ = 0;
+    std::uint32_t export_read_step_ = 0;       // pages from the file's start
     std::uint32_t export_read_logical_offset_ = 0;
     std::uint16_t export_read_payload_length_ = 0;
     bool export_read_cache_valid_ = false;

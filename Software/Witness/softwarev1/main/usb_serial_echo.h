@@ -7,6 +7,7 @@
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "hitl_input.h"
 #include "usb_mass_storage.h"
 
 class Heartbeat;
@@ -40,11 +41,20 @@ private:
         4 + 3 * (IRIS_PACKET_ID_LENGTH + IRIS_PACKET_MAX_DATA_LENGTH);
     static constexpr std::uint32_t kTaskStackSize = 3072;
     static constexpr std::uint32_t kBinaryCommandIdleMs = 20;
+    static constexpr std::uint32_t kHitlErrorReportIntervalMs = 1000;
+    static constexpr std::uint32_t kHitlIgnoredReportIntervalMs = 5000;
 
     static void task_entry(void *context);
     void echo_bytes(const std::uint8_t *data, std::size_t length);
+    // Splits USB input into 0x0C HITL frames (never echoed, never forwarded)
+    // and everything else (echoed, then parsed as before).
+    void consume_input(const std::uint8_t *data, std::size_t length);
+    void echo_and_consume_commands(const std::uint8_t *data, std::size_t length);
+    void handle_hitl_frame(const std::uint8_t *frame);
+    void report_hitl_frame_error(const char *reason);
     void consume_command_bytes(const std::uint8_t *data, std::size_t length);
     void finish_binary_command();
+    void discard_partial_text_line();
     void process_compact_binary_command(
         std::uint8_t command,
         std::uint8_t argument);
@@ -85,4 +95,12 @@ private:
     TickType_t binary_command_last_byte_time_ = 0;
     bool camera_enabled_[2]{};
     bool mass_storage_started_ = false;
+    // Set just before the Serial/JTAG driver is uninstalled for export.
+    bool usb_driver_removed_ = false;
+    hitl::FrameAssembler hitl_frames_{};
+    TickType_t hitl_last_byte_time_ = 0;
+    std::uint32_t hitl_frame_errors_ = 0;
+    TickType_t hitl_last_error_report_ = 0;
+    std::uint32_t hitl_ignored_frames_ = 0;
+    TickType_t hitl_last_ignored_report_ = 0;
 };

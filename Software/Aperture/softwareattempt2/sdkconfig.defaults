@@ -1,0 +1,6 @@
+# Route the primary diagnostic console through the built-in USB Serial/JTAG port,
+# the same port that carries the LoRa bridge traffic to the host.
+# CONFIG_ESP_CONSOLE_UART_DEFAULT is not set
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+CONFIG_ESP_CONSOLE_SECONDARY_NONE=y
+# CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG is not set

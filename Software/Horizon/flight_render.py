@@ -45,9 +45,41 @@ def value_text(trace, history):
         return STATES[int(value)] if value in range(5) else "INVALID STATE"
     if trace.format == "continuity":
         return {0: "OPEN", 1: "CONTINUITY"}.get(value, "UNKNOWN")
+    if trace.format == "flag":
+        return {0: "0", 1: "1"}.get(value, "?")
+    if trace.format == "hitl":
+        return {0: "HITL OFF - real sensors", 1: "HITL ACTIVE - SIMULATED SENSORS"}.get(value, "HITL ?")
     if "voltage" in trace.field.lower():
         return f"{value:.3f}"
     return f"{value:.5g}"
+
+
+def hitl_trace(row, data):
+    """Return (trace, history) for a state row's optional HITL trace."""
+    for trace, history in zip(row.traces[1:], data[1:]):
+        if trace.format == "hitl":
+            return trace, history
+    return None
+
+
+def hitl_line(row, data, end):
+    """Text and color for the HITL line under the flight state.
+
+    HITL active is shown in the error color whatever the data age, so a
+    simulated run cannot be mistaken for flight data even after it stops.
+    """
+    found = hitl_trace(row, data)
+    if found is None:
+        return None
+    trace, history = found
+    if not trace.enabled:
+        return "HITL: N/A", MUTED
+    if history.latest == 1:
+        return "HITL ACTIVE - SIMULATED SENSORS", BAD
+    if history.latest is None:
+        return "HITL: --", MUTED
+    status, _color = quality_text(history, end)
+    return f"HITL off - real sensors ({status})", MUTED
 
 
 def quality_text(history, end):
@@ -180,6 +212,9 @@ class DashboardRenderer:
             self.text((x0, y0 + h * .68, x1, y0 + h * .78), value_text(trace, history), 46, trace.color, True)
             self.text((x0, y0 + h * .79, x1, y0 + h * .825), state, 16, color, True)
             self.text((x0, y0 + h * .83, x1, y0 + h * .865), history.source or "Waiting for Witness", 12, MUTED)
+            hitl = hitl_line(row, data, end)
+            if hitl is not None:
+                self.text((x0, y0 + h * .865, x1, y0 + h * .90), hitl[0], 16, hitl[1], hitl[1] == BAD)
         else:
             self.text((x0, y0 + h * .68, x1, y0 + h * .78), "NOT CONFIGURED", 24, MUTED)
         self.text((x0, y0 + h * .90, x1, y0 + h * .93), "Distance: from first live position / Set pad", 12, MUTED)
@@ -218,6 +253,9 @@ class DashboardRenderer:
             status, color = quality_text(history, end)
             self.text((x0, top + 66, x1, top + 86), status, 14, color)
             self.text((x0, top + 87, x1, top + 107), history.source or "Waiting for Witness", 12, MUTED)
+            hitl = hitl_line(row, data, end)
+            if hitl is not None:
+                self.text((x0, top + 108, x1, top + 130), hitl[0], 15, hitl[1], hitl[1] == BAD)
         else:
             self.text((x0, top + 25, x1, top + 65), "NOT CONFIGURED", 19, MUTED)
         self.text((x0, y1 - 24, x1, y1 - 3), "A baro / Vz estimated; GPS raw", 12, WARN)
@@ -234,6 +272,21 @@ class DashboardRenderer:
         row_h = (h - heading - 10) / len(rows)
         for index, (row, data) in enumerate(rows):
             top = y0 + heading + index * row_h
+            if len(data) == 2 and row.group == "gps" and row_h < 2 * self.font(self.min_font).metrics("linespace") + 2:
+                # Compact GPS pair on one line, e.g. "W   GPS sats 7  lock 1".
+                # Each value keeps its own stale/invalid "!" marker.
+                parts, alert = [], None
+                for trace, history in zip(row.traces, data):
+                    status, color = quality_text(history, end)
+                    marker = "!" if status.startswith(("AGE", "STALE", "INVALID", "SNAPSHOT")) else ""
+                    alert = alert or (color if marker else None)
+                    parts.append(f"{trace.label} {value_text(trace, history)}{marker}")
+                cut = x0 + (x1 - x0) * .30
+                label = row.title.replace("Featherweight", "FW").replace("Witness", "W")
+                self.text((x0, top, cut, top + row_h), label, 14, MUTED)
+                self.text((cut, top, x1, top + row_h), "  ".join(parts), 14,
+                          alert or row.traces[0].color, True, align="right")
+                continue
             if len(data) == 2:
                 # Paired power supplies share one row, but keep independent
                 # values and stale/invalid markers (never combine timestamps).
@@ -244,8 +297,10 @@ class DashboardRenderer:
                     status, color = quality_text(history, end)
                     marker = "!" if status.startswith(("AGE", "STALE", "INVALID", "SNAPSHOT")) else ""
                     unit = trace.unit or row.unit
-                    self.text((a, top + row_h * .42, b, top + row_h - 3),
-                              f"{value_text(trace, history)}{marker} {unit}", 14,
+                    # GPS pairs read "<label> <value>", e.g. "GPS sats 7" "lock 1".
+                    text = (f"{trace.label} {value_text(trace, history)}{marker}" if row.group == "gps"
+                            else f"{value_text(trace, history)}{marker} {unit}")
+                    self.text((a, top + row_h * .42, b, top + row_h - 3), text, 14,
                               color if marker else trace.color, True)
                 if index < len(rows) - 1:
                     self.canvas.create_line(x0, top + row_h, x1, top + row_h, fill=GRID)

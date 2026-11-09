@@ -1,4 +1,5 @@
 #include "usb_serial_echo.h"
+#include "task_cores.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -122,13 +123,14 @@ esp_err_t UsbSerialEcho::start()
     usb_serial_jtag_vfs_use_driver();
 #endif
 
-    const BaseType_t task_created = xTaskCreate(
+    const BaseType_t task_created = xTaskCreatePinnedToCore(
         task_entry,
         "usb_serial_echo",
         kTaskStackSize,
         this,
         kTaskPriority,
-        &task_handle_);
+        &task_handle_,
+        task_cores::kSystem);
 
     if (task_created != pdPASS) {
         task_handle_ = nullptr;
@@ -149,6 +151,9 @@ void UsbSerialEcho::task_entry(void *context)
 
 void UsbSerialEcho::echo_bytes(const std::uint8_t *data, const std::size_t length)
 {
+    if (usb_driver_removed_) {
+        return;
+    }
     std::size_t bytes_echoed = 0;
 
     while (bytes_echoed < length) {
@@ -162,6 +167,97 @@ void UsbSerialEcho::echo_bytes(const std::uint8_t *data, const std::size_t lengt
         } else {
             taskYIELD();
         }
+    }
+}
+
+void UsbSerialEcho::consume_input(
+    const std::uint8_t *data,
+    const std::size_t length)
+{
+    // A 0x0C byte starts a HITL frame unless a binary 0x05 command is in
+    // progress. Text commands are printable, so a 0x0C abandons any partial
+    // text line (for example stale echoed log text with no newline yet).
+    // Once started, the next 46 bytes belong to the frame whatever their value.
+    std::size_t run_start = 0;
+    for (std::size_t index = 0; index < length; ++index) {
+        const std::uint8_t byte = data[index];
+        if (!hitl_frames_.active()) {
+            if (byte != IRIS_PACKET_ID_HITL_SENSORS) {
+                continue;
+            }
+            // The boundary depends on the bytes before this one.
+            echo_and_consume_commands(data + run_start, index - run_start);
+            run_start = index;
+            if (usb_driver_removed_) {
+                return;
+            }
+            if (binary_command_active_) {
+                continue;
+            }
+            discard_partial_text_line();
+        }
+
+        run_start = index + 1U;
+        hitl_last_byte_time_ = xTaskGetTickCount();
+        switch (hitl_frames_.push(byte)) {
+            case hitl::FrameAssembler::Result::Frame:
+                handle_hitl_frame(hitl_frames_.frame());
+                break;
+            case hitl::FrameAssembler::Result::BadEof:
+                report_hitl_frame_error("invalid EOF; resynchronizing");
+                break;
+            default:
+                break;
+        }
+    }
+    echo_and_consume_commands(data + run_start, length - run_start);
+}
+
+void UsbSerialEcho::echo_and_consume_commands(
+    const std::uint8_t *data,
+    const std::size_t length)
+{
+    if (length == 0U || usb_driver_removed_) {
+        return;
+    }
+    echo_bytes(data, length);
+    consume_command_bytes(data, length);
+}
+
+void UsbSerialEcho::handle_hitl_frame(const std::uint8_t *const frame)
+{
+    hitl::Sample sample{};
+    if (!hitl::decode_frame(frame, hitl::kFrameLength, sample)) {
+        report_hitl_frame_error("decode failed");
+        return;
+    }
+    if (sensors_.submit_hitl_sample(sample)) {
+        return;
+    }
+    // Typically a host still streaming after an exit or timeout.
+    ++hitl_ignored_frames_;
+    const TickType_t now = xTaskGetTickCount();
+    if (hitl_ignored_frames_ == 1U ||
+        now - hitl_last_ignored_report_ >=
+            pdMS_TO_TICKS(kHitlIgnoredReportIntervalMs)) {
+        ESP_LOGW(kLogTag, "%lu 0x0C HITL frame(s) ignored: HITL mode is not active",
+                 static_cast<unsigned long>(hitl_ignored_frames_));
+        hitl_ignored_frames_ = 0;
+        hitl_last_ignored_report_ = now;
+    }
+}
+
+void UsbSerialEcho::report_hitl_frame_error(const char *const reason)
+{
+    ++hitl_frame_errors_;
+    const TickType_t now = xTaskGetTickCount();
+    if (hitl_frame_errors_ == 1U ||
+        now - hitl_last_error_report_ >=
+            pdMS_TO_TICKS(kHitlErrorReportIntervalMs)) {
+        ESP_LOGW(kLogTag, "0x0C HITL frame rejected: %s (%lu since last report)",
+                 reason, static_cast<unsigned long>(hitl_frame_errors_));
+        hitl_frame_errors_ = 0;
+        hitl_last_error_report_ = now;
     }
 }
 
@@ -185,7 +281,11 @@ void UsbSerialEcho::consume_command_bytes(
             continue;
         }
 
-        if (command_length_ == 0U && byte == IRIS_PACKET_ID_COMMAND) {
+        if (byte == IRIS_PACKET_ID_COMMAND) {
+            // Text commands are printable, so 0x05 always starts a binary
+            // command, even if unterminated text (such as echoed log output)
+            // is pending. Otherwise that text would swallow the command.
+            discard_partial_text_line();
             binary_command_active_ = true;
             binary_command_last_byte_time_ = xTaskGetTickCount();
             command_buffer_[command_length_++] = static_cast<char>(byte);
@@ -217,6 +317,16 @@ void UsbSerialEcho::consume_command_bytes(
             command_overflow_ = true;
         }
     }
+}
+
+void UsbSerialEcho::discard_partial_text_line()
+{
+    if (command_length_ != 0U || command_overflow_) {
+        ESP_LOGD(kLogTag, "discarded %u bytes of unterminated text before a binary frame",
+                 static_cast<unsigned>(command_length_));
+    }
+    command_length_ = 0;
+    command_overflow_ = false;
 }
 
 void UsbSerialEcho::finish_binary_command()
@@ -272,6 +382,23 @@ void UsbSerialEcho::process_canonical_binary_command(
 
     constexpr std::size_t kCommandFrameOffset =
         IRIS_PACKET_ID_LENGTH + IRIS_PACKET_COMMAND_VALUE_OFFSET;
+    const std::uint16_t command = static_cast<std::uint16_t>(
+        (static_cast<std::uint16_t>(data[kCommandFrameOffset]) << 8U) |
+        data[kCommandFrameOffset + 1U]);
+    if (command == IRIS_COMMAND_HITL_ENTER) {
+        (void)sensors_.enter_hitl(hitl::Source::Usb);
+        return;
+    }
+    if (command == IRIS_COMMAND_HITL_EXIT) {
+        (void)sensors_.exit_hitl(hitl::Source::Usb);
+        return;
+    }
+    if (command == IRIS_COMMAND_WITNESS_DEBUG_START) {
+        // Canonical 05 .. 00 E0 0A, as the HITL tool sends it. The compact
+        // handler has no 0x00E0 form, so without this the request was ignored.
+        process_protocol_command(command);
+        return;
+    }
     process_compact_binary_command(
         data[kCommandFrameOffset], data[kCommandFrameOffset + 1U]);
 }
@@ -294,6 +421,12 @@ void UsbSerialEcho::process_compact_binary_command(
         erase_log_sessions();
     } else if (command == IRIS_COMMAND_SET_FLIGHT_STATE) {
         set_flight_state(argument);
+    } else if (command == IRIS_COMMAND_IMU_CALIBRATION) {
+        (void)sensors_.request_calibration(argument);
+    } else if (command == static_cast<std::uint8_t>(IRIS_COMMAND_HITL_ENTER >> 8) &&
+               (argument == static_cast<std::uint8_t>(IRIS_COMMAND_HITL_ENTER) ||
+                argument == static_cast<std::uint8_t>(IRIS_COMMAND_HITL_EXIT))) {
+        ESP_LOGW(kLogTag, "HITL command ignored: send it as a canonical 10-byte 0x05 frame");
     }
 }
 
@@ -348,6 +481,13 @@ void UsbSerialEcho::process_radio_command(
             break;
         case IRIS_COMMAND_ERASE_LOG_SESSIONS:
             erase_log_sessions();
+            break;
+        case IRIS_COMMAND_HITL_ENTER:
+            // Rejected and logged: HITL can only be entered over USB.
+            (void)sensors_.enter_hitl(hitl::Source::Radio);
+            break;
+        case IRIS_COMMAND_HITL_EXIT:
+            (void)sensors_.exit_hitl(hitl::Source::Radio);
             break;
         case 0x7300U:
         case 0x7301U:
@@ -409,6 +549,9 @@ void UsbSerialEcho::process_command()
                hex_nibble(command_buffer_[7]) >= 0) {
         set_flight_state(
             static_cast<std::uint8_t>(hex_nibble(command_buffer_[7])));
+    } else if (std::strcmp(command_buffer_, "05 48 49") == 0 ||
+               std::strcmp(command_buffer_, "05 48 58") == 0) {
+        ESP_LOGW(kLogTag, "HITL command ignored: send it as a canonical 10-byte 0x05 frame");
     } else if (std::strcmp(command_buffer_, "E0") == 0 ||
                std::strcmp(command_buffer_, "0XE0") == 0) {
         process_protocol_command(IRIS_COMMAND_WITNESS_DEBUG_START);
@@ -515,6 +658,7 @@ void UsbSerialEcho::start_mass_storage()
     spi_interface_.set_output_enabled(false);
     vTaskDelay(pdMS_TO_TICKS(50));
     flash_logger_.disable_console_output();
+    usb_driver_removed_ = true;
 #if CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
     usb_serial_jtag_vfs_use_nonblocking();
 #endif
@@ -588,6 +732,10 @@ void UsbSerialEcho::process_tx_command()
         forward_usb_command(bytes, byte_count);
         return;
     }
+    if (bytes[0] == IRIS_PACKET_ID_HITL_SENSORS) {
+        ESP_LOGW(kLogTag, "TX rejected: 0x0C HITL input is USB-local and never forwarded");
+        return;
+    }
 
     if (byte_count < IRIS_PACKET_ID_LENGTH + 6U) {
         ESP_LOGW(kLogTag, "TX requires an ID and 6 to %u payload bytes",
@@ -625,14 +773,18 @@ void UsbSerialEcho::run()
             buffer, sizeof(buffer), read_timeout);
 
         if (bytes_read > 0) {
-            const std::size_t bytes_to_echo =
-                static_cast<std::size_t>(bytes_read);
-            echo_bytes(buffer, bytes_to_echo);
-            consume_command_bytes(buffer, bytes_to_echo);
+            consume_input(buffer, static_cast<std::size_t>(bytes_read));
         } else if (binary_command_active_ &&
                    (xTaskGetTickCount() - binary_command_last_byte_time_) >=
                        read_timeout) {
             finish_binary_command();
+        } else if (hitl_frames_.active() &&
+                   (xTaskGetTickCount() - hitl_last_byte_time_) >=
+                       read_timeout) {
+            // A host writes each frame at once; a stalled partial frame is
+            // dropped so it cannot absorb the next command.
+            hitl_frames_.reset();
+            report_hitl_frame_error("incomplete frame followed by idle input");
         }
 
         process_queued_radio_commands();

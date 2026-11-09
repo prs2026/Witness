@@ -14,3 +14,6 @@ Software/Horizon/__pycache__/
 
 # KiCad local history (each is its own git repo)
 .history/
+
+# ESP-IDF build output (machine-specific; regenerate with idf.py build)
+build/

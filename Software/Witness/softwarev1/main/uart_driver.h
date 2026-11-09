@@ -8,7 +8,7 @@
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "px1120s_gps.h"
+#include "gps_receiver.h"
 #include "nmea_gps.h"
 
 class SpiDataForwarder;
@@ -16,9 +16,9 @@ class FlashLogger;
 
 class UartDriver final {
 public:
-    // UART task settings. The UART baud rate can be changed here without
-    // modifying the implementation.
-    static constexpr std::uint32_t kBaudRate = Px1120sGps::kBaudRate;
+    // Initial host rate. GpsReceiver may move the host to the u-blox factory
+    // rate while identifying a silent receiver, then back to this rate.
+    static constexpr std::uint32_t kBaudRate = GpsReceiver::kOperationalBaud;
     // GPS receivers must not receive the legacy 05 22 startup probe.
     static constexpr bool kStartupLoopbackTestEnabled = false;
     static constexpr UBaseType_t kTaskPriority = 3;
@@ -37,7 +37,8 @@ public:
 
     esp_err_t start();
     esp_err_t shutdown();
-    // Thread-safe snapshot; invalid/stale fixes return zero-valued coordinates.
+    // Thread-safe snapshot of the latest GGA within the fix timeout, otherwise
+    // a zero Fix. Position fields are zero unless valid; satellites are kept.
     NmeaGps::Fix latest_gps_fix() const;
 
     // Writes the exact bytes supplied to this UART.
@@ -62,7 +63,7 @@ private:
     uart_port_t port_;
     gpio_num_t tx_pin_;
     gpio_num_t rx_pin_;
-    Px1120sGps gps_{{this, gps_send, gps_set_baud}};
+    GpsReceiver gps_{{this, gps_send, gps_set_baud}};
     mutable portMUX_TYPE fix_lock_ = portMUX_INITIALIZER_UNLOCKED;
     NmeaGps::Fix latest_fix_{};
     TaskHandle_t task_handle_ = nullptr;

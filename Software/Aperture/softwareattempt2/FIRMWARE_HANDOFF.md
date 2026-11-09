@@ -177,9 +177,9 @@ enumerate under a different COM number.
 
 The four comms.h copies now share Iris status flags, flight-state definitions,
 all command values, and the 20 mA/count current scale. Aperture continues to
-forward canonical packets unchanged. Witness–Iris CAN fragmentation is internal
+forward canonical packets unchanged. Witnessï¿½Iris CAN fragmentation is internal
 to those boards and never appears on LoRa or USB. See
 [shared CAN contract](../../Intercomm/README.md).
 
-Remote bench: `prs2026hitl`, programming RFC2217 port 7001, raw USB data TCP
-port 7101. Run `flashit.ps1` from this folder to flash the Aperture image.
+Remote bench: `prs2026hitl`, programming RFC2217 port 7000, raw USB data TCP
+port 7100. Run `flashit.ps1` from this folder to flash the Aperture image.

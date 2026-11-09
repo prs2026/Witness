@@ -8,6 +8,12 @@ The converter auto-detects both raw application-packet streams and the fixed
 48-byte ``WL`` records exported by Witness flash mass storage. Neither format
 contains host receive timestamps, so ``time_seconds`` is derived from device
 uptime.
+
+State packets (0x02) are 65-byte frames with ``gps_satellites``. Legacy 64-byte
+state frames from older firmware (no satellite byte) are still accepted: the
+65-byte form is tried first and the 64-byte form is used only when frame
+offset 64 is not 0x0A (or the file ends). See ``frame_payload_length``.
+Echoed host-to-Witness HITL input packets (0x0C, 47 bytes) are skipped.
 """
 
 from __future__ import annotations
@@ -33,11 +39,17 @@ PACKET_NAMES = {
     0xF0: "ground_station_status",
 }
 
+# Host -> Witness HITL sensor input. Witness may echo it on USB; it is framed
+# (fixed length + EOF) and skipped so it is never misparsed as telemetry.
+HOST_PAYLOAD_LENGTHS = {
+    0x0C: (45,),
+}
+
 # The current capture format uses a 23-byte sensor payload.  The 21-byte form
 # declared by comms.h is also accepted for compatibility.
 PAYLOAD_LENGTHS = {
     0x01: (23, 21),
-    0x02: (62,),
+    0x02: (63, 62),  # 65-byte frame with GPS satellites; legacy 64-byte frame
     0x03: (17,),
     0x05: (8,),
     0xFF: (6,),
@@ -51,6 +63,15 @@ PAYLOAD_LENGTHS = {
 FLASH_RECORD_MAGIC = b"WL"
 FLASH_RECORD_VERSION = 1
 FLASH_RECORD_SIZE = 48
+# Witness flash store v3 IMU stream (I*.BIN): 24-byte records, no magic.
+# u32 timestamp_us (low 32 bits of esp_timer), int16 low-g xyz, int16 high-g
+# xyz, int16 gyro xyz (native counts), u8 status, u8 sequence (wraps at 256).
+IMU_RECORD_SIZE = 24
+IMU_STATUS_STATE_MASK = 0x07
+IMU_STATUS_HITL = 0x08
+IMU_STATUS_LOW_G_FRESH = 0x10
+IMU_STATUS_HIGH_G_FRESH = 0x20
+IMU_STATUS_GYRO_FRESH = 0x40
 
 FILTERED_ACCEL_G_PER_COUNT = 0.000040
 GYRO_DPS_PER_COUNT = 0.070
@@ -105,8 +126,8 @@ def parse_packet(packet_id: int, payload: bytes) -> dict[str, Any] | None:
             packet["sensor_trailing_u16"] = unsigned(payload[21:23])
         return packet
 
-    if packet_id == 0x02 and len(payload) == 62:
-        return {
+    if packet_id == 0x02 and len(payload) in (63, 62):
+        packet = {
             "packet": "state",
             "status": unsigned(payload[0:2]),
             "uptime": unsigned(payload[2:6]),
@@ -119,6 +140,10 @@ def parse_packet(packet_id: int, payload: bytes) -> dict[str, Any] | None:
             "barometric_altitude": float32(payload[56:60]),
             "witness_battery_voltage": unsigned(payload[60:62]) * BATTERY_V_PER_COUNT,
         }
+        # Legacy 62-byte payloads leave gps_satellites blank in the CSV.
+        if len(payload) == 63:
+            packet["gps_satellites"] = payload[62]
+        return packet
 
     if packet_id == 0x03 and len(payload) == 17:
         return {
@@ -278,6 +303,9 @@ def flatten_packet(packet: dict[str, Any]) -> dict[str, Any]:
         flat["flight_state_name"] = FLIGHT_STATE_NAMES.get(
             state, f"Reserved ({state})"
         )
+        # Status byte 1 bit 3: fresh GPS fix; bit 4: HITL (simulated sensors).
+        flat["gps_locked"] = (status_byte1 >> 3) & 0x01
+        flat["hitl_active"] = (status_byte1 >> 4) & 0x01
     return flat
 
 
@@ -365,6 +393,82 @@ def decode_flash_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
     return rows, discarded
 
 
+def frame_payload_length(data: bytes, offset: int, lengths: tuple[int, ...]) -> int | None:
+    """Return the first candidate payload length whose EOF byte is 0x0A.
+
+    Candidates are listed longest first. For the state packet this means a
+    65-byte frame wins whenever frame offset 64 is 0x0A, even if offset 63 is
+    also 0x0A (10 satellites). The legacy 64-byte frame is chosen only when
+    offset 63 is 0x0A and offset 64 is not (or the data ends). No packet ID is
+    0x0A, so a legacy frame followed by any valid packet is unambiguous; the
+    remaining false match needs a stray 0x0A byte right after a legacy frame.
+    """
+    for candidate_length in lengths:
+        eof_index = offset + 1 + candidate_length
+        if eof_index < len(data) and data[eof_index] == EOF:
+            return candidate_length
+    return None
+
+
+def decode_imu_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
+    """Decode a store-v3 I*.BIN IMU stream into rows.
+
+    time_seconds is relative to the first record, unwrapping the 32-bit
+    microsecond counter. ``missing_before`` counts records lost before this
+    one, from the 8-bit sequence (it cannot see gaps of 256 or more).
+    """
+    rows: list[dict[str, Any]] = []
+    discarded = len(data) % IMU_RECORD_SIZE
+    first_us = None
+    previous_raw = None
+    wraps = 0
+    previous_sequence = None
+    for offset in range(0, len(data) - discarded, IMU_RECORD_SIZE):
+        record = data[offset:offset + IMU_RECORD_SIZE]
+        raw_us = unsigned(record[0:4])
+        if previous_raw is not None and raw_us < previous_raw:
+            wraps += 1
+        previous_raw = raw_us
+        timestamp_us = raw_us + (wraps << 32)
+        if first_us is None:
+            first_us = timestamp_us
+        status = record[22]
+        sequence = record[23]
+        missing = 0 if previous_sequence is None else (sequence - previous_sequence - 1) % 256
+        previous_sequence = sequence
+        state = status & IMU_STATUS_STATE_MASK
+        low = [signed(record[i:i + 2]) * LSM6_LOW_ACCEL_G_PER_COUNT for i in (4, 6, 8)]
+        high = [signed(record[i:i + 2]) * LSM6_HIGH_ACCEL_G_PER_COUNT for i in (10, 12, 14)]
+        gyro = [signed(record[i:i + 2]) * GYRO_DPS_PER_COUNT for i in (16, 18, 20)]
+        rows.append({
+            "packet_index": len(rows),
+            "byte_offset": offset,
+            "packet_id": "IMU",
+            "packet_type": "imu_sample",
+            "frame_length": IMU_RECORD_SIZE,
+            "time_seconds": round((timestamp_us - first_us) / 1e6, 6),
+            "timestamp_us": timestamp_us,
+            "sequence": sequence,
+            "missing_before": missing,
+            "flight_state": state,
+            "flight_state_name": FLIGHT_STATE_NAMES.get(state, f"Reserved ({state})"),
+            "hitl_active": int(bool(status & IMU_STATUS_HITL)),
+            "low_g_fresh": int(bool(status & IMU_STATUS_LOW_G_FRESH)),
+            "high_g_fresh": int(bool(status & IMU_STATUS_HIGH_G_FRESH)),
+            "gyro_fresh": int(bool(status & IMU_STATUS_GYRO_FRESH)),
+            "low_accel_x_g": low[0], "low_accel_y_g": low[1], "low_accel_z_g": low[2],
+            "high_accel_x_g": high[0], "high_accel_y_g": high[1], "high_accel_z_g": high[2],
+            "gyro_x_dps": gyro[0], "gyro_y_dps": gyro[1], "gyro_z_dps": gyro[2],
+            "raw_packet_hex": record.hex(" "),
+        })
+    return rows, discarded
+
+
+def is_imu_log_name(path: Path) -> bool:
+    """Witness exports the IMU stream as I<generation>.BIN."""
+    return path.name.upper().startswith("I") and path.suffix.upper() == ".BIN"
+
+
 def decode_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
     """Decode either a flash-record file or a possibly noisy packet stream."""
     if is_flash_record_log(data):
@@ -377,18 +481,21 @@ def decode_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
 
     while offset < len(data):
         packet_id = data[offset]
+        host_lengths = HOST_PAYLOAD_LENGTHS.get(packet_id)
+        if host_lengths is not None:
+            payload_length = frame_payload_length(data, offset, host_lengths)
+            if payload_length is not None:
+                # Skip the echoed host packet whole; it is not telemetry and
+                # is not counted as discarded noise.
+                offset += 1 + payload_length + 1
+                continue
         lengths = PAYLOAD_LENGTHS.get(packet_id)
         if lengths is None:
             offset += 1
             discarded += 1
             continue
 
-        payload_length = None
-        for candidate_length in lengths:
-            eof_index = offset + 1 + candidate_length
-            if eof_index < len(data) and data[eof_index] == EOF:
-                payload_length = candidate_length
-                break
+        payload_length = frame_payload_length(data, offset, lengths)
 
         if payload_length is None:
             offset += 1
@@ -462,6 +569,10 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "-o", "--output", type=Path,
         help="output CSV path (default: input filename with a .csv extension)",
     )
+    parser.add_argument(
+        "--format", choices=("auto", "imu", "flash", "wire"), default="auto",
+        help="input format; auto treats I*.BIN as the Witness IMU stream",
+    )
     return parser
 
 
@@ -476,10 +587,18 @@ def main() -> int:
 
     try:
         data = input_path.read_bytes()
-        input_format = (
-            "Witness flash records" if is_flash_record_log(data) else "wire packets"
-        )
-        rows, discarded = decode_log(data)
+        imu = args.format == "imu" or (args.format == "auto" and is_imu_log_name(input_path))
+        if imu:
+            input_format = "Witness IMU records (24-byte, store v3)"
+            rows, discarded = decode_imu_log(data)
+        elif args.format == "flash" or (args.format == "auto" and is_flash_record_log(data)):
+            input_format = "Witness flash records"
+            rows, discarded = decode_flash_log(data)
+        else:
+            input_format = (
+                "Witness flash records" if is_flash_record_log(data) else "wire packets"
+            )
+            rows, discarded = decode_log(data)
         write_csv(rows, output_path)
     except OSError as exc:
         print(f"error: {exc}", file=sys.stderr)

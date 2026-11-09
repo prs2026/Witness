@@ -50,6 +50,24 @@
 #define IRIS_FLIGHT_STATE_COAST 0x02U
 #define IRIS_FLIGHT_STATE_DESCENT 0x03U
 #define IRIS_FLIGHT_STATE_LANDED 0x04U
+// Hardware-in-the-loop (HITL) test mode. ENTER is accepted only from USB and
+// only in Pad Idle; Witness then takes IMU, barometer, GPS and battery values
+// from host 0x0C packets instead of its sensors. EXIT (USB or radio), a reboot,
+// or no 0x0C packet for IRIS_HITL_INPUT_TIMEOUT_MS returns to real sensors.
+#define IRIS_COMMAND_HITL_ENTER 0x4849U
+#define IRIS_COMMAND_HITL_EXIT 0x4858U
+// IMU calibration (USB only, Pad Idle, real sensors): 0x05, 0x43, then one of
+// these arguments. GYRO captures 2 s still and stores the gyro bias; FACE
+// captures 2 s on one face (+/-X, +/-Y, +/-Z, any order) and, after all six,
+// solves and stores accelerometer offset/scale and high-g offset; CLEAR erases
+// the stored calibration; STATUS logs it. Results are ESP log lines (tag
+// sensors) and persist in NVS across reboots.
+#define IRIS_COMMAND_IMU_CALIBRATION 0x43U
+#define IRIS_IMU_CALIBRATION_GYRO 0x47U   /* 'G' */
+#define IRIS_IMU_CALIBRATION_FACE 0x41U   /* 'A' */
+#define IRIS_IMU_CALIBRATION_CLEAR 0x58U  /* 'X' */
+#define IRIS_IMU_CALIBRATION_STATUS 0x53U /* 'S' */
+#define IRIS_HITL_INPUT_TIMEOUT_MS 1000U
 
 // Producer-defined IRIS status-byte flags.
 #define IRIS_STATUS_CURRENT_MONITOR_ERROR_FLAG 0x01U
@@ -88,8 +106,14 @@
 #define IRIS_WITNESS_STATUS_FLIGHT_STATE_BYTE_OFFSET 1U
 #define IRIS_WITNESS_STATUS_FLIGHT_STATE_SHIFT 0U
 #define IRIS_WITNESS_STATUS_FLIGHT_STATE_MASK 0x07U
-// Status byte 1, bits 3..7: reserved and transmitted as zero.
-#define IRIS_WITNESS_STATUS_RESERVED_MASK 0xF8U
+// Status byte 1, bit 3: a fresh GPS fix (GGA quality >= 1) is available.
+#define IRIS_WITNESS_STATUS_GPS_LOCKED_BYTE_OFFSET 1U
+#define IRIS_WITNESS_STATUS_GPS_LOCKED_MASK (1U << 3)
+// Status byte 1, bit 4: HITL mode is active; sensor values are simulated.
+#define IRIS_WITNESS_STATUS_HITL_ACTIVE_BYTE_OFFSET 1U
+#define IRIS_WITNESS_STATUS_HITL_ACTIVE_MASK (1U << 4)
+// Status byte 1, bits 5..7: reserved and transmitted as zero.
+#define IRIS_WITNESS_STATUS_RESERVED_MASK 0xE0U
 
 // Witness uptime: big-endian uint32, milliseconds since boot. The counter
 // wraps after approximately 49.7 days.
@@ -122,8 +146,14 @@
 #define IRIS_FIELD_FILTERED_ACCEL_Z_LENGTH 3U
 
 // Orientation quaternion: big-endian IEEE-754 float32, unitless normalized
-// quaternion components in X, Y, Z, W order. Coordinate-frame convention is
-// estimator-defined and must be shared separately by producers and consumers.
+// quaternion components in X, Y, Z, W order (scalar last).
+// Convention: Hamilton quaternion rotating BODY vectors into the WORLD frame
+// (v_world = q * v_body * q^-1). WORLD is local ENU: +X east, +Y north,
+// +Z up. BODY is the LSM6 sensor frame, with +X along the rocket's nose axis
+// (an upright rocket on the pad has body +X pointing to world +Z). Heading
+// (rotation about world +Z) is not observable without a magnetometer; it is
+// fixed arbitrarily at initialization by the shortest-arc tilt alignment.
+// All four components zero means attitude is not available.
 #define IRIS_FIELD_ORIENTATION_QUAT_X_LENGTH 4U
 #define IRIS_FIELD_ORIENTATION_QUAT_Y_LENGTH 4U
 #define IRIS_FIELD_ORIENTATION_QUAT_Z_LENGTH 4U
@@ -184,6 +214,14 @@
 
 // GPS altitude: big-endian IEEE-754 float32, meters above mean sea level.
 #define IRIS_FIELD_GPS_ALTITUDE_LENGTH 4U
+
+// GPS satellites: unsigned uint8, satellites used in the solution (NMEA GGA
+// field 7) from the most recent GGA within the fix timeout; 0 when stale.
+#define IRIS_FIELD_GPS_SATELLITES_LENGTH 1U
+
+// GPS fix quality: unsigned uint8, NMEA GGA field 6 (0 = no fix, 1 = GPS,
+// 2 = DGPS, ...). Used by the HITL input packet.
+#define IRIS_FIELD_GPS_FIX_QUALITY_LENGTH 1U
 
 // Channel current: unsigned uint8, 0.02 ampere/count (20 mA/count).
 // Representable range is 0.00 to 5.10 A. Camera reports one-second peaks;
@@ -361,6 +399,10 @@
      IRIS_PACKET_STATE_BAROMETRIC_ALTITUDE_LENGTH)
 #define IRIS_PACKET_STATE_BATTERY_VOLTAGE_LENGTH \
     IRIS_FIELD_WITNESS_BATTERY_VOLTAGE_LENGTH
+#define IRIS_PACKET_STATE_GPS_SATELLITES_OFFSET \
+    (IRIS_PACKET_STATE_BATTERY_VOLTAGE_OFFSET + \
+     IRIS_PACKET_STATE_BATTERY_VOLTAGE_LENGTH)
+#define IRIS_PACKET_STATE_GPS_SATELLITES_LENGTH IRIS_FIELD_GPS_SATELLITES_LENGTH
 #define IRIS_PACKET_STATE_DATA_LENGTH \
     (IRIS_PACKET_STATE_STATUS_LENGTH + \
      IRIS_PACKET_STATE_UPTIME_LENGTH + \
@@ -371,7 +413,8 @@
      IRIS_PACKET_STATE_LONGITUDE_LENGTH + \
      IRIS_PACKET_STATE_GPS_ALTITUDE_LENGTH + \
      IRIS_PACKET_STATE_BAROMETRIC_ALTITUDE_LENGTH + \
-     IRIS_PACKET_STATE_BATTERY_VOLTAGE_LENGTH)
+     IRIS_PACKET_STATE_BATTERY_VOLTAGE_LENGTH + \
+     IRIS_PACKET_STATE_GPS_SATELLITES_LENGTH)
 #define IRIS_PACKET_STATE_EOF_OFFSET IRIS_PACKET_STATE_DATA_LENGTH
 #define IRIS_PACKET_STATE_FRAME_LENGTH \
     (IRIS_PACKET_ID_LENGTH + IRIS_PACKET_STATE_DATA_LENGTH + \
@@ -581,6 +624,41 @@
 #define IRIS_PACKET_IRIS_DEBUG_CAN_FRAME_COUNT \
     IRIS_CAN_FRAME_COUNT(IRIS_PACKET_IRIS_DEBUG_FRAME_LENGTH)
 
+// ---------------------------------------------------------------------------
+// HITL sensor input packet (0x0C), host -> Witness over USB only
+// ---------------------------------------------------------------------------
+// Never bridged to CAN or radio. Field encodings match the Witness debug
+// packet's native sensor counts; offsets are payload-relative. Witness
+// computes barometric altitude from the pressure, as it does for the MS5607.
+
+#define IRIS_PACKET_ID_HITL_SENSORS 0x0CU
+
+#define IRIS_PACKET_HITL_STATUS_OFFSET 0U             // sender status, ignored
+#define IRIS_PACKET_HITL_SIM_TIME_OFFSET 2U           // uint32 simulation ms
+#define IRIS_PACKET_HITL_LOW_ACCEL_X_OFFSET 6U        // int16, 0.488 mg/count
+#define IRIS_PACKET_HITL_LOW_ACCEL_Y_OFFSET 8U
+#define IRIS_PACKET_HITL_LOW_ACCEL_Z_OFFSET 10U
+#define IRIS_PACKET_HITL_HIGH_ACCEL_X_OFFSET 12U      // int16, 10.417 mg/count
+#define IRIS_PACKET_HITL_HIGH_ACCEL_Y_OFFSET 14U
+#define IRIS_PACKET_HITL_HIGH_ACCEL_Z_OFFSET 16U
+#define IRIS_PACKET_HITL_GYRO_X_OFFSET 18U            // int16, 70 mdps/count
+#define IRIS_PACKET_HITL_GYRO_Y_OFFSET 20U
+#define IRIS_PACKET_HITL_GYRO_Z_OFFSET 22U
+#define IRIS_PACKET_HITL_IMU_TEMPERATURE_OFFSET 24U   // int16, 25 + raw/256 C
+#define IRIS_PACKET_HITL_PRESSURE_OFFSET 26U          // uint24, Pa
+#define IRIS_PACKET_HITL_BARO_TEMPERATURE_OFFSET 29U  // int16, centi-C
+#define IRIS_PACKET_HITL_LATITUDE_OFFSET 31U          // int24, 0.0001 deg
+#define IRIS_PACKET_HITL_LONGITUDE_OFFSET 34U         // int24, 0.0001 deg
+#define IRIS_PACKET_HITL_GPS_ALTITUDE_OFFSET 37U      // float32, m MSL
+#define IRIS_PACKET_HITL_GPS_SATELLITES_OFFSET 41U    // uint8
+#define IRIS_PACKET_HITL_GPS_FIX_QUALITY_OFFSET 42U   // uint8, GGA quality
+#define IRIS_PACKET_HITL_BATTERY_VOLTAGE_OFFSET 43U   // uint16, mV
+#define IRIS_PACKET_HITL_DATA_LENGTH 45U
+#define IRIS_PACKET_HITL_EOF_OFFSET IRIS_PACKET_HITL_DATA_LENGTH
+#define IRIS_PACKET_HITL_FRAME_LENGTH \
+    (IRIS_PACKET_ID_LENGTH + IRIS_PACKET_HITL_DATA_LENGTH + \
+     IRIS_PACKET_EOF_LENGTH)
+
 // Largest payload currently defined by the workbook. This excludes both the
 // packet ID and EOF delimiter.
 #define IRIS_PACKET_MAX_DATA_LENGTH IRIS_PACKET_WITNESS_DEBUG_DATA_LENGTH
@@ -590,8 +668,16 @@
 #if IRIS_PACKET_SENSORS_DATA_LENGTH != 21U
 #error "Sensor packet payload must be 21 bytes"
 #endif
-#if IRIS_PACKET_STATE_DATA_LENGTH != 62U
-#error "State packet payload must be 62 bytes"
+#if IRIS_PACKET_STATE_DATA_LENGTH != 63U
+#error "State packet payload must be 63 bytes"
+#endif
+#if IRIS_PACKET_HITL_BATTERY_VOLTAGE_OFFSET + \
+        IRIS_FIELD_WITNESS_BATTERY_VOLTAGE_LENGTH != \
+    IRIS_PACKET_HITL_DATA_LENGTH
+#error "HITL packet field offsets do not fill the payload"
+#endif
+#if IRIS_PACKET_HITL_FRAME_LENGTH != 47U
+#error "HITL application packet must be 47 bytes"
 #endif
 #if IRIS_PACKET_CAMERA_DATA_LENGTH != 17U
 #error "Camera packet payload must be 17 bytes"
@@ -613,8 +699,8 @@
     IRIS_PACKET_SENSORS_DATA_LENGTH
 #error "Sensor packet field offsets do not fill the payload"
 #endif
-#if IRIS_PACKET_STATE_BATTERY_VOLTAGE_OFFSET + \
-        IRIS_PACKET_STATE_BATTERY_VOLTAGE_LENGTH != \
+#if IRIS_PACKET_STATE_GPS_SATELLITES_OFFSET + \
+        IRIS_PACKET_STATE_GPS_SATELLITES_LENGTH != \
     IRIS_PACKET_STATE_DATA_LENGTH
 #error "State packet field offsets do not fill the payload"
 #endif
@@ -645,8 +731,8 @@
 #if IRIS_PACKET_SENSORS_FRAME_LENGTH != 23U
 #error "Sensor application packet must be 23 bytes"
 #endif
-#if IRIS_PACKET_STATE_FRAME_LENGTH != 64U
-#error "State application packet must be 64 bytes"
+#if IRIS_PACKET_STATE_FRAME_LENGTH != 65U
+#error "State application packet must be 65 bytes"
 #endif
 #if IRIS_PACKET_CAMERA_FRAME_LENGTH != 19U
 #error "Camera application packet must be 19 bytes"

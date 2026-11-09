@@ -14,11 +14,20 @@ from tkinter import colorchooser, filedialog, messagebox, ttk
 from aim_mqtt import AIM_TOPIC_FIELDS
 from aim_altitude import BARO_ALTITUDE, BARO_VELOCITY
 from aim_orientation import GYRO_FIELDS
-from flight_data import DEFAULT_LAYOUT, load_layout, validate_layout
+from flight_data import DEFAULT_LAYOUT, DISPLAY_FORMATS, load_layout, validate_layout
 from ground_tabs import FEATHERWEIGHT_FIELDS, WITNESS_FIELDS
 
+# Derived Witness status fields computed by FlightData from status/fc_status:
+# byte 1 bits 2:0 flight state, bit 3 GPS locked, bit 4 HITL active.
+_STATUS_DERIVED = ("flight_state", "gps_locked", "hitl_active")
+WITNESS_EDITOR_FIELDS = {
+    packet: (*fields, *(f"{status}.{name}" for status in ("status", "fc_status") if status in fields
+                        and not (status == "status" and packet in ("camera", "iris_debug"))
+                        for name in _STATUS_DERIVED))
+    for packet, fields in WITNESS_FIELDS.items()
+}
 
-FIELDS = {"witness": WITNESS_FIELDS, "featherweight": FEATHERWEIGHT_FIELDS,
+FIELDS = {"witness": WITNESS_EDITOR_FIELDS, "featherweight": FEATHERWEIGHT_FIELDS,
           "aim": {**AIM_TOPIC_FIELDS,
                   "pressure_payload/v1": (*AIM_TOPIC_FIELDS["pressure_payload/v1"], BARO_ALTITUDE, BARO_VELOCITY),
                   "orientation_payload/v1": (*AIM_TOPIC_FIELDS["orientation_payload/v1"], *GYRO_FIELDS)}}
@@ -193,7 +202,7 @@ class FlightLayoutEditor(ttk.Frame):
                     ("offset", "Then add", 0), ("unit", "Override units (optional)", ""), ("color", "Color (#RRGGBB)", "#004b80")):
                 self.field(key, label, target.get(key, default))
             self.field("axis", "Graph axis", target.get("axis", "left"), ["left", "right"])
-            self.field("format", "Display format", target.get("format", "number"), ["number", "state", "continuity"])
+            self.field("format", "Display format", target.get("format", "number"), list(DISPLAY_FORMATS))
             self.field("match", "Filters (optional JSON)", json.dumps(target.get("match", {})))
             self.field("note", "Note", target.get("note", ""))
             self.suggestions()
@@ -201,6 +210,7 @@ class FlightLayoutEditor(ttk.Frame):
         ttk.Label(self.form, text=title, font=("Segoe UI", 12, "bold")).grid(row=0, column=0, columnspan=2, sticky="w")
         hint = ("Select an item on the left to edit it. Graph order is reading order.\n"
                 "Limits: 6 graphs, 3 flight rows, 1 state row, 6 GPS rows, 10 power rows.\n"
+                "Values per row: flight 3; state, GPS and power 2 (state: add format hitl).\n"
                 "Packet lists use commas. Fixed Y limits apply only with Auto-scale off.\n"
                 'FW tracker filter: {"unit_type": "TRACKER"}. Leave {} for no filter.\n'
                 "Existing custom fields and filters are preserved. Right axis requires right-axis units.")

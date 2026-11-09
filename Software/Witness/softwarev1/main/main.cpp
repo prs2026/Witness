@@ -1,9 +1,11 @@
 #include "command_bridge.h"
+#include "cpu_load.h"
 #include "can_link.h"
 #include "esp_err.h"
 #include "flash_logger.h"
 #include "flight_state_machine.h"
 #include "heartbeat.h"
+#include "imu_calibration_store.h"
 #include "hardware_pins.h"
 #include "uart_driver.h"
 #include "sensors.h"
@@ -52,6 +54,19 @@ extern "C" void app_main(void)
     if (gps_result != ESP_OK)
         ESP_LOGW("main", "GPS UART1 start failed: %s; other logging continues",
                  esp_err_to_name(gps_result));
+    sensors.set_imu_log_sink(&flash_logger);
+    {
+        // IMU calibration lives in NVS; without it the IMU runs uncorrected.
+        const esp_err_t nvs_result = imu_calibration::init_storage();
+        if (nvs_result != ESP_OK) {
+            ESP_LOGE("main", "NVS init failed: %s; IMU calibration unavailable",
+                     esp_err_to_name(nvs_result));
+        }
+    }
     ESP_ERROR_CHECK(sensors.start());
     ESP_ERROR_CHECK(heartbeat.start());
+    static CpuLoadMonitor cpu_load;
+    const esp_err_t cpu_result = cpu_load.start();
+    if (cpu_result != ESP_OK)
+        ESP_LOGW("main", "CPU load monitor start failed: %s", esp_err_to_name(cpu_result));
 }

@@ -1,4 +1,5 @@
 #include "heartbeat.h"
+#include "task_cores.h"
 
 // Set to 0 to disable heartbeat buzzing. GPIO48 remains configured as an
 // output and held low. The frequency controls the passive-buzzer PWM tone.
@@ -56,13 +57,14 @@ esp_err_t Heartbeat::start()
         return gpio_result;
     }
 
-    const BaseType_t task_created = xTaskCreate(
+    const BaseType_t task_created = xTaskCreatePinnedToCore(
         task_entry,
         "heartbeat",
         kTaskStackSize,
         this,
         kTaskPriority,
-        &task_handle_);
+        &task_handle_,
+        task_cores::kSystem);
 
     if (task_created != pdPASS) {
         task_handle_ = nullptr;

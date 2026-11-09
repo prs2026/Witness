@@ -72,18 +72,26 @@ void NmeaGps::parse(std::uint32_t now_ms) {
     if (count < 11 || std::strlen(fields[0]) != 5 ||
         std::strcmp(fields[0] + 2, "GGA") != 0) return;
     ++gga_sentence_count_;
-    // A checksum-valid GGA replaces the prior fix, including no-fix reports.
+    // A checksum-valid GGA replaces the prior fix, including no-fix reports;
+    // its quality and satellite count are retained even without a position.
     fix_ = {};
-    if (std::strlen(fields[6]) != 1 || fields[6][0] < '1' || fields[6][0] > '8' ||
+    fix_.gga = true;
+    fix_.received_ms = now_ms;
+    if (std::strlen(fields[6]) == 1 && fields[6][0] >= '0' && fields[6][0] <= '9')
+        fix_.fix_quality = static_cast<std::uint8_t>(fields[6][0] - '0');
+    double satellites;
+    if (number(fields[7], satellites) && satellites >= 0 && satellites <= 255 &&
+        satellites == std::floor(satellites))
+        fix_.satellites = static_cast<std::uint8_t>(satellites);
+    if (fix_.fix_quality < 1 || fix_.fix_quality > 8 ||
         std::strcmp(fields[10], "M") != 0) return;
-    Fix next{};
+    Fix next = fix_;
     double altitude;
     if (!coordinate(fields[2], fields[3], true, next.latitude_degrees) ||
         !coordinate(fields[4], fields[5], false, next.longitude_degrees) ||
         !number(fields[9], altitude)) return;
     next.altitude_meters = static_cast<float>(altitude);
     if (!std::isfinite(next.altitude_meters)) return;
-    next.received_ms = now_ms;
     next.valid = true;
     fix_ = next;
 }

@@ -6,6 +6,7 @@
 
 #include "driver/gpio.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "hardware_pins.h"
@@ -67,6 +68,7 @@ void Ra01::release()
         spi_device_ = nullptr;
     }
     initialized_ = false;
+    transmit_in_progress_ = false;
 }
 
 esp_err_t Ra01::initialize(const spi_host_device_t spi_host)
@@ -207,9 +209,32 @@ esp_err_t Ra01::initialize(const spi_host_device_t spi_host)
 
 esp_err_t Ra01::transmit(const std::uint8_t *data, const std::size_t length)
 {
+    esp_err_t result = start_transmit(data, length);
+    if (result != ESP_OK) return result;
+    for (;;) {
+        esp_err_t error = ESP_OK;
+        switch (poll_transmit(&error)) {
+        case TxStatus::InProgress:
+            vTaskDelay(1);
+            break;
+        case TxStatus::Done:
+            return ESP_OK;
+        case TxStatus::Timeout:
+            return ESP_ERR_TIMEOUT;
+        case TxStatus::Idle:
+        case TxStatus::Error:
+        default:
+            return error == ESP_OK ? ESP_FAIL : error;
+        }
+    }
+}
+
+esp_err_t Ra01::start_transmit(const std::uint8_t *data, const std::size_t length)
+{
     if (!initialized_ || data == nullptr || length == 0U || length > 255U) {
         return ESP_ERR_INVALID_ARG;
     }
+    if (transmit_in_progress_) return ESP_ERR_INVALID_STATE;
 
     const std::uint8_t standby[] = {0x00U};
     esp_err_t result = write_command(kSetStandby, standby, sizeof(standby));
@@ -240,32 +265,61 @@ esp_err_t Ra01::transmit(const std::uint8_t *data, const std::size_t length)
     // SetTx timeout units are 15.625 us. 0x00FA00 is exactly 1 second.
     const std::uint8_t tx_timeout[] = {0x00U, 0xFAU, 0x00U};
     result = write_command(kSetTx, tx_timeout, sizeof(tx_timeout));
-    if (result != ESP_OK) return result;
+    if (result != ESP_OK) {
+        // Best effort: do not leave the receiver in standby.
+        const std::uint8_t continuous_rx[] = {0xFFU, 0xFFU, 0xFFU};
+        (void)write_command(kSetRx, continuous_rx, sizeof(continuous_rx));
+        return result;
+    }
 
-    const TickType_t deadline = xTaskGetTickCount() +
-                                pdMS_TO_TICKS(kTransmitTimeoutMs);
-    for (;;) {
-        std::uint8_t irq_data[2]{};
-        result = read_command(kGetIrqStatus, irq_data, sizeof(irq_data));
-        if (result != ESP_OK) break;
+    // The SX1262 SetTx timeout above also ends the transmission; the host
+    // deadline adds margin so a missed DIO1 edge cannot stall the radio.
+    transmit_deadline_us_ = esp_timer_get_time() +
+                            static_cast<std::int64_t>(kTransmitTimeoutMs + 100U) * 1000;
+    transmit_in_progress_ = true;
+    return ESP_OK;
+}
+
+Ra01::TxStatus Ra01::poll_transmit(esp_err_t *error)
+{
+    if (error != nullptr) *error = ESP_OK;
+    if (!transmit_in_progress_) return TxStatus::Idle;
+
+    // DIO1 is routed to TxDone (and the RX IRQs, which cannot fire while
+    // transmitting). Skip SPI entirely until it rises or the deadline passes.
+    const bool timed_out = esp_timer_get_time() >= transmit_deadline_us_;
+    if (gpio_get_level(HW_PIN_RAD_DIO1) == 0 && !timed_out) {
+        return TxStatus::InProgress;
+    }
+
+    std::uint8_t irq_data[2]{};
+    esp_err_t result = read_command(kGetIrqStatus, irq_data, sizeof(irq_data));
+    TxStatus status = TxStatus::Error;
+    if (result == ESP_OK) {
         const std::uint16_t irq = static_cast<std::uint16_t>(
             (static_cast<std::uint16_t>(irq_data[0]) << 8U) | irq_data[1]);
         if ((irq & kIrqTxDone) != 0U) {
-            result = ESP_OK;
-            break;
-        }
-        if (xTaskGetTickCount() >= deadline) {
+            status = TxStatus::Done;
+        } else if (timed_out) {
+            status = TxStatus::Timeout;
             result = ESP_ERR_TIMEOUT;
-            break;
+        } else {
+            return TxStatus::InProgress;  // DIO1 glitch; keep waiting.
         }
-        vTaskDelay(1);
     }
 
+    transmit_in_progress_ = false;
+    const std::uint8_t clear_irq[] = {0xFFU, 0xFFU};
     (void)write_command(kClearIrqStatus, clear_irq, sizeof(clear_irq));
     const std::uint8_t continuous_rx[] = {0xFFU, 0xFFU, 0xFFU};
     const esp_err_t rx_result = write_command(kSetRx, continuous_rx,
                                                sizeof(continuous_rx));
-    return result == ESP_OK ? rx_result : result;
+    if (status == TxStatus::Done && rx_result != ESP_OK) {
+        status = TxStatus::Error;
+        result = rx_result;
+    }
+    if (error != nullptr) *error = result;
+    return status;
 }
 
 esp_err_t Ra01::receive(std::uint8_t *data, const std::size_t capacity,
@@ -302,6 +356,14 @@ esp_err_t Ra01::receive(std::uint8_t *data, const std::size_t capacity,
 
 esp_err_t Ra01::wait_until_ready()
 {
+    // BUSY normally clears within microseconds of the previous command;
+    // spin briefly rather than sleeping a whole scheduler tick per command.
+    const std::int64_t spin_end = esp_timer_get_time() + kBusySpinUs;
+    while (gpio_get_level(HW_PIN_RAD_BUSY) != 0 &&
+           esp_timer_get_time() < spin_end) {
+    }
+    if (gpio_get_level(HW_PIN_RAD_BUSY) == 0) return ESP_OK;
+
     const TickType_t deadline = xTaskGetTickCount() +
                                 pdMS_TO_TICKS(kBusyTimeoutMs);
     while (gpio_get_level(HW_PIN_RAD_BUSY) != 0) {
@@ -328,7 +390,7 @@ esp_err_t Ra01::write_command(const std::uint8_t command,
     spi_transaction_t transaction{};
     transaction.length = (length + 1U) * 8U;
     transaction.tx_buffer = buffer.data();
-    return spi_device_transmit(spi_device_, &transaction);
+    return spi_device_polling_transmit(spi_device_, &transaction);
 }
 
 esp_err_t Ra01::write_buffer(const std::uint8_t *data, const std::size_t length)
@@ -343,7 +405,7 @@ esp_err_t Ra01::write_buffer(const std::uint8_t *data, const std::size_t length)
     spi_transaction_t transaction{};
     transaction.length = (length + 2U) * 8U;
     transaction.tx_buffer = buffer.data();
-    return spi_device_transmit(spi_device_, &transaction);
+    return spi_device_polling_transmit(spi_device_, &transaction);
 }
 
 esp_err_t Ra01::read_command(const std::uint8_t command, std::uint8_t *data,
@@ -360,7 +422,7 @@ esp_err_t Ra01::read_command(const std::uint8_t command, std::uint8_t *data,
     transaction.rxlength = transaction.length;
     transaction.tx_buffer = tx.data();
     transaction.rx_buffer = rx.data();
-    result = spi_device_transmit(spi_device_, &transaction);
+    result = spi_device_polling_transmit(spi_device_, &transaction);
     if (result == ESP_OK) std::copy(rx.begin() + 2,
                                     rx.begin() + 2 + length, data);
     return result;
@@ -382,7 +444,7 @@ esp_err_t Ra01::read_buffer(const std::uint8_t offset, std::uint8_t *data,
     transaction.rxlength = transaction.length;
     transaction.tx_buffer = tx.data();
     transaction.rx_buffer = rx.data();
-    result = spi_device_transmit(spi_device_, &transaction);
+    result = spi_device_polling_transmit(spi_device_, &transaction);
     if (result == ESP_OK) std::copy(rx.begin() + 3,
                                     rx.begin() + 3 + length, data);
     return result;

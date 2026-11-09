@@ -1,4 +1,5 @@
 #include "ms5607.h"
+#include "pressure_altitude.h"
 
 #include <cmath>
 #include <cstddef>
@@ -42,7 +43,10 @@ esp_err_t Ms5607::initialize(const spi_host_device_t host)
     }
 
     // The RTOS tick can be coarser than the required 2.8 ms PROM reload time.
-    vTaskDelay(pdMS_TO_TICKS(kResetDelayMs) + 1U);
+    // Round up to whole ticks, plus one because vTaskDelay(n) can return just
+    // after n-1 tick periods (3 ticks = at least 4 ms at the 500 Hz tick).
+    vTaskDelay(static_cast<TickType_t>(
+                   (kResetDelayMs * configTICK_RATE_HZ + 999U) / 1000U) + 1U);
 
     result = read_prom();
     if (result != ESP_OK) {
@@ -142,7 +146,7 @@ esp_err_t Ms5607::send_command(const std::uint8_t command)
     spi_transaction_t transaction{};
     transaction.length = 8;
     transaction.tx_buffer = &command;
-    return spi_device_transmit(spi_device_, &transaction);
+    return spi_device_polling_transmit(spi_device_, &transaction);
 }
 
 esp_err_t Ms5607::read_command(
@@ -162,7 +166,7 @@ esp_err_t Ms5607::read_command(
     transaction.tx_buffer = transmit;
     transaction.rx_buffer = receive;
 
-    const esp_err_t result = spi_device_transmit(spi_device_, &transaction);
+    const esp_err_t result = spi_device_polling_transmit(spi_device_, &transaction);
     if (result == ESP_OK) {
         std::memcpy(data, &receive[1], length);
     }
@@ -274,13 +278,8 @@ void Ms5607::compensate()
     sample_.temperature_centi_celsius =
         static_cast<std::int32_t>(temperature);
 
-    const float pressure_mbar = static_cast<float>(pressure) / 100.0F;
-    if (pressure_mbar > 0.0F) {
-        sample_.altitude_meters = 44330.0F *
-            (1.0F - std::pow(
-                        pressure_mbar / kSeaLevelPressureMbar,
-                        0.19029495F));
-    }
+    (void)pressure_altitude_meters(sample_.pressure_centi_mbar,
+                                   sample_.altitude_meters);
     sample_.timestamp_us = static_cast<std::uint64_t>(esp_timer_get_time());
     sample_.valid = true;
 }
