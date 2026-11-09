@@ -99,6 +99,24 @@ falls back to `time_seconds`, and the list marks it `[no uptime]`. To align
 such a CSV, or logs from different boots, select it and set **Time offset
 s**. Any numeric column can be chosen as the x axis instead.
 
+**Zoom.** All graphs share one x axis, and zooming any graph zooms them all.
+Each graph's y axis refits to the data in view, and its statistics then read
+"in view".
+
+- Drag across a plot to zoom to that span. The band shows on every graph.
+- **Ctrl+wheel** zooms in or out around the cursor.
+- **Shift+wheel** pans when zoomed in.
+- Double-click a plot, or press **Reset zoom**, to show everything.
+  **Zoom out** doubles the span.
+- Changing the x axis resets the zoom.
+
+**Hover.** Hold the pointer over a plot to get a dashed crosshair at that x
+in every graph, with a ring on each trace's nearest sample. A box next to the
+pointer lists the exact values from the CSV, for example
+`S0000010.csv: barometric_altitude = 245.9904175  @ 31.788` (the value, then
+that sample's x). A trace whose log has ended, or hasn't started yet, at that
+time is left out of the box.
+
 The Summary tab shows one CSV at a time; pick it from the CSV list.
 
 ## Window sizes and rendering

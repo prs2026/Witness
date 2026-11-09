@@ -138,6 +138,38 @@ class LayoutModelTests(unittest.TestCase):
         self.assertIsNone(viewer.sync_time_seconds({}))
 
 
+class ZoomMathTests(unittest.TestCase):
+    def test_view_points_interpolates_onto_the_edges(self):
+        pts = [(0.0, 0.0), (10.0, 100.0), (20.0, 0.0)]
+        self.assertEqual(viewer.view_points(pts, 5.0, 15.0),
+                         [(5.0, 50.0), (10.0, 100.0), (15.0, 50.0)])
+        # Zoomed between two samples: still a line across the view.
+        self.assertEqual(viewer.view_points(pts, 2.0, 4.0), [(2.0, 20.0), (4.0, 40.0)])
+        self.assertEqual(viewer.view_points(pts, 30.0, 40.0), [])
+        self.assertEqual(viewer.view_points(pts, -5.0, 25.0), pts)
+
+    def test_zoom_and_pan_stay_inside_the_data(self):
+        full = (0.0, 100.0)
+        self.assertEqual(viewer.zoom_range(full, full, 50.0, 0.5), (25.0, 75.0))
+        # Zooming about a point keeps that point under the cursor.
+        self.assertEqual(viewer.zoom_range(full, full, 10.0, 0.5), (5.0, 55.0))
+        self.assertEqual(viewer.zoom_range((0.0, 10.0), full, 0.0, 0.5), (0.0, 5.0))
+        self.assertIsNone(viewer.zoom_range((40.0, 60.0), full, 50.0, 10.0))
+        self.assertEqual(viewer.zoom_range((90.0, 100.0), full, 100.0, 2.0), (80.0, 100.0))
+        self.assertEqual(viewer.pan_range((10.0, 20.0), full, 5.0), (15.0, 25.0))
+        self.assertEqual(viewer.pan_range((10.0, 20.0), full, -50.0), (0.0, 10.0))
+
+    def test_nearest_point_and_value_text(self):
+        pts = [(1.0, 10.0), (2.0, 20.0), (4.0, 40.0)]
+        self.assertEqual(viewer.nearest_point(pts, 2.9), (2.0, 20.0))
+        self.assertEqual(viewer.nearest_point(pts, 3.1), (4.0, 40.0))
+        self.assertEqual(viewer.nearest_point(pts, -9), (1.0, 10.0))
+        self.assertIsNone(viewer.nearest_point([], 1))
+        self.assertEqual(viewer.value_text(15528.0), "15528")
+        self.assertEqual(viewer.value_text(0.1 + 0.2), "0.3")
+        self.assertEqual(viewer.value_text(-0.375012), "-0.375012")
+
+
 class OverlayPanelTests(unittest.TestCase):
     def setUp(self):
         try:
@@ -206,6 +238,70 @@ class OverlayPanelTests(unittest.TestCase):
         panel.remove_dataset(ids[0])
         self.assertEqual(panel.layout.graphs, [])
         self.assertEqual(panel.csv_path, b)
+
+    def test_shared_zoom_and_hover_values(self):
+        a = self.write("a.csv", 10_000, 1.0)
+        b = self.write("b.csv", 12_000, 2.0)
+        panel = viewer.CsvViewerPanel(self.root)
+        panel.pack(fill="both", expand=True)
+        self.root.geometry("900x700")
+        panel.load_csv(a)
+        panel.add_csv(b)
+        ids = list(panel.datasets)
+        panel.clear_graphs()
+        panel.layout.add([(ids[0], "altitude")])
+        panel.layout.add([(ids[1], "altitude")])
+        panel.notebook.select(panel.plot_tab)
+        for _ in range(5):
+            self.root.update()
+        panel.draw_graphs()
+        self.root.update()
+        g0, g1 = (graph["geom"] for graph in panel._graphs)
+        # Both graphs share one time axis: the union of the two logs.
+        self.assertEqual((g0["x_min"], g0["x_max"]), (10.0, 21.95))
+        self.assertEqual((g1["x_min"], g1["x_max"]), (10.0, 21.95))
+
+        # Hover: exact sample values at the cursor, nearest sample in time.
+        x = g0["left"] + (12.0 - 10.0) / (21.95 - 10.0) * (g0["right"] - g0["left"])
+        lines = panel.hover_readout(x, (g0["top"] + g0["bottom"]) / 2)
+        self.assertEqual(lines[0], f"{viewer.SYNC_X}: 12")
+        self.assertEqual(lines[1], "a.csv: altitude = 40  @ 12")
+        self.assertIsNone(panel.hover_readout(2, 2))
+        # b.csv starts at 12 s: at 11 s its graph shows no (stale) value.
+        x11 = g1["left"] + (11.0 - 10.0) / (21.95 - 10.0) * (g1["right"] - g1["left"])
+        self.assertEqual(len(panel.hover_readout(x11, (g1["top"] + g1["bottom"]) / 2)), 1)
+        panel.event_generate("<Motion>", x=0, y=0)  # no crash off-plot
+        panel._hover(type("E", (), {"x": int(x), "y": int(g1["top"] + 5)})())
+        self.assertTrue(panel.canvas.find_withtag("hover"))
+        panel.clear_hover()
+
+        # Drag-select on one graph zooms every graph (and their y axes).
+        start = g1["left"] + 0.25 * (g1["right"] - g1["left"])
+        end = g1["left"] + 0.5 * (g1["right"] - g1["left"])
+        y = (g1["top"] + g1["bottom"]) / 2
+        event = type("E", (), {"x": int(start), "y": int(y), "x_root": 0, "y_root": 0})
+        panel._canvas_press(event())
+        event.x = int(end)
+        panel._canvas_motion(event())
+        self.assertTrue(panel.canvas.find_withtag("zoomband"))
+        panel._canvas_release(event())
+        self.root.update()
+        low, high = panel.x_view
+        self.assertAlmostEqual(low, 10.0 + 0.25 * 11.95, delta=0.05)
+        self.assertAlmostEqual(high, 10.0 + 0.5 * 11.95, delta=0.05)
+        z0, z1 = (graph["geom"] for graph in panel._graphs)
+        self.assertEqual((z0["x_min"], z0["x_max"]), (z1["x_min"], z1["x_max"]))
+        self.assertLess(z0["y_end"], g0["y_end"])  # y refits to the data in view
+        # Ctrl+wheel zooms about the cursor; zooming out past the data resets.
+        panel.zoom(0.5)
+        self.assertAlmostEqual(panel.x_view[1] - panel.x_view[0], (high - low) / 2)
+        panel.zoom_out()
+        panel.zoom_out()
+        panel.zoom_out()
+        self.assertIsNone(panel.x_view)
+        panel.set_x_view((12.0, 13.0))
+        panel.on_axis_changed()            # a new x axis drops the zoom
+        self.assertIsNone(panel.x_view)
 
 
 if __name__ == "__main__":
