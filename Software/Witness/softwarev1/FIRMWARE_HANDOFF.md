@@ -399,7 +399,7 @@ in-flight attitude with the radio transmitting.
 
 | Phase | Behaviour |
 |---|---|
-| Pad Idle | Window membership comes from the accelerometer: every sample \|a\| in 0.95..1.05 g (any other sample, or a dt gap, restarts the window). A window completes after 1 s (at least 50 samples) and is **accepted** when: RMS of the per-axis accel standard deviations <= 0.02 g; per axis robust gyro sigma (1.4826 x MAD) <= 10 dps; at most 40% of samples have any axis more than 10 dps from that axis's median; and the per-axis median vector is <= 5 dps. The bias is the per-axis median. The first accepted window initializes the attitude (shortest arc from the mean accel). Later accepted windows set the bias, **restore the attitude to its value at the window start** (the board did not rotate, so gyro noise integrated over the window is discarded) and apply a tilt correction toward the window's mean accel (fraction window/2 s, about a horizontal axis, so heading is not changed). Every step is gyro propagated (median-filtered, bias-corrected), so non-stationary samples, including the >10 g, 300 ms launch-detection window, are kept and the attitude at the Boost transition already includes the motion since ignition. |
+| Pad Idle | Window membership comes from the accelerometer: every sample \|a\| in 0.95..1.05 g (any other sample, or a dt gap, restarts the window). A window completes after 1 s (at least 50 samples) and is **accepted** when: RMS of the per-axis accel standard deviations <= 0.02 g; per axis robust gyro sigma (1.4826 x MAD) <= 10 dps; at most 40% of samples have any axis more than 10 dps from that axis's median; and the per-axis median vector is <= 5 dps. The bias is the per-axis median refined by the mean of the samples within 3 robust sigmas of it, with the refinement clamped to one 70 mdps quantization step (`gyro_quantum_rad_s`). A median of quantized counts snaps to whole counts: with about 1.2 counts of noise it left up to 35 mdps of bias, which drifted a 300 s descent about 10 deg in HITL. The mean resolves below a count, and the clamp stops dense interference from pulling it further than one step. The first accepted window initializes the attitude (shortest arc from the mean accel). Later accepted windows set the bias, **restore the attitude to its value at the window start** (the board did not rotate, so gyro noise integrated over the window is discarded) and apply a tilt correction toward the window's mean accel (fraction window/2 s, about a horizontal axis, so heading is not changed). Every step is gyro propagated (median-filtered, bias-corrected), so non-stationary samples, including the >10 g, 300 ms launch-detection window, are kept and the attitude at the Boost transition already includes the motion since ignition. |
 | Boost, Coast, Descent | Pure median-filtered, bias-corrected gyro integration; no accelerometer use. |
 | Landed | Integration stops and the attitude is held ("attitude after flight"); logged once on entry. Re-entering Pad Idle by command resumes pad behaviour. |
 
@@ -547,9 +547,9 @@ Gaussian noise and a 0.4/-0.3/0.6 dps bias, at 15% ("radio off") and 90%
 
 | Case | Init | Bias error | Pad 60 s drift, final / max | Coast 10 s drift (pure integration) |
 |---|---|---|---|---|
-| radio off, median 5 | 1.01 s | 0.02-0.04 dps | <= 0.04 / 0.54-0.78 deg | 1.4-3.0 deg |
+| radio off, median 5 | 1.01 s | 0.012-0.029 dps (median alone: 0.02-0.04) | <= 0.04 / 0.51-0.79 deg | 1.4-2.9 deg |
 | radio off, no filter | 1.01 s | same | <= 0.02 / 2.8-3.5 deg | 6.8-14.7 deg |
-| radio on, median 5 | 1.01 s | 0.07-0.13 dps | <= 0.07 / 1.37-1.41 deg | 11.1-12.0 deg |
+| radio on, median 5 | 1.01 s | 0.065-0.19 dps (median alone: 0.07-0.13) | <= 0.07 / 1.44 deg | 10.4-11.7 deg |
 | radio on, no filter | 1.01 s | same | <= 0.01 / 7.1-7.2 deg | 56-58 deg |
 
 The pad final drift is small with or without the filter because each accepted

@@ -22,8 +22,10 @@
 //  - Stationary windows (Pad Idle): stationarity comes from the
 //    accelerometer (every sample |a| in band and low accel scatter over the
 //    window). The gyro window is judged with per-axis median and MAD and may
-//    contain up to max_outlier_fraction outliers; the bias is the per-axis
-//    median.
+//    contain up to max_outlier_fraction outliers; the bias is the median
+//    refined (by at most one quantization step) with the mean of the samples
+//    within 3 robust sigmas of it, which resolves below the 70 mdps step where
+//    a median of quantized counts cannot.
 //
 // Phases:
 //  - PadIdle: every step is gyro propagated (filtered, bias-corrected). When
@@ -80,6 +82,10 @@ struct Config {
     float gyro_outlier_rad_s = 10.0F * kDpsToRadS;    // |w - median| any axis
     float max_outlier_fraction = 0.4F;
     float max_bias_rad_s = 5.0F * kDpsToRadS;         // |median| (vector norm)
+    // Gyro quantization step (70 mdps at +/-2000 dps). The bias is the window
+    // median refined by the mean of the samples near it; the refinement is
+    // clamped to one step, so dense interference cannot pull it further.
+    float gyro_quantum_rad_s = 0.070F * kDpsToRadS;
     std::uint32_t window_us = 1'000'000U;
     std::uint32_t window_min_samples = 50U;
     // Pad tilt correction per accepted window: fraction window/tau.

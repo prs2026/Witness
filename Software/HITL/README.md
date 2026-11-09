@@ -413,7 +413,34 @@ fetch, and `fetch_restart_hub: false` to skip the power cycle.
 Bench results, 2026-11-09 (`a3241569-trajectory.csv`, worst-case noise,
 offsets and vibration):
 
-{RESULTS}
+| Run | Transitions | Up RMS, flash 50 Hz (boost / coast / descent) | Horizontal RMS, descent | Final attitude error |
+|---|---|---|---|---|
+| Nominal, before the bias fix (`runs/20261109-120942`) | all within 0.02 s | 3.8 / 4.8 / 2.1 m | 2.2 m | 10.6 deg (FAIL) |
+| Nominal, with the bias fix (`runs/20261109-123242`) | all within 0.02 s | 3.8 / 4.8 / 2.1 m | 1.9 m | 2.2 deg (PASS) |
+| Deployment, 2500 dps + 20 g (`runs/20261109-121755`) | all within 0.02 s | 4.5 / 7.7 / 3.3 m | 3.3 m | attitude lost at deployment (sim 112.57 s), as designed |
+
+Notes on these runs:
+- All 418,800 samples (52,350 `0x0E` frames) were sent, and Witness's
+  attitude ran at 960 Hz.
+- In the nominal runs Witness never logged a gyro saturation.
+- In the deployment run it logged `gyro saturated ... attitude tracking
+  stopped`, and from then on `IMU ignored (attitude lost)`, with position
+  carried by the barometer and GPS.
+- With the bias fix, the tilt error RMS is 0.96 deg on the pad, 1.05 deg in
+  coast, 1.67 deg in descent and 2.15 deg landed (before the fix: 0.94 / 1.25 /
+  6.92 / 10.56). About 1 deg of that is the worst-case 12 mg accelerometer
+  offset, visible already on the pad.
+- The live `0xE0` comparison (`comparison.csv`) shows larger up errors in boost
+  and coast than the flash comparison, because it is matched by receive time
+  and so includes the link latency. `comparison_flash.csv` is matched by
+  Witness uptime and is the better measure.
+
+The bias fix (2026-11-09): the pad gyro bias used to be the per-axis median of
+counts quantized at 0.07 dps. With about 1.2 counts of noise, that left up to
+about 0.035 dps of residual bias, which drifted the nominal run 10.6 deg by
+landing. It is now the median refined by the mean of the samples within 3
+robust sigmas of it, clamped to one quantization step (see the firmware
+handoff, "Attitude estimator").
 
 ## Safety rules
 

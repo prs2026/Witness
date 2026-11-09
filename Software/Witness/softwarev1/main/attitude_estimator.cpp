@@ -276,6 +276,7 @@ void Estimator::finish_window(const std::uint64_t timestamp_us, StepResult &resu
 
     // Gyro: per-axis median and MAD; bounded outlier fraction.
     float median[3]{};
+    float robust_sigma[3]{};
     for (int axis = 0; axis < 3; ++axis) {
         std::copy(window_gyro_[axis], window_gyro_[axis] + n, scratch_);
         median[axis] = median_in_scratch(n);
@@ -283,6 +284,7 @@ void Estimator::finish_window(const std::uint64_t timestamp_us, StepResult &resu
             scratch_[i] = std::fabs(window_gyro_[axis][i] - median[axis]);
         }
         const float sigma = kMadToSigma * median_in_scratch(n);
+        robust_sigma[axis] = sigma;
         if (sigma > config_.max_gyro_sigma_rad_s) {
             ++windows_rejected_gyro_;
             result.window_rejected = true;
@@ -299,7 +301,32 @@ void Estimator::finish_window(const std::uint64_t timestamp_us, StepResult &resu
             }
         }
     }
-    const Vector3 bias{median[0], median[1], median[2]};
+    // Bias: per axis, the mean of the samples within 3 robust sigmas of the
+    // median. The median alone snaps to whole quantization counts (70 mdps at
+    // +/-2000 dps), and with ~1 count of noise that left up to ~35 mdps of
+    // bias, about 10 deg over a 300 s descent. The noise dithers the mean well
+    // below a count, and the tight band keeps interference excursions (which
+    // sit well outside the noise) out of it.
+    float bias_axis[3]{};
+    for (int axis = 0; axis < 3; ++axis) {
+        const float band = 3.0F * robust_sigma[axis];
+        double sum = 0.0;
+        std::size_t used = 0;
+        for (std::size_t i = 0; i < n; ++i) {
+            const float w = window_gyro_[axis][i];
+            if (std::fabs(w - median[axis]) <= band) {
+                sum += w;
+                ++used;
+            }
+        }
+        float refine = used == 0 ? 0.0F
+                                 : static_cast<float>(sum / static_cast<double>(used)) - median[axis];
+        const float q = config_.gyro_quantum_rad_s;
+        if (refine > q) refine = q;
+        if (refine < -q) refine = -q;
+        bias_axis[axis] = median[axis] + refine;
+    }
+    const Vector3 bias{bias_axis[0], bias_axis[1], bias_axis[2]};
     if (static_cast<float>(outliers) > config_.max_outlier_fraction * static_cast<float>(n) ||
         norm(bias) > config_.max_bias_rad_s) {
         ++windows_rejected_gyro_;
