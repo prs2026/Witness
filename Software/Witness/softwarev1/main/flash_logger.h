@@ -26,7 +26,9 @@ class FlightStateMachine;
 //   block 0        session header (page 0) and flight marker (page 1)
 //   blocks 1-96    I*.BIN  IMU stream: 24-byte records, 960 Hz until Descent,
 //                  then every 10th record (96 Hz); prelaunch 2 s included
-//   blocks 97-136  S*.BIN  sensor stream: 48-byte WL records at 50 Hz
+//   blocks 97-136  S*.BIN  sensor stream: 24-byte WL v2 records at 100 Hz
+//                  (status, uptime, pressure and temperatures only; IMU
+//                  samples are in I*.BIN, altitude/battery in P*.BIN)
 //   blocks 137-160 S*.TXT  diagnostic text (circular)
 //   blocks 161-280 P*.BIN  packet stream (circular): Witness state packets at
 //                  100 Hz and every packet sent or received over CAN, plus
@@ -48,7 +50,7 @@ class FlashLogger final {
 public:
     static constexpr UBaseType_t kTaskPriority = 3;
     static constexpr UBaseType_t kCaptureTaskPriority = 4;
-    static constexpr std::uint32_t kLogRateHz = 50;
+    static constexpr std::uint32_t kLogRateHz = 100;
     static constexpr std::uint32_t kPrelaunchBufferSeconds = 2;
     static constexpr std::uint32_t kFlushIntervalMs = 1000;
     static constexpr std::uint32_t kTaskStackSize = 7168;
@@ -142,7 +144,7 @@ public:
 private:
     static constexpr TickType_t kLogPeriod =
         pdMS_TO_TICKS(1000U / kLogRateHz);
-    static constexpr std::size_t kRecordSize = 48;
+    static constexpr std::size_t kRecordSize = 24;
     static constexpr std::size_t kPrelaunchRecordCount =
         kLogRateHz * kPrelaunchBufferSeconds;
     static constexpr std::size_t kImuPrelaunchRecordCount =
@@ -205,7 +207,7 @@ private:
     static constexpr std::uint8_t kPacketType = 5;
     static constexpr std::size_t kPacketQueueDepth = 128;
     static constexpr std::uint16_t kRecordMagic = 0x574C;       // WL
-    static constexpr std::uint8_t kRecordVersion = 1;
+    static constexpr std::uint8_t kRecordVersion = 2;
 
     struct LogLine {
         std::uint16_t length;

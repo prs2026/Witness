@@ -145,7 +145,7 @@ def describe(name: str) -> str:
     if upper.startswith("I") and upper.endswith(".BIN"):
         return "IMU records (24-byte)"
     if upper.startswith("S") and upper.endswith(".BIN"):
-        return "sensor records (48-byte WL)"
+        return "sensor records (WL: pressure, temperatures, status)"
     if upper.startswith("S") and upper.endswith(".TXT"):
         return "diagnostic log text"
     if upper.startswith("P") and upper.endswith(".BIN"):

@@ -29,9 +29,6 @@ std::uint32_t read_u32_be(const std::uint8_t *p) {
            (static_cast<std::uint32_t>(p[1]) << 16) |
            (static_cast<std::uint32_t>(p[2]) << 8) | p[3];
 }
-void write_float_be(std::uint8_t *p, float v) {
-    std::uint32_t bits; std::memcpy(&bits, &v, sizeof(bits)); write_u32_be(p, bits);
-}
 
 // Flight states in which sensor and IMU records are written.
 bool logged_state(std::uint8_t state) {
@@ -488,22 +485,25 @@ esp_err_t FlashLogger::append_bytes(Writer &writer, const std::uint8_t *data, st
     return ESP_OK;
 }
 
+// WL record v2 (24 bytes, big-endian), 100 Hz. Only what no other stream
+// has: IMU samples are in I*.BIN (960 Hz) and baro altitude, battery, GPS,
+// attitude and position in the 100 Hz state packets of P*.BIN.
+//   0 magic "WL", 2 version 2, 3-4 Witness status bytes 0 and 1 (byte 1
+//   carries the flight state), 5 reserved, 6 u32 sequence, 10 u32 uptime ms,
+//   14 int16 LSM6 temperature raw, 16 int32 pressure Pa (centi-mbar),
+//   20 int32 MS5607 temperature centi-degC.
 void FlashLogger::serialize_record(std::uint8_t *d) {
     Sensors::Sample sample{};
     const bool available = sensors_.latest_sample(sample, 0) == ESP_OK;
     std::memset(d, 0, kRecordSize); write_u16_be(d, kRecordMagic);
-    d[2] = kRecordVersion; d[3] = witness_status_.flags(); write_u32_be(d + 4, sequence_++);
-    write_u32_be(d + 8, static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL));
+    d[2] = kRecordVersion;
+    witness_status_.write(d + 3);
+    write_u32_be(d + 6, sequence_++);
+    write_u32_be(d + 10, static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL));
     if (!available) return;
-    std::size_t o = 12;
-    for (auto v : sample.low_g_accel_raw) { write_u16_be(d + o, static_cast<std::uint16_t>(v)); o += 2; }
-    for (auto v : sample.high_g_accel_raw) { write_u16_be(d + o, static_cast<std::uint16_t>(v)); o += 2; }
-    for (auto v : sample.gyro_raw) { write_u16_be(d + o, static_cast<std::uint16_t>(v)); o += 2; }
-    write_u16_be(d + 30, static_cast<std::uint16_t>(sample.temperature_raw));
-    write_u32_be(d + 32, static_cast<std::uint32_t>(sample.pressure_centi_mbar));
-    write_u32_be(d + 36, static_cast<std::uint32_t>(sample.ms5607_temperature_centi_celsius));
-    write_float_be(d + 40, sample.barometric_altitude_meters);
-    write_u32_be(d + 44, sample.battery_voltage_mv);
+    write_u16_be(d + 14, static_cast<std::uint16_t>(sample.temperature_raw));
+    write_u32_be(d + 16, static_cast<std::uint32_t>(sample.pressure_centi_mbar));
+    write_u32_be(d + 20, static_cast<std::uint32_t>(sample.ms5607_temperature_centi_celsius));
 }
 
 esp_err_t FlashLogger::append_record(const BinaryRecord &record) {

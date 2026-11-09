@@ -49,5 +49,31 @@ class PacketLogTest(unittest.TestCase):
         self.assertFalse(converter.is_packet_log_name(Path("I0000032.BIN")))
 
 
+class FlashRecordV2Test(unittest.TestCase):
+    def record(self, sequence, uptime_ms, state):
+        return (b"WL" + bytes([2, 0x46, 0x08 | state, 0])
+                + struct.pack(">IIhii", sequence, uptime_ms, 512, 85602, 2150))
+
+    def test_v2_records_decode(self):
+        data = self.record(7, 1000, 1) + self.record(8, 1010, 2)
+        self.assertTrue(converter.is_flash_record_log(data))
+        rows, discarded = converter.decode_flash_log(data)
+        self.assertEqual(discarded, 0)
+        self.assertEqual([r["sequence"] for r in rows], [7, 8])
+        self.assertEqual(rows[0]["flight_state_name"], "Boost")
+        self.assertEqual(rows[1]["flight_state"], 2)
+        self.assertEqual(rows[0]["gps_locked"], 1)
+        self.assertEqual(rows[0]["pressure"], 85602)
+        self.assertAlmostEqual(rows[0]["ms5607_temperature"], 21.5)
+        self.assertAlmostEqual(rows[1]["time_seconds"], 1.01)
+        self.assertEqual(rows[0]["frame_length"], 24)
+
+    def test_v1_still_detected(self):
+        v1 = b"WL" + bytes([1]) + bytes(45)
+        self.assertTrue(converter.is_flash_record_log(v1 * 3))
+        rows, _ = converter.decode_flash_log(v1 * 3)
+        self.assertEqual(len(rows), 3)
+
+
 if __name__ == "__main__":
     unittest.main()

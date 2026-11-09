@@ -111,7 +111,7 @@ Tick-rate audit (100 to 500 Hz, then 1000 Hz, 2026-11-08; the notes below are
 from the 500 Hz step and still hold at 1 kHz). Millisecond-specified periods keep
 their length, except the sensor loop, now 2 ms (500 Hz, 2 ticks,
 `static_assert`ed in `sensors.h`; was 10 ms),
-flash capture 20 ms (10 ticks, still 50 Hz), sensor/state/debug packets, radio
+flash capture 10 ms (100 Hz since the WL v2 record), sensor/state/debug packets, radio
 schedule, heartbeat, USB 20 ms binary idle boundary, HITL 1000 ms timeout
 (millisecond clock) and the 1 s flash flush. Changes: the UART read wait and the
 CAN service loop's `vTaskDelay(1)` now wake every 2 ms instead of 10 ms (lower
@@ -127,7 +127,7 @@ BUSY spin.
 | Task | Priority | Stack bytes | Cadence or role |
 |---|---:|---:|---|
 | `sensors` | 4 | 8192 | Core 1. 500 Hz deadline-scheduled (2 ticks); drains the 960 Hz LSM6 FIFO, attitude, sole active SPI3 application service loop |
-| `flash_capture` | 4 | 3072 | 50 Hz sensor snapshots and prelaunch ring |
+| `flash_capture` | 4 | 3072 | 100 Hz sensor snapshots (WL v2) and prelaunch ring |
 | `flash_logger` | 3 | 7168 | Queue draining and NAND writes; default 1 s flush interval |
 | `uart1` | 3 | 4096 | Blocking UART reads, parsing and raw byte dispatch |
 | `usb_serial_echo` | 3 | 3072 | USB input and local/radio command handling |
@@ -325,7 +325,7 @@ a linear Kalman filter with a constant-acceleration kinematic model:
   rejected; pad hold|integrating`.
 
 The estimate is not logged to NAND. Every input is, though (I*.BIN IMU,
-S*.BIN baro at 50 Hz, U*.BIN raw NMEA), so a flight can be re-filtered
+S*.BIN pressure at 100 Hz, U*.BIN raw NMEA), so a flight can be re-filtered
 offline.
 
 Host test (simulated 11 g, 4 s boost to Mach 1.3, coast and descent, with a
@@ -869,7 +869,7 @@ slot:
 |---|---|---|
 | 0 | - | Session header (page 0) and flight marker (page 1, magic `WLFT`) |
 | 1-96 | `I<gen>.BIN` | IMU stream, 24-byte records (below) |
-| 97-136 | `S<gen>.BIN` | 48-byte sensor records at 50 Hz (about 35.8 min) |
+| 97-136 | `S<gen>.BIN` | 24-byte WL v2 sensor records at 100 Hz (about 35.8 min) |
 | 137-160 | `S<gen>.TXT` | Captured ESP log text, circular (keeps the newest) |
 | 161-280 | `P<gen>.BIN` | Packet stream, circular (below) |
 | 281-501 | `U<gen>.BIN` | Raw GPS UART bytes, circular (see GPS section) |
@@ -937,7 +937,7 @@ the cause is not confirmed.
 |---|---|
 | `I0000001.BIN` | 24-byte IMU records (decode with Horizon `converter.py`) |
 | `P0000001.BIN` | Packet stream: state at 100 Hz, CAN in/out, radio commands (decode with `converter.py`) |
-| `S0000001.BIN` | Fixed 48-byte sensor records; not canonical telemetry packets |
+| `S0000001.BIN` | Fixed 24-byte WL v2 sensor records; not canonical telemetry packets |
 | `S0000001.TXT` | Captured ESP logging output after the application log hook is installed |
 | `U0000001.BIN` | Exact raw UART bytes, including NMEA and binary responses; no added timestamps or framing |
 
@@ -957,8 +957,8 @@ Big-endian record layout (`FlashLogger::make_imu_record()`):
 | 22 | 1 | Status: bits 0-2 flight state, 0x08 HITL, 0x10/0x20/0x40 low-g/high-g/gyro fresh, 0x80 filtered accel from high-g |
 | 23 | 1 | uint8 record sequence (wraps at 256; gaps reveal drops) |
 
-Sensor capture is independent of the USB packet rates. It samples at 50 Hz,
-holds the most recent 100 records in a two-second Pad Idle ring, and on entry
+Sensor capture is independent of the USB packet rates. It samples at 100 Hz,
+holds the most recent 200 records in a two-second Pad Idle ring, and on entry
 to an enabled logging state queues the oldest prelaunch record first, followed
 by live records. A separate writer drains that queue while capture continues.
 The 256-record queue accommodates the snapshot and a finite live backlog;
@@ -1007,24 +1007,34 @@ every stream has stopped or that a healthy initialization guarantees logging.
 The exported sensor record layout is independent of `comms.h`. Multi-byte fields
 are big-endian; the source of truth is `FlashLogger::serialize_record()`:
 
+Record version 2 (2026-11-09) is 24 bytes at 100 Hz. It keeps only what no
+other stream logs:
+- the raw low-g, high-g and gyro samples are in I*.BIN at 960 Hz;
+- barometric altitude, battery, GPS, attitude, position and velocity are in
+  the 100 Hz state packets in P*.BIN.
+
 | Offset | Bytes | Field |
 |---:|---:|---|
 | 0 | 2 | Magic `57 4C` |
-| 2 | 1 | Record version 1 |
-| 3 | 1 | Witness flags only; no flight-state byte |
-| 4 | 4 | uint32 capture sequence |
-| 8 | 4 | uint32 uptime ms |
-| 12 | 6 | Three signed int16 low-g raw samples |
-| 18 | 6 | Three signed int16 high-g raw samples |
-| 24 | 6 | Three signed int16 gyro raw samples |
-| 30 | 2 | Signed int16 IMU raw temperature |
-| 32 | 4 | Signed int32 pressure in centi-mbar |
-| 36 | 4 | Signed int32 barometer temperature in centi-Celsius |
-| 40 | 4 | Float32 barometric altitude in metres |
-| 44 | 4 | uint32 battery millivolts |
+| 2 | 1 | Record version 2 |
+| 3 | 1 | Witness status byte 0 (flags) |
+| 4 | 1 | Witness status byte 1 (flight state bits 0-2, GPS lock 0x08, HITL 0x10) |
+| 5 | 1 | Reserved, 0 |
+| 6 | 4 | uint32 capture sequence |
+| 10 | 4 | uint32 uptime ms |
+| 14 | 2 | Signed int16 LSM6 raw temperature |
+| 16 | 4 | Signed int32 pressure in centi-mbar (numerically Pa) |
+| 20 | 4 | Signed int32 MS5607 temperature in centi-Celsius |
 
-There are **no parsed GPS coordinates or state enum in these 48-byte records**.
-GPS survives in `Uxxxxxxx.BIN`; parsed GPS is exposed in live state/debug packets.
+The barometer converts pressure at about 50 Hz, so about half of consecutive
+records repeat the previous pressure. Version 1 (48 bytes at 50 Hz: status
+byte 0 only, sequence, uptime, raw low-g/high-g/gyro, IMU temperature,
+pressure, baro temperature, float32 baro altitude, uint32 battery mV) is
+still decoded by `converter.py`. The size comes from the version byte.
+
+Bench, commanded flight on 2026-11-09: 3,201 records over 32.0 s at 100.0 Hz,
+no sequence gaps, and flight state decoded from the record.
+
 Changing the binary record requires a deliberate version/decoder migration.
 
 Export command `05 68 68` disables radio TX, stops capture, drains accepted

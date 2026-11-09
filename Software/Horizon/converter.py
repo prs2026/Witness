@@ -63,6 +63,10 @@ PAYLOAD_LENGTHS = {
 FLASH_RECORD_MAGIC = b"WL"
 FLASH_RECORD_VERSION = 1
 FLASH_RECORD_SIZE = 48
+# WL v2 (store v4 firmware, 100 Hz): status bytes 0-1, sequence, uptime, LSM6
+# temperature, pressure, MS5607 temperature. IMU samples are in I*.BIN and
+# baro altitude/battery in the P*.BIN state packets.
+FLASH_RECORD_SIZES = {1: 48, 2: 24}
 # Witness flash store v3 IMU stream (I*.BIN): 24-byte records, no magic.
 # u32 timestamp_us (low 32 bits of esp_timer), int16 low-g xyz, int16 high-g
 # xyz, int16 gyro xyz (native counts), u8 status, u8 sequence (wraps at 256).
@@ -310,19 +314,62 @@ def flatten_packet(packet: dict[str, Any]) -> dict[str, Any]:
     return flat
 
 
+def flash_record_size(data: bytes) -> int | None:
+    """Record size of a WL file from its first record's version, or None."""
+    if len(data) < 3 or data[0:2] != FLASH_RECORD_MAGIC:
+        return None
+    return FLASH_RECORD_SIZES.get(data[2])
+
+
 def is_flash_record_log(data: bytes) -> bool:
-    """Return True when the stream is predominantly aligned 48-byte WL records."""
-    complete_records = len(data) // FLASH_RECORD_SIZE
+    """Return True when the stream is predominantly aligned WL records (v1 or v2)."""
+    size = flash_record_size(data)
+    if size is None:
+        return False
+    complete_records = len(data) // size
     if complete_records == 0:
         return False
     sample_count = min(complete_records, 64)
     valid = 0
     for index in range(sample_count):
-        offset = index * FLASH_RECORD_SIZE
+        offset = index * size
         if (data[offset:offset + 2] == FLASH_RECORD_MAGIC
-                and data[offset + 2] == FLASH_RECORD_VERSION):
+                and FLASH_RECORD_SIZES.get(data[offset + 2]) == size):
             valid += 1
     return valid >= max(1, math.ceil(sample_count * 0.9))
+
+
+def parse_flash_record_v2(record: bytes) -> dict[str, Any] | None:
+    if len(record) != 24 or record[0:2] != FLASH_RECORD_MAGIC or record[2] != 2:
+        return None
+    status0, status1 = record[3], record[4]
+    state = status1 & 0x07
+    return {
+        "packet": "flash_sample",
+        "record_version": 2,
+        "status_byte0": status0,
+        "status_byte1": status1,
+        "heartbeat_phase": int(bool(status0 & 0x01)),
+        "low_g_valid": int(bool(status0 & 0x02)),
+        "gyro_valid": int(bool(status0 & 0x04)),
+        "imu_temperature_valid": int(bool(status0 & 0x08)),
+        "flash_init_failed": int(bool(status0 & 0x10)),
+        "high_g_valid": int(bool(status0 & 0x20)),
+        "barometer_valid": int(bool(status0 & 0x40)),
+        "logging_failed": int(bool(status0 & 0x80)),
+        "flight_state": state,
+        "flight_state_name": FLIGHT_STATE_NAMES.get(state, f"Reserved ({state})"),
+        "gps_locked": int(bool(status1 & 0x08)),
+        "hitl_active": int(bool(status1 & 0x10)),
+        "sequence": unsigned(record[6:10]),
+        "uptime": unsigned(record[10:14]),
+        "lsm6_temperature": (
+            LSM6_TEMPERATURE_OFFSET_C
+            + signed(record[14:16]) * LSM6_TEMPERATURE_C_PER_COUNT
+        ),
+        "pressure": signed(record[16:20]),  # pascals
+        "ms5607_temperature": signed(record[20:24]) * MS5607_TEMPERATURE_C_PER_COUNT,
+    }
 
 
 def parse_flash_record(record: bytes) -> dict[str, Any] | None:
@@ -369,14 +416,16 @@ def parse_flash_record(record: bytes) -> dict[str, Any] | None:
 
 def decode_flash_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
     rows: list[dict[str, Any]] = []
-    discarded = len(data) % FLASH_RECORD_SIZE
+    size = flash_record_size(data) or FLASH_RECORD_SIZE
+    parse = parse_flash_record_v2 if size == 24 else parse_flash_record
+    discarded = len(data) % size
     complete_length = len(data) - discarded
 
-    for offset in range(0, complete_length, FLASH_RECORD_SIZE):
-        record = data[offset:offset + FLASH_RECORD_SIZE]
-        packet = parse_flash_record(record)
+    for offset in range(0, complete_length, size):
+        record = data[offset:offset + size]
+        packet = parse(record)
         if packet is None:
-            discarded += FLASH_RECORD_SIZE
+            discarded += size
             continue
         uptime_ms = packet["uptime"]
         row: dict[str, Any] = {
@@ -384,7 +433,7 @@ def decode_flash_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
             "byte_offset": offset,
             "packet_id": "WL",
             "packet_type": packet["packet"],
-            "frame_length": FLASH_RECORD_SIZE,
+            "frame_length": size,
             "time_seconds": uptime_ms / 1000.0,
         }
         row.update(flatten_packet(packet))
