@@ -91,13 +91,38 @@ apply to `python main.py` too:
    first CSV you open does this automatically. **Remove CSV** removes the
    selected CSV.
 
-**Syncing.** The default x axis is **uptime [s] (synced)**: every CSV is placed
-on Witness `uptime` (ms ÷ 1000), or on `fc_uptime` for camera packets. Logs
-from the same power-on line up exactly. If a CSV has no uptime (for example
-`I*.BIN` IMU records, whose `time_seconds` counts from the first record), it
-falls back to `time_seconds`, and the list marks it `[no uptime]`. To align
-such a CSV, or logs from different boots, select it and set **Time offset
-s**. Any numeric column can be chosen as the x axis instead.
+**Per-file time axes.** The default x axis is **time [s] (per-file time
+axes)**: each CSV is placed by its own time column, converted to seconds, plus
+its own offset. Select a CSV in the list to edit its settings in the **Time
+axis** box. The plots redraw as you change them.
+
+- **Column**: which column is time. **auto (Witness uptime)** uses `uptime`,
+  then `fc_uptime` (camera packets), then `time_seconds`, row by row.
+- **Units**: s, ms, us or ns. Choosing a column picks the units its name
+  implies; correct them here if that guess is wrong.
+- **Offset s**: added after unit conversion, so one file can be slid against
+  the others. Type a value (applied when you pause or press Enter), use the
+  spin arrows (0.1 s), or the −1 / −0.1 / +0.1 / +1 buttons.
+- The note under the controls shows where the file now sits on the shared
+  axis. The list shows each file's setting, for example
+  `truth.csv [sim_s s, +674.401 s]`.
+- Settings stay with each file while it's loaded.
+
+Defaults put Witness-clock files on the same clock, so the flash logs and the
+HITL comparison files line up without any offset:
+
+| File | Default |
+|---|---|
+| `P*.csv`, `S*.csv` and packet logs (have `uptime`) | auto |
+| `comparison*.csv` | `uptime_ms` (ms) |
+| `I*.csv` | `timestamp_us` (µs) |
+| `truth.csv` | `sim_s` (s) |
+| `sent.csv` | `sim_ms` (ms) |
+
+Sim-time files need one offset to join the Witness clock. In a HITL run that
+offset is `comparison.csv`'s first `uptime_ms`/1000 minus its first `sim_s`.
+
+You can also pick any single numeric column as a shared x axis instead.
 
 **Zoom.** All graphs share one x axis, and zooming any graph zooms them all.
 Each graph's y axis refits to the data in view, and its statistics then read

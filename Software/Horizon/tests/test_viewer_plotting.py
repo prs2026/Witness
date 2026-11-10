@@ -170,6 +170,60 @@ class ZoomMathTests(unittest.TestCase):
         self.assertEqual(viewer.value_text(-0.375012), "-0.375012")
 
 
+class TimeAxisModelTests(unittest.TestCase):
+    def write(self, name, header, rows):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(lambda: __import__("shutil").rmtree(tmp, ignore_errors=True))
+        path = Path(tmp) / name
+        with path.open("w", newline="") as f:
+            f.write(header + "\n")
+            for row in rows:
+                f.write(",".join(str(v) for v in row) + "\n")
+        return viewer.load_dataset(path)
+
+    def test_infer_time_unit(self):
+        for column, unit in (("uptime", "ms"), ("fc_uptime", "ms"), ("uptime_ms", "ms"),
+                             ("timestamp_us", "us"), ("sim_ms", "ms"), ("t_ns", "ns"),
+                             ("sim_s", "s"), ("time_seconds", "s"), ("wall_s", "s")):
+            self.assertEqual(viewer.infer_time_unit(column), unit, column)
+
+    def test_defaults_match_hitl_and_flash_files(self):
+        truth = self.write("truth.csv", "sim_s,alt_msl_m", [(0.0, 1400), (0.5, 1401)])
+        comparison = self.write("comparison.csv", "sim_s,uptime_ms,error_up_m",
+                                [(0.05, 674451, 0.1)])
+        imu = self.write("I000004A.csv", "time_seconds,timestamp_us,low_accel_x_g",
+                         [(0.0, 692770390, 1.01)])
+        packets = self.write("P000004A.csv", "time_seconds,timestamp_us,uptime,status",
+                             [(0.0, 174272, 174, 9728)])
+        self.assertEqual((truth.time_column, truth.time_unit), ("sim_s", "s"))
+        self.assertEqual((comparison.time_column, comparison.time_unit), ("uptime_ms", "ms"))
+        self.assertEqual((imu.time_column, imu.time_unit), ("timestamp_us", "us"))
+        self.assertEqual(packets.time_column, viewer.AUTO_TIME)
+        # All on one clock in seconds: comparison 674.451 s, IMU 692.77039 s.
+        self.assertAlmostEqual(comparison.times()[0], 674.451)
+        self.assertAlmostEqual(imu.times()[0], 692.77039)
+        self.assertAlmostEqual(packets.times()[0], 0.174)
+
+    def test_set_time_axis_converts_then_offsets(self):
+        data = self.write("x.csv", "sim_ms,wall_s,value", [(1000, 5.0, 1), (2000, 6.0, 2)])
+        self.assertEqual((data.time_column, data.time_unit), ("sim_ms", "ms"))
+        self.assertEqual(data.times(), [1.0, 2.0])
+        data.set_time_axis(unit="s")              # the user says it is seconds
+        self.assertEqual(data.times(), [1000.0, 2000.0])
+        data.set_time_axis(column="wall_s")       # new column: its own units
+        self.assertEqual(data.time_unit, "s")
+        self.assertEqual(data.times(), [5.0, 6.0])
+        data.set_time_axis(offset=-5.0)
+        self.assertEqual(data.time_axis_text(), "wall_s s, -5 s")
+        self.assertNotIn(viewer.AUTO_TIME, data.time_choices())
+        with self.assertRaises(ValueError):
+            data.set_time_axis(column="nope")
+        with self.assertRaises(ValueError):
+            data.set_time_axis(unit="minutes")
+        with self.assertRaises(ValueError):
+            data.set_time_axis(offset=float("nan"))
+
+
 class OverlayPanelTests(unittest.TestCase):
     def setUp(self):
         try:
@@ -238,6 +292,66 @@ class OverlayPanelTests(unittest.TestCase):
         panel.remove_dataset(ids[0])
         self.assertEqual(panel.layout.graphs, [])
         self.assertEqual(panel.csv_path, b)
+
+    def test_per_file_time_axes_line_up_and_update_live(self):
+        truth = Path(self.tmp) / "truth.csv"
+        with truth.open("w", newline="") as f:
+            f.write("sim_s,alt\n")
+            for i in range(100):
+                f.write(f"{i * 0.1:.1f},{i}\n")
+        flash = Path(self.tmp) / "I000004A.csv"
+        with flash.open("w", newline="") as f:
+            f.write("time_seconds,timestamp_us,alt\n")
+            for i in range(100):
+                f.write(f"{i * 0.1:.1f},{692_000_000 + i * 100_000},{i}\n")
+        panel = viewer.CsvViewerPanel(self.root)
+        panel.pack(fill="both", expand=True)
+        self.root.geometry("900x700")
+        panel.load_csv(truth)
+        panel.add_csv(flash)
+        t_id, f_id = list(panel.datasets)
+        self.assertEqual(panel.x_axis_combo.get(), viewer.SYNC_X)
+        self.assertEqual(panel.series_points((t_id, "alt"))[0][0], 0.0)
+        self.assertAlmostEqual(panel.series_points((f_id, "alt"))[0][0], 692.0)
+        self.assertIn("[timestamp_us us]", panel.trace_tree.item(f"d{f_id}", "text"))
+
+        # Slide sim time onto the flash clock: offset applies after units.
+        panel.set_time_axis(t_id, offset=692.0)
+        self.assertAlmostEqual(panel.series_points((t_id, "alt"))[0][0], 692.0)
+        self.assertIn("+692 s", panel.trace_tree.item(f"d{t_id}", "text"))
+        # Wrong units are fixed in place, and the redraw is live (debounced).
+        panel.set_time_axis(f_id, unit="ms")
+        self.assertAlmostEqual(panel.series_points((f_id, "alt"))[0][0], 692000.0)
+        self.assertIsNotNone(panel.redraw_job)
+        panel.set_time_axis(f_id, unit="us")
+
+        # The controls follow the selected CSV and edit it.
+        panel.trace_tree.selection_set(f"d{f_id}")
+        self.root.update()
+        self.assertEqual(panel.time_column_combo.get(), "timestamp_us")
+        self.assertEqual(panel.time_unit_combo.get(), "us")
+        self.assertIn(viewer.AUTO_TIME, panel.time_column_combo["values"])
+        panel.time_column_combo.set("time_seconds")
+        panel._time_controls_changed()
+        self.assertEqual(panel.datasets[f_id].time_column, "time_seconds")
+        self.assertEqual(panel.series_points((f_id, "alt"))[0][0], 0.0)
+        panel.nudge_offset(0.1)
+        panel.nudge_offset(1.0)
+        self.assertAlmostEqual(panel.datasets[f_id].offset, 1.1)
+        self.assertEqual(panel.offset_var.get(), "1.1")
+        panel.offset_var.set("-")            # half-typed: ignored, not an error
+        panel.apply_offset()
+        self.assertAlmostEqual(panel.datasets[f_id].offset, 1.1)
+        panel.offset_var.set("2.5")
+        panel.apply_offset()
+        self.assertAlmostEqual(panel.series_points((f_id, "alt"))[0][0], 2.5)
+        # Settings stay with the file while it is loaded.
+        panel.trace_tree.selection_set(f"d{t_id}")
+        self.root.update()
+        self.assertEqual(panel.offset_var.get(), "692")
+        panel.trace_tree.selection_set(f"d{f_id}")
+        self.root.update()
+        self.assertEqual(panel.offset_var.get(), "2.5")
 
     def test_shared_zoom_and_hover_values(self):
         a = self.write("a.csv", 10_000, 1.0)
