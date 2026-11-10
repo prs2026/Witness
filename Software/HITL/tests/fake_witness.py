@@ -142,7 +142,6 @@ def parse_hitl(f: bytes) -> dict:
         "sim_time_ms": struct.unpack_from(">I", f, 3)[0],
         "low_g": [h(o) * 0.000488 for o in (6, 8, 10)],
         "high_g": [h(o) * 0.010417 for o in (12, 14, 16)],
-        "high_g": [h(o) * 0.010417 for o in (12, 14, 16)],
         "gyro_dps": [h(o) * 0.070 for o in (18, 20, 22)],
         "pressure_pa": int.from_bytes(f[27:30], "big"),
         "lat": int.from_bytes(f[32:35], "big", signed=True) / 1e4,

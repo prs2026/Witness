@@ -75,7 +75,6 @@ class RunState:
     expected: dict
     tolerance_s: float
     time_scale: int = 1
-    started_wall: float = 0.0
     sim_ms: int = 0
     frames_sent: int = 0
     late_ticks: int = 0
@@ -837,7 +836,6 @@ class HitlSession:
             run.run_dir = self._recorder.dir
         run.running = True
         run.streaming = True
-        run.started_wall = self.now()
         self._sender = threading.Thread(
             target=self._send_loop, args=(run, abort_on_no_hitl),
             name="hitl-sender", daemon=True)

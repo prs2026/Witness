@@ -1,7 +1,6 @@
 """Attitude tab: live source selection, CSV loading/replay and a GUI smoke test."""
 
 import csv
-import math
 from pathlib import Path
 import struct
 import tempfile

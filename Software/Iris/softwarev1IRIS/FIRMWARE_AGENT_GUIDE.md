@@ -349,7 +349,7 @@ USB data is read independently at raw TCP `prs2026hitl:7101`.
 `openserial.sh` starts minicom on
 `/dev/ttyUSB0` at 115200 and may also need adjustment.
 
-`flashit copy.ps1` delegates to `flashit.ps1`. The normal image offsets are bootloader `0x0`,
+The normal image offsets are bootloader `0x0`,
 partition table `0x8000` and application `0x10000`.
 
 ## 10. Maintenance rules and known traps
