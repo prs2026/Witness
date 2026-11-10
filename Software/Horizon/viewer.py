@@ -1364,6 +1364,7 @@ class CsvViewerPanel(ttk.Frame):
         self._drag = None
         self._ghost = None
         self._cache_bytes = 0
+        self._cache_sizes: dict = {}
         self._load_queue: list[Path] = []
         self._load_events: queue.Queue = queue.Queue()
         self._load_thread: threading.Thread | None = None
@@ -1833,7 +1834,7 @@ class CsvViewerPanel(ttk.Frame):
             for widget in (self.load_cancel_button, self.load_bar, self.load_label):
                 widget.pack_forget()
             return
-        if not self.load_bar.winfo_ismapped():
+        if not self.load_bar.winfo_manager():
             self.load_cancel_button.pack(side="right")
             self.load_bar.pack(side="right", padx=4)
             self.load_label.pack(side="right")
@@ -1877,7 +1878,6 @@ class CsvViewerPanel(ttk.Frame):
 
     def clear_datasets(self) -> None:
         self.datasets.clear()
-        self._cache_bytes = 0
         self.x_view = None
         self.layout.clear()
         self._drop_cached()
@@ -2019,10 +2019,12 @@ class CsvViewerPanel(ttk.Frame):
         self.time_unit_combo.set("s (auto)" if auto else dataset.time_unit)
         self.time_unit_combo.state(["disabled"] if auto else ["!disabled"])
         self.offset_var.set(f"{dataset.offset:g}")
-        times = [value for value in dataset.times() if value is not None]
-        if times:
-            note = (f"{value_text(round(min(times) + dataset.offset, 6))} to "
-                    f"{value_text(round(max(times) + dataset.offset, 6))} s on the shared axis")
+        times = dataset.times()
+        timed = times[~np.isnan(times)]
+        if timed.size:
+            note = (f"{value_text(round(float(timed.min()) + dataset.offset, 6))} to "
+                    f"{value_text(round(float(timed.max()) + dataset.offset, 6))} s "
+                    "on the shared axis")
         else:
             note = "No values in this column"
         self.time_axis_note.configure(text=note)
@@ -2089,12 +2091,12 @@ class CsvViewerPanel(ttk.Frame):
         """Forget cached series (of one CSV, or all)."""
         if dataset_id is None:
             self._points_cache = {}
+            self._cache_sizes = {}
             self._cache_bytes = 0
             return
         for key in [k for k in self._points_cache if k[0] == dataset_id]:
-            old = self._points_cache.pop(key)
-            arrays = old if isinstance(old, tuple) else (old.xs, old.ys)
-            self._cache_bytes -= sum(a.nbytes for a in arrays)
+            self._points_cache.pop(key)
+            self._cache_bytes -= self._cache_sizes.pop(key, 0)
 
     def on_axis_changed(self) -> None:
         self._drop_cached()
@@ -2167,23 +2169,32 @@ class CsvViewerPanel(ttk.Frame):
             mask = dataset.mask_for(packet_filter)
             if mask is not None:
                 keep &= mask
-            rows = np.flatnonzero(keep)
-            rows = rows[np.argsort(x[rows], kind="stable")]
-            result = (x[rows], rows)
-        self._cache_store(key, result, result[0].nbytes + result[1].nbytes)
+            if keep.all() and (x.size < 2 or bool(np.all(x[1:] >= x[:-1]))):
+                # Logs are nearly always in time order with every row
+                # timed: use the columns as they are (no sort, no copies).
+                result = (x, None)
+            else:
+                rows = np.flatnonzero(keep)
+                xs = x[rows]
+                if xs.size > 1 and not bool(np.all(xs[1:] >= xs[:-1])):
+                    order = np.argsort(xs, kind="stable")
+                    rows, xs = rows[order], xs[order]
+                result = (xs, rows)
+        rows = result[1]
+        self._cache_store(key, result, result[0].nbytes + (0 if rows is None else rows.nbytes))
         return result
 
     def _cache_store(self, key, value, nbytes: int) -> None:
         """Remember a computed series; forget the oldest beyond the budget."""
         self._points_cache[key] = value
+        self._cache_sizes[key] = nbytes
         self._cache_bytes += nbytes
         while self._cache_bytes > self.SERIES_CACHE_BYTES and len(self._points_cache) > 1:
             old_key = next(iter(self._points_cache))
             if old_key == key:
                 break
-            old = self._points_cache.pop(old_key)
-            arrays = old if isinstance(old, tuple) else (old.xs, old.ys)
-            self._cache_bytes -= sum(a.nbytes for a in arrays)
+            self._points_cache.pop(old_key)
+            self._cache_bytes -= self._cache_sizes.pop(old_key, 0)
 
     def series_points(self, ref) -> Series:
         """One trace as x-sorted arrays for the current x axis and filter."""
@@ -2196,11 +2207,12 @@ class CsvViewerPanel(ttk.Frame):
         if dataset is None or column not in dataset.numeric_data:
             return Series([], [])
         xs, rows = self._row_order(dataset_id, dataset)
-        ys = dataset.numeric_data[column][rows]
+        column_values = dataset.numeric_data[column]
+        ys = column_values if rows is None else column_values[rows]
         keep = ~np.isnan(ys)
         if keep.all():
-            points = Series(xs, ys)          # shares the x array
-            nbytes = ys.nbytes
+            points = Series(xs, ys)          # shares the arrays
+            nbytes = 0 if ys is column_values else ys.nbytes
         else:
             points = Series(xs[keep], ys[keep])
             nbytes = points.xs.nbytes + points.ys.nbytes

@@ -91,6 +91,23 @@ apply to `python main.py` too:
    first CSV you open does this automatically. **Remove CSV** removes the
    selected CSV.
 
+**Large files.** Converted flash logs can have millions of rows (`I*.csv` is
+960 Hz). The viewer:
+- Reads files on a worker thread, with a progress bar and **Cancel** in the
+  toolbar, so the window stays usable.
+- Keeps each numeric column as one float64 numpy array (`csv_columns.py`
+  parses ~4 MB chunks with numpy's C reader). Text columns other than
+  `packet_type`/`packet_id` are skipped.
+- Computes derived columns and the summary on those arrays.
+- Above 1 GiB of column data, loads every Nth row and says so on the Summary
+  tab.
+- Draws only the visible span of each trace, as a min/max envelope per pixel,
+  recomputed on every zoom.
+
+On a 139 MB, 536k-row I log, memory held went from 1.5 GB to 104 MB, and the
+UI freeze when opening it went from about 36 s to 0.26 s. A 557 MB,
+2.1M-row file loads in about 12 s in the background, holding 403 MB.
+
 **Per-file time axes.** The default x axis is **time [s] (per-file time
 axes)**: each CSV is placed by its own time column, converted to seconds, plus
 its own offset. Select a CSV in the list to edit its settings in the **Time

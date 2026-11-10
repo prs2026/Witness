@@ -390,6 +390,22 @@ and write `profile.json` like the existing one. Each run's log line and
 GUI runs print it, for example `vibration: profile 'eayftrajectory'` or
 `vibration: none (no profile for this trajectory)`.
 
+In the GUI (and the witnessOS HITL tab), `vibration_profile` is a dropdown:
+- **Auto (profile for this trajectory)**, the default (`""`).
+- **None** (`"none"`).
+- Every folder under `vibration/`.
+
+Use it together with the `vibration_scale` field. Both are saved in
+`hitl_settings.json`. A blue line under the parameters shows what the choice
+resolves to before a run (e.g. `Vibration: Auto -> profile 'eayftrajectory'
+x1`) and which profile the last run actually used.
+
+Loading a CSV, predicting and building a run (CSV parsing, 960 Hz synthesis,
+`0x0E` encoding: seconds) run on a worker thread with a busy indicator, so the
+window stays responsive. Start, Load CSV and the preset list are disabled
+while a run is being built or is streaming. Log lines are written in one
+batch per 100 ms poll.
+
 **Parachute deployment event** (default off):
 - `deployment_spin_dps` adds a pitch rate (above 2000 dps it saturates the
   gyro) from `deployment_delay_s` (1 s) after the attitude hold starts at
