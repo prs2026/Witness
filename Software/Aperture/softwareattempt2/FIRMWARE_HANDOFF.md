@@ -12,7 +12,10 @@ Its responsibilities are:
    Serial/JTAG.
 3. Accept canonical command frames from the host computer and transmit them
    unchanged to Witness over LoRa.
-4. Publish a ground-station status frame to the host once per second.
+4. Publish a ground-station status frame to the host once per second,
+   including Aperture's own LC86 GPS fix. Aperture sits in the pad box, so
+   that fix gives Horizon the launch pad position when the Featherweight
+   ground station's location is not available.
 
 It does not generate Witness telemetry or periodic LoRa heartbeats.
 
@@ -21,6 +24,13 @@ It does not generate Witness telemetry or periodic LoRa heartbeats.
 - `main/main.cpp`: USB bridge, command parser, received-packet forwarding, and
   ground-station status packet generation.
 - `main/ra01.cpp` / `main/ra01.h`: SX1262 command-mode driver.
+- `main/lc86_gps.cpp` / `main/lc86_gps.h`: LC86 reset, UART driver,
+  configuration and PPS counter on a dedicated FreeRTOS task.
+- `main/lc86_nmea.cpp` / `main/lc86_nmea.h`: pure C++ NMEA GGA/RMC and
+  PAIR/PMTK acknowledgement parser (host-tested).
+- `main/ground_station_status.cpp` / `.h`: pure C++ `0xF0` frame builder
+  (host-tested).
+- `tests/gps_status_test.cpp`: host test for the two pure modules.
 - `main/hardware.h`: authoritative pin map and radio configuration.
 - `main/comms.h`: canonical packet IDs, field offsets, and frame lengths.
 - `main/GROUND_STATION_PROTOCOL.md`: protocol description for host software.
@@ -41,6 +51,10 @@ The current values in `main/hardware.h` are authoritative:
 | DIO2 | 11 |
 | DIO3 | 9 |
 | RF_EN | 3 |
+| GPS UART RX (MCU RX <- LC86 TX) | 38 |
+| GPS UART TX (MCU TX -> LC86 RX) | 39 |
+| GPS PPS (input) | 18 |
+| GPS RESET_N (open-drain, active low) | 14 |
 
 Current LoRa settings:
 
@@ -109,22 +123,90 @@ document are not currently parsed by this bridge.
 
 ## USB-only ground-station status
 
-Once per second, the bridge sends a 13-byte status frame to the host. It is not
-sent over LoRa:
-
-```text
-F0 RSSI uptime[4] reserved[6] 0A
-```
+Once per second, the bridge sends a 29-byte status frame
+(`IRIS_PACKET_GROUND_STATION_STATUS_FRAME_LENGTH`) to the host. It is not sent
+over LoRa. All multi-byte fields are big-endian:
 
 | Offset | Size | Field |
 |---:|---:|---|
 | 0 | 1 | Packet ID `0xF0` |
 | 1 | 1 | Last valid LoRa RSSI, signed dBm |
-| 2 | 4 | Ground-station uptime, big-endian milliseconds |
-| 6 | 6 | Reserved, currently zero |
-| 12 | 1 | EOF `0x0A` |
+| 2 | 4 | Ground-station uptime, milliseconds |
+| 6 | 1 | GPS fix quality (GGA field 6; 0 = no fix) |
+| 7 | 1 | GPS satellites used |
+| 8 | 4 | Latitude, int32, 1e-7 degree |
+| 12 | 4 | Longitude, int32, 1e-7 degree |
+| 16 | 4 | GPS altitude, float32 m MSL |
+| 20 | 4 | GPS time, uint32 Unix seconds (0 = unknown) |
+| 24 | 2 | HDOP, uint16 x0.01 (`0xFFFF` = unknown) |
+| 26 | 2 | Fix age, uint16 ms (`0xFFFF` = none or >= 65.535 s) |
+| 28 | 1 | EOF `0x0A` |
 
-Before the first valid LoRa packet, RSSI is reported as `-127 dBm`.
+Before the first valid LoRa packet, RSSI is reported as `-127 dBm`. Quality,
+satellites and HDOP come from the latest GGA and read 0 / 0 / `0xFFFF` once it
+is 3 s old. Position holds the last valid fix with its age; it is zero until a
+fix has been seen. GPS time is the last status-`A` RMC's UTC advanced by the
+time since it arrived. `build_ground_station_status()` fills the frame using
+the `comms.h` offset macros; `GROUND_STATION_PROTOCOL.md` has the full
+description.
+
+## GPS (Quectel LC86)
+
+The LC86 (L80-R footprint) is on UART1 at 115200 8N1, the LC86G factory rate:
+GPIO38 is MCU RX (GPS TX) and GPIO39 MCU TX (GPS RX). Pins and settings are in
+`main/hardware.h` (`IRIS_PIN_GPS_*`, `IRIS_GPS_*`).
+
+`Lc86Gps` runs on its own FreeRTOS task (priority 2, 4 KiB stack), so it never
+blocks the LoRa RX / USB loop in `main.cpp`. At boot it:
+
+1. Pulses RESET_N (GPIO14) low for 100 ms and releases it. The pin is driven
+   open-drain: LC86G RESET_N is active low with an internal 10 kOhm pull-up to
+   1.8 V, and the hardware design forbids an external pull-up. If a board
+   drives RESET_N through an inverting transistor instead, set
+   `IRIS_GPS_RESET_ACTIVE_LOW` to 0.
+2. Waits up to 3 s for the first checksum-valid sentence.
+3. Configures 10 Hz GGA + RMC with Airoha PAIR commands, each resent up to
+   three times until `$PAIR001,<id>,0` arrives (500 ms per attempt). Settings
+   go to receiver RAM only and are reapplied on every boot:
+
+   | Command | Purpose |
+   |---|---|
+   | `$PAIR062,1,0*3F` .. `$PAIR062,9,0` | GLL, GSA, GSV, VTG, ZDA, GRS, GST, GNS off (ZDA/GRS/GST/GNS may answer "not supported") |
+   | `$PAIR062,0,1*3F` | GGA every fix |
+   | `$PAIR062,4,1*3B` | RMC every fix |
+   | `$PAIR050,100*22` | 100 ms fix interval (10 Hz; range 100..1000) |
+
+   Source: Quectel LC26G(AB)&LC76G&LC86G Series GNSS Protocol Specification
+   V1.1, sections 2.3.1 (`PAIR001`), 2.3.9 (`PAIR050`) and 2.3.12
+   (`PAIR062`). Checksums are computed by `Lc86Nmea::build_sentence()`; the
+   host test checks it against the specification's printed examples.
+4. If the receiver never answers a PAIR command, it is probably a MediaTek
+   LC86L, so it falls back to PMTK: `$PMTK314,0,1,0,1,0,0,...` (GGA + RMC,
+   22 fields) and `$PMTK220,100` (L76-LB&L26-LB&LC86L GNSS Protocol
+   Specification V1.1, sections 3.2.13 and 3.2.25; ack `$PMTK001,<id>,3`).
+   Note that the LC86L factory baud rate is 9600, not 115200; the firmware does
+   not search other baud rates.
+
+If configuration fails the task logs a warning and keeps parsing whatever
+arrives. `Lc86Nmea` accepts GGA and RMC from any talker (`$GP`, `$GN`, `$GL`,
+`$GA`, `$GB`, ...), requires a valid checksum, and tolerates arbitrarily
+fragmented reads. The latest state is published under a spinlock with esp_timer
+millisecond timestamps; `main.cpp` reads it once per second for `0xF0`.
+
+PPS (GPIO18, rising edge) is counted in an ISR with the last edge's esp_timer
+time. It is diagnostic only, appears in the 30 s `gps` log line, and is not in
+any packet.
+
+Log lines (tag `gps`, on the USB console): configuration result, fix acquired
+or lost, and every 30 s a summary of UART bytes, valid/bad sentences, quality,
+satellites, HDOP, fix age and PPS count.
+
+Host test (from this folder, WinLibs g++):
+
+```powershell
+g++ -std=c++17 -Wall -Wextra -Werror -I main tests/gps_status_test.cpp main/lc86_nmea.cpp main/ground_station_status.cpp -o build/gps_status_test.exe
+& .\build\gps_status_test.exe
+```
 
 ## USB stream caveat
 
@@ -155,6 +237,12 @@ The generated application image is:
 ```text
 build/softwareattempt2.bin
 ```
+
+Without `export.ps1`, `idf.py build` also works from a plain PowerShell with
+`IDF_PATH=C:\esp\v6.1\esp-idf`, `IDF_TOOLS_PATH=C:\Espressif\tools`,
+`IDF_PYTHON_ENV_PATH=C:\Espressif\tools\python\v6.1\venv`,
+`ESP_IDF_VERSION=6.1`, and the venv Scripts, CMake, Ninja and
+`xtensa-esp-elf\esp-15.2.0_20251204\xtensa-esp-elf\bin` directories on `PATH`.
 
 Use the ESP-IDF extension or the generated esptool command from `idf.py
 build`. Confirm the serial port after flashing because USB Serial/JTAG can

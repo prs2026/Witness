@@ -111,7 +111,7 @@ class LoadBinTests(BinFixtures):
     def test_packet_log(self):
         dataset = self.assert_same_as_csv(self.packet_file())
         self.assertEqual(dataset.packet_types, ["command", "state"])
-        self.assertIn("barometric_altitude", dataset.numeric_columns)
+        self.assertIn("kalman_altitude", dataset.numeric_columns)
 
     def test_unknown_and_empty_files_fail_clearly(self):
         junk = self.write("X0000001.BIN", bytes(range(256)) * 40)

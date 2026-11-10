@@ -15,13 +15,13 @@
       "right_unit": "GPS raw",
       "traces": [
         {
-          "label": "W baro",
+          "label": "W KF",
           "input": "witness",
           "packet": [
             "state",
             "witness_debug"
           ],
-          "field": "barometric_altitude",
+          "field": "kalman_altitude",
           "color": "#171717"
         },
         {
@@ -272,7 +272,7 @@
             "state",
             "witness_debug"
           ],
-          "field": "barometric_altitude",
+          "field": "kalman_altitude",
           "color": "#171717"
         },
         {

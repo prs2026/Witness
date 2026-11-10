@@ -147,13 +147,16 @@ class AsyncLoadTests(unittest.TestCase):
             panel.add_csvs([good, bad])
             self.assertTrue(panel.loading)
             self.root.update()
-            self.assertTrue(panel.load_bar.winfo_ismapped())   # progress shown
+            # Packed into the toolbar = shown. winfo_ismapped() also needs the
+            # window manager to have mapped the toplevel, which a busy
+            # machine may not have done after one update() (flaky).
+            self.assertEqual(panel.load_bar.winfo_manager(), "pack")  # progress shown
             self.assertTrue(panel.wait_for_loads(60))
         finally:
             viewer.messagebox.showerror = original
         self.assertEqual([d.path.name for d in panel.datasets.values()], ["good.csv"])
         self.assertEqual(len(errors), 1)                       # bad.csv reported once
-        self.assertFalse(panel.load_bar.winfo_ismapped())
+        self.assertEqual(panel.load_bar.winfo_manager(), "")    # and hidden again
         dataset = next(iter(panel.datasets.values()))
         self.assertIsInstance(dataset.numeric_data["alt"], np.ndarray)
         # Cancel drops the file being read and the queue.

@@ -93,7 +93,7 @@ class FlightEditorTests(unittest.TestCase):
         editor.move(1)
         self.assertEqual(editor.document["plots"][1]["title"], original_titles[0])
         editor.add_trace()
-        self.assertEqual(editor.variables["field"].get(), "barometric_altitude")
+        self.assertEqual(editor.variables["field"].get(), "kalman_altitude")
         editor.variables["input"].set("aim")
         editor.variables["packet"].set("pressure_payload/v1")
         editor.suggestions()

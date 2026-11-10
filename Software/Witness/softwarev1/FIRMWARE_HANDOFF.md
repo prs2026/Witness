@@ -360,6 +360,16 @@ first. The baro altitude conversion was troposphere-only and geopotential
 with a 111,320 m/deg sphere (a 43 m north offset over 11 km); it now uses
 WGS-84.
 
+Outputs: the `0x02` state and `0xE0` debug packets carry the filter's ENU
+position and velocity, and their former barometric-altitude slot now carries
+the Kalman altitude above the pad (`position_filter_.up().p`, the same value
+as Position Z). Raw pressure remains in `0x01`, `0xE0` and S*.BIN. Every update
+cycle also writes the `0xE2` Kalman log to flash (see Flash storage) with the
+covariances, innovations, gates and counters for post-flight review.
+`Filter::begin_update_cycle()` clears the per-cycle innovation records
+(`baro_innovation()`, `gps_innovation(axis)`), which `update_position` fills
+for both accepted and gated measurements.
+
 Limitations: no GPS velocity (GGA only) and no GPS latency compensation
 (fixes are applied when parsed, typically tens of ms late). Accelerometer bias
 is not estimated. Heading comes from the attitude estimator's initialization,
@@ -929,7 +939,7 @@ written, at the first logged state (Boost), each ring is launch-protected:
 nothing written after that point is overwritten. A ring that comes back round
 to its launch point stops, with `ring full since launch; stopped to keep the
 flight`. That warning is not a failure and does not set the flash fault bit.
-After launch the packet ring holds about 70 min (state at 50 Hz plus CAN, ~3.6 KB/s), the GPS ring (221 blocks,
+After launch the packet ring holds about 40 min (state at 50 Hz, the 25 Hz Kalman log and CAN, ~6.3 KB/s), the GPS ring (221 blocks,
 about 28.8 MB) about 2.1 h at 25 Hz GGA+RMC, and the text about 5 h.
 
 **Packet stream (`P*.BIN`).** It records every packet in four classes:
@@ -940,6 +950,13 @@ about 28.8 MB) about 2.1 h at 25 Hz GGA+RMC, and the text about 5 h.
   forwarded.
 - Every packet sent to Iris over CAN (commands, the 1 Hz heartbeat).
 - Every command received over the radio.
+- The `0xE2` Kalman filter log at 25 Hz, one per position-filter update cycle
+  (`Sensors::log_kalman_packet`, source 5): ENU position/velocity, the P00,
+  P11 and P01 covariance terms per axis, the barometer and GPS innovations of
+  that cycle (NaN if not offered) with the barometer innovation variance and
+  sigma, Mach, gate/hold flags and the update/reject counters. Layout in
+  `comms.h` (`IRIS_PACKET_KALMAN_LOG_*`) and GROUND_STATION_PROTOCOL.md. It
+  adds ~2.7 KB/s, so the packet ring now lasts about 40 min after launch.
 
 `FlashLogger::log_packet()` never blocks. Its queue holds 128 packets, and
 drops are counted and warned at flush (`packet log queue full: N packets
@@ -948,7 +965,7 @@ dropped so far`). Records are big-endian:
 | Offset | Bytes | Field |
 |---:|---:|---|
 | 0 | 4 | uint32 esp_timer microseconds (wraps every 71.6 min) |
-| 4 | 1 | Source: 1 Witness state, 2 CAN in, 3 CAN out, 4 radio in |
+| 4 | 1 | Source: 1 Witness state, 2 CAN in, 3 CAN out, 4 radio in, 5 Kalman log |
 | 5 | 1 | Frame length N |
 | 6 | N | Complete frame, ID through EOF `0x0A` |
 
@@ -1049,8 +1066,9 @@ Record version 2 (2026-11-09) is 24 bytes at 50 Hz, the rate at which the
 MS5607 delivers new pressure (100 Hz only repeated it). It keeps only what no
 other stream logs:
 - the raw low-g, high-g and gyro samples are in I*.BIN at 960 Hz;
-- barometric altitude, battery, GPS, attitude, position and velocity are in
-  the 50 Hz state packets in P*.BIN.
+- battery, GPS, attitude, position, velocity and the Kalman altitude are in
+  the 50 Hz state packets in P*.BIN; barometric altitude is recomputed from the
+  logged pressure (converter.py adds `barometric_altitude` to WL v2 rows).
 
 | Offset | Bytes | Field |
 |---:|---:|---|

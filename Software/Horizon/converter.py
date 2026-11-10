@@ -37,6 +37,7 @@ PACKET_NAMES = {
     0xE0: "witness_debug",
     0xE1: "iris_debug",
     0xF0: "ground_station_status",
+    0xE2: "kalman_log",
 }
 
 # Host -> Witness HITL sensor input. Witness may echo it on USB; it is framed
@@ -55,7 +56,8 @@ PAYLOAD_LENGTHS = {
     0xFF: (6,),
     0xE0: (101,),
     0xE1: (12,),
-    0xF0: (11,),
+    0xF0: (27, 11),  # 29-byte frame with Aperture GPS; legacy 13-byte frame
+    0xE2: (101,),    # Kalman log, flash P*.BIN only
 }
 
 # Flash mass-storage .BIN files use fixed records rather than application
@@ -111,6 +113,107 @@ def float_vector(data: bytes, count: int) -> list[float]:
     return [float32(data[index:index + 4]) for index in range(0, count * 4, 4)]
 
 
+GROUND_GPS_DEGREES_PER_COUNT = 1e-7
+
+
+def parse_ground_station_status(payload: bytes) -> dict[str, Any]:
+    """0xF0 from Aperture: RSSI, uptime and (27-byte form) Aperture's GPS.
+
+    The legacy 11-byte payload has no GPS; its fields are reported as no fix.
+    """
+    packet: dict[str, Any] = {
+        "packet": "ground_station_status",
+        "rssi": signed(payload[0:1]),
+        "uptime": unsigned(payload[1:5]),
+        "gps_fix_quality": 0,
+        "gps_satellites": 0,
+        "latitude": None,
+        "longitude": None,
+        "gps_altitude": None,
+        "gps_time": None,
+        "gps_hdop": None,
+        "gps_fix_age_ms": None,
+    }
+    if len(payload) == 27:
+        hdop = unsigned(payload[23:25])
+        age = unsigned(payload[25:27])
+        has_position = age != 0xFFFF or unsigned(payload[7:15]) != 0
+        packet.update({
+            "gps_fix_quality": payload[5],
+            "gps_satellites": payload[6],
+            "latitude": signed(payload[7:11]) * GROUND_GPS_DEGREES_PER_COUNT if has_position else None,
+            "longitude": signed(payload[11:15]) * GROUND_GPS_DEGREES_PER_COUNT if has_position else None,
+            "gps_altitude": float32(payload[15:19]) if has_position else None,
+            "gps_time": unsigned(payload[19:23]) or None,
+            "gps_hdop": None if hdop == 0xFFFF else hdop / 100.0,
+            "gps_fix_age_ms": None if age == 0xFFFF else age,
+        })
+    return packet
+
+
+KALMAN_FLAGS = {
+    "initialized": 0x01, "imu_ignored": 0x02, "pad_hold": 0x04, "baro_gated": 0x08,
+    "baro_accepted": 0x10, "gps_accepted": 0x20, "gps_origin_set": 0x40, "hitl": 0x80,
+}
+
+
+def parse_kalman_log(payload: bytes) -> dict[str, Any]:
+    """0xE2 Witness Kalman filter log (P*.BIN source 5), see comms.h."""
+    flags = payload[1]
+    packet: dict[str, Any] = {
+        "packet": "kalman_log",
+        "flight_state_code": payload[0],
+        "kalman_flags": flags,
+        **{f"kf_{name}": int(bool(flags & bit)) for name, bit in KALMAN_FLAGS.items()},
+        "gps_satellites": payload[2],
+        "position": float_vector(payload[3:15], 3),
+        "velocity": float_vector(payload[15:27], 3),
+        "position_variance": float_vector(payload[27:39], 3),
+        "velocity_variance": float_vector(payload[39:51], 3),
+        "position_velocity_covariance": float_vector(payload[51:63], 3),
+        "baro_innovation": float32(payload[63:67]),
+        "baro_innovation_variance": float32(payload[67:71]),
+        "baro_sigma": float32(payload[71:75]),
+        "gps_innovation": float_vector(payload[75:87], 3),
+        "mach": float32(payload[87:91]),
+        "baro_updates": unsigned(payload[91:93]),
+        "baro_gated_count": unsigned(payload[93:95]),
+        "baro_rejects": unsigned(payload[95:97]),
+        "gps_updates": unsigned(payload[97:99]),
+        "gps_rejects": unsigned(payload[99:101]),
+    }
+    # 1-sigma uncertainties (sqrt of the variances) for plotting.
+    packet["position_sigma"] = [v ** 0.5 if v == v and v >= 0 else None
+                                for v in packet["position_variance"]]
+    packet["velocity_sigma"] = [v ** 0.5 if v == v and v >= 0 else None
+                                for v in packet["velocity_variance"]]
+    return packet
+
+
+SEA_LEVEL_PRESSURE_PA = 101325.0
+_ISA_LAYERS = (  # base geopotential m, base K, lapse K/m, base Pa
+    (0.0, 288.15, -0.0065, 101325.0), (11000.0, 216.65, 0.0, 22632.06),
+    (20000.0, 216.65, 0.001, 5474.889), (32000.0, 228.65, 0.0028, 868.0187),
+    (47000.0, 270.65, 0.0, 110.9063))
+
+
+def pressure_altitude_m(pressure_pa: float) -> float | None:
+    """ISA barometric altitude (geometric m, 1013.25 mbar), as pressure_altitude.h."""
+    if not pressure_pa or pressure_pa <= 0:
+        return None
+    i = 0
+    while i + 1 < len(_ISA_LAYERS) and pressure_pa < _ISA_LAYERS[i + 1][3]:
+        i += 1
+    hb, tb, lapse, pb = _ISA_LAYERS[i]
+    k = 287.05287 / 9.80665
+    if lapse == 0.0:
+        h = hb - k * tb * math.log(pressure_pa / pb)
+    else:
+        h = hb + tb / lapse * ((pressure_pa / pb) ** (-lapse * k) - 1.0)
+    r = 6356766.0
+    return r * h / (r - h)
+
+
 def parse_packet(packet_id: int, payload: bytes) -> dict[str, Any] | None:
     """Decode one payload using the same field layout as main.py/comms.h."""
     if packet_id == 0x01 and len(payload) in (21, 23):
@@ -142,7 +245,8 @@ def parse_packet(packet_id: int, payload: bytes) -> dict[str, Any] | None:
             "latitude": signed_int24(payload[46:49]) * GPS_DEGREES_PER_COUNT,
             "longitude": signed_int24(payload[49:52]) * GPS_DEGREES_PER_COUNT,
             "gps_altitude": float32(payload[52:56]),
-            "barometric_altitude": float32(payload[56:60]),
+            # Kalman altitude above the pad (raw baro MSL in pre-2026-11-10 logs).
+            "kalman_altitude": float32(payload[56:60]),
             "witness_battery_voltage": unsigned(payload[60:62]) * BATTERY_V_PER_COUNT,
         }
         # Legacy 62-byte payloads leave gps_satellites blank in the CSV.
@@ -176,13 +280,11 @@ def parse_packet(packet_id: int, payload: bytes) -> dict[str, Any] | None:
             "uptime": unsigned(payload[2:6]),
         }
 
-    if packet_id == 0xF0 and len(payload) == 11:
-        return {
-            "packet": "ground_station_status",
-            "rssi": signed(payload[0:1]),
-            "uptime": unsigned(payload[1:5]),
-            "reserved": list(payload[5:11]),
-        }
+    if packet_id == 0xF0 and len(payload) in (11, 27):
+        return parse_ground_station_status(payload)
+
+    if packet_id == 0xE2 and len(payload) == 101:
+        return parse_kalman_log(payload)
 
     if packet_id == 0xE0 and len(payload) == 101:
         return {
@@ -218,7 +320,7 @@ def parse_packet(packet_id: int, payload: bytes) -> dict[str, Any] | None:
             "ms5607_temperature": (
                 signed(payload[81:83]) * MS5607_TEMPERATURE_C_PER_COUNT
             ),
-            "barometric_altitude": float32(payload[83:87]),
+            "kalman_altitude": float32(payload[83:87]),
             "latitude": signed_int24(payload[87:90]) * GPS_DEGREES_PER_COUNT,
             "longitude": signed_int24(payload[90:93]) * GPS_DEGREES_PER_COUNT,
             "gps_time": unsigned(payload[93:97]),
@@ -244,6 +346,12 @@ VECTOR_LABELS = {
     "orientation": ("x", "y", "z", "w"),
     "position": ("x", "y", "z"),
     "velocity": ("x", "y", "z"),
+    "position_variance": ("x", "y", "z"),
+    "velocity_variance": ("x", "y", "z"),
+    "position_velocity_covariance": ("x", "y", "z"),
+    "position_sigma": ("x", "y", "z"),
+    "velocity_sigma": ("x", "y", "z"),
+    "gps_innovation": ("x", "y", "z"),
     "low_accel": ("x", "y", "z"),
     "high_accel": ("x", "y", "z"),
     "current_sense": ("ch1", "ch2", "ch3"),
@@ -369,6 +477,9 @@ def parse_flash_record_v2(record: bytes) -> dict[str, Any] | None:
         ),
         "pressure": signed(record[16:20]),  # pascals
         "ms5607_temperature": signed(record[20:24]) * MS5607_TEMPERATURE_C_PER_COUNT,
+        # Recomputed exactly as Witness does (the state packet now carries the
+        # Kalman altitude instead).
+        "barometric_altitude": pressure_altitude_m(signed(record[16:20])),
     }
 
 
@@ -543,7 +654,8 @@ def iter_imu_log(data: bytes, stats: DecodeStats | None = None):
 # Witness store-v4 packet stream (P*.BIN): records of
 # [u32 timestamp_us][u8 source][u8 length][complete frame], big-endian.
 PACKET_RECORD_HEADER = 6
-PACKET_SOURCES = {1: "witness_state", 2: "can_rx", 3: "can_tx", 4: "radio_rx"}
+PACKET_SOURCES = {1: "witness_state", 2: "can_rx", 3: "can_tx", 4: "radio_rx",
+                  5: "kalman_log"}
 
 
 def decode_packet_log(data: bytes) -> tuple[list[dict[str, Any]], int]:

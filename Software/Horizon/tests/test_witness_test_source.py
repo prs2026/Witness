@@ -34,13 +34,13 @@ class SourceTests(unittest.TestCase):
             "sensors", "state", "camera", "heartbeat", "ground_station_status", "witness_debug", "iris_debug"})
         states = [p for p in packets if p["packet"] == "state"]
         self.assertEqual({p["status"] & 7 for p in states}, {0, 1, 2, 3, 4})
-        self.assertEqual(max(p["barometric_altitude"] for p in states), 900)
+        self.assertEqual(max(p["kalman_altitude"] for p in states), 900)
         self.assertEqual(states[0]["witness_battery_voltage"], 4.2)
         self.assertLess(states[-1]["witness_battery_voltage"], 4.2)
         self.assertTrue(all(p["longitude"] < 0 for p in states))
 
     def test_demo_wire_lengths_and_engineering_units(self):
-        expected = {0x01: 23, 0x02: 65, 0x03: 19, 0xFF: 8, 0xF0: 13, 0xE0: 103, 0xE1: 14}
+        expected = {0x01: 23, 0x02: 65, 0x03: 19, 0xFF: 8, 0xF0: 29, 0xE0: 103, 0xE1: 14}
         frames = demo_packets(7000)
         self.assertEqual({key: len(frame) for key, frame in frames.items()}, expected)
         packet = parse_packet(0xE0, frames[0xE0][1:-1])
@@ -48,7 +48,7 @@ class SourceTests(unittest.TestCase):
         self.assertEqual(packet["status"] & 7, 1)
         self.assertAlmostEqual(packet["filtered_accel"][2], 3.45, places=4)
         self.assertAlmostEqual(packet["low_accel"][2], 3.45, places=3)
-        self.assertEqual(packet["barometric_altitude"], 48.0)
+        self.assertEqual(packet["kalman_altitude"], 48.0)
         self.assertEqual(packet["witness_battery_voltage"], 4.186)
         self.assertEqual(packet["lsm6_temperature"], 27.0)
 

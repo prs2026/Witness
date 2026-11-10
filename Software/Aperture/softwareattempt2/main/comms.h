@@ -394,6 +394,12 @@
      IRIS_PACKET_STATE_GPS_ALTITUDE_LENGTH)
 #define IRIS_PACKET_STATE_BAROMETRIC_ALTITUDE_LENGTH \
     IRIS_FIELD_MS5607_ALTITUDE_LENGTH
+// This slot carries the Kalman filter altitude (float32 m above the pad, the
+// filter's up position), not the raw barometer altitude. Raw MS5607 pressure
+// stays in the sensors packet and the flash sensor log (S*.BIN), from which
+// the ISA barometric altitude can be recomputed.
+#define IRIS_PACKET_STATE_KALMAN_ALTITUDE_OFFSET \
+    IRIS_PACKET_STATE_BAROMETRIC_ALTITUDE_OFFSET
 #define IRIS_PACKET_STATE_BATTERY_VOLTAGE_OFFSET \
     (IRIS_PACKET_STATE_BAROMETRIC_ALTITUDE_OFFSET + \
      IRIS_PACKET_STATE_BAROMETRIC_ALTITUDE_LENGTH)
@@ -501,6 +507,54 @@
     IRIS_CAN_FRAME_COUNT(IRIS_PACKET_COMMAND_FRAME_LENGTH)
 
 // ---------------------------------------------------------------------------
+// Kalman filter log packet (0xE2): flash log only, never sent over LoRa/CAN
+// ---------------------------------------------------------------------------
+// Witness writes one per position-filter update cycle (25 Hz) to the P*.BIN
+// packet stream (record source 5) for post-flight review. All multi-byte
+// fields are big-endian; floats are IEEE-754 float32. Axes are E, N, U (m,
+// m/s relative to the pad). Variances: P00 position (m^2), P11 velocity
+// ((m/s)^2), P01 position-velocity covariance (m^2/s), after the cycle's
+// updates. Innovations are measurement - prediction (m) with S = P00 + R
+// (m^2) for the barometer; NaN when that measurement was not offered this
+// cycle. GPS R = (2.5 m horizontal / 5 m vertical, doubled below 6
+// satellites)^2. Counters are the filter's running totals, mod 65536.
+
+#define IRIS_PACKET_ID_KALMAN_LOG 0xE2U
+
+#define IRIS_PACKET_KALMAN_LOG_PHASE_OFFSET 0U             // uint8 flight state
+#define IRIS_PACKET_KALMAN_LOG_FLAGS_OFFSET 1U             // uint8, IRIS_KALMAN_FLAG_*
+#define IRIS_PACKET_KALMAN_LOG_GPS_SATELLITES_OFFSET 2U    // uint8, last fix
+#define IRIS_PACKET_KALMAN_LOG_POSITION_OFFSET 3U          // 3 x float32 m
+#define IRIS_PACKET_KALMAN_LOG_VELOCITY_OFFSET 15U         // 3 x float32 m/s
+#define IRIS_PACKET_KALMAN_LOG_POSITION_VARIANCE_OFFSET 27U  // 3 x float32 P00
+#define IRIS_PACKET_KALMAN_LOG_VELOCITY_VARIANCE_OFFSET 39U  // 3 x float32 P11
+#define IRIS_PACKET_KALMAN_LOG_COVARIANCE_OFFSET 51U       // 3 x float32 P01
+#define IRIS_PACKET_KALMAN_LOG_BARO_INNOVATION_OFFSET 63U  // float32 m
+#define IRIS_PACKET_KALMAN_LOG_BARO_INNOVATION_VARIANCE_OFFSET 67U  // float32 m^2
+#define IRIS_PACKET_KALMAN_LOG_BARO_SIGMA_OFFSET 71U       // float32 m, last R^0.5
+#define IRIS_PACKET_KALMAN_LOG_GPS_INNOVATION_OFFSET 75U   // 3 x float32 m
+#define IRIS_PACKET_KALMAN_LOG_MACH_OFFSET 87U             // float32
+#define IRIS_PACKET_KALMAN_LOG_BARO_UPDATES_OFFSET 91U     // uint16
+#define IRIS_PACKET_KALMAN_LOG_BARO_GATED_OFFSET 93U       // uint16 (Mach gate)
+#define IRIS_PACKET_KALMAN_LOG_BARO_REJECTS_OFFSET 95U     // uint16 (5 sigma gate)
+#define IRIS_PACKET_KALMAN_LOG_GPS_UPDATES_OFFSET 97U      // uint16
+#define IRIS_PACKET_KALMAN_LOG_GPS_REJECTS_OFFSET 99U      // uint16 (per axis)
+#define IRIS_PACKET_KALMAN_LOG_DATA_LENGTH 101U
+#define IRIS_PACKET_KALMAN_LOG_EOF_OFFSET IRIS_PACKET_KALMAN_LOG_DATA_LENGTH
+#define IRIS_PACKET_KALMAN_LOG_FRAME_LENGTH \
+    (IRIS_PACKET_ID_LENGTH + IRIS_PACKET_KALMAN_LOG_DATA_LENGTH + \
+     IRIS_PACKET_EOF_LENGTH)
+
+#define IRIS_KALMAN_FLAG_INITIALIZED 0x01U     // predicting (attitude known once)
+#define IRIS_KALMAN_FLAG_IMU_IGNORED 0x02U     // attitude lost: no-IMU predict
+#define IRIS_KALMAN_FLAG_PAD_HOLD 0x04U        // pad still: state pinned to 0
+#define IRIS_KALMAN_FLAG_BARO_GATED 0x08U      // Mach >= 0.8 gate active
+#define IRIS_KALMAN_FLAG_BARO_ACCEPTED 0x10U   // baro update used this cycle
+#define IRIS_KALMAN_FLAG_GPS_ACCEPTED 0x20U    // >= 1 GPS axis used this cycle
+#define IRIS_KALMAN_FLAG_GPS_ORIGIN_SET 0x40U  // GPS origin (pad) established
+#define IRIS_KALMAN_FLAG_HITL 0x80U            // HITL simulation active
+
+// ---------------------------------------------------------------------------
 // Ground-station USB status packet (not transmitted over LoRa)
 // ---------------------------------------------------------------------------
 
@@ -509,14 +563,38 @@
 #define IRIS_PACKET_GROUND_STATION_STATUS_RSSI_LENGTH 1U
 #define IRIS_PACKET_GROUND_STATION_STATUS_UPTIME_OFFSET 1U
 #define IRIS_PACKET_GROUND_STATION_STATUS_UPTIME_LENGTH 4U
-#define IRIS_PACKET_GROUND_STATION_STATUS_RESERVED_OFFSET 5U
-#define IRIS_PACKET_GROUND_STATION_STATUS_RESERVED_LENGTH 6U
-#define IRIS_PACKET_GROUND_STATION_STATUS_DATA_LENGTH 11U
+// Aperture's own GPS (LC86 on UART): the launch pad position when the
+// Featherweight ground station's location is not available.
+#define IRIS_PACKET_GROUND_STATION_STATUS_GPS_FIX_QUALITY_OFFSET 5U
+#define IRIS_PACKET_GROUND_STATION_STATUS_GPS_FIX_QUALITY_LENGTH 1U
+#define IRIS_PACKET_GROUND_STATION_STATUS_GPS_SATELLITES_OFFSET 6U
+#define IRIS_PACKET_GROUND_STATION_STATUS_GPS_SATELLITES_LENGTH 1U
+#define IRIS_PACKET_GROUND_STATION_STATUS_LATITUDE_OFFSET 7U
+#define IRIS_PACKET_GROUND_STATION_STATUS_LATITUDE_LENGTH 4U
+#define IRIS_PACKET_GROUND_STATION_STATUS_LONGITUDE_OFFSET 11U
+#define IRIS_PACKET_GROUND_STATION_STATUS_LONGITUDE_LENGTH 4U
+#define IRIS_PACKET_GROUND_STATION_STATUS_GPS_ALTITUDE_OFFSET 15U
+#define IRIS_PACKET_GROUND_STATION_STATUS_GPS_ALTITUDE_LENGTH 4U
+#define IRIS_PACKET_GROUND_STATION_STATUS_GPS_TIME_OFFSET 19U
+#define IRIS_PACKET_GROUND_STATION_STATUS_GPS_TIME_LENGTH 4U
+#define IRIS_PACKET_GROUND_STATION_STATUS_GPS_HDOP_OFFSET 23U
+#define IRIS_PACKET_GROUND_STATION_STATUS_GPS_HDOP_LENGTH 2U
+#define IRIS_PACKET_GROUND_STATION_STATUS_GPS_FIX_AGE_OFFSET 25U
+#define IRIS_PACKET_GROUND_STATION_STATUS_GPS_FIX_AGE_LENGTH 2U
+#define IRIS_PACKET_GROUND_STATION_STATUS_DATA_LENGTH 27U
 #define IRIS_PACKET_GROUND_STATION_STATUS_EOF_OFFSET \
     IRIS_PACKET_GROUND_STATION_STATUS_DATA_LENGTH
-#define IRIS_PACKET_GROUND_STATION_STATUS_FRAME_LENGTH 13U
+#define IRIS_PACKET_GROUND_STATION_STATUS_FRAME_LENGTH 29U
+// Pre-GPS Aperture firmware sent an 11-byte payload (RSSI, uptime, six zero
+// bytes); hosts should still accept it.
+#define IRIS_PACKET_GROUND_STATION_STATUS_LEGACY_DATA_LENGTH 11U
 
-// RSSI is a signed int8 in dBm. The six reserved bytes are transmitted as 0.
+// RSSI is a signed int8 in dBm. Fix quality is NMEA GGA field 6 (0 = no fix).
+// Latitude/longitude: big-endian signed int32, 1e-7 degree/count (north/east
+// positive). GPS altitude: float32 m MSL. GPS time: uint32 Unix seconds (0 =
+// unknown). HDOP: uint16, 0.01/count (0xFFFF = unknown). Fix age: uint16 ms
+// since the last fix with quality >= 1 (0xFFFF = none, or 65.5 s or older).
+// Position fields are zero while no fix has been seen.
 
 // ---------------------------------------------------------------------------
 // Heartbeat packet (0xFF)
@@ -584,6 +662,9 @@
 #define IRIS_PACKET_WITNESS_DEBUG_PRESSURE_OFFSET 78U
 #define IRIS_PACKET_WITNESS_DEBUG_MS5607_TEMPERATURE_OFFSET 81U
 #define IRIS_PACKET_WITNESS_DEBUG_BAROMETRIC_ALTITUDE_OFFSET 83U
+// Kalman filter altitude, m above the pad (same as the state packet slot).
+#define IRIS_PACKET_WITNESS_DEBUG_KALMAN_ALTITUDE_OFFSET \
+    IRIS_PACKET_WITNESS_DEBUG_BAROMETRIC_ALTITUDE_OFFSET
 #define IRIS_PACKET_WITNESS_DEBUG_LATITUDE_OFFSET 87U
 #define IRIS_PACKET_WITNESS_DEBUG_LONGITUDE_OFFSET 90U
 #define IRIS_PACKET_WITNESS_DEBUG_GPS_TIME_OFFSET 93U
@@ -771,6 +852,14 @@
 #endif
 #if IRIS_PACKET_WITNESS_DEBUG_FRAME_LENGTH != 103U
 #error "Witness debug application packet must be 103 bytes"
+#endif
+#if IRIS_PACKET_KALMAN_LOG_FRAME_LENGTH != 103U
+#error "Kalman log packet must be 103 bytes (flash packet record limit)"
+#endif
+#if IRIS_PACKET_GROUND_STATION_STATUS_FRAME_LENGTH != \
+    (IRIS_PACKET_ID_LENGTH + IRIS_PACKET_GROUND_STATION_STATUS_DATA_LENGTH + \
+     IRIS_PACKET_EOF_LENGTH)
+#error "Ground-station status frame length mismatch"
 #endif
 #if IRIS_PACKET_IRIS_DEBUG_FRAME_LENGTH != 14U
 #error "IRIS debug application packet must be 14 bytes"

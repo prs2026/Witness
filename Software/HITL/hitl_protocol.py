@@ -329,7 +329,7 @@ def decode_frame(frame: bytes) -> dict | None:
         pkt["lat_deg"] = i24(frame, 47) * LATLON_DEG_PER_COUNT
         pkt["lon_deg"] = i24(frame, 50) * LATLON_DEG_PER_COUNT
         pkt["gps_alt_m"] = f32(frame, 53)
-        pkt["baro_alt_m"] = f32(frame, 57)
+        pkt["kalman_alt_m"] = f32(frame, 57)  # Kalman altitude above the pad
         pkt["battery_mv"] = u16(frame, 61)
         pkt["gps_satellites"] = frame[63]
     elif pid == ID_CAMERA:
@@ -358,7 +358,9 @@ def decode_frame(frame: bytes) -> dict | None:
                            for o in (73, 75, 77)]
         pkt["pressure_pa"] = u24(frame, 79)
         pkt["baro_temp_c"] = i16(frame, 82) / 100.0
-        pkt["baro_alt_m"] = f32(frame, 84)
+        pkt["kalman_alt_m"] = f32(frame, 84)  # Kalman altitude above the pad
+        pkt["baro_alt_m"] = (pressure_altitude_m(pkt["pressure_pa"])
+                             if pkt["pressure_pa"] > 0 else None)
         pkt["lat_deg"] = i24(frame, 88) * LATLON_DEG_PER_COUNT
         pkt["lon_deg"] = i24(frame, 91) * LATLON_DEG_PER_COUNT
         pkt["gps_time_s"] = u32(frame, 94)

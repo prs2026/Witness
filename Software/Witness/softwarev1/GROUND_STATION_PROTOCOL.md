@@ -36,8 +36,9 @@ Packet lengths include the packet ID and EOF:
 | `0x0E` | HITL IMU batch (8 samples at 960 Hz) | 148 | 150 | host to Witness over USB only, 120 Hz | never transmitted |
 | `0xE0` | Witness debug | 101 | 103 | 10 Hz after debug enable | latest frame at 1 Hz |
 | `0xE1` | IRIS debug | 12 | 14 | Iris CAN, 10 Hz after debug enable | latest frame at 1 Hz |
+| `0xE2` | Kalman filter log | 101 | 103 | flash `P*.BIN` only, 25 Hz | never transmitted |
 | `0xFF` | Heartbeat | 6 | 8 | 1 Hz | latest frame at 1 Hz |
-| `0xF0` | Ground-station status | 11 | 13 | Aperture USB, 1 Hz | never transmitted |
+| `0xF0` | Ground-station status | 27 | 29 | Aperture USB, 1 Hz | never transmitted |
 
 All offsets in the packet tables below are absolute frame offsets: packet ID
 is byte 0, the first payload byte is byte 1, and EOF is the last byte.
@@ -156,18 +157,24 @@ delay) on the 960 Hz sample stream and sent in the 40 micro-g/count format
 | 47 | 3 | Latitude, signed int24 |
 | 50 | 3 | Longitude, signed int24 |
 | 53 | 4 | GPS altitude, float32 m MSL |
-| 57 | 4 | MS5607 barometric altitude, float32 m |
+| 57 | 4 | Kalman altitude, float32 m above the pad (see below) |
 | 61 | 2 | Witness/FC battery voltage, uint16 mV |
 | 63 | 1 | GPS satellites used, uint8 |
 | 64 | 1 | EOF `0x0A` |
 
-Status, uptime, the orientation quaternion, barometric altitude, battery
+Status, uptime, the orientation quaternion, Kalman altitude, battery
 voltage, valid UART1 GPS fixes and the satellite count are populated. Position
 and velocity come from the position Kalman filter: ENU metres and m/s, origin
 at the pad, zero until the attitude is initialized and held at zero while the
 vehicle sits still on the pad. Satellites come from the most recent checksum-valid
 GGA within 3 s and are reported even when that GGA has no fix (position fields
 are then zero); they are 0 when stale.
+
+The altitude at offset 57 is the position Kalman filter's up estimate (equal
+to Position Z), in metres above the pad. Firmware before 2026-11-10 sent the
+raw MS5607 barometric altitude (m, ISA 1013.25 mbar) in this slot. Raw pressure
+is still in `0x01`/`0xE0` and the flash sensor log, from which Horizon
+recomputes the barometric altitude.
 
 Quaternion convention (`0x02` and `0xE0`): Hamilton quaternion sent X, Y, Z,
 W (scalar last), rotating BODY vectors into WORLD (`v_world = q v_body q^-1`).
@@ -249,13 +256,42 @@ Radio commands are additionally interpreted locally.
 | 3 | 4 | Witness uptime, ms |
 | 7 | 1 | EOF `0x0A` |
 
-### `0xF0` Ground-station status packet, 13 bytes
+### `0xF0` Ground-station status packet, 29 bytes
 
 Aperture emits this frame only over USB once per second. It is never sent over
-LoRa. Frame offsets: ID `0xF0` at byte 0, last valid LoRa RSSI as signed dBm at
-byte 1, big-endian station uptime in milliseconds at bytes 2..5, six reserved
-zero bytes at 6..11, and EOF `0x0A` at byte 12. Before a valid receive, RSSI is
-`-127 dBm`.
+LoRa. Its GPS fields come from Aperture's own Quectel LC86 receiver in the pad
+box and give the launch pad position when the Featherweight ground station's
+location is not available.
+
+| Frame offset | Size | Field |
+|---:|---:|---|
+| 0 | 1 | Packet ID `0xF0` |
+| 1 | 1 | Last valid LoRa RSSI, int8 dBm (`-127` before the first packet) |
+| 2 | 4 | Station uptime, uint32 ms |
+| 6 | 1 | GPS fix quality, uint8, NMEA GGA field 6 (0 = no fix) |
+| 7 | 1 | GPS satellites used, uint8 (GGA field 7) |
+| 8 | 4 | Latitude, int32, 1e-7 degree/count, north positive |
+| 12 | 4 | Longitude, int32, 1e-7 degree/count, east positive |
+| 16 | 4 | GPS altitude, float32 m above mean sea level |
+| 20 | 4 | GPS time, uint32 Unix seconds (0 = unknown) |
+| 24 | 2 | HDOP, uint16, 0.01/count (`0xFFFF` = unknown) |
+| 26 | 2 | Fix age, uint16 ms since the reported position (`0xFFFF` = none, or 65.535 s or older) |
+| 28 | 1 | EOF `0x0A` |
+
+Payload offsets in `comms.h` (`IRIS_PACKET_GROUND_STATION_STATUS_*_OFFSET`)
+are these frame offsets minus one. All multi-byte fields are big-endian.
+
+- Fix quality, satellites and HDOP come from the most recent checksum-valid
+  GGA, including a no-fix GGA. When that GGA is 3 s old or older (or none has
+  arrived), quality and satellites are 0 and HDOP is `0xFFFF`.
+- Latitude, longitude and altitude hold the last valid fix (GGA quality 1..8
+  with a parseable position), however old; use the fix-age field to judge it.
+  They are zero, with fix age `0xFFFF`, until a fix has been seen since boot.
+- GPS time is the UTC of the last RMC with status `A`, advanced by the
+  station's elapsed time since that RMC arrived, so it keeps counting through a
+  dropout. It is 0 until such an RMC has been received.
+- Hosts should still accept the pre-GPS 13-byte form (11-byte payload: RSSI,
+  uptime, six zero bytes; `IRIS_PACKET_GROUND_STATION_STATUS_LEGACY_DATA_LENGTH`).
 
 ### `0xE0` Witness debug packet, 103 bytes
 
@@ -276,7 +312,7 @@ zero bytes at 6..11, and EOF `0x0A` at byte 12. Before a valid receive, RSSI is
 | 73, 75, 77 | 2 each | LSM6 gyro X/Y/Z, int16 |
 | 79 | 3 | MS5607 pressure, uint24 Pa |
 | 82 | 2 | MS5607 temperature, int16 centi-C |
-| 84 | 4 | MS5607 altitude, float32 m |
+| 84 | 4 | Kalman altitude, float32 m above the pad (as `0x02`) |
 | 88 | 3 | Latitude, int24 |
 | 91 | 3 | Longitude, int24 |
 | 94 | 4 | GPS Unix time, uint32 s |
@@ -290,6 +326,50 @@ the estimator is initialized), so enabling debug output with command `0x00E0`
 gives 10 Hz quaternions on USB (LoRa still sends the newest debug frame at its
 1 Hz radio rate). GPS latitude, longitude and MSL altitude come from UART1 NMEA
 GGA fixes.
+
+### `0xE2` Kalman filter log packet, 103 bytes (flash log only)
+
+Witness writes one per position-filter update cycle (25 Hz) into the flash
+packet stream (`P*.BIN`, record source 5) for post-flight review of the
+filter. It is never sent over LoRa, USB or CAN. Floats are big-endian
+float32; axes are East, North, Up relative to the pad.
+
+| Frame offset | Size | Field |
+|---:|---:|---|
+| 0 | 1 | Packet ID `0xE2` |
+| 1 | 1 | Flight state (0 Pad Idle .. 4 Landed) |
+| 2 | 1 | Flags (below) |
+| 3 | 1 | GPS satellites in the latest fix |
+| 4, 8, 12 | 4 each | Position E/N/U, m |
+| 16, 20, 24 | 4 each | Velocity E/N/U, m/s |
+| 28, 32, 36 | 4 each | Position variance P00 E/N/U, m^2 |
+| 40, 44, 48 | 4 each | Velocity variance P11 E/N/U, (m/s)^2 |
+| 52, 56, 60 | 4 each | Position-velocity covariance P01 E/N/U, m^2/s |
+| 64 | 4 | Barometer innovation (measurement - prediction), m |
+| 68 | 4 | Barometer innovation variance S = P00 + R, m^2 |
+| 72 | 4 | Barometer measurement sigma (sqrt R) of the latest update, m |
+| 76, 80, 84 | 4 each | GPS innovation E/N/U, m |
+| 88 | 4 | Mach (filter speed / ISA speed of sound) |
+| 92 | 2 | Barometer updates used, uint16 running total |
+| 94 | 2 | Barometer updates skipped by the Mach gate, uint16 |
+| 96 | 2 | Barometer updates rejected by the 5-sigma gate, uint16 |
+| 98 | 2 | GPS fixes used, uint16 |
+| 100 | 2 | GPS axis updates rejected, uint16 |
+| 102 | 1 | EOF `0x0A` |
+
+Variances are after the cycle's updates. Innovations are NaN when that
+measurement was not offered in the cycle; they are recorded whether or not the
+gate accepted them. GPS R is (2.5 m horizontal, 5 m vertical, doubled below 6
+satellites)^2. Counters wrap at 65536.
+
+Flags: `0x01` filter initialized (attitude known), `0x02` IMU ignored (attitude
+lost after gyro saturation), `0x04` pad hold, `0x08` barometer Mach gate
+active, `0x10` barometer update accepted this cycle, `0x20` at least one GPS
+axis accepted this cycle, `0x40` GPS origin set, `0x80` HITL active.
+
+Horizon `converter.py` decodes it in `P*.BIN` exports (`packet_type`
+`kalman_log`), adding `kf_*` flag columns and `position_sigma_*` /
+`velocity_sigma_*` (square roots of the variances).
 
 ### `0xE1` IRIS debug packet, 14 bytes
 
@@ -665,7 +745,7 @@ FRAME_LENGTH = {
     0xE0: 103,
     0xE1: 14,
     0xFF: 8,
-    0xF0: 13,
+    0xF0: 29,  # pre-GPS Aperture firmware sent 13
 }
 
 def extract_frames(buffer: bytearray):

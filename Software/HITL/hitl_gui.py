@@ -1024,7 +1024,7 @@ class HitlApp:
                f"  late {run.late_ticks}" if run else "")
         self._set(self.info_label, text=(
             f"sats {fmt(v.gps_sats, 'd')}  lock {'Y' if v.gps_locked else 'N'}"
-            f"  baro {fmt(v.baro_alt_m, '.1f')} m  gps {fmt(v.gps_alt_m, '.1f')}"
+            f"  KF alt {fmt(v.kalman_alt_m, '.1f')} m AGL  gps {fmt(v.gps_alt_m, '.1f')}"
             f" m  accX {fmt(v.accel_x_g, '.2f')} g  batt "
             f"{fmt(v.battery_mv, 'd')} mV  uptime "
             f"{fmt(None if v.uptime_ms is None else v.uptime_ms / 1000, '.1f')}"
@@ -1084,7 +1084,7 @@ class HitlApp:
         specs = [
             ("Altitude MSL (m)",
              [(run.plot_true, "#1f5fbf", "sim true"),
-              (run.plot_baro, "#d2691e", "Witness baro")]),
+              (run.plot_baro, "#d2691e", "Witness Kalman")]),
             ("X accel (g)",
              [(run.plot_accel, "#1f5fbf", "sim low-g X"),
               (run.plot_wacc, "#d2691e", "Witness accel X")]),

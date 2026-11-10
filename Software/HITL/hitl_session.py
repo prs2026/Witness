@@ -57,7 +57,7 @@ class WitnessView:
     hitl_active: bool = False
     gps_locked: bool = False
     gps_sats: int | None = None
-    baro_alt_m: float | None = None
+    kalman_alt_m: float | None = None   # above the pad
     gps_alt_m: float | None = None
     battery_mv: int | None = None
     accel_x_g: float | None = None
@@ -92,7 +92,7 @@ class RunState:
     warnings: list = field(default_factory=list)
     plot_true: list = field(default_factory=list)    # (sim s, alt msl)
     plot_accel: list = field(default_factory=list)   # (sim s, sent low-g x)
-    plot_baro: list = field(default_factory=list)    # (sim s, Witness baro)
+    plot_baro: list = field(default_factory=list)    # (sim s, Witness Kalman alt MSL)
     plot_wacc: list = field(default_factory=list)    # (sim s, Witness acc x)
     run_dir: str | None = None
     result: dict | None = None
@@ -553,19 +553,16 @@ class HitlSession:
                 return
         with self._lock:
             v = self.view
-            if pid == hp.ID_STATE:
-                v.baro_alt_m = pkt["baro_alt_m"]
+            if pid in (hp.ID_STATE, hp.ID_WITNESS_DEBUG):
+                v.kalman_alt_m = pkt["kalman_alt_m"]
                 v.gps_alt_m = pkt["gps_alt_m"]
                 v.battery_mv = pkt["battery_mv"]
-                v.gps_sats = pkt["gps_satellites"]
+                if pid == hp.ID_STATE:
+                    v.gps_sats = pkt["gps_satellites"]
                 if run is not None and run.running:
-                    run.plot_baro.append((self._sim_s(), pkt["baro_alt_m"]))
-            elif pid == hp.ID_WITNESS_DEBUG:
-                v.baro_alt_m = pkt["baro_alt_m"]
-                v.gps_alt_m = pkt["gps_alt_m"]
-                v.battery_mv = pkt["battery_mv"]
-                if run is not None and run.running:
-                    run.plot_baro.append((self._sim_s(), pkt["baro_alt_m"]))
+                    # Plotted against the MSL truth: add the pad's altitude.
+                    pad = run.samples[0].alt_msl_m if run.samples else 0.0
+                    run.plot_baro.append((self._sim_s(), pkt["kalman_alt_m"] + pad))
             if pid in (hp.ID_SENSORS, hp.ID_WITNESS_DEBUG):
                 v.accel_x_g = pkt["accel_g"][0]
                 if run is not None and run.running:

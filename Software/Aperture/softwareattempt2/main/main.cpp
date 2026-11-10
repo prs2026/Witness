@@ -9,28 +9,23 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "comms.h"
+#include "ground_station_status.h"
 #include "hardware.h"
+#include "lc86_gps.h"
 #include "ra01.h"
 
 namespace {
 
 constexpr const char *kLogTag = "aperture";
 
+Lc86Gps gps;
+
 void make_ground_station_status(std::uint8_t *packet,
                                 const std::int8_t rssi_dbm)
 {
-    packet[0] = IRIS_PACKET_ID_GROUND_STATION_STATUS;
-    packet[IRIS_PACKET_GROUND_STATION_STATUS_RSSI_OFFSET + 1U] =
-        static_cast<std::uint8_t>(rssi_dbm);
     const std::uint32_t uptime_ms = static_cast<std::uint32_t>(
         esp_timer_get_time() / 1000LL);
-    packet[2] = static_cast<std::uint8_t>(uptime_ms >> 24U);
-    packet[3] = static_cast<std::uint8_t>(uptime_ms >> 16U);
-    packet[4] = static_cast<std::uint8_t>(uptime_ms >> 8U);
-    packet[5] = static_cast<std::uint8_t>(uptime_ms);
-    for (std::size_t index = 6U; index < 12U; ++index) packet[index] = 0U;
-    packet[IRIS_PACKET_GROUND_STATION_STATUS_FRAME_LENGTH - 1U] =
-        IRIS_PACKET_EOF_VALUE;
+    build_ground_station_status(packet, rssi_dbm, uptime_ms, gps.state());
 }
 
 }  // namespace
@@ -46,6 +41,15 @@ extern "C" void app_main(void)
     // ESP-IDF requires the RX buffer to be larger than 64 bytes.
     usb_config.rx_buffer_size = 128U;
     ESP_ERROR_CHECK(usb_serial_jtag_driver_install(&usb_config));
+
+    // The GPS runs on its own task; a failure here leaves the bridge running
+    // and the 0xF0 GPS fields at their no-fix values.
+    const esp_err_t gps_result = gps.start();
+    if (gps_result != ESP_OK) {
+        ESP_LOGE(kLogTag, "GPS start failed: %s (0x%x)",
+                 esp_err_to_name(gps_result),
+                 static_cast<unsigned>(gps_result));
+    }
 
     Ra01 radio;
     const esp_err_t radio_result = radio.initialize();

@@ -142,7 +142,7 @@ def demo_packets(at_ms):
     latitude = _integer((34.0 + seconds * 0.00001) * 10000, 3, signed=True)
     longitude = _integer((-117.0 + seconds * 0.00001) * 10000, 3, signed=True)
     gps_altitude = struct.pack(">f", altitude + 100)
-    barometric_altitude = struct.pack(">f", altitude)
+    kalman_altitude = struct.pack(">f", altitude)  # Kalman altitude slot
     battery = _integer((4.2 - seconds * 0.002) * 1000, 2)
     iris_header = _integer(0x7800, 2) + _integer(at_ms, 4)
     currents = bytes((5 + int(seconds) % 3, 8, 12))
@@ -152,15 +152,19 @@ def demo_packets(at_ms):
              + _vector(accel, 0.000488, 2) + _integer(2 * 256, 2, signed=True)
              + _vector(accel, 0.010417, 2) + gyro
              + _integer(101325 * math.exp(-altitude / 8400), 3)
-             + _integer(2150, 2, signed=True) + barometric_altitude
+             + _integer(2150, 2, signed=True) + kalman_altitude
              + latitude + longitude + _integer(1791849600 + int(seconds), 4) + gps_altitude)
     payloads = {
         0x01: header + accel_bytes + gyro,
         0x02: header + orientation + position + velocity_bytes + latitude + longitude
-              + gps_altitude + barometric_altitude + battery + bytes((satellites,)),
+              + gps_altitude + kalman_altitude + battery + bytes((satellites,)),
         0x03: header + iris_header + currents + iris_battery,
         0xFF: header,
-        0xF0: _integer(-65 - 10 * math.sin(seconds / 5), 1, signed=True) + _integer(at_ms, 4) + bytes(6),
+        0xF0: (_integer(-65 - 10 * math.sin(seconds / 5), 1, signed=True) + _integer(at_ms, 4)
+               + bytes((1, 9)) + _integer(round(34.0 * 1e7), 4, signed=True)
+               + _integer(round(-117.0 * 1e7), 4, signed=True)
+               + struct.pack(">f", 1400.0) + _integer(1791849600 + int(seconds), 4)
+               + _integer(90, 2) + _integer(100, 2)),
         0xE0: debug,
         0xE1: iris_header + _integer(29, 1, signed=True) + iris_battery + currents,
     }

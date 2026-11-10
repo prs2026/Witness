@@ -111,7 +111,7 @@ class DecoderTests(unittest.TestCase):
         self.assertAlmostEqual(p["lat_deg"], 32.9903)
         self.assertAlmostEqual(p["lon_deg"], -106.975)
         self.assertAlmostEqual(p["gps_alt_m"], 1500.5)
-        self.assertAlmostEqual(p["baro_alt_m"], 1499.25)
+        self.assertAlmostEqual(p["kalman_alt_m"], 1499.25)
         self.assertEqual(p["battery_mv"], 7800)
         self.assertEqual(p["gps_satellites"], 10)
 

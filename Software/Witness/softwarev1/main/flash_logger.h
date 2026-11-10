@@ -65,6 +65,7 @@ public:
     static constexpr std::uint8_t kPacketSourceCanRx = 2;   // from Iris over CAN
     static constexpr std::uint8_t kPacketSourceCanTx = 3;   // to Iris over CAN
     static constexpr std::uint8_t kPacketSourceRadioRx = 4; // LoRa command
+    static constexpr std::uint8_t kPacketSourceKalman = 5;  // 0xE2 filter log, 25 Hz
     static constexpr std::size_t kPacketRecordHeader = 6;   // u32 us, source, length
     static constexpr std::size_t kMaxPacketFrame = 103;     // intercomm limit
     // Any task may call this; never blocks (a full queue drops and counts).

@@ -84,12 +84,12 @@ COMPARISON_HEADER = [
     "witness_up_m", "truth_up_m", "error_east_m", "error_north_m", "error_up_m",
     "error_horizontal_m", "witness_vel_east_mps", "truth_vel_east_mps",
     "witness_vel_north_mps", "truth_vel_north_mps", "witness_vel_up_mps",
-    "truth_vel_up_mps", "error_speed_mps", "witness_baro_alt_msl_m",
+    "truth_vel_up_mps", "error_speed_mps", "witness_kalman_alt_m",
     "truth_alt_msl_m", "witness_tilt_deg", "truth_tilt_deg", "error_attitude_deg",
 ]
 
 
-def _compare_row(samples, state_track, sim_s, uptime_ms, state, pos, vel, quat, baro):
+def _compare_row(samples, state_track, sim_s, uptime_ms, state, pos, vel, quat, kalman_alt):
     k = _tick_index(samples, sim_s)
     s = samples[k]
     tp = getattr(s, "pos_enu_m", (0.0, 0.0, 0.0))
@@ -113,7 +113,7 @@ def _compare_row(samples, state_track, sim_s, uptime_ms, state, pos, vel, quat, 
         "witness_vel_north_mps": vel[1], "truth_vel_north_mps": tv[1],
         "witness_vel_up_mps": vel[2], "truth_vel_up_mps": tv[2],
         "error_speed_mps": speed_err,
-        "witness_baro_alt_msl_m": baro, "truth_alt_msl_m": s.alt_msl_m,
+        "witness_kalman_alt_m": kalman_alt, "truth_alt_msl_m": s.alt_msl_m,
         "witness_tilt_deg": w_tilt, "truth_tilt_deg": att.tilt_from_vertical_deg(tq),
         "error_attitude_deg": _att_error_deg(tq, quat) if quat else None,
     }
@@ -176,7 +176,7 @@ def write_comparison(run, run_dir: str) -> dict | None:
         rows.append(_compare_row(run.samples, run.state_track, sim_s, pkt.get("uptime_ms"),
                                  pkt["status"]["flight_state"], pkt["position_m"],
                                  pkt["velocity_mps"], pkt.get("quat_xyzw"),
-                                 pkt.get("baro_alt_m")))
+                                 pkt.get("kalman_alt_m")))
     if not rows:
         return None
     _write_rows(os.path.join(run_dir, "comparison.csv"), rows)
@@ -297,7 +297,9 @@ def write_flash_comparison(run, fc_dir: str) -> dict | None:
                     num("orientation_z"), num("orientation_w"))
             state = int(float(r["flight_state"])) if r.get("flight_state") else 0
             rows.append(_compare_row(run.samples, run.state_track, sim_s, int(r["uptime"]),
-                                     state, pos, vel, quat, num("barometric_altitude")))
+                                     state, pos, vel, quat,
+                                     num("kalman_altitude") if r.get("kalman_altitude")
+                                     not in ("", None) else num("barometric_altitude")))
     if not rows:
         return None
     _write_rows(os.path.join(run.run_dir, "comparison_flash.csv"), rows)

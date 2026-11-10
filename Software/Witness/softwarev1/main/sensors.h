@@ -368,6 +368,9 @@ private:
     void build_state_payload(std::uint8_t *payload);
     // NAND packet stream: the full 0x02 frame every kStateLogPeriod.
     void log_state_packet();
+    // One 0xE2 Kalman log packet per position update cycle (flash only).
+    void log_kalman_packet(position::Phase phase, bool baro_accepted, bool gps_accepted,
+                           std::uint8_t satellites);
     esp_err_t queue_debug_packet();
     esp_err_t read_battery_voltage();
     void poll_radio_commands();
