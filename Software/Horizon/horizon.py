@@ -185,6 +185,8 @@ def main(argv=None) -> int:
     parser.add_argument("--no-gl", action="store_true", help="draw attitude as a 2D projection (no OpenGL)")
     args = parser.parse_args(argv)
     app = ensure_app()
+    import stall_watchdog
+    stall_watchdog.install(LOG_DIR)
     window = HorizonGroundStation(flight_layout=args.flight_layout, auto_connect=not args.no_auto_connect,
                                   broker_enabled=DEFAULT_MQTT_BROKER_ENABLED and not args.no_broker,
                                   map_online=not args.offline_map, use_gl=False if args.no_gl else None)
