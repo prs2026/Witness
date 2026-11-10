@@ -1,22 +1,22 @@
 # Horizon Unified Ground Station
 
-Horizon is the desktop ground-station software for viewing Witness, Featherweight GPS, and AIM XTRA telemetry together. It includes a fixed launch dashboard, a layout editor, logging, and an embedded MQTT broker. This folder contains Python applications, not the embedded firmware that runs on the flight computers.
+Horizon is the desktop ground-station software for viewing Witness, Featherweight GPS, and AIM XTRA telemetry together. It includes a launch dashboard, a layout editor, an attitude view, a map/orientation visualizer, logging, and an embedded MQTT broker. The UI is PyQt6 with pyqtgraph for every plot. This folder contains Python applications, not the embedded firmware that runs on the flight computers.
 
-Start `horizon.py` for the unified display. Run `main.py` alongside it for Witness hardware input. AIM BASE still connects to AIM hardware and publishes its telemetry; Horizon replaces the separate MQTT broker application, not AIM BASE.
+Start `horizon.py` for the unified display. Witness hardware input comes from the **Witness monitor** tab of witnessOS (`Software/witnessOS/witnessos.py --tab monitor`); the standalone `main.py` window is retired (running `main.py` just prints where the monitor went). AIM BASE still connects to AIM hardware and publishes its telemetry; Horizon replaces the separate MQTT broker application, not AIM BASE.
 
 ## Data connections
 
 | Input | Data path | Where to configure it |
 |---|---|---|
-| Witness | Serial or TCP → `main.py` → local JSON telemetry feed → Horizon | Witness monitor for hardware; Horizon Witness tab for feed |
+| Witness | Serial or TCP → witnessOS Witness monitor → local JSON telemetry feed → Horizon | witnessOS Witness monitor tab for hardware; Horizon Witness tab for feed |
 | Featherweight GPS | Serial COM port → Horizon | Featherweight GPS tab |
 | AIM XTRA | AIM BASE → MQTT broker → Horizon subscriber | AIM BASE publisher settings and Horizon AIM XTRA MQTT tab |
 
-Horizon’s telemetry clients are receive-only: they do not send flight commands to Witness, Featherweight, or AIM hardware. The Witness monitor (`main.py`) has separate command controls that can transmit to connected serial/TCP devices. The embedded broker routes MQTT messages between clients; it does not translate them into hardware commands.
+Horizon’s telemetry clients are receive-only: they do not send flight commands to Witness, Featherweight, or AIM hardware. The Witness monitor (witnessOS tab, built on `main.MonitorPanel`) has separate command controls that can transmit to connected serial/TCP devices. The embedded broker routes MQTT messages between clients; it does not translate them into hardware commands.
 
 ## Installation and startup
 
-The application has been tested with Python 3.14 on Windows. Install Python with Tcl/Tk support, then run these commands in this folder using PowerShell:
+The application has been tested with Python 3.14 on Windows. Run these commands in this folder using PowerShell:
 
 ```powershell
 py -3.14 -m venv .venv
@@ -24,13 +24,15 @@ py -3.14 -m venv .venv
 .\.venv\Scripts\python.exe horizon.py
 ```
 
-If `.venv` already exists, use it and run the dependency-install command after upgrading. Dependencies are `pyserial`, `paho-mqtt`, and `amqtt`; the graphs use Tk canvas drawing.
+If `.venv` already exists, use it and run the dependency-install command after upgrading. Dependencies include `PyQt6`, `pyqtgraph`, `PyOpenGL` (3D attitude; a 2D projection is used without it), `numpy`, `pyserial`, `paho-mqtt` and `amqtt`.
 
-In a second terminal, start the Witness monitor:
+For Witness hardware, start witnessOS and use its **Witness monitor** tab:
 
 ```powershell
-.\.venv\Scripts\python.exe main.py
+.\.venv\Scripts\python.exe ..\witnessOS\witnessos.py --tab monitor
 ```
+
+Keys in Horizon: **F9** Visualizer, **F11** fullscreen (**Escape** leaves), **Ctrl+P** pause Flight View, **Ctrl+1..6** switch tabs, **Ctrl+Q** quit. In the Attitude tab **Space** plays/pauses a replay and **Ctrl+O** loads a CSV.
 
 Either app may start first. Horizon retries its enabled inputs when unavailable. A connected device with no fresh packets is not the same as a healthy telemetry stream: check packet ages and the Flight View banner.
 
@@ -46,7 +48,7 @@ Either app may start first. Horizon retries its enabled inputs when unavailable.
 | AIM subscription | `entacore/aim/1234/#` |
 | Embedded broker at startup | Enabled |
 
-These defaults are in [ground_settings.py](ground_settings.py). Witness raw TCP defaults are at the top of [main.py](main.py). Do not point the Horizon Witness feed at a raw telemetry TCP port: the feed carries decoded JSON records, not binary application packets.
+These defaults are in [ground_settings.py](ground_settings.py). Witness raw TCP defaults are at the top of [monitor_core.py](monitor_core.py). Do not point the Horizon Witness feed at a raw telemetry TCP port: the feed carries decoded JSON records, not binary application packets.
 
 The subscriber UUID is an identifier, not a password. Horizon adds a unique suffix to its MQTT client ID to avoid collisions between instances.
 
@@ -90,7 +92,7 @@ If port 1883 is occupied, Horizon reports the bind failure without taking over o
 
 ## Witness and Featherweight inputs
 
-Witness hardware is opened by `main.py`, not by Horizon. The monitor supports two serial inputs, two TCP inputs, decoded telemetry, diagnostic displays, graphs, and command transmission. Select `(no port)` for an unused serial slot. Serial/TCP streams use the same application decoder and the TCP inputs expect raw binary telemetry, not Telnet negotiation or terminal echo traffic.
+Witness hardware is opened by the Witness monitor (witnessOS tab; logic in `monitor_core.py`), not by Horizon. The monitor supports two serial inputs, two TCP inputs, decoded telemetry, diagnostic displays, graphs, and command transmission. Select `(no port)` for an unused serial slot. Serial/TCP streams use the same application decoder and the TCP inputs expect raw binary telemetry, not Telnet negotiation or terminal echo traffic.
 
 Automatic USB discovery is enabled by default. Recognizable devices are discovered automatically. For a generic adapter, select its port manually once; after a valid packet, its USB identity can be learned in `auto_connect_witness.json` or `auto_connect_featherweight.json`. Changing a COM number does not change a learned USB identity.
 
@@ -100,12 +102,12 @@ Featherweight is read directly in its Horizon tab. Tracker battery voltage and l
 
 ## Flight View
 
-Flight View is a single, non-scrolling launch display. It places key flight numbers and state on the left, up to six graphs in the center, and GPS/power readouts on the right. Text is dark on white backgrounds. Battery readouts use three decimal places; AIM CPU/ejection batteries share a row. Default AIM continuity placeholders are removed.
+Flight View is the launch display. It places key flight numbers and state on the left, up to six pyqtgraph graphs in the center, and GPS/power readouts on the right, in a resizable splitter (the side panels scroll only when the window is too small). Panels are dark text on white whatever the system theme. Redraws are timer-driven (the layout's `refresh_ms`, at most 30 Hz), never once per packet. Battery readouts use three decimal places; AIM CPU/ejection batteries share a row. Default AIM continuity placeholders are removed.
 
-- **Witness GPS** (GPS panel, row titled `Witness`) shows the state packet's satellite count beside the status GPS lock bit, for example `GPS sats 7  lock 1` (compact) or `GPS sats 7` | `lock 1` (large windows). `lock` is a literal `1` (fresh fix) or `0`. Satellites are those used in the solution and read 0 when the fix is stale. Each value keeps its own `!` age/invalid marker.
+- **Witness GPS** (GPS panel, row titled `W`) shows the state packet's satellite count beside the status GPS lock bit, for example `GPS sats 7  lock 1`. `lock` is a literal `1` (fresh fix) or `0`. Satellites are those used in the solution and read 0 when the fix is stale. Each value keeps its own `!` age/invalid marker.
 - **HITL** (state area, under the flight state) shows `HITL ACTIVE - SIMULATED SENSORS` in red whenever Witness reports status byte 1 bit 4, and the banner adds `HITL - SIMULATED SENSORS`. A held HITL value stays red even when old, so a simulated run is never mistaken for flight data. Otherwise the line reads `HITL off - real sensors (...)`.
 
-The **Flight controls** menu provides layout loading/saving, Pause/Resume, Clear plots, Set pad, a graph time-window selector, fullscreen, and display details. F11 toggles fullscreen; Escape exits it.
+The **Flight controls** menu provides layout loading/saving, Pause/Resume, Clear plots, Set pad, a graph time-window selector, fullscreen, and display details. F11 toggles fullscreen; Escape exits it; Ctrl+P pauses/resumes. Witness traces are solid, AIM traces dashed.
 
 - Pause freezes the display, not telemetry reception or logging.
 - Changing the graph window preserves history. History is bounded, so a longer window may contain empty space.
@@ -136,7 +138,7 @@ AIM fields whose publisher units remain unverified, including GPS altitude and Z
 
 ## Attitude tab
 
-**Attitude** (next to Flight View, which is unchanged) draws the Witness orientation quaternion as a 3D wireframe rocket on a Tk canvas: body tube, nose cone and four fins. The fin on body +Y and a stripe along the body are orange so roll is visible. The view also shows a body-axis triad (`xb` = nose, `yb`, `zb`), world ENU axes (E, N, U) and a ground grid. **Iso**, **From East**, **From North** and **From Above** set the camera, and dragging the view orbits it. Below the view is a strip chart of qx/qy/qz/qw and tilt. **Conventions...** summarises the definitions below.
+**Attitude** (next to Flight View, which is unchanged) draws the Witness orientation quaternion as a 3D rocket with `pyqtgraph.opengl` (or, where OpenGL is unavailable such as headless or some remote desktops, an orthographic 2D projection of the same wireframe): body tube, nose cone and four fins. The fin on body +Y and a stripe along the body are orange so roll is visible. The view also shows a body-axis triad (`xb` = nose, `yb`, `zb`), world ENU axes (E, N, U) and a ground grid. **Iso**, **From East**, **From North** and **From Above** set the camera, and dragging the view orbits it. Readouts sit beside the view in a resizable splitter; below is a pyqtgraph strip chart of qx/qy/qz/qw and tilt, with a cursor at the replay time. **Conventions...** summarises the definitions below.
 
 **Live mode** (default, or **Live feed**) uses the same Witness decoded feed as Flight View. A fresh `0xE0` debug quaternion is used when one has arrived in the last 2.5 s (10 Hz over USB after command `0x00E0`; the LoRa downlink relays it at most 1 Hz). Otherwise Horizon uses the newest 1 Hz `0x02` state quaternion. The readouts show the source (`0xE0`/`0x02` and feed source name), sample age (red and `STALE` after 3 s, `SNAPSHOT` for a relay replay), flight state, HITL flag (red when active) and GPS lock from the latest Witness status. The strip chart shows the last 30 to 600 s of host receive time; `0x02` samples are not added to it while `0xE0` is fresh.
 
@@ -168,18 +170,18 @@ When a truth quaternion is present, truth is drawn as a blue dashed ghost and as
 - Heading is not observable on Witness (no magnetometer). Its initial heading is arbitrary, so nose azimuth, spin, yaw and roll include an unknown constant offset. For a vertical rocket, heading and spin are the same rotation. Only tilt is absolute.
 - The `0x02` quaternion is 1 Hz. The 10 Hz `0xE0` stream must be enabled with command `0x00E0` from the Witness monitor (Horizon sends no commands). Over LoRa, `0xE0` is relayed at 1 Hz at most. Fast motion between 1 Hz samples is not visible, and live mode does not interpolate.
 - Live age is host receive time and includes link latency. File time is the CSV's own time base. For converter CSVs that is device uptime.
-- The drawing is an orthographic wireframe with simple depth ordering, not a rendered model, and is not to scale.
+- The drawing is a simple wireframe/mesh model (perspective in OpenGL, orthographic in the 2D fallback), not to scale.
 
 ## Visualizer window
 
-**Windows > Visualizer** (or **F9**) in `horizon.py` opens a separate window with two tabs. Both use the same Witness and Featherweight records as Flight View. Tracks are collected from startup, so opening the window later still shows the whole flight.
+**Windows > Visualizer** (or **F9**) in `horizon.py` opens a separate window with the **orientation view on the left and the map on the right, side by side** in a resizable splitter, so both are visible at once. Both use the same Witness and Featherweight records as Flight View. Tracks are collected from startup, so opening the window later still shows the whole flight.
 
-**Orientation** draws the Witness quaternion as the Attitude tab's 3D wireframe rocket (fresh `0xE0`, else `0x02`; same conventions), with large **tilt from vertical**, **roll** (spin about the nose) and **heading** (nose azimuth) readouts. Heading and roll are relative to the arbitrary heading fixed at initialisation, because Witness has no magnetometer. An all-zero quaternion is explained rather than drawn:
+**Orientation** draws the Witness quaternion as the Attitude tab's 3D rocket (OpenGL, drag to orbit; 2D fallback without OpenGL) (fresh `0xE0`, else `0x02`; same conventions), with large **tilt from vertical**, **roll** (spin about the nose) and **heading** (nose azimuth) readouts. Heading and roll are relative to the arbitrary heading fixed at initialisation, because Witness has no magnetometer. An all-zero quaternion is explained rather than drawn:
 
 - on the pad: `ATTITUDE NOT INITIALISED` (waiting for the 1 s stationary window; HITL entry/exit resets it);
-- in Boost/Coast/Descent/Landed after a valid attitude: `ATTITUDE LOST`. Witness stops its attitude for the rest of the flight once a gyro axis saturates (≥ 1950 dps), and its Kalman filter then ignores the IMU. The last valid attitude is drawn dashed.
+- in Boost/Coast/Descent/Landed after a valid attitude: `ATTITUDE LOST`. Witness stops its attitude for the rest of the flight once a gyro axis saturates (≥ 1950 dps), and its Kalman filter then ignores the IMU. The last valid attitude is drawn as a blue ghost.
 
-**Map** is a top-down, north-up view centred on the pad, showing:
+**Map** is a top-down, north-up pyqtgraph plot in local ENU metres centred on the pad, with locked aspect, showing:
 
 - range rings, a north arrow and a scale bar;
 - a track for each source, distinguished by colour and marker:
@@ -189,11 +191,11 @@ When a truth quaternion is present, truth is drawn as a blue dashed ghost and as
 - distance, compass bearing, altitude above the pad and age for each source;
 - the pad source in use, its position and its MSL altitude.
 
-The Kalman position is relative to the vehicle's own pad. It is placed using the mean Witness GPS fix on the pad when one exists, and is otherwise assumed to start at the selected pad. Drag to pan, use the mouse wheel or **+/-** to zoom, and tick **Follow rocket** to keep the newest position centred. **Set pad here...** then a click overrides the pad position. **Auto pad** returns to automatic selection.
+The Kalman position is relative to the vehicle's own pad. It is placed using the mean Witness GPS fix on the pad when one exists, and is otherwise assumed to start at the selected pad. Drag to pan, use the mouse wheel or **+/-** to zoom (the tile zoom level follows the view), and tick **Follow rocket** to keep the newest position centred. **Set pad here...** then a click overrides the pad position. **Auto pad** returns to automatic selection.
 
 The map always works offline as a metric grid. With **OSM tiles** ticked (the default), OpenStreetMap raster tiles are drawn underneath. They are fetched on one background thread at no more than 2 requests/s, with a User-Agent naming Horizon and no personal data, and cached in `tile_cache/osm/<z>/<x>/<y>.png` (ignored by git). Cached tiles are re-used offline and refreshed only after 30 days. **Pre-cache area...** downloads up to 600 tiles covering about 2 km around the pad at zoom 12–17. Do this once at home with internet, after the pad is known or set manually. Start with `horizon.py --offline-map` to never download. The map shows "© OpenStreetMap contributors" whenever tiles are drawn.
 
-Redraws are timer-driven: at most 25 Hz, and only when data or the view changed. Tiles are fetched off the UI thread and loaded with Tk's built-in PNG support, so there are no new dependencies.
+Redraws are timer-driven: at most 25 Hz, and only when data or the view changed. Tiles are downloaded by the `map_tiles.py` worker (same User-Agent and rate policy), decoded on a worker thread and shown as pyqtgraph `ImageItem`s.
 
 ## Layout Editor
 
@@ -205,7 +207,7 @@ Use **Layout Editor** to customize the dashboard without editing JSON by hand:
 4. Choose **Apply to Flight View** to validate and apply the draft. Confirming resets graph history and source bindings; connections and logging continue.
 5. Choose **Save JSON as...** to keep the setup. Saving and applying are separate operations.
 
-The editor may scroll; Flight View never does. A fixed dashboard supports at most six graphs in two columns and three rows, with up to three flight readout rows, one state row, six GPS rows, and ten power rows. Flight rows hold up to three values; state, GPS and power rows hold up to two. Validation rejects layouts exceeding these limits.
+The editor form scrolls when needed. The dashboard supports at most six graphs in two columns and three rows, with up to three flight readout rows, one state row, six GPS rows, and ten power rows. Flight rows hold up to three values; state, GPS and power rows hold up to two. Validation rejects layouts exceeding these limits.
 
 Display formats are `number`, `state` (flight-state name), `continuity`, `flag` (a 0/1 bit shown literally, used for GPS lock) and `hitl` (the HITL warning line; use it as the state row's second value). Witness status fields available to traces are `status.flight_state`, `status.gps_locked` and `status.hitl_active` (and the `fc_status.*` equivalents on camera packets), plus `status.byte0.bit0` to `bit7`. Layouts saved before this change still load, but their `Witness GPS satellites` placeholder stays N/A and they have no HITL line until edited or replaced with the default.
 
@@ -221,19 +223,9 @@ The default is [flight_view_default.json](flight_view_default.json). The full sc
 
 ## Testing without hardware
 
-Start Horizon normally, then run the built-in Witness test source in a separate terminal:
+Start Horizon normally, then in witnessOS's **Witness monitor** tab use the test-source row: leave the file blank for the built-in 60 s simulated flight, or **Browse JSON** for a replay such as `test_data/ballistic_10g.json`, set **Speed** (0.1-10) and **Loop**, and press **Start test**. Embedders can pass the same options to `main.MonitorPanel(test_mode=True, test_source=..., test_speed=..., test_loop=...)`.
 
-```powershell
-.\.venv\Scripts\python.exe main.py --test
-```
-
-For the example ballistic flight:
-
-```powershell
-.\.venv\Scripts\python.exe main.py --test-file test_data/ballistic_10g.json --test-once
-```
-
-`--test-speed 2` runs replay at twice normal speed. Without `--test-once`, the scenario repeats and its device uptimes repeat too. Test bytes pass through the normal Witness decoder and local telemetry feed; they are not transmitted to hardware. Witness test mode disables automatic USB opening and labels test traffic. Horizon’s other enabled inputs can still receive real data, so turn those inputs off if you want an isolated demonstration.
+Without **Loop**, the scenario plays once; with it, the scenario repeats and its device uptimes repeat too. Test bytes pass through the normal Witness decoder and local telemetry feed; they are not transmitted to hardware. Witness test mode disables automatic USB opening and labels test traffic. Horizon’s other enabled inputs can still receive real data, so turn those inputs off if you want an isolated demonstration.
 
 Replay JSON has `version: 1`, `duration_ms`, and a `frames` list containing ordered `at_ms` times and hexadecimal byte strings. See [test_data/example_packets.json](test_data/example_packets.json) and [witness_test_source.py](witness_test_source.py). The built-in scenario and both example files use 65-byte state frames. GPS has no fix at first (0 satellites, lock 0), then locks, and some samples have 10 satellites so a `0x0A` byte appears inside the payload. None of them set the HITL bit.
 
@@ -254,7 +246,7 @@ Logs are written under `logs/` next to the scripts:
 
 The Witness monitor picks GPS NMEA sentences (`$GNGGA`, `$GNRMC`, ...) out of the mixed Witness stream and checks each `*hh` checksum. Valid and damaged sentences both go to the NMEA CSV (`checksum_ok` 1 or 0); a damaged one is usually a sentence with a telemetry frame spliced into it. A status line under the feed status shows the counts per input and the latest GGA fix, satellites and altitude.
 
-The monitor keeps up with fast streams: each GUI tick drains every queued event, keeps every graph sample at its arrival time, and redraws the labels and graphs (at most 10 times a second) from the newest packet of each type. The on-screen console keeps its newest 2,000 lines and, in a burst, skips lines with a note; the debug log keeps everything.
+The monitor keeps up with fast streams: each GUI tick (30 ms) drains every queued event, keeps every graph sample at its arrival time in numpy ring buffers, updates the labels from the newest packet of each type, and redraws the pyqtgraph graphs through a throttle (at most 20 times a second, and only while the Graphs tab is shown). The on-screen console keeps its newest 2,000 lines and, in a burst, skips lines with a note; the debug log keeps everything.
 
 Broker diagnostic logs rotate at 5 MB with two backups per run. This does not limit the other telemetry log files or remove logs from previous runs; monitor disk space. Broker logs are not a replacement for the AIM message log.
 
@@ -288,7 +280,7 @@ Witness status rows get `status_byte0`, `status_byte1`, `flight_state`, `flight_
 
 The monitor and converter also accept captured sensor payloads of 23 bytes alongside the 21-byte documented form. Check the deployed firmware revision before changing lengths or scaling. Witness flash `WL` records are a different format from application frames.
 
-The state packet (`0x02`) is a 65-byte frame: ID, a 63-byte payload, then EOF at frame offset 64. The payload is status, uptime, orientation, position, velocity, latitude, longitude, GPS altitude, barometric altitude, battery voltage (uint16 mV at frame offset 61) and GPS satellites (uint8 at frame offset 63). Witness status byte 1 (the low byte of `status`) holds the flight state in bits 2:0, GPS locked in bit 3 and HITL active in bit 4; bits 7:5 are reserved. These bits appear in the sensor, state, command, debug and heartbeat packets, and in camera `fc_status`. The Witness monitor shows the satellites as `GPS sats: 7  lock 1`. Its status decoders add `GPS lock` and `HITL (SIM)` indicators, with HITL shown in red.
+The state packet (`0x02`) is a 65-byte frame: ID, a 63-byte payload, then EOF at frame offset 64. The payload is status, uptime, orientation, position, velocity, latitude, longitude, GPS altitude, barometric altitude, battery voltage (uint16 mV at frame offset 61) and GPS satellites (uint8 at frame offset 63). Witness status byte 1 (the low byte of `status`) holds the flight state in bits 2:0, GPS locked in bit 3 and HITL active in bit 4; bits 7:5 are reserved. These bits appear in the sensor, state, command, debug and heartbeat packets, and in camera `fc_status`. The Witness monitor shows the satellites as `7  lock 1`. Its status decoders add `GPS lock` and `HITL (SIM)` indicators, with HITL shown in red.
 
 **Legacy 64-byte state frames.** Older firmware and logs use a 64-byte state frame with no satellite byte. There is no version field, so both decoders try the 65-byte form first. It is chosen when frame offset 64 is `0x0A`, even if offset 63 is also `0x0A` (10 satellites). The 64-byte form is chosen only when offset 63 is `0x0A` and offset 64 is not. No packet ID is `0x0A`, so a legacy frame followed by any valid packet is unambiguous. To avoid cutting a split read short, the live monitor waits for the 65th byte before deciding. A legacy frame at the very end of a stream is therefore decoded only once another byte arrives. Two rare cases can still be misread: a stray `0x0A` noise byte straight after a legacy frame (read as a 65-byte frame with 10 satellites), and a corrupted 65-byte frame with 10 satellites and a bad EOF (read as legacy, then resynchronized). The converter also accepts a legacy-looking frame at the end of a file.
 
@@ -307,25 +299,29 @@ Commands are sent from the Witness monitor, not Horizon. All command shortcuts, 
 | Broker running but no AIM messages | AIM BASE must be connected and publishing; verify its host, port, and base path against Horizon. Try `127.0.0.1` instead of `localhost` if name resolution differs. |
 | Remote computer cannot connect to embedded broker | The listener is intentionally loopback-only. Use an appropriately secured external broker for network access. |
 | AIM BASE USB connection error | Horizon does not open AIM USB hardware. Resolve the connection in AIM BASE; starting a broker cannot fix a USB failure. |
-| Witness tab disconnected | Start `main.py`, check that its local feed is available, and use feed port 8766 rather than a raw TCP telemetry port. |
+| Witness tab disconnected | Start the witnessOS Witness monitor, check that its local feed is available, and use feed port 8766 rather than a raw TCP telemetry port. |
 | Featherweight missing | Check COM ownership and connect a generic adapter manually once so its identity can be learned. |
 | Values visible but not changing | Inspect receive age, retained/invalid flags, pause state, and the source tab. A held value is not a fresh packet. |
 | Custom graph empty | Verify packet/topic and flattened field names, source selection, filters, enabled state, axis units, and received messages. |
-| Tcl/Tk startup error | Use a Python installation with Tcl/Tk included and run from the intended virtual environment. |
+| Qt startup error / no window | Install `requirements.txt` (PyQt6, pyqtgraph) into the interpreter you run. |
+| Attitude view says "2D projection (OpenGL unavailable)" | OpenGL could not be initialised (remote desktop, old driver, missing PyOpenGL). The 2D view shows the same attitude; set `HORIZON_NO_GL=1` or `--no-gl` to force it. |
 
 ## Development and verification
 
 | Module | Responsibility |
 |---|---|
-| `horizon.py` | App startup, tabs, defaults, and shutdown |
+| `horizon.py` | App startup, tabs, defaults, and shutdown (Qt main window) |
+| `qt_common.py`, `qt_widgets.py`, `observable.py` | Shared Qt/pyqtgraph setup, widget bindings, observable `Cell` state |
 | `mqtt_broker.py` | Background embedded broker and diagnostic log |
-| `aim_tab.py`, `aim_mqtt.py` | AIM controls, MQTT subscriber, decoding, logging |
-| `ground_tabs.py`, `ground_receivers.py`, `featherweight.py` | Witness feed and Featherweight reception |
-| `flight_view.py`, `flight_render.py`, `flight_data.py` | Dashboard controls, drawing, validated layouts, histories |
-| `flight_editor.py` | Draft layout editing and JSON save/load |
-| `attitude_view.py`, `attitude_data.py`, `attitude_math.py` | Attitude tab drawing, live/CSV sample handling, pure quaternion math |
+| `aim_tab.py`, `aim_mqtt.py` | AIM tab (fields + live strip chart of a selected field), MQTT subscriber, decoding, logging |
+| `ground_tabs.py`, `auto_connect.py`, `ground_receivers.py`, `featherweight.py` | Witness feed / Featherweight tabs, connection + auto-connect logic (no Qt), reception |
+| `telemetry_view.py`, `telemetry_model.py` | Field tree widget; field schemas and row model (no Qt) |
+| `flight_view.py`, `flight_render.py`, `flight_data.py` | Dashboard widgets; what to display (no Qt); validated layouts and histories |
+| `flight_editor.py`, `flight_layout_draft.py` | Layout editor widget; draft editing logic and JSON save/load (no Qt) |
+| `attitude_view.py`, `attitude_scene.py`, `attitude_data.py`, `attitude_math.py` | Attitude tab and 3D/2D rocket widget; rocket geometry (no Qt); live/CSV samples; quaternion math |
+| `visualizer.py`, `map_data.py`, `map_tiles.py`, `pad_reference.py`, `geodesy.py` | Visualizer window (orientation + map side by side); tracks, tile cache, pad selection, geodesy |
 | `aim_altitude.py`, `aim_orientation.py` | Derived AIM altitude, velocity, and angular rates |
-| `main.py`, `witness_link.py`, `witness_test_source.py` | Witness monitor, local relay, test playback |
+| `main.py`, `monitor_core.py`, `witness_protocol.py`, `witness_link.py`, `witness_test_source.py` | `MonitorPanel` Qt widget (embedded by witnessOS); monitor logic and protocol (no Qt); local relay; test playback |
 | `converter.py`, `viewer.py` | Postflight conversion and analysis |
 | `witness_download.py`, `witness_pi_agent.py` | Download Witness flash logs through the bench Pi |
 
@@ -335,7 +331,7 @@ Run the regression suite from this folder:
 .\.venv\Scripts\python.exe -B -m unittest discover -s tests -q
 ```
 
-Broker tests use isolated loopback ports rather than the live AIM port. They cover MQTT delivery through the AIM receiver, QoS, wildcard subscriptions, retained messages, startup defaults, checkbox shutdown/restart, missing dependencies, and port conflicts. GUI tests require a working Tcl/Tk environment. These tests do not replace verification with the actual receivers and deployed firmware before a flight.
+Broker tests use isolated loopback ports rather than the live AIM port. They cover MQTT delivery through the AIM receiver, QoS, wildcard subscriptions, retained messages, startup defaults, checkbox shutdown/restart, missing dependencies, and port conflicts. GUI tests run headless (`QT_QPA_PLATFORM=offscreen`, which also exercises the 2D attitude fallback); they include checks that live packets are batched into throttled redraws and that the Visualizer shows the map and attitude side by side. These tests do not replace verification with the actual receivers and deployed firmware before a flight.
 
 ## Shared firmware protocol
 

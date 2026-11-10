@@ -233,47 +233,5 @@ class CsvEndToEndTests(unittest.TestCase):
         self.assertIn("Expected: Boost", out.getvalue())
 
 
-class GuiSmokeTest(unittest.TestCase):
-    def test_build_gui(self):
-        try:
-            import tkinter as tk
-            root = tk.Tk()
-        except Exception as exc:  # pragma: no cover - environment specific
-            self.skipTest(f"Tk unavailable: {exc}")
-        tmp = tempfile.mkdtemp(prefix="hitl-gui-")
-        try:
-            root.withdraw()
-            app = hitl_gui.HitlApp(
-                root, settings={"host": "127.0.0.1", "port": 1,
-                                "preset": "Nominal 10 g",
-                                "tolerance_s": 1.0},
-                settings_path=os.path.join(tmp, "s.json"), runs_dir=tmp)
-            root.update()
-            app.preset_var.set("Pad abort - no launch")
-            app.load_preset()
-            self.assertFalse(app.read_params().ignite)
-            app.load_csv(BUNDLED)
-            params = app.read_params()
-            self.assertEqual(params.csv_path, BUNDLED)
-            self.assertEqual(params.after_apogee_attitude, "hold")
-            # Plot path for an attitude run (not started, nothing sent).
-            run = app.session.prepare_run(params)
-            run.sim_ms = 60_000
-            run.plot_tilt_w.append((50.0, 10.0))
-            run.plot_tilt_err.append((50.0, 0.5))
-            app.session.run = run
-            app.redraw_plot()
-            root.update()
-            app.session.run = None
-            app.preset_var.set("Nominal 10 g")
-            app.load_preset()
-            app.poll()
-            app.redraw_plot()
-            root.update()
-            app.on_close()
-        finally:
-            shutil.rmtree(tmp, ignore_errors=True)
-
-
 if __name__ == "__main__":
     unittest.main()

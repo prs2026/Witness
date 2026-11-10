@@ -174,24 +174,29 @@ def _read_head(path: str) -> tuple[list[str], list[list[str]], int, float]:
 
 
 def load_table(path, progress=None, cancel=None,
-               max_bytes: int = MAX_TABLE_BYTES) -> Table:
+               max_bytes: int = MAX_TABLE_BYTES, columns=None) -> Table:
     """Load a converted CSV as numpy columns.
 
     ``progress(fraction)`` is called as the file is read; setting the
-    ``cancel`` threading.Event raises LoadCancelled. Raises ValueError for a
-    file without a header or numeric columns, OSError for I/O errors.
+    ``cancel`` threading.Event raises LoadCancelled. ``columns`` (a set of
+    names) limits the numeric columns read; the others are never allocated.
+    Raises ValueError for a file without a header or numeric columns,
+    OSError for I/O errors.
     """
     path = str(path)
     size = os.path.getsize(path)
     header, sample, _header_bytes, avg_line = _read_head(path)
     is_numeric = _classify(header, sample)
+    if columns is not None:
+        wanted = set(columns)
+        is_numeric = [ok and name in wanted for ok, name in zip(is_numeric, header)]
     estimated_rows = max(1, int(size / max(avg_line, 1.0)))
     n_numeric = sum(is_numeric)
     stride = max(1, math.ceil(estimated_rows * max(n_numeric, 1) * 8 / max_bytes))
     try:
         table = _load_fast(path, header, is_numeric, stride, size, progress, cancel)
     except ValueError:
-        table = _load_robust(path, header, stride, size, progress, cancel)
+        table = _load_robust(path, header, stride, size, progress, cancel, columns)
     # Columns that never held a number are not numeric columns.
     table.columns = {name: values for name, values in table.columns.items()
                      if values.size and not np.all(np.isnan(values))}
@@ -270,9 +275,10 @@ def _load_fast(path, header, is_numeric, stride, size, progress, cancel) -> Tabl
                  stride=stride, total_rows=total_rows)
 
 
-def _load_robust(path, header, stride, size, progress, cancel) -> Table:
+def _load_robust(path, header, stride, size, progress, cancel, columns=None) -> Table:
     """csv.reader fallback: same output as _load_fast for any CSV."""
     n = len(header)
+    use = [columns is None or name in columns for name in header]
     values = [array("d") for _ in range(n)]
     has_text = [False] * n
     keep_text = {header.index(name) for name in TEXT_COLUMNS if name in header}
@@ -296,6 +302,8 @@ def _load_robust(path, header, stride, size, progress, cancel) -> Table:
                     progress(min(0.99, f.tell() / size))
             width = len(row)
             for i in range(n):
+                if not use[i] and i not in keep_text:
+                    continue
                 value = row[i].strip() if i < width else ""
                 if i in keep_text:
                     texts[i].append(value)
@@ -307,7 +315,7 @@ def _load_robust(path, header, stride, size, progress, cancel) -> Table:
                         has_text[i] = True
                 appends[i](nan)
     columns = {header[i]: np.frombuffer(values[i], dtype=np.float64).copy()
-               for i in range(n) if not has_text[i]}
+               for i in range(n) if use[i] and not has_text[i]}
     text = {header[i]: TextColumn.from_values(texts[i]) for i in keep_text
             if has_text[i] or header[i] not in columns}
     for i in keep_text:
@@ -318,15 +326,17 @@ def _load_robust(path, header, stride, size, progress, cancel) -> Table:
 
 
 def table_from_rows(path, rows, base_columns=(), progress=None, cancel=None,
-                    size: int = 0) -> Table:
+                    size: int = 0, columns=None) -> Table:
     """Build a Table from an iterable of row dicts (converter.iter_* output).
 
     Rows are consumed one at a time and never kept, so a decoded log of
     millions of records costs only its numeric arrays. Columns are ordered
     like converter.write_csv's CSV header (``base_columns`` first, then in
     first-seen order, ``raw_packet_hex`` last); a column is numeric when all
-    its non-empty values are numbers, as when the CSV is loaded.
+    its non-empty values are numbers, as when the CSV is loaded. ``columns``
+    (a set of names) limits the numeric columns kept.
     """
+    wanted = None if columns is None else set(columns)
     nan = math.nan
     numeric: dict[str, array] = {}
     is_text: set[str] = set()
@@ -347,7 +357,7 @@ def table_from_rows(path, rows, base_columns=(), progress=None, cancel=None,
                     codes.extend([0] * (count - len(codes)))
                 codes.append(lookup.setdefault(str(value).strip(), len(lookup)))
                 continue
-            if name in is_text:
+            if name in is_text or (wanted is not None and name not in wanted):
                 continue
             if isinstance(value, (int, float)):
                 number = float(value)

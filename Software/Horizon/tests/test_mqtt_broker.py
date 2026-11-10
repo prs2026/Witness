@@ -7,8 +7,10 @@ import socket
 import tempfile
 import threading
 import time
-import tkinter as tk
+import os
 import unittest
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from unittest.mock import patch
 
 import paho.mqtt.client as mqtt
@@ -142,34 +144,55 @@ class BrokerTests(unittest.TestCase):
 
 class BrokerGuiTests(unittest.TestCase):
     def test_default_enabled_checkbox_restart_and_close(self):
-        from horizon import HorizonGroundStation
+        from horizon_qt_support import make_horizon, pump_until
         with tempfile.TemporaryDirectory() as directory:
             port = free_port()
-            try:
-                # Broker default remains on even if subscriber auto-connect is off.
-                app = HorizonGroundStation(log_dir=Path(directory), auto_connect=False, broker_port=port)
-            except tk.TclError as exc:
-                self.skipTest(f"Tk display unavailable: {exc}")
-            app.withdraw()
+            # Broker default remains on even if subscriber auto-connect is off.
+            app = make_horizon(directory, broker_enabled=True, broker_port=port)
             try:
                 tab = app.aim
                 self.assertTrue(tab.broker_enabled.get())
-                wait_for(lambda: tab.broker.snapshot()[0] == "running")
+                self.assertTrue(tab.broker_button.isChecked())
+                self.assertTrue(pump_until(lambda: tab.broker.snapshot()[0] == "running", 8))
                 tab._poll_broker()
                 self.assertIn(str(port), tab.broker_status.get())
-                tab.broker_button.invoke()
+                tab.broker_button.click()
                 self.assertFalse(tab.broker_enabled.get())
-                wait_for(lambda: not tab.broker.alive)
+                self.assertTrue(pump_until(lambda: not tab.broker.alive, 8))
                 tab._poll_broker()
                 self.assertFalse(tab.broker.alive)
-                tab.broker_button.invoke()
-                wait_for(lambda: tab.broker.snapshot()[0] == "running")
+                tab.broker_button.click()
+                self.assertTrue(pump_until(lambda: tab.broker.snapshot()[0] == "running", 8))
                 # Stopping the subscriber does not stop the broker.
                 tab.disconnect()
                 self.assertEqual(tab.broker.snapshot()[0], "running")
             finally:
                 app.close()
             self.assertFalse(tab.broker.alive)
+
+    def test_aim_rows_and_selected_field_chart(self):
+        from horizon_qt_support import make_horizon, pump_until
+        with tempfile.TemporaryDirectory() as directory:
+            app = make_horizon(directory)
+            try:
+                tab = app.aim
+                now = time.monotonic()
+                tab.receiver = type("Fake", (), {"running": True, "auto_retry": False, "stop": lambda self: None,
+                                                 "drain": lambda self: ({}, ("Connected", 0, 0, 0), [])})()
+                tab.show_records({"rssi_payload/v1": {"rssi": (-71, "2026-11-10T00:00:00+00:00", now, False)}}, [])
+                self.assertEqual(tab.value("rssi_payload/v1", "rssi"), "-71")
+                tab.tree.setCurrentItem(tab._rows[("rssi_payload/v1", "rssi")])
+                self.assertEqual(tab.chart_key, ("rssi_payload/v1", "rssi"))
+                for index in range(50):
+                    tab.show_records({"rssi_payload/v1": {"rssi": (-70 - index, "2026-11-10T00:00:00+00:00",
+                                                                   now + index * .01, False)}}, [])
+                self.assertTrue(pump_until(lambda: tab.chart_curve.yData is not None and len(tab.chart_curve.yData) == 51, 2))
+                tab.show_records({"rssi_payload/v1": {"rssi": (None, "", now + 1, False)}}, [])
+                self.assertEqual(tab.value("rssi_payload/v1", "rssi"), "-119")   # held last valid
+                self.assertEqual(tab.model.rows[("rssi_payload/v1", "rssi")].tag, "invalid")
+                tab.receiver = None
+            finally:
+                app.close()
 
 
 if __name__ == "__main__":

@@ -6,7 +6,10 @@ Witness over its USB serial link. Witness runs its actual flight-state detector
 on that data. The tool then compares the transitions Witness reports against a
 reference model of the same firmware rules.
 
-It uses only the Python standard library and Tkinter (tested with Python 3.14).
+The bench logic here uses only the Python standard library (numpy, scipy and
+soundfile for the 960 Hz IMU synthesis; tested with Python 3.14). The GUI is
+the **HITL bench** tab of witnessOS (`Software/witnessOS`, PyQt6 with
+pyqtgraph plots); there is no standalone HITL window any more.
 
 | File | Purpose |
 |---|---|
@@ -16,7 +19,7 @@ It uses only the Python standard library and Tkinter (tested with Python 3.14).
 | `attitude.py` | Quaternion helpers and the truth-vs-Witness attitude comparison and summary. |
 | `trajectories/` | Reference trajectory CSVs. `a3241569-trajectory.csv` is the bundled fixture. |
 | `hitl_session.py` | TCP connection, reader thread, 100 Hz sender thread, state tracking, pass/fail evaluation, run recording. |
-| `hitl_gui.py` | Tkinter GUI and the headless CLI. |
+| `hitl_gui.py` | Qt-free helpers (settings, vibration choice, prediction) and the headless runner. The GUI is `Software/witnessOS/wos_hitl_tab.py`. |
 | `tests/` | Unit tests, an end-to-end test, and `fake_witness.py`, a local fake Witness TCP server. |
 
 ## Connecting
@@ -35,11 +38,13 @@ next to the script. That file and `runs/` are gitignored.
 
 ## Running
 
-GUI:
+GUI (the HITL bench tab of witnessOS):
 
 ```
-py -3.14 hitl_gui.py
+py -3.14 ../witnessOS/witnessos.py --tab hitl
 ```
+
+`py -3.14 hitl_gui.py` without `--headless` only prints where the GUI went.
 
 1. Set the host and port, then click **Connect**. The flight state, the status
    bit indicators and the byte counters start updating.
@@ -52,8 +57,18 @@ py -3.14 hitl_gui.py
 4. Click **Stop**, **Exit HITL**, Disconnect or close the window to stop. Each
    of these stops streaming and sends EXIT.
 
-The plot shows simulated true altitude (MSL) against the barometric altitude
-Witness reports, and the simulated low-g X against the accel X Witness reports.
+Connecting, CSV parsing, prediction and the 960 Hz IMU synthesis run on worker
+threads; a busy bar next to the tolerance field shows what is running. The
+**Fetch FC logs after run** box holds the bench Pi host, user and SSH key and
+the hub power-cycle choice (saved in `hitl_settings.json`; empty fields fall
+back to `WITNESS_PI_HOST` / `_USER` / `_KEY`). When a run ends, the log gets
+`[result]` lines: the transition table, the observed-vs-truth comparison, the
+FC log files and the run folder.
+
+The pyqtgraph plots show simulated true altitude (MSL) against the Kalman
+altitude Witness reports, and the simulated low-g X against the accel X
+Witness reports. Their x axes are linked: drag to pan, wheel to zoom, and
+right-click for the plot menu. A dashed line marks the current sim time.
 The table compares the expected time of each transition with the time Witness
 reported it. A red banner appears in these cases:
 
@@ -61,7 +76,10 @@ reported it. A red banner appears in these cases:
 - the bit drops during a run;
 - a run fails.
 
-Headless, for one run with a pass/fail exit code:
+Headless, for one run with a pass/fail exit code. The runner is
+`witnessos.py --hitl-headless` (it never imports Qt); `hitl_gui.py --headless`
+is a deprecated alias that prints a note on stderr and then runs the same
+code, so the examples below work either way:
 
 ```
 py -3.14 hitl_gui.py --headless --preset "Nominal 10 g" --host prs2026hitl --port 7100
@@ -284,7 +302,7 @@ If the quaternions stay all-zero, the run reports a warning, "attitude not
 available", and does not fail. This happens when the estimator firmware is
 not flashed.
 
-The GUI adds a third plot: truth tilt, Witness tilt, tilt error and attitude
+The GUI adds a third plot for CSV runs: truth tilt, Witness tilt, tilt error and attitude
 error against sim time.
 
 `attitude.csv` columns (Horizon Attitude-tab layout):
@@ -306,7 +324,8 @@ After these come these columns: `wall_s`, `packet`, `flight_state_name`,
 
 The sender keeps an absolute 100 Hz schedule. A 436 s CSV run therefore stays
 drift-free, and late ticks are counted. Building a run takes about 2 s. The
-GUI plots are decimated to about 1500 points per series.
+GUI plots add only new points on each redraw (about 7 Hz) and pyqtgraph
+reduces them to min/max per pixel, so long runs stay responsive.
 
 ### Limitations
 
@@ -390,7 +409,7 @@ and write `profile.json` like the existing one. Each run's log line and
 GUI runs print it, for example `vibration: profile 'eayftrajectory'` or
 `vibration: none (no profile for this trajectory)`.
 
-In the GUI (and the witnessOS HITL tab), `vibration_profile` is a dropdown:
+In the GUI (the witnessOS HITL tab), `vibration_profile` is a dropdown:
 - **Auto (profile for this trajectory)**, the default (`""`).
 - **None** (`"none"`).
 - Every folder under `vibration/`.
@@ -570,6 +589,10 @@ From `Software/HITL`:
 ```
 py -3.14 -B -m unittest discover -s tests -v
 ```
+
+These are the bench, protocol, model and headless tests, plus
+`test_headless_no_qt.py`, which checks that the headless runner never imports
+PyQt6. The GUI tests are in `Software/witnessOS/tests/test_hitl_tab.py`.
 
 The end-to-end tests start `tests/fake_witness.py` on 127.0.0.1. The fake
 does the following:

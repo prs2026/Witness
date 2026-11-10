@@ -11,9 +11,11 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import any_csv  # noqa: E402
-import viewer  # noqa: E402
+import viewer_data as viewer  # noqa: E402  (data logic)
+from viewer_qt_support import ViewerCase, pump  # noqa: E402
 
 
 # A small Blue Raven LR-style log: Year/Month/Day/Time, Flight_Time_(s) that
@@ -196,32 +198,40 @@ class TimeOfDayTests(unittest.TestCase):
             [1.5, 3600.0, 0.0, 86400.0, math.nan])
 
 
-class PanelTests(Fixture):
+class PanelTests(ViewerCase):
     def test_panel_opens_generic_csv_with_text_readout(self):
-        try:
-            import tkinter as tk
-            root = tk.Tk()
-        except Exception as exc:  # pragma: no cover
-            self.skipTest(f"Tk unavailable: {exc}")
-        self.addCleanup(root.destroy)
-        path = self.write("semi.csv", "time;alt;mode;flags_hex\n" + "".join(
+        path = self.write_text("semi.csv", "time;alt;mode;flags_hex\n" + "".join(
             f"{i / 10};{i};{'PAD' if i < 50 else 'BOOST'};0x{i:x}\n" for i in range(100)))
-        panel = viewer.CsvViewerPanel(root)
-        panel.pack(fill="both", expand=True)
-        root.geometry("900x600")
+        panel = self.make()
         self.assertTrue(panel.load_csv(path))
         dataset = next(iter(panel.datasets.values()))
         self.assertIn("semicolon", dataset.format_note)
-        panel.notebook.select(panel.plot_tab)
-        panel.layout.clear()
-        panel.layout.add([(0, "flags_hex")])
-        root.update()
-        panel.draw_graphs()
-        geom = panel._graphs[0]["geom"]
-        x = geom["left"] + 0.75 * (geom["right"] - geom["left"])
-        rows = panel.hover_readout(x, (geom["top"] + geom["bottom"]) / 2)
+        panel.layout_model.clear()
+        panel.layout_model.add([(0, "flags_hex")])
+        panel.rebuild_graphs()
+        self.plots(panel)
+        low, high = panel.current_x_range()
+        rows = panel.hover_readout(0, low + 0.75 * (high - low))
         self.assertTrue(any("= 0x" in row for row in rows), rows)
         self.assertIn("mode: BOOST", rows)
+        # The hover box and crosshair draw on the live plot.
+        panel.show_hover(0, low + 0.75 * (high - low))
+        slot = panel.slots[0]
+        self.assertTrue(slot.hover_text.isVisible())
+        self.assertTrue(slot.hover_line.isVisible())
+        panel.clear_hover()
+        self.assertFalse(slot.hover_text.isVisible())
+
+    def test_hex_checkbox_applies_to_new_loads(self):
+        path = self.write_text("h.csv", "t;flags_hex\n" + "".join(
+            f"{i};0x{i:x}\n" for i in range(20)))
+        panel = self.make()
+        panel.hex_check.setChecked(False)
+        panel.add_files([path])
+        self.assertTrue(panel.wait_for_loads(30))
+        dataset = next(iter(panel.datasets.values()))
+        self.assertNotIn("flags_hex", dataset.numeric_columns)
+        self.assertIn("flags_hex", dataset.text_columns)
 
 
 if __name__ == "__main__":

@@ -174,6 +174,48 @@ class LiveAttitude:
         return max(candidates, key=lambda s: s.time) if candidates else None
 
 
+AIM_ORIENTATION_TOPIC = "orientation_payload/v1"
+
+
+class LiveAimAttitude:
+    """Latest AIM Xtra orientation from AIM BASE MQTT (orientation_payload/v1).
+
+    accept_aim() matches AimMqttReceiver's on_sample signature and runs on the
+    MQTT thread. AIM publishes x, y, z, w; it is kept in Witness wire order
+    (x, y, z, w). AIM's body frame and heading reference relative to Witness
+    are unverified, so the overlay is a visual comparison, not a truth.
+    """
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self.latest = None
+        self.records = 0
+
+    def clear(self):
+        with self._lock:
+            self.latest = None
+
+    def accept_aim(self, source, topic, fields, received, retained=False):
+        if topic != AIM_ORIENTATION_TOPIC or not isinstance(fields, dict):
+            return False
+        if not isinstance(received, (int, float)) or not math.isfinite(received):
+            return False
+        raw = [fields.get(key) for key in ("x", "y", "z", "w")]
+        if not all(type(v) in (int, float) for v in raw):
+            return False
+        sample = make_sample(float(received), raw, "AIM", device=str(source or ""), snapshot=bool(retained))
+        with self._lock:
+            if self.latest is not None and self.latest.time > sample.time:
+                return False
+            self.latest = sample
+            self.records += 1
+        return True
+
+    def current(self, now=None):
+        with self._lock:
+            return self.latest
+
+
 # --------------------------------------------------------------- file track
 
 def _find(columns, names):

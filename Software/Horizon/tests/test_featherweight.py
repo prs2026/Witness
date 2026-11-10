@@ -1,13 +1,14 @@
 """Observed Featherweight status traffic, CRC/error recovery and flight routing."""
 
+import os
 import unittest
 import time
-import tkinter as tk
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from featherweight import FeatherweightParseError, FeatherweightStreamParser, crc16_buypass, parse_featherweight_line
 from flight_data import DEFAULT_LAYOUT, FlightData, load_layout
-from ground_tabs import FEATHERWEIGHT_FIELDS
-from telemetry_view import TelemetryView
+from telemetry_model import FEATHERWEIGHT_FIELDS
 
 
 # Unmodified records from the 2026-10-22 COM5 capture, with original CRCs.
@@ -134,39 +135,37 @@ class FeatherweightStatusTests(unittest.TestCase):
 
 class FeatherweightDisplayTests(unittest.TestCase):
     def test_new_fields_and_radio_crc_quality_in_tab(self):
+        from horizon_qt_support import app  # noqa: F401 - creates the QApplication
+        from telemetry_view import TelemetryView
+        view = TelemetryView(schema=FEATHERWEIGHT_FIELDS)
         try:
-            root = tk.Tk()
-        except tk.TclError as exc:
-            self.skipTest(f'Tk display unavailable: {exc}')
-        root.withdraw()
-        try:
-            view = TelemetryView(root, schema=FEATHERWEIGHT_FIELDS)
             view.add_source('COM5')
-            self.assertEqual(view.tree.set(view._rows[('COM5', 'BATT_BLE', 'battery_voltage_v')], 'value'), 'null')
+            self.assertEqual(view.value(('COM5', 'BATT_BLE', 'battery_voltage_v')), 'null')
             for line in CAPTURE:
                 packet = parse_featherweight_line(line)
                 view.update_record({'source': 'COM5', 'received_at': time.time(),
                     'packet': {**packet, 'packet': packet['packet_type']}})
-            row = view._rows[('COM5', 'RX_NOMTK', 'tracker_battery_voltage_v')]
-            self.assertEqual(view.tree.set(row, 'value'), '3.513')
-            local = view._rows[('COM5', 'BATT_BLE', 'battery_voltage_v')]
-            self.assertEqual(view.tree.set(local, 'value'), '3.73')
+            row = ('COM5', 'RX_NOMTK', 'tracker_battery_voltage_v')
+            self.assertEqual(view.value(row), '3.513')
+            local = ('COM5', 'BATT_BLE', 'battery_voltage_v')
+            self.assertEqual(view.value(local), '3.73')
             last_received = view._received[local][0]
             invalid_local = parse_featherweight_line(CAPTURE[1].replace('3730', '9999'))
             view.update_record({'source': 'COM5', 'received_at': time.time(),
                 'packet': {**invalid_local, 'packet': 'BATT_BLE'}})
-            self.assertEqual(view.tree.set(local, 'value'), '3.73')
+            self.assertEqual(view.value(local), '3.73')
             self.assertEqual(view._received[local][0], last_received)
-            self.assertEqual(view.tree.set(local, 'quality'), 'BAD TEXT CRC')
+            self.assertEqual(view.column(local, 'quality'), 'BAD TEXT CRC')
             packet = parse_featherweight_line(replace_payload(CAPTURE[5], 'CRC_OK', 'CRC_ERR'))
             view.update_record({'source': 'COM5', 'received_at': time.time(),
                 'packet': {**packet, 'packet': 'RX_NOMTK'}})
             view.update_ages()
-            self.assertEqual(view.tree.set(row, 'quality'), 'BAD RADIO CRC')
-            self.assertIn('invalid', view.tree.item(row, 'tags'))
-            self.assertEqual(view.tree.set(local, 'quality'), 'BAD TEXT CRC')
+            self.assertEqual(view.column(row, 'quality'), 'BAD RADIO CRC')
+            self.assertEqual(view.tag(row), 'invalid')
+            self.assertEqual(view._rows[row].background(0).color().name(), '#ff8a80')
+            self.assertEqual(view.column(local, 'quality'), 'BAD TEXT CRC')
         finally:
-            root.destroy()
+            view.close()
 
 
 if __name__ == '__main__':

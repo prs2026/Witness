@@ -1,147 +1,127 @@
-"""Independent AIM XTRA MQTT tab for the Horizon Tk interface."""
+"""Independent AIM XTRA MQTT tab for Horizon (Qt).
+
+Receive only: subscribes to <base path>/# on the broker the vendor AIM BASE
+app publishes to. The embedded local-only broker (mqtt_broker.py) runs by
+default. Field state is telemetry_model.AimFieldTable; the connection
+lifecycle is auto_connect.ReceiverControl. Click a numeric field to plot it
+live in the strip chart (pyqtgraph, redrawn by a throttle, not per message).
+"""
 
 from __future__ import annotations
 
-import json
-import math
+from collections import deque
 from pathlib import Path
 import time
-import tkinter as tk
-from tkinter import messagebox, scrolledtext, ttk
+
+import numpy as np
+from PyQt6 import QtCore, QtWidgets
 
 from aim_mqtt import AIM_TOPIC_FIELDS, AimMqttReceiver, AimSettings
-from auto_connect import AutoConnectTab
-from mqtt_broker import EmbeddedMqttBroker
+from auto_connect import ReceiverControl
 from ground_settings import DEFAULT_MQTT_BROKER_ENABLED, DEFAULT_MQTT_BROKER_PORT
+from mqtt_broker import EmbeddedMqttBroker
+from observable import Cell
+from qt_common import Throttle, add_curve, make_plot, message_error
+from qt_widgets import LogConsole, bind_check, bind_label, bind_line_edit, hbox, wrap_label
+from telemetry_model import AimFieldTable
+from telemetry_view import configure_tree, paint_row
+
+COLUMNS = (("Topic / field", 340), ("Latest value", 200), ("Received at (UTC)", 205),
+           ("Receive age", 95), ("Delivery", 80))
+POLL_MS = 100
+CHART_POINTS = 3000
 
 
-class AimMqttTab(AutoConnectTab, ttk.Frame):
-    def __init__(self, parent, *, log_dir: Path, host, port, client_uuid, base_path, on_sample=None,
+class AimMqttTab(ReceiverControl, QtWidgets.QWidget):
+    stats_format = "Messages: {messages}   Bytes: {bytes}   Errors: {errors}"
+
+    def __init__(self, parent=None, *, log_dir: Path, host, port, client_uuid, base_path, on_sample=None,
                  broker_enabled=DEFAULT_MQTT_BROKER_ENABLED, broker_port=DEFAULT_MQTT_BROKER_PORT):
-        super().__init__(parent, padding=8)
+        QtWidgets.QWidget.__init__(self, parent)
+        self.init_receiver_control()
         self.log_dir = log_dir
-        self.receiver = None
         self.on_sample = on_sample
-        self._groups = {}
-        self._rows = {}
-        self._received = {}
-        self._invalid = set()
-        self._raw_lines = 0
-        self._after_id = None
-        self._limit_reported = False
-        self.host = tk.StringVar(value=host)
-        self.port = tk.StringVar(value=str(port))
-        self.client_uuid = tk.StringVar(value=client_uuid)
-        self.base_path = tk.StringVar(value=base_path)
-        self.status = tk.StringVar(value="Disconnected")
-        self.stats = tk.StringVar(value="Messages: 0   Bytes: 0   Errors: 0")
-        self.log_status = tk.StringVar(value="")
+        self.model = AimFieldTable(AIM_TOPIC_FIELDS)
+        self._groups, self._rows = {}, {}
+        self.host = Cell(host)
+        self.port = Cell(str(port))
+        self.client_uuid = Cell(client_uuid)
+        self.base_path = Cell(base_path)
         self.broker = EmbeddedMqttBroker(log_dir, port=broker_port)
-        self.broker_enabled = tk.BooleanVar(value=broker_enabled)
-        self.broker_status = tk.StringVar(value="Embedded broker off")
+        self.broker_enabled = Cell(bool(broker_enabled))
+        self.broker_status = Cell("Embedded broker off")
         self._last_broker_status = None
+        self.chart_key = None
+        self.chart_points = deque(maxlen=CHART_POINTS)
         self._build_ui()
-        self._reset_fields()
+        self.reset_view()
+        self._chart_throttle = Throttle(self._draw_chart, 50, self)
         self.broker_changed()
-        self._after_id = self.after(100, self._poll)
+        self._timer = QtCore.QTimer(self)
+        self._timer.setInterval(POLL_MS)
+        self._timer.timeout.connect(self._poll)
+        self._timer.start()
 
     def _build_ui(self):
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(4, weight=1)
-        controls = ttk.Frame(self)
-        controls.grid(row=0, column=0, sticky="ew")
-        controls.columnconfigure(1, weight=1)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
         self.entries = []
-        for column, (label, variable, width) in enumerate((
-            ("MQTT host:", self.host, 20),
-            ("Port:", self.port, 6),
-            ("Subscriber UUID:", self.client_uuid, 10),
-        )):
-            ttk.Label(controls, text=label).grid(row=0, column=column * 2, padx=(0, 4))
-            entry = ttk.Entry(controls, textvariable=variable, width=width)
-            entry.grid(row=0, column=column * 2 + 1, sticky="ew", padx=(0, 10))
-            self.entries.append(entry)
-        self.connect_button = ttk.Button(controls, text="Connect", command=self.toggle_connection)
-        self.connect_button.grid(row=0, column=6)
-        self.init_auto_connect(controls, row=0, column=7, padx=(8, 0))
+        widgets = []
+        for label, cell, width in (("MQTT host:", self.host, None), ("Port:", self.port, 70),
+                                   ("Subscriber UUID:", self.client_uuid, 110)):
+            edit = QtWidgets.QLineEdit()
+            if width:
+                edit.setMaximumWidth(width)
+            bind_line_edit(cell, edit)
+            self.entries.append(edit)
+            widgets += [QtWidgets.QLabel(label), edit]
+        self.connect_button = QtWidgets.QPushButton("Connect")
+        bind_label(self.connect_text, self.connect_button)
+        self.connect_button.clicked.connect(self.toggle_connection)
+        self.auto_button = QtWidgets.QCheckBox("Auto-connect")
+        bind_check(self.auto_connect, self.auto_button, on_user=self.auto_changed)
+        row = hbox(*widgets, self.connect_button, self.auto_button)
+        row.setStretch(1, 1)
+        layout.addLayout(row)
+        base = QtWidgets.QLineEdit()
+        bind_line_edit(self.base_path, base)
+        self.entries.append(base)
+        layout.addLayout(hbox(QtWidgets.QLabel("Base path:"), base, QtWidgets.QLabel("/#  (receive only)")))
+        self.broker_button = QtWidgets.QCheckBox("Run embedded MQTT broker (local only)")
+        bind_check(self.broker_enabled, self.broker_button, on_user=self.broker_changed)
+        layout.addLayout(hbox(self.broker_button, wrap_label(
+            "Turning this off disconnects its clients; an external broker is unaffected.", muted=True)))
+        for cell in (self.status, self.stats, self.broker_status):
+            label = wrap_label()
+            bind_label(cell, label)
+            layout.addWidget(label)
+        layout.addWidget(wrap_label(
+            "Values and timestamps are shown as published. Retained messages may be old. "
+            "Drag column dividers to resize; click a numeric field to plot it below.", muted=True))
+        splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical)
+        splitter.setChildrenCollapsible(False)
+        self.tree = QtWidgets.QTreeWidget()
+        configure_tree(self.tree, COLUMNS)
+        self.tree.currentItemChanged.connect(self._select_field)
+        splitter.addWidget(self.tree)
+        self.chart = make_plot(title="Selected field: none", x_label="age [s]", legend=False)
+        self.chart.setMinimumHeight(120)
+        self.chart_curve = add_curve(self.chart, np.empty(0), np.empty(0), width=1.5)
+        splitter.addWidget(self.chart)
+        box = QtWidgets.QGroupBox("MQTT messages and diagnostics")
+        box_layout = QtWidgets.QVBoxLayout(box)
+        box_layout.setContentsMargins(4, 4, 4, 4)
+        self.raw = LogConsole(max_lines=1000)
+        box_layout.addWidget(self.raw)
+        splitter.addWidget(box)
+        for index, stretch in enumerate((4, 2, 1)):
+            splitter.setStretchFactor(index, stretch)
+        layout.addWidget(splitter, 1)
+        log_label = wrap_label(muted=True)
+        bind_label(self.log_status, log_label)
+        layout.addWidget(log_label)
 
-        topic_controls = ttk.Frame(self)
-        topic_controls.grid(row=1, column=0, sticky="ew", pady=(6, 0))
-        topic_controls.columnconfigure(1, weight=1)
-        ttk.Label(topic_controls, text="Base path:").grid(row=0, column=0, padx=(0, 4))
-        entry = ttk.Entry(topic_controls, textvariable=self.base_path)
-        entry.grid(row=0, column=1, sticky="ew")
-        self.entries.append(entry)
-        ttk.Label(topic_controls, text="/#  (receive only)").grid(row=0, column=2)
-        self.broker_button = ttk.Checkbutton(topic_controls, text="Run embedded MQTT broker (local only)",
-                                             variable=self.broker_enabled, command=self.broker_changed)
-        self.broker_button.grid(row=1, column=0, columnspan=3, sticky="w", pady=(5, 0))
-        ttk.Label(topic_controls, text="Turning this off disconnects its clients; an external broker is unaffected.").grid(
-            row=2, column=0, columnspan=3, sticky="w")
-
-        information = ttk.Frame(self)
-        information.grid(row=2, column=0, sticky="ew", pady=5)
-        information.columnconfigure(0, weight=1)
-        status_label = ttk.Label(information, textvariable=self.status, wraplength=650)
-        status_label.grid(row=0, column=0, sticky="ew")
-        information.bind("<Configure>", lambda event: status_label.configure(
-            wraplength=max(150, event.width)))
-        ttk.Label(information, textvariable=self.stats).grid(row=1, column=0, sticky="w")
-        broker_label = ttk.Label(information, textvariable=self.broker_status, wraplength=650)
-        broker_label.grid(row=2, column=0, sticky="ew")
-        information.bind("<Configure>", lambda event: broker_label.configure(
-            wraplength=max(150, event.width)), add=True)
-        ttk.Label(
-            self,
-            text="Values and timestamps are shown as published. Retained messages may be old. "
-                 "Drag column dividers to resize; scroll to see all fields.",
-            wraplength=750,
-        ).grid(row=3, column=0, sticky="ew", pady=(0, 5))
-
-        pane = ttk.PanedWindow(self, orient=tk.VERTICAL)
-        pane.grid(row=4, column=0, sticky="nsew")
-        fields_frame = ttk.Frame(pane)
-        fields_frame.columnconfigure(0, weight=1)
-        fields_frame.rowconfigure(0, weight=1)
-        self.tree = ttk.Treeview(
-            fields_frame, columns=("value", "received", "age", "delivery"),
-            show="tree headings", height=14,
-        )
-        for column, title, width in (
-            ("#0", "Topic / field", 340), ("value", "Latest value", 200),
-            ("received", "Received at (UTC)", 205), ("age", "Receive age", 95),
-            ("delivery", "Delivery", 80),
-        ):
-            self.tree.heading(column, text=title)
-            self.tree.column(column, width=width, minwidth=60, stretch=False)
-        self.tree.tag_configure("fresh", background="#f7f7f7")
-        self.tree.tag_configure("yellow", background="#fff2a8")
-        self.tree.tag_configure("orange", background="#ffd27f")
-        self.tree.tag_configure("stale", background="#ff8a80")
-        self.tree.tag_configure("retained", background="#e4e4e4")
-        self.tree.tag_configure("invalid", background="#ff8a80")
-        self.tree.grid(row=0, column=0, sticky="nsew")
-        vertical = ttk.Scrollbar(fields_frame, orient="vertical", command=self.tree.yview)
-        vertical.grid(row=0, column=1, sticky="ns")
-        horizontal = ttk.Scrollbar(fields_frame, orient="horizontal", command=self.tree.xview)
-        horizontal.grid(row=1, column=0, sticky="ew")
-        self.tree.configure(yscrollcommand=vertical.set, xscrollcommand=horizontal.set)
-        # The Telemetry page uses a global wheel binding. Handle wheel events
-        # locally here so switching tabs cannot scroll the hidden page instead.
-        self.tree.bind("<MouseWheel>", self._scroll_fields)
-        pane.add(fields_frame, weight=4)
-
-        raw_frame = ttk.LabelFrame(pane, text="MQTT messages and diagnostics", padding=4)
-        self.raw = scrolledtext.ScrolledText(
-            raw_frame, height=6, wrap="word", state="disabled", font=("Consolas", 9),
-        )
-        self.raw.pack(fill="both", expand=True)
-        pane.add(raw_frame, weight=1)
-        log_label = ttk.Label(self, textvariable=self.log_status, wraplength=700)
-        log_label.grid(row=5, column=0, sticky="ew", pady=(4, 0))
-        self.bind("<Configure>", lambda event: log_label.configure(
-            wraplength=max(150, event.width - 16)))
-
+    # -------------------------------------------------------------- broker
     def broker_changed(self):
         if self.broker_enabled.get():
             self.broker.start()
@@ -158,139 +138,117 @@ class AimMqttTab(AutoConnectTab, ttk.Frame):
         status = (state, message, path)
         if status != self._last_broker_status:
             self._last_broker_status = status
-            self._append_lines([f"BROKER: {message}" + (f" | Log: {path}" if path else "")])
+            self.show_lines([f"BROKER: {message}" + (f" | Log: {path}" if path else "")])
 
-    def _scroll_fields(self, event):
-        self.tree.yview_scroll(-int(event.delta / 120), "units")
-        return "break"
+    # ---------------------------------------------------------------- rows
+    def _item(self, row):
+        key = (row.topic, row.field)
+        item = self._rows.get(key)
+        if item is None:
+            group = self._groups.get(row.topic)
+            if group is None:
+                group = self._groups[row.topic] = QtWidgets.QTreeWidgetItem(self.tree, [row.topic])
+                group.setExpanded(True)
+            item = self._rows[key] = QtWidgets.QTreeWidgetItem(group, [row.field, "null", "--", "--", "--"])
+            item.setData(1, QtCore.Qt.ItemDataRole.UserRole, key)
+        return item
+
+    def _show(self, row):
+        item = self._item(row)
+        for column, text in ((1, row.value), (2, row.received), (3, row.age), (4, row.delivery)):
+            if item.text(column) != text:
+                item.setText(column, text)
+        if item.data(0, QtCore.Qt.ItemDataRole.UserRole) != row.tag:
+            paint_row(item, row.tag)
 
     def _reset_fields(self):
-        self.tree.delete(*self.tree.get_children())
+        self.tree.clear()
         self._groups.clear()
         self._rows.clear()
-        self._received.clear()
-        self._invalid.clear()
-        self._limit_reported = False
-        for topic, fields in AIM_TOPIC_FIELDS.items():
-            for field in fields:
-                self._ensure_row(topic, field)
+        self.model.reset()
+        for row in self.model.rows.values():
+            self._show(row)
 
-    def _ensure_row(self, topic, field):
-        key = (topic, field)
-        if key not in self._rows:
-            # Keep a badly behaved publisher from creating unlimited Tk rows.
-            if len(self._rows) >= 4096:
-                if not self._limit_reported:
-                    self._append_lines(["Display field limit reached; further fields remain in the log."])
-                    self._limit_reported = True
-                return None
-            if topic not in self._groups:
-                self._groups[topic] = self.tree.insert("", "end", text=topic, open=True)
-            self._rows[key] = self.tree.insert(
-                self._groups[topic], "end", text=field,
-                values=("null", "--", "--", "--"),
-            )
-        return self._rows[key]
+    def value(self, topic, field):
+        return self._rows[(topic, field)].text(1)
 
-    def toggle_connection(self):
-        if self.receiver is not None:
-            self.set_auto_connect(False)
-            self.disconnect()
-            return
-        self.connect()
+    # ------------------------------------------------------ receiver hooks
+    def reset_view(self):
+        self._reset_fields()
 
-    def connect(self, *, automatic=False):
-        if self.receiver is not None:
-            return
-        try:
-            settings = AimSettings(
-                self.host.get().strip(), int(self.port.get()),
-                self.client_uuid.get().strip(), self.base_path.get().strip().rstrip("/"),
-            )
-            receiver = AimMqttReceiver(settings, self.log_dir, on_sample=self.on_sample)
-            receiver.auto_retry = self.auto_connect.get()
-            receiver.start()
-        except (ValueError, RuntimeError, OSError) as exc:
-            self.status.set(f"Connection failed: {exc}")
-            if not automatic:
-                messagebox.showerror("AIM XTRA MQTT", str(exc), parent=self)
-            return
-        self.receiver = receiver
-        if not automatic:
-            self._reset_fields()
-        self.status.set(f"Connecting to {settings.host}:{settings.port}...")
-        self.stats.set("Messages: 0   Bytes: 0   Errors: 0")
-        self.log_status.set(f"Log: {receiver.log_path}")
-        for entry in self.entries:
-            entry.configure(state="disabled")
-        self.connect_button.configure(text="Disconnect")
+    def alert(self, title, text):
+        message_error(self, "AIM XTRA MQTT", text)
+
+    def make_receiver(self):
+        settings = AimSettings(str(self.host.get()).strip(), int(self.port.get()),
+                               str(self.client_uuid.get()).strip(),
+                               str(self.base_path.get()).strip().rstrip("/"))
+        self._settings = settings
+        return AimMqttReceiver(settings, self.log_dir, on_sample=self.on_sample)
+
+    def connecting_status(self, receiver):
+        self.stats.set(self.stats_format.format(messages=0, bytes=0, errors=0))
+        return f"Connecting to {self._settings.host}:{self._settings.port}..."
+
+    def stop_receiver(self, receiver):
+        receiver.stop()
 
     def disconnect(self):
-        receiver, self.receiver = self.receiver, None
-        if receiver is not None:
-            self._consume(receiver)
-            receiver.stop()
+        super().disconnect()
         self.status.set("Disconnected — latest values retained")
-        self.connect_button.configure(text="Connect")
+
+    def set_inputs_enabled(self, enabled):
         for entry in self.entries:
-            entry.configure(state="normal")
+            entry.setEnabled(enabled)
 
-    def _consume(self, receiver):
-        updates, stats, diagnostics = receiver.drain()
-        status, messages, byte_count, errors = stats
-        self.status.set(status)
-        self.stats.set(f"Messages: {messages}   Bytes: {byte_count}   Errors: {errors}")
-        for topic, fields in updates.items():
-            for field, (value, received_at, received_mono, retained) in fields.items():
-                row = self._ensure_row(topic, field)
-                if row is None:
-                    continue
-                if value is None or (type(value) is float and not math.isfinite(value)):
-                    self._invalid.add(row)
-                    self.tree.set(row, "delivery", "Invalid - holding last valid")
-                    self.tree.item(row, tags=("invalid",))
-                    continue
-                self._invalid.discard(row)
-                display = value if isinstance(value, str) else json.dumps(value, ensure_ascii=True)
-                self.tree.item(row, values=(
-                    display, received_at.replace("T", " ").replace("+00:00", ""),
-                    "0.0s", "Retained" if retained else "Live",
-                ))
-                self._received[row] = (received_mono, retained)
-        self._append_lines(diagnostics)
+    def show_records(self, updates, diagnostics):
+        for row in self.model.apply(updates):
+            self._show(row)
+            if (row.topic, row.field) == self.chart_key and row.number is not None and not row.invalid:
+                self.chart_points.append((row.received_mono, row.number))
+                self._chart_throttle.request()
+        if self.model.limit_notice:
+            self.model.limit_notice = False
+            diagnostics = [*diagnostics, "Display field limit reached; further fields remain in the log."]
+        self.show_lines(diagnostics)
 
-    def _append_lines(self, lines):
-        if not lines:
+    def show_lines(self, lines):
+        self.raw.append_lines(lines)
+
+    _append_lines = show_lines
+
+    # --------------------------------------------------------------- chart
+    def _select_field(self, item, _previous=None):
+        key = item.data(1, QtCore.Qt.ItemDataRole.UserRole) if item is not None else None
+        if key is None or key == self.chart_key:
             return
-        self.raw.configure(state="normal")
-        self.raw.insert("end", "\n".join(lines) + "\n")
-        self._raw_lines += len(lines)
-        if self._raw_lines > 1000:
-            excess = self._raw_lines - 1000
-            self.raw.delete("1.0", f"{excess + 1}.0")
-            self._raw_lines = 1000
-        self.raw.see("end")
-        self.raw.configure(state="disabled")
+        self.chart_key = key
+        self.chart_points.clear()
+        row = self.model.rows.get(key)
+        if row is not None and row.number is not None and row.received_mono is not None:
+            self.chart_points.append((row.received_mono, row.number))
+        self.chart.setTitle(f"Selected field: {key[0]} / {key[1]}")
+        self._chart_throttle.flush()
 
+    def _draw_chart(self):
+        if not self.chart_points:
+            self.chart_curve.setData([], [])
+            return
+        data = np.array(self.chart_points, dtype=float)
+        self.chart_curve.setData(data[:, 0] - time.monotonic(), data[:, 1])
+
+    # ---------------------------------------------------------------- poll
     def _poll(self):
         try:
             self._poll_broker()
-            if self.receiver is not None:
-                self._consume(self.receiver)
-            self.auto_tick()
-            now = time.monotonic()
-            for row, (received, retained) in self._received.items():
-                age = max(0, now - received)
-                tag = ("fresh" if age < 2 else "yellow" if age < 5
-                       else "orange" if age < 10 else "stale")
-                self.tree.set(row, "age", f"{age:.1f}s")
-                self.tree.item(row, tags=("invalid" if row in self._invalid else "retained" if retained else tag,))
+            self.poll()
         finally:
-            self._after_id = self.after(100, self._poll)
+            for row in self.model.update_ages():
+                self._show(row)
 
     def close(self):
-        if self._after_id is not None:
-            self.after_cancel(self._after_id)
-            self._after_id = None
+        self._timer.stop()
+        self._chart_throttle.stop()
         self.disconnect()
         self.broker.stop(wait=True)
+        return QtWidgets.QWidget.close(self)

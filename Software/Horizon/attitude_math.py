@@ -1,4 +1,4 @@
-"""Pure quaternion/attitude math for the Horizon Attitude tab. No Tk imports.
+"""Pure quaternion/attitude math for the Horizon Attitude tab. No GUI imports.
 
 Conventions (match comms.h "Orientation quaternion"):
 

@@ -1,4 +1,8 @@
-"""Horizon's single-pane launch dashboard. Nothing on this tab scrolls.
+"""Horizon's launch dashboard (Qt + pyqtgraph): readouts left/right, up to six plots.
+
+The three panels sit in a resizable splitter; the side panels scroll only when
+the window is too small for them. Plots are pyqtgraph, redrawn on a timer
+(layout refresh_ms, at most 30 Hz) from FlightData snapshots, never per packet.
 
 JSON: flight_view_default.json or Flight controls > Load layout / --flight-layout.
 The Layout Editor tab offers form-based editing, trace/row ordering and JSON
@@ -72,7 +76,7 @@ TRACKER by the parser, with the original token retained as unit_type_raw.
 Host receive time (UTC) is the graph clock. Cached values aren't live samples.
 Pause freezes display only; receiving/logging continue. ! marks old/invalid
 graph values; readouts show age. Clear resets history but never logs.
-F11 toggles fullscreen; Escape exits fullscreen. No extra dependencies.
+F11 toggles fullscreen; Escape exits fullscreen; Ctrl+P pauses / resumes.
 White panels and dark text are used throughout the dashboard. Pale custom or
 legacy trace colors are darkened for readability without changing saved JSON.
 Window selects the visible timespan without clearing history, including while
@@ -92,24 +96,271 @@ Clear/reload resets the estimator; Pause/time-window changes do not. More than
 AIM uses dashed lines. See aim_orientation.py for the calculation and limits.
 """
 
+from __future__ import annotations
+
 import json
 from pathlib import Path
 import time
-import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+
+from PyQt6 import QtCore, QtGui, QtWidgets
+import pyqtgraph as pg
 
 from flight_data import DEFAULT_LAYOUT, FlightData, load_layout, validate_layout
-from flight_render import BG, TEXT, DashboardRenderer
+import flight_render as fr
+from qt_common import message_error
+from qt_widgets import light_axes, set_background
+
+WINDOW_CHOICES = (10, 30, 60, 120, 300, 600, 1800, 3600)
+MIN_REDRAW_MS = 33
 
 
-class FlightView(ttk.Frame):
-    def __init__(self, parent, *, layout_path=DEFAULT_LAYOUT, pad=None):
-        super().__init__(parent, padding=5)
-        self._after_id = None
+def show_error(parent, title, text):
+    """Error dialog (tests patch this)."""
+    message_error(parent, title, text)
+
+
+def _label(text="", size=10, bold=False, color=fr.TEXT, wrap=False):
+    label = QtWidgets.QLabel(text)
+    font = label.font()
+    font.setPointSize(size)
+    font.setBold(bold)
+    label.setFont(font)
+    label.setStyleSheet(f"color: {color};")
+    label.setWordWrap(wrap)
+    label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Ignored, QtWidgets.QSizePolicy.Policy.Preferred)
+    return label
+
+
+def _set(label, text, color=None):
+    if label.text() != text:
+        label.setText(text)
+    if color is not None and label.property("fg") != color:
+        label.setProperty("fg", color)
+        label.setStyleSheet(f"color: {color};")
+
+
+class ReadoutPanel(QtWidgets.QFrame):
+    """A white bordered panel of labels, rebuilt when the layout changes."""
+
+    def __init__(self, title, parent=None):
+        super().__init__(parent)
+        self.setObjectName("readoutPanel")
+        self.setStyleSheet(f"#readoutPanel {{ background: {fr.PANEL}; border: 1px solid {fr.BORDER}; }} "
+                           f"QLabel {{ color: {fr.TEXT}; background: transparent; }}")
+        self.layout_ = QtWidgets.QVBoxLayout(self)
+        self.layout_.setContentsMargins(8, 6, 8, 6)
+        self.layout_.setSpacing(2)
+        self.title = _label(title, 12, True)
+        self.layout_.addWidget(self.title)
+        self.body = QtWidgets.QVBoxLayout()
+        self.body.setSpacing(2)
+        self.layout_.addLayout(self.body)
+        self.layout_.addStretch(1)
+        self.labels = []
+
+    def clear_body(self):
+        def clear(layout):
+            while layout.count():
+                item = layout.takeAt(0)
+                if item.widget() is not None:
+                    item.widget().deleteLater()
+                elif item.layout() is not None:
+                    clear(item.layout())
+        clear(self.body)
+        self.labels = []
+
+    def texts(self):
+        return [label.text() for label in self.labels]
+
+
+class StatusPanel(ReadoutPanel):
+    """GPS or power readouts (flight_render.status_rows)."""
+
+    def show_rows(self, rows):
+        shape = [len(cells) for _title, cells in rows]
+        if shape != getattr(self, "_shape", None):
+            self._shape = shape
+            self.clear_body()
+            self.rows = []
+            for _title, cells in rows:
+                title = _label(size=9, color=fr.MUTED)
+                values = QtWidgets.QHBoxLayout()
+                cell_labels = []
+                for _ in cells:
+                    label = _label(size=11, bold=True)
+                    values.addWidget(label)
+                    cell_labels.append(label)
+                self.body.addWidget(title)
+                self.body.addLayout(values)
+                self.rows.append((title, cell_labels))
+                self.labels += [title, *cell_labels]
+            if not rows:
+                label = _label("No readouts configured", 9, color=fr.MUTED)
+                self.body.addWidget(label)
+                self.labels.append(label)
+        for (title, cells), (title_label, cell_labels) in zip(rows, self.rows):
+            _set(title_label, title)
+            for (text, color), label in zip(cells, cell_labels):
+                _set(label, text, color)
+
+
+class FlightPanel(ReadoutPanel):
+    """Flight overview metrics and the Witness flight state."""
+
+    def __init__(self, parent=None):
+        super().__init__("FLIGHT OVERVIEW", parent)
+        self.layout_.insertWidget(1, _label("W = Witness    A = AIM    F = Featherweight", 9, color=fr.MUTED))
+
+    def show_panel(self, panel):
+        shape = [len(cells) for _t, cells in panel["metrics"]]
+        if shape != getattr(self, "_shape", None):
+            self._shape = shape
+            self.clear_body()
+            self.metric_labels = []
+            for _title, cells in panel["metrics"]:
+                title = _label(size=11, bold=True)
+                self.body.addWidget(title)
+                pairs = []
+                for _ in cells:
+                    value, status = _label(size=14, bold=True), _label(size=9)
+                    row = QtWidgets.QHBoxLayout()
+                    row.addWidget(value, 3)
+                    row.addWidget(status, 1)
+                    self.body.addLayout(row)
+                    pairs.append((value, status))
+                self.metric_labels.append((title, pairs))
+                self.labels += [title, *(label for pair in pairs for label in pair)]
+            line = QtWidgets.QFrame()
+            line.setFrameShape(QtWidgets.QFrame.Shape.HLine)
+            self.body.addWidget(line)
+            heading = _label("WITNESS FLIGHT STATE", 11, True)
+            self.body.addWidget(heading)
+            self.state_value = _label(size=22, bold=True)
+            self.state_status = _label(size=10, bold=True)
+            self.state_source = _label(size=9, color=fr.MUTED)
+            self.state_hitl = _label(size=10, wrap=True)
+            for label in (self.state_value, self.state_status, self.state_source, self.state_hitl):
+                self.body.addWidget(label)
+            notes = [_label("Distance: from the pad (Set pad re-references)", 9, color=fr.MUTED, wrap=True),
+                     _label("A baro / Vz: estimates; GPS units raw", 9, color=fr.WARN, wrap=True)]
+            for label in notes:
+                self.body.addWidget(label)
+            self.labels += [heading, self.state_value, self.state_status, self.state_source,
+                            self.state_hitl, *notes]
+        for (title, cells), (title_label, pairs) in zip(panel["metrics"], self.metric_labels):
+            _set(title_label, title)
+            for (text, color, status, status_color), (value, status_label) in zip(cells, pairs):
+                _set(value, text, color)
+                _set(status_label, status, status_color)
+        state = panel["state"]
+        if state is None:
+            _set(self.state_value, "NOT CONFIGURED", fr.MUTED)
+            for label in (self.state_status, self.state_source, self.state_hitl):
+                _set(label, "")
+            return
+        _set(self.state_value, state["value"], state["color"])
+        _set(self.state_status, state["status"], state["status_color"])
+        _set(self.state_source, state["source"])
+        hitl = state["hitl"]
+        _set(self.state_hitl, hitl[0] if hitl else "", hitl[1] if hitl else None)
+
+
+class GraphPanel(QtWidgets.QFrame):
+    """One layout plot: legend row + pyqtgraph plot with optional right axis."""
+
+    def __init__(self, plot, wall_offset, parent=None):
+        super().__init__(parent)
+        self.plot = plot
+        self.wall_offset = wall_offset
+        self.setObjectName("graphPanel")
+        # Light panel whatever the system theme: trace colours are tuned for white.
+        self.setStyleSheet(f"#graphPanel {{ background: {fr.PANEL}; border: 1px solid {fr.BORDER}; }} "
+                           f"QLabel {{ color: {fr.TEXT}; background: transparent; }}")
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(4, 2, 4, 2)
+        layout.setSpacing(1)
+        units = plot.unit + (f" | {plot.right_unit}" if plot.right_unit else "")
+        self.title = _label(f"{plot.title} [{units}]", 11, True)
+        layout.addWidget(self.title)
+        legend = QtWidgets.QGridLayout()
+        legend.setSpacing(1)
+        self.legend_labels = []
+        for index, _trace in enumerate(plot.traces):
+            label = _label(size=9)
+            legend.addWidget(label, index // 3, index % 3)
+            self.legend_labels.append(label)
+        layout.addLayout(legend)
+        self.notice = _label("", 9, color=fr.MUTED)
+        layout.addWidget(self.notice)
+        self.widget = pg.PlotWidget(axisItems={"bottom": pg.DateAxisItem(orientation="bottom", utcOffset=0)})
+        self.widget.setBackground(fr.BG)
+        item = self.widget.getPlotItem()
+        item.showGrid(x=True, y=True, alpha=0.3)
+        item.setMenuEnabled(False)
+        item.setMouseEnabled(x=False, y=False)
+        item.hideButtons()
+        item.setLabel("left", plot.unit)
+        light_axes(item, fr.MUTED)
+        self.widget.setMinimumHeight(90)
+        layout.addWidget(self.widget, 1)
+        self.right_view = None
+        if plot.right_unit:
+            self.right_view = pg.ViewBox()
+            self.right_view.setMouseEnabled(x=False, y=False)
+            item.showAxis("right")
+            item.scene().addItem(self.right_view)
+            item.getAxis("right").linkToView(self.right_view)
+            item.getAxis("right").setLabel(plot.right_unit, color=fr.BAD)
+            self.right_view.setXLink(item)
+            item.vb.sigResized.connect(self._sync_right)
+        self.curves = []
+        for trace in plot.traces:
+            style = QtCore.Qt.PenStyle.DashLine if trace.input == "aim" else QtCore.Qt.PenStyle.SolidLine
+            curve = pg.PlotDataItem(pen=pg.mkPen(fr.readable_color(trace.color), width=2, style=style),
+                                    connect="finite")
+            curve.setClipToView(True)
+            curve.setDownsampling(auto=True, method="peak")
+            if trace.axis == "right" and self.right_view is not None:
+                self.right_view.addItem(curve)
+            else:
+                item.addItem(curve)
+            self.curves.append(curve)
+
+    def _sync_right(self):
+        self.right_view.setGeometry(self.widget.getPlotItem().vb.sceneBoundingRect())
+
+    def update_plot(self, histories, layout, end):
+        for (text, color), label in zip(fr.legend(self.plot, histories, end), self.legend_labels):
+            _set(label, text, color)
+        start = end - layout.window_seconds
+        series = [fr.trace_arrays(h.points, start, end, layout.gap_seconds) for h in histories]
+        for curve, (x, y), trace in zip(self.curves, series, self.plot.traces):
+            if trace.enabled and len(x):
+                curve.setData(x + self.wall_offset, y)
+            else:
+                curve.setData([], [])
+        ranges, clipped = fr.axis_ranges(self.plot, series, layout, max(60, self.widget.height()))
+        item = self.widget.getPlotItem()
+        item.setXRange(start + self.wall_offset, end + self.wall_offset, padding=0)
+        item.setYRange(*ranges["left"][:2], padding=0)
+        if self.right_view is not None:
+            self.right_view.setYRange(*ranges["right"][:2], padding=0)
+        has_values = any(bool((y == y).any()) for _x, y in series if len(y))
+        notice = "OUT OF RANGE" if clipped else "" if has_values else "NO LIVE SAMPLES"
+        _set(self.notice, notice, fr.BAD if clipped else fr.MUTED)
+
+    def texts(self):
+        return [self.title.text(), *(label.text() for label in self.legend_labels), self.notice.text()]
+
+
+class FlightView(QtWidgets.QWidget):
+    def __init__(self, parent=None, *, layout_path=DEFAULT_LAYOUT, pad=None):
+        super().__init__(parent)
         self.paused, self.frozen = False, None
         self.wall_offset = time.time() - time.monotonic()
         self.layout_path = Path(layout_path)
         self.load_error = None
+        self.redraws = 0
         try:
             layout = load_layout(self.layout_path)
         except (OSError, ValueError) as exc:
@@ -117,71 +368,145 @@ class FlightView(ttk.Frame):
             layout = validate_layout({"version": 1, "plots": [{"title": "Altitude above pad", "unit": "m",
                 "traces": [{"label": "W", "input": "witness", "packet": "state", "field": "kalman_altitude"}]}]})
         self.data = FlightData(layout, pad=pad)
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(1, weight=1)
-        toolbar = ttk.Frame(self)
-        toolbar.grid(row=0, column=0, sticky="ew", pady=(0, 2))
-        toolbar.columnconfigure(1, weight=1)
-        self.actions_button = ttk.Menubutton(toolbar, text="Flight controls", direction="below")
-        self.actions_button.grid(row=0, column=0, padx=(0, 6))
-        self.actions_menu = tk.Menu(self.actions_button, tearoff=False)
-        self.actions_button.configure(menu=self.actions_menu)
-        for label, command in (("Load layout...", self.choose_layout), ("Save layout...", self.save_layout),
-                               ("Default layout", lambda: self.load_config(DEFAULT_LAYOUT))):
-            self.actions_menu.add_command(label=label, command=command)
-        self.actions_menu.add_separator()
-        self.pause_menu_index = self.actions_menu.index("end") + 1
-        self.actions_menu.add_command(label="Pause view", command=self.toggle_pause)
-        self.actions_menu.add_command(label="Clear plots", command=self.clear)
-        self.actions_menu.add_command(label="Set pad", command=self.set_pad)
-        self.window_var = tk.StringVar()
-        self.window_menu = tk.Menu(self.actions_menu, tearoff=False)
-        self.actions_menu.add_cascade(label="Graph time window", menu=self.window_menu)
+        root = QtWidgets.QVBoxLayout(self)
+        root.setContentsMargins(4, 4, 4, 4)
+        root.setSpacing(3)
+        self.actions_button = QtWidgets.QToolButton()
+        self.actions_button.setText("Flight controls")
+        self.actions_button.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.actions_menu = QtWidgets.QMenu(self)
+        self.actions_button.setMenu(self.actions_menu)
+        self._add_action("Load layout...", self.choose_layout)
+        self._add_action("Save layout...", self.save_layout)
+        self._add_action("Default layout", lambda: self.load_config(DEFAULT_LAYOUT))
+        self.actions_menu.addSeparator()
+        self.pause_action = self._add_action("Pause view", self.toggle_pause, "Ctrl+P")
+        self._add_action("Clear plots", self.clear)
+        self._add_action("Set pad", self.set_pad)
+        self.window_menu = self.actions_menu.addMenu("Graph time window")
+        self.window_group = QtGui.QActionGroup(self)
+        self.window_group.setExclusive(True)
         self.sync_window()
-        self.actions_menu.add_command(label="Fullscreen", accelerator="F11", command=self.toggle_fullscreen)
-        self.actions_menu.add_separator()
-        self.actions_menu.add_command(label="Layout / display details...", command=self.show_details)
-        self.banner = tk.Label(toolbar, anchor="w", foreground=TEXT, font=("Segoe UI", 11, "bold"),
-                               height=1, width=1, padx=8, pady=2)
-        self.banner.grid(row=0, column=1, sticky="ew")
-        self.canvas = tk.Canvas(self, background=BG, highlightthickness=0, width=1, height=1)
-        self.canvas.grid(row=1, column=0, sticky="nsew")
-        self.renderer = DashboardRenderer(self.canvas)
-        self.canvas.bind("<Configure>", lambda _event: self.redraw())
-        self.bind("<Map>", lambda _event: self.redraw())
-        # Consume wheel events; there is no hidden content to scroll to.
-        for event in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
-            self.canvas.bind(event, lambda _event: "break")
-        self._top = self.winfo_toplevel()
-        self._f11 = self._top.bind("<F11>", self.toggle_fullscreen, add="+")
-        self._escape = self._top.bind("<Escape>", self.exit_fullscreen, add="+")
+        self.fullscreen_action = self._add_action("Fullscreen", self.toggle_fullscreen, "F11")
+        self.actions_menu.addSeparator()
+        self._add_action("Layout / display details...", self.show_details)
+        escape = QtGui.QShortcut(QtGui.QKeySequence("Escape"), self)
+        escape.setContext(QtCore.Qt.ShortcutContext.WindowShortcut)
+        escape.activated.connect(self.exit_fullscreen)
+        self.banner = _label(size=11, bold=True)
+        self.banner.setContentsMargins(8, 2, 8, 2)
+        toolbar = QtWidgets.QHBoxLayout()
+        toolbar.addWidget(self.actions_button)
+        toolbar.addWidget(self.banner, 1)
+        root.addLayout(toolbar)
+
+        self.splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
+        self.splitter.setChildrenCollapsible(False)
+        self.flight_panel = FlightPanel()
+        self.gps_panel = StatusPanel("GPS / SATELLITES")
+        self.power_panel = StatusPanel("POWER")
+        self.graph_area = QtWidgets.QWidget()
+        self.graph_grid = QtWidgets.QGridLayout(self.graph_area)
+        self.graph_grid.setContentsMargins(0, 0, 0, 0)
+        self.graph_grid.setSpacing(6)
+        right = QtWidgets.QWidget()
+        right_layout = QtWidgets.QVBoxLayout(right)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.addWidget(self.gps_panel)
+        right_layout.addWidget(self.power_panel, 1)
+        for widget, minimum in ((self.flight_panel, 170), (self.graph_area, 300), (right, 160)):
+            if widget is not self.graph_area:
+                scroll = QtWidgets.QScrollArea()
+                scroll.setWidgetResizable(True)
+                scroll.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+                scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+                scroll.setWidget(widget)
+                widget = scroll
+            widget.setMinimumWidth(minimum)
+            self.splitter.addWidget(widget)
+        for index, stretch in enumerate((26, 55, 19)):
+            self.splitter.setStretchFactor(index, stretch)
+        self.splitter.setSizes([260, 550, 190])
+        root.addWidget(self.splitter, 1)
+        self.graphs = []
+        self._build_graphs()
+        self._timer = QtCore.QTimer(self)
+        self._timer.timeout.connect(self._poll)
+        self._timer.start(max(MIN_REDRAW_MS, self.data.layout.refresh_ms))
         self.redraw()
-        self._poll()
 
-    def toggle_fullscreen(self, _event=None):
-        current = bool(self._top.tk.getboolean(self._top.attributes("-fullscreen")))
-        self._top.attributes("-fullscreen", not current)
-        return "break"
+    def _add_action(self, label, slot, key=None):
+        action = self.actions_menu.addAction(label)
+        action.triggered.connect(lambda _checked=False: slot())
+        if key:
+            action.setShortcut(QtGui.QKeySequence(key))
+            action.setShortcutContext(QtCore.Qt.ShortcutContext.WindowShortcut)
+            self.addAction(action)
+        return action
 
-    def exit_fullscreen(self, _event=None):
-        self._top.attributes("-fullscreen", False)
-        return "break"
+    def menu_labels(self):
+        return [action.text() for action in self.actions_menu.actions() if not action.isSeparator()]
+
+    def _build_graphs(self):
+        for graph in self.graphs:
+            self.graph_grid.removeWidget(graph)
+            graph.deleteLater()
+        layout = self.data.layout
+        columns = max(1, min(layout.columns, len(layout.plots)))
+        self.graphs = []
+        for index, plot in enumerate(layout.plots):
+            graph = GraphPanel(plot, self.wall_offset)
+            row, column = divmod(index, columns)
+            self.graph_grid.addWidget(graph, row, column)
+            self.graphs.append(graph)
+        rows = -(-len(layout.plots) // columns)
+        for row in range(6):
+            self.graph_grid.setRowStretch(row, 1 if row < rows else 0)
+
+    # ------------------------------------------------------------ actions
+    def toggle_fullscreen(self):
+        window = self.window()
+        if window.isFullScreen():
+            window.showNormal()
+        else:
+            window.showFullScreen()
+
+    def exit_fullscreen(self):
+        if self.window().isFullScreen():
+            self.window().showNormal()
 
     def choose_layout(self):
-        filename = filedialog.askopenfilename(parent=self, title="Flight View layout", filetypes=(("JSON layout", "*.json"),))
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Flight View layout", "", "JSON layout (*.json)")
         if filename:
             self.load_config(filename)
 
     def sync_window(self):
         seconds = self.data.layout.window_seconds
-        self.window_menu.delete(0, "end")
-        for value in sorted({10, 30, 60, 120, 300, 600, 1800, 3600, seconds}):
-            self.window_menu.add_radiobutton(label=f"{value:g} s", value=f"{value:g} s",
-                                            variable=self.window_var, command=self.select_window)
-        self.window_var.set(f"{seconds:g} s")
+        for action in self.window_group.actions():
+            self.window_group.removeAction(action)
+        self.window_menu.clear()
+        for value in sorted({*WINDOW_CHOICES, seconds}):
+            action = self.window_menu.addAction(f"{value:g} s")
+            action.setCheckable(True)
+            action.setChecked(value == seconds)
+            action.triggered.connect(lambda _c=False, v=value: self.select_window(v))
+            self.window_group.addAction(action)
+
+    def window_label(self):
+        checked = self.window_group.checkedAction()
+        return checked.text() if checked else ""
+
+    def select_window(self, seconds):
+        """Change the visible time span; history, sources and the pause snapshot stay."""
+        try:
+            self.data.set_window(float(seconds))
+        except (ValueError, TypeError):
+            pass
+        self.sync_window()
+        self.redraw()
 
     def show_details(self):
-        messagebox.showinfo("Flight View details", self.display_details(), parent=self)
+        QtWidgets.QMessageBox.information(self, "Flight View details", self.display_details())
 
     def display_details(self):
         return (f"{self.layout_path.name}\n{self.data.layout.window_seconds:g}s window | UTC receive time\n"
@@ -189,19 +514,11 @@ class FlightView(ttk.Frame):
                 "! old/invalid | History bounded by max_points\n"
                 "AIM GPS altitude remains on the Altitude graph. FW fix mode is on the Featherweight GPS tab.")
 
-    def select_window(self, _event=None):
-        try:
-            self.data.set_window(float(self.window_var.get().split()[0]))
-        except (ValueError, IndexError):
-            self.sync_window()
-            return
-        self.redraw()
-
     def load_config(self, filename):
         try:
             layout = load_layout(filename)
         except (OSError, ValueError) as exc:
-            messagebox.showerror("Flight View layout", str(exc), parent=self)
+            show_error(self, "Flight View layout", str(exc))
             return False
         self.apply_layout(layout, Path(filename))
         return True
@@ -214,17 +531,23 @@ class FlightView(ttk.Frame):
             self.layout_path = Path(path)
         self.load_error = None
         self.paused, self.frozen = False, None
-        self.actions_menu.entryconfigure(self.pause_menu_index, label="Pause view")
+        self.pause_action.setText("Pause view")
+        self._timer.setInterval(max(MIN_REDRAW_MS, layout.refresh_ms))
+        self._build_graphs()
         self.redraw()
 
-    def save_layout(self):
-        filename = filedialog.asksaveasfilename(parent=self, title="Save Flight View layout", defaultextension=".json",
-                                              initialfile="flight_view_custom.json", filetypes=(("JSON layout", "*.json"),))
-        if filename:
-            try:
-                Path(filename).write_text(json.dumps(self.data.layout.document, indent=2) + "\n", encoding="utf-8")
-            except OSError as exc:
-                messagebox.showerror("Save Flight View layout", str(exc), parent=self)
+    def save_layout(self, filename=None):
+        if filename is None:
+            filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+                self, "Save Flight View layout", "flight_view_custom.json", "JSON layout (*.json)")
+        if not filename:
+            return False
+        try:
+            Path(filename).write_text(json.dumps(self.data.layout.document, indent=2) + "\n", encoding="utf-8")
+        except OSError as exc:
+            show_error(self, "Save Flight View layout", str(exc))
+            return False
+        return True
 
     def clear(self):
         self.data.clear()
@@ -241,35 +564,40 @@ class FlightView(ttk.Frame):
     def toggle_pause(self):
         self.paused = not self.paused
         self.frozen = (time.monotonic(), self.data.snapshot()) if self.paused else None
-        self.actions_menu.entryconfigure(self.pause_menu_index, label="Resume live" if self.paused else "Pause view")
+        self.pause_action.setText("Resume live" if self.paused else "Pause view")
         self.redraw()
 
-    def redraw(self):
-        end, histories = self.frozen if self.paused else (time.monotonic(), self.data.snapshot())
-        flat = [(trace, history) for row, data in zip(self.data.layout.rows, histories)
-                for trace, history in zip(row.traces, data) if trace.enabled]
-        fresh = sum(h.quality == "LIVE" and h.received is not None and end - h.received < 2 for _, h in flat)
-        simulated = any(h.source.startswith("TEST_") for _, h in flat)
-        hitl = any(trace.format == "hitl" and h.latest == 1 for trace, h in flat)
-        state = "PAUSED - DISPLAY FROZEN; receiving/logging continues" if self.paused else (
-            f"LIVE - {fresh}/{len(flat)} readings fresh" if fresh else "WAITING / STALE - no fresh live readings")
-        warning = ("HITL - SIMULATED SENSORS | " if hitl else "") + ("TEST DATA | " if simulated else "")
-        if self.load_error:
-            warning = "LAYOUT ERROR (fallback active) | " + warning
-        self.banner.configure(text=f"{warning}{state} | {self.data.layout.window_seconds:g}s",
-                              background="#fff2a8" if self.paused or simulated or hitl or self.load_error else "#d8efdf" if fresh else "#ffd5cf")
-        self.renderer.draw(self.data.layout, histories, end, self.wall_offset)
+    # ------------------------------------------------------------- render
+    def redraw(self, end=None):
+        """Render the current (or frozen) snapshot. ``end`` overrides 'now' (tests)."""
+        if self.paused:
+            frozen_end, histories = self.frozen
+            end = frozen_end if end is None else end
+        else:
+            histories = self.data.snapshot()
+            end = time.monotonic() if end is None else end
+        self.redraws += 1
+        layout = self.data.layout
+        text, background = fr.banner(layout, histories, end, paused=self.paused, load_error=self.load_error)
+        _set(self.banner, text)
+        set_background(self.banner, background, fr.TEXT)
+        self.flight_panel.show_panel(fr.flight_panel(layout, histories, end))
+        self.gps_panel.show_rows(fr.status_rows(layout, histories, end, "gps"))
+        self.power_panel.show_rows(fr.status_rows(layout, histories, end, "power"))
+        for graph, data in zip(self.graphs, histories):
+            graph.update_plot(data, layout, end)
+
+    def texts(self):
+        """Every readout / legend text currently shown (tests and diagnostics)."""
+        out = [self.banner.text(), *self.flight_panel.texts(), *self.gps_panel.texts(), *self.power_panel.texts()]
+        for graph in self.graphs:
+            out += graph.texts()
+        return [text for text in out if text]
 
     def _poll(self):
-        try:
-            if self.winfo_ismapped():
-                self.redraw()
-        finally:
-            self._after_id = self.after(self.data.layout.refresh_ms, self._poll)
+        if self.isVisible():
+            self.redraw()
 
     def close(self):
-        if self._after_id is not None:
-            self.after_cancel(self._after_id)
-            self._after_id = None
-        self._top.unbind("<F11>", self._f11)
-        self._top.unbind("<Escape>", self._escape)
+        self._timer.stop()
+        return super().close()

@@ -1,13 +1,16 @@
 """Attitude tab: live source selection, CSV loading/replay and a GUI smoke test."""
 
 import csv
+import os
 from pathlib import Path
 import struct
 import tempfile
 import time
 import unittest
 
-import attitude_math as am
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+import attitude_math as am  # noqa: E402
 from attitude_data import E0_FRESH_S, LiveAttitude, load_attitude_csv
 from converter import decode_log, parse_packet, write_csv
 
@@ -146,21 +149,14 @@ class CsvLoading(unittest.TestCase):
 
 class AttitudeTabGui(unittest.TestCase):
     def setUp(self):
-        import tkinter as tk
-        try:
-            self.root = tk.Tk()
-        except tk.TclError as exc:
-            self.skipTest(f"Tk display unavailable: {exc}")
-        self.root.withdraw()
+        from horizon_qt_support import app  # noqa: F401 - creates the QApplication
         from attitude_view import AttitudeTab
-        self.tab = AttitudeTab(self.root)
-        self.tab.pack(fill="both", expand=True)
-        self.root.geometry("1200x800")
-        self.root.update_idletasks()
+        self.tab = AttitudeTab(use_gl=False)
+        self.tab.resize(1200, 800)
 
     def tearDown(self):
         self.tab.close()
-        self.root.destroy()
+        self.tab.deleteLater()
 
     def value(self, key):
         return self.tab.values[key].get()
@@ -175,6 +171,7 @@ class AttitudeTabGui(unittest.TestCase):
         self.assertEqual(self.value("tilt"), "0.0°")
         self.assertEqual(self.value("state"), "PAD IDLE")
         self.assertIn("ACTIVE", self.value("hitl"))
+        self.assertEqual(self.tab.value_labels["hitl"].text(), self.value("hitl"))
         self.assertEqual(self.value("gps"), "1")
         self.assertEqual(self.value("qy"), "-0.70711")
         self.assertEqual(self.value("pitch"), "-90.0°")
@@ -187,8 +184,8 @@ class AttitudeTabGui(unittest.TestCase):
         self.assertEqual(self.value("azimuth"), "90.0°")
         self.assertEqual(self.value("state"), "BOOST")
         self.assertEqual(self.value("hitl"), "off")
-        self.assertGreater(len(self.tab.canvas.find_all()), 60)
-        self.assertGreater(len(self.tab.chart.find_all()), 10)
+        self.assertGreater(self.tab.scene.item_count(), 15)
+        self.assertGreaterEqual(self.tab.chart_point_count(), 8)
         # Non-unit norm flagged; zero quaternion not drawn.
         self.tab.accept_record(record(debug_frame((0, 0, 0, 1.05)), received=now + 0.1))
         self.tab.refresh(now + 0.15)
@@ -197,11 +194,10 @@ class AttitudeTabGui(unittest.TestCase):
         self.tab.refresh(now + 0.25)
         self.assertIn("not available", self.value("note"))
         self.assertEqual(self.value("tilt"), "--")
-        texts = [self.tab.canvas.itemcget(i, "text") for i in self.tab.canvas.find_all()
-                 if self.tab.canvas.type(i) == "text"]
-        self.assertIn("ATTITUDE NOT AVAILABLE", texts)
+        self.assertIn("ATTITUDE NOT AVAILABLE", self.tab.scene.texts())
         for name in ("From East", "From North", "From Above", "Iso"):
             self.tab.set_view(name)
+        self.assertAlmostEqual(self.tab.scene.view_el, 35.26, places=1)
 
     def test_file_replay_with_truth(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -216,6 +212,7 @@ class AttitudeTabGui(unittest.TestCase):
                     writer.writerow([i * 0.1, *est, *truth, 1])
             self.tab.load_file(path)
         self.assertEqual(self.tab.mode, "file")
+        self.assertTrue(self.tab.play_button.isEnabled())
         self.assertIn("attitude.csv", self.value("mode"))
         self.assertIn("auto", self.value("offset"))
         self.assertEqual(self.value("tilt_err"), "1.00°")
@@ -223,37 +220,56 @@ class AttitudeTabGui(unittest.TestCase):
         self.assertIn("ACTIVE", self.value("hitl"))
         self.tab.seek(1.0)
         self.assertEqual(self.value("truth_tilt"), "5.0°")
+        self.assertEqual(self.tab.scale.value(), 5000)
+        self.assertAlmostEqual(self.tab.cursor.value(), 1.0)
+        # Scrubbing the slider seeks the replay.
+        self.tab.scale.setValue(10000)
+        self.assertAlmostEqual(self.tab.play_time, 2.0)
+        self.tab.scale.setValue(5000)
         self.tab.align_here()
         self.assertIn("manual", self.value("offset"))
         self.tab.toggle_play()
         self.assertTrue(self.tab.playing)
+        self.assertEqual(self.tab.play_button.text(), "Pause")
         self.tab.play_time = 5.0
         self.tab._tick()
         self.assertFalse(self.tab.playing)
         self.assertAlmostEqual(self.tab.play_time, 2.0)
         self.tab.use_live()
         self.assertEqual(self.tab.mode, "live")
+        self.assertFalse(self.tab.play_button.isEnabled())
 
     def test_horizon_has_attitude_tab_fed_by_witness(self):
-        import tkinter as tk
-        try:
-            from horizon import HorizonGroundStation
-        except ImportError as exc:
-            self.skipTest(f"Horizon dependency unavailable: {exc}")
+        from horizon_qt_support import make_horizon
         with tempfile.TemporaryDirectory() as directory:
+            app = make_horizon(directory)
             try:
-                app = HorizonGroundStation(log_dir=Path(directory), auto_connect=False, broker_enabled=False)
-            except tk.TclError as exc:
-                self.skipTest(f"Tk display unavailable: {exc}")
-            app.withdraw()
-            try:
-                titles = [app.notebook.tab(tab, "text") for tab in app.notebook.tabs()]
-                self.assertEqual(titles[:2], ["Flight View", "Attitude"])
+                self.assertEqual(app.tab_titles()[:2], ["Flight View", "Attitude"])
                 app._witness_record(record(state_frame(TILT_EAST_10)))
                 app.attitude.refresh()
                 self.assertEqual(app.attitude.values["tilt"].get(), "10.0°")
             finally:
                 app.close()
+
+
+class RocketSceneFallback(unittest.TestCase):
+    def test_offscreen_uses_2d_projection_and_handles_lost_attitude(self):
+        from horizon_qt_support import app  # noqa: F401
+        from attitude_view import RocketScene, gl_available
+        self.assertFalse(gl_available())   # offscreen platform: no OpenGL, no crash
+        scene = RocketScene()
+        try:
+            self.assertFalse(scene.use_gl)
+            scene.show_attitude(TILT_EAST_10, legend="estimate")
+            self.assertIn("2D projection", scene.texts()[0])
+            drawn = scene.item_count()
+            self.assertGreater(drawn, 15)
+            scene.show_attitude(None, ghost=TILT_EAST_10, message=("ATTITUDE LOST", "gyro saturated"))
+            self.assertIn("ATTITUDE LOST", scene.texts())
+            scene.set_view_angles(90, 0)
+            self.assertEqual((scene.view_az, scene.view_el), (90.0, 0.0))
+        finally:
+            scene.close()
 
 
 if __name__ == "__main__":

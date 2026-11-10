@@ -1,6 +1,6 @@
 """Validated Flight View layouts and thread-safe, bounded telemetry histories.
 
-No Tk or device access here. Receiver callbacks run before latest-value UI
+No GUI or device access here. Receiver callbacks run before latest-value UI
 coalescing, preserving short peaks. All plots use host receive time, not uptime.
 """
 
@@ -13,7 +13,7 @@ import re
 import threading
 import time
 
-from telemetry_view import flatten_fields
+from telemetry_model import flatten_fields
 from aim_orientation import AimAngularRateEstimator
 from aim_altitude import AimAltitudeEstimator
 

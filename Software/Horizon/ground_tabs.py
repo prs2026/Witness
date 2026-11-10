@@ -1,121 +1,68 @@
-"""Witness relay and Featherweight serial tabs for Horizon Unified."""
+"""Witness feed and Featherweight serial tabs for Horizon Unified (Qt).
 
-import tkinter as tk
-from tkinter import messagebox, ttk
+Connection logic is auto_connect.ReceiverControl and the receivers are
+ground_receivers (worker threads); these widgets only show their state.
+"""
 
+from __future__ import annotations
+
+from PyQt6 import QtCore, QtWidgets
+
+from auto_connect import ReceiverControl
 from featherweight import FEATHERWEIGHT_BAUD
 from ground_receivers import FeatherweightReceiver, WitnessReceiver
 from ground_settings import WITNESS_FEED_HOST, WITNESS_FEED_PORT
-from telemetry_view import TelemetryView
-from auto_connect import AutoConnectTab
+from observable import Cell
+from qt_common import message_error
+from qt_widgets import bind_check, bind_combo, bind_label, bind_line_edit, hbox, wrap_label
 from serial_discovery import SerialDiscovery
+from telemetry_model import FEATHERWEIGHT_FIELDS, WITNESS_FIELDS  # noqa: F401 - re-exported
+from telemetry_view import TelemetryView
 
-WITNESS_FIELDS = {
-    "sensors": ("status", "uptime", "filtered_accel[0]", "filtered_accel[1]", "filtered_accel[2]",
-                "gyro[0]", "gyro[1]", "gyro[2]", "sensor_trailing_u16"),
-    "state": ("status", "uptime", "orientation[0]", "orientation[1]", "orientation[2]", "orientation[3]",
-              "position[0]", "position[1]", "position[2]", "velocity[0]", "velocity[1]", "velocity[2]",
-              "latitude", "longitude", "gps_altitude", "kalman_altitude", "witness_battery_voltage",
-              "gps_satellites"),
-    "camera": ("fc_status", "fc_uptime", "status", "uptime", "current_sense[0]", "current_sense[1]",
-               "current_sense[2]", "iris_battery_voltage"),
-    "heartbeat": ("status", "uptime"),
-    "command": ("status", "uptime", "command_value"),
-    "ground_station_status": ("rssi", "uptime", "gps_fix_quality", "gps_satellites", "latitude",
-                              "longitude", "gps_altitude", "gps_time", "gps_hdop", "gps_fix_age_ms"),
-    "witness_debug": ("status", "uptime", "mcu_temperature", "witness_battery_voltage",
-                      *(f"{name}[{i}]" for name, count in (("filtered_accel", 3), ("orientation", 4),
-                        ("position", 3), ("velocity", 3), ("low_accel", 3), ("high_accel", 3), ("gyro", 3))
-                        for i in range(count)), "lsm6_temperature", "pressure", "ms5607_temperature",
-                      "kalman_altitude", "latitude", "longitude", "gps_time", "gps_altitude"),
-    "iris_debug": ("status", "uptime", "mcu_temperature", "iris_battery_voltage",
-                   "current_sense[0]", "current_sense[1]", "current_sense[2]"),
-}
-FEATHERWEIGHT_FIELDS = {"GPS_STAT": (
-    "packet_type", "timestamp", "packet_length", "radio_crc_status", "text_crc_valid",
-    "text_crc_expected", "text_crc_computed", "unit_type", "unit_type_raw", "unit_id", "altitude_ft", "latitude_deg",
-    "longitude_deg", "horizontal_velocity_fps", "heading_deg", "vertical_velocity_fps", "fix_type",
-    "satellites_total", "satellites_over_24db", "satellites_over_32db", "satellites_over_40db",
-    *(f"satellite_details[{i}]" for i in range(5)),
-)}
-_FW_STATUS_COMMON = ("timestamp", "text_crc_valid", "text_crc_expected", "text_crc_computed")
-FEATHERWEIGHT_FIELDS.update({
-    "BATT_BLE": (*_FW_STATUS_COMMON, "battery_mv", "battery_voltage_v", "battery_valid",
-                 "battery_scope", "ble_status", "ble_connected", "temperature_c"),
-    "RX_NOMTK": (*_FW_STATUS_COMMON, "radio_crc_status", "unit_type", "unit_id", "packets_received",
-                 "packets_sent", "rssi_dbm", "snr_db", "ack_received", "ack_sent", "ack_rssi_dbm",
-                 "ack_snr_db", "spreading_factor", "frequency_hz", "tracker_battery_mv",
-                 "tracker_battery_voltage_v", "tracker_battery_valid", "temperature_c"),
-    "GS_STAT": (*_FW_STATUS_COMMON, "radio_crc_status", "unit_id", "packets_received", "packets_sent",
-                "rssi_dbm", "ack_received", "ack_sent", "ack_rssi_dbm", "found_unit_id",
-                "found_received", "found_sent", "found_rssi_dbm", "spreading_factor", "frequency_hz"),
-    "TX_STAT": (*_FW_STATUS_COMMON, "unit_id", "apid", "tx_duration_ms", "spreading_factor", "frequency_hz"),
-    "RX_TMOUT": (*_FW_STATUS_COMMON, "receive_timeout", "spreading_factor"),
-})
+NO_PORT = "(no port)"
+POLL_MS = 100
 
 
-class ReceiverTab(AutoConnectTab, ttk.Frame):
-    def __init__(self, parent, log_dir, *, witness=False, schema=None, on_record=None):
-        super().__init__(parent, padding=8)
+class ReceiverTab(ReceiverControl, QtWidgets.QWidget):
+    def __init__(self, parent=None, log_dir=None, *, witness=False, schema=None, on_record=None):
+        QtWidgets.QWidget.__init__(self, parent)
+        self.init_receiver_control()
         self.log_dir, self.witness = log_dir, witness
-        self.receiver = None
         self.on_record = on_record
         self.entries = []
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(4, weight=1)
-        self.controls = ttk.Frame(self)
-        self.controls.grid(row=0, column=0, sticky="ew")
-        self.status = tk.StringVar(value="Disconnected")
-        self.stats = tk.StringVar(value="Packets: 0   Bytes: 0   Errors: 0")
-        self.log_status = tk.StringVar()
-        for row, variable in ((1, self.status), (2, self.stats), (5, self.log_status)):
-            label = ttk.Label(self, textvariable=variable, wraplength=800)
-            label.grid(row=row, column=0, sticky="ew", pady=3)
-            label.bind("<Configure>", lambda event, widget=label: widget.configure(
-                wraplength=max(120, event.width)))
-        self.note = ttk.Label(self, wraplength=850)
-        self.note.grid(row=3, column=0, sticky="ew", pady=(0, 6))
-        self.view = TelemetryView(self, schema=schema)
-        self.view.grid(row=4, column=0, sticky="nsew")
-        self._after_id = self.after(100, self._poll)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
+        self.controls = QtWidgets.QHBoxLayout()
+        layout.addLayout(self.controls)
+        self.status_label, self.stats_label = wrap_label(), wrap_label()
+        bind_label(self.status, self.status_label)
+        bind_label(self.stats, self.stats_label)
+        self.note = wrap_label(muted=True)
+        self.log_label = wrap_label(muted=True)
+        bind_label(self.log_status, self.log_label)
+        for widget in (self.status_label, self.stats_label, self.note):
+            layout.addWidget(widget)
+        self.view = TelemetryView(schema=schema)
+        layout.addWidget(self.view, 1)
+        layout.addWidget(self.log_label)
+        self.connect_button = QtWidgets.QPushButton("Connect")
+        bind_label(self.connect_text, self.connect_button)
+        self.connect_button.clicked.connect(self.toggle_connection)
+        self.auto_button = QtWidgets.QCheckBox("Auto-connect")
+        bind_check(self.auto_connect, self.auto_button, on_user=self.auto_changed)
+        self._timer = QtCore.QTimer(self)
+        self._timer.setInterval(POLL_MS)
+        self._timer.timeout.connect(self._poll)
+        self._timer.start()
 
-    def toggle_connection(self):
-        if self.receiver is not None:
-            self.set_auto_connect(False)
-            self.disconnect()
-        else:
-            self.connect()
+    # ReceiverControl view hooks.
+    def alert(self, title, text):
+        message_error(self, title, text)
 
-    def connect(self, *, automatic=False):
-        if self.receiver is not None:
-            return
-        try:
-            receiver = self.make_receiver()
-            receiver.auto_retry = self.auto_connect.get()
-            receiver.start()
-        except (ValueError, RuntimeError, OSError) as exc:
-            self.status.set(f"Connection failed: {exc}")
-            if not automatic:
-                messagebox.showerror("Input connection", str(exc), parent=self)
-            return
-        self.receiver = receiver
-        if not automatic:
-            self.view.clear()
-        self.prepare_view()
-        self.status.set("Connecting...")
-        self.log_status.set(f"Log: {receiver.log_path}")
-        for entry in self.entries:
-            entry.configure(state="disabled")
-        self.connect_button.configure(text="Disconnect")
+    def reset_view(self):
+        self.view.clear()
 
-    def prepare_view(self):
-        pass
-
-    def _consume(self, receiver):
-        updates, stats, diagnostics = receiver.drain()
-        status, messages, byte_count, errors = stats
-        self.status.set(status)
-        self.stats.set(f"Packets: {messages}   Bytes: {byte_count}   Errors: {errors}")
+    def show_records(self, updates, diagnostics):
         for record in updates:
             self.remember_source(record)
             try:
@@ -124,98 +71,87 @@ class ReceiverTab(AutoConnectTab, ttk.Frame):
                 diagnostics.append(f"DISPLAY_ERROR: {exc}")
         self.view.append(diagnostics)
 
-    def remember_source(self, record):
-        pass
+    def set_inputs_enabled(self, enabled):
+        for entry in self.entries:
+            entry.setEnabled(enabled)
 
     def _poll(self):
         try:
-            if self.receiver is not None:
-                self._consume(self.receiver)
-            self.view.update_ages()
-            self.auto_tick()
+            self.poll()
         finally:
-            self._after_id = self.after(100, self._poll)
-
-    def disconnect(self):
-        receiver, self.receiver = self.receiver, None
-        if receiver is not None:
-            self._consume(receiver)
-            # Wait for the old reader to release its COM port/log files before
-            # allowing another connection (serial reads time out after 0.2 s).
-            receiver.stop(wait=True)
-        self.status.set("Disconnected - latest values retained")
-        self.connect_button.configure(text="Connect")
-        for entry in self.entries:
-            entry.configure(state="readonly" if isinstance(entry, ttk.Combobox) else "normal")
+            self.view.update_ages()
 
     def close(self):
-        if self._after_id is not None:
-            self.after_cancel(self._after_id)
-            self._after_id = None
+        self._timer.stop()
         self.disconnect()
+        return QtWidgets.QWidget.close(self)
 
 
 class WitnessTab(ReceiverTab):
-    def __init__(self, parent, *, log_dir, on_record=None):
+    def __init__(self, parent=None, *, log_dir, on_record=None):
         super().__init__(parent, log_dir, witness=True, schema=WITNESS_FIELDS, on_record=on_record)
-        self.host = tk.StringVar(value=WITNESS_FEED_HOST)
-        self.port = tk.StringVar(value=str(WITNESS_FEED_PORT))
-        for column, (label, variable, width) in enumerate((
-                ("Witness app host:", self.host, 16), ("Feed port:", self.port, 7))):
-            ttk.Label(self.controls, text=label).grid(row=0, column=column * 2, padx=(0, 4))
-            entry = ttk.Entry(self.controls, textvariable=variable, width=width)
-            entry.grid(row=0, column=column * 2 + 1, padx=(0, 12))
-            self.entries.append(entry)
-        self.connect_button = ttk.Button(self.controls, text="Connect", command=self.toggle_connection)
-        self.connect_button.grid(row=0, column=4)
-        self.init_auto_connect(self.controls, row=0, column=5, padx=12)
-        self.note.configure(text="Receive only: start main.py to supply decoded Witness telemetry. "
-                            "Auto-connect retries while enabled; snapshots retain original age. Units: g, dps, m, m/s, V, A, C, Pa; "
-                            "uptime in ms. kalman_altitude and position/velocity are the Kalman filter's ENU estimate "
-                            "relative to the pad (m, m/s); gps_altitude is m MSL and GPS fields read 0 without "
-                            "status.gps_locked. An all-zero orientation means attitude not available (not yet "
-                            "initialised, or lost after gyro saturation in flight). ground_station_status carries "
-                            "Aperture's own LC86G GPS (pad position). Live graphs are on Flight View, attitude/map in "
-                            "Windows > Visualizer; commands remain in main.py.")
+        self.host = Cell(WITNESS_FEED_HOST)
+        self.port = Cell(str(WITNESS_FEED_PORT))
+        host_edit, port_edit = QtWidgets.QLineEdit(), QtWidgets.QLineEdit()
+        port_edit.setMaximumWidth(80)
+        bind_line_edit(self.host, host_edit)
+        bind_line_edit(self.port, port_edit)
+        self.entries += [host_edit, port_edit]
+        self.controls.addLayout(hbox(QtWidgets.QLabel("Witness app host:"), host_edit,
+                                     QtWidgets.QLabel("Feed port:"), port_edit, self.connect_button,
+                                     self.auto_button, None))
+        self.note.setText(
+            "Receive only: start main.py to supply decoded Witness telemetry. "
+            "Auto-connect retries while enabled; snapshots retain original age. Units: g, dps, m, m/s, V, A, C, Pa; "
+            "uptime in ms. kalman_altitude and position/velocity are the Kalman filter's ENU estimate "
+            "relative to the pad (m, m/s); gps_altitude is m MSL and GPS fields read 0 without "
+            "status.gps_locked. An all-zero orientation means attitude not available (not yet "
+            "initialised, or lost after gyro saturation in flight). ground_station_status carries "
+            "Aperture's own LC86G GPS (pad position). Live graphs are on Flight View, attitude/map in "
+            "Windows > Visualizer; commands remain in main.py.")
 
     def make_receiver(self):
-        return WitnessReceiver(self.host.get().strip(), int(self.port.get()), self.log_dir, on_record=self.on_record)
+        return WitnessReceiver(str(self.host.get()).strip(), int(self.port.get()), self.log_dir,
+                               on_record=self.on_record)
 
 
 class FeatherweightTab(ReceiverTab):
-    def __init__(self, parent, *, log_dir, on_record=None):
+    def __init__(self, parent=None, *, log_dir, on_record=None):
         super().__init__(parent, log_dir, schema=FEATHERWEIGHT_FIELDS, on_record=on_record)
         self.discovery = SerialDiscovery("featherweight")
-        ttk.Label(self.controls, text="Featherweight COM port:").grid(row=0, column=0, padx=(0, 4))
-        self.port_combo = ttk.Combobox(self.controls, width=14, state="readonly")
-        self.port_combo.grid(row=0, column=1, padx=(0, 5))
+        self.port = Cell(NO_PORT)
+        self.port_choices = Cell((NO_PORT,))
+        self.port_combo = QtWidgets.QComboBox()
+        self.port_combo.setMinimumWidth(120)
+        bind_combo(self.port, self.port_combo, self.port_choices)
         self.entries.append(self.port_combo)
-        ttk.Button(self.controls, text="Refresh", command=self.refresh_ports).grid(row=0, column=2)
-        self.connect_button = ttk.Button(self.controls, text="Connect", command=self.toggle_connection)
-        self.connect_button.grid(row=0, column=3, padx=12)
-        self.init_auto_connect(self.controls, row=0, column=4)
-        self.note.configure(text=f"{FEATHERWEIGHT_BAUD} baud, 8-N-1, receive only. "
-                            "Altitude: ft ASL; velocity: ft/s; coordinates/heading: degrees. "
-                            "Fix: 0 = no fix, 2 = 2D, 3 = 3D. Bad text/radio CRC is shown in red. "
-                            "BATT_BLE = local/GS battery; RX_NOMTK = tracker battery. Voltages: V and raw mV; "
-                            "temperature: C; RSSI: dBm; SNR: dB; TX airtime: ms; frequency: Hz. "
-                            "Binary FWT chatter without a tracker is ignored; raw bytes are logged. "
-                            "Auto-connect finds Featherweight-named USB devices or learned USB identities. "
-                            "For generic adapters select the port and Connect once to learn it.")
+        refresh = QtWidgets.QPushButton("Refresh")
+        refresh.clicked.connect(self.refresh_ports)
+        self.controls.addLayout(hbox(QtWidgets.QLabel("Featherweight COM port:"), self.port_combo, refresh,
+                                     self.connect_button, self.auto_button, None))
+        self.note.setText(
+            f"{FEATHERWEIGHT_BAUD} baud, 8-N-1, receive only. "
+            "Altitude: ft ASL; velocity: ft/s; coordinates/heading: degrees. "
+            "Fix: 0 = no fix, 2 = 2D, 3 = 3D. Bad text/radio CRC is shown in red. "
+            "BATT_BLE = local/GS battery; RX_NOMTK = tracker battery. Voltages: V and raw mV; "
+            "temperature: C; RSSI: dBm; SNR: dB; TX airtime: ms; frequency: Hz. "
+            "Binary FWT chatter without a tracker is ignored; raw bytes are logged. "
+            "Auto-connect finds Featherweight-named USB devices or learned USB identities. "
+            "For generic adapters select the port and Connect once to learn it.")
         self.refresh_ports()
-        self.view.add_source("(no port)")
+        self.view.add_source(NO_PORT)
 
     def refresh_ports(self):
         self.discovery.refresh(force=True)
         self._update_ports()
 
     def _update_ports(self):
-        ports = [port.device for port in self.discovery.ports]
-        current = self.port_combo.get()
         if self.receiver is not None:
             return
-        self.port_combo["values"] = ["(no port)", *ports]
-        self.port_combo.set(current if current in ports else "(no port)")
+        ports = [port.device for port in self.discovery.ports]
+        current = self.port.get()
+        self.port_choices.set((NO_PORT, *ports))
+        self.port.set(current if current in ports else NO_PORT)
 
     def auto_tick(self):
         self.discovery.refresh()
@@ -228,9 +164,10 @@ class FeatherweightTab(ReceiverTab):
     def prepare_auto_connect(self):
         candidates = self.discovery.candidates()
         if not candidates:
-            self.status.set("Auto-connect: waiting for a known Featherweight USB device; select generic adapters manually once")
+            self.status.set("Auto-connect: waiting for a known Featherweight USB device; "
+                            "select generic adapters manually once")
             return False
-        self.port_combo.set(candidates[0])
+        self.port.set(candidates[0])
         self.discovery.attempted(candidates[0])
         return True
 
@@ -239,7 +176,7 @@ class FeatherweightTab(ReceiverTab):
             self.discovery.remember(record["source"])
 
     def make_receiver(self):
-        return FeatherweightReceiver(self.port_combo.get(), self.log_dir, on_record=self.on_record)
+        return FeatherweightReceiver(self.port.get(), self.log_dir, on_record=self.on_record)
 
     def prepare_view(self):
-        self.view.add_source(self.port_combo.get())
+        self.view.add_source(self.port.get())

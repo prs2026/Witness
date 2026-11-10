@@ -1,0 +1,8 @@
+# HITL session, --headless runner and the 960 Hz IMU synthesis. The HITL GUI
+# now lives in witnessOS (Software/witnessOS). HITL imports a few Qt-free
+# Horizon modules (converter, witness_download), so Horizon's requirements are
+# included; headless runs never import Qt.
+# Install: python -m pip install -r requirements.txt
+-r ../Horizon/requirements.txt
+scipy>=1.11
+soundfile>=0.12           # vibration profile recordings (.ogg)

@@ -2,6 +2,7 @@
 
 from collections import deque
 import json
+import os
 from pathlib import Path
 import queue
 import socket
@@ -12,11 +13,13 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from featherweight import crc16_buypass
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+from featherweight import crc16_buypass  # noqa: E402
 from ground_receivers import FeatherweightReceiver, WitnessReceiver
-from ground_tabs import WITNESS_FIELDS
-from main import PacketDecoder, SerialMonitor, parse_packet
-from telemetry_view import flatten_fields
+from monitor_core import MonitorCore  # noqa: E402
+from telemetry_model import WITNESS_FIELDS, flatten_fields  # noqa: E402
+from witness_protocol import PacketDecoder, parse_packet  # noqa: E402
 from witness_link import SCHEMA, WitnessPublisher, decode_record, encode_record
 
 
@@ -130,7 +133,7 @@ class ReceiverTests(unittest.TestCase):
                 wait_for(lambda: receiver.status.startswith("Connected"))
                 monitor = SimpleNamespace(publisher=publisher, events=queue.Queue())
                 errors = []
-                decoder = PacketDecoder(lambda packet: SerialMonitor.on_decoded_packet(
+                decoder = PacketDecoder(lambda packet: MonitorCore.on_decoded_packet(
                     monitor, "COM4", packet), errors.append)
                 payload = (b'\x02\x01' + (1234).to_bytes(4, "big")
                            + (25000).to_bytes(3, "big") + bytes(6)
@@ -238,32 +241,21 @@ class ReceiverTests(unittest.TestCase):
 
 
 class GuiTests(unittest.TestCase):
-    def test_live_witness_window_feeds_unified_window(self):
-        import tkinter as tk
-        from horizon import HorizonGroundStation
+    def test_live_witness_monitor_feeds_unified_window(self):
+        from horizon_qt_support import make_horizon, make_monitor, pump_until
         with tempfile.TemporaryDirectory() as directory:
-            try:
-                unified = HorizonGroundStation(log_dir=Path(directory), auto_connect=False, broker_enabled=False)
-            except tk.TclError as exc:
-                self.skipTest(f"Tk display unavailable: {exc}")
-            unified.withdraw()
+            unified = make_horizon(directory)
             witness = None
             try:
-                with patch("main.DEFAULT_WITNESS_FEED_PORT", 0):
-                    witness = SerialMonitor(auto_connect=False)
-                witness.withdraw()
+                witness = make_monitor(directory)
                 unified.witness.port.set(str(witness.publisher.port))
                 unified.witness.connect()
                 # Both serial and raw TCP decoders use this callback.
                 witness.on_decoded_packet("COM_LIVE", {"packet": "state", "status": 0x0B02,
                     "uptime": 2100, "kalman_altitude": 125.5, "witness_battery_voltage": 4.125})
                 key = ("COM_LIVE", "state", "witness_battery_voltage")
-                def displayed():
-                    unified.update()
-                    witness.update()
-                    row = unified.witness.view._rows.get(key)
-                    return row and unified.witness.view.tree.set(row, "value") == "4.125"
-                wait_for(displayed)
+                self.assertTrue(pump_until(lambda: key in unified.witness.view._rows
+                                           and unified.witness.view.value(key) == "4.125"))
                 self.assertIsNone(unified.aim.receiver)
                 self.assertIsNone(unified.featherweight.receiver)
                 receiver = unified.witness.receiver
@@ -271,46 +263,35 @@ class GuiTests(unittest.TestCase):
                 self.assertFalse(receiver._thread.is_alive())
                 self.assertTrue(witness.publisher._thread.is_alive())
                 # Closing Horizon's feed does not close or command Witness ports.
-                self.assertEqual(witness.values["packet.state.kalman_altitude"].get(), "125.5")
+                self.assertTrue(pump_until(
+                    lambda: witness.values["packet.state.kalman_altitude"].get() == "125.5"))
             finally:
                 if witness is not None:
-                    for callback in witness.tk.call("after", "info"):
-                        witness.after_cancel(callback)
                     witness.close()
                 unified.close()
 
     def test_unified_tabs_and_witness_feed_widgets(self):
-        import tkinter as tk
-        from horizon import HorizonGroundStation
+        from horizon_qt_support import make_horizon, make_monitor
         with tempfile.TemporaryDirectory() as directory:
+            unified = make_horizon(directory)
             try:
-                unified = HorizonGroundStation(log_dir=Path(directory), auto_connect=False, broker_enabled=False)
-            except tk.TclError as exc:
-                self.skipTest(f"Tk display unavailable: {exc}")
-            unified.withdraw()
-            try:
-                titles = [unified.notebook.tab(tab, "text") for tab in unified.notebook.tabs()]
-                self.assertEqual(titles, ["Flight View", "Attitude", "Witness", "Featherweight GPS", "AIM XTRA MQTT", "Layout Editor"])
+                self.assertEqual(unified.tab_titles(), ["Flight View", "Attitude", "Witness",
+                                                        "Featherweight GPS", "AIM XTRA MQTT", "Layout Editor"])
                 replay = record(received_at=time.time() - 20, replay=True)
-                unified.witness.view.update_record(replay, witness=True)
-                unified.witness.view.update_ages()
                 view = unified.witness.view
-                row = view._rows[("COM7", "sensors", "status")]
-                self.assertEqual(view.tree.set(row, "value"), "0b0000001000000001")
-                self.assertEqual(view.tree.set(row, "quality"), "Snapshot")
-                self.assertEqual(view.tree.item(row, "tags"), ("stale",))
-                row = view._rows[("COM7", "sensors", "status.flight_state_name")]
-                self.assertEqual(view.tree.set(row, "value"), "Boost")
-                row = view._rows[("COM7", "state", "witness_battery_voltage")]
-                self.assertEqual(view.tree.set(row, "value"), "null")
+                view.update_record(replay, witness=True)
+                view.update_ages()
+                key = ("COM7", "sensors", "status")
+                self.assertEqual(view.value(key), "0b0000001000000001")
+                self.assertEqual(view.column(key, "quality"), "Snapshot")
+                self.assertEqual(view.tag(key), "stale")
+                self.assertEqual(view.value(("COM7", "sensors", "status.flight_state_name")), "Boost")
+                self.assertEqual(view.value(("COM7", "state", "witness_battery_voltage")), "null")
                 self.assertEqual(unified.aim.host.get(), "localhost")
                 self.assertEqual(unified.aim.base_path.get(), "entacore/aim/1234")
-                unified.update()
             finally:
                 unified.close()
-            with patch("main.DEFAULT_WITNESS_FEED_PORT", 0):
-                witness = SerialMonitor(auto_connect=False)
-            witness.withdraw()
+            witness = make_monitor(directory)
             try:
                 self.assertFalse(hasattr(witness, "aim_page"))
                 self.assertFalse(hasattr(witness, "featherweight_serial"))
@@ -318,9 +299,6 @@ class GuiTests(unittest.TestCase):
                 witness.on_decoded_packet("COM_TEST", {"packet": "heartbeat", "status": 1, "uptime": 5})
                 witness.process_events()
                 self.assertEqual(witness.values["packet.heartbeat.uptime"].get(), "5")
-                # Cancel existing monitor timers before destroying this test Tcl interpreter.
-                for callback in witness.tk.call("after", "info"):
-                    witness.after_cancel(callback)
             finally:
                 witness.close()
             self.assertFalse(witness.publisher._thread.is_alive())

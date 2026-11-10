@@ -1,0 +1,5 @@
+# ESP-IDF example on-target test (pytest_blink.py), run inside the ESP-IDF
+# Python environment.
+pytest>=7
+pytest-embedded-idf>=1.0
+pytest-embedded-serial-esp>=1.0
