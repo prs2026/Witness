@@ -12,8 +12,10 @@ Sources (distinguished on the map):
   wgps     Witness GPS lat/lon (0x02/0xE0, int24 1e-4 deg ~ 11 m), only while the
            status GPS-locked bit is set.
   fw       Featherweight tracker GPS_STAT (unit_type TRACKER) with a 2D/3D fix.
+  aim      AIM Xtra GNSS from AIM BASE MQTT (gnss_payload/v1, >= 4 satellites).
 Altitudes are metres above the pad: Kalman up for kf, GPS MSL minus pad MSL
-for the GPS sources (None until a pad altitude is known).
+for wgps/fw (None until a pad altitude is known). AIM's GNSS altitude unit is
+unverified, so aim points carry it raw (alt_raw) and no AGL.
 """
 
 from collections import deque
@@ -25,8 +27,10 @@ from geodesy import enu_range_bearing, enu_to_geodetic, geodetic_to_enu, valid_l
 from pad_reference import FT_TO_M, PadReference, record_time
 
 TRACK_POINTS = 5000
-SOURCES = ("kf", "wgps", "fw")
-SOURCE_LABELS = {"kf": "Witness Kalman (ENU)", "wgps": "Witness GPS", "fw": "Featherweight tracker"}
+SOURCES = ("kf", "wgps", "fw", "aim")
+SOURCE_LABELS = {"kf": "Witness Kalman (ENU)", "wgps": "Witness GPS", "fw": "Featherweight tracker",
+                 "aim": "AIM Xtra GPS"}
+AIM_GNSS_TOPIC = "gnss_payload/v1"
 
 
 @dataclass(frozen=True)
@@ -37,6 +41,7 @@ class TrackPoint:
     agl: float | None
     lat: float | None = None
     lon: float | None = None
+    alt_raw: float | None = None
 
 
 def _finite(*values):
@@ -75,6 +80,23 @@ class MapData:
         except (TypeError, ValueError, KeyError, AttributeError, OverflowError):
             pass
         return False
+
+    def accept_aim(self, source, topic, fields, received, retained=False):
+        """AimMqttReceiver on_sample callback (MQTT thread): AIM GNSS fixes."""
+        try:
+            if topic != AIM_GNSS_TOPIC or retained or not isinstance(fields, dict) or not _finite(received):
+                return False
+            sats = fields.get("satellites_used")
+            if sats is not None and (not _finite(sats) or sats < 4):
+                return False
+            lat = fields.get("gnss_coordinate.latitude")
+            lon = fields.get("gnss_coordinate.longitude")
+            if not valid_lat_lon(lat, lon):
+                return False
+            alt = fields.get("gnss_coordinate.altitude")
+            return self._append("aim", (float(received), lat, lon, alt if _finite(alt) else None))
+        except (TypeError, ValueError, OverflowError):
+            return False
 
     def _append(self, name, item):
         with self._lock:
@@ -130,7 +152,7 @@ class MapData:
         if site is not None:
             return site.lat, site.lon, "witness"
         with self._lock:
-            for name in ("wgps", "fw"):
+            for name in ("wgps", "fw", "aim"):
                 if self._raw[name]:
                     _, _, lat, lon, _ = self._raw[name][0]
                     return lat, lon, f"first {name} fix"
@@ -182,5 +204,7 @@ class MapData:
         if ref is None:
             return None
         e, n, _ = geodetic_to_enu(lat, lon, 0.0, ref[0], ref[1], 0.0)
+        if name == "aim":
+            return TrackPoint(t, e, n, None, lat, lon, alt)
         agl = alt - pad_alt[0] if alt is not None and pad_alt is not None else None
         return TrackPoint(t, e, n, agl, lat, lon)

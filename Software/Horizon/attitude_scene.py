@@ -14,7 +14,7 @@ import numpy as np
 import attitude_math as am
 
 BG = "#ffffff"
-TEXT = "#171717"
+TEXT = "#000000"
 MUTED = "#555555"
 GRID = "#d0d0d0"
 BAD = "#990000"
@@ -24,6 +24,10 @@ ROCKET_NEAR = "#1a1a1a"
 ROCKET_FAR = "#8a8a8a"
 MARK = "#c04000"
 GHOST = "#2f6fb0"
+AIM_COLOR = "#8e24aa"          # AIM Xtra overlay rocket (drawn translucent)
+AIM_ALPHA = 0.35
+AIM_STALE_ALPHA = 0.12         # AIM overlay when its sample is stale
+STALE_ALPHA = 0.3              # Witness rocket when its sample is stale
 AXIS_COLORS = ("#b00020", "#007a33", "#0040c0")   # body x, y, z
 Q_COLORS = ("#b00020", "#007a33", "#0040c0", "#6a3d9a")
 FIN_FILL = {"fin": "#c8c8c8", "mark": "#f2a36b"}

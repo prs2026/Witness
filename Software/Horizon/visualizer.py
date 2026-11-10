@@ -8,7 +8,8 @@ opening it later still shows the track.
 
 Orientation: the Witness quaternion (fresh 0xE0, else 0x02; see attitude_data)
 drawn with pyqtgraph.opengl as a 3D rocket with axes (drag to orbit), or as a
-2D projection where OpenGL is unavailable. Large tilt, roll and heading
+2D projection where OpenGL is unavailable. The AIM Xtra orientation (AIM BASE
+MQTT) is overlaid on the same view as a translucent purple rocket. Large tilt, roll and heading
 readouts. All-zero quaternions are explained: not yet initialised on the pad,
 or LOST in flight after gyro saturation (the last valid attitude is then drawn
 as a ghost).
@@ -20,7 +21,8 @@ It always works offline as a metric grid; with "OSM tiles" on, OpenStreetMap
 tiles are fetched by map_tiles.py's rate-limited worker (its User-Agent and
 tile policy), cached on disk, decoded on a worker thread and shown as
 ImageItems. "Pre-cache area" downloads the launch area at home. Range rings,
-north arrow, scale bar, a track per source and range / bearing / altitude
+north arrow, scale bar, a track per source (Witness Kalman, Witness GPS,
+Featherweight tracker, AIM Xtra GPS) and range / bearing / altitude
 above the pad for each source.
 
 Redraws are timer driven (REFRESH_MS, 25 Hz max) and only when something
@@ -37,8 +39,10 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 import pyqtgraph as pg
 
 import attitude_math as am
-from attitude_data import LiveAttitude, state_name
-from attitude_scene import BAD, MUTED, OK, TEXT, VIEWS, WARN, attitude_condition, fmt  # noqa: F401
+from attitude_data import LiveAimAttitude, LiveAttitude, state_name
+from attitude_scene import (AIM_ALPHA, AIM_COLOR, AIM_STALE_ALPHA, BAD, MUTED, OK, STALE_ALPHA,  # noqa: F401
+                            TEXT, VIEWS, WARN,
+                            attitude_condition, fmt)
 from attitude_view import RocketScene, readout_panel, set_colored
 from geodesy import (TILE_SIZE, compass_point, enu_to_geodetic, format_distance, geodetic_to_enu,
                      lat_lon_to_world_px, metres_per_pixel, nice_ring_step)
@@ -56,13 +60,29 @@ TRACK_STYLE = {          # colour, dashed, marker symbol
     "kf": ("#171717", False, "o"),
     "wgps": ("#0050b0", False, "s"),
     "fw": ("#008030", True, "o"),
+    "aim": (AIM_COLOR, True, "t"),
 }
-TRACK_TAGS = {"kf": "KF", "wgps": "W GPS", "fw": "FW"}
+TRACK_TAGS = {"kf": "KF", "wgps": "W GPS", "fw": "FW", "aim": "AIM"}
+TRACK_ORDER = ("aim", "fw", "wgps", "kf")      # drawing order: KF on top
 PAD_COLOR = "#c00000"
 MIN_MAP_ZOOM, MAX_MAP_ZOOM, DEFAULT_ZOOM = 8, 19, 16
 TILE_ITEMS = 160
 MAX_VISIBLE_TILES = 120
 DEFAULT_VIEW_PX = 600
+# Auto range: the view's half-extent (pad to the nearest edge) steps through
+# these so it never jitters; the farthest rocket stays inside ~80% of it.
+AUTO_RANGE_STEPS_M = (500, 750, 1000, 1500, 2000, 3000, 5000, 7500, 10000, 15000, 20000)
+AUTO_RANGE_MARGIN = 1.25
+
+
+def auto_range_radius(snap):
+    """Half-extent (m) showing every rocket's latest position: 500 m to 20 km."""
+    far = max((item["range"] for item in snap["latest"].values()), default=0.0)
+    need = far * AUTO_RANGE_MARGIN
+    for step in AUTO_RANGE_STEPS_M:
+        if need <= step:
+            return float(step)
+    return float(AUTO_RANGE_STEPS_M[-1])
 
 
 def ask_yes_no(parent, title, text) -> bool:
@@ -108,9 +128,13 @@ def tile_rect_enu(z, x, y, ref_lat, ref_lon):
 # ------------------------------------------------------------ orientation
 
 class OrientationPanel(QtWidgets.QWidget):
-    def __init__(self, parent=None, *, live=None, refresh_ms=REFRESH_MS, use_gl=None):
+    def __init__(self, parent=None, *, live=None, aim=None, refresh_ms=REFRESH_MS, use_gl=None):
         super().__init__(parent)
         self.live = live if live is not None else LiveAttitude()
+        self.aim = aim if aim is not None else LiveAimAttitude()
+        self.aim_shown = None
+        self.aim_stale = False
+        self.witness_stale = False
         self.last_valid = None
         self._drawn_key = None
         self._readout_key = None
@@ -126,7 +150,8 @@ class OrientationPanel(QtWidgets.QWidget):
             bar.addWidget(button)
         bar.addStretch(1)
         layout.addLayout(bar)
-        hint = QtWidgets.QLabel("Drag to orbit. Live Witness quaternion: fresh 0xE0, else 0x02.")
+        hint = QtWidgets.QLabel("Drag to orbit. Solid rocket: Witness quaternion (fresh 0xE0, else 0x02). "
+                                f"<span style='color:{AIM_COLOR}'>Translucent purple rocket: AIM Xtra.</span>")
         hint.setWordWrap(True)
         hint.setStyleSheet(f"color: {MUTED};")
         layout.addWidget(hint)
@@ -138,10 +163,13 @@ class OrientationPanel(QtWidgets.QWidget):
         rows = (("tilt", "Tilt from vertical"), ("roll", "Roll (spin about nose)"),
                 ("heading", "Heading (nose azimuth)"), None,
                 ("status", "Attitude"), ("source", "Source"), ("age", "Sample age"),
-                ("state", "Flight state"), ("hitl", "HITL"), ("quat", "q (x, y, z, w)"), ("norm", "|q|"))
+                ("state", "Flight state"), ("hitl", "HITL"), ("quat", "q (x, y, z, w)"), ("norm", "|q|"), None,
+                ("aim_tilt", "AIM tilt"), ("aim_roll", "AIM roll"), ("aim_heading", "AIM heading"),
+                ("aim_age", "AIM sample age"))
         panel, self.values, self.labels = readout_panel(rows, big_keys=("tilt", "roll", "heading"))
-        note = QtWidgets.QLabel("Heading and roll are relative to the arbitrary heading set at "
-                                "initialisation (no magnetometer). Tilt is absolute.")
+        note = QtWidgets.QLabel("Witness heading and roll are relative to the arbitrary heading set at "
+                                "initialisation (no magnetometer). Tilt is absolute. AIM's body frame and "
+                                "heading reference relative to Witness are unverified, so compare tilt first.")
         note.setWordWrap(True)
         note.setStyleSheet(f"color: {MUTED};")
         panel.layout().addWidget(note, panel.layout().rowCount(), 0, 1, 2)
@@ -184,7 +212,13 @@ class OrientationPanel(QtWidgets.QWidget):
                 and self.last_valid.flight_state not in (0, None):
             self.last_valid = None      # back on the pad: a new flight
         self.condition = attitude_condition(sample, self.last_valid, state, hitl)
-        key = (id(sample), self.condition[0], id(self.last_valid))
+        aim = self.aim.current(now)
+        # Old samples stay on screen, only fainter.
+        self.aim_shown = aim.q if aim is not None and aim.q is not None else None
+        self.aim_stale = aim is not None and now - aim.time > STALE_S
+        self.witness_stale = sample is not None and (sample.snapshot or now - sample.time > STALE_S)
+        key = (id(sample), self.condition[0], id(self.last_valid), id(aim), self.aim_shown is None,
+               self.aim_stale, self.witness_stale)
         if key != self._drawn_key:
             self._drawn_key = key
             self._draw(sample)
@@ -194,13 +228,24 @@ class OrientationPanel(QtWidgets.QWidget):
 
     def _draw(self, s):
         code, title, detail = self.condition
+        aim = self.aim_shown
+        aim_alpha = AIM_STALE_ALPHA if self.aim_stale else AIM_ALPHA
+        alpha = STALE_ALPHA if self.witness_stale else 1.0
+        notes = []
+        if aim is not None:
+            notes.append("AIM Xtra: translucent purple rocket" + (" (stale, faded)" if self.aim_stale else ""))
+        if code == "ok" and self.witness_stale:
+            notes.append("Witness sample stale (faded)")
+        aim_legend = "\n".join(notes)
         if code == "ok":
-            self.scene.show_attitude(s.q)
+            self.scene.show_attitude(s.q, overlay=aim, legend=aim_legend, alpha=alpha, overlay_alpha=aim_alpha)
         elif code == "lost" and self.last_valid is not None:
-            self.scene.show_attitude(None, ghost=self.last_valid.q, message=(title, detail),
-                                     legend="last valid attitude (blue ghost)")
+            legend = "last valid attitude (blue ghost)" + ("\n" + aim_legend if aim_legend else "")
+            self.scene.show_attitude(None, ghost=self.last_valid.q, overlay=aim, message=(title, detail),
+                                     legend=legend, overlay_alpha=aim_alpha)
         else:
-            self.scene.show_attitude(None, message=(title, detail))
+            self.scene.show_attitude(None, overlay=aim, message=(title, detail), legend=aim_legend,
+                                     overlay_alpha=aim_alpha)
 
     def _readouts(self, s, now, state, hitl):
         code, title, detail = self.condition
@@ -235,6 +280,25 @@ class OrientationPanel(QtWidgets.QWidget):
         self._set("state", state_name(state))
         self._set("hitl", "ACTIVE - SIMULATED" if hitl == 1 else "off" if hitl == 0 else "--",
                   BAD if hitl == 1 else TEXT)
+        self._aim_readouts(now)
+
+    def _aim_readouts(self, now):
+        aim = self.aim.current(now)
+        angles = am.attitude_angles(aim.q) if aim is not None and aim.q is not None else None
+        if angles is None:
+            for key in ("aim_tilt", "aim_roll", "aim_heading"):
+                self._set(key, "--", MUTED)
+        else:
+            self._set("aim_tilt", fmt(angles["tilt"]), AIM_COLOR)
+            self._set("aim_roll", fmt(angles["spin"]), AIM_COLOR)
+            self._set("aim_heading", fmt(angles["azimuth"]), AIM_COLOR)
+        if aim is None:
+            self._set("aim_age", "no AIM orientation", MUTED)
+        else:
+            age = now - aim.time
+            stale = age > STALE_S
+            self._set("aim_age", f"{age:.1f} s" + (" STALE (faded)" if stale else "")
+                      + (f" ({aim.reason})" if aim.q is None and aim.reason else ""), BAD if stale else TEXT)
 
     def close(self):
         self._timer.stop()
@@ -252,6 +316,8 @@ class MapPanel(QtWidgets.QWidget):
         self.zoom = DEFAULT_ZOOM
         self.set_pad_mode = False
         self.follow = Cell(False)
+        self.auto_range = Cell(True)
+        self.auto_radius = None
         self.online = Cell(self.tiles.online)
         self.last_snapshot = None
         self.tiles_drawn = 0
@@ -277,25 +343,29 @@ class MapPanel(QtWidgets.QWidget):
         minus, plus = QtWidgets.QPushButton("-"), QtWidgets.QPushButton("+")
         for button, step in ((minus, -1), (plus, 1)):
             button.setMaximumWidth(32)
-            button.clicked.connect(lambda _c=False, s=step: self.set_zoom(self.zoom + s))
+            button.clicked.connect(lambda _c=False, s=step: self._manual_zoom(self.zoom + s))
             bar.addWidget(button)
         self.zoom_label = QtWidgets.QLabel()
         bar.addWidget(self.zoom_label)
         centre = QtWidgets.QPushButton("Centre on pad")
         centre.clicked.connect(self.centre)
+        auto = QtWidgets.QCheckBox("Auto range")
+        auto.setToolTip("Scale the map to the farthest rocket (500 m to 20 km). "
+                        "Zooming or panning by hand turns it off.")
+        bind_check(self.auto_range, auto, on_user=self._invalidate)
         follow = QtWidgets.QCheckBox("Follow rocket")
         bind_check(self.follow, follow, on_user=self._invalidate)
         self.pad_button = QtWidgets.QPushButton("Set pad here...")
         self.pad_button.clicked.connect(self.toggle_set_pad)
-        auto = QtWidgets.QPushButton("Auto pad")
-        auto.clicked.connect(self.clear_manual_pad)
+        auto_pad = QtWidgets.QPushButton("Auto pad")
+        auto_pad.clicked.connect(self.clear_manual_pad)
         clear = QtWidgets.QPushButton("Clear track")
         clear.clicked.connect(self.clear_track)
         online = QtWidgets.QCheckBox("OSM tiles")
         bind_check(self.online, online, on_user=self._online_changed)
         precache = QtWidgets.QPushButton("Pre-cache area...")
         precache.clicked.connect(self.precache_dialog)
-        for widget in (centre, follow, self.pad_button, auto, clear, online, precache):
+        for widget in (centre, auto, follow, self.pad_button, auto_pad, clear, online, precache):
             bar.addWidget(widget)
         bar.addStretch(1)
         bar_widget = QtWidgets.QWidget()
@@ -311,7 +381,7 @@ class MapPanel(QtWidgets.QWidget):
         splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical)
         splitter.setChildrenCollapsible(False)
         self.plot = pg.PlotWidget()
-        self.plot.setBackground("#f4f4ef")
+        self.plot.setBackground("w")
         item = self.plot.getPlotItem()
         item.setAspectLocked(True)
         light_axes(item)
@@ -322,13 +392,14 @@ class MapPanel(QtWidgets.QWidget):
         item.setMenuEnabled(False)
         self.view = item.getViewBox()
         self.view.sigRangeChanged.connect(self._range_changed)
+        self.view.sigRangeChangedManually.connect(self._manual_range)
         self.plot.scene().sigMouseClicked.connect(self._clicked)
         self._rings = pg.PlotCurveItem(pen=pg.mkPen("#c06060", width=1, style=QtCore.Qt.PenStyle.DashLine),
                                        connect="finite")
         item.addItem(self._rings)
         self._ring_labels = []
         self._tracks = {}
-        for name in ("fw", "wgps", "kf"):
+        for name in TRACK_ORDER:
             color, dashed, symbol = TRACK_STYLE[name]
             line = pg.PlotDataItem(pen=pg.mkPen(color, width=2 if name == "kf" else 1.5,
                                                 style=QtCore.Qt.PenStyle.DashLine if dashed
@@ -367,7 +438,7 @@ class MapPanel(QtWidgets.QWidget):
 
         rows = [("pad", "Pad"), ("pad_pos", "Pad position"), ("pad_alt", "Pad altitude"), None,
                 ("state", "Flight state")]
-        for name in ("kf", "wgps", "fw"):
+        for name in ("kf", "wgps", "fw", "aim"):
             rows += [None, (name, "● " + SOURCE_LABELS[name])]
         rows += [None, ("tiles", "Map tiles")]
         panel, self.values, self.labels = readout_panel(rows)
@@ -385,6 +456,9 @@ class MapPanel(QtWidgets.QWidget):
     def eventFilter(self, obj, event):  # noqa: N802 - Qt API: keep overlays placed
         if obj is self.plot and event.type() == QtCore.QEvent.Type.Resize:
             self._place_overlays()
+            if self.auto_range.get():
+                self.auto_radius = None      # refit the range to the new size
+                self._invalidate()
         return super().eventFilter(obj, event)
 
     def _place_overlays(self):
@@ -440,9 +514,35 @@ class MapPanel(QtWidgets.QWidget):
         base = metres_per_pixel(self._ref_lat(), 0)
         mpp = max(1e-6, self.mpp())
         self.zoom = max(MIN_MAP_ZOOM, min(MAX_MAP_ZOOM, int(round(math.log2(base / mpp)))))
-        self.zoom_label.setText(f"zoom {self.zoom}")
+        self.zoom_label.setText(f"zoom {self.zoom}" + (f", auto {format_distance(self.auto_radius)}"
+                                                     if self.auto_range.get() and self.auto_radius else ""))
         self._tiles_dirty = True
         self._invalidate()
+
+    def _manual_range(self, *_):
+        """Mouse wheel / drag on the map: the user takes over the range."""
+        if self.auto_range.get():
+            self.auto_range.set(False)
+            self._invalidate()
+
+    def _manual_zoom(self, zoom):
+        self.auto_range.set(False)
+        self.set_zoom(zoom)
+
+    def apply_auto_range(self, snap, now=None):
+        """Fit the view to the farthest rocket (centred on the pad, or the rocket when following)."""
+        radius = auto_range_radius(snap)
+        centre = (0.0, 0.0)
+        if self.follow.get():
+            primary = self.primary(snap, now)
+            if primary is not None:
+                centre = (primary.east, primary.north)
+        w, h = self._view_pixels()
+        mpp = 2.0 * radius / max(1.0, min(w, h))
+        if (radius != self.auto_radius or abs(centre[0] - self.pan[0]) > 1e-6
+                or abs(centre[1] - self.pan[1]) > 1e-6 or abs(mpp - self.mpp()) > 0.01 * mpp):
+            self.auto_radius = radius
+            self._set_view(centre, mpp)
 
     def centre(self):
         self.follow.set(False)
@@ -527,14 +627,14 @@ class MapPanel(QtWidgets.QWidget):
 
     @staticmethod
     def primary(snap, now=None):
-        """Freshest-preferred rocket point: Kalman, else Witness GPS, else Featherweight."""
+        """Freshest-preferred rocket point: Kalman, Witness GPS, Featherweight, then AIM."""
         now = time.monotonic() if now is None else now
         latest = snap["latest"]
-        for name in ("kf", "wgps", "fw"):
+        for name in ("kf", "wgps", "fw", "aim"):
             item = latest.get(name)
             if item is not None and now - item["point"].t <= STALE_S:
                 return item["point"]
-        items = [latest[name]["point"] for name in ("kf", "wgps", "fw") if name in latest]
+        items = [latest[name]["point"] for name in ("kf", "wgps", "fw", "aim") if name in latest]
         return max(items, key=lambda p: p.t) if items else None
 
     def refresh(self, now=None):
@@ -546,11 +646,14 @@ class MapPanel(QtWidgets.QWidget):
                 stale = self._tile_items.pop(key, None)   # refreshed on disk: reload
                 if stale is not None:
                     self.plot.removeItem(stale)
-        key = (self.data.version, self.data.pad.version, self.follow.get(), self.online.get(), self.set_pad_mode)
+        key = (self.data.version, self.data.pad.version, self.follow.get(), self.online.get(), self.set_pad_mode,
+               self.auto_range.get())
         if key != self._drawn_key:
             snap = self.data.snapshot()
             self.last_snapshot = snap
-            if self.follow.get():
+            if self.auto_range.get():
+                self.apply_auto_range(snap, now)
+            elif self.follow.get():
                 primary = self.primary(snap, now)
                 if primary is not None and (abs(primary.east - self.pan[0]) > 1e-6
                                             or abs(primary.north - self.pan[1]) > 1e-6):
@@ -734,14 +837,17 @@ class MapPanel(QtWidgets.QWidget):
         state, gps, hitl = snap["status"]
         self._set("state", state_name(state) + (f", GPS lock {gps}" if gps is not None else "")
                   + (", HITL SIMULATED" if hitl == 1 else ""), BAD if hitl == 1 else TEXT)
-        for name in ("kf", "wgps", "fw"):
+        for name in ("kf", "wgps", "fw", "aim"):
             item = snap["latest"].get(name)
             if item is None:
                 self._set(name, "no data", MUTED)
                 continue
             p = item["point"]
             age = now - p.t
-            agl = f"{p.agl:.1f} m AGL" if p.agl is not None else "alt AGL --"
+            if name == "aim":
+                agl = f"GPS alt {p.alt_raw:.1f} (AIM units)" if p.alt_raw is not None else "GPS alt --"
+            else:
+                agl = f"{p.agl:.1f} m AGL" if p.agl is not None else "alt AGL --"
             text = (f"{format_distance(item['range'])} @ {item['bearing']:.0f}° "
                     f"{compass_point(item['bearing'])}\n{agl}   age {age:.1f} s")
             if name == "kf" and snap["reference"] is not None and not snap["kf_placed"]:
@@ -780,7 +886,7 @@ class VisualizerWindow(QtWidgets.QWidget):
 
     closed = QtCore.pyqtSignal()
 
-    def __init__(self, parent=None, *, live=None, map_data=None, tiles=None, use_gl=None):
+    def __init__(self, parent=None, *, live=None, aim=None, map_data=None, tiles=None, use_gl=None):
         super().__init__(parent, QtCore.Qt.WindowType.Window)
         self.setWindowTitle("Horizon Visualizer")
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, False)
@@ -788,7 +894,7 @@ class VisualizerWindow(QtWidgets.QWidget):
         layout.setContentsMargins(4, 4, 4, 4)
         self.splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
         self.splitter.setChildrenCollapsible(False)
-        self.orientation = OrientationPanel(live=live, use_gl=use_gl)
+        self.orientation = OrientationPanel(live=live, aim=aim, use_gl=use_gl)
         self.map = MapPanel(data=map_data, tiles=tiles)
         self.orientation.setMinimumWidth(260)
         self.map.setMinimumWidth(300)

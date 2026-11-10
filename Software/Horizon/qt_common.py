@@ -60,25 +60,49 @@ def ensure_app(argv: list[str] | None = None) -> QtWidgets.QApplication:
     _APP = app
     app.setApplicationName(APP_NAME)
     app.setStyle("Fusion")
+    apply_light_theme(app)
     apply_plot_theme(app)
     return app
 
 
-def is_dark(app: QtWidgets.QApplication | None = None) -> bool:
-    app = app or QtWidgets.QApplication.instance()
-    if app is None:
-        return False
+def light_palette() -> QtGui.QPalette:
+    """White backgrounds and black text, whatever the OS theme."""
+    roles = QtGui.QPalette.ColorRole
+    palette = QtGui.QPalette()
+    colors = {
+        roles.Window: "#f5f5f5", roles.WindowText: "#000000", roles.Base: "#ffffff",
+        roles.AlternateBase: "#f0f0f0", roles.Text: "#000000", roles.Button: "#ececec",
+        roles.ButtonText: "#000000", roles.ToolTipBase: "#ffffdc", roles.ToolTipText: "#000000",
+        roles.PlaceholderText: "#707070", roles.Highlight: "#2a6fd6", roles.HighlightedText: "#ffffff",
+        roles.Link: "#0050b0", roles.BrightText: "#c00000", roles.Light: "#ffffff",
+        roles.Midlight: "#e6e6e6", roles.Mid: "#b8b8b8", roles.Dark: "#a0a0a0", roles.Shadow: "#707070",
+    }
+    for role, value in colors.items():
+        palette.setColor(role, QtGui.QColor(value))
+    disabled = QtGui.QPalette.ColorGroup.Disabled
+    for role in (roles.WindowText, roles.Text, roles.ButtonText):
+        palette.setColor(disabled, role, QtGui.QColor("#8a8a8a"))
+    return palette
+
+
+def apply_light_theme(app: QtWidgets.QApplication) -> None:
+    """Force light mode (white background, black text) on every platform."""
     try:
-        return app.styleHints().colorScheme() == QtCore.Qt.ColorScheme.Dark
-    except AttributeError:  # pragma: no cover - older Qt
-        return app.palette().color(QtGui.QPalette.ColorRole.Window).lightness() < 128
+        app.styleHints().setColorScheme(QtCore.Qt.ColorScheme.Light)
+    except AttributeError:  # pragma: no cover - Qt < 6.8
+        pass
+    app.setPalette(light_palette())
+
+
+def is_dark(app: QtWidgets.QApplication | None = None) -> bool:
+    """Always False: the tools force light mode (kept for callers)."""
+    return False
 
 
 def apply_plot_theme(app: QtWidgets.QApplication | None = None) -> None:
-    """Match pyqtgraph's background/foreground to the Qt palette."""
-    dark = is_dark(app)
-    pg.setConfigOption("background", "#1e1e1e" if dark else "w")
-    pg.setConfigOption("foreground", "#d0d0d0" if dark else "#202020")
+    """pyqtgraph plots: white background, black axes and text."""
+    pg.setConfigOption("background", "w")
+    pg.setConfigOption("foreground", "k")
 
 
 def color(index: int) -> str:

@@ -26,7 +26,7 @@ import pyqtgraph as pg
 import attitude_math as am
 from attitude_data import AttitudeTrack, LiveAttitude, load_attitude_csv, state_name
 from attitude_scene import (  # noqa: F401 - re-exported
-    AXIS_COLORS, BAD, BG, CONVENTIONS, FIN_FILL, FIN_ROLES, GHOST, GRID, MARK, MUTED, OK, Q_COLORS,
+    AIM_ALPHA, AIM_COLOR, AXIS_COLORS, BAD, BG, CONVENTIONS, FIN_FILL, FIN_ROLES, GHOST, GRID, MARK, MUTED, OK, Q_COLORS,
     ROCKET_FAR, ROCKET_NEAR, TEXT, VIEWS, WARN, body_axes_world, chart_series, fmt, ground_grid,
     projector, rocket_segments, rocket_world,
 )
@@ -69,6 +69,13 @@ def gl_available() -> bool:
     except Exception:  # noqa: BLE001 - any GL failure means "use the 2D view"
         _GL_STATE = False
     return _GL_STATE
+
+
+def _faded(color, alpha=1.0):
+    """QColor with alpha (2D drawing)."""
+    c = QtGui.QColor(color)
+    c.setAlphaF(max(0.0, min(1.0, alpha)))
+    return c
 
 
 def _rgba(color, alpha=1.0):
@@ -142,21 +149,43 @@ class RocketScene(QtWidgets.QWidget):
                                        antialias=True))
         for label, pos in (("E", (1.05, 0, 0)), ("N", (0, 1.05, 0)), ("U", (0, 0, 1.05))):
             view.addItem(gl.GLTextItem(pos=pos, text=label, color=QtGui.QColor(MUTED)))
-        self._gl_body = gl.GLLinePlotItem(mode="lines", width=2, antialias=True)
-        self._gl_mark = gl.GLLinePlotItem(mode="lines", width=4, antialias=True, color=_rgba(MARK))
+        # Translucent blending so a stale sample can be drawn faded (alpha < 1).
+        self._gl_body = gl.GLLinePlotItem(mode="lines", width=2, antialias=True, glOptions="translucent")
+        self._gl_mark = gl.GLLinePlotItem(mode="lines", width=4, antialias=True, color=_rgba(MARK),
+                                          glOptions="translucent")
         self._gl_ghost = gl.GLLinePlotItem(mode="lines", width=1.5, antialias=True, color=_rgba(GHOST, 0.8))
-        self._gl_fins = [gl.GLMeshItem(smooth=False, drawEdges=True, edgeColor=_rgba(MARK if role == "mark"
-                         else ROCKET_NEAR), color=_rgba(FIN_FILL[role])) for role in FIN_ROLES]
-        self._gl_axes = [gl.GLLinePlotItem(mode="lines", width=3, color=_rgba(color)) for color in AXIS_COLORS]
-        for item in (self._gl_body, self._gl_mark, self._gl_ghost, *self._gl_fins, *self._gl_axes):
+        self._gl_fins = [gl.GLMeshItem(smooth=False, drawEdges=True, glOptions="translucent",
+                                       edgeColor=_rgba(MARK if role == "mark" else ROCKET_NEAR),
+                                       color=_rgba(FIN_FILL[role])) for role in FIN_ROLES]
+        self._gl_axes = [gl.GLLinePlotItem(mode="lines", width=3, color=_rgba(color), glOptions="translucent")
+                         for color in AXIS_COLORS]
+        # AIM Xtra overlay: the same rocket, translucent, in AIM_COLOR.
+        self._gl_aim = gl.GLLinePlotItem(mode="lines", width=2, antialias=True,
+                                         color=_rgba(AIM_COLOR, min(1.0, AIM_ALPHA * 2)), glOptions="translucent")
+        self._gl_aim_fins = [gl.GLMeshItem(smooth=False, drawEdges=True, glOptions="translucent",
+                                           edgeColor=_rgba(AIM_COLOR, min(1.0, AIM_ALPHA * 2)),
+                                           color=_rgba(AIM_COLOR, AIM_ALPHA)) for _role in FIN_ROLES]
+        for item in (self._gl_body, self._gl_mark, self._gl_ghost, *self._gl_fins, *self._gl_axes,
+                     self._gl_aim, *self._gl_aim_fins):
             view.addItem(item)
             item.setVisible(False)
         layout.addWidget(view)
 
-    def _gl_show(self, q, ghost):
-        body_color = _rgba(ROCKET_NEAR)
-        for item in (self._gl_body, self._gl_mark, *self._gl_fins, *self._gl_axes, self._gl_ghost):
+    def _gl_show(self, q, ghost, overlay=None, alpha=1.0, overlay_alpha=AIM_ALPHA):
+        body_color = _rgba(ROCKET_NEAR, alpha)
+        for item in (self._gl_body, self._gl_mark, *self._gl_fins, *self._gl_axes, self._gl_ghost,
+                     self._gl_aim, *self._gl_aim_fins):
             item.setVisible(False)
+        if overlay is not None:
+            segments, _roles, fins = rocket_world(overlay)
+            edge = _rgba(AIM_COLOR, min(1.0, overlay_alpha * 2))
+            self._gl_aim.setData(pos=segments.reshape(-1, 3), color=edge)
+            self._gl_aim.setVisible(True)
+            for item, quad in zip(self._gl_aim_fins, fins):
+                item.opts["edgeColor"] = edge
+                item.setColor(_rgba(AIM_COLOR, overlay_alpha))
+                item.setMeshData(vertexes=quad, faces=np.array([[0, 1, 2], [0, 2, 3]]))
+                item.setVisible(True)
         if ghost is not None:
             segments, _roles, _fins = rocket_world(ghost)
             self._gl_ghost.setData(pos=segments.reshape(-1, 3))
@@ -165,11 +194,13 @@ class RocketScene(QtWidgets.QWidget):
             return
         segments, roles, fins = rocket_world(q)
         self._gl_body.setData(pos=segments[roles != "mark"].reshape(-1, 3), color=body_color)
-        self._gl_mark.setData(pos=segments[roles == "mark"].reshape(-1, 3))
-        for item, quad in zip(self._gl_fins, fins):
+        self._gl_mark.setData(pos=segments[roles == "mark"].reshape(-1, 3), color=_rgba(MARK, alpha))
+        for item, quad, role in zip(self._gl_fins, fins, FIN_ROLES):
+            item.opts["edgeColor"] = _rgba(MARK if role == "mark" else ROCKET_NEAR, alpha)
+            item.setColor(_rgba(FIN_FILL[role], alpha))
             item.setMeshData(vertexes=quad, faces=np.array([[0, 1, 2], [0, 2, 3]]))
-        for item, axis in zip(self._gl_axes, body_axes_world(q)):
-            item.setData(pos=np.array([[0, 0, 0], axis]))
+        for item, axis, color in zip(self._gl_axes, body_axes_world(q), AXIS_COLORS):
+            item.setData(pos=np.array([[0, 0, 0], axis]), color=_rgba(color, alpha))
         for item in (self._gl_body, self._gl_mark, *self._gl_fins, *self._gl_axes):
             item.setVisible(True)
 
@@ -209,7 +240,7 @@ class RocketScene(QtWidgets.QWidget):
         self._items.append(item)
         return item
 
-    def _draw_2d(self, q, ghost):
+    def _draw_2d(self, q, ghost, overlay=None, alpha=1.0, overlay_alpha=AIM_ALPHA):
         for item in self._items:
             self.plot.removeItem(item)
         self._items = []
@@ -229,6 +260,20 @@ class RocketScene(QtWidgets.QWidget):
             for quad in fins:
                 fx, fy, _ = project(np.vstack([quad, quad[:1]]))
                 self._line((fx, fy), GHOST, 1.0, QtCore.Qt.PenStyle.DashLine, pairs=False)
+        if overlay is not None:
+            segments, _roles, fins = rocket_world(overlay)
+            line = _faded(AIM_COLOR, min(1.0, overlay_alpha * 2))
+            fill = _faded(AIM_COLOR, overlay_alpha)
+            sx, sy, _ = project(segments)
+            self._line((sx.ravel(), sy.ravel()), line, 2.0)
+            for quad in fins:
+                fx, fy, _ = project(quad)
+                polygon = QtWidgets.QGraphicsPolygonItem(QtGui.QPolygonF(
+                    [QtCore.QPointF(float(a), float(b)) for a, b in zip(fx, fy)]))
+                polygon.setBrush(pg.mkBrush(fill))
+                polygon.setPen(pg.mkPen(line, width=1.0))
+                self.plot.addItem(polygon)
+                self._items.append(polygon)
         if q is None:
             return
         segments, roles, fins = rocket_world(q)
@@ -239,22 +284,22 @@ class RocketScene(QtWidgets.QWidget):
         # Painter's order: far lines, fins far-to-near, near lines, marks.
         far = (roles != "mark") & (mid_depth < middle)
         near = (roles != "mark") & (mid_depth >= middle)
-        self._line((sx[far].ravel(), sy[far].ravel()), ROCKET_FAR, 1.5)
+        self._line((sx[far].ravel(), sy[far].ravel()), _faded(ROCKET_FAR, alpha), 1.5)
         for index in np.argsort(fin_depth):
             quad, role = fins[index], FIN_ROLES[index]
             fx, fy, _ = project(np.vstack([quad, quad[:1]]))
             polygon = QtWidgets.QGraphicsPolygonItem(QtGui.QPolygonF(
                 [QtCore.QPointF(float(a), float(b)) for a, b in zip(fx, fy)]))
-            polygon.setBrush(pg.mkBrush(FIN_FILL[role]))
-            polygon.setPen(pg.mkPen(MARK if role == "mark" else ROCKET_NEAR, width=1.5))
+            polygon.setBrush(pg.mkBrush(_faded(FIN_FILL[role], alpha)))
+            polygon.setPen(pg.mkPen(_faded(MARK if role == "mark" else ROCKET_NEAR, alpha), width=1.5))
             self.plot.addItem(polygon)
             self._items.append(polygon)
-        self._line((sx[near].ravel(), sy[near].ravel()), ROCKET_NEAR, 2.0)
+        self._line((sx[near].ravel(), sy[near].ravel()), _faded(ROCKET_NEAR, alpha), 2.0)
         marks = roles == "mark"
-        self._line((sx[marks].ravel(), sy[marks].ravel()), MARK, 3.0)
+        self._line((sx[marks].ravel(), sy[marks].ravel()), _faded(MARK, alpha), 3.0)
         for axis, color, label in zip(body_axes_world(q), AXIS_COLORS, ("xb", "yb", "zb")):
             ax, ay, _ = project(np.array([[0, 0, 0], axis]))
-            self._line((ax, ay), color, 3.0)
+            self._line((ax, ay), _faded(color, alpha), 3.0)
             tip = axis * (1 + 0.08 / max(1e-9, float(np.linalg.norm(axis))))
             tx, ty, _ = project(tip)
             self._text(label, (float(tx), float(ty)), color, bold=True)
@@ -286,15 +331,18 @@ class RocketScene(QtWidgets.QWidget):
     def set_view(self, name):
         self.set_view_angles(*VIEWS[name])
 
-    def show_attitude(self, q, *, ghost=None, message=("", ""), legend=""):
-        """Draw estimate q (None hides it), an optional ghost and a message."""
-        self.state = (q, ghost)
+    def show_attitude(self, q, *, ghost=None, overlay=None, message=("", ""), legend="",
+                      alpha=1.0, overlay_alpha=AIM_ALPHA):
+        """Draw estimate q (None hides it), an optional ghost, an optional
+        translucent overlay rocket (AIM Xtra) and a message. alpha and
+        overlay_alpha fade the rockets (stale samples are drawn fainter)."""
+        self.state = (q, ghost, overlay, alpha, overlay_alpha)
         self.message = message
         self.legend_text = legend
         if self.use_gl:
-            self._gl_show(q, ghost)
+            self._gl_show(q, ghost, overlay, alpha, overlay_alpha)
         else:
-            self._draw_2d(q, ghost)
+            self._draw_2d(q, ghost, overlay, alpha, overlay_alpha)
         self.overlay.show_message(*message)
         self._update_caption()
         self._place_overlays()

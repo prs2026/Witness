@@ -53,6 +53,7 @@ from PyQt6 import QtGui, QtWidgets
 
 from qt_common import ensure_app
 from aim_tab import AimMqttTab
+from attitude_data import LiveAimAttitude
 from attitude_view import AttitudeTab
 from flight_data import DEFAULT_LAYOUT
 from flight_editor import FlightLayoutEditor
@@ -81,6 +82,7 @@ class HorizonGroundStation(QtWidgets.QMainWindow):
         # distance) and the Visualizer map; both are fed on receiver threads.
         self.pad = PadReference()
         self.map_data = MapData(self.pad)
+        self.aim_attitude = LiveAimAttitude()
         self.tiles = tile_cache if tile_cache is not None else TileCache(online=map_online)
         self.use_gl = use_gl
         self.visualizer = None
@@ -99,7 +101,7 @@ class HorizonGroundStation(QtWidgets.QMainWindow):
         self.featherweight = FeatherweightTab(log_dir=log_dir, on_record=self._featherweight_record)
         self.aim = AimMqttTab(log_dir=log_dir, host=DEFAULT_AIM_MQTT_HOST, port=DEFAULT_AIM_MQTT_PORT,
                               client_uuid=DEFAULT_AIM_MQTT_UUID, base_path=DEFAULT_AIM_MQTT_BASE_PATH,
-                              on_sample=self.flight.data.accept_aim, broker_enabled=broker_enabled,
+                              on_sample=self._aim_sample, broker_enabled=broker_enabled,
                               broker_port=broker_port)
         self.layout_editor = FlightLayoutEditor(flight=self.flight)
         for tab, title in zip((self.flight, self.attitude, self.witness, self.featherweight, self.aim,
@@ -134,6 +136,11 @@ class HorizonGroundStation(QtWidgets.QMainWindow):
         self.map_data.accept_record("featherweight", record)
         self.flight.data.accept_record("featherweight", record)
 
+    def _aim_sample(self, source, topic, fields, received, retained):
+        self.flight.data.accept_aim(source, topic, fields, received, retained)
+        self.map_data.accept_aim(source, topic, fields, received, retained)
+        self.aim_attitude.accept_aim(source, topic, fields, received, retained)
+
     def open_visualizer(self):
         if self.visualizer is not None and self.visualizer.is_open():
             self.visualizer.showNormal()
@@ -141,7 +148,7 @@ class HorizonGroundStation(QtWidgets.QMainWindow):
             self.visualizer.activateWindow()
             return self.visualizer
         # The Attitude tab's LiveAttitude already ingests every Witness record.
-        self.visualizer = VisualizerWindow(live=self.attitude.live, map_data=self.map_data,
+        self.visualizer = VisualizerWindow(live=self.attitude.live, aim=self.aim_attitude, map_data=self.map_data,
                                            tiles=self.tiles, use_gl=self.use_gl)
         self.visualizer.show()
         return self.visualizer

@@ -348,6 +348,7 @@ class VisualizerGui(unittest.TestCase):
         data = MapData()
         tiles = TileCache(self.tmp.name, fetch=None)
         tab = MapPanel(data=data, tiles=tiles)
+        tab.auto_range.set(False)      # manual zoom/pan behaviour (auto range: test_aim_visualizer)
         tab.resize(800, 600)
         try:
             tab.refresh()
