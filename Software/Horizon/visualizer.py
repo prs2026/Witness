@@ -881,17 +881,25 @@ MapTab = MapPanel
 
 # ------------------------------------------------------------------ window
 
-class VisualizerWindow(QtWidgets.QWidget):
-    """Top-level window: orientation (left) and map (right) side by side."""
+class VisualizerPanel(QtWidgets.QWidget):
+    """Orientation (left) and map (right) side by side: Horizon's "Map &
+    Attitude" tab, and the body of the pop-out VisualizerWindow."""
 
-    closed = QtCore.pyqtSignal()
-
-    def __init__(self, parent=None, *, live=None, aim=None, map_data=None, tiles=None, use_gl=None):
-        super().__init__(parent, QtCore.Qt.WindowType.Window)
-        self.setWindowTitle("Horizon Visualizer")
-        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, False)
+    def __init__(self, parent=None, *, live=None, aim=None, map_data=None, tiles=None, use_gl=None,
+                 on_pop_out=None):
+        super().__init__(parent)
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
+        if on_pop_out is not None:
+            bar = QtWidgets.QHBoxLayout()
+            hint = QtWidgets.QLabel("Map of every rocket relative to the pad (right) and the "
+                                    "Witness / AIM attitude (left). Drag the divider to resize.")
+            hint.setStyleSheet(f"color: {MUTED};")
+            pop = QtWidgets.QPushButton("Open in separate window (F9)")
+            pop.clicked.connect(on_pop_out)
+            bar.addWidget(hint, 1)
+            bar.addWidget(pop)
+            layout.addLayout(bar)
         self.splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
         self.splitter.setChildrenCollapsible(False)
         self.orientation = OrientationPanel(live=live, aim=aim, use_gl=use_gl)
@@ -902,7 +910,32 @@ class VisualizerWindow(QtWidgets.QWidget):
         self.splitter.addWidget(self.map)
         self.splitter.setStretchFactor(0, 2)
         self.splitter.setStretchFactor(1, 3)
-        layout.addWidget(self.splitter)
+        layout.addWidget(self.splitter, 1)
+        self.splitter.setSizes([400, 600])
+        self._closed = False
+
+    def close(self):
+        if not self._closed:
+            self._closed = True
+            self.orientation.close()
+            self.map.close()
+        return super().close()
+
+
+class VisualizerWindow(QtWidgets.QWidget):
+    """Top-level window: orientation (left) and map (right) side by side."""
+
+    closed = QtCore.pyqtSignal()
+
+    def __init__(self, parent=None, *, live=None, aim=None, map_data=None, tiles=None, use_gl=None):
+        super().__init__(parent, QtCore.Qt.WindowType.Window)
+        self.setWindowTitle("Horizon Visualizer")
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, False)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.panel = VisualizerPanel(live=live, aim=aim, map_data=map_data, tiles=tiles, use_gl=use_gl)
+        self.splitter, self.orientation, self.map = self.panel.splitter, self.panel.orientation, self.panel.map
+        layout.addWidget(self.panel)
         self._closed = False
         screen = QtGui.QGuiApplication.primaryScreen()
         area = screen.availableGeometry() if screen is not None else QtCore.QRect(0, 0, 1400, 900)
@@ -922,8 +955,7 @@ class VisualizerWindow(QtWidgets.QWidget):
         if self._closed:
             return
         self._closed = True
-        self.orientation.close()
-        self.map.close()
+        self.panel.close()
         self.closed.emit()
 
     def close(self):

@@ -41,12 +41,28 @@ Either app may start first. Horizon retries its enabled inputs when unavailable.
 | Setting | Default |
 |---|---|
 | Witness decoded telemetry feed | `127.0.0.1:8766` |
+| Witness feed over Tailscale (from another machine) | `<witnessOS PC's Tailscale name or 100.x IP>:8767` |
 | AIM subscriber host and port | `localhost:1883` |
 | Embedded broker listener | `127.0.0.1:1883` |
 | AIM subscriber UUID setting | `124` |
 | AIM base topic | `entacore/aim/1234` |
 | AIM subscription | `entacore/aim/1234/#` |
 | Embedded broker at startup | Enabled |
+
+### Watching from another machine (Tailscale)
+
+witnessOS also publishes the same receive-only feed on its PC's Tailscale
+address, port 8767 (Witness monitor > **Share over Tailscale**, on by default).
+On the remote machine, in Horizon's Witness tab, set the host to the witnessOS
+PC's Tailscale name (MagicDNS, e.g. `benchpc`) or its `100.x` address and the
+port to 8767, then Connect. Horizon only accepts this PC (loopback) or a
+Tailscale address, so the unauthenticated feed is never read over the LAN or
+the internet; your tailnet's login and ACLs decide who can watch.
+
+The remote feed is a separate server with its own thread and buffers: a slow
+or dropped remote viewer is disconnected from it (Horizon reconnects
+automatically) and never delays the local `127.0.0.1:8766` feed. TCP
+keepalive detects a dead link within seconds.
 
 These defaults are in [ground_settings.py](ground_settings.py). Witness raw TCP defaults are at the top of [monitor_core.py](monitor_core.py). Do not point the Horizon Witness feed at a raw telemetry TCP port: the feed carries decoded JSON records, not binary application packets.
 

@@ -126,6 +126,8 @@ def run(args) -> int:
     stall_watchdog.install(Path(wos_paths.HORIZON_DIR) / "logs")
     window = WitnessOS(csv_files=args.csv_files, start_tab=args.tab,
                        monitor_options={"start_feed": not args.no_feed,
+                                        "remote_feed": getattr(args, "remote_feed", "auto"),
+                                        "remote_feed_port": getattr(args, "remote_feed_port", None),
                                         "auto_connect": not args.no_auto_connect})
     window.show()
     return app.exec()
