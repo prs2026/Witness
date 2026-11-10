@@ -13,7 +13,6 @@ sys.path.insert(0, os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 
 import hitl_gui  # noqa: E402
-import trajectory_csv as tc  # noqa: E402
 
 TRAJ = os.path.join(os.path.dirname(HERE), "trajectories")
 EAYF = os.path.join(TRAJ, "eayftrajectory.csv")

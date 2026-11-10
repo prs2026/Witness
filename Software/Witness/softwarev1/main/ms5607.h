@@ -16,7 +16,6 @@ public:
     static constexpr std::uint8_t kTemperatureConversionCommand = 0x58; // OSR 4096
     static constexpr std::uint32_t kConversionTimeUs = 9'100;
     static constexpr std::uint32_t kResetDelayMs = 3;
-    static constexpr float kSeaLevelPressureMbar = kStandardSeaLevelPressureMbar;
 
     struct Sample {
         std::uint32_t pressure_raw = 0;

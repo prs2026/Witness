@@ -45,7 +45,6 @@ public:
     void add(const float gyro_mdps[3], const float low_g_mg[3],
              const float high_g_mg[3]);
     std::uint32_t count() const { return count_; }
-    void gyro_mean(float out[3]) const { mean(gyro_sum_, out); }
     // Median and robust spread of the stored gyro samples (reorders them).
     void gyro_median(float median[3], float spread[3]);
     void low_g_mean(float out[3]) const { mean(low_sum_, out); }

@@ -20,7 +20,6 @@ summary.json gains "comparison": RMS and max errors per expected phase.
 
 from __future__ import annotations
 
-import bisect
 import csv
 import math
 import os

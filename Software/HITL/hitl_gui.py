@@ -361,7 +361,6 @@ class HitlApp:
         self.session = hs.HitlSession(runs_dir=runs_dir)
         self.session.fc_log_config = fc_log_config(self.settings) \
             if hasattr(self, "settings") else fc_log_config(load_settings())
-        self._shown_run = None
         self._closing = False
         self._plot_sig = None
         self._plot_job = None

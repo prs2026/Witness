@@ -142,9 +142,6 @@ public:
     Vector3 gyro_bias_rad_s() const { return bias_; }
     // Angle between body +X and world +Z, degrees; 0 upright, 90 horizontal.
     float tilt_from_vertical_deg() const;
-    // Integration-path delay introduced by the median, in samples.
-    std::uint32_t filter_lag_samples() const { return median_length_ / 2U; }
-
     std::uint32_t steps() const { return steps_; }            // Integrated
     std::uint32_t gaps() const { return gaps_; }
     std::uint32_t late_steps() const { return late_steps_; }
