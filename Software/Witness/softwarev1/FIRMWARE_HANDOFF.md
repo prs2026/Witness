@@ -1141,7 +1141,7 @@ idf.py -p <actual-port> flash monitor
 
 Inspect the local environment before selecting ports or running scripts.
 `flashit.sh`, `openserial.sh` and `sendserial.sh` contain Linux-specific paths;
-`flashit copy.ps1` targets an RFC2217 remote endpoint. The VS Code settings list
+`flashit.ps1` targets an RFC2217 remote endpoint. The VS Code settings list
 COM4, but an old IDE setting is not proof that a board is connected there.
 Do not flash a remote bench or erase NAND without an explicit request.
 

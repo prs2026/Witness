@@ -125,10 +125,6 @@ def status_gps_locked(status: int) -> int:
     return 1 if status & GPS_LOCKED_MASK else 0
 
 
-def status_hitl_active(status: int) -> int:
-    return 1 if status & HITL_ACTIVE_MASK else 0
-
-
 CAMERA_STATUS_FLAG_LABELS = (
     (0x01, "Current error"),
     (0x02, "Battery invalid"),

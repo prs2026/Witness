@@ -13,7 +13,6 @@ public:
     // Keep host and receiver at the hardware-confirmed rate. Startup never
     // changes receiver baud or probes another rate while it is streaming.
     static constexpr std::uint32_t kBaudRate = 115200;
-    static constexpr std::uint32_t kFactoryBaudRate = 115200;
     static constexpr std::uint8_t kNavigationMode = 5; // airborne; PX1120S rated for 4 g
     // Reapply SRAM settings each boot instead of wearing GPS flash on startup.
     static constexpr bool kSaveSettingsToFlash = false;

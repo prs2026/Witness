@@ -154,7 +154,6 @@ class FlightSim:
         self.phase = "pad"
         self.burn_start = None
         self.apogee_t = None
-        self.apogee_alt = None
         self.landed_t = None
         self.roll = 0.0
         self.gps_n = 0.0
@@ -205,7 +204,6 @@ class FlightSim:
                 specific_x = -drag / G0
                 if self.vel <= 0 and self.apogee_t is None:
                     self.apogee_t = t
-                    self.apogee_alt = self.alt
                 if self.apogee_t is not None and t >= self.apogee_t + \
                         p.drogue_delay_s:
                     self.phase = "drogue"

@@ -340,7 +340,7 @@ class DashboardRenderer:
 
     def graph(self, box, plot, histories, layout, end, wall_offset):
         x0, y0, x1, y1 = box
-        w, h = x1 - x0, y1 - y0
+        w = x1 - x0
         units = plot.unit + (f" | {plot.right_unit}" if plot.right_unit else "")
         self.text((x0 + 5, y0 + 2, x1 - 5, y0 + 25), f"{plot.title} [{units}]", 15, bold=True)
         columns = min(2 if self.compact else 3, len(histories))

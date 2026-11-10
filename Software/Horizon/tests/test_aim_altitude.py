@@ -3,7 +3,7 @@
 import math
 import unittest
 
-from aim_altitude import AimAltitudeEstimator, BARO_ALTITUDE, BARO_VELOCITY, pressure_altitude
+from aim_altitude import AimAltitudeEstimator, BARO_VELOCITY, pressure_altitude
 from flight_data import DEFAULT_LAYOUT, FlightData, graph_range, load_layout
 from flight_render import quality_text, value_text
 

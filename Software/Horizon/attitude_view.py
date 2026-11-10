@@ -183,7 +183,6 @@ class AttitudeTab(ttk.Frame):
         self.view_az, self.view_el = VIEWS["Iso"]
         self._drag = None
         self._scrubbing = False
-        self.last_sample = None
         self._build()
         self._after_id = self.after(self.refresh_ms, self._tick)
 
@@ -427,7 +426,6 @@ class AttitudeTab(ttk.Frame):
     def refresh(self, now=None):
         now = time.monotonic() if now is None else now
         sample = self.current_sample(now)
-        self.last_sample = sample
         offset, how = self.heading_offset()
         self._readouts(sample, now, offset, how)
         self._draw_scene(sample, offset)

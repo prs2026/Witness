@@ -1,15 +1,6 @@
 *.pyc
-Software/Horizon/__pycache__/aim_mqtt.cpython-314.pyc
-Software/Horizon/__pycache__/aim_tab.cpython-314.pyc
-Software/Horizon/__pycache__/featherweight.cpython-314.pyc
-Software/Horizon/__pycache__/flight_data.cpython-314.pyc
-Software/Horizon/__pycache__/flight_render.cpython-314.pyc
-Software/Horizon/__pycache__/flight_view.cpython-314.pyc
-Software/Horizon/__pycache__/ground_receivers.cpython-314.pyc
-Software/Horizon/__pycache__/ground_settings.cpython-314.pyc
-Software/Horizon/__pycache__/ground_tabs.cpython-314.pyc
-Software/Horizon/__pycache__/telemetry_view.cpython-314.pyc
-Software/Horizon/__pycache__/witness_link.cpython-314.pyc
+# Host test binaries (g++ builds of the C++ unit tests)
+*.exe
 Software/Horizon/__pycache__/
 
 # KiCad local history (each is its own git repo)
