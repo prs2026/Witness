@@ -244,6 +244,42 @@ class Throttle(QtCore.QObject):
             traceback.print_exc()
 
 
+class Debounce(QtCore.QObject):
+    """Run the callback once input has been quiet for ``settle_ms``.
+
+    Every request() restarts the wait, so a continuous stream of mouse,
+    wheel or scroll events causes no work until it stops.
+    """
+
+    def __init__(self, callback: Callable[[], None], settle_ms: int = 150,
+                 parent: QtCore.QObject | None = None):
+        super().__init__(parent)
+        self._callback = callback
+        self._timer = QtCore.QTimer(self)
+        self._timer.setSingleShot(True)
+        self._timer.setInterval(max(1, int(settle_ms)))
+        self._timer.timeout.connect(self._fire)
+
+    def request(self) -> None:
+        self._timer.start()          # (re)start: fires settle_ms after the last request
+
+    def pending(self) -> bool:
+        return self._timer.isActive()
+
+    def flush(self) -> None:
+        self._timer.stop()
+        self._fire()
+
+    def stop(self) -> None:
+        self._timer.stop()
+
+    def _fire(self) -> None:
+        try:
+            self._callback()
+        except Exception:  # report like Qt would; never kill the caller
+            traceback.print_exc()
+
+
 class _WorkerSignals(QtCore.QObject):
     done = QtCore.pyqtSignal(object)
     failed = QtCore.pyqtSignal(object)

@@ -45,7 +45,7 @@ import csv_columns
 import qt_common
 import spectrum
 import viewer_data as vd
-from qt_common import add_curve, ensure_app, run_in_thread, Throttle
+from qt_common import add_curve, Debounce, ensure_app, run_in_thread, Throttle
 # Compatibility: the data helpers were importable from viewer before the Qt
 # port (Horizon main.py imports these four; tests and scripts use the rest).
 from viewer_data import *  # noqa: F401,F403
@@ -63,8 +63,18 @@ PEN_STYLES = (QtCore.Qt.PenStyle.SolidLine, QtCore.Qt.PenStyle.DashLine,
               QtCore.Qt.PenStyle.DotLine, QtCore.Qt.PenStyle.DashDotLine,
               QtCore.Qt.PenStyle.DashDotDotLine)
 AXIS_WIDTH = 64               # fixed left axis width: every graph's x lines up
-MAX_LIVE_PLOTS = 40           # PlotWidgets kept alive; farther ones are freed
-LAZY_MARGIN = 0.75            # build graphs this many viewports above/below
+MAX_LIVE_PLOTS = 16           # PlotWidgets kept alive; farther ones are freed. Every
+                              # live plot re-clips on each zoom, so keep this small.
+# Graphs redraw only once input stops: zoom/pan/scroll after SETTLE_MS of no
+# wheel/drag/scroll events, the hover readout after HOVER_SETTLE_MS of a still mouse.
+SETTLE_MS = 150
+HOVER_SETTLE_MS = 80
+MAX_COLUMNS = 4               # graphs side by side (Graphs per row)
+MIN_RESIZE_HEIGHT = 90        # smallest graph a drag can make
+MAX_RESIZE_HEIGHT = 2400
+GRIP_HEIGHT = 7
+DENSE_POINTS = 5000           # traces longer than this get a 1 px pen (2-3x faster)
+LAZY_MARGIN = 0.5             # build graphs this many viewports above/below
 REALIZE_BUDGET_S = 0.035      # GUI time spent creating graphs per event-loop turn
 SERIES_CACHE_BYTES = 768 * 1024 ** 2
 BUSY_SWITCH_INTERVAL_S = 0.0005
@@ -151,13 +161,23 @@ class TimeViewBox(pg.ViewBox):
 
     Drag across a plot: zoom x (every graph). Ctrl+wheel: zoom about the
     cursor. Shift+wheel: pan. Plain wheel scrolls the page. Shift/middle
-    drag pans. Double-click resets the zoom. Right-click: menu.
+    drag pans. Double-click resets the zoom. Right-click: menu. Zoom and
+    pan are applied once the wheel/mouse stops (SETTLE_MS), not per event.
     """
 
     def __init__(self, owner: "CsvViewerWidget"):
         super().__init__(enableMenu=True)
         self.owner = owner
+        self._pan_press_x = None
         self.setMouseEnabled(x=True, y=False)
+
+    def _pan_shift(self) -> float:
+        """How far the view has already moved since the drag began (a pause
+        applies the pan mid-drag), so the drag keeps tracking the cursor."""
+        pending = self.owner._drag_pan
+        if pending is None or self.owner.x_view is None:
+            return 0.0
+        return self.owner.x_view[0] - pending[0][0]
 
     def linkedViewChanged(self, view, axis):  # noqa: N802
         # Every graph has the same width and axis width, so a linked x range
@@ -176,8 +196,22 @@ class TimeViewBox(pg.ViewBox):
 
     def mouseDragEvent(self, ev, axis=None):  # noqa: N802
         left = ev.button() == QtCore.Qt.MouseButton.LeftButton
+        middle = ev.button() == QtCore.Qt.MouseButton.MiddleButton
         shift = bool(ev.modifiers() & QtCore.Qt.KeyboardModifier.ShiftModifier)
-        if axis is not None or not left or shift:
+        if axis is None and (middle or (left and shift)):
+            # Pan: applied when the mouse pauses or is released, not per move.
+            ev.accept()
+            press = self._pan_press_x if not ev.isStart() else None
+            if press is None:
+                press = self.mapToView(ev.buttonDownPos()).x()
+                self._pan_press_x = press
+            # Distance in the press-time view: map with the view as it was.
+            here = self.mapToView(ev.pos()).x() - self._pan_shift()
+            self.owner.drag_pan(press, here, ev.isFinish())
+            if ev.isFinish():
+                self._pan_press_x = None
+            return
+        if axis is not None or not left:
             super().mouseDragEvent(ev, axis)
             return
         ev.accept()
@@ -198,12 +232,13 @@ class TimeViewBox(pg.ViewBox):
         if not delta:
             ev.ignore()
             return
+        # Queued, not applied: a fast wheel or a touchpad sends dozens of
+        # events a second and each zoom redraws every graph.
         if modifiers & QtCore.Qt.KeyboardModifier.ControlModifier:
-            center = self.mapToView(ev.pos()).x()
-            self.owner.zoom(ZOOM_FACTOR if delta > 0 else 1 / ZOOM_FACTOR, center)
+            self.owner.queue_wheel(zoom_steps=delta / 120.0, center=self.mapToView(ev.pos()).x())
             ev.accept()
         elif modifiers & QtCore.Qt.KeyboardModifier.ShiftModifier:
-            self.owner.pan(-1 if delta > 0 else 1)
+            self.owner.queue_wheel(pan_steps=-delta / 120.0)
             ev.accept()
         else:
             ev.ignore()          # the scroll area moves the page
@@ -279,6 +314,69 @@ def _drop_payload(mime: QtCore.QMimeData):
     return None
 
 
+class ResizeGrip(QtWidgets.QWidget):
+    """Bottom edge of a graph: drag to change its height (the row's, when
+    graphs are tiled), double-click to go back to the automatic height.
+
+    While dragging only a guide line moves; the graph is resized (and
+    redrawn) once, when the mouse is released.
+    """
+
+    def __init__(self, slot: "GraphSlot"):
+        super().__init__(slot)
+        self.slot = slot
+        self.setCursor(QtCore.Qt.CursorShape.SizeVerCursor)
+        self.setToolTip("Drag to resize this graph; double-click for automatic height")
+        self._start = None
+        self._guide = None
+
+    def paintEvent(self, event) -> None:  # noqa: N802
+        painter = QtGui.QPainter(self)
+        painter.setPen(QtGui.QPen(QtGui.QColor("#b0b0b0"), 1))
+        mid = self.height() // 2
+        center = self.width() // 2
+        for dx in (-12, -6, 0, 6, 12):
+            painter.drawPoint(center + dx, mid)
+
+    def mousePressEvent(self, event) -> None:  # noqa: N802
+        if event.button() != QtCore.Qt.MouseButton.LeftButton:
+            return
+        self._start = (event.globalPosition().y(), self.slot.height())
+        container = self.slot.owner.graph_container
+        self._guide = QtWidgets.QRubberBand(QtWidgets.QRubberBand.Shape.Line, container)
+        self._move_guide(event.globalPosition().y())
+        self._guide.show()
+        event.accept()
+
+    def _target(self, global_y: float) -> int:
+        start_y, start_height = self._start
+        return int(max(MIN_RESIZE_HEIGHT, min(MAX_RESIZE_HEIGHT, start_height + global_y - start_y)))
+
+    def _move_guide(self, global_y: float) -> None:
+        container = self.slot.owner.graph_container
+        top = self.slot.mapTo(container, QtCore.QPoint(0, 0))
+        y = top.y() + self._target(global_y)
+        self._guide.setGeometry(0, y - 1, container.width(), 3)
+
+    def mouseMoveEvent(self, event) -> None:  # noqa: N802
+        if self._start is not None:
+            self._move_guide(event.globalPosition().y())
+
+    def mouseReleaseEvent(self, event) -> None:  # noqa: N802
+        if self._start is None:
+            return
+        height = self._target(event.globalPosition().y())
+        self._start = None
+        if self._guide is not None:
+            self._guide.hide()
+            self._guide.deleteLater()
+            self._guide = None
+        self.slot.owner.set_graph_height(self.slot.index, height)
+
+    def mouseDoubleClickEvent(self, event) -> None:  # noqa: N802
+        self.slot.owner.set_graph_height(self.slot.index, None)
+
+
 class GraphSlot(QtWidgets.QFrame):
     """One graph of the stack: a cheap placeholder until it scrolls into view,
     then a header (names, statistics, close) and a pyqtgraph plot."""
@@ -305,6 +403,13 @@ class GraphSlot(QtWidgets.QFrame):
         self._placeholder.setStyleSheet("color: #888888;")
         self._layout.addWidget(self._placeholder)
         self._layout.addStretch(1)
+        self._layout.setContentsMargins(4, 2, 4, 2 + GRIP_HEIGHT)
+        self.grip = ResizeGrip(self)
+
+    def resizeEvent(self, event) -> None:  # noqa: N802
+        super().resizeEvent(event)
+        self.grip.setGeometry(0, self.height() - GRIP_HEIGHT, self.width(), GRIP_HEIGHT)
+        self.grip.raise_()
 
     @property
     def realized(self) -> bool:
@@ -346,7 +451,7 @@ class GraphSlot(QtWidgets.QFrame):
         for series_index, ref in enumerate(self.refs):
             xs, ys = owner.series(ref)
             color, style = owner.series_style(self.index, series_index, len(self.refs), ref)
-            pen = pg.mkPen(color, width=1.5, style=style)
+            pen = pg.mkPen(color, width=1.0 if xs.size > DENSE_POINTS else 1.5, style=style)
             curve = add_curve(plot, xs, ys, pen=pen)
             curve.setSkipFiniteCheck(True)        # series arrays are finite
             dataset = owner.datasets.get(ref[0])
@@ -381,6 +486,7 @@ class GraphSlot(QtWidgets.QFrame):
         owner._attach_view(self)
         plot.scene().sigMouseMoved.connect(self._mouse_moved)
         self.update_stats()
+        self.grip.raise_()
 
     def _build_header(self) -> QtWidgets.QWidget:
         owner = self.owner
@@ -715,6 +821,11 @@ class CsvViewerWidget(QtWidgets.QWidget):
         self._spectrum_windows: list[SpectrogramWindow] = []
         self._hover_pending = None
         self._hover_visible = False
+        self.graph_columns = 1
+        self._height_overrides: dict[tuple, int] = {}   # graph refs -> height set by dragging
+        self._wheel_zoom = 0.0          # queued Ctrl+wheel steps (+ = in)
+        self._wheel_pan = 0.0           # queued Shift+wheel steps (+ = later)
+        self._wheel_center = None
 
         self._build_ui()
         self.setAcceptDrops(True)
@@ -723,8 +834,12 @@ class CsvViewerWidget(QtWidgets.QWidget):
         self._realize_timer.setSingleShot(True)
         self._realize_timer.setInterval(0)
         self._realize_timer.timeout.connect(self._realize_visible)
-        self._hover_throttle = Throttle(self._hover_tick, 25, self)
+        self._hover_throttle = Debounce(self._hover_tick, HOVER_SETTLE_MS, self)
         self._view_throttle = Throttle(self._view_changed_tick, 120, self)
+        self._wheel_throttle = Debounce(self._apply_wheel, SETTLE_MS, self)
+        self._scroll_settle = Debounce(self._schedule_realize, SETTLE_MS, self)
+        self._pan_settle = Debounce(self._apply_drag_pan, SETTLE_MS, self)
+        self._drag_pan = None           # (view at press, view x at press, latest view x)
 
         files = [files] if isinstance(files, (str, Path)) else list(files or ())
         if files:
@@ -854,6 +969,18 @@ class CsvViewerWidget(QtWidgets.QWidget):
         self.packet_filter_combo.addItem("All")
         self.packet_filter_combo.activated.connect(lambda _i: self.on_axis_changed())
         controls.addWidget(self.packet_filter_combo)
+        controls.addSpacing(10)
+        controls.addWidget(QtWidgets.QLabel("Graphs per row:"))
+        self.columns_spin = QtWidgets.QSpinBox()
+        self.columns_spin.setRange(1, MAX_COLUMNS)
+        self.columns_spin.setValue(self.graph_columns)
+        self.columns_spin.setToolTip("Tile graphs side by side")
+        self.columns_spin.valueChanged.connect(self.set_columns)
+        controls.addWidget(self.columns_spin)
+        auto_heights = QtWidgets.QPushButton("Auto heights")
+        auto_heights.setToolTip("Undo graph resizing (drag a graph's bottom edge to resize it)")
+        auto_heights.clicked.connect(self.reset_graph_heights)
+        controls.addWidget(auto_heights)
         controls.addStretch(1)
         layout.addLayout(controls)
 
@@ -875,15 +1002,16 @@ class CsvViewerWidget(QtWidgets.QWidget):
         self.graph_scroll.setWidgetResizable(True)
         self.graph_scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.graph_container = QtWidgets.QWidget()
-        self.graph_layout = QtWidgets.QVBoxLayout(self.graph_container)
+        # Graphs in a grid: ``graph_columns`` per row (1 = the classic stack).
+        self.graph_layout = QtWidgets.QGridLayout(self.graph_container)
         self.graph_layout.setContentsMargins(0, 0, 0, 0)
         self.graph_layout.setSpacing(4)
         self.drop_zone = DropZone(self)
-        self.graph_layout.addWidget(self.drop_zone)
-        self.graph_layout.addStretch(1)
+        self._place_slots()
         self.graph_scroll.setWidget(self.graph_container)
+        # Scrolling the page builds newly visible graphs once scrolling stops.
         self.graph_scroll.verticalScrollBar().valueChanged.connect(
-            lambda _v: self._schedule_realize())
+            lambda _v: self._scroll_settle.request())
         self.graph_scroll.viewport().installEventFilter(self)
         splitter.addWidget(self.graph_scroll)
         splitter.setStretchFactor(0, 0)
@@ -971,6 +1099,9 @@ class CsvViewerWidget(QtWidgets.QWidget):
             timer.stop()
         self._hover_throttle.stop()
         self._view_throttle.stop()
+        self._wheel_throttle.stop()
+        self._scroll_settle.stop()
+        self._pan_settle.stop()
         self.cancel_loads()
         for worker in (self._load_worker, self._save_worker):
             self._disconnect_worker(worker)
@@ -1632,18 +1763,82 @@ class CsvViewerWidget(QtWidgets.QWidget):
         self.slots = []
         self._link_root = None
         self._update_full_x(apply=False)
-        height = self._graph_height()
         for index, refs in enumerate(self.layout_model.graphs):
-            slot = GraphSlot(self, index, refs, height)
-            self.graph_layout.insertWidget(index, slot)
-            self.slots.append(slot)
+            self.slots.append(GraphSlot(self, index, refs, self._graph_height()))
+        self._place_slots()
+        self._apply_heights()
         self.drop_zone.set_empty(not self.slots)
         self._update_status()
         self._schedule_realize()
 
     def _graph_height(self) -> int:
-        view_height = self.graph_scroll.viewport().height()
-        return graph_height_for(len(self.layout_model.graphs), view_height - DROP_ZONE_HEIGHT)
+        """Automatic height: rows (not graphs) share the view when tiled."""
+        view_height = self.graph_scroll.viewport().height() if hasattr(self, "graph_scroll") else 0
+        rows = -(-len(self.layout_model.graphs) // max(1, self.graph_columns))
+        return graph_height_for(rows, view_height - DROP_ZONE_HEIGHT)
+
+    def _place_slots(self) -> None:
+        """Put the graphs in the grid, ``graph_columns`` per row, then the drop zone."""
+        grid = self.graph_layout
+        for widget in [*self.slots, self.drop_zone]:
+            grid.removeWidget(widget)
+        for row in range(grid.rowCount()):
+            grid.setRowStretch(row, 0)
+        columns = max(1, self.graph_columns)
+        for index, slot in enumerate(self.slots):
+            grid.addWidget(slot, index // columns, index % columns)
+        rows = -(-len(self.slots) // columns)
+        grid.addWidget(self.drop_zone, rows, 0, 1, columns)
+        grid.setRowStretch(rows + 1, 1)
+        for column in range(MAX_COLUMNS):
+            grid.setColumnStretch(column, 1 if column < columns else 0)
+
+    def _slot_height(self, slot: "GraphSlot", auto: int) -> int:
+        return self._height_overrides.get(tuple(slot.refs), auto)
+
+    def _apply_heights(self) -> None:
+        """Each row takes its tallest graph's height, so tiles line up."""
+        auto = self._graph_height()
+        columns = max(1, self.graph_columns)
+        for start in range(0, len(self.slots), columns):
+            row = self.slots[start:start + columns]
+            height = max(self._slot_height(slot, auto) for slot in row)
+            for slot in row:
+                if slot.height() != height:
+                    slot.setFixedHeight(height)
+
+    def set_columns(self, columns: int) -> None:
+        """Tile graphs ``columns`` per row (1 to MAX_COLUMNS)."""
+        columns = max(1, min(MAX_COLUMNS, int(columns)))
+        if self.columns_spin.value() != columns:
+            self.columns_spin.setValue(columns)     # re-enters through valueChanged
+            return
+        if columns == self.graph_columns and self.slots:
+            return
+        self.graph_columns = columns
+        self._place_slots()
+        self._apply_heights()
+        self._schedule_realize()
+
+    def set_graph_height(self, index: int, height: int | None) -> None:
+        """Height of graph ``index`` (and its row when tiled); None = automatic."""
+        if not 0 <= index < len(self.slots):
+            return
+        columns = max(1, self.graph_columns)
+        start = index - index % columns
+        for slot in self.slots[start:start + columns]:
+            key = tuple(slot.refs)
+            if height is None:
+                self._height_overrides.pop(key, None)
+            else:
+                self._height_overrides[key] = int(max(MIN_RESIZE_HEIGHT, min(MAX_RESIZE_HEIGHT, height)))
+        self._apply_heights()
+        self._schedule_realize()
+
+    def reset_graph_heights(self) -> None:
+        self._height_overrides.clear()
+        self._apply_heights()
+        self._schedule_realize()
 
     def _schedule_realize(self) -> None:
         if not self._closing and not self._realize_timer.isActive():
@@ -1690,10 +1885,7 @@ class CsvViewerWidget(QtWidgets.QWidget):
     def eventFilter(self, obj, event) -> bool:  # noqa: N802
         kind = event.type()
         if obj is self.graph_scroll.viewport() and kind == QtCore.QEvent.Type.Resize:
-            height = self._graph_height()
-            for slot in self.slots:
-                if slot.height() != height:
-                    slot.setFixedHeight(height)
+            self._apply_heights()
             self._schedule_realize()
         elif kind == QtCore.QEvent.Type.Leave:
             self._clear_hover()
@@ -1822,6 +2014,60 @@ class CsvViewerWidget(QtWidgets.QWidget):
         if center is None:
             center = (view[0] + view[1]) / 2
         self.set_x_view(vd.zoom_range(view, full, center, factor))
+
+    def queue_wheel(self, zoom_steps: float = 0.0, pan_steps: float = 0.0,
+                    center: float | None = None) -> None:
+        """Accumulate wheel input; _apply_wheel applies it once per frame."""
+        self._wheel_zoom += zoom_steps
+        self._wheel_pan += pan_steps
+        if center is not None:
+            self._wheel_center = center
+        self._wheel_throttle.request()
+
+    def _apply_wheel(self) -> None:
+        zoom, pan, center = self._wheel_zoom, self._wheel_pan, self._wheel_center
+        self._wheel_zoom = self._wheel_pan = 0.0
+        self._wheel_center = None
+        full = self._full_x
+        if full is None:
+            return
+        if zoom:
+            # 120 units = one notch = ZOOM_FACTOR; touchpad fractions scale.
+            factor = ZOOM_FACTOR ** max(-20.0, min(20.0, zoom))
+            view = self.x_view or full
+            if center is None:
+                center = (view[0] + view[1]) / 2
+            self.set_x_view(vd.zoom_range(view, full, center, factor))
+        if pan and self.x_view is not None:
+            view = self.x_view
+            step = (view[1] - view[0]) * PAN_FRACTION * pan
+            self.set_x_view(vd.pan_range(view, full, step))
+
+    def drag_pan(self, press_x: float, here_x: float, finished: bool) -> None:
+        """Shift/middle-drag pan: applied when the mouse pauses or is released."""
+        if self._drag_pan is None:
+            if self._full_x is None or self.x_view is None:
+                return
+            self._drag_pan = (self.x_view, press_x, here_x)
+        view, start, _ = self._drag_pan
+        self._drag_pan = (view, start, here_x)
+        if finished:
+            self._pan_settle.stop()
+            self._apply_drag_pan()
+            self._drag_pan = None
+        else:
+            self._pan_settle.request()
+
+    def _apply_drag_pan(self) -> None:
+        if self._drag_pan is None or self._full_x is None:
+            return
+        view, start, here = self._drag_pan
+        # The view is moved by the drag distance measured in the press-time view.
+        self.set_x_view(vd.pan_range(view, self._full_x, start - here))
+
+    def flush_wheel(self) -> None:
+        """Apply queued wheel input now (tests)."""
+        self._wheel_throttle.flush()
 
     def zoom_out(self) -> None:
         self.zoom(2.0)
@@ -2405,6 +2651,8 @@ def parse_arguments(argv=None) -> argparse.Namespace:
 def main(argv=None) -> int:
     args = parse_arguments(argv)
     app = ensure_app()
+    import stall_watchdog
+    stall_watchdog.install(Path(__file__).resolve().parent / "logs")
     window = CsvViewerWindow(args.csv_files, prompt_on_start=not args.csv_files)
     window.show()
     return app.exec()
