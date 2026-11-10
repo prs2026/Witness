@@ -15,7 +15,7 @@ from __future__ import annotations
 import argparse
 import bisect
 import csv
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import math
 import re
 from pathlib import Path
@@ -577,8 +577,9 @@ def elide(text: str, max_width: float, measure) -> str:
     return text + "…" if text else ""
 
 
-SYNC_X = "uptime [s] (synced)"
-SYNC_SKIP_COLUMNS = frozenset(("uptime", "fc_uptime", "time_seconds"))
+SYNC_X = "time [s] (per-file time axes)"
+SYNC_SKIP_COLUMNS = frozenset(("uptime", "fc_uptime", "time_seconds", "uptime_ms",
+                               "timestamp_us", "sim_s", "sim_ms", "wall_s"))
 DATASET_DASHES = ((), (7, 3), (2, 2), (9, 3, 2, 3), (4, 4))
 DROP_ZONE_HEIGHT = 64
 DRAG_THRESHOLD_PX = 6
@@ -679,9 +680,36 @@ def sync_time_seconds(row: dict[str, str]) -> float | None:
     return numeric_value(row.get("time_seconds"))
 
 
+AUTO_TIME = "auto (Witness uptime)"
+TIME_UNITS = {"s": 1.0, "ms": 1e-3, "us": 1e-6, "ns": 1e-9}
+# Default time column of a CSV, in order of preference. Witness-clock columns
+# come first so flash logs and HITL comparison files line up by themselves;
+# sim/wall time files (truth.csv, sent.csv) are aligned with an offset.
+TIME_COLUMN_PREFERENCE = ("uptime_ms", "timestamp_us", "sim_s", "sim_ms",
+                          "time_seconds", "wall_s")
+
+
+def infer_time_unit(column: str) -> str:
+    """Units implied by a time column's name (seconds when unsure)."""
+    name = column.lower()
+    if name in ("uptime", "fc_uptime") or name.endswith("_ms") or name == "ms":
+        return "ms"
+    if name.endswith("_us") or name == "us":
+        return "us"
+    if name.endswith("_ns") or name == "ns":
+        return "ns"
+    return "s"
+
+
 @dataclass
 class Dataset:
-    """One converted CSV, parsed for plotting."""
+    """One converted CSV, parsed for plotting.
+
+    Each CSV has its own time axis: ``time_column`` (a numeric column, or
+    AUTO_TIME for the Witness uptime fallback chain), ``time_unit`` (a
+    TIME_UNITS key) and ``offset`` in seconds, added after unit conversion so
+    files can be slid into line with each other.
+    """
     path: Path
     label: str
     rows: list[dict[str, str]]
@@ -691,6 +719,9 @@ class Dataset:
     sync_times: list[float | None]
     paired_state_log: Path | None = None
     offset: float = 0.0
+    time_column: str = AUTO_TIME
+    time_unit: str = "s"
+    _time_cache: tuple | None = field(default=None, repr=False, compare=False)
 
     @property
     def packet_types(self) -> list[str]:
@@ -700,8 +731,71 @@ class Dataset:
         })
 
     @property
-    def has_sync_time(self) -> bool:
+    def has_auto_time(self) -> bool:
         return any(value is not None for value in self.sync_times)
+
+    def time_choices(self) -> list[str]:
+        """Columns that can be this CSV's time axis."""
+        return ([AUTO_TIME] if self.has_auto_time else []) + list(self.numeric_columns)
+
+    def set_time_axis(self, column: str | None = None, unit: str | None = None,
+                      offset: float | None = None) -> None:
+        if column is not None:
+            if column not in self.time_choices():
+                raise ValueError(f"{column!r} is not a numeric column of {self.label}")
+            if column != self.time_column and column != AUTO_TIME and unit is None:
+                unit = infer_time_unit(column)
+            self.time_column = column
+        if unit is not None:
+            if unit not in TIME_UNITS:
+                raise ValueError(f"unknown time unit {unit!r}")
+            self.time_unit = unit
+        if offset is not None:
+            if not math.isfinite(offset):
+                raise ValueError("the offset must be a finite number of seconds")
+            self.offset = float(offset)
+
+    def times(self) -> list[float | None]:
+        """Per-row time in seconds (unit converted, before the offset)."""
+        key = (self.time_column, self.time_unit)
+        if self._time_cache is not None and self._time_cache[0] == key:
+            return self._time_cache[1]
+        if self.time_column == AUTO_TIME:
+            values = self.sync_times      # already seconds
+        else:
+            raw = self.numeric_data.get(self.time_column)
+            scale = TIME_UNITS[self.time_unit]
+            values = ([None] * len(self.rows) if raw is None else
+                      [None if value is None else value * scale for value in raw])
+        self._time_cache = (key, values)
+        return values
+
+    @property
+    def has_sync_time(self) -> bool:
+        return any(value is not None for value in self.times())
+
+    def time_axis_text(self) -> str:
+        if self.time_column == AUTO_TIME:
+            text = "uptime auto"
+        else:
+            text = f"{self.time_column} {self.time_unit}"
+        if self.offset:
+            text += f", {self.offset:+g} s"
+        return text
+
+
+def default_time_axis(dataset: Dataset) -> tuple[str, str]:
+    """(column, unit) a newly opened CSV starts with."""
+    columns = set(dataset.numeric_columns)
+    if {"uptime", "fc_uptime"} & columns:
+        return AUTO_TIME, "s"
+    for column in TIME_COLUMN_PREFERENCE:
+        if column in columns:
+            return column, infer_time_unit(column)
+    if dataset.has_auto_time:
+        return AUTO_TIME, "s"
+    first = dataset.numeric_columns[0]
+    return first, infer_time_unit(first)
 
 
 def load_dataset(path: Path, label: str | None = None) -> Dataset:
@@ -737,11 +831,13 @@ def load_dataset(path: Path, label: str | None = None) -> Dataset:
             numeric_data[field] = values
     if not numeric_columns:
         raise ValueError("the CSV contains no numeric columns to graph")
-    return Dataset(path=path, label=label or path.name, rows=rows,
-                   fieldnames=fieldnames, numeric_columns=numeric_columns,
-                   numeric_data=numeric_data,
-                   sync_times=[sync_time_seconds(row) for row in rows],
-                   paired_state_log=paired_state_log)
+    dataset = Dataset(path=path, label=label or path.name, rows=rows,
+                      fieldnames=fieldnames, numeric_columns=numeric_columns,
+                      numeric_data=numeric_data,
+                      sync_times=[sync_time_seconds(row) for row in rows],
+                      paired_state_log=paired_state_log)
+    dataset.time_column, dataset.time_unit = default_time_axis(dataset)
+    return dataset
 
 
 def unique_label(name: str, taken) -> str:
@@ -1021,7 +1117,7 @@ class CsvViewerPanel(ttk.Frame):
         controls.pack(fill="x")
 
         ttk.Label(controls, text="X axis:").pack(side="left", padx=(0, 4))
-        self.x_axis_combo = ttk.Combobox(controls, width=18, state="readonly")
+        self.x_axis_combo = ttk.Combobox(controls, width=26, state="readonly")
         self.x_axis_combo.pack(side="left")
         self.x_axis_combo.bind("<<ComboboxSelected>>", lambda _event: self.on_axis_changed())
 
@@ -1064,8 +1160,7 @@ class CsvViewerPanel(ttk.Frame):
                   "Shift+wheel pans; double-click a plot to reset. Hover a "
                   "plot for exact values."))
         self.help_label.pack(fill="x", padx=4, pady=(0, 4))
-        trace_panel.bind("<Configure>", lambda event: self.help_label.configure(
-            wraplength=max(120, event.width - 10)))
+        trace_panel.bind("<Configure>", self._trace_panel_resized)
 
         buttons = ttk.Frame(trace_panel)
         buttons.pack(fill="x", padx=2, pady=(0, 4))
@@ -1074,15 +1169,43 @@ class CsvViewerPanel(ttk.Frame):
         ttk.Button(buttons, text="Remove CSV", command=self.remove_selected_dataset).pack(
             side="left", fill="x", expand=True, padx=(2, 0))
 
-        offset_row = ttk.Frame(trace_panel)
-        offset_row.pack(fill="x", padx=2, pady=(0, 4))
-        ttk.Label(offset_row, text="Time offset s:").pack(side="left")
+        # Time axis of the selected CSV: which column is time, its units and
+        # an offset (seconds, after unit conversion). Changes redraw live.
+        axis = ttk.LabelFrame(trace_panel, text="Time axis", padding=4)
+        axis.pack(fill="x", padx=2, pady=(0, 4))
+        self.time_axis_frame = axis
+        axis.columnconfigure(1, weight=1)
+        ttk.Label(axis, text="Column").grid(row=0, column=0, sticky="w")
+        self.time_column_combo = ttk.Combobox(axis, state="readonly", width=14)
+        self.time_column_combo.grid(row=0, column=1, sticky="ew", pady=1)
+        self.time_column_combo.bind("<<ComboboxSelected>>",
+                                    lambda _event: self._time_controls_changed())
+        ttk.Label(axis, text="Units").grid(row=1, column=0, sticky="w")
+        self.time_unit_combo = ttk.Combobox(axis, state="readonly", width=5,
+                                            values=list(TIME_UNITS))
+        self.time_unit_combo.grid(row=1, column=1, sticky="w", pady=1)
+        self.time_unit_combo.bind("<<ComboboxSelected>>",
+                                  lambda _event: self._time_controls_changed())
+        ttk.Label(axis, text="Offset s").grid(row=2, column=0, sticky="w")
         self.offset_var = tk.StringVar(value="0")
-        self.offset_entry = ttk.Entry(offset_row, textvariable=self.offset_var, width=8)
-        self.offset_entry.pack(side="left", padx=4)
+        self.offset_entry = ttk.Spinbox(
+            axis, textvariable=self.offset_var, from_=-1e9, to=1e9, increment=0.1,
+            width=10, command=self.apply_offset)
+        self.offset_entry.grid(row=2, column=1, sticky="ew", pady=1)
         self.offset_entry.bind("<Return>", lambda _event: self.apply_offset())
-        ttk.Button(offset_row, text="Apply", command=self.apply_offset, width=6).pack(
-            side="left")
+        self.offset_entry.bind("<FocusOut>", lambda _event: self.apply_offset())
+        self.offset_entry.bind("<KeyRelease>", lambda _event: self._offset_typed())
+        self._offset_job = None
+        nudges = ttk.Frame(axis)
+        nudges.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(2, 0))
+        for text, delta in (("\u22121", -1.0), ("\u22120.1", -0.1),
+                            ("+0.1", 0.1), ("+1", 1.0)):
+            ttk.Button(nudges, text=text, width=4,
+                       command=lambda d=delta: self.nudge_offset(d)).pack(
+                side="left", fill="x", expand=True)
+        self.time_axis_note = ttk.Label(axis, text="", foreground="#555555",
+                                        justify="left", wraplength=190)
+        self.time_axis_note.grid(row=4, column=0, columnspan=2, sticky="w", pady=(2, 0))
 
         tree_frame = ttk.Frame(trace_panel)
         tree_frame.pack(fill="both", expand=True)
@@ -1098,7 +1221,8 @@ class CsvViewerPanel(ttk.Frame):
         self.trace_tree.bind("<B1-Motion>", self._tree_motion)
         self.trace_tree.bind("<ButtonRelease-1>", self._tree_release)
         self.trace_tree.bind("<Double-1>", self._tree_double)
-        self.trace_tree.bind("<<TreeviewSelect>>", lambda _event: self._sync_offset_entry())
+        self.trace_tree.bind("<<TreeviewSelect>>",
+                             lambda _event: self._sync_time_axis_controls())
         # Kept for callers of the single-file viewer.
         self.trace_vars: dict[str, tk.BooleanVar] = {}
 
@@ -1233,6 +1357,7 @@ class CsvViewerPanel(ttk.Frame):
             self.plot_dataset(dataset_id)
         self._refresh_file_label()
         self._refresh_summary_choices(select=dataset_id)
+        self._sync_time_axis_controls()
         self._set_title()
         if first:
             self.notebook.select(self.summary_outer)
@@ -1249,6 +1374,7 @@ class CsvViewerPanel(ttk.Frame):
         self._refresh_axis_choices(keep=False)
         self._refresh_file_label()
         self._refresh_summary_choices()
+        self._sync_time_axis_controls()
         self.draw_graphs()
 
     def remove_dataset(self, dataset_id: int) -> None:
@@ -1263,6 +1389,7 @@ class CsvViewerPanel(ttk.Frame):
         self._refresh_axis_choices(keep=True)
         self._refresh_file_label()
         self._refresh_summary_choices()
+        self._sync_time_axis_controls()
         self._set_title()
         self.draw_graphs()
 
@@ -1286,7 +1413,8 @@ class CsvViewerPanel(ttk.Frame):
         if dataset is None:
             return
         x_column = self.x_axis_combo.get()
-        skip = SYNC_SKIP_COLUMNS if x_column == SYNC_X else {x_column}
+        skip = (SYNC_SKIP_COLUMNS | {dataset.time_column} if x_column == SYNC_X
+                else {x_column})
         self.layout.add([(dataset_id, column) for column in dataset.numeric_columns
                          if column not in skip])
 
@@ -1301,7 +1429,31 @@ class CsvViewerPanel(ttk.Frame):
         self.canvas.yview_moveto(0)
         self.draw_graphs()
 
+    # ------------------------------------------------- per-file time axis
+    def set_time_axis(self, dataset_id: int, column: str | None = None,
+                      unit: str | None = None, offset: float | None = None) -> None:
+        """Change one CSV's time column, units and/or offset (seconds).
+
+        The shared x axis, zoom and hover all follow, after a short
+        debounced redraw. Raises ValueError for an unknown column or unit.
+        """
+        dataset = self.datasets.get(dataset_id)
+        if dataset is None:
+            return
+        dataset.set_time_axis(column, unit, offset)
+        self._points_cache = {key: value for key, value in self._points_cache.items()
+                              if key[0] != dataset_id}
+        if self.trace_tree.exists(f"d{dataset_id}"):
+            self.trace_tree.item(f"d{dataset_id}", text=self._dataset_text(dataset))
+        if self._selected_dataset_id() == dataset_id:
+            self._sync_time_axis_controls()
+        self.schedule_redraw()
+
     def apply_offset(self) -> None:
+        """Use the offset typed (or spun) for the selected CSV."""
+        if self._offset_job is not None:
+            self.after_cancel(self._offset_job)
+            self._offset_job = None
         dataset_id = self._selected_dataset_id()
         dataset = self.datasets.get(dataset_id)
         if dataset is None:
@@ -1309,28 +1461,70 @@ class CsvViewerPanel(ttk.Frame):
         try:
             offset = float(self.offset_var.get())
         except ValueError:
-            messagebox.showerror("Time offset", "Enter a number of seconds.", parent=self)
+            return  # half-typed ("-", "1e"): keep the last good value
+        if not math.isfinite(offset) or offset == dataset.offset:
             return
-        if not math.isfinite(offset):
-            return
-        dataset.offset = offset
-        self._points_cache = {key: value for key, value in self._points_cache.items()
-                              if key[0] != dataset_id}
-        self.trace_tree.item(f"d{dataset_id}", text=self._dataset_text(dataset))
-        self.draw_graphs()
+        self.set_time_axis(dataset_id, offset=offset)
 
-    def _sync_offset_entry(self) -> None:
-        dataset = self.datasets.get(self._selected_dataset_id())
+    def _offset_typed(self) -> None:
+        # Live while typing, but only once the text has paused.
+        if self._offset_job is not None:
+            self.after_cancel(self._offset_job)
+        self._offset_job = self.after(300, self.apply_offset)
+
+    def nudge_offset(self, delta: float) -> None:
+        dataset_id = self._selected_dataset_id()
+        dataset = self.datasets.get(dataset_id)
         if dataset is not None:
-            self.offset_var.set(f"{dataset.offset:g}")
+            self.set_time_axis(dataset_id, offset=round(dataset.offset + delta, 9))
+
+    def _time_controls_changed(self) -> None:
+        dataset_id = self._selected_dataset_id()
+        dataset = self.datasets.get(dataset_id)
+        if dataset is None:
+            return
+        column = self.time_column_combo.get()
+        unit = self.time_unit_combo.get() or None
+        if column != dataset.time_column:
+            # A new column brings the units its name implies.
+            self.set_time_axis(dataset_id, column=column)
+        elif unit != dataset.time_unit and column != AUTO_TIME:
+            self.set_time_axis(dataset_id, unit=unit)
+
+    def _sync_time_axis_controls(self) -> None:
+        """Show the selected CSV's time axis in the controls."""
+        dataset = self.datasets.get(self._selected_dataset_id())
+        if dataset is None:
+            self.time_axis_frame.configure(text="Time axis")
+            self.time_column_combo.configure(values=())
+            self.time_column_combo.set("")
+            self.time_unit_combo.set("")
+            self.offset_var.set("0")
+            self.time_axis_note.configure(text="")
+            return
+        self.time_axis_frame.configure(
+            text=elide(f"Time axis: {dataset.label}", 220, self.font.measure))
+        self.time_column_combo.configure(values=dataset.time_choices())
+        self.time_column_combo.set(dataset.time_column)
+        auto = dataset.time_column == AUTO_TIME
+        self.time_unit_combo.set("s (auto)" if auto else dataset.time_unit)
+        self.time_unit_combo.state(["disabled"] if auto else ["!disabled"])
+        self.offset_var.set(f"{dataset.offset:g}")
+        times = [value for value in dataset.times() if value is not None]
+        if times:
+            note = (f"{value_text(round(min(times) + dataset.offset, 6))} to "
+                    f"{value_text(round(max(times) + dataset.offset, 6))} s on the shared axis")
+        else:
+            note = "No values in this column"
+        self.time_axis_note.configure(text=note)
+
+    def _trace_panel_resized(self, event) -> None:
+        width = max(120, event.width - 10)
+        self.help_label.configure(wraplength=width)
+        self.time_axis_note.configure(wraplength=max(110, width - 12))
 
     def _dataset_text(self, dataset: Dataset) -> str:
-        text = dataset.label
-        if dataset.offset:
-            text += f"  ({dataset.offset:+g} s)"
-        if not dataset.has_sync_time:
-            text += "  [no uptime]"
-        return text
+        return f"{dataset.label}  [{dataset.time_axis_text()}]"
 
     def _insert_tree(self, dataset_id: int, dataset: Dataset) -> None:
         node = f"d{dataset_id}"
@@ -1454,7 +1648,7 @@ class CsvViewerPanel(ttk.Frame):
         if dataset is None or column not in dataset.numeric_data:
             return []
         if x_column == SYNC_X:
-            x_data = dataset.sync_times
+            x_data = dataset.times()
             offset = dataset.offset
         else:
             x_data = dataset.numeric_data.get(x_column)
