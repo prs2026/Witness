@@ -1,0 +1,5 @@
+state,expected_s,witness_s,delta_s,result
+Boost,20.33,20.36,0.03,OK
+Coast,22.99,23.02,0.03,OK
+Descent,128.87,128.88,0.01,OK
+Landed,419.73,419.74,0.01,OK

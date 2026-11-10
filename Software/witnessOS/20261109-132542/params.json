@@ -1,0 +1,171 @@
+{
+  "preset": "CSV trajectory eayftrajectory.csv",
+  "params": {
+    "csv_path": "C:/Users/E/Documents/GitHub/Witness/Software/HITL/trajectories/eayftrajectory.csv",
+    "seed": 1,
+    "site_alt_msl_m": 1400.0,
+    "lat_deg": 32.9903,
+    "lon_deg": -106.975,
+    "sea_level_pressure_pa": 101325.0,
+    "temp_offset_c": 0.0,
+    "pad_hold_s": 20.0,
+    "post_landing_s": 40.0,
+    "touchdown_s": 0.2,
+    "accel_smooth_s": 0.05,
+    "follow_speed_mps": 10.0,
+    "rail_dir_speed_mps": 0.5,
+    "after_apogee_attitude": "hold",
+    "pendulum_amp_deg": 10.0,
+    "pendulum_period_s": 4.0,
+    "accel_noise_g": 0.003,
+    "high_g_noise_g": 0.01,
+    "gyro_noise_dps": 0.05,
+    "gyro_bias_x_dps": 0.0,
+    "gyro_bias_y_dps": 0.0,
+    "gyro_bias_z_dps": 0.0,
+    "baro_noise_pa": 1.0,
+    "gps_sats": 10,
+    "gps_fix": true,
+    "battery_mv": 7800.0,
+    "imu_synthesis": true,
+    "vibration_profile": "",
+    "vibration_scale": 1.0,
+    "imu_noise_scale": 1.0,
+    "imu_offset_scale": 1.0,
+    "deployment_spin_dps": 0.0,
+    "deployment_shock_g": 0.0,
+    "deployment_delay_s": 1.0,
+    "deployment_duration_s": 0.3
+  },
+  "tolerance_s": 10.0,
+  "time_scale": 1,
+  "expected_transitions_s": {
+    "Boost": 20.33,
+    "Coast": 22.99,
+    "Descent": 128.87,
+    "Landed": 419.73
+  },
+  "model_summary": {
+    "duration_s": 429.71000000000004,
+    "apogee_msl_m": 37326.776000000005,
+    "apogee_agl_m": 35926.776000000005,
+    "apogee_t_s": 108.84,
+    "max_low_g_x": 16.0,
+    "max_high_g_x": 74.11617046426039
+  },
+  "source": "csv",
+  "csv_report": {
+    "csv": {
+      "path": "C:/Users/E/Documents/GitHub/Witness/Software/HITL/trajectories/eayftrajectory.csv",
+      "rows": 3079,
+      "duplicates_merged": 0,
+      "rows_dropped": 0,
+      "dt_min_s": 0.0001,
+      "dt_max_s": 0.5002,
+      "columns": {
+        "time": "time [s]",
+        "east": "east [ft]",
+        "north": "north [ft]",
+        "altitude": "altitude [ft]",
+        "ve": "east velocity [ft/s]",
+        "vn": "north velocity [ft/s]",
+        "vu": "vertical velocity [ft/s]",
+        "roll_rate": "roll rate [rev/s]"
+      },
+      "derived": [],
+      "aero_nan_t_s": 88.86,
+      "notes": []
+    },
+    "timeline": {
+      "pad_hold_s": 20.0,
+      "csv_offset_s": 20.0,
+      "touchdown_csv_s": 369.498,
+      "touchdown_sim_s": 389.498,
+      "attitude_hold_csv_s": 88.839,
+      "attitude_hold_sim_s": 108.839,
+      "duration_s": 429.71,
+      "ticks": 42971
+    },
+    "flight": {
+      "apogee_agl_m": 35926.8,
+      "apogee_agl_ft": 117870.0,
+      "apogee_csv_s": 88.839,
+      "max_speed_mps": 1327.0,
+      "max_speed_csv_s": 15.82,
+      "max_mach": 4.12,
+      "touchdown_vertical_mps": -12.33,
+      "rail_direction_enu": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "rail_tilt_deg": 0.0
+    },
+    "sensors": {
+      "max_specific_force_g": [
+        74.08,
+        14.71,
+        16.56
+      ],
+      "max_specific_force_mag_g": 74.1,
+      "low_g_saturates": true,
+      "low_g_saturated_s": 4.9,
+      "low_g_saturation_windows_sim_s": [
+        [
+          20.37,
+          22.44
+        ],
+        [
+          32.65,
+          35.45
+        ],
+        [
+          342.19,
+          342.19
+        ]
+      ],
+      "max_gyro_dps": [
+        1.45,
+        10.5,
+        9.39
+      ],
+      "max_gyro_mag_dps": 14.15,
+      "gyro_saturates": false,
+      "high_g_saturates": false
+    },
+    "baro": {
+      "min_pressure_pa": 411.5,
+      "min_pressure_sim_s": 109.81,
+      "ms5607_min_pa": 1000.0,
+      "below_ms5607_range_windows_sim_s": [
+        [
+          73.37,
+          145.25
+        ]
+      ],
+      "below_ms5607_range_s": 71.88,
+      "ms5607_note": "MS5607 range ends at 10 mbar (~31 km ISA); pressures below it are sent but cannot be measured by the real sensor"
+    },
+    "edges": {
+      "csv_thrust_10g_sim_s": 20.024,
+      "csv_burnout_1g_sim_s": [
+        22.492,
+        35.831
+      ],
+      "csv_reignition_sim_s": [
+        32.496
+      ],
+      "sent_high_g_x_above_10g_sim_s": 20.03,
+      "sent_low_g_x_below_1g_sim_s": [
+        22.49,
+        35.82
+      ],
+      "sent_low_g_x_above_1p5g_sim_s": [
+        32.48
+      ]
+    }
+  },
+  "attitude_thresholds": {
+    "final_tilt_max_deg": 5.0
+  }
+}

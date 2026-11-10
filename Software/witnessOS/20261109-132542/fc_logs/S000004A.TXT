@@ -1,0 +1,1906 @@
+I (185) uart: UART1 ready at 115200 baud on TX=4 RX=5
+I (186) uart: GPS startup: identifying PX1120S or u-blox M8 at 115200 baud
+I (189) w25n01kv: initialized W25N01KV JEDEC EF AE 21, SR1=0x00 SR2=0x19
+I (195) flash_logger: startup test block 1023 wrote/read:
+I (195) flash_logger: a5 b8 9f f2 d1 34 0b 6e 4d a0 87 9a f9 dc 33 16
+I (195) flash_logger: 75 48 af 82 e1 c4 db 3e 1d 70 57 aa 89 ec c3 26
+I (203) sensors: IMU calibration loaded from NVS: gyro bias 0.490 -0.140 0.070 dps
+I (204) sensors: IMU calibration loaded from NVS: accelerometers not calibrated
+I (221) flash_logger: session 74 in slot B (store v4); blocks: IMU 96, sensors 40, text 24, packets 120, GPS ring 221; flush interval 1000 ms
+I (269) sensors: LSM6 7.68 kHz ODR, gyro LPF1 407 Hz, low-g LPF2 384 Hz, high-g 960 Hz; FIFO batching at 960 Hz nominal, 936.29 Hz actual (FREQ_FINE -19)
+E (274) ms5607: PROM CRC mismatch: stored=0 calculated=6
+E (274) sensors: MS5607 initialization failed: ESP_ERR_INVALID_CRC
+I (275) ra01: Pins: RESET=8 BUSY=39 RF_EN=40 CS=16
+I (297) ra01: After reset: RESET=0 RF_EN=0 BUSY=0
+I (299) sensors: sensor task ready; radio ready
+I (300) main_task: Returned from app_main()
+I (1278) sensors: attitude initialized: tilt 94.97 deg from vertical, gyro bias 0.070 -0.006 -0.148 dps
+I (1304) ms5607: ready on SPI3, OSR=4096
+I (1305) sensors: MS5607 initialization recovered
+I (1711) uart: GPS identified as u-blox M8 at 115200 baud
+W (1789) uart: discarded UART packet 0x05 with invalid EOF
+W (1797) uart: discarded UART packet 0x05 with invalid EOF
+W (1805) uart: discarded UART packet 0x05 with invalid EOF
+W (1813) uart: discarded UART packet 0x05 with invalid EOF
+W (1821) uart: discarded UART packet 0x05 with invalid EOF
+W (1832) uart: discarded UART packet 0x05 with invalid EOF
+W (1840) uart: discarded UART packet 0x05 with invalid EOF
+W (1852) uart: discarded UART packet 0x05 with invalid EOF
+W (1853) uart: discarded UART packet 0xFF with invalid EOF
+W (1854) uart: discarded UART packet 0x05 with invalid EOF
+W (1863) uart: discarded UART packet 0x05 with invalid EOF
+I (1865) uart: u-blox M8 airborne 4 g mode and 10 Hz GGA+RMC confirmed at 115200 baud
+I (5131) uart: GPS RX: baud=115201 bytes=3300 GGA=34 fix=none sats=0 idle_ms=16
+I (5182) iris_can: state=0 RX dropped=0 TX failed=0
+I (10131) uart: GPS RX: baud=115201 bytes=6300 GGA=84 fix=none sats=0 idle_ms=16
+I (10161) data_forwarder: USB output not drained (no host or no reader): 227 packets dropped so far
+I (10182) iris_can: state=0 RX dropped=0 TX failed=0
+I (10304) cpu: core0 15.0% busy, core1 42.9% busy; heap free 66404 (min 62748), internal free 66404
+I (10308) sensors: attitude: 939.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 10 ok/0 accel/0 gyro rejected, overruns 161, max pass 6620 us, radio TX 39 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6847 0.0597 -0.0000 0.7264]
+I (10309) cpu: task sensors          42.9% core 1, stack free 6264 B
+I (10316) cpu: task iris_can          6.2% core 0, stack free 2384 B
+I (10318) cpu: task uart1             6.0% core 0, stack free 1916 B
+I (10321) cpu: task flash_logger      1.5% core 0, stack free 3568 B
+I (10323) cpu: task data_forwarder    0.4% core 0, stack free 1180 B
+I (10326) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (10328) cpu: task flash_capture     0.4% core 0, stack free 2352 B
+I (10330) cpu: task cpu_load          0.0% core 0, stack free 2488 B
+I (10313) sensors: imu fifo: 939.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 81 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.0%
+I (10336) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 209 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (15132) uart: GPS RX: baud=115201 bytes=9300 GGA=134 fix=none sats=0 idle_ms=18
+I (15183) iris_can: state=0 RX dropped=0 TX failed=0
+I (20133) uart: GPS RX: baud=115201 bytes=12300 GGA=184 fix=none sats=0 idle_ms=18
+I (20161) data_forwarder: USB output not drained (no host or no reader): 457 packets dropped so far
+I (20183) iris_can: state=0 RX dropped=0 TX failed=0
+I (20304) cpu: core0 14.8% busy, core1 43.2% busy; heap free 66404 (min 62748), internal free 66404
+I (20308) cpu: task sensors          43.2% core 1, stack free 6264 B
+I (20310) cpu: task iris_can          6.3% core 0, stack free 2352 B
+I (20309) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 20 ok/0 accel/0 gyro rejected, overruns 326, max pass 5925 us, radio TX 79 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6851 0.0597 -0.0000 0.7260]
+I (20318) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.1%
+I (20314) cpu: task uart1             5.5% core 0, stack free 1916 B
+I (20322) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity -0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 209 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (20326) cpu: task flash_logger      1.5% core 0, stack free 3568 B
+I (20331) cpu: task data_forwarder    0.4% core 0, stack free 1180 B
+I (20333) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (20336) cpu: task flash_capture     0.4% core 0, stack free 2352 B
+I (20338) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (25133) uart: GPS RX: baud=115201 bytes=15300 GGA=234 fix=none sats=0 idle_ms=18
+I (25184) iris_can: state=0 RX dropped=0 TX failed=0
+I (30133) uart: GPS RX: baud=115201 bytes=18300 GGA=284 fix=none sats=0 idle_ms=18
+I (30171) data_forwarder: USB output not drained (no host or no reader): 687 packets dropped so far
+I (30185) iris_can: state=0 RX dropped=0 TX failed=0
+I (30305) cpu: core0 15.1% busy, core1 44.0% busy; heap free 66404 (min 62748), internal free 66404
+I (30308) cpu: task sensors          44.0% core 1, stack free 6264 B
+I (30310) cpu: task iris_can          6.6% core 0, stack free 2352 B
+I (30314) cpu: task uart1             5.5% core 0, stack free 1916 B
+I (30318) cpu: task flash_logger      1.5% core 0, stack free 3520 B
+I (30320) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (30323) cpu: task data_forwarder    0.4% core 0, stack free 1180 B
+I (30325) cpu: task flash_capture     0.4% core 0, stack free 2352 B
+I (30327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (30309) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 30 ok/0 accel/0 gyro rejected, overruns 479, max pass 5898 us, radio TX 119 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6853 0.0597 0.0000 0.7258]
+I (30334) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.5%, sample processing 15.7%
+I (30338) sensors: position: ENU -0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 209 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (35133) uart: GPS RX: baud=115201 bytes=21300 GGA=334 fix=none sats=0 idle_ms=18
+I (35186) iris_can: state=0 RX dropped=0 TX failed=0
+I (40133) uart: GPS RX: baud=115201 bytes=24300 GGA=384 fix=none sats=0 idle_ms=18
+I (40171) data_forwarder: USB output not drained (no host or no reader): 917 packets dropped so far
+I (40186) iris_can: state=0 RX dropped=0 TX failed=0
+I (40304) cpu: core0 15.0% busy, core1 43.9% busy; heap free 66404 (min 62748), internal free 66404
+I (40307) cpu: task sensors          43.9% core 1, stack free 6264 B
+I (40308) cpu: task iris_can          6.6% core 0, stack free 2352 B
+I (40310) cpu: task uart1             5.4% core 0, stack free 1916 B
+I (40311) cpu: task flash_logger      1.5% core 0, stack free 3520 B
+I (40312) sensors: attitude: 935.7 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 40 ok/0 accel/0 gyro rejected, overruns 644, max pass 8206 us, radio TX 158 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6855 0.0598 -0.0000 0.7256]
+I (40321) sensors: imu fifo: 935.7 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 21 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.8%
+I (40326) sensors: position: ENU 0.0 -0.0 0.0 m, velocity 0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 209 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (40317) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (40331) cpu: task data_forwarder    0.4% core 0, stack free 1180 B
+I (40333) cpu: task flash_capture     0.4% core 0, stack free 2352 B
+I (40335) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (45133) uart: GPS RX: baud=115201 bytes=27300 GGA=434 fix=none sats=0 idle_ms=18
+I (45187) iris_can: state=0 RX dropped=0 TX failed=0
+I (50134) uart: GPS RX: baud=115201 bytes=30300 GGA=484 fix=none sats=0 idle_ms=18
+I (50171) data_forwarder: USB output not drained (no host or no reader): 1147 packets dropped so far
+I (50187) iris_can: state=0 RX dropped=0 TX failed=0
+I (50304) cpu: core0 15.1% busy, core1 43.3% busy; heap free 66404 (min 62748), internal free 66404
+I (50308) cpu: task sensors          43.3% core 1, stack free 6264 B
+I (50310) cpu: task iris_can          6.1% core 0, stack free 2352 B
+I (50311) cpu: task uart1             6.0% core 0, stack free 1916 B
+I (50312) cpu: task flash_logger      1.5% core 0, stack free 3520 B
+I (50313) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (50316) cpu: task flash_capture     0.4% core 0, stack free 2352 B
+I (50319) cpu: task data_forwarder    0.4% core 0, stack free 1180 B
+I (50322) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (50316) sensors: attitude: 936.5 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 50 ok/0 accel/0 gyro rejected, overruns 805, max pass 6386 us, radio TX 198 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6849 0.0597 -0.0001 0.7262]
+I (50330) sensors: imu fifo: 936.5 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 30 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.1%
+I (50334) sensors: position: ENU -0.0 -0.0 -0.0 m, velocity -0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 209 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (55134) uart: GPS RX: baud=115201 bytes=33300 GGA=534 fix=none sats=0 idle_ms=18
+I (55188) iris_can: state=0 RX dropped=0 TX failed=0
+I (60134) uart: GPS RX: baud=115201 bytes=36300 GGA=584 fix=none sats=0 idle_ms=19
+I (60171) data_forwarder: USB output not drained (no host or no reader): 1377 packets dropped so far
+I (60188) iris_can: state=0 RX dropped=0 TX failed=0
+I (60304) cpu: core0 16.4% busy, core1 44.6% busy; heap free 66404 (min 62748), internal free 66404
+I (60308) cpu: task sensors          44.6% core 1, stack free 6264 B
+I (60309) cpu: task uart1             8.0% core 0, stack free 1916 B
+I (60311) cpu: task iris_can          5.4% core 0, stack free 2352 B
+I (60314) cpu: task flash_logger      1.5% core 0, stack free 3520 B
+I (60317) sensors: attitude: 936.8 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 59 ok/0 accel/0 gyro rejected, overruns 966, max pass 6423 us, radio TX 238 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6870 0.0605 -0.0011 0.7241]
+I (60320) sensors: imu fifo: 936.8 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 24 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.4%
+I (60325) sensors: position: ENU -0.0 0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 210 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (60318) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (60331) cpu: task data_forwarder    0.4% core 0, stack free 1180 B
+I (60333) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (60335) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (65135) uart: GPS RX: baud=115201 bytes=39300 GGA=634 fix=none sats=0 idle_ms=20
+I (65189) iris_can: state=0 RX dropped=0 TX failed=0
+I (70135) uart: GPS RX: baud=115201 bytes=42300 GGA=684 fix=none sats=0 idle_ms=20
+I (70190) iris_can: state=0 RX dropped=0 TX failed=0
+I (70215) data_forwarder: USB output not drained (no host or no reader): 1608 packets dropped so far
+I (70304) cpu: core0 15.2% busy, core1 44.0% busy; heap free 66404 (min 62748), internal free 66404
+I (70308) cpu: task sensors          44.0% core 1, stack free 6264 B
+I (70309) cpu: task iris_can          6.3% core 0, stack free 2352 B
+I (70311) cpu: task uart1             6.0% core 0, stack free 1916 B
+I (70313) cpu: task flash_logger      1.5% core 0, stack free 3520 B
+I (70316) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (70318) cpu: task data_forwarder    0.4% core 0, stack free 1180 B
+I (70322) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (70324) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (70317) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 69 ok/0 accel/0 gyro rejected, overruns 1121, max pass 7713 us, radio TX 278 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6850 0.0600 -0.0005 0.7261]
+I (70329) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 24 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.6%
+I (70333) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 210 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (75134) uart: GPS RX: baud=115201 bytes=45300 GGA=734 fix=none sats=0 idle_ms=19
+I (75191) iris_can: state=0 RX dropped=0 TX failed=0
+I (80135) uart: GPS RX: baud=115201 bytes=48300 GGA=784 fix=none sats=0 idle_ms=20
+I (80191) iris_can: state=0 RX dropped=0 TX failed=0
+I (80215) data_forwarder: USB output not drained (no host or no reader): 1838 packets dropped so far
+I (80304) cpu: core0 15.4% busy, core1 43.5% busy; heap free 66404 (min 62748), internal free 66404
+I (80308) cpu: task sensors          43.5% core 1, stack free 6264 B
+I (80310) cpu: task uart1             6.6% core 0, stack free 1916 B
+I (80312) cpu: task iris_can          5.8% core 0, stack free 2352 B
+I (80315) cpu: task flash_logger      1.5% core 0, stack free 3520 B
+I (80318) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (80319) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (80322) cpu: task data_forwarder    0.4% core 0, stack free 1180 B
+I (80325) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (80320) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 79 ok/0 accel/0 gyro rejected, overruns 1272, max pass 6365 us, radio TX 318 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6848 0.0598 -0.0004 0.7263]
+I (80332) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.2%
+I (80335) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 210 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (85135) uart: GPS RX: baud=115201 bytes=51300 GGA=834 fix=none sats=0 idle_ms=20
+I (85191) iris_can: state=0 RX dropped=0 TX failed=0
+I (90135) uart: GPS RX: baud=115201 bytes=54300 GGA=884 fix=none sats=0 idle_ms=20
+I (90192) iris_can: state=0 RX dropped=0 TX failed=0
+I (90246) data_forwarder: USB output not drained (no host or no reader): 2069 packets dropped so far
+I (90304) cpu: core0 15.0% busy, core1 44.0% busy; heap free 66404 (min 62748), internal free 66404
+I (90308) cpu: task sensors          44.0% core 1, stack free 6264 B
+I (90309) cpu: task iris_can          6.5% core 0, stack free 2352 B
+I (90311) cpu: task uart1             5.5% core 0, stack free 1916 B
+I (90314) cpu: task flash_logger      1.5% core 0, stack free 3520 B
+I (90317) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (90319) cpu: task data_forwarder    0.4% core 0, stack free 1180 B
+I (90320) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (90321) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 89 ok/0 accel/0 gyro rejected, overruns 1431, max pass 6272 us, radio TX 358 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6854 0.0603 -0.0009 0.7257]
+I (90328) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.5%, sample processing 15.7%
+I (90332) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 210 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (90325) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (95135) uart: GPS RX: baud=115201 bytes=57300 GGA=934 fix=none sats=0 idle_ms=20
+I (95193) iris_can: state=0 RX dropped=0 TX failed=0
+I (100136) uart: GPS RX: baud=115201 bytes=60300 GGA=984 fix=none sats=0 idle_ms=22
+I (100193) iris_can: state=0 RX dropped=0 TX failed=0
+I (100250) data_forwarder: USB output not drained (no host or no reader): 2299 packets dropped so far
+I (100304) cpu: core0 15.2% busy, core1 43.8% busy; heap free 66404 (min 62748), internal free 66404
+I (100308) cpu: task sensors          43.8% core 1, stack free 6248 B
+I (100309) cpu: task iris_can          6.2% core 0, stack free 2352 B
+I (100311) cpu: task uart1             6.0% core 0, stack free 1916 B
+I (100313) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (100316) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (100317) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (100319) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (100321) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 99 ok/0 accel/0 gyro rejected, overruns 1586, max pass 6449 us, radio TX 398 (failed 0), valid, tilt 95.2 deg, q xyzw [0.6862 0.0608 -0.0015 0.7249]
+I (100327) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.5%
+I (100331) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 210 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (100322) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (105137) uart: GPS RX: baud=115201 bytes=63300 GGA=1034 fix=none sats=0 idle_ms=22
+I (105193) iris_can: state=0 RX dropped=0 TX failed=0
+I (110138) uart: GPS RX: baud=115201 bytes=66300 GGA=1084 fix=none sats=0 idle_ms=24
+I (110194) iris_can: state=0 RX dropped=0 TX failed=0
+I (110258) data_forwarder: USB output not drained (no host or no reader): 2529 packets dropped so far
+I (110304) cpu: core0 15.1% busy, core1 43.4% busy; heap free 66404 (min 62748), internal free 66404
+I (110308) cpu: task sensors          43.4% core 1, stack free 6248 B
+I (110310) cpu: task iris_can          6.4% core 0, stack free 2352 B
+I (110312) cpu: task uart1             5.7% core 0, stack free 1916 B
+I (110315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (110318) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (110319) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (110321) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (110324) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (110323) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 109 ok/0 accel/0 gyro rejected, overruns 1737, max pass 5885 us, radio TX 438 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6851 0.0598 -0.0003 0.7260]
+I (110331) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.4%
+I (110335) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 210 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (115139) uart: GPS RX: baud=115201 bytes=69300 GGA=1134 fix=none sats=0 idle_ms=24
+I (115194) iris_can: state=0 RX dropped=0 TX failed=0
+I (120139) uart: GPS RX: baud=115201 bytes=72300 GGA=1184 fix=none sats=0 idle_ms=24
+I (120195) iris_can: state=0 RX dropped=0 TX failed=0
+I (120264) data_forwarder: USB output not drained (no host or no reader): 2759 packets dropped so far
+I (120304) cpu: core0 15.2% busy, core1 44.0% busy; heap free 66404 (min 62748), internal free 66404
+I (120308) cpu: task sensors          44.0% core 1, stack free 6232 B
+I (120309) cpu: task iris_can          6.4% core 0, stack free 2352 B
+I (120311) cpu: task uart1             5.8% core 0, stack free 1916 B
+I (120314) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (120317) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (120319) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (120322) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (120324) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (120323) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 119 ok/0 accel/0 gyro rejected, overruns 1894, max pass 5801 us, radio TX 478 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6851 0.0603 -0.0008 0.7260]
+I (120331) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.6%
+I (120335) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 210 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (125139) uart: GPS RX: baud=115201 bytes=75300 GGA=1234 fix=none sats=0 idle_ms=24
+I (125196) iris_can: state=0 RX dropped=0 TX failed=0
+I (130140) uart: GPS RX: baud=115201 bytes=78300 GGA=1284 fix=none sats=0 idle_ms=24
+I (130196) iris_can: state=0 RX dropped=0 TX failed=0
+I (130272) data_forwarder: USB output not drained (no host or no reader): 2989 packets dropped so far
+I (130304) cpu: core0 15.6% busy, core1 43.8% busy; heap free 66404 (min 62748), internal free 66404
+I (130308) cpu: task sensors          43.8% core 1, stack free 6232 B
+I (130309) cpu: task uart1             7.0% core 0, stack free 1916 B
+I (130311) cpu: task iris_can          5.7% core 0, stack free 2352 B
+I (130314) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (130317) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (130319) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (130321) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (130324) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (130325) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 129 ok/0 accel/0 gyro rejected, overruns 2052, max pass 6058 us, radio TX 518 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6870 0.0603 -0.0011 0.7241]
+I (130330) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.3%
+I (130334) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 210 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (135141) uart: GPS RX: baud=115201 bytes=81300 GGA=1334 fix=none sats=0 idle_ms=27
+I (135197) iris_can: state=0 RX dropped=0 TX failed=0
+I (140141) uart: GPS RX: baud=115201 bytes=84300 GGA=1384 fix=none sats=0 idle_ms=27
+I (140198) iris_can: state=0 RX dropped=0 TX failed=0
+I (140280) data_forwarder: USB output not drained (no host or no reader): 3219 packets dropped so far
+I (140304) cpu: core0 15.5% busy, core1 43.7% busy; heap free 66404 (min 62748), internal free 66404
+I (140308) cpu: task sensors          43.7% core 1, stack free 6232 B
+I (140309) cpu: task uart1             6.6% core 0, stack free 1916 B
+I (140311) cpu: task iris_can          5.9% core 0, stack free 2352 B
+I (140313) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (140316) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (140318) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (140320) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (140323) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (140325) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 139 ok/0 accel/0 gyro rejected, overruns 2206, max pass 5953 us, radio TX 558 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6871 0.0604 -0.0012 0.7241]
+I (140330) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.4%
+I (140334) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 211 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (145141) uart: GPS RX: baud=115201 bytes=87300 GGA=1434 fix=none sats=0 idle_ms=27
+I (145198) iris_can: state=0 RX dropped=0 TX failed=0
+I (150142) uart: GPS RX: baud=115201 bytes=90300 GGA=1484 fix=none sats=0 idle_ms=26
+I (150198) iris_can: state=0 RX dropped=0 TX failed=0
+I (150286) data_forwarder: USB output not drained (no host or no reader): 3449 packets dropped so far
+I (150304) cpu: core0 16.0% busy, core1 44.4% busy; heap free 66404 (min 62748), internal free 66404
+I (150308) cpu: task sensors          44.4% core 1, stack free 6232 B
+I (150310) cpu: task uart1             7.3% core 0, stack free 1916 B
+I (150312) cpu: task iris_can          5.8% core 0, stack free 2352 B
+I (150314) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (150317) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (150320) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (150322) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (150325) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (150327) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 149 ok/0 accel/0 gyro rejected, overruns 2368, max pass 6012 us, radio TX 598 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6854 0.0599 -0.0005 0.7257]
+I (150332) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.6%
+I (150336) sensors: position: ENU 0.0 0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 210 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (155141) uart: GPS RX: baud=115201 bytes=93300 GGA=1534 fix=none sats=0 idle_ms=27
+I (155199) iris_can: state=0 RX dropped=0 TX failed=0
+I (160142) uart: GPS RX: baud=115201 bytes=96300 GGA=1584 fix=none sats=0 idle_ms=29
+I (160200) iris_can: state=0 RX dropped=0 TX failed=0
+I (160296) data_forwarder: USB output not drained (no host or no reader): 3679 packets dropped so far
+I (160304) cpu: core0 15.4% busy, core1 43.7% busy; heap free 66404 (min 62748), internal free 66404
+I (160308) cpu: task sensors          43.7% core 1, stack free 6232 B
+I (160310) cpu: task uart1             6.3% core 0, stack free 1916 B
+I (160313) cpu: task iris_can          6.1% core 0, stack free 2352 B
+I (160315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (160318) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (160319) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (160322) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (160325) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (160328) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 159 ok/0 accel/0 gyro rejected, overruns 2523, max pass 6206 us, radio TX 638 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6860 0.0595 -0.0002 0.7252]
+I (160332) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.4%
+I (160336) sensors: position: ENU -0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 211 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (165143) uart: GPS RX: baud=115201 bytes=99300 GGA=1634 fix=none sats=0 idle_ms=29
+I (165201) iris_can: state=0 RX dropped=0 TX failed=0
+I (170144) uart: GPS RX: baud=115201 bytes=102300 GGA=1684 fix=none sats=0 idle_ms=30
+I (170202) iris_can: state=0 RX dropped=0 TX failed=0
+I (170299) data_forwarder: USB output not drained (no host or no reader): 3909 packets dropped so far
+I (170304) cpu: core0 16.6% busy, core1 44.8% busy; heap free 66404 (min 62748), internal free 66404
+I (170308) cpu: task sensors          44.8% core 1, stack free 6232 B
+I (170309) cpu: task uart1             8.4% core 0, stack free 1916 B
+I (170311) cpu: task iris_can          5.3% core 0, stack free 2352 B
+I (170315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (170317) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (170319) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (170321) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (170325) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (170329) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 169 ok/0 accel/0 gyro rejected, overruns 2690, max pass 5905 us, radio TX 678 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6854 0.0597 -0.0004 0.7257]
+I (170334) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.5%
+I (170338) sensors: position: ENU 0.0 0.0 -0.0 m, velocity 0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 211 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (175144) uart: GPS RX: baud=115201 bytes=105300 GGA=1734 fix=none sats=0 idle_ms=30
+I (175203) iris_can: state=0 RX dropped=0 TX failed=0
+I (180144) uart: GPS RX: baud=115201 bytes=108300 GGA=1784 fix=none sats=0 idle_ms=30
+I (180203) iris_can: state=0 RX dropped=0 TX failed=0
+I (180299) data_forwarder: USB output not drained (no host or no reader): 4139 packets dropped so far
+I (180304) cpu: core0 17.2% busy, core1 45.2% busy; heap free 66404 (min 62748), internal free 66404
+I (180306) cpu: task sensors          45.2% core 1, stack free 6232 B
+I (180309) cpu: task uart1             9.4% core 0, stack free 1916 B
+I (180311) cpu: task iris_can          5.0% core 0, stack free 2352 B
+I (180313) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (180317) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (180319) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (180322) cpu: task usb_serial_echo   0.3% core 0, stack free 1692 B
+I (180325) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (180329) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 179 ok/0 accel/0 gyro rejected, overruns 2853, max pass 7044 us, radio TX 718 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6861 0.0604 -0.0011 0.7250]
+I (180334) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 21 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.5%
+I (180338) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 211 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (185144) uart: GPS RX: baud=115201 bytes=111300 GGA=1834 fix=none sats=0 idle_ms=30
+I (185204) iris_can: state=0 RX dropped=0 TX failed=0
+I (190144) uart: GPS RX: baud=115201 bytes=114300 GGA=1884 fix=none sats=0 idle_ms=30
+I (190205) iris_can: state=0 RX dropped=0 TX failed=0
+I (190299) data_forwarder: USB output not drained (no host or no reader): 4369 packets dropped so far
+I (190304) cpu: core0 16.7% busy, core1 44.2% busy; heap free 66404 (min 62748), internal free 66404
+I (190306) cpu: task sensors          44.2% core 1, stack free 6232 B
+I (190309) cpu: task uart1             8.9% core 0, stack free 1916 B
+I (190311) cpu: task iris_can          4.9% core 0, stack free 2352 B
+I (190313) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (190316) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (190318) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (190320) cpu: task data_forwarder    0.3% core 0, stack free 1148 B
+I (190323) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (190331) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 189 ok/0 accel/0 gyro rejected, overruns 3012, max pass 6191 us, radio TX 758 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6849 0.0600 -0.0009 0.7262]
+I (190335) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.2%, sample processing 15.2%
+I (190339) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 211 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (195143) uart: GPS RX: baud=115201 bytes=117300 GGA=1934 fix=none sats=0 idle_ms=29
+I (195205) iris_can: state=0 RX dropped=0 TX failed=0
+I (200143) uart: GPS RX: baud=115201 bytes=120300 GGA=1984 fix=none sats=0 idle_ms=29
+I (200206) iris_can: state=0 RX dropped=0 TX failed=0
+I (200299) data_forwarder: USB output not drained (no host or no reader): 4599 packets dropped so far
+I (200304) cpu: core0 16.0% busy, core1 44.4% busy; heap free 66404 (min 62748), internal free 66404
+I (200308) cpu: task sensors          44.4% core 1, stack free 6232 B
+I (200309) cpu: task uart1             7.2% core 0, stack free 1916 B
+I (200311) cpu: task iris_can          5.8% core 0, stack free 2352 B
+I (200313) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (200317) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (200320) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (200322) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (200325) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (200331) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 199 ok/0 accel/0 gyro rejected, overruns 3176, max pass 6343 us, radio TX 798 (failed 0), valid, tilt 94.9 deg, q xyzw [0.6838 0.0593 -0.0001 0.7273]
+I (200336) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.5%
+I (200340) sensors: position: ENU -0.0 0.0 -0.0 m, velocity -0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 211 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (205144) uart: GPS RX: baud=115201 bytes=123300 GGA=2034 fix=none sats=0 idle_ms=30
+I (205206) iris_can: state=0 RX dropped=0 TX failed=0
+I (210144) uart: GPS RX: baud=115201 bytes=126300 GGA=2084 fix=none sats=0 idle_ms=30
+I (210206) iris_can: state=0 RX dropped=0 TX failed=0
+I (210299) data_forwarder: USB output not drained (no host or no reader): 4829 packets dropped so far
+I (210305) cpu: core0 16.4% busy, core1 44.3% busy; heap free 66404 (min 62748), internal free 66404
+I (210308) cpu: task sensors          44.3% core 1, stack free 6232 B
+I (210309) cpu: task uart1             8.2% core 0, stack free 1916 B
+I (210312) cpu: task iris_can          5.2% core 0, stack free 2352 B
+I (210315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (210317) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (210319) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (210321) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (210325) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (210333) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 209 ok/0 accel/0 gyro rejected, overruns 3343, max pass 6101 us, radio TX 838 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6853 0.0601 -0.0010 0.7258]
+I (210337) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.4%
+I (210341) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 211 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (215144) uart: GPS RX: baud=115201 bytes=129300 GGA=2134 fix=none sats=0 idle_ms=28
+I (215207) iris_can: state=0 RX dropped=0 TX failed=0
+I (220143) uart: GPS RX: baud=115201 bytes=132300 GGA=2184 fix=none sats=0 idle_ms=29
+I (220208) iris_can: state=0 RX dropped=0 TX failed=0
+I (220299) data_forwarder: USB output not drained (no host or no reader): 5059 packets dropped so far
+I (220304) cpu: core0 15.9% busy, core1 44.2% busy; heap free 66404 (min 62748), internal free 66404
+I (220309) cpu: task sensors          44.2% core 1, stack free 6232 B
+I (220311) cpu: task uart1             7.3% core 0, stack free 1916 B
+I (220313) cpu: task iris_can          5.7% core 0, stack free 2352 B
+I (220316) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (220319) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (220321) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (220324) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (220326) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (220335) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 219 ok/0 accel/0 gyro rejected, overruns 3503, max pass 5943 us, radio TX 878 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6847 0.0602 -0.0010 0.7264]
+I (220340) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.4%
+I (220344) sensors: position: ENU 0.0 0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 211 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (225144) uart: GPS RX: baud=115201 bytes=135300 GGA=2234 fix=none sats=0 idle_ms=30
+I (225208) iris_can: state=0 RX dropped=0 TX failed=0
+I (230144) uart: GPS RX: baud=115201 bytes=138300 GGA=2284 fix=none sats=0 idle_ms=30
+I (230209) iris_can: state=0 RX dropped=0 TX failed=0
+I (230299) data_forwarder: USB output not drained (no host or no reader): 5289 packets dropped so far
+I (230304) cpu: core0 16.5% busy, core1 44.0% busy; heap free 66404 (min 62748), internal free 66404
+I (230308) cpu: task sensors          44.0% core 1, stack free 6232 B
+I (230311) cpu: task uart1             8.5% core 0, stack free 1916 B
+I (230313) cpu: task iris_can          5.0% core 0, stack free 2352 B
+I (230317) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (230319) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (230322) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (230325) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (230327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (230337) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 229 ok/0 accel/0 gyro rejected, overruns 3672, max pass 6117 us, radio TX 918 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6845 0.0596 -0.0003 0.7265]
+I (230341) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.2%, sample processing 15.1%
+I (230346) sensors: position: ENU -0.0 0.0 -0.0 m, velocity 0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 211 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (235144) uart: GPS RX: baud=115201 bytes=141300 GGA=2334 fix=none sats=0 idle_ms=30
+I (235210) iris_can: state=0 RX dropped=0 TX failed=0
+I (240144) uart: GPS RX: baud=115201 bytes=144300 GGA=2384 fix=none sats=0 idle_ms=30
+I (240210) iris_can: state=0 RX dropped=0 TX failed=0
+I (240299) data_forwarder: USB output not drained (no host or no reader): 5519 packets dropped so far
+I (240304) cpu: core0 17.2% busy, core1 45.0% busy; heap free 66404 (min 62748), internal free 66404
+I (240308) cpu: task sensors          45.0% core 1, stack free 6232 B
+I (240309) cpu: task uart1             9.3% core 0, stack free 1916 B
+I (240311) cpu: task iris_can          4.9% core 0, stack free 2352 B
+I (240315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (240318) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (240320) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (240323) cpu: task usb_serial_echo   0.3% core 0, stack free 1692 B
+I (240326) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (240339) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 239 ok/0 accel/0 gyro rejected, overruns 3837, max pass 6023 us, radio TX 958 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6853 0.0605 -0.0013 0.7257]
+I (240344) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.4%
+I (240348) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 211 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (245144) uart: GPS RX: baud=115201 bytes=147300 GGA=2434 fix=none sats=0 idle_ms=30
+I (245210) iris_can: state=0 RX dropped=0 TX failed=0
+I (250144) uart: GPS RX: baud=115201 bytes=150300 GGA=2484 fix=none sats=0 idle_ms=30
+I (250211) iris_can: state=0 RX dropped=0 TX failed=0
+I (250299) data_forwarder: USB output not drained (no host or no reader): 5749 packets dropped so far
+I (250304) cpu: core0 16.8% busy, core1 44.5% busy; heap free 66404 (min 62748), internal free 66404
+I (250308) cpu: task sensors          44.5% core 1, stack free 6232 B
+I (250309) cpu: task uart1             8.8% core 0, stack free 1916 B
+I (250312) cpu: task iris_can          5.0% core 0, stack free 2352 B
+I (250315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (250318) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (250320) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (250324) cpu: task usb_serial_echo   0.3% core 0, stack free 1692 B
+I (250327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (250339) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 249 ok/0 accel/0 gyro rejected, overruns 4008, max pass 5920 us, radio TX 998 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6857 0.0599 -0.0008 0.7254]
+I (250344) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.3%
+I (250348) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 211 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (255144) uart: GPS RX: baud=115201 bytes=153300 GGA=2534 fix=none sats=0 idle_ms=30
+I (255212) iris_can: state=0 RX dropped=0 TX failed=0
+I (260144) uart: GPS RX: baud=115201 bytes=156300 GGA=2584 fix=none sats=0 idle_ms=30
+I (260213) iris_can: state=0 RX dropped=0 TX failed=0
+I (260299) data_forwarder: USB output not drained (no host or no reader): 5979 packets dropped so far
+I (260304) cpu: core0 17.0% busy, core1 44.7% busy; heap free 66404 (min 62748), internal free 66404
+I (260308) cpu: task sensors          44.7% core 1, stack free 6232 B
+I (260310) cpu: task uart1             9.1% core 0, stack free 1916 B
+I (260312) cpu: task iris_can          4.9% core 0, stack free 2352 B
+I (260315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (260317) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (260320) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (260324) cpu: task usb_serial_echo   0.3% core 0, stack free 1692 B
+I (260327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (260339) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 259 ok/0 accel/0 gyro rejected, overruns 4178, max pass 6432 us, radio TX 1038 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6866 0.0603 -0.0011 0.7245]
+I (260344) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.3%
+I (260348) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 211 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (265144) uart: GPS RX: baud=115201 bytes=159300 GGA=2634 fix=none sats=0 idle_ms=30
+I (265214) iris_can: state=0 RX dropped=0 TX failed=0
+I (270144) uart: GPS RX: baud=115201 bytes=162300 GGA=2684 fix=none sats=0 idle_ms=30
+I (270215) iris_can: state=0 RX dropped=0 TX failed=0
+I (270299) data_forwarder: USB output not drained (no host or no reader): 6209 packets dropped so far
+I (270304) cpu: core0 17.1% busy, core1 45.0% busy; heap free 66404 (min 62748), internal free 66404
+I (270308) cpu: task sensors          45.0% core 1, stack free 6232 B
+I (270309) cpu: task uart1             9.2% core 0, stack free 1916 B
+I (270312) cpu: task iris_can          4.9% core 0, stack free 2352 B
+I (270315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (270318) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (270320) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (270323) cpu: task usb_serial_echo   0.3% core 0, stack free 1692 B
+I (270327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (270339) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 269 ok/0 accel/0 gyro rejected, overruns 4345, max pass 5982 us, radio TX 1078 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6847 0.0596 -0.0004 0.7264]
+I (270344) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.4%
+I (270348) sensors: position: ENU 0.0 0.0 -0.0 m, velocity 0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 211 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (275144) uart: GPS RX: baud=115201 bytes=165300 GGA=2734 fix=none sats=0 idle_ms=30
+I (275216) iris_can: state=0 RX dropped=0 TX failed=0
+I (280144) uart: GPS RX: baud=115201 bytes=168300 GGA=2784 fix=none sats=0 idle_ms=30
+I (280216) iris_can: state=0 RX dropped=0 TX failed=0
+I (280299) data_forwarder: USB output not drained (no host or no reader): 6439 packets dropped so far
+I (280304) cpu: core0 16.6% busy, core1 44.2% busy; heap free 66404 (min 62748), internal free 66404
+I (280308) cpu: task sensors          44.2% core 1, stack free 6232 B
+I (280310) cpu: task uart1             8.8% core 0, stack free 1916 B
+I (280313) cpu: task iris_can          4.8% core 0, stack free 2352 B
+I (280315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (280318) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (280320) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (280323) cpu: task usb_serial_echo   0.4% core 0, stack free 1692 B
+I (280325) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (280341) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 279 ok/0 accel/0 gyro rejected, overruns 4513, max pass 6027 us, radio TX 1118 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6850 0.0596 -0.0003 0.7261]
+I (280346) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.2%, sample processing 15.1%
+I (280350) sensors: position: ENU -0.0 -0.0 0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 212 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (285144) uart: GPS RX: baud=115201 bytes=171300 GGA=2834 fix=none sats=0 idle_ms=30
+I (285217) iris_can: state=0 RX dropped=0 TX failed=0
+I (290144) uart: GPS RX: baud=115201 bytes=174300 GGA=2884 fix=none sats=0 idle_ms=28
+I (290217) iris_can: state=0 RX dropped=0 TX failed=0
+I (290299) data_forwarder: USB output not drained (no host or no reader): 6483 packets dropped so far
+I (290306) cpu: core0 16.5% busy, core1 44.7% busy; heap free 66404 (min 62748), internal free 66404
+I (290311) cpu: task sensors          44.7% core 1, stack free 6232 B
+I (290314) cpu: task uart1             7.9% core 0, stack free 1916 B
+I (290318) cpu: task iris_can          5.5% core 0, stack free 2352 B
+I (290322) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (290326) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (290329) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (290334) cpu: task usb_serial_echo   0.3% core 0, stack free 1692 B
+I (290337) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (290341) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 289 ok/0 accel/0 gyro rejected, overruns 4676, max pass 6201 us, radio TX 1158 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6855 0.0597 -0.0007 0.7257]
+I (290350) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.5%
+I (290357) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 212 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (295144) uart: GPS RX: baud=115201 bytes=177300 GGA=2934 fix=none sats=0 idle_ms=30
+I (295218) iris_can: state=0 RX dropped=0 TX failed=0
+I (300144) uart: GPS RX: baud=115201 bytes=180300 GGA=2984 fix=none sats=0 idle_ms=30
+I (300218) iris_can: state=0 RX dropped=0 TX failed=0
+I (300304) cpu: core0 16.8% busy, core1 45.1% busy; heap free 66404 (min 62748), internal free 66404
+I (300309) cpu: task sensors          45.1% core 1, stack free 6232 B
+I (300313) cpu: task uart1             8.0% core 0, stack free 1916 B
+I (300317) cpu: task iris_can          5.6% core 0, stack free 2352 B
+I (300321) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (300325) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (300328) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (300332) cpu: task usb_serial_echo   0.3% core 0, stack free 1692 B
+I (300336) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (300343) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 299 ok/0 accel/0 gyro rejected, overruns 4850, max pass 6295 us, radio TX 1198 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6863 0.0597 -0.0005 0.7249]
+I (300352) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.5%, sample processing 15.6%
+I (300359) sensors: position: ENU -0.0 0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 212 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (305144) uart: GPS RX: baud=115201 bytes=183300 GGA=3034 fix=none sats=0 idle_ms=30
+I (305219) iris_can: state=0 RX dropped=0 TX failed=0
+I (308734) data_forwarder: USB output not drained (no host or no reader): 6484 packets dropped so far
+I (310144) uart: GPS RX: baud=115201 bytes=186300 GGA=3084 fix=none sats=0 idle_ms=30
+I (310219) iris_can: state=0 RX dropped=0 TX failed=0
+I (310304) cpu: core0 17.3% busy, core1 45.1% busy; heap free 66404 (min 62748), internal free 66404
+I (310308) cpu: task sensors          45.1% core 1, stack free 6232 B
+I (310310) cpu: task uart1             9.1% core 0, stack free 1916 B
+I (310312) cpu: task iris_can          5.1% core 0, stack free 2352 B
+I (310315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (310317) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (310320) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (310323) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (310326) cpu: task usb_serial_echo   0.3% core 0, stack free 1692 B
+I (310345) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 309 ok/0 accel/0 gyro rejected, overruns 5023, max pass 7054 us, radio TX 1238 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6860 0.0601 -0.0011 0.7251]
+I (310350) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 21 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.5%
+I (310354) sensors: position: ENU -0.0 -0.0 0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 212 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (315144) uart: GPS RX: baud=115201 bytes=189300 GGA=3134 fix=none sats=0 idle_ms=30
+I (315219) iris_can: state=0 RX dropped=0 TX failed=0
+I (318810) data_forwarder: USB output not drained (no host or no reader): 6715 packets dropped so far
+I (320144) uart: GPS RX: baud=115201 bytes=192300 GGA=3184 fix=none sats=0 idle_ms=31
+I (320220) iris_can: state=0 RX dropped=0 TX failed=0
+I (320304) cpu: core0 16.5% busy, core1 44.5% busy; heap free 66404 (min 62748), internal free 66404
+I (320308) cpu: task sensors          44.5% core 1, stack free 6232 B
+I (320309) cpu: task uart1             8.5% core 0, stack free 1916 B
+I (320312) cpu: task iris_can          5.2% core 0, stack free 2352 B
+I (320315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (320317) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (320319) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (320322) cpu: task usb_serial_echo   0.3% core 0, stack free 1692 B
+I (320324) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (320345) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 319 ok/0 accel/0 gyro rejected, overruns 5187, max pass 6374 us, radio TX 1278 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6854 0.0599 -0.0008 0.7257]
+I (320351) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.3%
+I (320354) sensors: position: ENU -0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 212 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (325144) uart: GPS RX: baud=115201 bytes=195300 GGA=3234 fix=none sats=0 idle_ms=31
+I (325222) iris_can: state=0 RX dropped=0 TX failed=0
+I (328814) data_forwarder: USB output not drained (no host or no reader): 6945 packets dropped so far
+I (330145) uart: GPS RX: baud=115201 bytes=198300 GGA=3284 fix=none sats=0 idle_ms=32
+I (330223) iris_can: state=0 RX dropped=0 TX failed=0
+I (330304) cpu: core0 16.9% busy, core1 45.2% busy; heap free 66404 (min 62748), internal free 66404
+I (330308) cpu: task sensors          45.2% core 1, stack free 6232 B
+I (330310) cpu: task uart1             8.8% core 0, stack free 1916 B
+I (330312) cpu: task iris_can          5.3% core 0, stack free 2352 B
+I (330315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (330317) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (330320) cpu: task data_forwarder    0.3% core 0, stack free 1148 B
+I (330323) cpu: task usb_serial_echo   0.3% core 0, stack free 1692 B
+I (330325) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (330347) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 329 ok/0 accel/0 gyro rejected, overruns 5345, max pass 6218 us, radio TX 1318 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6855 0.0598 -0.0006 0.7256]
+I (330352) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.6%
+I (330356) sensors: position: ENU -0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 212 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (335146) uart: GPS RX: baud=115201 bytes=201300 GGA=3334 fix=none sats=0 idle_ms=32
+I (335223) iris_can: state=0 RX dropped=0 TX failed=0
+I (338814) data_forwarder: USB output not drained (no host or no reader): 7175 packets dropped so far
+I (340146) uart: GPS RX: baud=115201 bytes=204300 GGA=3384 fix=none sats=0 idle_ms=32
+I (340223) iris_can: state=0 RX dropped=0 TX failed=0
+I (340304) cpu: core0 16.7% busy, core1 44.9% busy; heap free 66404 (min 62748), internal free 66404
+I (340308) cpu: task sensors          44.9% core 1, stack free 6232 B
+I (340310) cpu: task uart1             8.3% core 0, stack free 1916 B
+I (340313) cpu: task iris_can          5.4% core 0, stack free 2352 B
+I (340315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (340318) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (340321) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (340323) cpu: task usb_serial_echo   0.3% core 0, stack free 1692 B
+I (340326) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (340347) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 339 ok/0 accel/0 gyro rejected, overruns 5503, max pass 6087 us, radio TX 1358 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6861 0.0594 -0.0004 0.7250]
+I (340351) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.5%
+I (340355) sensors: position: ENU -0.0 0.0 -0.0 m, velocity -0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 212 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (345146) uart: GPS RX: baud=115201 bytes=207300 GGA=3434 fix=none sats=0 idle_ms=32
+I (345224) iris_can: state=0 RX dropped=0 TX failed=0
+I (348814) data_forwarder: USB output not drained (no host or no reader): 7405 packets dropped so far
+I (350147) uart: GPS RX: baud=115201 bytes=210300 GGA=3484 fix=none sats=0 idle_ms=32
+I (350224) iris_can: state=0 RX dropped=0 TX failed=0
+I (350304) cpu: core0 16.6% busy, core1 44.5% busy; heap free 66404 (min 62748), internal free 66404
+I (350308) cpu: task sensors          44.5% core 1, stack free 6232 B
+I (350309) cpu: task uart1             8.7% core 0, stack free 1916 B
+I (350311) cpu: task iris_can          5.0% core 0, stack free 2352 B
+I (350314) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (350317) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (350319) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (350321) cpu: task usb_serial_echo   0.3% core 0, stack free 1692 B
+I (350324) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (350347) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 349 ok/0 accel/0 gyro rejected, overruns 5670, max pass 6103 us, radio TX 1398 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6855 0.0597 -0.0006 0.7256]
+I (350352) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.3%
+I (350356) sensors: position: ENU -0.0 0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 212 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (355147) uart: GPS RX: baud=115201 bytes=213300 GGA=3534 fix=none sats=0 idle_ms=32
+I (355225) iris_can: state=0 RX dropped=0 TX failed=0
+I (358816) data_forwarder: USB output not drained (no host or no reader): 7635 packets dropped so far
+I (360148) uart: GPS RX: baud=115201 bytes=216300 GGA=3584 fix=none sats=0 idle_ms=32
+I (360226) iris_can: state=0 RX dropped=0 TX failed=0
+I (360304) cpu: core0 16.7% busy, core1 45.1% busy; heap free 66404 (min 62748), internal free 66404
+I (360308) cpu: task sensors          45.1% core 1, stack free 6232 B
+I (360310) cpu: task uart1             8.3% core 0, stack free 1916 B
+I (360313) cpu: task iris_can          5.4% core 0, stack free 2352 B
+I (360316) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (360318) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (360320) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (360323) cpu: task usb_serial_echo   0.3% core 0, stack free 1692 B
+I (360325) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (360349) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 359 ok/0 accel/0 gyro rejected, overruns 5823, max pass 5830 us, radio TX 1438 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6857 0.0595 -0.0004 0.7255]
+I (360353) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 1.00 g; core-1 time: FIFO read 11.4%, sample processing 15.7%
+I (360357) sensors: position: ENU -0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 212 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (365148) uart: GPS RX: baud=115201 bytes=219300 GGA=3634 fix=none sats=0 idle_ms=34
+I (365228) iris_can: state=0 RX dropped=0 TX failed=0
+I (368846) data_forwarder: USB output not drained (no host or no reader): 7866 packets dropped so far
+I (370148) uart: GPS RX: baud=115201 bytes=222300 GGA=3684 fix=none sats=0 idle_ms=34
+I (370229) iris_can: state=0 RX dropped=0 TX failed=0
+I (370304) cpu: core0 16.8% busy, core1 45.1% busy; heap free 66404 (min 62748), internal free 66404
+I (370309) cpu: task sensors          45.1% core 1, stack free 6232 B
+I (370313) cpu: task uart1             8.4% core 0, stack free 1916 B
+I (370318) cpu: task iris_can          5.4% core 0, stack free 2352 B
+I (370322) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (370326) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (370329) cpu: task usb_serial_echo   0.4% core 0, stack free 1644 B
+I (370333) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (370336) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (370349) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 369 ok/0 accel/0 gyro rejected, overruns 5988, max pass 6224 us, radio TX 1478 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6862 0.0599 -0.0008 0.7249]
+I (370357) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.6%
+I (370365) sensors: position: ENU -0.0 0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 212 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (375150) uart: GPS RX: baud=115201 bytes=225300 GGA=3734 fix=none sats=0 idle_ms=35
+I (375230) iris_can: state=0 RX dropped=0 TX failed=0
+I (378852) data_forwarder: USB output not drained (no host or no reader): 7868 packets dropped so far
+I (380151) uart: GPS RX: baud=115201 bytes=228300 GGA=3784 fix=none sats=0 idle_ms=38
+I (380231) iris_can: state=0 RX dropped=0 TX failed=0
+I (380304) cpu: core0 17.0% busy, core1 44.6% busy; heap free 66404 (min 62748), internal free 66404
+I (380310) cpu: task sensors          44.6% core 1, stack free 6232 B
+I (380315) cpu: task uart1             8.3% core 0, stack free 1916 B
+I (380318) cpu: task iris_can          5.1% core 0, stack free 2352 B
+I (380322) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (380327) cpu: task usb_serial_echo   0.8% core 0, stack free 1644 B
+I (380330) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (380334) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (380338) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (380351) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 379 ok/0 accel/0 gyro rejected, overruns 6150, max pass 6135 us, radio TX 1518 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6856 0.0596 -0.0006 0.7256]
+I (380360) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.4%
+I (380368) sensors: position: ENU 0.0 0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 212 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (385151) uart: GPS RX: baud=115201 bytes=231300 GGA=3834 fix=none sats=0 idle_ms=38
+I (385232) iris_can: state=0 RX dropped=0 TX failed=0
+I (390151) uart: GPS RX: baud=115201 bytes=234300 GGA=3884 fix=none sats=0 idle_ms=38
+I (390232) iris_can: state=0 RX dropped=0 TX failed=0
+I (390304) cpu: core0 15.9% busy, core1 44.5% busy; heap free 66404 (min 62748), internal free 66404
+I (390306) cpu: task sensors          44.5% core 1, stack free 6232 B
+I (390310) cpu: task iris_can          6.1% core 0, stack free 2352 B
+I (390315) cpu: task uart1             6.1% core 0, stack free 1916 B
+I (390318) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (390322) cpu: task usb_serial_echo   0.8% core 0, stack free 1644 B
+I (390326) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (390329) cpu: task flash_capture     0.4% core 0, stack free 2320 B
+I (390333) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (390351) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 389 ok/0 accel/0 gyro rejected, overruns 6301, max pass 6010 us, radio TX 1558 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6859 0.0595 -0.0005 0.7253]
+I (390359) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.5%, sample processing 15.8%
+I (390367) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 212 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (395151) uart: GPS RX: baud=115201 bytes=237300 GGA=3934 fix=none sats=0 idle_ms=38
+I (395232) iris_can: state=0 RX dropped=0 TX failed=0
+I (400151) uart: GPS RX: baud=115201 bytes=240300 GGA=3984 fix=none sats=0 idle_ms=38
+I (400232) iris_can: state=0 RX dropped=0 TX failed=0
+I (400304) cpu: core0 15.6% busy, core1 44.2% busy; heap free 66404 (min 62748), internal free 66404
+I (400309) cpu: task sensors          44.1% core 1, stack free 6232 B
+I (400313) cpu: task iris_can          6.2% core 0, stack free 2352 B
+I (400317) cpu: task uart1             5.8% core 0, stack free 1916 B
+I (400320) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (400324) cpu: task usb_serial_echo   0.7% core 0, stack free 1644 B
+I (400328) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (400331) cpu: task flash_capture     0.4% core 0, stack free 2240 B
+I (400334) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (400353) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 399 ok/0 accel/0 gyro rejected, overruns 6456, max pass 6134 us, radio TX 1598 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6851 0.0593 -0.0003 0.7261]
+I (400361) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.5%, sample processing 15.7%
+I (400369) sensors: position: ENU -0.0 -0.0 -0.0 m, velocity -0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 213 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (405151) uart: GPS RX: baud=115201 bytes=243300 GGA=4034 fix=none sats=0 idle_ms=38
+I (405233) iris_can: state=0 RX dropped=0 TX failed=0
+I (410151) uart: GPS RX: baud=115201 bytes=246300 GGA=4084 fix=none sats=0 idle_ms=38
+I (410233) iris_can: state=0 RX dropped=0 TX failed=0
+I (410304) cpu: core0 15.5% busy, core1 43.7% busy; heap free 66404 (min 62748), internal free 66404
+I (410309) cpu: task sensors          43.7% core 1, stack free 6232 B
+I (410314) cpu: task iris_can          6.1% core 0, stack free 2352 B
+I (410318) cpu: task uart1             6.0% core 0, stack free 1916 B
+I (410322) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (410326) cpu: task usb_serial_echo   0.6% core 0, stack free 1644 B
+I (410329) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (410333) cpu: task flash_capture     0.4% core 0, stack free 2240 B
+I (410336) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (410354) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 409 ok/0 accel/0 gyro rejected, overruns 6614, max pass 6051 us, radio TX 1638 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6858 0.0594 -0.0003 0.7254]
+I (410364) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.4%
+I (410372) sensors: position: ENU -0.0 0.0 -0.0 m, velocity -0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 213 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (415151) uart: GPS RX: baud=115201 bytes=249300 GGA=4134 fix=none sats=0 idle_ms=38
+I (415234) iris_can: state=0 RX dropped=0 TX failed=0
+I (420151) uart: GPS RX: baud=115201 bytes=252300 GGA=4184 fix=none sats=0 idle_ms=38
+I (420235) iris_can: state=0 RX dropped=0 TX failed=0
+I (420304) cpu: core0 15.6% busy, core1 44.2% busy; heap free 66404 (min 62748), internal free 66404
+I (420309) cpu: task sensors          44.2% core 1, stack free 6232 B
+I (420314) cpu: task iris_can          6.4% core 0, stack free 2352 B
+I (420318) cpu: task uart1             5.9% core 0, stack free 1916 B
+I (420321) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (420325) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (420328) cpu: task usb_serial_echo   0.4% core 0, stack free 1644 B
+I (420332) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (420335) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (420355) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 419 ok/0 accel/0 gyro rejected, overruns 6770, max pass 6025 us, radio TX 1678 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6858 0.0597 -0.0007 0.7253]
+I (420364) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.5%, sample processing 15.7%
+I (420371) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 213 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (425152) uart: GPS RX: baud=115201 bytes=255300 GGA=4234 fix=none sats=0 idle_ms=38
+I (425235) iris_can: state=0 RX dropped=0 TX failed=0
+I (430153) uart: GPS RX: baud=115201 bytes=258300 GGA=4284 fix=none sats=0 idle_ms=40
+I (430236) iris_can: state=0 RX dropped=0 TX failed=0
+I (430304) cpu: core0 16.7% busy, core1 44.8% busy; heap free 66404 (min 62748), internal free 66404
+I (430309) cpu: task sensors          44.8% core 1, stack free 6232 B
+I (430313) cpu: task uart1             7.9% core 0, stack free 1916 B
+I (430317) cpu: task iris_can          5.6% core 0, stack free 2352 B
+I (430320) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (430324) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (430328) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (430331) cpu: task usb_serial_echo   0.3% core 0, stack free 1644 B
+I (430334) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (430356) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 429 ok/0 accel/0 gyro rejected, overruns 6934, max pass 6185 us, radio TX 1718 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6854 0.0597 -0.0007 0.7257]
+I (430366) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.6%
+I (430373) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 213 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (435154) uart: GPS RX: baud=115201 bytes=261300 GGA=4334 fix=none sats=0 idle_ms=40
+I (435237) iris_can: state=0 RX dropped=0 TX failed=0
+I (440154) uart: GPS RX: baud=115201 bytes=264300 GGA=4384 fix=none sats=0 idle_ms=40
+I (440237) iris_can: state=0 RX dropped=0 TX failed=0
+I (440304) cpu: core0 16.6% busy, core1 44.4% busy; heap free 66404 (min 62748), internal free 66404
+I (440310) cpu: task sensors          44.4% core 1, stack free 6232 B
+I (440313) cpu: task uart1             8.0% core 0, stack free 1916 B
+I (440317) cpu: task iris_can          5.4% core 0, stack free 2352 B
+I (440321) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (440324) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (440328) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (440331) cpu: task usb_serial_echo   0.3% core 0, stack free 1644 B
+I (440334) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (440357) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 439 ok/0 accel/0 gyro rejected, overruns 7085, max pass 6039 us, radio TX 1758 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6853 0.0596 -0.0005 0.7258]
+I (440365) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.5%
+I (440372) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity -0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 213 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (445155) uart: GPS RX: baud=115201 bytes=267300 GGA=4434 fix=none sats=0 idle_ms=42
+I (445237) iris_can: state=0 RX dropped=0 TX failed=0
+I (450154) uart: GPS RX: baud=115201 bytes=270300 GGA=4484 fix=none sats=0 idle_ms=41
+I (450238) iris_can: state=0 RX dropped=0 TX failed=0
+I (450304) cpu: core0 16.7% busy, core1 44.9% busy; heap free 66404 (min 62748), internal free 66404
+I (450309) cpu: task sensors          44.9% core 1, stack free 6232 B
+I (450313) cpu: task uart1             8.0% core 0, stack free 1916 B
+I (450319) cpu: task iris_can          5.5% core 0, stack free 2352 B
+I (450323) cpu: task flash_logger      1.6% core 0, stack free 3360 B
+I (450326) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (450329) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (450333) cpu: task usb_serial_echo   0.3% core 0, stack free 1644 B
+I (450336) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (450359) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 449 ok/0 accel/0 gyro rejected, overruns 7261, max pass 6040 us, radio TX 1798 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6853 0.0598 -0.0008 0.7258]
+I (450368) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.5%
+I (450375) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 213 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (455155) uart: GPS RX: baud=115201 bytes=273300 GGA=4534 fix=none sats=0 idle_ms=42
+I (455238) iris_can: state=0 RX dropped=0 TX failed=0
+I (460155) uart: GPS RX: baud=115201 bytes=276300 GGA=4584 fix=none sats=0 idle_ms=42
+I (460239) iris_can: state=0 RX dropped=0 TX failed=0
+I (460304) cpu: core0 15.5% busy, core1 44.1% busy; heap free 66404 (min 62748), internal free 66404
+I (460310) cpu: task sensors          44.1% core 1, stack free 6232 B
+I (460315) cpu: task iris_can          6.4% core 0, stack free 2352 B
+I (460319) cpu: task uart1             5.9% core 0, stack free 1916 B
+I (460323) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (460326) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (460330) cpu: task usb_serial_echo   0.4% core 0, stack free 1644 B
+I (460333) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (460336) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (460359) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 459 ok/0 accel/0 gyro rejected, overruns 7423, max pass 7133 us, radio TX 1838 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6841 0.0593 -0.0002 0.7270]
+I (460367) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 21 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.5%, sample processing 15.8%
+I (460374) sensors: position: ENU 0.0 0.0 -0.0 m, velocity -0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 213 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (465155) uart: GPS RX: baud=115201 bytes=279300 GGA=4634 fix=none sats=0 idle_ms=42
+I (465240) iris_can: state=0 RX dropped=0 TX failed=0
+I (466332) data_forwarder: USB output not drained (no host or no reader): 7869 packets dropped so far
+I (470155) uart: GPS RX: baud=115201 bytes=282300 GGA=4684 fix=none sats=0 idle_ms=42
+I (470241) iris_can: state=0 RX dropped=0 TX failed=0
+I (470304) cpu: core0 15.2% busy, core1 43.4% busy; heap free 66404 (min 62748), internal free 66404
+I (470308) cpu: task sensors          43.4% core 1, stack free 6232 B
+I (470310) cpu: task iris_can          6.5% core 0, stack free 2352 B
+I (470313) cpu: task uart1             5.5% core 0, stack free 1916 B
+I (470315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (470318) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (470321) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (470324) cpu: task usb_serial_echo   0.4% core 0, stack free 1644 B
+I (470327) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (470361) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 469 ok/0 accel/0 gyro rejected, overruns 7582, max pass 6062 us, radio TX 1878 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6851 0.0597 -0.0008 0.7260]
+I (470366) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.3%
+I (470370) sensors: position: ENU -0.0 0.0 -0.0 m, velocity 0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 213 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (475155) uart: GPS RX: baud=115201 bytes=285300 GGA=4734 fix=none sats=0 idle_ms=43
+I (475241) iris_can: state=0 RX dropped=0 TX failed=0
+I (476413) data_forwarder: USB output not drained (no host or no reader): 8101 packets dropped so far
+I (480155) uart: GPS RX: baud=115201 bytes=288300 GGA=4784 fix=none sats=0 idle_ms=43
+I (480242) iris_can: state=0 RX dropped=0 TX failed=0
+I (480304) cpu: core0 15.0% busy, core1 44.0% busy; heap free 66404 (min 62748), internal free 66404
+I (480308) cpu: task sensors          44.0% core 1, stack free 6232 B
+I (480309) cpu: task iris_can          6.6% core 0, stack free 2352 B
+I (480311) cpu: task uart1             5.4% core 0, stack free 1916 B
+I (480314) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (480316) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (480318) cpu: task usb_serial_echo   0.4% core 0, stack free 1644 B
+I (480321) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (480323) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (480363) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 479 ok/0 accel/0 gyro rejected, overruns 7735, max pass 6299 us, radio TX 1918 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6855 0.0598 -0.0009 0.7257]
+I (480367) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.5%, sample processing 15.7%
+I (480371) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 213 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (485155) uart: GPS RX: baud=115201 bytes=291300 GGA=4834 fix=none sats=0 idle_ms=43
+I (485243) iris_can: state=0 RX dropped=0 TX failed=0
+I (486413) data_forwarder: USB output not drained (no host or no reader): 8331 packets dropped so far
+I (490155) uart: GPS RX: baud=115201 bytes=294300 GGA=4884 fix=none sats=0 idle_ms=43
+I (490243) iris_can: state=0 RX dropped=0 TX failed=0
+I (490304) cpu: core0 15.0% busy, core1 43.9% busy; heap free 66404 (min 62748), internal free 66404
+I (490308) cpu: task sensors          43.9% core 1, stack free 6232 B
+I (490310) cpu: task iris_can          6.5% core 0, stack free 2352 B
+I (490312) cpu: task uart1             5.6% core 0, stack free 1916 B
+I (490315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (490317) cpu: task usb_serial_echo   0.4% core 0, stack free 1644 B
+I (490320) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (490324) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (490326) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (490363) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 489 ok/0 accel/0 gyro rejected, overruns 7893, max pass 6141 us, radio TX 1958 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6846 0.0596 -0.0007 0.7264]
+I (490368) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.5%, sample processing 15.7%
+I (490372) sensors: position: ENU -0.0 0.0 -0.0 m, velocity 0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 213 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (495157) uart: GPS RX: baud=115201 bytes=297300 GGA=4934 fix=none sats=0 idle_ms=44
+I (495244) iris_can: state=0 RX dropped=0 TX failed=0
+I (496413) data_forwarder: USB output not drained (no host or no reader): 8561 packets dropped so far
+I (500157) uart: GPS RX: baud=115201 bytes=300300 GGA=4984 fix=none sats=0 idle_ms=44
+I (500245) iris_can: state=0 RX dropped=0 TX failed=0
+I (500304) cpu: core0 15.1% busy, core1 43.8% busy; heap free 66404 (min 62748), internal free 66404
+I (500308) cpu: task sensors          43.8% core 1, stack free 6232 B
+I (500310) cpu: task iris_can          6.6% core 0, stack free 2352 B
+I (500313) cpu: task uart1             5.5% core 0, stack free 1916 B
+I (500316) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (500318) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (500321) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (500323) cpu: task usb_serial_echo   0.4% core 0, stack free 1644 B
+I (500326) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (500365) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 499 ok/0 accel/0 gyro rejected, overruns 8041, max pass 5879 us, radio TX 1998 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6856 0.0600 -0.0012 0.7255]
+I (500370) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.6%
+I (500373) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 213 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (505158) uart: GPS RX: baud=115201 bytes=303300 GGA=5034 fix=none sats=0 idle_ms=44
+I (505245) iris_can: state=0 RX dropped=0 TX failed=0
+I (506414) data_forwarder: USB output not drained (no host or no reader): 8791 packets dropped so far
+I (510159) uart: GPS RX: baud=115201 bytes=306300 GGA=5084 fix=none sats=0 idle_ms=46
+I (510246) iris_can: state=0 RX dropped=0 TX failed=0
+I (510304) cpu: core0 15.4% busy, core1 44.2% busy; heap free 66404 (min 62748), internal free 66404
+I (510308) cpu: task sensors          44.2% core 1, stack free 6232 B
+I (510309) cpu: task iris_can          6.3% core 0, stack free 2352 B
+I (510311) cpu: task uart1             6.1% core 0, stack free 1916 B
+I (510314) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (510317) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (510319) cpu: task usb_serial_echo   0.4% core 0, stack free 1644 B
+I (510321) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (510324) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (510367) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 509 ok/0 accel/0 gyro rejected, overruns 8190, max pass 6008 us, radio TX 2038 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6853 0.0594 -0.0005 0.7258]
+I (510371) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.5%, sample processing 15.7%
+I (510375) sensors: position: ENU 0.0 0.0 -0.0 m, velocity -0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 214 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (515159) uart: GPS RX: baud=115201 bytes=309300 GGA=5134 fix=none sats=0 idle_ms=46
+I (515247) iris_can: state=0 RX dropped=0 TX failed=0
+I (516448) data_forwarder: USB output not drained (no host or no reader): 9022 packets dropped so far
+I (520159) uart: GPS RX: baud=115201 bytes=312300 GGA=5184 fix=none sats=0 idle_ms=46
+I (520248) iris_can: state=0 RX dropped=0 TX failed=0
+I (520304) cpu: core0 15.1% busy, core1 43.9% busy; heap free 66404 (min 62748), internal free 66404
+I (520308) cpu: task sensors          43.9% core 1, stack free 6232 B
+I (520309) cpu: task iris_can          6.4% core 0, stack free 2352 B
+I (520311) cpu: task uart1             5.7% core 0, stack free 1916 B
+I (520314) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (520315) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (520318) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (520319) cpu: task usb_serial_echo   0.4% core 0, stack free 1644 B
+I (520322) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (520367) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 519 ok/0 accel/0 gyro rejected, overruns 8348, max pass 6162 us, radio TX 2078 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6858 0.0596 -0.0008 0.7254]
+I (520371) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.5%, sample processing 15.6%
+I (520375) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 214 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (525159) uart: GPS RX: baud=115201 bytes=315300 GGA=5234 fix=none sats=0 idle_ms=46
+I (525248) iris_can: state=0 RX dropped=0 TX failed=0
+I (526456) data_forwarder: USB output not drained (no host or no reader): 9252 packets dropped so far
+I (530159) uart: GPS RX: baud=115201 bytes=318300 GGA=5284 fix=none sats=0 idle_ms=46
+I (530249) iris_can: state=0 RX dropped=0 TX failed=0
+I (530304) cpu: core0 15.3% busy, core1 44.0% busy; heap free 66404 (min 62748), internal free 66404
+I (530308) cpu: task sensors          44.0% core 1, stack free 6232 B
+I (530310) cpu: task iris_can          6.5% core 0, stack free 2352 B
+I (530313) cpu: task uart1             5.9% core 0, stack free 1916 B
+I (530316) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (530317) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (530320) cpu: task usb_serial_echo   0.4% core 0, stack free 1644 B
+I (530322) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (530325) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (530369) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 529 ok/0 accel/0 gyro rejected, overruns 8499, max pass 5907 us, radio TX 2118 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6851 0.0597 -0.0007 0.7260]
+I (530373) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.5%, sample processing 15.7%
+I (530377) sensors: position: ENU -0.0 -0.0 -0.0 m, velocity 0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 214 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+W (532971) serial_command: unknown command: W UBX\NVTG,,,,,,,,,^(^AG^@^@\GNGGA,,,,,,0,0\GNGGA,,,^Z¯ÿ÷–C
+W (532974) serial_command: unknown command: $C
+I (535160) uart: GPS RX: baud=115201 bytes=321300 GGA=5334 fix=none sats=0 idle_ms=48
+I (535250) iris_can: state=0 RX dropped=0 TX failed=0
+I (536462) data_forwarder: USB output not drained (no host or no reader): 9401 packets dropped so far
+I (540161) uart: GPS RX: baud=115201 bytes=324300 GGA=5384 fix=none sats=0 idle_ms=49
+I (540251) iris_can: state=0 RX dropped=0 TX failed=0
+I (540304) cpu: core0 15.8% busy, core1 44.3% busy; heap free 66404 (min 62748), internal free 66404
+I (540309) cpu: task sensors          44.3% core 1, stack free 6232 B
+I (540314) cpu: task uart1             6.1% core 0, stack free 1916 B
+I (540318) cpu: task iris_can          6.1% core 0, stack free 2352 B
+I (540321) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (540325) cpu: task usb_serial_echo   0.7% core 0, stack free 764 B
+I (540328) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (540331) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (540335) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (540369) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 539 ok/0 accel/0 gyro rejected, overruns 8659, max pass 6087 us, radio TX 2158 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6851 0.0594 -0.0006 0.7260]
+I (540377) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 1.02 g; core-1 time: FIFO read 11.5%, sample processing 15.7%
+I (540385) sensors: position: ENU -0.0 0.0 -0.0 m, velocity -0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 214 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (545161) uart: GPS RX: baud=115201 bytes=327300 GGA=5434 fix=none sats=0 idle_ms=49
+I (545252) iris_can: state=0 RX dropped=0 TX failed=0
+I (546470) data_forwarder: USB output not drained (no host or no reader): 9456 packets dropped so far
+I (550161) uart: GPS RX: baud=115201 bytes=330300 GGA=5484 fix=none sats=0 idle_ms=49
+I (550252) iris_can: state=0 RX dropped=0 TX failed=0
+I (550304) cpu: core0 15.4% busy, core1 43.7% busy; heap free 66404 (min 62748), internal free 66404
+I (550306) cpu: task sensors          43.7% core 1, stack free 6232 B
+I (550309) cpu: task iris_can          6.3% core 0, stack free 2352 B
+I (550311) cpu: task uart1             5.5% core 0, stack free 1916 B
+I (550313) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (550316) cpu: task usb_serial_echo   0.8% core 0, stack free 764 B
+I (550318) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (550320) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (550324) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (550371) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 549 ok/0 accel/0 gyro rejected, overruns 8812, max pass 6116 us, radio TX 2198 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6851 0.0597 -0.0009 0.7260]
+I (550376) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.5%
+I (550379) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 214 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (555161) uart: GPS RX: baud=115201 bytes=333300 GGA=5534 fix=none sats=0 idle_ms=49
+I (555252) iris_can: state=0 RX dropped=0 TX failed=0
+I (556478) data_forwarder: USB output not drained (no host or no reader): 9686 packets dropped so far
+I (560161) uart: GPS RX: baud=115201 bytes=336300 GGA=5584 fix=none sats=0 idle_ms=49
+I (560252) iris_can: state=0 RX dropped=0 TX failed=0
+I (560304) cpu: core0 15.3% busy, core1 44.0% busy; heap free 66404 (min 62748), internal free 66404
+I (560308) cpu: task sensors          44.0% core 1, stack free 6232 B
+I (560310) cpu: task iris_can          6.2% core 0, stack free 2352 B
+I (560313) cpu: task uart1             5.7% core 0, stack free 1916 B
+I (560316) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (560318) cpu: task usb_serial_echo   0.7% core 0, stack free 764 B
+I (560321) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (560323) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (560326) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (560371) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 559 ok/0 accel/0 gyro rejected, overruns 8963, max pass 5821 us, radio TX 2238 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6860 0.0600 -0.0011 0.7252]
+I (560375) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.6%
+I (560380) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 214 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (565161) uart: GPS RX: baud=115201 bytes=339300 GGA=5634 fix=none sats=0 idle_ms=49
+I (565253) iris_can: state=0 RX dropped=0 TX failed=0
+I (566484) data_forwarder: USB output not drained (no host or no reader): 9916 packets dropped so far
+I (570161) uart: GPS RX: baud=115201 bytes=342300 GGA=5684 fix=none sats=0 idle_ms=49
+I (570253) iris_can: state=0 RX dropped=0 TX failed=0
+I (570304) cpu: core0 15.4% busy, core1 44.1% busy; heap free 66404 (min 62748), internal free 66404
+I (570308) cpu: task sensors          44.1% core 1, stack free 6232 B
+I (570310) cpu: task iris_can          6.2% core 0, stack free 2352 B
+I (570312) cpu: task uart1             5.8% core 0, stack free 1916 B
+I (570316) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (570318) cpu: task usb_serial_echo   0.8% core 0, stack free 764 B
+I (570320) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (570324) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (570326) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (570373) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 569 ok/0 accel/0 gyro rejected, overruns 9117, max pass 5973 us, radio TX 2278 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6854 0.0598 -0.0010 0.7257]
+I (570377) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.5%, sample processing 15.6%
+I (570382) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 214 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (575162) uart: GPS RX: baud=115201 bytes=345300 GGA=5734 fix=none sats=0 idle_ms=51
+I (575254) iris_can: state=0 RX dropped=0 TX failed=0
+I (576492) data_forwarder: USB output not drained (no host or no reader): 10146 packets dropped so far
+I (580164) uart: GPS RX: baud=115201 bytes=348300 GGA=5784 fix=none sats=0 idle_ms=52
+I (580255) iris_can: state=0 RX dropped=0 TX failed=0
+I (580304) cpu: core0 15.7% busy, core1 43.9% busy; heap free 66404 (min 62748), internal free 66404
+I (580308) cpu: task sensors          43.9% core 1, stack free 6232 B
+I (580310) cpu: task uart1             6.6% core 0, stack free 1916 B
+I (580312) cpu: task iris_can          5.7% core 0, stack free 2352 B
+I (580315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (580317) cpu: task usb_serial_echo   0.8% core 0, stack free 764 B
+I (580319) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (580322) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (580324) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (580373) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 579 ok/0 accel/0 gyro rejected, overruns 9272, max pass 5835 us, radio TX 2318 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6847 0.0594 -0.0007 0.7264]
+I (580377) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.3%
+I (580382) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 214 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (585164) uart: GPS RX: baud=115201 bytes=351300 GGA=5834 fix=none sats=0 idle_ms=52
+I (585256) iris_can: state=0 RX dropped=0 TX failed=0
+I (586502) data_forwarder: USB output not drained (no host or no reader): 10376 packets dropped so far
+I (590164) uart: GPS RX: baud=115201 bytes=354300 GGA=5884 fix=none sats=0 idle_ms=52
+I (590257) iris_can: state=0 RX dropped=0 TX failed=0
+I (590304) cpu: core0 16.8% busy, core1 44.9% busy; heap free 66404 (min 62748), internal free 66404
+I (590308) cpu: task sensors          44.9% core 1, stack free 6232 B
+I (590310) cpu: task uart1             8.4% core 0, stack free 1916 B
+I (590313) cpu: task iris_can          5.1% core 0, stack free 2352 B
+I (590315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (590317) cpu: task usb_serial_echo   0.7% core 0, stack free 764 B
+I (590320) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (590323) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (590325) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (590373) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 589 ok/0 accel/0 gyro rejected, overruns 9451, max pass 5738 us, radio TX 2358 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6847 0.0591 -0.0004 0.7264]
+I (590378) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 1.02 g; core-1 time: FIFO read 11.3%, sample processing 15.4%
+I (590382) sensors: position: ENU -0.0 0.0 -0.0 m, velocity -0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 214 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (595164) uart: GPS RX: baud=115201 bytes=357300 GGA=5934 fix=none sats=0 idle_ms=52
+I (595257) iris_can: state=0 RX dropped=0 TX failed=0
+I (596510) data_forwarder: USB output not drained (no host or no reader): 10606 packets dropped so far
+I (600164) uart: GPS RX: baud=115201 bytes=360300 GGA=5984 fix=none sats=0 idle_ms=52
+I (600258) iris_can: state=0 RX dropped=0 TX failed=0
+I (600304) cpu: core0 17.1% busy, core1 45.0% busy; heap free 66404 (min 62748), internal free 66404
+I (600308) cpu: task sensors          45.0% core 1, stack free 6232 B
+I (600310) cpu: task uart1             8.6% core 0, stack free 1916 B
+I (600314) cpu: task iris_can          5.1% core 0, stack free 2352 B
+I (600317) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (600319) cpu: task usb_serial_echo   0.8% core 0, stack free 764 B
+I (600321) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (600324) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (600326) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (600375) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 599 ok/0 accel/0 gyro rejected, overruns 9623, max pass 7035 us, radio TX 2398 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6846 0.0593 -0.0005 0.7265]
+I (600379) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 21 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.4%
+I (600384) sensors: position: ENU -0.0 0.0 -0.0 m, velocity -0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 214 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (605163) uart: GPS RX: baud=115201 bytes=363300 GGA=6034 fix=none sats=0 idle_ms=51
+I (605259) iris_can: state=0 RX dropped=0 TX failed=0
+I (606512) data_forwarder: USB output not drained (no host or no reader): 10836 packets dropped so far
+I (610164) uart: GPS RX: baud=115201 bytes=366300 GGA=6084 fix=none sats=0 idle_ms=52
+I (610259) iris_can: state=0 RX dropped=0 TX failed=0
+I (610304) cpu: core0 16.4% busy, core1 44.2% busy; heap free 66404 (min 62748), internal free 66404
+I (610308) cpu: task sensors          44.2% core 1, stack free 6232 B
+I (610310) cpu: task uart1             7.7% core 0, stack free 1916 B
+I (610312) cpu: task iris_can          5.3% core 0, stack free 2352 B
+I (610315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (610318) cpu: task usb_serial_echo   0.8% core 0, stack free 764 B
+I (610320) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (610323) cpu: task data_forwarder    0.3% core 0, stack free 1148 B
+I (610325) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (610375) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 609 ok/0 accel/0 gyro rejected, overruns 9784, max pass 6019 us, radio TX 2438 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6842 0.0594 -0.0007 0.7269]
+I (610379) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 1.02 g; core-1 time: FIFO read 11.3%, sample processing 15.3%
+I (610384) sensors: position: ENU 0.0 0.0 -0.0 m, velocity 0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 214 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (615163) uart: GPS RX: baud=115201 bytes=369300 GGA=6134 fix=none sats=0 idle_ms=51
+I (615260) iris_can: state=0 RX dropped=0 TX failed=0
+I (616513) data_forwarder: USB output not drained (no host or no reader): 11066 packets dropped so far
+I (620163) uart: GPS RX: baud=115201 bytes=372300 GGA=6184 fix=none sats=0 idle_ms=51
+I (620260) iris_can: state=0 RX dropped=0 TX failed=0
+I (620304) cpu: core0 15.8% busy, core1 44.2% busy; heap free 66404 (min 62748), internal free 66404
+I (620308) cpu: task sensors          44.2% core 1, stack free 6232 B
+I (620310) cpu: task uart1             6.5% core 0, stack free 1916 B
+I (620312) cpu: task iris_can          5.9% core 0, stack free 2352 B
+I (620315) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (620318) cpu: task usb_serial_echo   0.8% core 0, stack free 764 B
+I (620321) cpu: task data_forwarder    0.4% core 0, stack free 1148 B
+I (620323) cpu: task flash_capture     0.4% core 0, stack free 2208 B
+I (620326) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (620377) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 619 ok/0 accel/0 gyro rejected, overruns 9938, max pass 6241 us, radio TX 2478 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6856 0.0595 -0.0007 0.7256]
+I (620382) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.5%
+I (620386) sensors: position: ENU 0.0 0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 215 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+W (622484) serial_command: unknown command: W (5329$GNRMC,,V,,,,,,,,,,N,V*37
+W (622488) serial_command: unknown command: $GNGGA,,,,,,0,00,99.99,,,,,,*56
+W (622492) serial_command: unknown command: ^AG^@^@^HJÏÿ÷˜^@`^^^@^ERÿø^@ÿí
+W (622495) serial_command: unknown command: $GNRMC,,V,,,,,,,,,,N,V*37
+W (622498) serial_command: unknown command: $GNGGA,,,,,,0,00,99.99,,,,,,*56
+W (622501) serial_command: unknown command: ^AG^@^@^HK3ÿ÷´^@`K^@^÷´^@`K^@^ES^H^G¹èŠÓ?9ê±¶^@^@^@CT„^A                                  H^@
+W (622508) serial_command: unknown command: $GNRMC,,V,,,,,,,,,,N,V*37
+W (622511) serial_command: unknown command: $GNGGA,,,,,,0,00,99.99,,,,,,*56
+W (622514) serial_command: unknown command: ^AG^K^@^E_ÿþ^@^@ÿÿ
+I (625164) uart: GPS RX: baud=115201 bytes=375300 GGA=6234 fix=none sats=0 idle_ms=52
+I (625260) iris_can: state=0 RX dropped=0 TX failed=0
+I (626513) data_forwarder: USB output not drained (no host or no reader): 11203 packets dropped so far
+I (630163) uart: GPS RX: baud=115201 bytes=378300 GGA=6284 fix=none sats=0 idle_ms=51
+I (630261) iris_can: state=0 RX dropped=0 TX failed=0
+I (630304) cpu: core0 15.7% busy, core1 43.9% busy; heap free 66404 (min 62748), internal free 66404
+I (630309) cpu: task sensors          43.9% core 1, stack free 6232 B
+I (630313) cpu: task iris_can          6.1% core 0, stack free 2352 B
+I (630317) cpu: task uart1             5.8% core 0, stack free 1916 B
+I (630320) cpu: task flash_logger      1.6% core 0, stack free 3360 B
+I (630324) cpu: task usb_serial_echo   1.0% core 0, stack free 764 B
+I (630327) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (630331) cpu: task flash_capture     0.4% core 0, stack free 2096 B
+I (630334) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (630379) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 629 ok/0 accel/0 gyro rejected, overruns 10105, max pass 6060 us, radio TX 2518 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6841 0.0593 -0.0006 0.7269]
+I (630388) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.4%
+I (630395) sensors: position: ENU -0.0 0.0 -0.0 m, velocity -0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 215 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (635164) uart: GPS RX: baud=115201 bytes=381300 GGA=6334 fix=none sats=0 idle_ms=53
+I (635262) iris_can: state=0 RX dropped=0 TX failed=0
+I (640166) uart: GPS RX: baud=115201 bytes=384300 GGA=6384 fix=none sats=0 idle_ms=54
+I (640263) iris_can: state=0 RX dropped=0 TX failed=0
+I (640304) cpu: core0 16.9% busy, core1 44.7% busy; heap free 66404 (min 62748), internal free 66404
+I (640309) cpu: task sensors          44.7% core 1, stack free 6232 B
+I (640314) cpu: task uart1             8.0% core 0, stack free 1916 B
+I (640317) cpu: task iris_can          5.2% core 0, stack free 2352 B
+I (640321) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (640325) cpu: task usb_serial_echo   0.8% core 0, stack free 764 B
+I (640328) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (640332) cpu: task flash_capture     0.4% core 0, stack free 2096 B
+I (640335) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (640379) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 639 ok/0 accel/0 gyro rejected, overruns 10261, max pass 5786 us, radio TX 2558 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6851 0.0593 -0.0007 0.7260]
+I (640387) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.5%
+I (640395) sensors: position: ENU 0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 215 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (645166) uart: GPS RX: baud=115201 bytes=387300 GGA=6434 fix=none sats=0 idle_ms=54
+I (645263) iris_can: state=0 RX dropped=0 TX failed=0
+I (650166) uart: GPS RX: baud=115201 bytes=390300 GGA=6484 fix=none sats=0 idle_ms=54
+I (650264) iris_can: state=0 RX dropped=0 TX failed=0
+I (650304) cpu: core0 17.4% busy, core1 45.1% busy; heap free 66404 (min 62748), internal free 66404
+I (650309) cpu: task sensors          45.1% core 1, stack free 6232 B
+I (650314) cpu: task uart1             8.7% core 0, stack free 1916 B
+I (650318) cpu: task iris_can          5.0% core 0, stack free 2352 B
+I (650323) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (650326) cpu: task usb_serial_echo   0.8% core 0, stack free 764 B
+I (650329) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (650333) cpu: task flash_capture     0.4% core 0, stack free 2096 B
+I (650337) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (650379) sensors: attitude: 936.4 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 649 ok/0 accel/0 gyro rejected, overruns 10431, max pass 5835 us, radio TX 2598 (failed 0), valid, tilt 95.1 deg, q xyzw [0.6856 0.0597 -0.0011 0.7255]
+I (650388) sensors: imu fifo: 936.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.5%
+I (650395) sensors: position: ENU -0.0 -0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 215 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (655166) uart: GPS RX: baud=115201 bytes=393300 GGA=6534 fix=none sats=0 idle_ms=54
+I (655264) iris_can: state=0 RX dropped=0 TX failed=0
+I (660166) uart: GPS RX: baud=115201 bytes=396300 GGA=6584 fix=none sats=0 idle_ms=54
+I (660264) iris_can: state=0 RX dropped=0 TX failed=0
+I (660304) cpu: core0 17.3% busy, core1 44.8% busy; heap free 66404 (min 62748), internal free 66404
+I (660306) cpu: task sensors          44.8% core 1, stack free 6232 B
+I (660310) cpu: task uart1             8.7% core 0, stack free 1916 B
+I (660314) cpu: task iris_can          4.9% core 0, stack free 2352 B
+I (660317) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (660321) cpu: task usb_serial_echo   0.8% core 0, stack free 764 B
+I (660326) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (660329) cpu: task flash_capture     0.4% core 0, stack free 2096 B
+I (660333) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (660381) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 659 ok/0 accel/0 gyro rejected, overruns 10600, max pass 6092 us, radio TX 2638 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6846 0.0594 -0.0007 0.7265]
+I (660389) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.3%, sample processing 15.4%
+I (660396) sensors: position: ENU -0.0 0.0 0.0 m, velocity 0.0 0.0 -0.0 m/s, Mach 0.00, alt MSL 215 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+I (665166) uart: GPS RX: baud=115201 bytes=399300 GGA=6634 fix=none sats=0 idle_ms=54
+I (665265) iris_can: state=0 RX dropped=0 TX failed=0
+I (670166) uart: GPS RX: baud=115201 bytes=402300 GGA=6684 fix=none sats=0 idle_ms=54
+I (670265) iris_can: state=0 RX dropped=0 TX failed=0
+I (670304) cpu: core0 17.6% busy, core1 45.3% busy; heap free 66404 (min 62748), internal free 66404
+I (670309) cpu: task sensors          45.3% core 1, stack free 6232 B
+I (670313) cpu: task uart1             9.0% core 0, stack free 1916 B
+I (670317) cpu: task iris_can          5.0% core 0, stack free 2352 B
+I (670320) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (670325) cpu: task usb_serial_echo   0.8% core 0, stack free 764 B
+I (670328) cpu: task data_forwarder    0.5% core 0, stack free 1148 B
+I (670332) cpu: task flash_capture     0.4% core 0, stack free 2096 B
+I (670335) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (670381) sensors: attitude: 936.3 Hz, max dt 1.1 ms, gaps 0, late 0, spikes rejected 93, windows 669 ok/0 accel/0 gyro rejected, overruns 10760, max pass 5843 us, radio TX 2678 (failed 0), valid, tilt 95.0 deg, q xyzw [0.6857 0.0594 -0.0008 0.7255]
+I (670389) sensors: imu fifo: 936.3 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 0.99 g; core-1 time: FIFO read 11.4%, sample processing 15.6%
+I (670396) sensors: position: ENU 0.0 0.0 -0.0 m, velocity 0.0 -0.0 -0.0 m/s, Mach 0.00, alt MSL 215 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected (no GPS origin); pad hold
+W (674538) hitl: HITL mode entered from USB: IMU, barometer, GPS and battery now come from 0x0C packets; exits after 1000 ms without input
+I (674539) sensors: attitude reset: sensor source is now HITL 0x0C frames
+I (674544) hitl: first HITL sample received (sim time 0 ms)
+I (674579) sensors: Witness debug packets enabled at 10 Hz
+I (675166) uart: GPS RX: baud=115201 bytes=405300 GGA=6734 fix=none sats=0 idle_ms=54
+I (675266) iris_can: state=0 RX dropped=0 TX failed=0
+I (675545) sensors: attitude initialized: tilt 0.96 deg from vertical, gyro bias -1.006 0.998 1.002 dps
+I (680166) uart: GPS RX: baud=115201 bytes=408300 GGA=6784 fix=none sats=0 idle_ms=54
+I (680266) iris_can: state=0 RX dropped=0 TX failed=0
+I (680304) cpu: core0 16.2% busy, core1 27.7% busy; heap free 66404 (min 62748), internal free 66404
+I (680308) cpu: task sensors          27.7% core 1, stack free 6152 B
+I (680311) cpu: task uart1             6.1% core 0, stack free 1916 B
+I (680314) cpu: task iris_can          3.7% core 0, stack free 2352 B
+I (680316) cpu: task usb_serial_echo   3.3% core 0, stack free 652 B
+I (680319) cpu: task flash_logger      1.5% core 0, stack free 3360 B
+I (680323) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (680325) cpu: task flash_capture     0.4% core 0, stack free 2096 B
+I (680327) cpu: task cpu_load          0.3% core 0, stack free 1528 B
+I (680382) sensors: attitude: 949.4 Hz, max dt 4.9 ms, gaps 0, late 1, spikes rejected 93, windows 678 ok/0 accel/0 gyro rejected, overruns 10893, max pass 9870 us, radio TX 2726 (failed 0), valid, tilt 1.0 deg, q xyzw [0.0085 -0.7112 -0.0000 0.7029]
+I (680388) sensors: imu fifo: 389.4 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 18 words; filtered accel low-g, 0 switches to high-g, peak 1.02 g; core-1 time: FIFO read 4.7%, sample processing 6.3%
+I (680395) sensors: position: ENU -0.0 0.0 0.0 m, velocity 0.0 0.0 0.0 m/s, Mach 0.00, alt MSL 1400 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected; pad hold
+I (684539) hitl: HITL active: 1001 samples in last 10000 ms, sim time 10000 ms
+I (685166) uart: GPS RX: baud=115201 bytes=411300 GGA=6834 fix=none sats=0 idle_ms=54
+I (685266) iris_can: state=0 RX dropped=0 TX failed=0
+I (690166) uart: GPS RX: baud=115201 bytes=414300 GGA=6884 fix=none sats=0 idle_ms=54
+I (690266) iris_can: state=0 RX dropped=0 TX failed=0
+I (690304) cpu: core0 14.9% busy, core1 15.4% busy; heap free 66404 (min 62748), internal free 66404
+I (690308) cpu: task sensors          15.4% core 1, stack free 6152 B
+I (690312) cpu: task usb_serial_echo   5.1% core 0, stack free 652 B
+I (690314) cpu: task uart1             3.8% core 0, stack free 1916 B
+I (690316) cpu: task iris_can          2.9% core 0, stack free 2352 B
+I (690319) cpu: task flash_logger      1.6% core 0, stack free 3360 B
+I (690323) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (690325) cpu: task flash_capture     0.3% core 0, stack free 2096 B
+I (690327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (690382) sensors: attitude: 960.0 Hz, max dt 1.0 ms, gaps 0, late 1, spikes rejected 93, windows 688 ok/0 accel/0 gyro rejected, overruns 11030, max pass 8597 us, radio TX 2776 (failed 0), valid, tilt 1.0 deg, q xyzw [0.0085 -0.7112 -0.0000 0.7029]
+I (690388) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 0 switches to high-g, peak 1.02 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (690395) sensors: position: ENU -0.0 -0.0 0.0 m, velocity -0.0 -0.0 0.0 m/s, Mach 0.00, alt MSL 1400 m; baro 0 used/0 gated/0 rejected, sigma 0.0 m; GPS 0 used/0 rejected; pad hold
+I (694539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 20000 ms
+I (694890) flight_state: launch detected: axial acceleration 14.79 g
+I (694892) flight_state: pad idle -> boost
+I (694903) flash_logger: queued 100 prelaunch records (2000 ms) for flash
+I (694969) flash_logger: queued 1920 prelaunch IMU records (2000 ms) for flash
+I (694973) flash_logger: flight marked in slot B; this session is kept until the next flight
+I (695166) uart: GPS RX: baud=115201 bytes=417300 GGA=6934 fix=none sats=0 idle_ms=54
+I (695266) iris_can: state=0 RX dropped=0 TX failed=0
+I (697550) flight_state: burnout detected: axial acceleration -2.73 g
+I (697551) flight_state: boost -> coast
+I (700166) uart: GPS RX: baud=115201 bytes=420300 GGA=6984 fix=none sats=0 idle_ms=54
+I (700266) iris_can: state=0 RX dropped=0 TX failed=0
+I (700304) cpu: core0 16.8% busy, core1 14.6% busy; heap free 66404 (min 62748), internal free 66404
+I (700308) cpu: task sensors          14.6% core 1, stack free 6152 B
+I (700311) cpu: task usb_serial_echo   5.2% core 0, stack free 652 B
+I (700314) cpu: task uart1             3.7% core 0, stack free 1916 B
+I (700316) cpu: task flash_logger      3.4% core 0, stack free 3360 B
+I (700318) cpu: task iris_can          2.9% core 0, stack free 2352 B
+I (700322) cpu: task data_forwarder    0.8% core 0, stack free 1148 B
+I (700325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (700327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (700382) sensors: attitude: 960.0 Hz, max dt 1.0 ms, gaps 0, late 1, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11097, max pass 7452 us, radio TX 2826 (failed 0), valid, tilt 1.8 deg, q xyzw [0.0113 -0.7158 -0.0030 0.6982]
+I (700388) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel high-g, 4 switches to high-g, peak 69.87 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (700395) sensors: position: ENU -19.5 -9.9 1838.7 m, velocity 1.5 5.3 331.4 m/s, Mach 1.01, alt MSL 3239 m; baro 38 used/109 gated/0 rejected, sigma 1.1 m; GPS 147 used/0 rejected; integrating
+I (704539) hitl: HITL active: 999 samples in last 10000 ms, sim time 29990 ms
+I (705166) uart: GPS RX: baud=115201 bytes=423300 GGA=7034 fix=none sats=0 idle_ms=54
+I (705266) iris_can: state=0 RX dropped=0 TX failed=0
+I (710166) uart: GPS RX: baud=115201 bytes=426300 GGA=7084 fix=none sats=0 idle_ms=54
+I (710266) iris_can: state=0 RX dropped=0 TX failed=0
+I (710304) cpu: core0 17.5% busy, core1 14.2% busy; heap free 66404 (min 62748), internal free 66404
+I (710308) cpu: task sensors          14.2% core 1, stack free 6152 B
+I (710311) cpu: task usb_serial_echo   5.3% core 0, stack free 652 B
+I (710314) cpu: task flash_logger      4.0% core 0, stack free 3360 B
+I (710317) cpu: task uart1             3.7% core 0, stack free 1916 B
+I (710319) cpu: task iris_can          2.9% core 0, stack free 2352 B
+I (710323) cpu: task data_forwarder    0.8% core 0, stack free 1148 B
+I (710325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (710327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (710384) sensors: attitude: 959.8 Hz, max dt 1.0 ms, gaps 0, late 1, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11102, max pass 3123 us, radio TX 2876 (failed 0), valid, tilt 4.8 deg, q xyzw [0.0258 -0.7271 -0.0175 0.6858]
+I (710392) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 13 switches to high-g, peak 75.97 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (710397) sensors: position: ENU -150.7 -133.6 6188.5 m, velocity -59.3 -66.3 1324.4 m/s, Mach 4.28, alt MSL 7589 m; baro 91 used/306 gated/0 rejected, sigma 1.5 m; GPS 397 used/0 rejected; integrating
+I (714539) hitl: HITL active: 1001 samples in last 10000 ms, sim time 40000 ms
+I (715166) uart: GPS RX: baud=115201 bytes=429300 GGA=7134 fix=none sats=0 idle_ms=54
+I (715266) iris_can: state=0 RX dropped=0 TX failed=0
+I (720166) uart: GPS RX: baud=115201 bytes=432300 GGA=7184 fix=none sats=0 idle_ms=54
+I (720266) iris_can: state=0 RX dropped=0 TX failed=0
+I (720304) cpu: core0 16.8% busy, core1 13.9% busy; heap free 66404 (min 62748), internal free 66404
+I (720305) cpu: task sensors          13.9% core 1, stack free 6152 B
+I (720305) cpu: task usb_serial_echo   4.7% core 0, stack free 652 B
+I (720308) cpu: task flash_logger      4.0% core 0, stack free 3360 B
+I (720310) cpu: task uart1             3.6% core 0, stack free 1916 B
+I (720314) cpu: task iris_can          2.9% core 0, stack free 2352 B
+I (720316) cpu: task data_forwarder    0.8% core 0, stack free 1148 B
+I (720318) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (720322) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (720384) sensors: attitude: 960.0 Hz, max dt 1.0 ms, gaps 0, late 1, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11107, max pass 3087 us, radio TX 2926 (failed 0), valid, tilt 4.5 deg, q xyzw [0.0242 -0.7260 -0.0159 0.6871]
+I (720391) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 17.62 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (720397) sensors: position: ENU -589.4 -584.1 15712.8 m, velocity -32.9 -34.0 734.4 m/s, Mach 2.49, alt MSL 17113 m; baro 91 used/556 gated/0 rejected, sigma 1.5 m; GPS 647 used/0 rejected; integrating
+I (724539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 50000 ms
+I (725166) uart: GPS RX: baud=115201 bytes=435300 GGA=7234 fix=none sats=0 idle_ms=54
+I (725267) iris_can: state=0 RX dropped=0 TX failed=0
+I (730166) uart: GPS RX: baud=115201 bytes=438300 GGA=7284 fix=none sats=0 idle_ms=54
+I (730267) iris_can: state=0 RX dropped=0 TX failed=0
+I (730304) cpu: core0 17.1% busy, core1 14.2% busy; heap free 66404 (min 62748), internal free 66404
+I (730308) cpu: task sensors          14.2% core 1, stack free 6152 B
+I (730310) cpu: task usb_serial_echo   5.0% core 0, stack free 652 B
+I (730314) cpu: task flash_logger      4.0% core 0, stack free 3360 B
+I (730316) cpu: task uart1             3.6% core 0, stack free 1916 B
+I (730318) cpu: task iris_can          2.9% core 0, stack free 2352 B
+I (730322) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (730324) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (730326) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (730384) sensors: attitude: 960.0 Hz, max dt 1.0 ms, gaps 0, late 1, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11113, max pass 3082 us, radio TX 2976 (failed 0), valid, tilt 5.1 deg, q xyzw [0.0264 -0.7287 -0.0181 0.6841]
+I (730392) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 2.65 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (730397) sensors: position: ENU -894.0 -890.7 22027.2 m, velocity -29.2 -28.4 549.4 m/s, Mach 1.85, alt MSL 23427 m; baro 91 used/806 gated/0 rejected, sigma 1.5 m; GPS 897 used/0 rejected; integrating
+I (734539) hitl: HITL active: 999 samples in last 10000 ms, sim time 59990 ms
+I (735166) uart: GPS RX: baud=115201 bytes=441300 GGA=7334 fix=none sats=0 idle_ms=54
+I (735268) iris_can: state=0 RX dropped=0 TX failed=0
+I (740166) uart: GPS RX: baud=115201 bytes=444300 GGA=7384 fix=none sats=0 idle_ms=54
+I (740268) iris_can: state=0 RX dropped=0 TX failed=0
+I (740304) cpu: core0 17.9% busy, core1 14.7% busy; heap free 66404 (min 62748), internal free 66404
+I (740308) cpu: task sensors          14.7% core 1, stack free 6152 B
+I (740312) cpu: task usb_serial_echo   5.6% core 0, stack free 652 B
+I (740314) cpu: task flash_logger      4.1% core 0, stack free 3360 B
+I (740316) cpu: task uart1             3.7% core 0, stack free 1916 B
+I (740318) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (740322) cpu: task data_forwarder    0.8% core 0, stack free 1148 B
+I (740324) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (740326) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (740386) sensors: attitude: 959.8 Hz, max dt 1.0 ms, gaps 0, late 1, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11132, max pass 3095 us, radio TX 3026 (failed 0), valid, tilt 6.1 deg, q xyzw [0.0303 -0.7331 -0.0220 0.6791]
+I (740394) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.77 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (740400) sensors: position: ENU -1183.2 -1171.5 26884.8 m, velocity -28.4 -27.5 427.6 m/s, Mach 1.43, alt MSL 28285 m; baro 91 used/1056 gated/0 rejected, sigma 1.5 m; GPS 1147 used/0 rejected; integrating
+I (744539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 69990 ms
+I (745166) uart: GPS RX: baud=115201 bytes=447300 GGA=7434 fix=none sats=0 idle_ms=54
+I (745268) iris_can: state=0 RX dropped=0 TX failed=0
+I (750167) uart: GPS RX: baud=115201 bytes=450300 GGA=7484 fix=none sats=0 idle_ms=56
+I (750268) iris_can: state=0 RX dropped=0 TX failed=0
+I (750304) cpu: core0 18.0% busy, core1 14.8% busy; heap free 66404 (min 62748), internal free 66404
+I (750308) cpu: task sensors          14.8% core 1, stack free 6152 B
+I (750311) cpu: task usb_serial_echo   5.7% core 0, stack free 652 B
+I (750314) cpu: task flash_logger      4.1% core 0, stack free 3360 B
+I (750317) cpu: task uart1             3.8% core 0, stack free 1916 B
+I (750320) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (750323) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (750326) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (750328) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (750386) sensors: attitude: 960.0 Hz, max dt 1.0 ms, gaps 0, late 1, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11141, max pass 3097 us, radio TX 3076 (failed 0), valid, tilt 7.7 deg, q xyzw [0.0367 -0.7399 -0.0285 0.6711]
+I (750394) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.24 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (750401) sensors: position: ENU -1470.7 -1442.3 30628.0 m, velocity -28.1 -27.0 322.6 m/s, Mach 1.07, alt MSL 32028 m; baro 91 used/1245 gated/0 rejected, sigma 1.5 m; GPS 1397 used/0 rejected; integrating
+I (754539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 79990 ms
+I (755168) uart: GPS RX: baud=115201 bytes=453300 GGA=7534 fix=none sats=0 idle_ms=56
+I (755268) iris_can: state=0 RX dropped=0 TX failed=0
+I (760168) uart: GPS RX: baud=115201 bytes=456300 GGA=7584 fix=none sats=0 idle_ms=56
+I (760268) iris_can: state=0 RX dropped=0 TX failed=0
+I (760304) cpu: core0 18.0% busy, core1 14.8% busy; heap free 66404 (min 62748), internal free 66404
+I (760308) cpu: task sensors          14.8% core 1, stack free 6152 B
+I (760312) cpu: task usb_serial_echo   5.7% core 0, stack free 652 B
+I (760314) cpu: task flash_logger      4.0% core 0, stack free 3360 B
+I (760316) cpu: task uart1             3.8% core 0, stack free 1916 B
+I (760318) cpu: task iris_can          2.9% core 0, stack free 2352 B
+I (760322) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (760325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (760327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (760386) sensors: attitude: 960.0 Hz, max dt 1.0 ms, gaps 0, late 1, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11150, max pass 3023 us, radio TX 3126 (failed 0), valid, tilt 10.7 deg, q xyzw [0.0488 -0.7521 -0.0409 0.6560]
+I (760395) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 1.12 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (760403) sensors: position: ENU -1759.6 -1708.6 33357.3 m, velocity -28.5 -26.5 223.7 m/s, Mach 0.74, alt MSL 34757 m; baro 91 used/1245 gated/0 rejected, sigma 1.5 m; GPS 1647 used/0 rejected; integrating
+I (764539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 89990 ms
+I (765168) uart: GPS RX: baud=115201 bytes=459300 GGA=7634 fix=none sats=0 idle_ms=56
+I (765268) iris_can: state=0 RX dropped=0 TX failed=0
+I (770169) uart: GPS RX: baud=115201 bytes=462300 GGA=7684 fix=none sats=0 idle_ms=57
+I (770269) iris_can: state=0 RX dropped=0 TX failed=0
+I (770304) cpu: core0 18.0% busy, core1 14.8% busy; heap free 66404 (min 62748), internal free 66404
+I (770308) cpu: task sensors          14.8% core 1, stack free 6152 B
+I (770310) cpu: task usb_serial_echo   5.7% core 0, stack free 652 B
+I (770314) cpu: task flash_logger      4.1% core 0, stack free 3360 B
+I (770316) cpu: task uart1             3.7% core 0, stack free 1916 B
+I (770318) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (770322) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (770325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (770327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (770388) sensors: attitude: 959.8 Hz, max dt 1.0 ms, gaps 0, late 1, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11156, max pass 3040 us, radio TX 3176 (failed 0), valid, tilt 18.0 deg, q xyzw [0.0780 -0.7793 -0.0721 0.6176]
+I (770396) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.44 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (770407) sensors: position: ENU -2050.4 -1974.6 35105.8 m, velocity -28.6 -27.0 126.3 m/s, Mach 0.42, alt MSL 36506 m; baro 91 used/1245 gated/0 rejected, sigma 1.5 m; GPS 1897 used/0 rejected; integrating
+I (774539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 99990 ms
+I (775169) uart: GPS RX: baud=115201 bytes=465300 GGA=7734 fix=none sats=0 idle_ms=58
+I (775270) iris_can: state=0 RX dropped=0 TX failed=0
+I (780169) uart: GPS RX: baud=115201 bytes=468300 GGA=7784 fix=none sats=0 idle_ms=58
+I (780270) iris_can: state=0 RX dropped=0 TX failed=0
+I (780304) cpu: core0 18.0% busy, core1 14.8% busy; heap free 66404 (min 62748), internal free 66404
+I (780308) cpu: task sensors          14.8% core 1, stack free 6152 B
+I (780311) cpu: task usb_serial_echo   5.8% core 0, stack free 652 B
+I (780314) cpu: task flash_logger      4.1% core 0, stack free 3360 B
+I (780317) cpu: task uart1             3.6% core 0, stack free 1916 B
+I (780319) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (780323) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (780325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (780327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (780388) sensors: attitude: 960.0 Hz, max dt 1.0 ms, gaps 0, late 1, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11161, max pass 3149 us, radio TX 3226 (failed 0), valid, tilt 53.8 deg, q xyzw [0.2164 -0.8644 -0.2205 0.3967]
+I (780396) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.03 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (780403) sensors: position: ENU -2343.1 -2238.6 35882.7 m, velocity -29.3 -26.6 29.6 m/s, Mach 0.16, alt MSL 37283 m; baro 91 used/1245 gated/0 rejected, sigma 1.5 m; GPS 2147 used/0 rejected; integrating
+I (784539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 109990 ms
+I (785169) uart: GPS RX: baud=115201 bytes=471300 GGA=7834 fix=none sats=0 idle_ms=58
+I (785270) iris_can: state=0 RX dropped=0 TX failed=0
+I (790169) uart: GPS RX: baud=115201 bytes=474300 GGA=7884 fix=none sats=0 idle_ms=58
+I (790270) iris_can: state=0 RX dropped=0 TX failed=0
+I (790304) cpu: core0 18.1% busy, core1 15.0% busy; heap free 66404 (min 62748), internal free 66404
+I (790308) cpu: task sensors          15.0% core 1, stack free 6152 B
+I (790311) cpu: task usb_serial_echo   5.9% core 0, stack free 652 B
+I (790314) cpu: task flash_logger      4.1% core 0, stack free 3360 B
+I (790316) cpu: task uart1             3.6% core 0, stack free 1916 B
+I (790318) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (790322) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (790325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (790327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (790390) sensors: attitude: 959.8 Hz, max dt 1.0 ms, gaps 0, late 1, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11168, max pass 3081 us, radio TX 3276 (failed 0), valid, tilt 89.9 deg, q xyzw [0.3408 -0.8698 -0.3319 0.1307]
+I (790398) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.03 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (790408) sensors: position: ENU -2634.8 -2500.9 35691.3 m, velocity -29.0 -25.8 -67.1 m/s, Mach 0.25, alt MSL 37091 m; baro 91 used/1245 gated/0 rejected, sigma 1.5 m; GPS 2397 used/0 rejected; integrating
+I (794539) hitl: HITL active: 999 samples in last 10000 ms, sim time 119990 ms
+I (795170) uart: GPS RX: baud=115201 bytes=477300 GGA=7934 fix=none sats=0 idle_ms=58
+I (795271) iris_can: state=0 RX dropped=0 TX failed=0
+I (800170) uart: GPS RX: baud=115201 bytes=480300 GGA=7984 fix=none sats=0 idle_ms=59
+I (800271) iris_can: state=0 RX dropped=0 TX failed=0
+I (800304) cpu: core0 18.0% busy, core1 14.6% busy; heap free 66404 (min 62748), internal free 66404
+I (800308) cpu: task sensors          14.6% core 1, stack free 6152 B
+I (800310) cpu: task usb_serial_echo   5.9% core 0, stack free 652 B
+I (800314) cpu: task flash_logger      4.1% core 0, stack free 3360 B
+I (800316) cpu: task uart1             3.6% core 0, stack free 1916 B
+I (800318) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (800321) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (800325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (800327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (800390) sensors: attitude: 960.0 Hz, max dt 1.0 ms, gaps 0, late 1, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11178, max pass 3170 us, radio TX 3326 (failed 0), valid, tilt 89.9 deg, q xyzw [0.3406 -0.8699 -0.3318 0.1310]
+I (800398) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.06 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (800408) sensors: position: ENU -2922.8 -2761.3 34541.4 m, velocity -28.5 -26.1 -161.7 m/s, Mach 0.54, alt MSL 35941 m; baro 91 used/1245 gated/0 rejected, sigma 1.5 m; GPS 2647 used/0 rejected; integrating
+I (803412) flight_state: descent detected: altitude 35409.77 m, maximum 37378.71 m
+I (803414) flight_state: coast -> descent
+I (804539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 129990 ms
+I (805172) uart: GPS RX: baud=115201 bytes=483300 GGA=8034 fix=none sats=0 idle_ms=60
+I (805272) iris_can: state=0 RX dropped=0 TX failed=0
+I (810172) uart: GPS RX: baud=115201 bytes=486300 GGA=8084 fix=none sats=0 idle_ms=60
+I (810272) iris_can: state=0 RX dropped=0 TX failed=0
+I (810304) cpu: core0 16.5% busy, core1 14.2% busy; heap free 66404 (min 62748), internal free 66404
+I (810308) cpu: task sensors          14.2% core 1, stack free 6152 B
+I (810311) cpu: task usb_serial_echo   5.7% core 0, stack free 652 B
+I (810314) cpu: task uart1             3.7% core 0, stack free 1916 B
+I (810316) cpu: task iris_can          2.9% core 0, stack free 2352 B
+I (810318) cpu: task flash_logger      2.8% core 0, stack free 3360 B
+I (810322) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (810325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (810327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (810393) sensors: attitude: 961.3 Hz, max dt 1.0 ms, gaps 0, late 1, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11186, max pass 3485 us, radio TX 3376 (failed 0), valid, tilt 89.9 deg, q xyzw [0.3405 -0.8700 -0.3316 0.1312]
+I (810401) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.14 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (810407) sensors: position: ENU -3202.6 -3010.7 32473.5 m, velocity -27.0 -23.6 -249.0 m/s, Mach 0.82, alt MSL 33873 m; baro 91 used/1245 gated/0 rejected, sigma 1.5 m; GPS 2897 used/0 rejected; integrating
+I (814539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 139990 ms
+I (815172) uart: GPS RX: baud=115201 bytes=489300 GGA=8134 fix=none sats=0 idle_ms=60
+I (815272) iris_can: state=0 RX dropped=0 TX failed=0
+I (820173) uart: GPS RX: baud=115201 bytes=492300 GGA=8184 fix=none sats=0 idle_ms=62
+I (820272) iris_can: state=0 RX dropped=0 TX failed=0
+I (820304) cpu: core0 15.6% busy, core1 13.6% busy; heap free 66404 (min 62748), internal free 66404
+I (820308) cpu: task sensors          13.6% core 1, stack free 6152 B
+I (820311) cpu: task usb_serial_echo   5.5% core 0, stack free 652 B
+I (820315) cpu: task uart1             3.5% core 0, stack free 1916 B
+I (820317) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (820319) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (820323) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (820326) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (820328) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (820394) sensors: attitude: 959.9 Hz, max dt 1.0 ms, gaps 0, late 1, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11189, max pass 3063 us, radio TX 3426 (failed 0), valid, tilt 89.8 deg, q xyzw [0.3402 -0.8702 -0.3314 0.1314]
+I (820402) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.32 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (820408) sensors: position: ENU -3466.0 -3244.3 29609.3 m, velocity -25.3 -21.6 -319.1 m/s, Mach 1.06, alt MSL 31009 m; baro 91 used/1261 gated/0 rejected, sigma 1.5 m; GPS 3147 used/0 rejected; integrating
+I (824539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 149990 ms
+I (825174) uart: GPS RX: baud=115201 bytes=495300 GGA=8234 fix=none sats=0 idle_ms=62
+I (825272) iris_can: state=0 RX dropped=0 TX failed=0
+I (830175) uart: GPS RX: baud=115201 bytes=498300 GGA=8284 fix=none sats=0 idle_ms=64
+I (830273) iris_can: state=0 RX dropped=0 TX failed=0
+I (830304) cpu: core0 15.5% busy, core1 13.5% busy; heap free 66404 (min 62748), internal free 66404
+I (830308) cpu: task sensors          13.5% core 1, stack free 6152 B
+I (830310) cpu: task usb_serial_echo   5.5% core 0, stack free 652 B
+I (830314) cpu: task uart1             3.4% core 0, stack free 1916 B
+I (830316) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (830318) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (830322) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (830325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (830327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (830396) sensors: attitude: 959.8 Hz, max dt 1.0 ms, gaps 0, late 1, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11194, max pass 3168 us, radio TX 3476 (failed 0), valid, tilt 89.8 deg, q xyzw [0.3400 -0.8702 -0.3313 0.1316]
+I (830404) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.65 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (830409) sensors: position: ENU -3701.4 -3448.5 26199.9 m, velocity -22.1 -18.8 -354.8 m/s, Mach 1.19, alt MSL 27600 m; baro 91 used/1511 gated/0 rejected, sigma 1.5 m; GPS 3397 used/0 rejected; integrating
+I (834539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 159990 ms
+I (835176) uart: GPS RX: baud=115201 bytes=501300 GGA=8334 fix=none sats=0 idle_ms=64
+I (835274) iris_can: state=0 RX dropped=0 TX failed=0
+I (840176) uart: GPS RX: baud=115201 bytes=504300 GGA=8384 fix=none sats=0 idle_ms=64
+I (840275) iris_can: state=0 RX dropped=0 TX failed=0
+I (840304) cpu: core0 15.5% busy, core1 13.6% busy; heap free 66404 (min 62748), internal free 66404
+I (840308) cpu: task sensors          13.6% core 1, stack free 6152 B
+I (840310) cpu: task usb_serial_echo   5.4% core 0, stack free 652 B
+I (840314) cpu: task uart1             3.4% core 0, stack free 1916 B
+I (840316) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (840318) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (840322) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (840325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (840327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (840398) sensors: attitude: 959.9 Hz, max dt 10.0 ms, gaps 1, late 2, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11197, max pass 3193 us, radio TX 3526 (failed 0), valid, tilt 89.7 deg, q xyzw [0.3398 -0.8703 -0.3312 0.1319]
+I (840406) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 1.06 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (840413) sensors: position: ENU -3896.0 -3604.8 22679.1 m, velocity -17.4 -13.6 -340.1 m/s, Mach 1.14, alt MSL 24079 m; baro 91 used/1761 gated/0 rejected, sigma 1.5 m; GPS 3647 used/0 rejected; integrating
+I (844539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 169990 ms
+I (845176) uart: GPS RX: baud=115201 bytes=507300 GGA=8434 fix=none sats=0 idle_ms=64
+I (845275) iris_can: state=0 RX dropped=0 TX failed=0
+I (850177) uart: GPS RX: baud=115201 bytes=510300 GGA=8484 fix=none sats=0 idle_ms=66
+I (850276) iris_can: state=0 RX dropped=0 TX failed=0
+I (850304) cpu: core0 15.5% busy, core1 13.5% busy; heap free 66404 (min 62748), internal free 66404
+I (850308) cpu: task sensors          13.5% core 1, stack free 6152 B
+I (850311) cpu: task usb_serial_echo   5.4% core 0, stack free 652 B
+I (850314) cpu: task uart1             3.4% core 0, stack free 1916 B
+I (850317) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (850319) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (850322) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (850325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (850327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (850400) sensors: attitude: 959.9 Hz, max dt 10.0 ms, gaps 2, late 3, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11201, max pass 3182 us, radio TX 3576 (failed 0), valid, tilt 89.7 deg, q xyzw [0.3397 -0.8704 -0.3311 0.1321]
+I (850408) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 1.24 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (850415) sensors: position: ENU -4040.6 -3705.4 19535.7 m, velocity -11.7 -8.5 -284.9 m/s, Mach 0.96, alt MSL 20936 m; baro 91 used/2011 gated/0 rejected, sigma 1.5 m; GPS 3897 used/0 rejected; integrating
+I (854539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 179990 ms
+I (855177) uart: GPS RX: baud=115201 bytes=513300 GGA=8534 fix=none sats=0 idle_ms=64
+I (855277) iris_can: state=0 RX dropped=0 TX failed=0
+I (860178) uart: GPS RX: baud=115201 bytes=516300 GGA=8584 fix=none sats=0 idle_ms=66
+I (860277) iris_can: state=0 RX dropped=0 TX failed=0
+I (860304) cpu: core0 14.8% busy, core1 13.3% busy; heap free 66404 (min 62748), internal free 66404
+I (860308) cpu: task sensors          13.3% core 1, stack free 6152 B
+I (860310) cpu: task usb_serial_echo   4.8% core 0, stack free 652 B
+I (860314) cpu: task uart1             3.4% core 0, stack free 1916 B
+I (860316) cpu: task iris_can          2.9% core 0, stack free 2352 B
+I (860318) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (860322) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (860325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (860327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (860400) sensors: attitude: 960.1 Hz, max dt 10.0 ms, gaps 3, late 4, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11204, max pass 3108 us, radio TX 3626 (failed 0), valid, tilt 89.7 deg, q xyzw [0.3396 -0.8704 -0.3309 0.1324]
+I (860408) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 1.24 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (860415) sensors: position: ENU -4131.9 -3750.3 16995.2 m, velocity -6.7 -2.2 -224.0 m/s, Mach 0.76, alt MSL 18395 m; baro 91 used/2261 gated/0 rejected, sigma 1.5 m; GPS 4147 used/0 rejected; integrating
+I (864539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 189990 ms
+I (865179) uart: GPS RX: baud=115201 bytes=519300 GGA=8634 fix=none sats=0 idle_ms=68
+I (865277) iris_can: state=0 RX dropped=0 TX failed=0
+I (870179) uart: GPS RX: baud=115201 bytes=522300 GGA=8684 fix=none sats=0 idle_ms=68
+I (870277) iris_can: state=0 RX dropped=0 TX failed=0
+I (870304) cpu: core0 14.3% busy, core1 13.1% busy; heap free 66404 (min 62748), internal free 66404
+I (870308) cpu: task sensors          13.1% core 1, stack free 6152 B
+I (870310) cpu: task usb_serial_echo   4.5% core 0, stack free 652 B
+I (870314) cpu: task uart1             3.2% core 0, stack free 1916 B
+I (870316) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (870318) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (870321) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (870324) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (870326) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (870400) sensors: attitude: 960.1 Hz, max dt 10.0 ms, gaps 4, late 5, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11206, max pass 3167 us, radio TX 3676 (failed 0), valid, tilt 89.6 deg, q xyzw [0.3395 -0.8705 -0.3307 0.1326]
+I (870407) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 1.20 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (870415) sensors: position: ENU -4140.3 -3734.9 14997.7 m, velocity 6.2 3.6 -178.0 m/s, Mach 0.60, alt MSL 16398 m; baro 328 used/2274 gated/0 rejected, sigma 6.5 m; GPS 4397 used/0 rejected; integrating
+I (874539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 199990 ms
+I (875179) uart: GPS RX: baud=115201 bytes=525300 GGA=8734 fix=none sats=0 idle_ms=68
+I (875277) iris_can: state=0 RX dropped=0 TX failed=0
+I (880179) uart: GPS RX: baud=115201 bytes=528300 GGA=8784 fix=none sats=0 idle_ms=68
+I (880278) iris_can: state=0 RX dropped=0 TX failed=0
+I (880304) cpu: core0 14.2% busy, core1 13.1% busy; heap free 66404 (min 62748), internal free 66404
+I (880308) cpu: task sensors          13.1% core 1, stack free 6152 B
+I (880310) cpu: task usb_serial_echo   4.4% core 0, stack free 652 B
+I (880314) cpu: task uart1             3.2% core 0, stack free 1916 B
+I (880316) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (880318) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (880321) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (880324) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (880326) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (880403) sensors: attitude: 960.6 Hz, max dt 10.0 ms, gaps 5, late 6, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11208, max pass 3151 us, radio TX 3726 (failed 0), valid, tilt 89.6 deg, q xyzw [0.3394 -0.8706 -0.3305 0.1329]
+I (880409) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 1.06 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (880416) sensors: position: ENU -4058.2 -3658.0 13372.3 m, velocity 13.2 11.8 -149.1 m/s, Mach 0.51, alt MSL 14772 m; baro 578 used/2274 gated/0 rejected, sigma 5.1 m; GPS 4647 used/0 rejected; integrating
+I (884539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 209990 ms
+I (885179) uart: GPS RX: baud=115201 bytes=531300 GGA=8834 fix=none sats=0 idle_ms=68
+I (885278) iris_can: state=0 RX dropped=0 TX failed=0
+I (890179) uart: GPS RX: baud=115201 bytes=534300 GGA=8884 fix=none sats=0 idle_ms=68
+I (890279) iris_can: state=0 RX dropped=0 TX failed=0
+I (890304) cpu: core0 14.1% busy, core1 13.0% busy; heap free 66404 (min 62748), internal free 66404
+I (890308) cpu: task sensors          13.0% core 1, stack free 6152 B
+I (890311) cpu: task usb_serial_echo   4.4% core 0, stack free 652 B
+I (890314) cpu: task uart1             3.2% core 0, stack free 1916 B
+I (890317) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (890319) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (890323) cpu: task data_forwarder    0.6% core 0, stack free 1148 B
+I (890325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (890327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (890403) sensors: attitude: 960.1 Hz, max dt 10.0 ms, gaps 6, late 7, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11213, max pass 3173 us, radio TX 3776 (failed 0), valid, tilt 89.6 deg, q xyzw [0.3394 -0.8706 -0.3303 0.1332]
+I (890410) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.93 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (890417) sensors: position: ENU -3893.3 -3516.0 11974.6 m, velocity 18.8 16.4 -131.4 m/s, Mach 0.45, alt MSL 13375 m; baro 827 used/2274 gated/0 rejected, sigma 4.1 m; GPS 4897 used/0 rejected; integrating
+I (894539) hitl: HITL active: 995 samples in last 10000 ms, sim time 219990 ms
+I (895180) uart: GPS RX: baud=115201 bytes=537300 GGA=8934 fix=none sats=0 idle_ms=70
+I (895280) iris_can: state=0 RX dropped=0 TX failed=0
+I (900181) uart: GPS RX: baud=115201 bytes=540300 GGA=8984 fix=none sats=0 idle_ms=71
+I (900280) iris_can: state=0 RX dropped=0 TX failed=0
+I (900304) cpu: core0 14.2% busy, core1 13.2% busy; heap free 66404 (min 62748), internal free 66404
+I (900308) cpu: task sensors          13.2% core 1, stack free 6152 B
+I (900310) cpu: task usb_serial_echo   4.4% core 0, stack free 652 B
+I (900314) cpu: task uart1             3.3% core 0, stack free 1916 B
+I (900316) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (900318) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (900321) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (900324) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (900326) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (900404) sensors: attitude: 960.0 Hz, max dt 10.0 ms, gaps 7, late 8, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11216, max pass 3212 us, radio TX 3826 (failed 0), valid, tilt 89.5 deg, q xyzw [0.3391 -0.8707 -0.3301 0.1334]
+I (900412) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.87 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (900417) sensors: position: ENU -3686.0 -3345.1 10721.2 m, velocity 21.6 17.3 -119.3 m/s, Mach 0.41, alt MSL 12121 m; baro 1077 used/2274 gated/0 rejected, sigma 3.4 m; GPS 5147 used/0 rejected; integrating
+I (904539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 229990 ms
+I (905181) uart: GPS RX: baud=115201 bytes=543300 GGA=9034 fix=none sats=0 idle_ms=71
+I (905280) iris_can: state=0 RX dropped=0 TX failed=0
+I (910181) uart: GPS RX: baud=115201 bytes=546300 GGA=9084 fix=none sats=0 idle_ms=71
+I (910280) iris_can: state=0 RX dropped=0 TX failed=0
+I (910304) cpu: core0 14.3% busy, core1 13.2% busy; heap free 66404 (min 62748), internal free 66404
+I (910308) cpu: task sensors          13.2% core 1, stack free 6152 B
+I (910311) cpu: task usb_serial_echo   4.4% core 0, stack free 652 B
+I (910315) cpu: task uart1             3.3% core 0, stack free 1916 B
+I (910317) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (910319) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (910323) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (910325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (910327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (910404) sensors: attitude: 960.1 Hz, max dt 1.7 ms, gaps 8, late 9, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11222, max pass 3005 us, radio TX 3876 (failed 0), valid, tilt 89.5 deg, q xyzw [0.3390 -0.8708 -0.3299 0.1336]
+I (910410) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.84 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (910417) sensors: position: ENU -3465.0 -3159.6 9575.9 m, velocity 21.6 19.1 -109.8 m/s, Mach 0.38, alt MSL 10976 m; baro 1327 used/2274 gated/0 rejected, sigma 2.8 m; GPS 5397 used/0 rejected; integrating
+I (914539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 239990 ms
+I (915181) uart: GPS RX: baud=115201 bytes=549300 GGA=9134 fix=none sats=0 idle_ms=71
+I (915281) iris_can: state=0 RX dropped=0 TX failed=0
+I (920182) uart: GPS RX: baud=115201 bytes=552300 GGA=9184 fix=none sats=0 idle_ms=72
+I (920281) iris_can: state=0 RX dropped=0 TX failed=0
+I (920304) cpu: core0 15.2% busy, core1 13.3% busy; heap free 66404 (min 62748), internal free 66404
+I (920308) cpu: task sensors          13.4% core 1, stack free 6152 B
+I (920311) cpu: task usb_serial_echo   5.2% core 0, stack free 652 B
+I (920314) cpu: task uart1             3.4% core 0, stack free 1916 B
+I (920316) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (920319) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (920322) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (920325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (920327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (920404) sensors: attitude: 960.0 Hz, max dt 1.0 ms, gaps 8, late 9, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11225, max pass 1792 us, radio TX 3926 (failed 0), valid, tilt 89.4 deg, q xyzw [0.3389 -0.8710 -0.3296 0.1340]
+I (920412) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.81 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (920418) sensors: position: ENU -3265.8 -2969.1 8514.3 m, velocity 17.8 19.2 -102.4 m/s, Mach 0.35, alt MSL 9914 m; baro 1577 used/2274 gated/0 rejected, sigma 2.5 m; GPS 5647 used/0 rejected; integrating
+I (924539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 249990 ms
+I (925182) uart: GPS RX: baud=115201 bytes=555300 GGA=9234 fix=none sats=0 idle_ms=72
+I (925281) iris_can: state=0 RX dropped=0 TX failed=0
+I (930181) uart: GPS RX: baud=115201 bytes=558300 GGA=9284 fix=none sats=0 idle_ms=71
+I (930282) iris_can: state=0 RX dropped=0 TX failed=0
+I (930304) cpu: core0 15.2% busy, core1 13.4% busy; heap free 66404 (min 62748), internal free 66404
+I (930305) cpu: task sensors          13.4% core 1, stack free 6152 B
+I (930305) cpu: task usb_serial_echo   5.1% core 0, stack free 652 B
+I (930308) cpu: task uart1             3.4% core 0, stack free 1916 B
+I (930310) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (930313) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (930316) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (930318) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (930322) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (930406) sensors: attitude: 959.9 Hz, max dt 1.7 ms, gaps 9, late 10, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11230, max pass 3160 us, radio TX 3976 (failed 0), valid, tilt 89.4 deg, q xyzw [0.3389 -0.8710 -0.3294 0.1342]
+I (930414) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.80 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (930419) sensors: position: ENU -3096.5 -2782.3 7519.3 m, velocity 15.9 18.1 -96.4 m/s, Mach 0.33, alt MSL 8919 m; baro 1827 used/2274 gated/0 rejected, sigma 2.2 m; GPS 5897 used/0 rejected; integrating
+I (934539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 259990 ms
+I (935181) uart: GPS RX: baud=115201 bytes=561300 GGA=9334 fix=none sats=0 idle_ms=71
+I (935282) iris_can: state=0 RX dropped=0 TX failed=0
+I (940182) uart: GPS RX: baud=115201 bytes=564300 GGA=9384 fix=none sats=0 idle_ms=72
+I (940283) iris_can: state=0 RX dropped=0 TX failed=0
+I (940304) cpu: core0 15.2% busy, core1 13.5% busy; heap free 66404 (min 62748), internal free 66404
+I (940308) cpu: task sensors          13.5% core 1, stack free 6152 B
+I (940310) cpu: task usb_serial_echo   5.1% core 0, stack free 652 B
+I (940314) cpu: task uart1             3.5% core 0, stack free 1916 B
+I (940316) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (940318) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (940322) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (940325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (940327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (940406) sensors: attitude: 960.1 Hz, max dt 1.7 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11236, max pass 2960 us, radio TX 4026 (failed 0), valid, tilt 89.4 deg, q xyzw [0.3385 -0.8712 -0.3292 0.1343]I (940414) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.80 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (940420) sensors: position: ENU -2944.2 -2611.5 6576.8 m, velocity 14.7 15.8 -91.8 m/s, Mach 0.31, alt MSL 7977 m; baro 2077 used/2274 gated/0 rejected, sigma 2.0 m; GPS 6147 used/0 rejected; integrating
+I (944539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 269990 ms
+I (945182) uart: GPS RX: baud=115201 bytes=567300 GGA=9434 fix=none sats=0 idle_ms=72
+I (945283) iris_can: state=0 RX dropped=0 TX failed=0
+I (950181) uart: GPS RX: baud=115201 bytes=570300 GGA=9484 fix=none sats=0 idle_ms=71
+I (950284) iris_can: state=0 RX dropped=0 TX failed=0
+I (950304) cpu: core0 15.3% busy, core1 13.6% busy; heap free 66404 (min 62748), internal free 66404
+I (950308) cpu: task sensors          13.6% core 1, stack free 6152 B
+I (950313) cpu: task usb_serial_echo   5.2% core 0, stack free 652 B
+I (950315) cpu: task uart1             3.5% core 0, stack free 1916 B
+I (950317) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (950319) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (950323) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (950326) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (950328) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (950408) sensors: attitude: 959.8 Hz, max dt 1.0 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11246, max pass 1878 us, radio TX 4076 (failed 0), valid, tilt 89.3 deg, q xyzw [0.3385 -0.8712 -0.3291 0.1345]I (950416) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.80 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (950424) sensors: position: ENU -2804.2 -2451.8 5680.2 m, velocity 13.5 15.9 -87.4 m/s, Mach 0.29, alt MSL 7080 m; baro 2327 used/2274 gated/0 rejected, sigma 1.8 m; GPS 6397 used/0 rejected; integrating
+I (954539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 279990 ms
+I (955181) uart: GPS RX: baud=115201 bytes=573300 GGA=9534 fix=none sats=0 idle_ms=71
+I (955284) iris_can: state=0 RX dropped=0 TX failed=0
+I (960182) uart: GPS RX: baud=115201 bytes=576300 GGA=9584 fix=none sats=0 idle_ms=72
+I (960285) iris_can: state=0 RX dropped=0 TX failed=0
+I (960304) cpu: core0 15.3% busy, core1 13.6% busy; heap free 66404 (min 62748), internal free 66404
+I (960308) cpu: task sensors          13.6% core 1, stack free 6152 B
+I (960312) cpu: task usb_serial_echo   5.2% core 0, stack free 652 B
+I (960315) cpu: task uart1             3.5% core 0, stack free 1916 B
+I (960317) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (960319) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (960323) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (960326) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (960328) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (960410) sensors: attitude: 959.8 Hz, max dt 1.0 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11251, max pass 1834 us, radio TX 4126 (failed 0), valid, tilt 89.3 deg, q xyzw [0.3385 -0.8713 -0.3290 0.1346]I (960418) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.79 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (960426) sensors: position: ENU -2674.3 -2300.5 4824.0 m, velocity 12.6 14.6 -83.6 m/s, Mach 0.27, alt MSL 6224 m; baro 2577 used/2274 gated/0 rejected, sigma 1.7 m; GPS 6647 used/0 rejected; integrating
+I (964539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 289990 ms
+I (965182) uart: GPS RX: baud=115201 bytes=579300 GGA=9634 fix=none sats=0 idle_ms=72
+I (965285) iris_can: state=0 RX dropped=0 TX failed=0
+I (970182) uart: GPS RX: baud=115201 bytes=582300 GGA=9684 fix=none sats=0 idle_ms=73
+I (970285) iris_can: state=0 RX dropped=0 TX failed=0
+I (970304) cpu: core0 15.4% busy, core1 13.9% busy; heap free 66404 (min 62748), internal free 66404
+I (970308) cpu: task sensors          13.8% core 1, stack free 6152 B
+I (970312) cpu: task usb_serial_echo   5.2% core 0, stack free 652 B
+I (970315) cpu: task uart1             3.6% core 0, stack free 1916 B
+I (970317) cpu: task iris_can          2.9% core 0, stack free 2352 B
+I (970319) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (970322) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (970325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (970327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (970411) sensors: attitude: 960.0 Hz, max dt 1.0 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11266, max pass 1912 us, radio TX 4176 (failed 0), valid, tilt 89.3 deg, q xyzw [0.3383 -0.8714 -0.3288 0.1347]I (970418) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.79 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (970425) sensors: position: ENU -2560.4 -2160.4 4005.4 m, velocity 10.7 13.2 -79.9 m/s, Mach 0.26, alt MSL 5405 m; baro 2827 used/2274 gated/0 rejected, sigma 1.5 m; GPS 6897 used/0 rejected; integrating
+I (974539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 299990 ms
+I (975184) uart: GPS RX: baud=115201 bytes=585300 GGA=9734 fix=none sats=0 idle_ms=74
+I (975286) iris_can: state=0 RX dropped=0 TX failed=0
+I (980183) uart: GPS RX: baud=115201 bytes=588300 GGA=9784 fix=none sats=0 idle_ms=73
+I (980286) iris_can: state=0 RX dropped=0 TX failed=0
+I (980304) cpu: core0 15.4% busy, core1 13.8% busy; heap free 66404 (min 62748), internal free 66404
+I (980308) cpu: task sensors          13.8% core 1, stack free 6152 B
+I (980310) cpu: task usb_serial_echo   5.2% core 0, stack free 652 B
+I (980313) cpu: task uart1             3.7% core 0, stack free 1916 B
+I (980316) cpu: task iris_can          2.9% core 0, stack free 2352 B
+I (980318) cpu: task flash_logger      2.1% core 0, stack free 3360 B
+I (980322) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (980325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (980327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (980413) sensors: attitude: 960.5 Hz, max dt 1.0 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11270, max pass 1841 us, radio TX 4226 (failed 0), valid, tilt 89.2 deg, q xyzw [0.3381 -0.8715 -0.3286 0.1351]I (980420) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.79 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (980426) sensors: position: ENU -2467.0 -2042.0 3219.7 m, velocity 8.8 11.3 -76.8 m/s, Mach 0.24, alt MSL 4620 m; baro 3077 used/2274 gated/0 rejected, sigma 1.4 m; GPS 7147 used/0 rejected; integrating
+I (984539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 309990 ms
+I (985184) uart: GPS RX: baud=115201 bytes=591300 GGA=9834 fix=none sats=0 idle_ms=74
+I (985287) iris_can: state=0 RX dropped=0 TX failed=0
+I (990184) uart: GPS RX: baud=115201 bytes=594300 GGA=9884 fix=none sats=0 idle_ms=74
+I (990287) iris_can: state=0 RX dropped=0 TX failed=0
+I (990304) cpu: core0 15.5% busy, core1 14.0% busy; heap free 66404 (min 62748), internal free 66404
+I (990308) cpu: task sensors          14.0% core 1, stack free 6152 B
+I (990312) cpu: task usb_serial_echo   5.3% core 0, stack free 652 B
+I (990315) cpu: task uart1             3.7% core 0, stack free 1916 B
+I (990317) cpu: task iris_can          2.9% core 0, stack free 2352 B
+I (990319) cpu: task flash_logger      2.2% core 0, stack free 3360 B
+I (990323) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (990326) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (990328) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (990413) sensors: attitude: 960.0 Hz, max dt 1.0 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11275, max pass 1856 us, radio TX 4276 (failed 0), valid, tilt 89.2 deg, q xyzw [0.3380 -0.8716 -0.3284 0.1353]I (990420) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.79 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (990427) sensors: position: ENU -2389.9 -1939.3 2464.8 m, velocity 6.8 9.9 -74.0 m/s, Mach 0.23, alt MSL 3865 m; baro 3327 used/2274 gated/0 rejected, sigma 1.3 m; GPS 7397 used/0 rejected; integrating
+I (994539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 319990 ms
+I (995184) uart: GPS RX: baud=115201 bytes=597300 GGA=9934 fix=none sats=0 idle_ms=74
+I (995287) iris_can: state=0 RX dropped=0 TX failed=0
+I (1000184) uart: GPS RX: baud=115201 bytes=600300 GGA=9984 fix=none sats=0 idle_ms=74
+I (1000288) iris_can: state=0 RX dropped=0 TX failed=0
+I (1000304) cpu: core0 15.5% busy, core1 14.1% busy; heap free 66404 (min 62748), internal free 66404
+I (1000308) cpu: task sensors          14.1% core 1, stack free 6152 B
+I (1000311) cpu: task usb_serial_echo   5.3% core 0, stack free 652 B
+I (1000314) cpu: task uart1             3.7% core 0, stack free 1916 B
+I (1000317) cpu: task iris_can          2.9% core 0, stack free 2352 B
+I (1000319) cpu: task flash_logger      2.2% core 0, stack free 3360 B
+I (1000323) cpu: task data_forwarder    0.6% core 0, stack free 1148 B
+I (1000325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (1000327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (1000413) sensors: attitude: 960.0 Hz, max dt 1.0 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11279, max pass 1880 us, radio TX 4326 (failed 0), valid, tilt 89.2 deg, q xyzw [0.3378 -0.8716 -0.3283 0.1356I (1000420) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.78 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (1000427) sensors: position: ENU -2324.6 -1849.4 1737.6 m, velocity 5.4 8.6 -71.1 m/s, Mach 0.22, alt MSL 3138 m; baro 3577 used/2274 gated/0 rejected, sigma 1.2 m; GPS 7647 used/0 rejected; integrating
+I (1004539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 329990 ms
+I (1005184) uart: GPS RX: baud=115201 bytes=603300 GGA=10034 fix=none sats=0 idle_ms=74
+I (1005289) iris_can: state=0 RX dropped=0 TX failed=0
+I (1010184) uart: GPS RX: baud=115201 bytes=606300 GGA=10084 fix=none sats=0 idle_ms=74
+I (1010290) iris_can: state=0 RX dropped=0 TX failed=0
+I (1010304) cpu: core0 15.8% busy, core1 14.3% busy; heap free 66404 (min 62748), internal free 66404
+I (1010308) cpu: task sensors          14.3% core 1, stack free 6152 B
+I (1010313) cpu: task usb_serial_echo   5.4% core 0, stack free 652 B
+I (1010315) cpu: task uart1             3.8% core 0, stack free 1916 B
+I (1010317) cpu: task iris_can          2.9% core 0, stack free 2352 B
+I (1010319) cpu: task flash_logger      2.2% core 0, stack free 3360 B
+I (1010323) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (1010325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (1010327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (1010413) sensors: attitude: 960.0 Hz, max dt 1.0 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11288, max pass 1886 us, radio TX 4376 (failed 0), valid, tilt 89.1 deg, q xyzw [0.3377 -0.8717 -0.3282 0.1359I (1010420) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 15 switches to high-g, peak 0.79 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (1010427) sensors: position: ENU -2271.3 -1771.0 1036.9 m, velocity 5.4 6.2 -68.6 m/s, Mach 0.21, alt MSL 2437 m; baro 3827 used/2274 gated/0 rejected, sigma 1.2 m; GPS 7897 used/0 rejected; integrating
+I (1014539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 339990 ms
+I (1015184) uart: GPS RX: baud=115201 bytes=609300 GGA=10134 fix=none sats=0 idle_ms=74
+I (1015290) iris_can: state=0 RX dropped=0 TX failed=0
+I (1020184) uart: GPS RX: baud=115201 bytes=612300 GGA=10184 fix=none sats=0 idle_ms=74
+I (1020291) iris_can: state=0 RX dropped=0 TX failed=0
+I (1020304) cpu: core0 16.0% busy, core1 14.6% busy; heap free 66404 (min 62748), internal free 66404
+I (1020309) cpu: task sensors          14.6% core 1, stack free 6152 B
+I (1020311) cpu: task usb_serial_echo   5.5% core 0, stack free 652 B
+I (1020315) cpu: task uart1             3.8% core 0, stack free 1916 B
+I (1020317) cpu: task iris_can          2.9% core 0, stack free 2352 B
+I (1020320) cpu: task flash_logger      2.2% core 0, stack free 3360 B
+I (1020323) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (1020326) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (1020328) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (1020414) sensors: attitude: 959.9 Hz, max dt 1.0 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11299, max pass 1916 us, radio TX 4426 (failed 0), valid, tilt 89.1 deg, q xyzw [0.3376 -0.8718 -0.3279 0.1363I (1020421) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 16 switches to high-g, peak 18.08 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (1020428) sensors: position: ENU -2235.2 -1716.9 543.4 m, velocity 4.1 2.1 -12.5 m/s, Mach 0.04, alt MSL 1943 m; baro 4077 used/2274 gated/0 rejected, sigma 1.1 m; GPS 8147 used/0 rejected; integrating
+I (1024539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 349990 ms
+I (1025184) uart: GPS RX: baud=115201 bytes=615300 GGA=10234 fix=none sats=0 idle_ms=74
+I (1025292) iris_can: state=0 RX dropped=0 TX failed=0
+I (1030184) uart: GPS RX: baud=115201 bytes=618300 GGA=10284 fix=none sats=0 idle_ms=74
+I (1030293) iris_can: state=0 RX dropped=0 TX failed=0
+I (1030304) cpu: core0 16.1% busy, core1 14.8% busy; heap free 66404 (min 62748), internal free 66404
+I (1030309) cpu: task sensors          14.8% core 1, stack free 6152 B
+I (1030313) cpu: task usb_serial_echo   5.6% core 0, stack free 652 B
+I (1030315) cpu: task uart1             3.9% core 0, stack free 1916 B
+I (1030317) cpu: task iris_can          2.9% core 0, stack free 2352 B
+I (1030320) cpu: task flash_logger      2.2% core 0, stack free 3360 B
+I (1030323) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (1030327) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (1030329) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (1030416) sensors: attitude: 959.8 Hz, max dt 1.0 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11307, max pass 1760 us, radio TX 4476 (failed 0), valid, tilt 89.0 deg, q xyzw [0.3373 -0.8719 -0.3277 0.1364I (1030425) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 16 switches to high-g, peak 0.77 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (1030430) sensors: position: ENU -2220.3 -1674.2 417.6 m, velocity 2.3 5.2 -12.4 m/s, Mach 0.04, alt MSL 1818 m; baro 4327 used/2274 gated/0 rejected, sigma 1.1 m; GPS 8397 used/0 rejected; integrating
+I (1034539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 359990 ms
+I (1035184) uart: GPS RX: baud=115201 bytes=621300 GGA=10334 fix=none sats=0 idle_ms=74
+I (1035294) iris_can: state=0 RX dropped=0 TX failed=0
+I (1040184) uart: GPS RX: baud=115201 bytes=624300 GGA=10384 fix=none sats=0 idle_ms=74
+I (1040294) iris_can: state=0 RX dropped=0 TX failed=0
+I (1040304) cpu: core0 16.3% busy, core1 15.0% busy; heap free 66404 (min 62748), internal free 66404
+I (1040308) cpu: task sensors          15.0% core 1, stack free 6152 B
+I (1040311) cpu: task usb_serial_echo   5.7% core 0, stack free 652 B
+I (1040314) cpu: task uart1             3.9% core 0, stack free 1916 B
+I (1040317) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (1040319) cpu: task flash_logger      2.2% core 0, stack free 3360 B
+I (1040322) cpu: task data_forwarder    0.6% core 0, stack free 1148 B
+I (1040325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (1040327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (1040416) sensors: attitude: 960.0 Hz, max dt 1.0 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11313, max pass 1892 us, radio TX 4526 (failed 0), valid, tilt 89.0 deg, q xyzw [0.3372 -0.8720 -0.3275 0.1367I (1040424) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 16 switches to high-g, peak 0.76 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (1040429) sensors: position: ENU -2204.5 -1639.3 292.7 m, velocity 0.8 4.3 -12.4 m/s, Mach 0.04, alt MSL 1693 m; baro 4577 used/2274 gated/0 rejected, sigma 1.1 m; GPS 8647 used/0 rejected; integrating
+I (1044539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 369990 ms
+I (1045184) uart: GPS RX: baud=115201 bytes=627300 GGA=10434 fix=none sats=0 idle_ms=74
+I (1045294) iris_can: state=0 RX dropped=0 TX failed=0
+I (1050184) uart: GPS RX: baud=115201 bytes=630300 GGA=10484 fix=none sats=0 idle_ms=74
+I (1050295) iris_can: state=0 RX dropped=0 TX failed=0
+I (1050304) cpu: core0 16.3% busy, core1 15.0% busy; heap free 66404 (min 62748), internal free 66404
+I (1050308) cpu: task sensors          14.9% core 1, stack free 6152 B
+I (1050310) cpu: task usb_serial_echo   5.6% core 0, stack free 652 B
+I (1050314) cpu: task uart1             3.9% core 0, stack free 1916 B
+I (1050316) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (1050318) cpu: task flash_logger      2.2% core 0, stack free 3360 B
+I (1050322) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (1050325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (1050327) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (1050418) sensors: attitude: 959.8 Hz, max dt 1.0 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11318, max pass 1945 us, radio TX 4576 (failed 0), valid, tilt 88.9 deg, q xyzw [0.3371 -0.8720 -0.3273 0.1371I (1050426) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 16 switches to high-g, peak 0.77 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (1050432) sensors: position: ENU -2196.4 -1609.3 168.5 m, velocity -0.2 4.8 -12.2 m/s, Mach 0.04, alt MSL 1569 m; baro 4827 used/2274 gated/0 rejected, sigma 1.1 m; GPS 8897 used/0 rejected; integrating
+I (1054539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 379990 ms
+I (1055184) uart: GPS RX: baud=115201 bytes=633300 GGA=10534 fix=none sats=0 idle_ms=74
+I (1055295) iris_can: state=0 RX dropped=0 TX failed=0
+I (1060184) uart: GPS RX: baud=115201 bytes=636300 GGA=10584 fix=none sats=0 idle_ms=74
+I (1060296) iris_can: state=0 RX dropped=0 TX failed=0
+I (1060304) cpu: core0 16.4% busy, core1 15.1% busy; heap free 66404 (min 62748), internal free 66404
+I (1060308) cpu: task sensors          15.1% core 1, stack free 6152 B
+I (1060311) cpu: task usb_serial_echo   5.7% core 0, stack free 652 B
+I (1060314) cpu: task uart1             4.0% core 0, stack free 1916 B
+I (1060317) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (1060319) cpu: task flash_logger      2.2% core 0, stack free 3360 B
+I (1060323) cpu: task data_forwarder    0.6% core 0, stack free 1148 B
+I (1060326) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (1060328) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (1060420) sensors: attitude: 959.8 Hz, max dt 1.0 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11323, max pass 1911 us, radio TX 4626 (failed 0), valid, tilt 88.9 deg, q xyzw [0.3370 -0.8722 -0.3270 0.1372I (1060428) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 16 switches to high-g, peak 0.77 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (1060435) sensors: position: ENU -2187.1 -1597.3 44.9 m, velocity -0.1 -0.4 -12.1 m/s, Mach 0.04, alt MSL 1445 m; baro 5078 used/2274 gated/0 rejected, sigma 1.1 m; GPS 9148 used/0 rejected; integrating
+I (1064539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 389990 ms
+I (1065184) uart: GPS RX: baud=115201 bytes=639300 GGA=10634 fix=none sats=0 idle_ms=74
+I (1065296) iris_can: state=0 RX dropped=0 TX failed=0
+I (1070184) uart: GPS RX: baud=115201 bytes=642300 GGA=10684 fix=none sats=0 idle_ms=74
+I (1070297) iris_can: state=0 RX dropped=0 TX failed=0
+I (1070304) cpu: core0 16.3% busy, core1 15.0% busy; heap free 66404 (min 62748), internal free 66404
+I (1070309) cpu: task sensors          15.0% core 1, stack free 6152 B
+I (1070312) cpu: task usb_serial_echo   5.7% core 0, stack free 652 B
+I (1070315) cpu: task uart1             4.0% core 0, stack free 1916 B
+I (1070318) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (1070320) cpu: task flash_logger      2.2% core 0, stack free 3360 B
+I (1070323) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (1070327) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (1070329) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (1070420) sensors: attitude: 960.0 Hz, max dt 1.0 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11329, max pass 1919 us, radio TX 4676 (failed 0), valid, tilt 88.9 deg, q xyzw [0.3370 -0.8722 -0.3269 0.1375I (1070429) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 16 switches to high-g, peak 5.19 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (1070435) sensors: position: ENU -2177.7 -1585.9 0.0 m, velocity -0.0 0.0 0.1 m/s, Mach 0.00, alt MSL 1400 m; baro 5328 used/2274 gated/0 rejected, sigma 1.1 m; GPS 9398 used/0 rejected; integrating
+I (1074539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 399990 ms
+I (1075184) uart: GPS RX: baud=115201 bytes=645300 GGA=10734 fix=none sats=0 idle_ms=74
+I (1075298) iris_can: state=0 RX dropped=0 TX failed=0
+I (1080184) uart: GPS RX: baud=115201 bytes=648300 GGA=10784 fix=none sats=0 idle_ms=74
+I (1080298) iris_can: state=0 RX dropped=0 TX failed=0
+I (1080305) cpu: core0 16.4% busy, core1 15.2% busy; heap free 66404 (min 62748), internal free 66404
+I (1080308) cpu: task sensors          15.2% core 1, stack free 6152 B
+I (1080312) cpu: task usb_serial_echo   5.8% core 0, stack free 652 B
+I (1080315) cpu: task uart1             4.0% core 0, stack free 1916 B
+I (1080317) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (1080319) cpu: task flash_logger      2.2% core 0, stack free 3360 B
+I (1080322) cpu: task data_forwarder    0.6% core 0, stack free 1148 B
+I (1080325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (1080328) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (1080422) sensors: attitude: 959.8 Hz, max dt 1.0 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11333, max pass 1916 us, radio TX 4726 (failed 0), valid, tilt 88.8 deg, q xyzw [0.3368 -0.8722 -0.3267 0.1377I (1080429) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 16 switches to high-g, peak 0.76 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (1080436) sensors: position: ENU -2177.7 -1585.9 0.1 m, velocity -0.1 0.1 0.1 m/s, Mach 0.00, alt MSL 1400 m; baro 5578 used/2274 gated/0 rejected, sigma 1.1 m; GPS 9648 used/0 rejected; integrating
+I (1084539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 409990 ms
+I (1085184) uart: GPS RX: baud=115201 bytes=651300 GGA=10834 fix=none sats=0 idle_ms=74
+I (1085299) iris_can: state=0 RX dropped=0 TX failed=0
+I (1090183) uart: GPS RX: baud=115201 bytes=654300 GGA=10884 fix=none sats=0 idle_ms=75
+I (1090299) iris_can: state=0 RX dropped=0 TX failed=0
+I (1090304) cpu: core0 16.2% busy, core1 14.7% busy; heap free 66404 (min 62748), internal free 66404
+I (1090308) cpu: task sensors          14.7% core 1, stack free 6152 B
+I (1090312) cpu: task usb_serial_echo   5.6% core 0, stack free 652 B
+I (1090315) cpu: task uart1             3.9% core 0, stack free 1916 B
+I (1090317) cpu: task iris_can          2.9% core 0, stack free 2352 B
+I (1090319) cpu: task flash_logger      2.2% core 0, stack free 3360 B
+I (1090322) cpu: task data_forwarder    0.7% core 0, stack free 1148 B
+I (1090325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (1090328) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (1090423) sensors: attitude: 960.7 Hz, max dt 1.0 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11341, max pass 1826 us, radio TX 4776 (failed 0), valid, tilt 88.8 deg, q xyzw [0.3367 -0.8723 -0.3266 0.1377I (1090430) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 16 switches to high-g, peak 0.76 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (1090436) sensors: position: ENU -2177.7 -1585.9 0.1 m, velocity -0.1 0.1 0.2 m/s, Mach 0.00, alt MSL 1400 m; baro 5828 used/2274 gated/0 rejected, sigma 1.1 m; GPS 9898 used/0 rejected; integrating
+I (1094274) flight_state: landing detected: accel 1.02 g, gyro 1.74 dps, altitude range 0.57 m
+I (1094276) flight_state: descent -> landed
+I (1094283) sensors: attitude after flight: q xyzw [0.33667 -0.87235 -0.32660 0.13784], tilt 88.82 deg from vertical, integrated 383400 steps over 399.440 s (gaps 10, late 11)
+I (1094539) hitl: HITL active: 1000 samples in last 10000 ms, sim time 419990 ms
+I (1095184) uart: GPS RX: baud=115201 bytes=657300 GGA=10934 fix=none sats=0 idle_ms=74
+I (1095299) iris_can: state=0 RX dropped=0 TX failed=0
+I (1100184) uart: GPS RX: baud=115201 bytes=660300 GGA=10984 fix=none sats=0 idle_ms=74
+I (1100299) iris_can: state=0 RX dropped=0 TX failed=0
+I (1100304) cpu: core0 15.3% busy, core1 12.5% busy; heap free 66404 (min 62748), internal free 66404
+I (1100308) cpu: task sensors          12.5% core 1, stack free 6152 B
+I (1100311) cpu: task usb_serial_echo   5.4% core 0, stack free 652 B
+I (1100315) cpu: task uart1             3.8% core 0, stack free 1916 B
+I (1100317) cpu: task iris_can          3.0% core 0, stack free 2352 B
+I (1100319) cpu: task flash_logger      1.7% core 0, stack free 3360 B
+I (1100322) cpu: task data_forwarder    0.6% core 0, stack free 1148 B
+I (1100325) cpu: task flash_capture     0.4% core 0, stack free 1344 B
+I (1100328) cpu: task cpu_load          0.2% core 0, stack free 1528 B
+I (1100425) sensors: attitude: 959.9 Hz, max dt 1.0 ms, gaps 10, late 11, spikes rejected 93, windows 692 ok/0 accel/0 gyro rejected, overruns 11349, max pass 4325 us, radio TX 4826 (failed 0), held, tilt 88.8 deg, q xyzw [0.3367 -0.8723 -0.3266 0.1378]I (1100432) sensors: imu fifo: 0.0 Hz, overruns 0, partial slots 0, unknown words 0, max backlog 0 words; filtered accel low-g, 16 switches to high-g, peak 0.76 g; core-1 time: FIFO read 0.0%, sample processing 0.0%
+I (1100438) sensors: position: ENU -2177.7 -1585.9 0.0 m, velocity -0.0 0.0 0.0 m/s, Mach 0.00, alt MSL 1400 m; baro 6078 used/2274 gated/0 rejected, sigma 1.1 m; GPS 10148 used/0 rejected; integrating
+I (1104242) hitl: HITL mode exited by USB command; real sensors restored
+I (1104243) sensors: attitude reset: sensor source is now the real IMU
+W (1104247) sensors: attitude after flight unavailable: no stationary pad window initialized the estimator
+I (1105184) uart: GPS RX: baud=115201 bytes=663300 GGA=11034 fix=none sats=0 idle_ms=74
+I (1105299) iris_can: state=0 RX dropped=0 TX failed=0
+I (1105818) sensors: radio transmission disabled
+I (1105820) serial_command: freezing logs for read-only USB export

@@ -1,0 +1,348 @@
+{
+  "passed": true,
+  "rows": [
+    {
+      "state": "Boost",
+      "expected_s": 20.33,
+      "witness_s": 20.36,
+      "delta_s": 0.03,
+      "result": "OK"
+    },
+    {
+      "state": "Coast",
+      "expected_s": 22.99,
+      "witness_s": 23.02,
+      "delta_s": 0.03,
+      "result": "OK"
+    },
+    {
+      "state": "Descent",
+      "expected_s": 128.87,
+      "witness_s": 128.88,
+      "delta_s": 0.01,
+      "result": "OK"
+    },
+    {
+      "state": "Landed",
+      "expected_s": 419.73,
+      "witness_s": 419.74,
+      "delta_s": 0.01,
+      "result": "OK"
+    }
+  ],
+  "order_ok": true,
+  "problems": [],
+  "warnings": [
+    "simulated pressure is below the MS5607 10 mbar range for 71.9 s (sim 73.4-145.2 s); sent anyway, but the real sensor could not measure it"
+  ],
+  "attitude": {
+    "packets": 4727,
+    "valid_packets": 4716,
+    "thresholds": {
+      "final_tilt_max_deg": 5.0,
+      "final_att_max_deg": null,
+      "flight_tilt_max_deg": null
+    },
+    "available": true,
+    "problems": [],
+    "warnings": [],
+    "phases": {
+      "Pad idle": {
+        "tilt_err_deg": {
+          "n": 213,
+          "max": 0.971,
+          "rms": 0.961
+        },
+        "nose_err_deg": {
+          "n": 213,
+          "max": 0.971,
+          "rms": 0.961
+        },
+        "att_err_deg": {
+          "n": 213,
+          "max": 0.971,
+          "rms": 0.961
+        }
+      },
+      "Boost": {
+        "tilt_err_deg": {
+          "n": 29,
+          "max": 0.952,
+          "rms": 0.924
+        },
+        "nose_err_deg": {
+          "n": 29,
+          "max": 0.962,
+          "rms": 0.947
+        },
+        "att_err_deg": {
+          "n": 29,
+          "max": 0.962,
+          "rms": 0.947
+        }
+      },
+      "Coast": {
+        "tilt_err_deg": {
+          "n": 1165,
+          "max": 0.956,
+          "rms": 0.696
+        },
+        "nose_err_deg": {
+          "n": 1165,
+          "max": 0.96,
+          "rms": 0.7
+        },
+        "att_err_deg": {
+          "n": 1165,
+          "max": 0.96,
+          "rms": 0.701
+        }
+      },
+      "Descent": {
+        "tilt_err_deg": {
+          "n": 3199,
+          "max": 0.804,
+          "rms": 0.421
+        },
+        "nose_err_deg": {
+          "n": 3199,
+          "max": 0.807,
+          "rms": 0.423
+        },
+        "att_err_deg": {
+          "n": 3199,
+          "max": 0.835,
+          "rms": 0.438
+        }
+      },
+      "Landed": {
+        "tilt_err_deg": {
+          "n": 110,
+          "max": 0.803,
+          "rms": 0.803
+        },
+        "nose_err_deg": {
+          "n": 110,
+          "max": 0.807,
+          "rms": 0.807
+        },
+        "att_err_deg": {
+          "n": 110,
+          "max": 0.836,
+          "rms": 0.836
+        }
+      }
+    },
+    "final": {
+      "sim_s": 429.64,
+      "phase": "Landed",
+      "tilt_err_deg": 0.803,
+      "nose_err_deg": 0.807,
+      "att_err_deg": 0.836,
+      "truth_tilt_deg": 89.625,
+      "witness_tilt_deg": 88.821
+    },
+    "heading_offset_deg": 0.676,
+    "heading_source": "locked when Boost was detected (sim 20.45 s) from the last pad packet, sim 20.35 s",
+    "first_valid_sim_s": 1.05,
+    "passed": true
+  },
+  "source": "csv",
+  "tolerance_s": 10.0,
+  "frames_sent": 42971,
+  "late_ticks": 0,
+  "preset": "CSV trajectory eayftrajectory.csv",
+  "observed_sequence": [
+    "Pad idle",
+    "Boost",
+    "Coast",
+    "Descent",
+    "Landed"
+  ],
+  "comparison": {
+    "Pad idle": {
+      "packets": 203,
+      "up_rms_m": 0.053635636549873515,
+      "up_max_m": 0.6878802835712596,
+      "horizontal_rms_m": 0.017154025603641525,
+      "horizontal_max_m": 0.24180293581290108,
+      "speed_rms_mps": 0.40026440990101025,
+      "speed_max_mps": 4.184500406242332,
+      "attitude_rms_deg": 1.177881543266939,
+      "attitude_max_deg": 1.1839358686505965
+    },
+    "Boost": {
+      "packets": 27,
+      "up_rms_m": 4.803209429259551,
+      "up_max_m": 7.029668221076918,
+      "horizontal_rms_m": 3.5045926156087104,
+      "horizontal_max_m": 6.317384364570642,
+      "speed_rms_mps": 5.452418577108447,
+      "speed_max_mps": 7.888102127005595,
+      "attitude_rms_deg": 1.1650103872718576,
+      "attitude_max_deg": 1.176097842317513
+    },
+    "Coast": {
+      "packets": 1059,
+      "up_rms_m": 7.00192804134001,
+      "up_max_m": 27.0548864344928,
+      "horizontal_rms_m": 1.823819204066686,
+      "horizontal_max_m": 7.8263075655842504,
+      "speed_rms_mps": 2.333235746964503,
+      "speed_max_mps": 17.078571865234153,
+      "attitude_rms_deg": 0.9982150189247602,
+      "attitude_max_deg": 1.1802797427732552
+    },
+    "Descent": {
+      "packets": 2908,
+      "up_rms_m": 3.579151590660989,
+      "up_max_m": 14.68917131499984,
+      "horizontal_rms_m": 2.625037640134531,
+      "horizontal_max_m": 7.0570663572364705,
+      "speed_rms_mps": 0.47415254945552,
+      "speed_max_mps": 5.435353700457971,
+      "attitude_rms_deg": 0.7968291479886639,
+      "attitude_max_deg": 1.0275484722293684
+    },
+    "Landed": {
+      "packets": 100,
+      "up_rms_m": 0.02265915310781738,
+      "up_max_m": 0.08957466869122224,
+      "horizontal_rms_m": 5.719230639708007,
+      "horizontal_max_m": 5.759260476992489,
+      "speed_rms_mps": 0.021727880559872376,
+      "speed_max_mps": 0.20920853843771595,
+      "attitude_rms_deg": 1.0275475377112455,
+      "attitude_max_deg": 1.0275475377112446
+    }
+  },
+  "fc_logs": {
+    "ok": true,
+    "files": [
+      "I000004A.BIN",
+      "I000004A.csv",
+      "S000004A.BIN",
+      "S000004A.csv",
+      "S000004A.TXT",
+      "P000004A.BIN",
+      "P000004A.csv",
+      "U000004A.BIN"
+    ],
+    "dir": "C:\\Users\\E\\Documents\\GitHub\\Witness\\Software\\HITL\\runs\\20261109-132542\\fc_logs",
+    "error": null,
+    "flash_comparison": {
+      "Pad idle": {
+        "packets": 1016,
+        "up_rms_m": 0.05212934439466072,
+        "up_max_m": 0.7285936790656762,
+        "horizontal_rms_m": 0.024355213132610774,
+        "horizontal_max_m": 0.47071464655648027,
+        "speed_rms_mps": 0.37941155583469793,
+        "speed_max_mps": 4.286584054026495,
+        "attitude_rms_deg": 1.17788150738445,
+        "attitude_max_deg": 1.1844796683658805
+      },
+      "Boost": {
+        "packets": 133,
+        "up_rms_m": 4.00467096041887,
+        "up_max_m": 8.06860821391706,
+        "horizontal_rms_m": 3.5114581909298264,
+        "horizontal_max_m": 6.555119457252394,
+        "speed_rms_mps": 5.263755648853378,
+        "speed_max_mps": 9.466293633866826,
+        "attitude_rms_deg": 1.165775290445113,
+        "attitude_max_deg": 1.1775635702105973
+      },
+      "Coast": {
+        "packets": 5294,
+        "up_rms_m": 5.89005072757364,
+        "up_max_m": 22.77307897058381,
+        "horizontal_rms_m": 1.7998077790041247,
+        "horizontal_max_m": 8.500679569330499,
+        "speed_rms_mps": 2.3271625302254844,
+        "speed_max_mps": 19.565079589047627,
+        "attitude_rms_deg": 0.9988389440989272,
+        "attitude_max_deg": 1.180756722884203
+      },
+      "Descent": {
+        "packets": 14543,
+        "up_rms_m": 3.2990430511020428,
+        "up_max_m": 9.193694374996994,
+        "horizontal_rms_m": 2.621229500895459,
+        "horizontal_max_m": 7.0737253176501005,
+        "speed_rms_mps": 0.4801235905028514,
+        "speed_max_mps": 5.680139034742538,
+        "attitude_rms_deg": 0.7968503033106549,
+        "attitude_max_deg": 1.0281965463840235
+      },
+      "Landed": {
+        "packets": 499,
+        "up_rms_m": 0.02162454532660112,
+        "up_max_m": 0.08957466884844881,
+        "horizontal_rms_m": 5.719102130070997,
+        "horizontal_max_m": 5.7592604773877145,
+        "speed_rms_mps": 0.014575396807006879,
+        "speed_max_mps": 0.20920853820937113,
+        "attitude_rms_deg": 1.0275479120104705,
+        "attitude_max_deg": 1.027760445006087
+      }
+    }
+  },
+  "comparison_flash": {
+    "Pad idle": {
+      "packets": 1016,
+      "up_rms_m": 0.05212934439466072,
+      "up_max_m": 0.7285936790656762,
+      "horizontal_rms_m": 0.024355213132610774,
+      "horizontal_max_m": 0.47071464655648027,
+      "speed_rms_mps": 0.37941155583469793,
+      "speed_max_mps": 4.286584054026495,
+      "attitude_rms_deg": 1.17788150738445,
+      "attitude_max_deg": 1.1844796683658805
+    },
+    "Boost": {
+      "packets": 133,
+      "up_rms_m": 4.00467096041887,
+      "up_max_m": 8.06860821391706,
+      "horizontal_rms_m": 3.5114581909298264,
+      "horizontal_max_m": 6.555119457252394,
+      "speed_rms_mps": 5.263755648853378,
+      "speed_max_mps": 9.466293633866826,
+      "attitude_rms_deg": 1.165775290445113,
+      "attitude_max_deg": 1.1775635702105973
+    },
+    "Coast": {
+      "packets": 5294,
+      "up_rms_m": 5.89005072757364,
+      "up_max_m": 22.77307897058381,
+      "horizontal_rms_m": 1.7998077790041247,
+      "horizontal_max_m": 8.500679569330499,
+      "speed_rms_mps": 2.3271625302254844,
+      "speed_max_mps": 19.565079589047627,
+      "attitude_rms_deg": 0.9988389440989272,
+      "attitude_max_deg": 1.180756722884203
+    },
+    "Descent": {
+      "packets": 14543,
+      "up_rms_m": 3.2990430511020428,
+      "up_max_m": 9.193694374996994,
+      "horizontal_rms_m": 2.621229500895459,
+      "horizontal_max_m": 7.0737253176501005,
+      "speed_rms_mps": 0.4801235905028514,
+      "speed_max_mps": 5.680139034742538,
+      "attitude_rms_deg": 0.7968503033106549,
+      "attitude_max_deg": 1.0281965463840235
+    },
+    "Landed": {
+      "packets": 499,
+      "up_rms_m": 0.02162454532660112,
+      "up_max_m": 0.08957466884844881,
+      "horizontal_rms_m": 5.719102130070997,
+      "horizontal_max_m": 5.7592604773877145,
+      "speed_rms_mps": 0.014575396807006879,
+      "speed_max_mps": 0.20920853820937113,
+      "attitude_rms_deg": 1.0275479120104705,
+      "attitude_max_deg": 1.027760445006087
+    }
+  }
+}
