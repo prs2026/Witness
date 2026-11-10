@@ -112,12 +112,21 @@ The **Flight controls** menu provides layout loading/saving, Pause/Resume, Clear
 - Auto-scale fits each graph axis to its visible valid samples, including small changes around large offsets such as negative RSSI.
 - Invalid samples retain the last valid readout, its original receive age, and an invalid indication. Graphs leave a gap instead of drawing the held value as a fresh sample.
 - Clear plots resets histories, source bindings, and derived estimates, not logs.
-- Set pad resets horizontal-distance references. It does not zero altitude.
+- Set pad re-references the GPS horizontal distances and the Featherweight/AIM altitude-above-pad traces. The Witness Kalman altitude and position are zeroed by Witness itself on the pad, not by Horizon.
 - Graph time is host receive time, displayed in UTC. Device uptime and AIM publisher timestamps serve different purposes.
 
 ### Units and derived values
 
-Witness data uses the decoder’s protocol scaling. Featherweight altitude and velocity are converted from feet/feet per second for the default dashboard; its altitude is not automatically height above the launch pad.
+Witness data uses the decoder’s protocol scaling. The Altitude AGL graph and readout show metres above the pad for every source:
+
+- **W KF** is `kalman_altitude` from `0x02`/`0xE0`: the Witness position Kalman filter's up estimate, already relative to the pad (firmware before 2026-11-10 sent barometric altitude in this slot).
+- **F GPS** is the Featherweight tracker's altitude (ft ASL × 0.3048) minus the pad's MSL altitude (`_derived.altitude_agl_m`).
+- **A baro~** is AIM pressure altitude minus its first live sample (`_derived.barometric_altitude_agl_m`), because a standard-atmosphere pressure altitude is not MSL.
+- Witness GPS altitude is available as `_derived.gps_altitude_agl_m` (only while the GPS-locked bit is set).
+
+The pad's position and MSL altitude come from `pad_reference.py`, in priority order: a manual **Set pad here** on the Visualizer map (position only), the Featherweight ground station (`GPS_STAT` unit `BASE`), Aperture's LC86G GPS in the `0xF0` status packet, the mean Witness GPS fix while it reports Pad Idle with GPS lock, and finally the first Featherweight tracker fix. Until any pad altitude is known, an MSL source is referenced to its own first live value. Horizontal distance is `hypot(E, N)` of the Witness Kalman position (its origin is the pad) and the great-circle distance of GPS sources from the pad position.
+
+Featherweight velocity is converted from feet per second.
 
 AIM pressure is interpreted as pascals. Horizon estimates pressure altitude using a standard atmosphere with a 101325 Pa reference, then estimates vertical velocity from successive altitude differences divided by publisher timestamp differences. These are not AIM’s calibrated/fused outputs or height above ground.
 
@@ -160,6 +169,31 @@ When a truth quaternion is present, truth is drawn as a blue dashed ghost and as
 - The `0x02` quaternion is 1 Hz. The 10 Hz `0xE0` stream must be enabled with command `0x00E0` from the Witness monitor (Horizon sends no commands). Over LoRa, `0xE0` is relayed at 1 Hz at most. Fast motion between 1 Hz samples is not visible, and live mode does not interpolate.
 - Live age is host receive time and includes link latency. File time is the CSV's own time base. For converter CSVs that is device uptime.
 - The drawing is an orthographic wireframe with simple depth ordering, not a rendered model, and is not to scale.
+
+## Visualizer window
+
+**Windows > Visualizer** (or **F9**) in `horizon.py` opens a separate window with two tabs. Both use the same Witness and Featherweight records as Flight View. Tracks are collected from startup, so opening the window later still shows the whole flight.
+
+**Orientation** draws the Witness quaternion as the Attitude tab's 3D wireframe rocket (fresh `0xE0`, else `0x02`; same conventions), with large **tilt from vertical**, **roll** (spin about the nose) and **heading** (nose azimuth) readouts. Heading and roll are relative to the arbitrary heading fixed at initialisation, because Witness has no magnetometer. An all-zero quaternion is explained rather than drawn:
+
+- on the pad: `ATTITUDE NOT INITIALISED` (waiting for the 1 s stationary window; HITL entry/exit resets it);
+- in Boost/Coast/Descent/Landed after a valid attitude: `ATTITUDE LOST`. Witness stops its attitude for the rest of the flight once a gyro axis saturates (≥ 1950 dps), and its Kalman filter then ignores the IMU. The last valid attitude is drawn dashed.
+
+**Map** is a top-down, north-up view centred on the pad, showing:
+
+- range rings, a north arrow and a scale bar;
+- a track for each source, distinguished by colour and marker:
+  - Witness Kalman ENU: black line and dot;
+  - Witness GPS (int24, about 11 m steps, only with GPS lock): blue squares;
+  - Featherweight tracker: green dashed line and circle;
+- distance, compass bearing, altitude above the pad and age for each source;
+- the pad source in use, its position and its MSL altitude.
+
+The Kalman position is relative to the vehicle's own pad. It is placed using the mean Witness GPS fix on the pad when one exists, and is otherwise assumed to start at the selected pad. Drag to pan, use the mouse wheel or **+/-** to zoom, and tick **Follow rocket** to keep the newest position centred. **Set pad here...** then a click overrides the pad position. **Auto pad** returns to automatic selection.
+
+The map always works offline as a metric grid. With **OSM tiles** ticked (the default), OpenStreetMap raster tiles are drawn underneath. They are fetched on one background thread at no more than 2 requests/s, with a User-Agent naming Horizon and no personal data, and cached in `tile_cache/osm/<z>/<x>/<y>.png` (ignored by git). Cached tiles are re-used offline and refreshed only after 30 days. **Pre-cache area...** downloads up to 600 tiles covering about 2 km around the pad at zoom 12–17. Do this once at home with internet, after the pad is known or set manually. Start with `horizon.py --offline-map` to never download. The map shows "© OpenStreetMap contributors" whenever tiles are drawn.
+
+Redraws are timer-driven: at most 25 Hz, and only when data or the view changed. Tiles are fetched off the UI thread and loaded with Tk's built-in PNG support, so there are no new dependencies.
 
 ## Layout Editor
 

@@ -37,11 +37,21 @@ decoded * scale + offset. Unknown AIM units remain labeled raw; unmapped
 fields explicitly show N/A. To map continuity once topic/key is known, set
 enabled=true and packet/field, format=continuity (0=OPEN, 1=CONTINUITY).
 
-_derived.horizontal_distance_m uses Witness local X/Y or FW/AIM GPS lat/lon
-degrees. First valid live position is the reference; Set pad releases origins
-for the next live position. This is not slant range. Witness altitude remains
-pressure-referenced, FW altitude is converted from ft ASL. Set pad does not
-zero altitudes. AIM pressure_payload/v1 derives _derived.barometric_altitude_m
+_derived.horizontal_distance_m is distance from the pad, not slant range:
+hypot(E, N) of the Witness Kalman ENU position (its origin is the pad), and
+great-circle distance of FW/AIM GPS lat/lon from the shared pad position
+(pad_reference.py) or, before one is known, from the first valid live fix.
+Altitudes are metres above the pad: Witness kalman_altitude (0x02/0xE0) is
+the Kalman filter's up estimate, already relative to the pad. MSL sources use
+derived fields with the pad's MSL altitude subtracted (Featherweight GS,
+Aperture LC86G GPS, Witness on-pad GPS, first tracker fix, in that order):
+_derived.altitude_agl_m (FW altitude_ft x 0.3048) and
+_derived.gps_altitude_agl_m (Witness GPS, only with the GPS-locked bit).
+Without a pad altitude they use their own first live value. AIM pressure
+altitude is not MSL, so _derived.barometric_altitude_agl_m always uses its
+first live value. Set pad re-references distance and these AGL fields; the
+Kalman altitude itself is zeroed by Witness on the pad, not by Horizon.
+AIM pressure_payload/v1 derives _derived.barometric_altitude_m
 from pressure interpreted as Pa using a 101325 Pa standard atmosphere reference.
 _derived.vertical_velocity_mps is its altitude difference / publisher time
 difference, positive upwards, not AIM's fused velocity. A baro~ and A~ denote
@@ -93,7 +103,7 @@ from flight_render import BG, TEXT, DashboardRenderer
 
 
 class FlightView(ttk.Frame):
-    def __init__(self, parent, *, layout_path=DEFAULT_LAYOUT):
+    def __init__(self, parent, *, layout_path=DEFAULT_LAYOUT, pad=None):
         super().__init__(parent, padding=5)
         self._after_id = None
         self.paused, self.frozen = False, None
@@ -104,9 +114,9 @@ class FlightView(ttk.Frame):
             layout = load_layout(self.layout_path)
         except (OSError, ValueError) as exc:
             self.load_error = str(exc)
-            layout = validate_layout({"version": 1, "plots": [{"title": "Barometric altitude", "unit": "m",
+            layout = validate_layout({"version": 1, "plots": [{"title": "Altitude above pad", "unit": "m",
                 "traces": [{"label": "W", "input": "witness", "packet": "state", "field": "kalman_altitude"}]}]})
-        self.data = FlightData(layout)
+        self.data = FlightData(layout, pad=pad)
         self.columnconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
         toolbar = ttk.Frame(self)

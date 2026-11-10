@@ -4,3 +4,4 @@ __pycache__/
 *$py.class
 auto_connect_*.json
 auto_connect_*.json.tmp
+tile_cache/

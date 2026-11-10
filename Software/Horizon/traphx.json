@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Fixed, non-scrolling launch dashboard. W=Witness, A=AIM, F=Featherweight. A baro~ is standard pressure altitude in m, interpreting AIM pressure as Pa with 101325 Pa reference; A~ vertical velocity is delta barometric altitude / delta publisher timestamp in m/s, positive up. These are estimates, not AIM calibrated/fused outputs. A GPS remains raw on the right altitude axis and GPS readout (publisher units unverified). Altitudes are not zeroed by Set pad. Horizontal distance uses the first valid position. Invalid data holds the last valid readout with original age and an INVALID flag, with gaps in plots. FW tracker and local/GS batteries stay separate. Zero battery readings are invalid. AIM acceleration AZ stays on a separate raw axis; AX~/AY~/AZ~ gyro traces are quaternion-derived deg/s estimates. Window selector preserves history. See flight_view.py for configuration.",
+  "description": "Fixed, non-scrolling launch dashboard. W=Witness, A=AIM, F=Featherweight. A baro~ is standard pressure altitude in m, interpreting AIM pressure as Pa with 101325 Pa reference; A~ vertical velocity is delta barometric altitude / delta publisher timestamp in m/s, positive up. These are estimates, not AIM calibrated/fused outputs. A GPS remains raw on the right altitude axis and GPS readout (publisher units unverified). Altitudes are m above the pad: W KF is Witness's Kalman altitude (already AGL); F GPS is Featherweight ft ASL minus the pad MSL altitude (Featherweight GS, Aperture GPS, Witness pad GPS, else its first fix); A baro~ is referenced to its first live sample. Set pad re-references F/A altitudes and distances. Horizontal distance is from the pad: Witness Kalman E/N, GPS sources from the pad position (else their first fix). Invalid data holds the last valid readout with original age and an INVALID flag, with gaps in plots. FW tracker and local/GS batteries stay separate. Zero battery readings are invalid. AIM acceleration AZ stays on a separate raw axis; AX~/AY~/AZ~ gyro traces are quaternion-derived deg/s estimates. Window selector preserves history. See flight_view.py for configuration.",
   "title": "Horizon Flight View",
   "window_seconds": 120.0,
   "auto_scale": true,
@@ -10,7 +10,7 @@
   "gap_seconds": 3.0,
   "plots": [
     {
-      "title": "Altitude",
+      "title": "Altitude AGL",
       "unit": "m",
       "right_unit": "GPS raw",
       "traces": [
@@ -22,26 +22,27 @@
             "witness_debug"
           ],
           "field": "kalman_altitude",
-          "color": "#171717"
+          "color": "#171717",
+          "note": "Witness Kalman altitude, m above the pad"
         },
         {
           "label": "F GPS",
           "input": "featherweight",
           "packet": "GPS_STAT",
-          "field": "altitude_ft",
+          "field": "_derived.altitude_agl_m",
           "color": "#006020",
           "match": {
             "unit_type": "TRACKER"
           },
-          "scale": 0.3048
+          "note": "Featherweight ft ASL converted to m minus pad MSL altitude"
         },
         {
           "label": "A baro~",
           "input": "aim",
           "packet": "pressure_payload/v1",
-          "field": "_derived.barometric_altitude_m",
+          "field": "_derived.barometric_altitude_agl_m",
           "color": "#990000",
-          "note": "Standard pressure altitude; assumes Pa and sea-level reference 101325 Pa"
+          "note": "Pressure altitude (Pa, 101325 Pa ref) minus its first live sample"
         },
         {
           "label": "A GPS",
@@ -262,7 +263,7 @@
   "readouts": [
     {
       "group": "flight",
-      "title": "Altitude",
+      "title": "Altitude AGL",
       "unit": "m",
       "traces": [
         {
@@ -273,26 +274,27 @@
             "witness_debug"
           ],
           "field": "kalman_altitude",
-          "color": "#171717"
+          "color": "#171717",
+          "note": "Witness Kalman altitude, m above the pad"
         },
         {
           "label": "A baro~",
           "input": "aim",
           "packet": "pressure_payload/v1",
-          "field": "_derived.barometric_altitude_m",
+          "field": "_derived.barometric_altitude_agl_m",
           "color": "#990000",
-          "note": "Pressure altitude estimate, not GPS or calibrated AIM altitude"
+          "note": "Pressure altitude (Pa, 101325 Pa ref) minus its first live sample"
         },
         {
           "label": "F",
           "input": "featherweight",
           "packet": "GPS_STAT",
-          "field": "altitude_ft",
+          "field": "_derived.altitude_agl_m",
           "color": "#006020",
           "match": {
             "unit_type": "TRACKER"
           },
-          "scale": 0.3048
+          "note": "Featherweight ft ASL converted to m minus pad MSL altitude"
         }
       ]
     },

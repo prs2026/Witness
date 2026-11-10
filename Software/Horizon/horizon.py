@@ -26,6 +26,12 @@ Disconnect also disables that input's auto-connect. No network range is scanned.
 Horizon does not open the AIM USB device. Logs go in logs/: Witness JSONL,
 Featherweight raw BIN plus diagnostic/packet JSONL, and AIM MQTT JSONL.
 
+Windows > Visualizer (or F9) opens a second window: an Orientation tab (live
+Witness quaternion as a 3D rocket with tilt/roll/heading) and a top-down Map
+of the rocket relative to the pad. The map is an offline grid; with "OSM
+tiles" on it also draws OpenStreetMap tiles cached under tile_cache/ (use
+--offline-map to never fetch). Tracks are collected while the window is closed.
+
 Flight View opens first. The Attitude tab draws the Witness quaternion as a 3D
 rocket (live from the feed, or replaying a converter/HITL CSV); see README.md.
 Use the Layout Editor tab to edit a separate draft,
@@ -46,6 +52,10 @@ from flight_data import DEFAULT_LAYOUT
 from flight_view import FlightView
 from flight_editor import FlightLayoutEditor
 from ground_tabs import FeatherweightTab, WitnessTab
+from map_data import MapData
+from map_tiles import TileCache
+from pad_reference import PadReference
+from visualizer import VisualizerWindow
 from ground_settings import (
     DEFAULT_AIM_MQTT_HOST, DEFAULT_AIM_MQTT_PORT,
     DEFAULT_AIM_MQTT_UUID, DEFAULT_AIM_MQTT_BASE_PATH,
@@ -57,18 +67,25 @@ LOG_DIR = Path(__file__).resolve().parent / "logs"
 
 class HorizonGroundStation(tk.Tk):
     def __init__(self, *, log_dir=LOG_DIR, auto_connect=True, flight_layout=DEFAULT_LAYOUT,
-                 broker_enabled=DEFAULT_MQTT_BROKER_ENABLED, broker_port=DEFAULT_MQTT_BROKER_PORT):
+                 broker_enabled=DEFAULT_MQTT_BROKER_ENABLED, broker_port=DEFAULT_MQTT_BROKER_PORT,
+                 map_online=True, tile_cache=None):
         super().__init__()
+        # Pad reference and ground track are shared by Flight View (AGL altitudes,
+        # distance) and the Visualizer map; both are fed on receiver threads.
+        self.pad = PadReference()
+        self.map_data = MapData(self.pad)
+        self.tiles = tile_cache if tile_cache is not None else TileCache(online=map_online)
+        self.visualizer = None
         self.title("Horizon Unified Ground Station")
         self.geometry(f"{min(1440, self.winfo_screenwidth() - 40)}x{min(900, self.winfo_screenheight() - 100)}")
         self.minsize(min(1000, self.winfo_screenwidth() - 40), min(650, self.winfo_screenheight() - 100))
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill="both", expand=True, padx=4, pady=(2, 4))
-        self.flight = FlightView(self.notebook, layout_path=flight_layout)
+        self.flight = FlightView(self.notebook, layout_path=flight_layout, pad=self.pad)
         self.attitude = AttitudeTab(self.notebook)
         self.witness = WitnessTab(self.notebook, log_dir=log_dir, on_record=self._witness_record)
         self.featherweight = FeatherweightTab(self.notebook, log_dir=log_dir,
-                                             on_record=lambda record: self.flight.data.accept_record("featherweight", record))
+                                             on_record=self._featherweight_record)
         self.aim = AimMqttTab(self.notebook, log_dir=log_dir, host=DEFAULT_AIM_MQTT_HOST,
                               port=DEFAULT_AIM_MQTT_PORT, client_uuid=DEFAULT_AIM_MQTT_UUID,
                               base_path=DEFAULT_AIM_MQTT_BASE_PATH, on_sample=self.flight.data.accept_aim,
@@ -80,17 +97,45 @@ class HorizonGroundStation(tk.Tk):
             self.notebook.add(tab, text=title)
         for tab in (self.witness, self.featherweight, self.aim):
             tab.set_auto_connect(auto_connect)
+        menubar = tk.Menu(self)
+        windows = tk.Menu(menubar, tearoff=False)
+        windows.add_command(label="Visualizer (orientation + map)", accelerator="F9",
+                            command=self.open_visualizer)
+        menubar.add_cascade(label="Windows", menu=windows)
+        self.configure(menu=menubar)
+        self.bind("<F9>", lambda _event: self.open_visualizer())
         self.protocol("WM_DELETE_WINDOW", self.close)
 
     def _witness_record(self, record):
+        # Pad first, so this record's AGL altitude already uses a new pad fix.
+        self.pad.accept_record("witness", record)
+        self.map_data.accept_record("witness", record)
         self.flight.data.accept_record("witness", record)
         self.attitude.accept_record(record)
+
+    def _featherweight_record(self, record):
+        self.pad.accept_record("featherweight", record)
+        self.map_data.accept_record("featherweight", record)
+        self.flight.data.accept_record("featherweight", record)
+
+    def open_visualizer(self):
+        if self.visualizer is not None and self.visualizer.winfo_exists():
+            self.visualizer.deiconify()
+            self.visualizer.lift()
+            return self.visualizer
+        # The Attitude tab's LiveAttitude already ingests every Witness record.
+        self.visualizer = VisualizerWindow(self, live=self.attitude.live, map_data=self.map_data,
+                                           tiles=self.tiles)
+        return self.visualizer
 
     def close(self):
         for tab in (self.witness, self.featherweight, self.aim):
             tab.close()
+        if self.visualizer is not None and self.visualizer.winfo_exists():
+            self.visualizer.close()
         self.flight.close()
         self.attitude.close()
+        self.tiles.close()
         self.destroy()
 
 
@@ -100,6 +145,9 @@ if __name__ == "__main__":
                         help="Flight View JSON layout (default: flight_view_default.json next to horizon.py)")
     parser.add_argument("--no-auto-connect", action="store_true", help="start with all automatic connections off")
     parser.add_argument("--no-broker", action="store_true", help="do not start the embedded localhost MQTT broker")
+    parser.add_argument("--offline-map", action="store_true",
+                        help="never download OpenStreetMap tiles (cached tiles and the grid still show)")
     args = parser.parse_args()
     HorizonGroundStation(flight_layout=args.flight_layout, auto_connect=not args.no_auto_connect,
-                         broker_enabled=DEFAULT_MQTT_BROKER_ENABLED and not args.no_broker).mainloop()
+                         broker_enabled=DEFAULT_MQTT_BROKER_ENABLED and not args.no_broker,
+                         map_online=not args.offline_map).mainloop()

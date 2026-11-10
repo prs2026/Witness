@@ -171,7 +171,12 @@ class WitnessTab(ReceiverTab):
         self.init_auto_connect(self.controls, row=0, column=5, padx=12)
         self.note.configure(text="Receive only: start main.py to supply decoded Witness telemetry. "
                             "Auto-connect retries while enabled; snapshots retain original age. Units: g, dps, m, m/s, V, A, C, Pa; "
-                            "uptime in ms. Live graphs are on Flight View; commands remain in main.py.")
+                            "uptime in ms. kalman_altitude and position/velocity are the Kalman filter's ENU estimate "
+                            "relative to the pad (m, m/s); gps_altitude is m MSL and GPS fields read 0 without "
+                            "status.gps_locked. An all-zero orientation means attitude not available (not yet "
+                            "initialised, or lost after gyro saturation in flight). ground_station_status carries "
+                            "Aperture's own LC86G GPS (pad position). Live graphs are on Flight View, attitude/map in "
+                            "Windows > Visualizer; commands remain in main.py.")
 
     def make_receiver(self):
         return WitnessReceiver(self.host.get().strip(), int(self.port.get()), self.log_dir, on_record=self.on_record)

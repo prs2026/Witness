@@ -97,6 +97,76 @@ def fmt(value, digits=1, unit="°"):
     return f"{value:.{digits}f}{unit}"
 
 
+def make_screen(canvas, view_az, view_el, *, fill=0.42, minimum=200):
+    """Projection for a canvas: returns (screen(p) -> (x, y, depth), w, h, cx, cy)."""
+    w = max(canvas.winfo_width(), minimum)
+    h = max(canvas.winfo_height(), minimum)
+    scale = min(w, h) * fill
+    cx, cy = w / 2, h / 2
+    basis = am.camera_basis(view_az, view_el)
+
+    def screen(p):
+        sx, sy, depth = am.project(p, basis)
+        return cx + scale * sx, cy - scale * sy, depth
+    return screen, w, h, cx, cy
+
+
+def draw_world(canvas, screen, ground=-0.75):
+    """Ground grid (0.25 spacing) and world ENU axes."""
+    def line(a, b, **kw):
+        (x1, y1, _), (x2, y2, _) = screen(a), screen(b)
+        canvas.create_line(x1, y1, x2, y2, **kw)
+    for v in [i * 0.25 - 1.0 for i in range(9)]:
+        line((v, -1, ground), (v, 1, ground), fill=GRID)
+        line((-1, v, ground), (1, v, ground), fill=GRID)
+    for axis, label in (((1, 0, 0), "E"), ((0, 1, 0), "N"), ((0, 0, 1), "U")):
+        line((0, 0, 0), tuple(0.95 * a for a in axis), fill="#909090", width=1, arrow="last")
+        x, y, _ = screen(tuple(1.05 * a for a in axis))
+        canvas.create_text(x, y, text=label, fill=MUTED, font=("Segoe UI", 10, "bold"))
+
+
+def draw_body_axes(canvas, screen, q):
+    """Body triad xb (nose) / yb / zb rotated by q."""
+    for axis, color, label, length in zip(((1, 0, 0), (0, 1, 0), (0, 0, 1)), AXIS_COLORS,
+                                          ("xb", "yb", "zb"), (0.85, 0.45, 0.45)):
+        x1, y1, _ = screen((0, 0, 0))
+        x2, y2, _ = screen(am.rotate(q, tuple(length * a for a in axis)))
+        canvas.create_line(x1, y1, x2, y2, fill=color, width=3, arrow="last")
+        lx, ly, _ = screen(am.rotate(q, tuple((length + 0.08) * a for a in axis)))
+        canvas.create_text(lx, ly, text=label, fill=color, font=("Segoe UI", 9, "bold"))
+
+
+def draw_rocket(canvas, screen, q, ghost=False):
+    """Depth-sorted wireframe rocket; screen(p) -> (x, y, depth)."""
+    items = []
+    for a, b, role in ROCKET:
+        pa, pb = screen(am.rotate(q, a)), screen(am.rotate(q, b))
+        items.append(((pa[2] + pb[2]) / 2, pa, pb, role))
+    for points, role in FINS:
+        projected = [screen(am.rotate(q, p)) for p in points]
+        items.append((sum(p[2] for p in projected) / len(projected), projected, None, role))
+    items.sort(key=lambda item: item[0])
+    depths = [item[0] for item in items]
+    mid = (depths[0] + depths[-1]) / 2 if depths else 0.0
+    for depth, pa, pb, role in items:
+        if pb is None:   # fin polygon
+            coords = [v for p in pa for v in p[:2]]
+            if ghost:
+                canvas.create_polygon(*coords, fill="", outline=GHOST, dash=(4, 3))
+            else:
+                canvas.create_polygon(*coords, fill=FIN_FILL[role],
+                                      outline=MARK if role == "mark" else ROCKET_NEAR, width=1.5)
+            continue
+        if ghost:
+            kw = {"fill": GHOST, "width": 1, "dash": (4, 3)}
+        elif role == "mark":
+            kw = {"fill": MARK, "width": 3}
+        else:
+            kw = {"fill": ROCKET_NEAR if depth >= mid else ROCKET_FAR,
+                  "width": 2 if role in ("fin", "nose") else 1.5}
+        canvas.create_line(pa[0], pa[1], pb[0], pb[1], capstyle="round", **kw)
+
+
 class AttitudeTab(ttk.Frame):
     """Attitude visualization; feed it with accept_record() from the Witness tab."""
 
@@ -444,30 +514,8 @@ class AttitudeTab(ttk.Frame):
     def _draw_scene(self, s, offset):
         c = self.canvas
         c.delete("all")
-        w = max(c.winfo_width(), 200)
-        h = max(c.winfo_height(), 200)
-        scale = min(w, h) * 0.42
-        cx, cy = w / 2, h / 2
-        basis = am.camera_basis(self.view_az, self.view_el)
-
-        def screen(p):
-            sx, sy, depth = am.project(p, basis)
-            return cx + scale * sx, cy - scale * sy, depth
-
-        def line(a, b, **kw):
-            (x1, y1, _), (x2, y2, _) = screen(a), screen(b)
-            c.create_line(x1, y1, x2, y2, **kw)
-
-        ground = -0.75
-        steps = [i * 0.25 - 1.0 for i in range(9)]
-        for v in steps:
-            line((v, -1, ground), (v, 1, ground), fill=GRID)
-            line((-1, v, ground), (1, v, ground), fill=GRID)
-        for axis, label in (((1, 0, 0), "E"), ((0, 1, 0), "N"), ((0, 0, 1), "U")):
-            end = tuple(0.95 * a for a in axis)
-            line((0, 0, 0), end, fill="#909090", width=1, arrow="last")
-            x, y, _ = screen(tuple(1.05 * a for a in axis))
-            c.create_text(x, y, text=label, fill=MUTED, font=("Segoe UI", 10, "bold"))
+        screen, w, h, cx, cy = make_screen(c, self.view_az, self.view_el)
+        draw_world(c, screen)
         c.create_text(8, 8, anchor="nw", fill=MUTED, font=("Segoe UI", 9),
                       text=f"camera az {self.view_az:.0f}° el {self.view_el:.0f}°  (world ENU, grid 0.25)")
 
@@ -486,14 +534,7 @@ class AttitudeTab(ttk.Frame):
             q = am.apply_heading(q, offset)
             aligned = abs(offset) > 1e-9
         self._draw_rocket(screen, q)
-        for axis, color, label, length in zip(((1, 0, 0), (0, 1, 0), (0, 0, 1)), AXIS_COLORS,
-                                              ("xb", "yb", "zb"), (0.85, 0.45, 0.45)):
-            end = am.rotate(q, tuple(length * a for a in axis))
-            x1, y1, _ = screen((0, 0, 0))
-            x2, y2, _ = screen(end)
-            c.create_line(x1, y1, x2, y2, fill=color, width=3, arrow="last")
-            lx, ly, _ = screen(am.rotate(q, tuple((length + 0.08) * a for a in axis)))
-            c.create_text(lx, ly, text=label, fill=color, font=("Segoe UI", 9, "bold"))
+        draw_body_axes(c, screen, q)
         legend = "estimate (black, orange fin = +Y)"
         if truth is not None:
             legend += "   truth (blue dashed)"
@@ -502,33 +543,7 @@ class AttitudeTab(ttk.Frame):
         c.create_text(8, h - 8, anchor="sw", fill=MUTED, font=("Segoe UI", 9), text=legend)
 
     def _draw_rocket(self, screen, q, ghost=False):
-        items = []
-        for a, b, role in ROCKET:
-            pa, pb = screen(am.rotate(q, a)), screen(am.rotate(q, b))
-            items.append(((pa[2] + pb[2]) / 2, pa, pb, role))
-        for points, role in FINS:
-            projected = [screen(am.rotate(q, p)) for p in points]
-            items.append((sum(p[2] for p in projected) / len(projected), projected, None, role))
-        items.sort(key=lambda item: item[0])
-        depths = [item[0] for item in items]
-        mid = (depths[0] + depths[-1]) / 2 if depths else 0.0
-        for depth, pa, pb, role in items:
-            if pb is None:   # fin polygon
-                coords = [v for p in pa for v in p[:2]]
-                if ghost:
-                    self.canvas.create_polygon(*coords, fill="", outline=GHOST, dash=(4, 3))
-                else:
-                    self.canvas.create_polygon(*coords, fill=FIN_FILL[role],
-                                               outline=MARK if role == "mark" else ROCKET_NEAR, width=1.5)
-                continue
-            if ghost:
-                kw = {"fill": GHOST, "width": 1, "dash": (4, 3)}
-            elif role == "mark":
-                kw = {"fill": MARK, "width": 3}
-            else:
-                kw = {"fill": ROCKET_NEAR if depth >= mid else ROCKET_FAR,
-                      "width": 2 if role in ("fin", "nose") else 1.5}
-            self.canvas.create_line(pa[0], pa[1], pb[0], pb[1], capstyle="round", **kw)
+        draw_rocket(self.canvas, screen, q, ghost=ghost)
 
     # ------------------------------------------------------------ chart
     def _series(self, now):
