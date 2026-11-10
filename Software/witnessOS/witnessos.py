@@ -4,7 +4,8 @@
     python witnessos.py flight.csv       # open a converted CSV in the viewer
     python witnessos.py a.csv b.csv      # overlay several CSVs
     python witnessos.py --tab monitor    # start on a given tab
-    python witnessos.py --no-feed        # do not start the Horizon feed
+    python witnessos.py --no-feed        # do not start the Horizon feeds
+    python witnessos.py --remote-feed off  # no Tailscale feed (default: auto)
     python witnessos.py --no-auto-connect  # monitor: no automatic USB opens
     python witnessos.py --hitl-headless [HITL args]   # bench automation, no GUI
 
@@ -54,6 +55,12 @@ def build_parser() -> argparse.ArgumentParser:
                     default="hitl", help="tab to show first")
     ap.add_argument("--no-feed", action="store_true",
                     help="do not start the Horizon Witness feed at launch")
+    ap.add_argument("--remote-feed", default="auto", metavar="auto|off|ADDRESS",
+                    help="monitor: also publish the feed on this PC's Tailscale "
+                    "address (auto, the default), not at all (off), or on a "
+                    "given Tailscale address")
+    ap.add_argument("--remote-feed-port", type=int, default=None,
+                    help="port of the Tailscale feed (default 8767)")
     ap.add_argument("--no-auto-connect", action="store_true",
                     help="monitor: do not open Witness USB ports "
                     "automatically")

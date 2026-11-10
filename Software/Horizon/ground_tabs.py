@@ -97,11 +97,18 @@ class WitnessTab(ReceiverTab):
         bind_line_edit(self.host, host_edit)
         bind_line_edit(self.port, port_edit)
         self.entries += [host_edit, port_edit]
+        host_edit.setPlaceholderText("127.0.0.1 or Tailscale name/IP")
+        host_edit.setToolTip("127.0.0.1 with port 8766: witnessOS on this PC.\n"
+                             "The witnessOS PC's Tailscale name or 100.x address with port 8767: "
+                             "watch from another machine on your tailnet (witnessOS > Witness monitor > "
+                             "Share over Tailscale).")
         self.controls.addLayout(hbox(QtWidgets.QLabel("Witness app host:"), host_edit,
                                      QtWidgets.QLabel("Feed port:"), port_edit, self.connect_button,
                                      self.auto_button, None))
         self.note.setText(
-            "Receive only: start main.py to supply decoded Witness telemetry. "
+            "Receive only: witnessOS's Witness monitor supplies decoded telemetry - on this PC use "
+            "127.0.0.1 port 8766; from another machine use the witnessOS PC's Tailscale name/IP and "
+            "port 8767 (Share over Tailscale). "
             "Auto-connect retries while enabled; snapshots retain original age. Units: g, dps, m, m/s, V, A, C, Pa; "
             "uptime in ms. kalman_altitude and position/velocity are the Kalman filter's ENU estimate "
             "relative to the pad (m, m/s); gps_altitude is m MSL and GPS fields read 0 without "

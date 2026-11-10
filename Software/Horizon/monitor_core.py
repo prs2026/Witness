@@ -36,11 +36,11 @@ from pathlib import Path
 
 import numpy as np
 
-from ground_settings import WITNESS_FEED_HOST, WITNESS_FEED_PORT
+from ground_settings import WITNESS_FEED_HOST, WITNESS_FEED_PORT, WITNESS_REMOTE_FEED_PORT
 from nmea_capture import NmeaExtractor, summarize_gga
 from observable import Cell
 from serial_discovery import RETRY_SECONDS, SerialDiscovery, SerialOpenJob
-from witness_link import WitnessPublisher
+from witness_link import WitnessPublisher, is_tailscale_address, tailscale_ipv4
 from witness_protocol import (
     IMU_CALIBRATION_COMMANDS, QUICK_COMMANDS, SECTION_SPECS, PacketDecoder,
     build_command_packet, build_imu_calibration_packet, format_display_value,
@@ -58,6 +58,8 @@ DEFAULT_TCP_2_HOST = ""
 DEFAULT_TCP_2_PORT = ""
 DEFAULT_WITNESS_FEED_HOST = WITNESS_FEED_HOST
 DEFAULT_WITNESS_FEED_PORT = WITNESS_FEED_PORT
+DEFAULT_REMOTE_FEED_PORT = WITNESS_REMOTE_FEED_PORT
+REMOTE_RETRY_S = 10.0       # look for Tailscale again while the remote feed is waiting
 NO_SERIAL_PORT = "(no port)"
 BAUD_CHOICES = ("115200", "57600", "38400", "9600")
 WINDOW_TITLE = "Witness Communications Monitor"
@@ -153,7 +155,8 @@ class MonitorCore:
     max_console_lines_per_tick = 400
 
     def __init__(self, *, test_mode=False, test_source="", test_speed=1.0, test_loop=True,
-                 auto_connect=True, start_feed=True, feed_port=None):
+                 auto_connect=True, start_feed=True, feed_port=None,
+                 remote_feed="off", remote_feed_port=None):
         self._closed = False
         self.serials = {}
         self.tcp_sockets = {}
@@ -198,6 +201,13 @@ class MonitorCore:
         self.test_button_text = Cell("Start test")
         self.inputs_locked = Cell(False)           # test running: no connect / test edits
         self.feed_status = Cell("Horizon feed: starting...")
+        self.remote_feed_status = Cell("Remote feed: off")
+        self.remote_publisher = None
+        # remote_feed: "auto" (this PC's Tailscale IPv4), "off", or a Tailscale address.
+        self.remote_feed_mode = "off" if not start_feed else str(remote_feed or "off")
+        self.remote_feed_port = DEFAULT_REMOTE_FEED_PORT if remote_feed_port is None else int(remote_feed_port)
+        self.remote_feed_enabled = Cell(self.remote_feed_mode != "off")
+        self._remote_retry_at = 0.0
         self.nmea_status = Cell("NMEA: none received")
         self.status_text = Cell("Disconnected")
         self.connect_text = Cell("Connect")
@@ -235,6 +245,7 @@ class MonitorCore:
                 self.console_write(f"FEED_ERROR {exc}; Witness input still works")
         else:
             self.feed_status.set("Horizon feed: off")
+        self.start_remote_feed()
         self.refresh_ports()
 
     # ------------------------------------------------------------ dialogs
@@ -676,6 +687,13 @@ class MonitorCore:
             self.publisher.publish(source, packet, received_at=received_at)
         except Exception as exc:
             self.events.put(("decoder_error", (source, f"Horizon feed: {exc}")))
+        remote = getattr(self, "remote_publisher", None)
+        if remote is not None:
+            # Separate publisher, thread and buffers: never delays the local feed.
+            try:
+                remote.publish(source, packet, received_at=received_at)
+            except Exception as exc:  # noqa: BLE001
+                self.events.put(("decoder_error", (source, f"Remote feed: {exc}")))
         if test_token is None:
             self.events.put(("packet", (source, packet, received_at)))
         else:
@@ -905,7 +923,71 @@ class MonitorCore:
             self.debug_log_file = None
 
     # ------------------------------------------------------------ readouts
+    # ------------------------------------------------------------ remote feed
+    def start_remote_feed(self):
+        """Start the Tailscale feed if enabled; returns True when it is running."""
+        if self.remote_publisher is not None or not self.remote_feed_enabled.get():
+            if not self.remote_feed_enabled.get():
+                self.remote_feed_status.set("Remote feed (Tailscale): off")
+            return self.remote_publisher is not None
+        self._remote_retry_at = time.monotonic() + REMOTE_RETRY_S
+        mode = self.remote_feed_mode
+        host = tailscale_ipv4() if mode in ("auto", "on") else mode
+        if not host:
+            self.remote_feed_status.set("Remote feed (Tailscale): waiting for Tailscale "
+                                        "(not connected on this PC); retrying")
+            return False
+        if not is_tailscale_address(host):
+            self.remote_feed_status.set(f"Remote feed (Tailscale): {host} is not a Tailscale address; off")
+            return False
+        publisher = WitnessPublisher(host, self.remote_feed_port, remote=True)
+        try:
+            publisher.start()
+        except OSError as exc:
+            self.remote_feed_status.set(f"Remote feed (Tailscale) unavailable: {exc}; retrying")
+            return False
+        self.remote_publisher = publisher
+        self._remote_status_text()
+        self.console_write(f"Remote feed on {publisher.host}:{publisher.port} (Tailscale, receive only)")
+        return True
+
+    def stop_remote_feed(self):
+        publisher, self.remote_publisher = self.remote_publisher, None
+        if publisher is not None:
+            publisher.close()
+
+    def set_remote_feed(self, enabled):
+        """Turn the Tailscale feed on/off at runtime (the local feed is untouched)."""
+        self.remote_feed_enabled.set(bool(enabled))
+        if enabled:
+            if self.remote_feed_mode == "off":
+                self.remote_feed_mode = "auto"
+            self.start_remote_feed()
+        else:
+            self.stop_remote_feed()
+            self.remote_feed_status.set("Remote feed (Tailscale): off")
+
+    def _remote_status_text(self):
+        p = self.remote_publisher
+        if p is None:
+            return
+        if p.error:
+            self.remote_feed_status.set(f"Remote feed (Tailscale) stopped: {p.error}; restarting")
+            return
+        text = (f"Remote feed (Tailscale): {p.host}:{p.port}, {p.clients} viewer"
+                f"{'' if p.clients == 1 else 's'} connected")
+        if p.disconnected_slow:
+            text += f"; {p.disconnected_slow} slow viewer(s) dropped (local feed unaffected)"
+        self.remote_feed_status.set(text)
+
     def update_feed_status(self):
+        p = self.remote_publisher
+        if p is not None and p.error:
+            self.stop_remote_feed()
+        if self.remote_publisher is None and self.remote_feed_enabled.get() \
+                and time.monotonic() >= self._remote_retry_at:
+            self.start_remote_feed()
+        self._remote_status_text()
         if self.publisher.error:
             self.feed_status.set(f"Horizon feed stopped: {self.publisher.error}")
         elif self.publisher.dropped:
@@ -1025,6 +1107,7 @@ class MonitorCore:
         self.stop_test()
         self.disconnect()
         self.publisher.close()
+        self.stop_remote_feed()
 
 
 __all__ = [

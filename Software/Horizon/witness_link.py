@@ -1,17 +1,28 @@
-"""Local, one-way Witness telemetry feed (versioned newline-delimited JSON).
+"""One-way Witness telemetry feed (versioned newline-delimited JSON).
 
-Publishing never performs socket I/O on a decoder or Tk thread. Slow clients
+Publishing never performs socket I/O on a decoder or GUI thread. Slow clients
 are disconnected, not allowed to stall Witness. New clients get latest-packet
 snapshots with original receive times and an explicit replay marker.
+
+Two independent publishers can run at once: the local feed (127.0.0.1) and a
+remote feed bound to this PC's Tailscale address. Each has its own socket,
+thread, queue and client buffers, so a slow or dead remote client can only
+ever be disconnected from the remote feed; the local feed never waits on it.
+Only Tailscale addresses (100.64.0.0/10, fd7a:115c:a1e0::/48) are accepted for
+the remote feed, so it is never exposed on the LAN or the internet; the
+tailnet's own authentication and ACLs decide who can connect.
 """
 
 from __future__ import annotations
 
 from collections import OrderedDict, deque
+import ipaddress
 import json
 import math
 import select
+import shutil
 import socket
+import subprocess
 import threading
 import time
 import uuid
@@ -22,6 +33,64 @@ SCHEMA = "horizon.witness.v1"
 MAX_LINE_BYTES = 65536
 MAX_PENDING_BYTES = 512 * 1024
 MAX_PACKET_TYPES = 128
+# Remote links (Tailscale over cellular/Wi-Fi) stall for seconds at a time;
+# give them a larger buffer before a slow client is dropped.
+REMOTE_MAX_PENDING_BYTES = 8 * 1024 * 1024
+TAILSCALE_NETWORKS = (ipaddress.ip_network("100.64.0.0/10"), ipaddress.ip_network("fd7a:115c:a1e0::/48"))
+KEEPALIVE_IDLE_MS, KEEPALIVE_INTERVAL_MS = 5000, 1000
+
+
+def is_tailscale_address(address) -> bool:
+    try:
+        ip = ipaddress.ip_address(str(address).split("%")[0])
+    except ValueError:
+        return False
+    return any(ip in network for network in TAILSCALE_NETWORKS)
+
+
+def is_loopback_address(address) -> bool:
+    try:
+        return ipaddress.ip_address(str(address)).is_loopback
+    except ValueError:
+        return False
+
+
+def tailscale_ipv4():
+    """This PC's Tailscale IPv4 address, or None when Tailscale is not up."""
+    try:
+        import psutil
+        for addresses in psutil.net_if_addrs().values():
+            for item in addresses:
+                if item.family == socket.AF_INET and is_tailscale_address(item.address):
+                    return item.address
+    except Exception:  # noqa: BLE001 - fall back to the CLI
+        pass
+    exe = shutil.which("tailscale")
+    if exe:
+        try:
+            out = subprocess.run([exe, "ip", "-4"], capture_output=True, text=True, timeout=3,
+                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            for line in out.stdout.split():
+                if is_tailscale_address(line.strip()):
+                    return line.strip()
+        except (OSError, subprocess.SubprocessError):
+            pass
+    return None
+
+
+def enable_keepalive(sock) -> None:
+    """Detect a silently dead remote peer within seconds (not hours)."""
+    try:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        if hasattr(socket, "SIO_KEEPALIVE_VALS"):
+            sock.ioctl(socket.SIO_KEEPALIVE_VALS, (1, KEEPALIVE_IDLE_MS, KEEPALIVE_INTERVAL_MS))
+        else:
+            for name, value in (("TCP_KEEPIDLE", KEEPALIVE_IDLE_MS // 1000),
+                                ("TCP_KEEPINTVL", KEEPALIVE_INTERVAL_MS // 1000), ("TCP_KEEPCNT", 5)):
+                if hasattr(socket, name):
+                    sock.setsockopt(socket.IPPROTO_TCP, getattr(socket, name), max(1, value))
+    except OSError:
+        pass
 
 
 def json_safe(value):
@@ -91,10 +160,19 @@ def decode_record(line):
 
 
 class WitnessPublisher:
-    def __init__(self, host=WITNESS_FEED_HOST, port=WITNESS_FEED_PORT):
-        if host != "127.0.0.1":
+    def __init__(self, host=WITNESS_FEED_HOST, port=WITNESS_FEED_PORT, *, remote=False,
+                 max_pending=None, max_clients=8):
+        if remote:
+            if not is_tailscale_address(host):
+                raise ValueError(f"The remote Witness feed binds to a Tailscale address only, not {host!r}")
+        elif host != "127.0.0.1":
             raise ValueError("The Witness feed must bind to 127.0.0.1")
         self.host, self.port = host, port
+        self.remote = remote
+        self._max_pending = max_pending
+        self.max_clients = max_clients
+        self.clients = 0
+        self.disconnected_slow = 0
         self.session = uuid.uuid4().hex
         self.sequence = 0
         self.dropped = 0
@@ -106,10 +184,22 @@ class WitnessPublisher:
         self._listener = None
         self._thread = None
 
+    @property
+    def max_pending(self):
+        """Per-client buffer limit (read live, so the module setting applies)."""
+        if self._max_pending:
+            return self._max_pending
+        return REMOTE_MAX_PENDING_BYTES if self.remote else MAX_PENDING_BYTES
+
+    @max_pending.setter
+    def max_pending(self, value):
+        self._max_pending = value
+
     def start(self):
         if self._thread is not None:
             raise RuntimeError("Witness feed already started")
-        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        family = socket.AF_INET6 if ":" in str(self.host) else socket.AF_INET
+        listener = socket.socket(family, socket.SOCK_STREAM)
         try:
             # Never steal an existing application's listening endpoint on Windows.
             if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
@@ -150,6 +240,7 @@ class WitnessPublisher:
         def close_client(client):
             clients.pop(client, None)
             client.close()
+            self.clients = len(clients)
         try:
             while not self._stop.is_set():
                 readable, writable, _ = select.select(
@@ -161,17 +252,20 @@ class WitnessPublisher:
                     if client is self._listener:
                         connection, _ = self._listener.accept()
                         connection.setblocking(False)
-                        if len(clients) >= 8:
+                        if len(clients) >= self.max_clients:
                             connection.close()
                             continue
+                        if self.remote:
+                            enable_keepalive(connection)
                         with self._lock:
                             latest = sorted(self._latest.values(), key=lambda item: item["sequence"])
                             snapshot = b"".join(encode_record(dict(item, replay=True)) for item in latest)
                             sequence = self.sequence
-                        if len(snapshot) > MAX_PENDING_BYTES:
+                        if len(snapshot) > self.max_pending:
                             connection.close()
                         else:
                             clients[connection] = (bytearray(snapshot), sequence)
+                            self.clients = len(clients)
                     else:
                         # Clients have no command API. Disconnect on inbound data or EOF.
                         try:
@@ -189,7 +283,8 @@ class WitnessPublisher:
                         if record_sequence > sequence:
                             pending.extend(wire)
                             sequence = record_sequence
-                        if len(pending) > MAX_PENDING_BYTES:
+                        if len(pending) > self.max_pending:
+                            self.disconnected_slow += 1
                             close_client(client)
                             break
                     else:

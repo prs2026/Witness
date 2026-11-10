@@ -87,6 +87,13 @@ This tab embeds Horizon's monitor widget (`main.MonitorPanel` over
 Its JSON feed is the one `horizon.py` and the ground receivers read. Only one
 program can serve port 8766, so run one witnessOS at a time.
 
+**Share over Tailscale** (on by default) publishes the same feed on this PC's
+Tailscale address, port 8767, for Horizon on another tailnet machine (see
+Horizon's README). It is an independent server: a slow remote viewer is
+dropped from it, never the local feed. If Tailscale is not connected yet it
+waits and retries every 10 s. Command line: `--remote-feed off`, or
+`--remote-feed 100.x.y.z` / `--remote-feed-port N`.
+
 **Mirror HITL tab connection** is on by default. Witness's raw TCP port
 (ser2net, for example `prs2026hitl:7100`) serves one client at a time. While
 the HITL tab holds that connection, the monitor decodes the bytes the HITL

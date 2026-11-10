@@ -9,7 +9,18 @@ import threading
 import time
 
 from featherweight import FEATHERWEIGHT_BAUD, FeatherweightStreamParser
-from witness_link import MAX_LINE_BYTES, decode_record, json_safe
+import ipaddress
+
+from witness_link import (MAX_LINE_BYTES, decode_record, enable_keepalive, is_loopback_address,
+                          is_tailscale_address, json_safe)
+
+
+def _looks_like_ip(text):
+    try:
+        ipaddress.ip_address(text.strip("[]"))
+        return True
+    except ValueError:
+        return False
 
 
 class LoggedReceiver:
@@ -125,23 +136,59 @@ class LoggedReceiver:
             self._thread.join(timeout=4)
 
 
+def resolve_feed_host(host):
+    """(address, remote) for a Witness feed host, or ValueError.
+
+    The feed has no authentication of its own, so only this PC (loopback) or
+    a Tailscale peer (100.64.0.0/10, fd7a:115c:a1e0::/48 - authenticated by the
+    tailnet) is allowed. Names (e.g. MagicDNS "benchpc" or
+    "benchpc.tailnet-name.ts.net") are resolved and must land in those ranges.
+    """
+    host = str(host).strip().strip("[]")
+    if not host:
+        raise ValueError("Enter the Witness app host: 127.0.0.1, or the witnessOS PC's Tailscale name/IP")
+    if host == "localhost" or is_loopback_address(host):
+        return "127.0.0.1", False
+    if is_tailscale_address(host):
+        return host, True
+    try:
+        infos = socket.getaddrinfo(host, None, type=socket.SOCK_STREAM)
+    except OSError as exc:
+        raise ValueError(f"Cannot resolve {host!r}: {exc}") from exc
+    addresses = [info[4][0] for info in infos]
+    for address in addresses:
+        if is_tailscale_address(address):
+            return address, True
+    raise ValueError(f"{host!r} is not this PC or a Tailscale machine ({', '.join(addresses[:3])}); "
+                     "the Witness feed is only read over loopback or Tailscale")
+
+
 class WitnessReceiver(LoggedReceiver):
     def __init__(self, host, port, log_dir, *, on_record=None):
         super().__init__(log_dir, "horizon_witness", on_record=on_record)
-        # Keep the unauthenticated bridge on the local machine only.
-        if host not in ("localhost", "127.0.0.1"):
-            raise ValueError("Witness feed host must be localhost or 127.0.0.1")
+        host = str(host).strip()
+        # Literal addresses are checked now; names are resolved (and checked)
+        # on the worker thread so a slow DNS lookup never blocks the window.
+        if not host or (not (host == "localhost" or is_loopback_address(host) or is_tailscale_address(host))
+                        and _looks_like_ip(host)):
+            raise ValueError("Witness feed host must be 127.0.0.1 (this PC) or a Tailscale name/IP")
         if not 1 <= port <= 65535:
             raise ValueError("Witness feed port must be between 1 and 65535")
-        self.host, self.port = "127.0.0.1", port
+        self.requested_host = host
+        self.host, self.port = ("127.0.0.1" if host == "localhost" else host), port
+        self.remote = False
 
     def run(self):
         while not self._stop.is_set():
             try:
-                self.report(f"Connecting to Witness at {self.host}:{self.port}...", status=True)
-                with socket.create_connection((self.host, self.port), timeout=1) as connection:
+                self.host, self.remote = resolve_feed_host(self.requested_host)
+                where = f"{self.requested_host}:{self.port}" + (" over Tailscale" if self.remote else "")
+                self.report(f"Connecting to Witness at {where}...", status=True)
+                with socket.create_connection((self.host, self.port), timeout=5 if self.remote else 1) as connection:
                     connection.settimeout(0.2)
-                    self.report("Connected to Witness (receive only)", status=True)
+                    if self.remote:
+                        enable_keepalive(connection)
+                    self.report(f"Connected to Witness at {where} (receive only)", status=True)
                     buffer = bytearray()
                     previous = None
                     while not self._stop.is_set():

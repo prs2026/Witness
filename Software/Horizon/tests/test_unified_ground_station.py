@@ -275,7 +275,7 @@ class GuiTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             unified = make_horizon(directory)
             try:
-                self.assertEqual(unified.tab_titles(), ["Flight View", "Attitude", "Witness",
+                self.assertEqual(unified.tab_titles(), ["Flight View", "Attitude", "Map & Attitude", "Witness",
                                                         "Featherweight GPS", "AIM XTRA MQTT", "Layout Editor"])
                 replay = record(received_at=time.time() - 20, replay=True)
                 view = unified.witness.view

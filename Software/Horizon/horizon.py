@@ -25,8 +25,9 @@ Disconnect also disables that input's auto-connect. No network range is
 scanned. Horizon does not open the AIM USB device. Logs go in logs/: Witness
 JSONL, Featherweight raw BIN plus diagnostic/packet JSONL, and AIM MQTT JSONL.
 
-Windows > Visualizer (F9) opens a second window with the 3D orientation view
-and the top-down map side by side (resizable splitter). The map is an
+The Map & Attitude tab shows the 3D orientation view and the top-down map
+side by side (resizable splitter); Windows > Visualizer (F9), or the tab's
+button, opens the same view in a separate window. The map is an
 offline metric grid; with "OSM tiles" on it also draws OpenStreetMap tiles
 cached under tile_cache/ (use --offline-map to never fetch). Tracks are
 collected while the window is closed.
@@ -40,7 +41,7 @@ python horizon.py --flight-layout path/to/layout.json
 See flight_view.py's module help for the layout schema and source selection.
 
 Keys: F9 Visualizer, F11 fullscreen (Escape leaves), Ctrl+P pause Flight View,
-Ctrl+1..6 switch tabs, Ctrl+Q quit.
+Ctrl+1..7 switch tabs, Ctrl+Q quit.
 """
 
 from __future__ import annotations
@@ -66,10 +67,11 @@ from ground_tabs import FeatherweightTab, WitnessTab
 from map_data import MapData
 from map_tiles import TileCache
 from pad_reference import PadReference
-from visualizer import VisualizerWindow
+from visualizer import VisualizerPanel, VisualizerWindow
 
 LOG_DIR = Path(__file__).resolve().parent / "logs"
-TAB_TITLES = ("Flight View", "Attitude", "Witness", "Featherweight GPS", "AIM XTRA MQTT", "Layout Editor")
+TAB_TITLES = ("Flight View", "Attitude", "Map & Attitude", "Witness", "Featherweight GPS", "AIM XTRA MQTT",
+              "Layout Editor")
 
 
 class HorizonGroundStation(QtWidgets.QMainWindow):
@@ -104,8 +106,11 @@ class HorizonGroundStation(QtWidgets.QMainWindow):
                               on_sample=self._aim_sample, broker_enabled=broker_enabled,
                               broker_port=broker_port)
         self.layout_editor = FlightLayoutEditor(flight=self.flight)
-        for tab, title in zip((self.flight, self.attitude, self.witness, self.featherweight, self.aim,
-                               self.layout_editor), TAB_TITLES):
+        # The map and attitude visualizer as a tab (it can also pop out, F9).
+        self.map_tab = VisualizerPanel(live=self.attitude.live, aim=self.aim_attitude, map_data=self.map_data,
+                                       tiles=self.tiles, use_gl=use_gl, on_pop_out=self.open_visualizer)
+        for tab, title in zip((self.flight, self.attitude, self.map_tab, self.witness, self.featherweight,
+                               self.aim, self.layout_editor), TAB_TITLES):
             self.notebook.addTab(tab, title)
         for index in range(len(TAB_TITLES)):
             shortcut = QtGui.QShortcut(QtGui.QKeySequence(f"Ctrl+{index + 1}"), self)
@@ -161,6 +166,7 @@ class HorizonGroundStation(QtWidgets.QMainWindow):
             tab.close()
         if self.visualizer is not None and self.visualizer.is_open():
             self.visualizer.close()
+        self.map_tab.close()
         self.flight.close()
         self.attitude.close()
         self.tiles.close()

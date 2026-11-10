@@ -511,7 +511,7 @@ class FlightGuiTests(unittest.TestCase):
             try:
                 app.flight.redraw()
                 self.assertIn("LAYOUT ERROR", app.flight.banner.text())
-                self.assertEqual(app.notebook.count(), 6)
+                self.assertEqual(app.notebook.count(), 7)      # incl. Map & Attitude
             finally:
                 app.close()
 

@@ -309,6 +309,19 @@ class MonitorPanel(QtWidgets.QWidget):
         self.nmea_label = wrap_label()
         bind_label(core.nmea_status, self.nmea_label)
         root.addWidget(self.feed_label)
+        # Remote feed: a second, independent server on this PC's Tailscale address.
+        self.remote_check = QtWidgets.QCheckBox("Share over Tailscale")
+        self.remote_check.setToolTip(
+            "Publish the same receive-only telemetry feed on this PC's Tailscale address "
+            "(port 8767) so Horizon on another tailnet machine can watch. Independent of the "
+            "local 127.0.0.1 feed: a slow remote viewer is dropped, never the local one.")
+        bind_check(core.remote_feed_enabled, self.remote_check,
+                   on_user=lambda: core.set_remote_feed(core.remote_feed_enabled.get()))
+        self.remote_label = wrap_label()
+        bind_label(core.remote_feed_status, self.remote_label)
+        remote_row = hbox(self.remote_check, self.remote_label)
+        remote_row.setStretch(1, 1)
+        root.addLayout(remote_row)
         root.addWidget(self.nmea_label)
 
         splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical)

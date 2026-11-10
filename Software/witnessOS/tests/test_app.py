@@ -198,7 +198,8 @@ class ShellTests(unittest.TestCase):
         self.addCleanup(win.deleteLater)
         self.assertEqual(win.current_tab(), "monitor")
         self.assertEqual(win.monitor.monitor.options,
-                         {"start_feed": False, "auto_connect": False})
+                         {"start_feed": False, "remote_feed": "auto", "remote_feed_port": None,
+                          "auto_connect": False})
         self.assertTrue(win._closed)
 
 
