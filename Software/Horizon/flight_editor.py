@@ -294,7 +294,7 @@ class FlightLayoutEditor(ttk.Frame):
     @staticmethod
     def new_trace():
         return {"label": "Witness altitude", "input": "witness", "packet": "state",
-                "field": "barometric_altitude", "color": "#171717"}
+                "field": "kalman_altitude", "color": "#171717"}
 
     def add_trace(self):
         if not self.selected or self.selected == "layout":

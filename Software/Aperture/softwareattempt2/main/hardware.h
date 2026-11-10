@@ -1,6 +1,7 @@
 #pragma once
 
 #include "driver/gpio.h"
+#include "driver/uart.h"
 
 // RA-01SH-P (SX1262) connections on the Adafruit ESP32-S3 Feather.
 #define IRIS_PIN_RADIO_SPI_SCK GPIO_NUM_36
@@ -28,3 +29,17 @@
 #define IRIS_RADIO_BANDWIDTH_HZ 125000U
 #define IRIS_RADIO_CODING_RATE 1U // 4/5
 #define IRIS_RADIO_PREAMBLE_LENGTH 8U
+
+// Quectel LC86 GPS (L80-R footprint) on the MCU UART. RX/TX are named from the
+// ESP32-S3 side: MCU RX <- GPS TX, MCU TX -> GPS RX.
+#define IRIS_GPS_UART_PORT UART_NUM_1
+#define IRIS_GPS_BAUD_RATE 115200U // LC86G factory default, 8N1
+#define IRIS_PIN_GPS_UART_RX GPIO_NUM_38
+#define IRIS_PIN_GPS_UART_TX GPIO_NUM_39
+#define IRIS_PIN_GPS_PPS GPIO_NUM_18
+#define IRIS_PIN_GPS_RESET GPIO_NUM_14
+// RESET_N is active low with an internal 1.8 V pull-up: the line is driven
+// open-drain, low for 100 ms at boot, then released. Set to 0 only if the
+// board drives RESET_N through an inverting transistor (then GPIO14 is
+// push-pull and high means reset).
+#define IRIS_GPS_RESET_ACTIVE_LOW 1

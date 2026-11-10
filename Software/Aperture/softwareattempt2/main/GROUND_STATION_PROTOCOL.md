@@ -36,7 +36,7 @@ Packet lengths include the packet ID and EOF:
 | `0xE0` | Witness debug | 101 | 103 | 10 Hz after debug enable | latest frame at 1 Hz |
 | `0xE1` | IRIS debug | 12 | 14 | Iris CAN, 10 Hz after debug enable | latest frame at 1 Hz |
 | `0xFF` | Heartbeat | 6 | 8 | 1 Hz | latest frame at 1 Hz |
-| `0xF0` | Ground-station status | 11 | 13 | Aperture USB, 1 Hz | never transmitted |
+| `0xF0` | Ground-station status | 27 | 29 | Aperture USB, 1 Hz | never transmitted |
 
 All offsets in the packet tables below are absolute frame offsets: packet ID
 is byte 0, the first payload byte is byte 1, and EOF is the last byte.
@@ -243,13 +243,42 @@ Radio commands are additionally interpreted locally.
 | 3 | 4 | Witness uptime, ms |
 | 7 | 1 | EOF `0x0A` |
 
-### `0xF0` Ground-station status packet, 13 bytes
+### `0xF0` Ground-station status packet, 29 bytes
 
 Aperture emits this frame only over USB once per second. It is never sent over
-LoRa. Frame offsets: ID `0xF0` at byte 0, last valid LoRa RSSI as signed dBm at
-byte 1, big-endian station uptime in milliseconds at bytes 2..5, six reserved
-zero bytes at 6..11, and EOF `0x0A` at byte 12. Before a valid receive, RSSI is
-`-127 dBm`.
+LoRa. Its GPS fields come from Aperture's own Quectel LC86 receiver in the pad
+box and give the launch pad position when the Featherweight ground station's
+location is not available.
+
+| Frame offset | Size | Field |
+|---:|---:|---|
+| 0 | 1 | Packet ID `0xF0` |
+| 1 | 1 | Last valid LoRa RSSI, int8 dBm (`-127` before the first packet) |
+| 2 | 4 | Station uptime, uint32 ms |
+| 6 | 1 | GPS fix quality, uint8, NMEA GGA field 6 (0 = no fix) |
+| 7 | 1 | GPS satellites used, uint8 (GGA field 7) |
+| 8 | 4 | Latitude, int32, 1e-7 degree/count, north positive |
+| 12 | 4 | Longitude, int32, 1e-7 degree/count, east positive |
+| 16 | 4 | GPS altitude, float32 m above mean sea level |
+| 20 | 4 | GPS time, uint32 Unix seconds (0 = unknown) |
+| 24 | 2 | HDOP, uint16, 0.01/count (`0xFFFF` = unknown) |
+| 26 | 2 | Fix age, uint16 ms since the reported position (`0xFFFF` = none, or 65.535 s or older) |
+| 28 | 1 | EOF `0x0A` |
+
+Payload offsets in `comms.h` (`IRIS_PACKET_GROUND_STATION_STATUS_*_OFFSET`)
+are these frame offsets minus one. All multi-byte fields are big-endian.
+
+- Fix quality, satellites and HDOP come from the most recent checksum-valid
+  GGA, including a no-fix GGA. When that GGA is 3 s old or older (or none has
+  arrived), quality and satellites are 0 and HDOP is `0xFFFF`.
+- Latitude, longitude and altitude hold the last valid fix (GGA quality 1..8
+  with a parseable position), however old; use the fix-age field to judge it.
+  They are zero, with fix age `0xFFFF`, until a fix has been seen since boot.
+- GPS time is the UTC of the last RMC with status `A`, advanced by the
+  station's elapsed time since that RMC arrived, so it keeps counting through a
+  dropout. It is 0 until such an RMC has been received.
+- Hosts should still accept the pre-GPS 13-byte form (11-byte payload: RSSI,
+  uptime, six zero bytes; `IRIS_PACKET_GROUND_STATION_STATUS_LEGACY_DATA_LENGTH`).
 
 ### `0xE0` Witness debug packet, 103 bytes
 
@@ -628,7 +657,7 @@ FRAME_LENGTH = {
     0xE0: 103,
     0xE1: 14,
     0xFF: 8,
-    0xF0: 13,
+    0xF0: 29,  # pre-GPS Aperture firmware sent 13
 }
 
 def extract_frames(buffer: bytearray):

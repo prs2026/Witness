@@ -115,16 +115,28 @@ void Filter::symmetrize(Axis &axis)
     if (axis.P01 < -limit) axis.P01 = -limit;
 }
 
+void Filter::begin_update_cycle()
+{
+    baro_innovation_ = Innovation{};
+    for (Innovation &innovation : gps_innovation_) innovation = Innovation{};
+}
+
 bool Filter::update_position(Axis &axis, const float measurement, const float variance,
-                             std::uint32_t &consecutive_rejects)
+                             std::uint32_t &consecutive_rejects, Innovation *record)
 {
     const float innovation = measurement - axis.p;
     const float s = axis.P00 + variance;
+    if (record != nullptr) {
+        record->value = innovation;
+        record->variance = s;
+        record->accepted = false;
+    }
     if (innovation * innovation > config_.gate_sigma * config_.gate_sigma * s &&
         consecutive_rejects < config_.max_consecutive_rejects) {
         ++consecutive_rejects;
         return false;
     }
+    if (record != nullptr) record->accepted = true;
     consecutive_rejects = 0;
     const float k0 = axis.P00 / s;
     const float k1 = axis.P01 / s;
@@ -202,7 +214,7 @@ bool Filter::update_baro(const float altitude_m, const float pressure_pa, const 
     const float sigma = baro_sigma_m(pressure_pa, altitude_msl_m());
     last_baro_sigma_m_ = sigma;
     if (!update_position(axes_[2], altitude_m - baro_reference_m_, sigma * sigma,
-                         baro_consecutive_rejects_)) {
+                         baro_consecutive_rejects_, &baro_innovation_)) {
         ++baro_rejects_total_;
         return false;
     }
@@ -248,7 +260,8 @@ bool Filter::update_gps(const double latitude_deg, const double longitude_deg,
     const float measurement[3] = {east, north, up};
     const float variance[3] = {h * h, h * h, v * v};
     for (int i = 0; i < 3; ++i) {
-        if (update_position(axes_[i], measurement[i], variance[i], gps_consecutive_rejects_[i])) {
+        if (update_position(axes_[i], measurement[i], variance[i], gps_consecutive_rejects_[i],
+                            &gps_innovation_[i])) {
             used = true;
         } else {
             ++gps_rejects_total_;

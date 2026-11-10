@@ -235,6 +235,32 @@ void test_predict_without_imu()
     CHECK(!filter.imu_ignored());
 }
 
+void test_innovation_record()
+{
+    Filter filter;
+    const float still[3] = {0.0F, 0.0F, kG};
+    for (int n = 0; n < 960; ++n) filter.predict(still, 1.0F / 960.0F, Phase::Coast);
+    filter.begin_update_cycle();
+    CHECK(std::isnan(filter.baro_innovation().value));
+    CHECK(std::isnan(filter.gps_innovation(0).value));
+    // First baro sets the reference (innovation 0); a 2 m step is then seen.
+    filter.update_baro(100.0F, 100000.0F, Phase::Coast);
+    filter.begin_update_cycle();
+    const float before = filter.up().p;
+    CHECK(filter.update_baro(102.0F, 100000.0F, Phase::Coast));
+    const auto &b = filter.baro_innovation();
+    CHECK(b.accepted);
+    CHECK(std::fabs(b.value - (2.0F - before)) < 1e-4F);
+    CHECK(b.variance > filter.last_baro_sigma_m() * filter.last_baro_sigma_m());
+    // A 1 km jump is gated: recorded, not accepted.
+    filter.begin_update_cycle();
+    CHECK(!filter.update_baro(1102.0F, 100000.0F, Phase::Coast));
+    CHECK(!filter.baro_innovation().accepted);
+    CHECK(filter.baro_innovation().value > 900.0F);
+    filter.begin_update_cycle();
+    CHECK(std::isnan(filter.baro_innovation().variance));
+}
+
 }  // namespace
 
 int main()
@@ -244,6 +270,7 @@ int main()
     test_flights();
     test_gate_and_resync();
     test_predict_without_imu();
+    test_innovation_record();
     if (failures == 0) {
         std::printf("position_filter_test: all passed\n");
         return EXIT_SUCCESS;

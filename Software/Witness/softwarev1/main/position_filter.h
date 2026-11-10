@@ -35,6 +35,7 @@
 // No ESP-IDF dependencies (host-tested in tests/position_filter_test.cpp).
 
 #include <cstdint>
+#include <limits>
 
 namespace position {
 
@@ -69,6 +70,14 @@ enum class Phase : std::uint8_t {  // numerically FlightStateMachine::State
     PadIdle = 0, Boost = 1, Coast = 2, Descent = 3, Landed = 4,
 };
 
+// One measurement's innovation (measurement - prediction) and its variance
+// S = P00 + R; NaN when that measurement was not offered this cycle.
+struct Innovation {
+    float value = std::numeric_limits<float>::quiet_NaN();
+    float variance = std::numeric_limits<float>::quiet_NaN();
+    bool accepted = false;
+};
+
 struct Axis {
     float p = 0.0F;
     float v = 0.0F;
@@ -97,6 +106,11 @@ public:
                     std::uint8_t satellites, Phase phase);
     // Pad/landed pseudo-measurements; call at the update rate.
     void update_constraints(Phase phase);
+    // Clears the per-cycle innovations; call before each update cycle.
+    void begin_update_cycle();
+    // Innovations from the current update cycle (for logging).
+    const Innovation &baro_innovation() const { return baro_innovation_; }
+    const Innovation &gps_innovation(int axis) const { return gps_innovation_[axis]; }
 
     const Axis &east() const { return axes_[0]; }
     const Axis &north() const { return axes_[1]; }
@@ -126,7 +140,8 @@ public:
 private:
     // Returns false if gated out.
     bool update_position(Axis &axis, float measurement, float variance,
-                         std::uint32_t &consecutive_rejects);
+                         std::uint32_t &consecutive_rejects,
+                         Innovation *record = nullptr);
     void update_velocity(Axis &axis, float measurement, float variance);
     static void symmetrize(Axis &axis);
 
@@ -153,6 +168,8 @@ private:
     std::uint32_t baro_rejects_total_ = 0;
     std::uint32_t gps_rejects_total_ = 0;
     std::uint32_t baro_gated_count_ = 0;
+    Innovation baro_innovation_{};
+    Innovation gps_innovation_[3]{};
 };
 
 }  // namespace position

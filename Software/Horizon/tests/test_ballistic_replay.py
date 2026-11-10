@@ -68,9 +68,9 @@ class BallisticReplayTests(unittest.TestCase):
                 velocity = BURNOUT_SPEED - G * elapsed
             state, debug = packets["state"], packets["witness_debug"]
             for packet in (state, debug):
-                self.assertAlmostEqual(packet["barometric_altitude"], altitude, delta=0.0002)
-                self.assertEqual(packet["gps_altitude"], packet["barometric_altitude"])
-                self.assertEqual(packet["position"], [0.0, 0.0, packet["barometric_altitude"]])
+                self.assertAlmostEqual(packet["kalman_altitude"], altitude, delta=0.0002)
+                self.assertEqual(packet["gps_altitude"], packet["kalman_altitude"])
+                self.assertEqual(packet["position"], [0.0, 0.0, packet["kalman_altitude"]])
                 self.assertAlmostEqual(packet["velocity"][2], velocity, delta=0.00002)
                 self.assertEqual(packet["velocity"][:2], [0.0, 0.0])
                 self.assertEqual(packet["orientation"], [0.0, 0.0, 0.0, 1.0])
@@ -81,9 +81,9 @@ class BallisticReplayTests(unittest.TestCase):
                 self.assertAlmostEqual(energy, G * MAX_ALTITUDE, delta=0.01)
         apogee = self.groups[27000]["state"]
         self.assertEqual(apogee["velocity"][2], 0.0)
-        self.assertAlmostEqual(apogee["barometric_altitude"], 2157.463, delta=0.0002)
-        self.assertEqual(max(g["state"]["barometric_altitude"] for g in self.groups.values()),
-                         apogee["barometric_altitude"])
+        self.assertAlmostEqual(apogee["kalman_altitude"], 2157.463, delta=0.0002)
+        self.assertEqual(max(g["state"]["kalman_altitude"] for g in self.groups.values()),
+                         apogee["kalman_altitude"])
         self.assertLess(self.groups[47900]["state"]["velocity"][2], -200)
 
     def test_accelerometers_report_specific_force_not_kinematic_acceleration(self):

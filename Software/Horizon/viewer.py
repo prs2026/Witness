@@ -28,8 +28,10 @@ import tkinter.font as tkfont
 
 import numpy as np
 
+import any_csv
 import converter
 import csv_columns
+import spectrum
 
 
 GRAPH_HEIGHT = 230
@@ -407,7 +409,9 @@ def calculate_summary(rows: list[dict[str, str]]) -> dict[str, str]:
         if state is not None:
             state_samples.append((timestamp, row_index, state))
 
-        altitude = numeric_value(row.get("barometric_altitude"))
+        altitude = numeric_value(row.get("kalman_altitude"))
+        if altitude is None:  # CSVs from before the Kalman altitude field
+            altitude = numeric_value(row.get("barometric_altitude"))
         if (altitude is not None
                 and sensor_flag_is_valid(row, 0x40, "barometer_valid")):
             altitude_samples.append((altitude, timestamp))
@@ -675,6 +679,7 @@ def elide(text: str, max_width: float, measure) -> str:
 
 
 SYNC_X = "time [s] (per-file time axes)"
+CSV_FILETYPES = (("CSV / text logs", "*.csv *.CSV *.txt *.tsv"), ("All files", "*.*"))
 SYNC_SKIP_COLUMNS = frozenset(("uptime", "fc_uptime", "time_seconds", "uptime_ms",
                                "timestamp_us", "sim_s", "sim_ms", "wall_s"))
 DATASET_DASHES = ((), (7, 3), (2, 2), (9, 3, 2, 3), (4, 4))
@@ -683,6 +688,7 @@ DRAG_THRESHOLD_PX = 6
 ZOOM_FACTOR = 0.8          # one Ctrl+wheel step in; its inverse zooms out
 PAN_FRACTION = 0.1         # one Shift+wheel step pans this share of the view
 MIN_ZOOM_DRAG_PX = 5       # a shorter drag across a plot is just a click
+TEXT_READOUT_COLUMNS = 4   # text columns of a generic CSV shown on hover
 
 
 def view_points(
@@ -782,6 +788,7 @@ def sync_time_seconds(row: dict[str, str]) -> float | None:
 
 
 AUTO_TIME = "auto (Witness uptime)"
+ROW_INDEX = "row index"     # time axis of last resort: 0, 1, 2... per row
 TIME_UNITS = {"s": 1.0, "ms": 1e-3, "us": 1e-6, "ns": 1e-9}
 # Default time column of a CSV, in order of preference. Witness-clock columns
 # come first so flash logs and HITL comparison files line up by themselves;
@@ -791,8 +798,16 @@ TIME_COLUMN_PREFERENCE = ("uptime_ms", "timestamp_us", "sim_s", "sim_ms",
 
 
 def infer_time_unit(column: str) -> str:
-    """Units implied by a time column's name (seconds when unsure)."""
+    """Units implied by a time column's name (seconds when unsure).
+
+    A unit in the header wins (``time (ms)``, ``Flight_Time_(s)``).
+    """
+    from_header = any_csv.time_unit_of(column)
+    if from_header is not None:
+        return from_header
     name = column.lower()
+    if name in ("cts", "milliseconds", "millis", "millisecond"):
+        return "ms"
     if name in ("uptime", "fc_uptime") or name.endswith("_ms") or name == "ms":
         return "ms"
     if name.endswith("_us") or name == "us":
@@ -1005,6 +1020,19 @@ def _sensor_valid(cols: dict, text: dict, n: int, mask: int, explicit: str) -> n
     return valid
 
 
+def altitude_column(cols: dict, n: int) -> np.ndarray | None:
+    """Per-row altitude for the summary: kalman_altitude (Witness now sends
+    the Kalman altitude above the pad in the 0x02/0xE0 slot), falling back
+    to barometric_altitude for older CSVs and rows without it."""
+    kalman = cols.get("kalman_altitude")
+    baro = cols.get("barometric_altitude")
+    if kalman is None:
+        return baro
+    if baro is None:
+        return kalman
+    return np.where(np.isnan(kalman), baro, kalman)
+
+
 def summarize_columns(cols: dict, text: dict, n: int) -> dict[str, str]:
     """calculate_summary on columns (same texts, vectorized)."""
     times = row_times_array(cols, n)
@@ -1012,7 +1040,7 @@ def summarize_columns(cols: dict, text: dict, n: int) -> dict[str, str]:
     state = flight_state_array(cols, text, n)
 
     altitude_text = "Not available"
-    altitude = cols.get("barometric_altitude")
+    altitude = altitude_column(cols, n)
     if altitude is not None:
         ok = ~np.isnan(altitude) & _sensor_valid(cols, text, n, 0x40, "barometer_valid")
         if ok.any():
@@ -1148,6 +1176,12 @@ class Dataset:
     offset: float = 0.0
     time_column: str = AUTO_TIME
     time_unit: str = "s"
+    # Generic (non-converter) CSVs: column -> "hex" / "tod" / "datetime" for
+    # numeric columns decoded from text, the text columns kept for the hover
+    # readout, and how the file was read.
+    kinds: dict = field(default_factory=dict)
+    text_columns: dict = field(default_factory=dict)
+    format_note: str = ""
     _time_cache: tuple | None = field(default=None, repr=False, compare=False)
 
     @property
@@ -1162,7 +1196,8 @@ class Dataset:
 
     def time_choices(self) -> list[str]:
         """Columns that can be this CSV's time axis."""
-        return ([AUTO_TIME] if self.has_auto_time else []) + list(self.numeric_columns)
+        return (([AUTO_TIME] if self.has_auto_time else []) + list(self.numeric_columns)
+                + [ROW_INDEX])
 
     def set_time_axis(self, column: str | None = None, unit: str | None = None,
                       offset: float | None = None) -> None:
@@ -1188,6 +1223,8 @@ class Dataset:
             return self._time_cache[1]
         if self.time_column == AUTO_TIME:
             values = self.sync_times      # already seconds
+        elif self.time_column == ROW_INDEX and ROW_INDEX not in self.numeric_data:
+            values = np.arange(self.row_count, dtype=np.float64) * TIME_UNITS[self.time_unit]
         else:
             raw = self.numeric_data.get(self.time_column)
             values = (np.full(self.row_count, np.nan) if raw is None
@@ -1225,13 +1262,23 @@ def default_time_axis(dataset: Dataset) -> tuple[str, str]:
             return column, infer_time_unit(column)
     if dataset.has_auto_time:
         return AUTO_TIME, "s"
-    first = dataset.numeric_columns[0]
-    return first, infer_time_unit(first)
+    # Other loggers: Flight_Time_(s), time, t, timestamp, ms, GoPro cts...
+    picked = any_csv.pick_time_column(dataset.numeric_columns, dataset.kinds)
+    if picked is not None:
+        return picked
+    return ROW_INDEX, "s"
 
 
 def load_dataset(path: Path, label: str | None = None, progress=None,
-                 cancel=None) -> Dataset:
-    """Read a converted CSV into numpy columns (safe to run off the UI thread).
+                 cancel=None, hex_as_numbers: bool = True) -> Dataset:
+    """Read a CSV into numpy columns (safe to run off the UI thread).
+
+    Converted CSVs (plain comma-separated, unique header) are read by
+    csv_columns; any other CSV, from another flight computer or a GoPro
+    export for example, by any_csv. That loader works out the delimiter,
+    metadata lines, missing header, units row, duplicate names, hex,
+    time-of-day and ISO datetime columns. ``hex_as_numbers`` plots hex
+    columns as numbers; otherwise they are text for the readout only.
 
     ``progress(fraction)`` reports parsing progress; setting the ``cancel``
     threading.Event aborts with csv_columns.LoadCancelled. Raises OSError,
@@ -1240,7 +1287,12 @@ def load_dataset(path: Path, label: str | None = None, progress=None,
     path = Path(path)
     if is_bin_path(path):
         return load_bin_dataset(path, label, progress, cancel)
-    table = csv_columns.load_table(path, progress=progress, cancel=cancel)
+    sniffed = any_csv.sniff(path)
+    if sniffed.is_plain:
+        table = csv_columns.load_table(path, progress=progress, cancel=cancel)
+    else:
+        table = any_csv.load(path, progress=progress, cancel=cancel,
+                             hex_as_numbers=hex_as_numbers, sniffed=sniffed)
     if not table.columns:
         raise ValueError("the CSV contains no numeric columns to graph")
     return dataset_from_table(path, table, label)
@@ -1296,7 +1348,12 @@ def dataset_from_table(path: Path, table, label: str | None = None) -> Dataset:
         summary=summarize_columns(cols, text, n), row_count=n,
         paired_state_log=paired,
         is_wl=ids is not None and bool(np.any(ids == "WL")),
-        stride=table.stride, total_rows=table.total_rows)
+        stride=table.stride, total_rows=table.total_rows,
+        kinds=dict(getattr(table, "kinds", {})),
+        text_columns={name: column for name, column in text.items()
+                      if isinstance(table, any_csv.GenericTable)},
+        format_note="; ".join(part for part in (getattr(table, "format", ""),
+                                                *getattr(table, "notes", ())) if part))
     dataset.time_column, dataset.time_unit = default_time_axis(dataset)
     return dataset
 
@@ -1458,6 +1515,9 @@ class CsvViewerPanel(ttk.Frame):
             side="left", padx=(4, 0))
         ttk.Button(controls, text="Add CSV…", command=self.choose_add_csv).pack(
             side="left", padx=(4, 0))
+        self.hex_as_numbers = tk.BooleanVar(value=True)
+        ttk.Checkbutton(controls, text="Hex columns as numbers",
+                        variable=self.hex_as_numbers).pack(side="left", padx=(8, 0))
         self.load_cancel_button = ttk.Button(controls, text="Cancel",
                                              command=self.cancel_loads)
         self.load_bar = ttk.Progressbar(controls, length=140, maximum=1.0)
@@ -1531,7 +1591,7 @@ class CsvViewerPanel(ttk.Frame):
         self.launch_time_var = tk.StringVar(value="--")
         self.max_acceleration_var = tk.StringVar(value="--")
         card_values = (
-            ("Max barometric altitude", self.max_altitude_var),
+            ("Max altitude (Kalman, else baro)", self.max_altitude_var),
             ("Launch detected at", self.launch_time_var),
             ("Max acceleration", self.max_acceleration_var),
         )
@@ -1644,6 +1704,8 @@ class CsvViewerPanel(ttk.Frame):
         self.save_csv_button.pack(side="left", fill="x", expand=True, padx=(2, 0))
         ttk.Button(buttons, text="Remove CSV", command=self.remove_selected_dataset).pack(
             side="left", fill="x", expand=True, padx=(2, 0))
+        ttk.Button(trace_panel, text="Spectrogram / FFT of selected trace…",
+                   command=self.spectrogram_selected).pack(fill="x", padx=2, pady=(0, 4))
 
         # Time axis of the selected CSV: which column is time, its units and
         # an offset (seconds, after unit conversion). Changes redraw live.
@@ -1697,6 +1759,7 @@ class CsvViewerPanel(ttk.Frame):
         self.trace_tree.bind("<B1-Motion>", self._tree_motion)
         self.trace_tree.bind("<ButtonRelease-1>", self._tree_release)
         self.trace_tree.bind("<Double-1>", self._tree_double)
+        self.trace_tree.bind("<Button-3>", self._tree_menu)
         self.trace_tree.bind("<<TreeviewSelect>>",
                              lambda _event: self._sync_time_axis_controls())
         # Kept for callers of the single-file viewer.
@@ -1732,6 +1795,7 @@ class CsvViewerPanel(ttk.Frame):
         self.canvas.bind("<Shift-MouseWheel>", self._pan_wheel)
         self.canvas.bind("<Double-Button-1>", self._double_click)
         self.canvas.bind("<Motion>", self._hover)
+        self.canvas.bind("<Button-3>", self._canvas_menu)
         self.canvas.bind("<Leave>", self.clear_hover)
 
     def _on_destroy(self, event) -> None:
@@ -1779,8 +1843,8 @@ class CsvViewerPanel(ttk.Frame):
     def choose_csv(self) -> None:
         filenames = filedialog.askopenfilenames(
             parent=self,
-            title="Open converted telemetry CSV(s)",
-            filetypes=(("CSV files", "*.csv"), ("All files", "*.*")),
+            title="Open telemetry CSV(s)",
+            filetypes=CSV_FILETYPES,
         )
         if filenames:
             self.cancel_loads()
@@ -1840,8 +1904,8 @@ class CsvViewerPanel(ttk.Frame):
     def choose_add_csv(self) -> None:
         filenames = filedialog.askopenfilenames(
             parent=self,
-            title="Add converted telemetry CSV(s)",
-            filetypes=(("CSV files", "*.csv"), ("All files", "*.*")),
+            title="Add telemetry CSV(s)",
+            filetypes=CSV_FILETYPES,
         )
         if filenames:
             self.add_csvs([Path(name) for name in filenames])
@@ -1892,12 +1956,13 @@ class CsvViewerPanel(ttk.Frame):
         path = self._load_queue.pop(0)
         self._load_cancel = cancel = threading.Event()
         events = self._load_events
+        hex_numbers = bool(self.hex_as_numbers.get())
 
         def work():
             try:
                 dataset = load_dataset(
                     path, progress=lambda f: events.put(("progress", path, f)),
-                    cancel=cancel)
+                    cancel=cancel, hex_as_numbers=hex_numbers)
                 events.put(("done", path, dataset))
             except csv_columns.LoadCancelled:
                 events.put(("cancelled", path, None))
@@ -1978,7 +2043,7 @@ class CsvViewerPanel(ttk.Frame):
     def add_csv(self, path: Path, report: bool = True) -> bool:
         """Read one more CSV now (blocking) and add it alongside the others."""
         try:
-            dataset = load_dataset(path)
+            dataset = load_dataset(path, hex_as_numbers=bool(self.hex_as_numbers.get()))
         except (OSError, csv.Error, ValueError) as exc:
             if not report:
                 raise
@@ -2264,6 +2329,12 @@ class CsvViewerPanel(ttk.Frame):
         time_span = "unknown"
         if times.size:
             time_span = f"{times.min():.3f} to {times.max():.3f} s"
+        elif dataset.time_column != ROW_INDEX:      # other loggers: their time axis
+            times = dataset.times()
+            times = times[~np.isnan(times)]
+            if times.size:
+                time_span = (f"{times.min():.3f} to {times.max():.3f} s "
+                             f"({dataset.time_column})")
         details = (
             f"{dataset.path.name}: {dataset.row_count:,} rows | "
             f"{len(dataset.numeric_columns)} numeric fields | time span {time_span}"
@@ -2275,6 +2346,15 @@ class CsvViewerPanel(ttk.Frame):
             details += f" | decoded from .bin ({dataset.source_format}"
             details += (f", {dataset.discarded:,} bytes not decoded)" if dataset.discarded
                         else ")")
+        if dataset.format_note:
+            details += f" | read as {dataset.format_note}"
+        if dataset.kinds:
+            details += " | decoded: " + ", ".join(
+                f"{name} ({kind})" for name, kind in dataset.kinds.items())
+        if dataset.text_columns:
+            details += (" | text (readout only): "
+                        + ", ".join(list(dataset.text_columns)[:8])
+                        + (" ..." if len(dataset.text_columns) > 8 else ""))
         if dataset.paired_state_log is not None:
             details += f" | flight state from {dataset.paired_state_log.name}"
         elif dataset.is_wl:
@@ -2728,9 +2808,46 @@ class CsvViewerPanel(ttk.Frame):
             if not points or not points[0][0] <= x_value <= points[-1][0]:
                 continue
             sample = nearest_point(points, x_value)
-            rows.append((f"{self.series_label(ref)} = {value_text(sample[1])}"
+            rows.append((f"{self.series_label(ref)} = {self.cell_text(ref, sample[1])}"
                          f"  @ {value_text(sample[0])}", color))
+        # Text columns of generic CSVs (mode strings...) at the nearest row.
+        for dataset_id in dict.fromkeys(ref[0] for ref in graph["refs"]):
+            dataset = self.datasets.get(dataset_id)
+            if dataset is None or not dataset.text_columns:
+                continue
+            row = self.nearest_row(dataset_id, x_value)
+            if row is None:
+                continue
+            for name, column in list(dataset.text_columns.items())[:TEXT_READOUT_COLUMNS]:
+                value = column[row]
+                if value:
+                    prefix = "" if len(self.datasets) == 1 else f"{dataset.label}: "
+                    rows.append((f"{prefix}{name}: {value}", "#666666"))
         return rows
+
+    def cell_text(self, ref, value: float) -> str:
+        """A trace value as its CSV showed it: hex as 0x.., times of day as hh:mm:ss."""
+        dataset = self.datasets.get(ref[0])
+        kind = dataset.kinds.get(ref[1]) if dataset is not None else None
+        if kind == "hex" and value == int(value) and value >= 0:
+            return f"0x{int(value):x}"
+        if kind in ("tod", "datetime"):
+            return f"{any_csv.format_time_of_day(value)} ({value_text(value)} s)"
+        return value_text(value)
+
+    def nearest_row(self, dataset_id: int, x_value: float) -> int | None:
+        """Row of a CSV nearest to ``x_value`` on the current x axis."""
+        dataset = self.datasets.get(dataset_id)
+        if dataset is None:
+            return None
+        xs, rows = self._row_order(dataset_id, dataset)
+        if xs.size == 0:
+            return None
+        index = int(np.searchsorted(xs, x_value))
+        if index >= xs.size or (index > 0 and abs(xs[index - 1] - x_value)
+                                <= abs(xs[index] - x_value)):
+            index -= 1
+        return int(index if rows is None else rows[index])
 
     def clear_hover(self, _event=None) -> None:
         self.canvas.delete("hover")
@@ -2813,6 +2930,94 @@ class CsvViewerPanel(ttk.Frame):
             self.reset_zoom()
             return "break"
         return None
+
+    # ------------------------------------------------------- spectrogram
+    def spectrum_source(self, ref):
+        """(time, values) of one trace for an FFT: the CSV's own time axis in
+        shared-axis seconds (offset included), packet filter applied, rows
+        without a value dropped."""
+        dataset = self.datasets.get(ref[0])
+        if dataset is None or ref[1] not in dataset.numeric_data:
+            return np.empty(0), np.empty(0)
+        t = dataset.times() + dataset.offset
+        y = dataset.numeric_data[ref[1]]
+        keep = ~np.isnan(t) & ~np.isnan(y)
+        mask = dataset.mask_for(self.packet_filter_combo.get())
+        if mask is not None:
+            keep &= mask
+        return t[keep], y[keep]
+
+    def current_time_zoom(self) -> tuple[float, float] | None:
+        """The shared zoom, when the x axis is time (else None)."""
+        if self.x_axis_combo.get() != SYNC_X:
+            return None
+        return self.x_view
+
+    def open_spectrogram(self, ref) -> "SpectrogramWindow | None":
+        if ref is None or ref[0] not in self.datasets:
+            return None
+        window = SpectrogramWindow(self, ref)
+        self._spectrum_windows = [w for w in getattr(self, "_spectrum_windows", [])
+                                  if w.winfo_exists()] + [window]
+        return window
+
+    def _selected_ref(self):
+        for item in self.trace_tree.selection() or (self.trace_tree.focus(),):
+            ref = self._tree_ref(item)
+            if ref is not None:
+                return ref
+        return None
+
+    def spectrogram_selected(self):
+        ref = self._selected_ref()
+        if ref is None:
+            messagebox.showinfo("Spectrogram", "Select a trace (a column under a CSV) "
+                                "in the list first, or right-click a trace or graph.",
+                                parent=self)
+            return None
+        return self.open_spectrogram(ref)
+
+    def _popup(self, menu, event):
+        try:
+            menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            menu.grab_release()
+
+    def _tree_menu(self, event):
+        item = self.trace_tree.identify_row(event.y)
+        if not item:
+            return None
+        if item not in self.trace_tree.selection():
+            self.trace_tree.selection_set(item)
+        menu = tk.Menu(self, tearoff=0)
+        ref = self._tree_ref(item)
+        if ref is not None:
+            menu.add_command(label="Spectrogram / FFT…",
+                             command=lambda: self.open_spectrogram(ref))
+            menu.add_command(label="Add graph", command=lambda: (
+                self.layout.add([ref]), self.draw_graphs()))
+        else:
+            menu.add_command(label="Plot CSV", command=self.plot_selected_dataset)
+            menu.add_command(label="Remove CSV", command=self.remove_selected_dataset)
+        self._popup(menu, event)
+        return "break"
+
+    def _canvas_menu(self, event):
+        cx, cy = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        current = self.canvas.find_withtag("current")
+        if current and current[0] in self._legend_items:
+            refs = [self._legend_items[current[0]][1]]
+        else:
+            index = self.graph_at(cy)
+            refs = [] if index is None else list(self._graphs[index]["refs"])
+        if not refs:
+            return None
+        menu = tk.Menu(self, tearoff=0)
+        for ref in refs:
+            menu.add_command(label=f"Spectrogram / FFT: {self.series_label(ref)}",
+                             command=lambda r=ref: self.open_spectrogram(r))
+        self._popup(menu, event)
+        return "break"
 
     # -------------------------------------------------------- drag & drop
     def graph_at(self, canvas_y: float) -> int | None:
@@ -3020,6 +3225,421 @@ class CsvViewerPanel(ttk.Frame):
         if self._drag is not None:
             self._finish_drag(event)
         self._press = None
+
+
+class SpectrogramWindow(tk.Toplevel):
+    """Spectrogram (waterfall) of one trace over a time window.
+
+    Time runs along x, frequency up y and power (dB) is the colour. The
+    image is one PhotoImage made from a numpy array, not canvas items. The
+    Welch average spectrum can be shown underneath. The FFT runs on a worker
+    thread; the pure maths is in spectrum.py.
+    """
+    MAX_COLUMNS = 2000
+    POLL_MS = 40
+
+    def __init__(self, panel: "CsvViewerPanel", ref):
+        super().__init__(panel)
+        self.panel = panel
+        self.ref = ref
+        self.label = panel.series_label(ref)
+        self.title(f"Spectrogram - {self.label}")
+        self.geometry("1000x720")
+        self.minsize(560, 420)
+        self.font = panel.font
+        self.t, self.y = panel.spectrum_source(ref)
+        self.analysis: spectrum.Analysis | None = None
+        self.error = ""
+        self.geom = None
+        self.welch_geom = None
+        self._photo = None
+        self._bar_photo = None
+        self._thread: threading.Thread | None = None
+        self._pending = False
+        self._events: queue.Queue = queue.Queue()
+        self._poll_job = None
+        self._render_job = None
+        self._build()
+        zoom = panel.current_time_zoom()
+        self.set_window(*(zoom or self.full_range()))
+        self.bind("<Destroy>", self._on_destroy, add="+")
+        self.after_idle(self.compute)
+
+    # ---------------------------------------------------------------- UI
+    def _build(self) -> None:
+        row1 = ttk.Frame(self, padding=(8, 8, 8, 2))
+        row1.pack(fill="x")
+        ttk.Label(row1, text=f"Trace: {self.label}", font=self.panel.bold_font).pack(
+            side="left", padx=(0, 12))
+        ttk.Label(row1, text="Start s").pack(side="left")
+        self.start_var = tk.StringVar()
+        start = ttk.Entry(row1, textvariable=self.start_var, width=12)
+        start.pack(side="left", padx=(2, 6))
+        ttk.Label(row1, text="End s").pack(side="left")
+        self.end_var = tk.StringVar()
+        end = ttk.Entry(row1, textvariable=self.end_var, width=12)
+        end.pack(side="left", padx=(2, 6))
+        for entry in (start, end):
+            entry.bind("<Return>", lambda _e: self.compute())
+        ttk.Button(row1, text="Use current zoom", command=self.use_zoom).pack(side="left")
+        ttk.Button(row1, text="Whole trace", command=self.use_full).pack(
+            side="left", padx=(4, 0))
+
+        row2 = ttk.Frame(self, padding=(8, 2))
+        row2.pack(fill="x")
+        ttk.Label(row2, text="FFT length").pack(side="left")
+        self.nfft_var = tk.StringVar(value="1024")
+        ttk.Combobox(row2, textvariable=self.nfft_var, width=7, state="readonly",
+                     values=[str(n) for n in spectrum.FFT_LENGTHS]).pack(
+            side="left", padx=(2, 8))
+        ttk.Label(row2, text="Overlap %").pack(side="left")
+        self.overlap_var = tk.StringVar(value="50")
+        ttk.Spinbox(row2, textvariable=self.overlap_var, from_=0, to=95, increment=5,
+                    width=5).pack(side="left", padx=(2, 8))
+        ttk.Label(row2, text="Window").pack(side="left")
+        self.window_var = tk.StringVar(value="Hann")
+        ttk.Combobox(row2, textvariable=self.window_var, width=11, state="readonly",
+                     values=list(spectrum.WINDOWS)).pack(side="left", padx=(2, 8))
+        ttk.Label(row2, text="Detrend").pack(side="left")
+        self.detrend_var = tk.StringVar(value="Mean")
+        ttk.Combobox(row2, textvariable=self.detrend_var, width=7, state="readonly",
+                     values=list(spectrum.DETRENDS)).pack(side="left", padx=(2, 8))
+        self.welch_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(row2, text="Average spectrum (Welch)", variable=self.welch_var,
+                        command=self.render).pack(side="left", padx=(0, 8))
+        self.compute_button = ttk.Button(row2, text="Compute", command=self.compute)
+        self.compute_button.pack(side="left")
+
+        row3 = ttk.Frame(self, padding=(8, 2))
+        row3.pack(fill="x")
+        ttk.Label(row3, text="Colour range dB  min").pack(side="left")
+        self.db_min_var = tk.StringVar()
+        low = ttk.Entry(row3, textvariable=self.db_min_var, width=8)
+        low.pack(side="left", padx=(2, 6))
+        ttk.Label(row3, text="max").pack(side="left")
+        self.db_max_var = tk.StringVar()
+        high = ttk.Entry(row3, textvariable=self.db_max_var, width=8)
+        high.pack(side="left", padx=(2, 6))
+        for entry in (low, high):
+            entry.bind("<Return>", lambda _e: self.apply_colours())
+        ttk.Button(row3, text="Apply", command=self.apply_colours).pack(side="left")
+        self.auto_range_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(row3, text="Auto range", variable=self.auto_range_var,
+                        command=self.render).pack(side="left", padx=(8, 0))
+
+        self.status_var = tk.StringVar(value="")
+        ttk.Label(self, textvariable=self.status_var, foreground="#444444",
+                  wraplength=960, justify="left", padding=(8, 2)).pack(fill="x")
+        self.hover_var = tk.StringVar(value="Hover the plot for time, frequency and dB.")
+        ttk.Label(self, textvariable=self.hover_var, padding=(8, 2, 8, 6)).pack(
+            side="bottom", fill="x")
+        self.canvas = tk.Canvas(self, background="white", highlightthickness=0,
+                                width=900, height=480)
+        self.canvas.pack(fill="both", expand=True, padx=8)
+        self.canvas.bind("<Configure>", lambda _e: self.schedule_render())
+        self.canvas.bind("<Motion>", self._hover)
+        self.canvas.bind("<Leave>", lambda _e: self.canvas.delete("hover"))
+
+    def _on_destroy(self, event) -> None:
+        if event.widget is not self:
+            return
+        for job in (self._poll_job, self._render_job):
+            if job is not None:
+                try:
+                    self.after_cancel(job)
+                except tk.TclError:
+                    pass
+
+    # ------------------------------------------------------------ window
+    def full_range(self) -> tuple[float, float]:
+        if self.t.size == 0:
+            return 0.0, 0.0
+        return float(self.t.min()), float(self.t.max())
+
+    def set_window(self, start: float, end: float) -> None:
+        self.start_var.set(value_text(round(start, 6)))
+        self.end_var.set(value_text(round(end, 6)))
+
+    def use_zoom(self) -> None:
+        zoom = self.panel.current_time_zoom()
+        if zoom is None:
+            self.status_var.set("No time zoom to use: set the x axis to time and drag "
+                                "across a plot to zoom first.")
+            return
+        self.set_window(*zoom)
+        self.compute()
+
+    def use_full(self) -> None:
+        self.set_window(*self.full_range())
+        self.compute()
+
+    def settings(self) -> dict:
+        """Analysis arguments from the controls (ValueError if malformed)."""
+        start, end = float(self.start_var.get()), float(self.end_var.get())
+        if not (math.isfinite(start) and math.isfinite(end)) or end <= start:
+            raise ValueError("the end of the time window must be after its start")
+        overlap = float(self.overlap_var.get())
+        if not 0 <= overlap <= 95:
+            raise ValueError("overlap must be 0 to 95 %")
+        return {"start": start, "end": end, "nfft": int(self.nfft_var.get()),
+                "overlap": overlap / 100.0, "window": self.window_var.get(),
+                "detrend": self.detrend_var.get()}
+
+    # ----------------------------------------------------------- compute
+    @property
+    def computing(self) -> bool:
+        return self._thread is not None
+
+    def compute(self) -> None:
+        """Run the FFT for the current settings on a worker thread."""
+        try:
+            params = self.settings()
+        except ValueError as exc:
+            self.status_var.set(f"Check the settings: {exc}")
+            return
+        if self._thread is not None:
+            self._pending = True          # rerun with the newest settings after
+            return
+        t, y, events = self.t, self.y, self._events
+
+        def work():
+            try:
+                events.put(("done", spectrum.analyze(t, y, max_columns=self.MAX_COLUMNS,
+                                                     **params)))
+            except (ValueError, MemoryError) as exc:
+                events.put(("error", str(exc) or type(exc).__name__))
+            except Exception as exc:  # never leave the window stuck computing
+                events.put(("error", f"{type(exc).__name__}: {exc}"))
+
+        self._thread = threading.Thread(target=work, name="spectrogram", daemon=True)
+        self.compute_button.state(["disabled"])
+        self.status_var.set("Computing…")
+        self._thread.start()
+        if self._poll_job is None:
+            self._poll_job = self.after(self.POLL_MS, self._poll)
+
+    def _poll(self) -> None:
+        self._poll_job = None
+        try:
+            kind, payload = self._events.get_nowait()
+        except queue.Empty:
+            self._poll_job = self.after(self.POLL_MS, self._poll)
+            return
+        self._thread = None
+        try:
+            self.compute_button.state(["!disabled"])
+        except tk.TclError:
+            return
+        if kind == "done":
+            self.analysis, self.error = payload, ""
+            self.status_var.set(self.status_text())
+        else:
+            self.analysis, self.error = None, payload
+            self.status_var.set(f"Could not compute: {payload}")
+        self.render()
+        if self._pending:
+            self._pending = False
+            self.compute()
+
+    def wait(self, timeout: float = 30.0) -> bool:
+        """Pump Tk until the computation finishes (tests and scripts)."""
+        import time as _time
+        deadline = _time.monotonic() + timeout
+        while (self._thread is not None or self._pending) and _time.monotonic() < deadline:
+            self.update()
+            _time.sleep(0.005)
+        return self._thread is None
+
+    def status_text(self) -> str:
+        a = self.analysis
+        if a is None:
+            return self.error
+        s, r = a.sampling, a.result
+        df = r.fs / r.nfft
+        text = (f"{s.values.size:,} samples ({s.duration:.6g} s) | fs = {s.fs:.6g} Hz "
+                f"(median dt {s.median_dt * 1e3:.4g} ms) | FFT {r.nfft} "
+                f"({df:.4g} Hz/bin), hop {r.hop}, {r.segments:,} segment(s)")
+        if r.columns < r.segments:
+            text += f" averaged into {r.columns:,} columns"
+        if a.warnings:
+            text += "\nWARNING: " + "\nWARNING: ".join(a.warnings)
+        return text
+
+    # ------------------------------------------------------------ render
+    def db_range(self) -> tuple[float, float]:
+        a = self.analysis
+        if self.auto_range_var.get() and a is not None:
+            low, high = a.auto_range()
+            self.db_min_var.set(value_text(low))
+            self.db_max_var.set(value_text(high))
+            return low, high
+        try:
+            low, high = float(self.db_min_var.get()), float(self.db_max_var.get())
+            if math.isfinite(low) and math.isfinite(high) and high > low:
+                return low, high
+        except ValueError:
+            pass
+        return a.auto_range() if a is not None else (-100.0, 0.0)
+
+    def apply_colours(self) -> None:
+        self.auto_range_var.set(False)
+        self.render()
+
+    def schedule_render(self) -> None:
+        if self._render_job is not None:
+            self.after_cancel(self._render_job)
+        self._render_job = self.after(60, self.render)
+
+    def render(self) -> None:
+        self._render_job = None
+        canvas = self.canvas
+        canvas.delete("all")
+        self.geom = self.welch_geom = None
+        width = canvas.winfo_width()
+        height = canvas.winfo_height()
+        if width <= 1:
+            width, height = canvas.winfo_reqwidth(), canvas.winfo_reqheight()
+        a = self.analysis
+        if a is None:
+            canvas.create_text(width / 2, height / 2, fill="#777777",
+                               text=self.error or "Computing…")
+            return
+        font = self.font
+        line = font.metrics("linespace")
+        left, right, top = 72, width - 96, 10
+        axis_h = 2 * line + 10
+        show_welch = bool(self.welch_var.get())
+        if show_welch:
+            welch_h = max(110, int(height * 0.3))
+            bottom = height - welch_h - axis_h - 8
+        else:
+            bottom = height - axis_h
+        plot_w, plot_h = int(right - left), int(bottom - top)
+        if plot_w < 40 or plot_h < 40:
+            return
+        low, high = self.db_range()
+        rgb = spectrum.colorize(spectrum.image_grid(a.db, plot_w, plot_h), low, high)
+        self._photo = tk.PhotoImage(master=self, width=plot_w, height=plot_h,
+                                    data=spectrum.ppm(rgb), format="PPM")
+        canvas.create_image(left, top, anchor="nw", image=self._photo)
+        canvas.create_rectangle(left, top, right, bottom, outline="#888888")
+        t0, t1 = a.t_start, a.t_end
+        fmax = float(a.freqs[-1])
+        self._x_axis(left, right, bottom, t0, t1, "time [s] (shared axis)")
+        f_step, f_ticks = nice_ticks(0.0, fmax, max(2, min(10, plot_h // (2 * line))),
+                                     inside=True)
+        for value in f_ticks:
+            y = bottom - value / fmax * plot_h
+            canvas.create_line(left - 4, y, left, y, fill="#555555")
+            canvas.create_text(left - 7, y, anchor="e", text=tick_text(value, f_step),
+                               fill="#555555", font=font)
+        canvas.create_text(14, (top + bottom) / 2, text="frequency [Hz]", angle=90,
+                           fill="#444444", font=font)
+        # Colour bar.
+        bar_x = right + 14
+        bar = spectrum.colorize(np.repeat(np.linspace(high, low, plot_h)[:, None], 14, 1),
+                                low, high)
+        self._bar_photo = tk.PhotoImage(master=self, width=14, height=plot_h,
+                                        data=spectrum.ppm(bar), format="PPM")
+        canvas.create_image(bar_x, top, anchor="nw", image=self._bar_photo)
+        canvas.create_rectangle(bar_x, top, bar_x + 14, bottom, outline="#888888")
+        d_step, d_ticks = nice_ticks(low, high, max(2, min(8, plot_h // (2 * line))),
+                                     inside=True)
+        for value in d_ticks:
+            y = bottom - (value - low) / (high - low) * plot_h
+            canvas.create_text(bar_x + 18, y, anchor="w", text=tick_text(value, d_step),
+                               fill="#555555", font=font)
+        canvas.create_text(bar_x + 7, top + plot_h + line, text="dB", fill="#444444",
+                           font=font)
+        self.geom = {"left": left, "right": right, "top": top, "bottom": bottom,
+                     "t0": t0, "t1": t1, "fmax": fmax}
+        if show_welch:
+            self._draw_welch(left, right, bottom + axis_h + 8, height - axis_h, fmax)
+
+    def _x_axis(self, left, right, bottom, low, high, title) -> None:
+        canvas, font = self.canvas, self.font
+        line = font.metrics("linespace")
+        step, ticks = nice_ticks(low, high, max(2, min(10, int(right - left) // 90)),
+                                 inside=True)
+        span = (high - low) or 1.0
+        for value in ticks:
+            x = left + (value - low) / span * (right - left)
+            canvas.create_line(x, bottom, x, bottom + 4, fill="#555555")
+            canvas.create_text(x, bottom + 5, anchor="n", text=tick_text(value, step),
+                               fill="#555555", font=font)
+        canvas.create_text((left + right) / 2, bottom + 6 + line, anchor="n", text=title,
+                           fill="#444444", font=font)
+
+    def _draw_welch(self, left, right, top, bottom, fmax) -> None:
+        a, canvas, font = self.analysis, self.canvas, self.font
+        if bottom - top < 30:
+            return
+        values = a.welch_db
+        shown = values[values > -299]
+        if shown.size == 0:
+            return
+        y_step, y_ticks = nice_ticks(float(shown.min()), float(shown.max()), 4)
+        y0, y1 = y_ticks[0], y_ticks[-1]
+        if y1 <= y0:
+            y1 = y0 + y_step
+        height = bottom - top
+
+        def to_y(v):
+            return bottom - (np.maximum(v, y0) - y0) / (y1 - y0) * height
+
+        for value in y_ticks:
+            y = to_y(value)
+            canvas.create_line(left, y, right, y, fill="#eeeeee")
+            canvas.create_text(left - 7, y, anchor="e", text=tick_text(value, y_step),
+                               fill="#555555", font=font)
+        canvas.create_rectangle(left, top, right, bottom, outline="#888888")
+        xs, ys = envelope(a.freqs, values, 0.0, fmax, int(right - left))
+        coords = np.column_stack((left + xs / fmax * (right - left), to_y(ys))).ravel()
+        if coords.size >= 4:
+            canvas.create_line(*coords.tolist(), fill="#1565c0", width=1.5)
+        canvas.create_text(left + 6, top + 4, anchor="nw", fill="#444444", font=font,
+                           text=f"average spectrum (Welch, {a.result.segments:,} "
+                                "segments), dB")
+        self._x_axis(left, right, bottom, 0.0, fmax, "frequency [Hz]")
+        self.welch_geom = {"left": left, "right": right, "top": top, "bottom": bottom,
+                           "fmax": fmax}
+
+    # ------------------------------------------------------------- hover
+    def readout_at(self, x: float, y: float) -> str | None:
+        """Hover text at a canvas point: time, frequency and dB."""
+        a, g, w = self.analysis, self.geom, self.welch_geom
+        if a is None:
+            return None
+        if g is not None and g["left"] <= x <= g["right"] and g["top"] <= y <= g["bottom"]:
+            t = g["t0"] + (x - g["left"]) / (g["right"] - g["left"]) * (g["t1"] - g["t0"])
+            f = (g["bottom"] - y) / (g["bottom"] - g["top"]) * g["fmax"]
+            hit = a.value_at(t, f)
+            if hit is None:
+                return None
+            return f"t = {hit[0]:.6g} s    f = {hit[1]:.6g} Hz    {hit[2]:.1f} dB"
+        if w is not None and w["left"] <= x <= w["right"] and w["top"] <= y <= w["bottom"]:
+            f = (x - w["left"]) / (w["right"] - w["left"]) * w["fmax"]
+            df = a.freqs[1] - a.freqs[0] if a.freqs.size > 1 else 1.0
+            index = min(a.freqs.size - 1, int(round(f / df)))
+            return (f"f = {a.freqs[index]:.6g} Hz    {a.welch_db[index]:.1f} dB "
+                    "(average spectrum)")
+        return None
+
+    def _hover(self, event) -> None:
+        canvas = self.canvas
+        canvas.delete("hover")
+        text = self.readout_at(event.x, event.y)
+        if text is None:
+            return
+        self.hover_var.set(text)
+        for g, colour in ((self.geom, "#ffffff"), (self.welch_geom, "#9e9e9e")):
+            if g is not None and g["left"] <= event.x <= g["right"]:
+                canvas.create_line(event.x, g["top"], event.x, g["bottom"], fill=colour,
+                                   dash=(3, 3), tags=("hover",), state="disabled")
+        g = self.geom
+        if g is not None and g["top"] <= event.y <= g["bottom"]:
+            canvas.create_line(g["left"], event.y, g["right"], event.y, fill="#ffffff",
+                               dash=(3, 3), tags=("hover",), state="disabled")
 
 
 class CsvGraphViewer(tk.Tk):

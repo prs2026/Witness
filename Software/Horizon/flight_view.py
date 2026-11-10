@@ -105,7 +105,7 @@ class FlightView(ttk.Frame):
         except (OSError, ValueError) as exc:
             self.load_error = str(exc)
             layout = validate_layout({"version": 1, "plots": [{"title": "Barometric altitude", "unit": "m",
-                "traces": [{"label": "W", "input": "witness", "packet": "state", "field": "barometric_altitude"}]}]})
+                "traces": [{"label": "W", "input": "witness", "packet": "state", "field": "kalman_altitude"}]}]})
         self.data = FlightData(layout)
         self.columnconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)

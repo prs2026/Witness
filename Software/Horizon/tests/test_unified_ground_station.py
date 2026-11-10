@@ -256,7 +256,7 @@ class GuiTests(unittest.TestCase):
                 unified.witness.connect()
                 # Both serial and raw TCP decoders use this callback.
                 witness.on_decoded_packet("COM_LIVE", {"packet": "state", "status": 0x0B02,
-                    "uptime": 2100, "barometric_altitude": 125.5, "witness_battery_voltage": 4.125})
+                    "uptime": 2100, "kalman_altitude": 125.5, "witness_battery_voltage": 4.125})
                 key = ("COM_LIVE", "state", "witness_battery_voltage")
                 def displayed():
                     unified.update()
@@ -271,7 +271,7 @@ class GuiTests(unittest.TestCase):
                 self.assertFalse(receiver._thread.is_alive())
                 self.assertTrue(witness.publisher._thread.is_alive())
                 # Closing Horizon's feed does not close or command Witness ports.
-                self.assertEqual(witness.values["packet.state.barometric_altitude"].get(), "125.5")
+                self.assertEqual(witness.values["packet.state.kalman_altitude"].get(), "125.5")
             finally:
                 if witness is not None:
                     for callback in witness.tk.call("after", "info"):

@@ -181,7 +181,7 @@ def parse_packet(packet_id: int, payload: bytes):
                 "latitude": round(signed_int24(payload[46:49]) * GPS_DEGREES_PER_COUNT, 4),
                 "longitude": round(signed_int24(payload[49:52]) * GPS_DEGREES_PER_COUNT, 4),
                 "gps_altitude": round(float32(payload[52:56]), 6),
-                "barometric_altitude": round(float32(payload[56:60]), 6),
+                "kalman_altitude": round(float32(payload[56:60]), 6),
                 "witness_battery_voltage": round(number(payload[60:62]) * BATTERY_V_PER_COUNT, 3)}
         if len(payload) == 63:
             result["gps_satellites"] = payload[62]
@@ -194,13 +194,9 @@ def parse_packet(packet_id: int, payload: bytes):
         return result
     if packet_id == 0xFF and len(payload) == 6:
         return {"packet": "heartbeat", "status": number(payload[0:2]), "uptime": number(payload[2:6])}
-    if packet_id == 0xF0 and len(payload) == 11:
-        return {
-            "packet": "ground_station_status",
-            "rssi": signed_number(payload[0:1]),
-            "uptime": number(payload[1:5]),
-            "reserved": list(payload[5:11]),
-        }
+    if packet_id == 0xF0 and len(payload) in (11, 27):
+        from converter import parse_ground_station_status
+        return parse_ground_station_status(payload)
     if packet_id == 0x05 and len(payload) == 8:
         return {"packet": "command", "status": number(payload[0:2]), "uptime": number(payload[2:6]),
                 "command_value": number(payload[6:8])}
@@ -224,7 +220,7 @@ def parse_packet(packet_id: int, payload: bytes):
                      for i in (72, 74, 76)],
             "pressure": number(payload[78:81]),
             "ms5607_temperature": round(signed_number(payload[81:83]) * MS5607_TEMPERATURE_C_PER_COUNT, 2),
-            "barometric_altitude": round(float32(payload[83:87]), 6),
+            "kalman_altitude": round(float32(payload[83:87]), 6),
             "latitude": round(signed_int24(payload[87:90]) * GPS_DEGREES_PER_COUNT, 4),
             "longitude": round(signed_int24(payload[90:93]) * GPS_DEGREES_PER_COUNT, 4),
             "gps_time": number(payload[93:97]),
@@ -248,7 +244,7 @@ class PacketDecoder:
     # State: 63-byte payload (65-byte frame, with GPS satellites) is current;
     # 62 bytes is the legacy 64-byte frame from older firmware/logs.
     payload_lengths = {0x01: (23, 21), 0x02: (63, 62), 0x03: (17,), 0xFF: (6,),
-                       0xF0: (11,), 0x05: (8,), 0xE0: (101,), 0xE1: (12,)}
+                       0xF0: (27, 11), 0x05: (8,), 0xE0: (101,), 0xE1: (12,)}
     # Host -> Witness packets that Witness may echo on USB. They are deframed
     # (fixed length + EOF) and skipped, never decoded or shown as telemetry.
     # 0x0C = HITL sensor input, 47-byte frame.
@@ -620,7 +616,7 @@ class MonitorBase:
                 ("velocity", "Velocity [x, y, z]"),
                 ("latitude", "Latitude"), ("longitude", "Longitude"),
                 ("gps_altitude", "GPS altitude"),
-                ("barometric_altitude", "Barometric altitude (MS5607)"),
+                ("kalman_altitude", "Kalman altitude above pad [m]"),
                 ("witness_battery_voltage", "Witness battery voltage [V]"),
                 # Shown as "<sats>  lock <0|1>": lock is status byte 1 bit 3.
                 ("gps_satellites", "GPS sats"),
@@ -635,7 +631,13 @@ class MonitorBase:
             "ground_station_status": [
                 ("rssi", "Last valid LoRa RSSI [dBm]"),
                 ("uptime", "Ground-station uptime [ms]"),
-                ("reserved", "Reserved bytes [0..5]"),
+                ("gps_fix_quality", "Aperture GPS fix quality"),
+                ("gps_satellites", "Aperture GPS satellites"),
+                ("latitude", "Aperture latitude [deg]"),
+                ("longitude", "Aperture longitude [deg]"),
+                ("gps_altitude", "Aperture GPS altitude [m MSL]"),
+                ("gps_hdop", "Aperture GPS HDOP"),
+                ("gps_fix_age_ms", "Aperture GPS fix age [ms]"),
             ],
             "command": [
                 ("status", "Status"), ("uptime", "Uptime"),
@@ -655,7 +657,7 @@ class MonitorBase:
                 ("gyro", "Gyro [dps; x, y, z]"),
                 ("pressure", "MS5607 pressure [Pa]"),
                 ("ms5607_temperature", "MS5607 temperature [C]"),
-                ("barometric_altitude", "Barometric altitude [m]"),
+                ("kalman_altitude", "Kalman altitude above pad [m]"),
                 ("latitude", "Latitude [deg]"), ("longitude", "Longitude [deg]"),
                 ("gps_time", "GPS time [Unix s]"), ("gps_altitude", "GPS altitude [m]"),
             ],

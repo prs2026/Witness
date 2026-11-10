@@ -1158,9 +1158,10 @@ void Sensors::build_state_payload(std::uint8_t *payload)
         static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
     write_u32_be(
         &payload[IRIS_PACKET_STATE_UPTIME_OFFSET], uptime_milliseconds);
+    // Kalman altitude above the pad (raw baro altitude is in 0x01/flash).
     write_float_be(
-        &payload[IRIS_PACKET_STATE_BAROMETRIC_ALTITUDE_OFFSET],
-        working_sample_.barometric_altitude_meters);
+        &payload[IRIS_PACKET_STATE_KALMAN_ALTITUDE_OFFSET],
+        position_filter_.up().p);
     write_u16_be(
         &payload[IRIS_PACKET_STATE_BATTERY_VOLTAGE_OFFSET],
         encode_battery_voltage(working_sample_.battery_voltage_mv));
@@ -1265,8 +1266,8 @@ esp_err_t Sensors::queue_debug_packet()
         &payload[IRIS_PACKET_WITNESS_DEBUG_MS5607_TEMPERATURE_OFFSET],
         encoded_barometer_temperature);
     write_float_be(
-        &payload[IRIS_PACKET_WITNESS_DEBUG_BAROMETRIC_ALTITUDE_OFFSET],
-        working_sample_.barometric_altitude_meters);
+        &payload[IRIS_PACKET_WITNESS_DEBUG_KALMAN_ALTITUDE_OFFSET],
+        position_filter_.up().p);
 
     const auto gps = current_gps_fix();
     write_i24_be(&payload[IRIS_PACKET_WITNESS_DEBUG_LATITUDE_OFFSET],
@@ -1609,6 +1610,9 @@ void Sensors::service_position(const std::uint64_t now_us)
         return;  // no predict yet (attitude not initialized)
     }
     const auto phase = static_cast<position::Phase>(flight_state_machine_.state());
+    position_filter_.begin_update_cycle();
+    const std::uint32_t baro_updates_before = position_filter_.baro_updates();
+    const std::uint32_t gps_updates_before = position_filter_.gps_updates();
     if (position_baro_pending_) {
         position_baro_pending_ = false;
         // MS5607 pressure is in centi-mbar, i.e. pascals.
@@ -1623,6 +1627,57 @@ void Sensors::service_position(const std::uint64_t now_us)
                                           fix.altitude_meters, fix.satellites, phase);
     }
     position_filter_.update_constraints(phase);
+    log_kalman_packet(phase, position_filter_.baro_updates() != baro_updates_before,
+                      position_filter_.gps_updates() != gps_updates_before, fix.satellites);
+}
+
+void Sensors::log_kalman_packet(const position::Phase phase, const bool baro_accepted,
+                                const bool gps_accepted, const std::uint8_t satellites)
+{
+    if (imu_log_sink_ == nullptr) return;
+    std::uint8_t frame[IRIS_PACKET_KALMAN_LOG_FRAME_LENGTH]{};
+    frame[0] = IRIS_PACKET_ID_KALMAN_LOG;
+    std::uint8_t *payload = frame + IRIS_PACKET_ID_LENGTH;
+    const position::Filter &f = position_filter_;
+    std::uint8_t flags = 0;
+    if (f.initialized()) flags |= IRIS_KALMAN_FLAG_INITIALIZED;
+    if (f.imu_ignored()) flags |= IRIS_KALMAN_FLAG_IMU_IGNORED;
+    if (phase == position::Phase::PadIdle && f.still()) flags |= IRIS_KALMAN_FLAG_PAD_HOLD;
+    if (f.baro_gated()) flags |= IRIS_KALMAN_FLAG_BARO_GATED;
+    if (baro_accepted) flags |= IRIS_KALMAN_FLAG_BARO_ACCEPTED;
+    if (gps_accepted) flags |= IRIS_KALMAN_FLAG_GPS_ACCEPTED;
+    if (f.gps_origin_set()) flags |= IRIS_KALMAN_FLAG_GPS_ORIGIN_SET;
+    if (hitl_active()) flags |= IRIS_KALMAN_FLAG_HITL;
+    payload[IRIS_PACKET_KALMAN_LOG_PHASE_OFFSET] = static_cast<std::uint8_t>(phase);
+    payload[IRIS_PACKET_KALMAN_LOG_FLAGS_OFFSET] = flags;
+    payload[IRIS_PACKET_KALMAN_LOG_GPS_SATELLITES_OFFSET] = satellites;
+    const position::Axis *axes[3] = {&f.east(), &f.north(), &f.up()};
+    for (int i = 0; i < 3; ++i) {
+        const std::size_t o = static_cast<std::size_t>(i) * 4U;
+        write_float_be(&payload[IRIS_PACKET_KALMAN_LOG_POSITION_OFFSET + o], axes[i]->p);
+        write_float_be(&payload[IRIS_PACKET_KALMAN_LOG_VELOCITY_OFFSET + o], axes[i]->v);
+        write_float_be(&payload[IRIS_PACKET_KALMAN_LOG_POSITION_VARIANCE_OFFSET + o], axes[i]->P00);
+        write_float_be(&payload[IRIS_PACKET_KALMAN_LOG_VELOCITY_VARIANCE_OFFSET + o], axes[i]->P11);
+        write_float_be(&payload[IRIS_PACKET_KALMAN_LOG_COVARIANCE_OFFSET + o], axes[i]->P01);
+        write_float_be(&payload[IRIS_PACKET_KALMAN_LOG_GPS_INNOVATION_OFFSET + o],
+                       f.gps_innovation(i).value);
+    }
+    write_float_be(&payload[IRIS_PACKET_KALMAN_LOG_BARO_INNOVATION_OFFSET],
+                   f.baro_innovation().value);
+    write_float_be(&payload[IRIS_PACKET_KALMAN_LOG_BARO_INNOVATION_VARIANCE_OFFSET],
+                   f.baro_innovation().variance);
+    write_float_be(&payload[IRIS_PACKET_KALMAN_LOG_BARO_SIGMA_OFFSET], f.last_baro_sigma_m());
+    write_float_be(&payload[IRIS_PACKET_KALMAN_LOG_MACH_OFFSET], f.mach());
+    const auto u16 = [](const std::uint32_t value) {
+        return static_cast<std::uint16_t>(value & 0xFFFFU);
+    };
+    write_u16_be(&payload[IRIS_PACKET_KALMAN_LOG_BARO_UPDATES_OFFSET], u16(f.baro_updates()));
+    write_u16_be(&payload[IRIS_PACKET_KALMAN_LOG_BARO_GATED_OFFSET], u16(f.baro_gated_count()));
+    write_u16_be(&payload[IRIS_PACKET_KALMAN_LOG_BARO_REJECTS_OFFSET], u16(f.baro_rejects()));
+    write_u16_be(&payload[IRIS_PACKET_KALMAN_LOG_GPS_UPDATES_OFFSET], u16(f.gps_updates()));
+    write_u16_be(&payload[IRIS_PACKET_KALMAN_LOG_GPS_REJECTS_OFFSET], u16(f.gps_rejects()));
+    frame[IRIS_PACKET_KALMAN_LOG_FRAME_LENGTH - 1U] = IRIS_PACKET_EOF_VALUE;
+    (void)imu_log_sink_->log_packet(FlashLogger::kPacketSourceKalman, frame, sizeof(frame));
 }
 
 void Sensors::report_position(const std::uint64_t now_us)
