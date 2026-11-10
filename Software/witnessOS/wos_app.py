@@ -122,6 +122,8 @@ class WitnessOS(QtWidgets.QMainWindow):
 def run(args) -> int:
     """Open the window for parsed witnessos.py arguments; run the event loop."""
     app = ensure_app()
+    import stall_watchdog   # Horizon: logs where the UI freezes (Horizon/logs/ui_stalls.log)
+    stall_watchdog.install(Path(wos_paths.HORIZON_DIR) / "logs")
     window = WitnessOS(csv_files=args.csv_files, start_tab=args.tab,
                        monitor_options={"start_feed": not args.no_feed,
                                         "auto_connect": not args.no_auto_connect})
