@@ -10,7 +10,8 @@ import unittest
 import converter
 from flight_data import DEFAULT_LAYOUT, FlightData, load_layout, validate_layout
 from flight_render import hitl_line, value_text
-from main import QUICK_COMMANDS, PacketDecoder, SerialMonitor, parse_packet
+from monitor_core import MonitorCore
+from witness_protocol import QUICK_COMMANDS, PacketDecoder, parse_packet
 import viewer
 from witness_test_source import builtin_scenario, demo_packets, load_scenario
 
@@ -134,15 +135,15 @@ class StateFrameTests(unittest.TestCase):
         self.assertEqual((flat["gps_locked"], flat["hitl_active"]), (1, 0))  # Witness fc_status only
 
     def test_monitor_readout_and_hitl_shortcuts(self):
-        self.assertEqual(SerialMonitor.format_gps_satellites({"gps_satellites": 7, "status": 0x6E08}),
+        self.assertEqual(MonitorCore.format_gps_satellites({"gps_satellites": 7, "status": 0x6E08}),
                          "7  lock 1")
-        self.assertEqual(SerialMonitor.format_gps_satellites({"gps_satellites": 0, "status": 0x6E10}),
+        self.assertEqual(MonitorCore.format_gps_satellites({"gps_satellites": 0, "status": 0x6E10}),
                          "0  lock 0")
         commands = {opcode: label for label, opcode, _confirm in QUICK_COMMANDS}
         self.assertIn("EXIT", commands[0x4858])
         self.assertIn("Enter", commands[0x4849])
         for opcode in (0x4849, 0x4858):
-            frame = SerialMonitor.build_quick_command_packet(opcode)
+            frame = MonitorCore.build_quick_command_packet(opcode)
             self.assertEqual((len(frame), frame[0], frame[-1]), (10, 0x05, 0x0A))
             self.assertEqual(int.from_bytes(frame[7:9], "big"), opcode)
 

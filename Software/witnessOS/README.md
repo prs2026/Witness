@@ -1,20 +1,23 @@
 # witnessOS
 
-One Tkinter window for the Witness bench tools, one tab per tool:
+The Witness bench tools in one PyQt6 window (plots by pyqtgraph), one tab per
+tool. witnessOS is the only way to run the HITL bench GUI and the Witness
+monitor; they have no standalone windows any more.
 
-| Tab | Tool | Reused from |
+| Tab | Tool | Code |
 |---|---|---|
-| **HITL bench** | Streams simulated `0x0C` sensor frames to Witness and scores flight-state transitions and attitude | `Software/HITL/hitl_gui.py` (`HitlApp`), `hitl_session.py`, `sim_model.py`, `trajectory_csv.py`, `attitude.py`, `hitl_protocol.py` |
-| **CSV viewer** | Summary and plots of CSVs made by `converter.py`. Several CSVs can be overlaid on Witness uptime | `Software/Horizon/viewer.py` (`CsvViewerPanel`) |
-| **Witness monitor** | The Witness Communications Monitor: telemetry readout, status decoders, graphs, console, commands, test source and the Horizon `horizon.witness.v1` JSON feed on `127.0.0.1:8766` | `Software/Horizon/main.py` (`MonitorPanel`) |
-
-The tools are imported, not copied. Their standalone entry points still work:
-`hitl_gui.py` (GUI and `--headless`), `viewer.py`, `main.py` and `converter.py`.
+| **HITL bench** | Streams simulated `0x0C` sensor frames to Witness and scores flight-state transitions and attitude | `wos_hitl_tab.py` (`HitlWidget`) on `Software/HITL`'s `hitl_session.py`, `sim_model.py`, `trajectory_csv.py`, `attitude.py`, `hitl_protocol.py`, `hitl_gui.py` (Qt-free helpers and the headless runner) |
+| **CSV viewer** | Summary and plots of CSVs made by `converter.py`. Several CSVs can be overlaid on Witness uptime | `Software/Horizon/viewer.py` (`CsvViewerWidget`) |
+| **Witness monitor** | The Witness Communications Monitor: telemetry readout, status decoders, graphs, console, commands, test source and the Horizon `horizon.witness.v1` JSON feed on `127.0.0.1:8766` | `wos_monitor_tab.py`, embedding `Software/Horizon/main.py`'s `MonitorPanel` (logic in `monitor_core.py`) |
 
 ## Run
 
-You need Python 3.14 with Tk. For USB serial ports, install Horizon's
-requirements (`pip install -r Software/Horizon/requirements.txt`).
+You need Python 3.14 with PyQt6, pyqtgraph and numpy; the 960 Hz IMU
+synthesis also needs scipy and soundfile:
+
+```bash
+python -m pip install -r Software/witnessOS/requirements.txt
+```
 
 ```bash
 python Software/witnessOS/witnessos.py
@@ -34,11 +37,46 @@ python Software/witnessOS/witnessos.py --tab monitor --no-feed --no-auto-connect
 | `--tab hitl\|viewer\|monitor` | Picks the first tab. `relay` still works as an alias for `monitor` |
 | `--no-feed` | Doesn't start the JSON feed |
 | `--no-auto-connect` | Stops the monitor opening Witness USB ports automatically |
+| `--hitl-headless [HITL args]` | Runs one HITL simulation without a window (bench automation); see below |
+
+## HITL bench
+
+The tab is the HITL bench GUI described in `Software/HITL/README.md`:
+connection bar (host, port, Connect, Enter HITL, Start sim, Stop, Exit HITL,
+tolerance), preset or trajectory CSV source, the parameter list (including
+the vibration profile picker and scale), final tilt threshold, the FC log
+fetch settings (bench Pi host, user, SSH key, hub power-cycle), Predict
+transitions, the flight state and status lamps, the live readout (KF alt AGL,
+GPS, accel X, battery, uptime, sim time), the transition table, and the log
+with `[csv]`, `[imu]` and `[result]` lines (the result table plus the
+observed-vs-truth comparison).
+
+Plots are pyqtgraph: altitude MSL (sim true vs Witness Kalman), X accel (sim
+low-g vs Witness) and, for CSV runs, tilt / attitude error. The x axes are
+linked; drag to pan, wheel to zoom, right-click for the plot menu. Live data
+is converted incrementally and redrawn by a throttle (about 7 Hz), never per
+packet. CSV parsing, prediction, the 960 Hz IMU synthesis and connecting run
+on worker threads with a busy indicator, so the window never freezes.
+Settings persist in `Software/HITL/hitl_settings.json`.
+
+**Headless.** For scripts and the bench, without a window and without
+importing Qt:
+
+```bash
+python Software/witnessOS/witnessos.py --hitl-headless --preset "Nominal 10 g" --host prs2026hitl --port 7100
+python Software/witnessOS/witnessos.py --hitl-headless --csv Software/HITL/trajectories/a3241569-trajectory.csv --dry-run
+python Software/witnessOS/witnessos.py --hitl-headless --help
+```
+
+The arguments are the HITL runner's (see `Software/HITL/README.md`). The
+exit code is 0 for a pass, 1 for a fail and 2 for a setup error.
+`python Software/HITL/hitl_gui.py --headless ...` still works as a deprecated
+alias.
 
 ## Witness monitor
 
-This tab is `main.py`'s monitor, embedded. It shows the same per-packet
-sections as `python main.py`:
+This tab embeds Horizon's monitor widget (`main.MonitorPanel` over
+`monitor_core.MonitorCore`). It shows:
 
 - Data-age indicators.
 - Status-byte flag, flight-state and GPS/HITL decoders.
@@ -46,30 +84,14 @@ sections as `python main.py`:
 - The console with hex and quick commands.
 - The built-in test flight and JSON replay.
 
-Its JSON feed is the one `horizon.py` and the ground receivers read. Run
-either witnessOS or `main.py`, not both, because only one of them can serve
-port 8766.
+Its JSON feed is the one `horizon.py` and the ground receivers read. Only one
+program can serve port 8766, so run one witnessOS at a time.
 
 **Mirror HITL tab connection** is on by default. Witness's raw TCP port
 (ser2net, for example `prs2026hitl:7100`) serves one client at a time. While
 the HITL tab holds that connection, the monitor decodes the bytes the HITL
-session receives (`HitlSession.rx_tap` → `MonitorBase.stream_feeder`) instead
+session receives (`HitlSession.rx_tap` → `MonitorPanel.stream_feeder`) instead
 of opening a second connection. Mirroring only reads.
-
-Rendering fixes compared with standalone `main.py` before this change. They
-apply to `python main.py` too:
-
-- The Graphs tab has a scrollbar and responds to the mouse wheel. Before,
-  graphs past the window bottom couldn't be reached.
-- Graph height fits the view. Values get round ticks scaled to the space.
-  Wall-clock time ticks no longer overlap. Vector fields get an x/y/z(/w)
-  legend.
-- Graphs redraw on resize (debounced), skip drawing while hidden, and reduce
-  long histories to min/max per pixel.
-- Telemetry sections tile by their real width, so the status-flag grids are
-  no longer clipped.
-- The wheel binds per widget instead of through `bind_all`, so it can't take
-  over the host window's wheel.
 
 ## CSV viewer: overlaying logs
 
@@ -175,37 +197,30 @@ time is left out of the box.
 
 The Summary tab shows one CSV at a time; pick it from the CSV list.
 
-## Window sizes and rendering
+## Window sizes
 
-- Each tab sits in a `ScrollableFrame` (`wos_widgets.py`). When the window
-  is larger than the content needs, the content stretches to fill it. When
-  the window is smaller, scrollbars appear and nothing is squashed or clipped
-  out of reach.
-- One `WheelRouter` sends the mouse wheel to the innermost scroll area under
-  the pointer that can still move, and then to the whole tab. Text boxes and
-  tables keep their own scrolling.
-- **Viewer plots:**
-  - Graphs redraw on resize at the real width.
-  - Ticks are round values, and overlapping labels are skipped. Margins are
-    measured to fit the labels.
-  - Statistics and legends wrap instead of overdrawing.
-  - Long logs are reduced to min/max per pixel.
-  - Only graphs on screen are drawn.
-- **HITL plots:**
-  - Panels have round y and time ticks.
-  - Legends wrap.
-  - Data is clipped to the plot.
-  - Panels redraw on resize and skip work while hidden.
-  - Plot and log/table are split by a draggable sash.
+- The window opens at up to 1320 x 900 (less on small screens); the
+  minimum is 420 x 300.
+- Each tab sits in a `QScrollArea` (`wos_widgets.scroll_tab`). When the
+  window is larger than the tab needs, the tab stretches to fill it; when it
+  is smaller, scrollbars appear and nothing is squashed or clipped. Qt sends
+  the mouse wheel to the innermost scrollable widget under the pointer.
+- The window title follows the tab: the viewer's open files, the monitor's
+  connection.
+- Closing the window shuts down all three panels: the monitor (mirroring,
+  inputs, feed), the HITL bench (stops a run, sends HITL EXIT) and the viewer
+  (loader threads).
 
 ## Files
 
 | File | Contents |
 |---|---|
-| `witnessos.py` | The entry point: the `WitnessOS` notebook and the CLI |
-| `wos_paths.py` | Adds `Software/HITL` and `Software/Horizon` to `sys.path` |
-| `wos_widgets.py` | `ScrollableFrame`, `WheelRouter` and the pure layout helpers |
+| `witnessos.py` | The entry point and CLI, including `--hitl-headless`. Qt-free until the window opens |
+| `wos_app.py` | The `WitnessOS` main window (`QTabWidget`) |
+| `wos_hitl_tab.py` | The HITL bench tab, `HitlWidget` |
 | `wos_monitor_tab.py` | The monitor tab: `main.MonitorPanel` plus HITL mirroring |
+| `wos_widgets.py` | `scroll_tab()` |
+| `wos_paths.py` | Adds `Software/HITL` and `Software/Horizon` to `sys.path` |
 
 ## Tests
 
@@ -213,5 +228,11 @@ The Summary tab shows one CSV at a time; pick it from the CSV list.
 cd Software/witnessOS && python -B -m unittest discover -s tests -q
 ```
 
-Related tests are in `Software/HITL/tests/test_gui_plot.py` and
-`Software/Horizon/tests/test_viewer_plotting.py`.
+- `test_app.py`: the shell with stand-in viewer/monitor widgets, plus an
+  integration test with the real Horizon widgets (skipped until they are Qt).
+- `test_hitl_tab.py`: the HITL bench tab, including a run against
+  `Software/HITL/tests/fake_witness.py`.
+- `test_cli.py`: `--hitl-headless` runs and never imports Qt.
+
+GUI tests run offscreen (`QT_QPA_PLATFORM=offscreen`). Related tests are in
+`Software/HITL/tests` and `Software/Horizon/tests`.

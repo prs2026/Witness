@@ -1,7 +1,7 @@
 """Automatic connection tests use synthetic ports and loopback/fake receivers only."""
 
-import gc
 import json
+import os
 from pathlib import Path
 import tempfile
 import threading
@@ -9,7 +9,9 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
-from aim_mqtt import AimMqttReceiver, AimSettings
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+from aim_mqtt import AimMqttReceiver, AimSettings  # noqa: E402
 from ground_receivers import WitnessReceiver
 from serial_discovery import SerialDiscovery, SerialOpenJob
 
@@ -141,26 +143,15 @@ class RetryTests(unittest.TestCase):
 
 class AutoGuiTests(unittest.TestCase):
     def tearDown(self):
-        # The closed Tk apps are cyclic garbage now. Collect them here, on
-        # the Tk thread, before the apps' background port scans (real
-        # pyserial enumeration) allocate enough to trigger the cyclic GC in
-        # their own thread, where each tkinter Variable.__del__ blocks about
-        # a second ("main thread is not in main loop").
-        gc.collect()
+        # Let the apps' background port scans finish before the next test.
         for thread in threading.enumerate():
             if thread.name.startswith("discover-"):
                 thread.join(10)
-        gc.collect()
 
     def make_horizon(self, directory, **kwargs):
-        import tkinter as tk
-        from horizon import HorizonGroundStation
-        try:
-            app = HorizonGroundStation(log_dir=Path(directory), broker_enabled=False, **kwargs)
-        except tk.TclError as exc:
-            self.skipTest(f"Tk display unavailable: {exc}")
-        app.withdraw()
-        return app
+        from horizon_qt_support import make_horizon
+        kwargs.setdefault("auto_connect", True)
+        return make_horizon(directory, **kwargs)
 
     def test_horizon_defaults_manual_disconnect_and_off_preserves_connection(self):
         with tempfile.TemporaryDirectory() as directory, patch("serial_discovery.enumerate_ports", return_value=[]):
@@ -168,6 +159,7 @@ class AutoGuiTests(unittest.TestCase):
             try:
                 for tab in (app.witness, app.aim, app.featherweight):
                     self.assertTrue(tab.auto_connect.get())
+                    self.assertTrue(tab.auto_button.isChecked())
                 with patch.object(app.witness, "connect") as witness, patch.object(app.aim, "connect") as aim, \
                         patch.object(app.featherweight, "connect") as fw:
                     app.witness.auto_tick()
@@ -182,15 +174,18 @@ class AutoGuiTests(unittest.TestCase):
                     receiver = Mock(running=True, auto_retry=True)
                     receiver.drain.return_value = ({} if tab is app.aim else [], ("Connected", 0, 0, 0), [])
                     tab.receiver = receiver
-                    tab.set_auto_connect(False)
+                    tab.auto_button.click()             # user turns auto-connect off
+                    self.assertFalse(tab.auto_connect.get())
                     self.assertIs(tab.receiver, receiver)
                     self.assertFalse(receiver.auto_retry)
                     receiver.stop.assert_not_called()
                     tab.set_auto_connect(True)
+                    self.assertTrue(tab.auto_button.isChecked())
                     self.assertTrue(receiver.auto_retry)
-                    tab.toggle_connection()
+                    tab.connect_button.click()          # manual Disconnect
                     self.assertFalse(tab.auto_connect.get())
                     self.assertIsNone(tab.receiver)
+                    self.assertEqual(tab.connect_button.text(), "Connect")
             finally:
                 app.close()
 
@@ -205,7 +200,8 @@ class AutoGuiTests(unittest.TestCase):
                 tab.set_auto_connect(True)
                 with patch.object(discovery, "refresh"), patch.object(tab, "connect") as connect:
                     tab.auto_tick()
-                    self.assertEqual(tab.port_combo.get(), "COM_FAKE")
+                    self.assertEqual(tab.port.get(), "COM_FAKE")
+                    self.assertEqual(tab.port_combo.currentText(), "COM_FAKE")
                     connect.assert_called_once_with(automatic=True)
                     failed = Mock(running=False, status="Device unplugged")
                     failed.drain.return_value = ([], ("Device unplugged", 0, 0, 0), [])
@@ -213,6 +209,7 @@ class AutoGuiTests(unittest.TestCase):
                     tab.auto_tick()
                     self.assertIsNone(tab.receiver)
                     self.assertEqual(tab.status.get(), "Device unplugged")
+                    self.assertEqual(tab.status_label.text(), "Device unplugged")
                     self.assertEqual(connect.call_count, 1)
                     tab._next_connect = 0
                     tab.auto_tick()
@@ -224,56 +221,52 @@ class AutoGuiTests(unittest.TestCase):
             finally:
                 app.close()
 
-    def test_main_auto_open_error_reconnect_disable_and_test_isolation(self):
-        import tkinter as tk
-        from main import SerialMonitor
-        with tempfile.TemporaryDirectory() as directory, \
-                patch("main.DEFAULT_WITNESS_FEED_PORT", 0), patch("main.LOG_DIR", Path(directory)), \
+    def test_monitor_auto_open_error_reconnect_disable_and_test_isolation(self):
+        from horizon_qt_support import make_monitor
+        with tempfile.TemporaryDirectory() as directory, patch("monitor_core.LOG_DIR", Path(directory)), \
                 patch("serial_discovery.enumerate_ports", return_value=[]), \
-                patch("main.SerialOpenJob") as open_job:
-            try:
-                app = SerialMonitor()
-            except tk.TclError as exc:
-                self.skipTest(f"Tk display unavailable: {exc}")
-            app.withdraw()
+                patch("monitor_core.SerialOpenJob") as open_job:
+            app = make_monitor(directory, auto_connect=True)
             try:
                 self.assertTrue(app.auto_connect.get())
-                app.discovery = SerialDiscovery("witness", path=Path(directory) / "witness.json")
-                app.discovery.ports = [port("COM_W", "Witness"), port("COM_F", "Featherweight", serial="fw")]
+                self.assertTrue(app.auto_button.isChecked())
+                app.core.discovery = SerialDiscovery("witness", path=Path(directory) / "witness.json")
+                app.core.discovery.ports = [port("COM_W", "Witness"), port("COM_F", "Featherweight", serial="fw")]
                 stream = Mock()
                 open_job.return_value.port = "COM_W"
                 open_job.return_value.take.return_value = None
-                with patch.object(app.discovery, "refresh"), patch.object(app, "read_serial"):
-                    app._auto_poll()
+                with patch.object(app.core.discovery, "refresh"), patch.object(app.core, "read_serial"):
+                    app.core.auto_poll()
                     open_job.assert_called_once_with("COM_W", 115200)
+                    self.assertEqual(app.connect_button.text(), "Cancel connect")
                     open_job.return_value.take.return_value = (stream, None)
-                    app._auto_poll()
+                    app.core.auto_poll()
                     self.assertIs(app.serials["COM_W"], stream)
-                    self.assertIn("COM_W", app.command_port_combo["values"])
+                    self.assertEqual([app.command_port_combo.itemText(i)
+                                      for i in range(app.command_port_combo.count())], ["COM_W"])
+                    self.assertEqual(app.port_a_combo.currentText(), "COM_W")
                     # Unplug releases only this input; a later scan can reopen it.
                     app.events.put(("error", ("COM_W", "unplugged", stream)))
                     app.process_events()
                     self.assertFalse(app.serials)
                     self.assertTrue(app.auto_connect.get())
-                    app._next_auto_open = 0
-                    app._auto_poll()
+                    app.core._next_auto_open = 0
+                    app.core.auto_poll()
                     self.assertEqual(open_job.call_count, 2)
-                    app.toggle_connection()  # Cancel pending open, do not re-open.
+                    app.connect_button.click()  # Cancel pending open, do not re-open.
                     self.assertFalse(app.auto_connect.get())
+                    self.assertFalse(app.auto_button.isChecked())
                     open_job.return_value.cancel.assert_called()
-                    app._auto_poll()
+                    app.core.auto_poll()
                     self.assertEqual(open_job.call_count, 2)
                     app.auto_connect.set(True)
                     self.assertTrue(app.start_test())
                     self.assertFalse(app.auto_connect.get())
-                    app.auto_connect.set(True)
-                    app._auto_changed()
+                    app.auto_button.click()     # user tries to re-enable during a test
                     self.assertFalse(app.auto_connect.get())
-                    app._auto_poll()
+                    app.core.auto_poll()
                     self.assertEqual(open_job.call_count, 2)
             finally:
-                for timer in app.tk.call("after", "info"):
-                    app.after_cancel(timer)
                 app.close()
 
 

@@ -1,6 +1,6 @@
 """Rocket ground tracks for the Visualizer map, relative to the launch pad.
 
-accept_record() runs on receiver threads (no Tk). snapshot() is called by the
+accept_record() runs on receiver threads (no GUI). snapshot() is called by the
 map's UI timer and returns positions already converted to pad-relative ENU
 metres; conversions are cached per point and redone only when the pad or the
 Witness launch site changes.

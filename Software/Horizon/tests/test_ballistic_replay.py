@@ -4,7 +4,7 @@ import math
 from pathlib import Path
 import unittest
 
-from main import PacketDecoder
+from witness_protocol import PacketDecoder
 from witness_test_source import load_scenario
 
 

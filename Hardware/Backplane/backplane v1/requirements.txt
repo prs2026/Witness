@@ -1,0 +1,4 @@
+# These scripts run inside KiCad's bundled Python (they import pcbnew, which
+# ships with KiCad and is not installable from PyPI). No other third-party
+# packages are needed. Run them from the KiCad scripting console or with
+# KiCad's python executable.

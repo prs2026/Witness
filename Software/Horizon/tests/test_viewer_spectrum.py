@@ -10,9 +10,11 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import spectrum  # noqa: E402
-import viewer  # noqa: E402
+import viewer_data as viewer  # noqa: E402  (data logic)
+from viewer_qt_support import ViewerCase, pump  # noqa: E402
 
 
 def sine(freq, fs, seconds, amplitude=1.0, offset=0.0):
@@ -114,19 +116,10 @@ class SpectrumTests(unittest.TestCase):
         self.assertTrue(spectrum.ppm(rgb).startswith(b"P6 3 1 255 "))
 
 
-class SpectrogramWindowTests(unittest.TestCase):
-    def setUp(self):
-        try:
-            import tkinter as tk
-            self.root = tk.Tk()
-        except Exception as exc:  # pragma: no cover
-            self.skipTest(f"Tk unavailable: {exc}")
-        self.tmp = tempfile.mkdtemp()
+import pyqtgraph as pg  # noqa: E402
 
-    def tearDown(self):
-        self.root.destroy()
-        shutil.rmtree(self.tmp, ignore_errors=True)
 
+class SpectrogramWindowTests(ViewerCase):
     def test_window_computes_renders_and_hovers(self):
         path = Path(self.tmp) / "imu.csv"
         t, y = sine(40.0, 500.0, 8)
@@ -134,50 +127,58 @@ class SpectrogramWindowTests(unittest.TestCase):
             f.write("Flight_Time_(s),Accel_X\n")
             for ti, yi in zip(t - 2.0, y):
                 f.write(f"{ti:.3f},{yi:.5f}\n")
-        panel = viewer.CsvViewerPanel(self.root)
-        panel.pack(fill="both", expand=True)
-        self.root.geometry("900x600")
+        panel = self.make(900, 600)
         self.assertTrue(panel.load_csv(path))
-        self.root.update()
+        self.plots(panel)
         ref = (next(iter(panel.datasets)), "Accel_X")
         window = panel.open_spectrogram(ref)
-        window.update()
-        self.assertEqual(float(window.start_var.get()), -2.0)
+        pump()
+        self.assertEqual(float(window.start_edit.text()), -2.0)
         self.assertTrue(window.wait(30))
-        self.assertIsNotNone(window.analysis, window.status_var.get())
-        self.assertIn("fs = 500 Hz", window.status_var.get())
-        window.update()
-        window.render()
-        self.assertIsNotNone(window.geom)
-        self.assertIsNotNone(window.welch_geom)
-        g = window.geom
-        x = (g["left"] + g["right"]) / 2
-        y_at_40 = g["bottom"] - 40.0 / g["fmax"] * (g["bottom"] - g["top"])
-        text = window.readout_at(x, y_at_40)
+        self.assertIsNotNone(window.analysis, window.status_label.text())
+        self.assertIn("fs = 500 Hz", window.status_label.text())
+        # Rendered headless: image with a colour bar, time x frequency axes.
+        a = window.analysis
+        self.assertIsNotNone(window.image.image)
+        self.assertEqual(window.image.image.shape[1], a.result.columns)
+        rect = window.image.boundingRect()
+        self.assertGreater(rect.width(), 0)
+        x_range, y_range = window.p1.vb.viewRange()
+        self.assertAlmostEqual(x_range[0], a.t_start, places=6)
+        self.assertAlmostEqual(y_range[1], float(a.freqs[-1]), places=6)
+        self.assertEqual(tuple(window.colorbar.levels()), tuple(map(float, window.db_range())))
+        self.assertTrue(window.p2.isVisible())
+        text = window.readout_at((a.t_start + a.t_end) / 2, 40.0)
         self.assertRegex(text, r"t = .* s +f = 4\d(\.\d+)? Hz +-?\d+\.\d dB")
-        w = window.welch_geom
-        self.assertIn("average spectrum",
-                      window.readout_at((w["left"] + w["right"]) / 2, w["top"] + 5))
+        self.assertIn("average spectrum", window.welch_readout_at(40.0))
+        # Crosshair from a mouse move over the image.
+        scene_pos = window.p1.vb.mapViewToScene(
+            pg.Point((a.t_start + a.t_end) / 2, 40.0))
+        window._mouse_moved(scene_pos)
+        self.assertTrue(window.v_line.isVisible())
+        self.assertIn("Hz", window.hover_label.text())
         # A zoomed window, other settings, manual colours; bad input is reported.
         panel.set_x_view((0.0, 2.0))
         window.use_zoom()
-        window.nfft_var.set("256")
-        window.window_var.set("Blackman")
-        window.detrend_var.set("Linear")
+        window.nfft_combo.setCurrentText("256")
+        window.window_combo.setCurrentText("Blackman")
+        window.detrend_combo.setCurrentText("Linear")
         window.compute()
         self.assertTrue(window.wait(30))
         self.assertEqual(window.analysis.result.nfft, 256)
         self.assertAlmostEqual(window.analysis.sampling.t0, 0.0)
-        window.db_min_var.set("-120")
-        window.db_max_var.set("0")
+        window.db_min_edit.setText("-120")
+        window.db_max_edit.setText("0")
         window.apply_colours()
         self.assertEqual(window.db_range(), (-120.0, 0.0))
-        window.welch_var.set(False)
-        window.render()
-        self.assertIsNone(window.welch_geom)
-        window.end_var.set("-5")
+        self.assertEqual(tuple(window.colorbar.levels()), (-120.0, 0.0))
+        window.welch_check.setChecked(False)
+        self.assertFalse(window.p2.isVisible())
+        window.end_edit.setText("-5")
         window.compute()
-        self.assertIn("Check the settings", window.status_var.get())
+        self.assertIn("Check the settings", window.status_label.text())
+        window.close()
+        pump()
 
 
 if __name__ == "__main__":

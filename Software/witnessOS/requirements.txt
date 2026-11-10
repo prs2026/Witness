@@ -1,0 +1,3 @@
+# witnessOS: HITL bench, CSV viewer and Witness monitor in one window.
+# Install: python -m pip install -r requirements.txt
+-r ../HITL/requirements.txt

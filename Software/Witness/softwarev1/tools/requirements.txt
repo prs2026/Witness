@@ -1,0 +1,2 @@
+# Witness host tools (serial / RFC2217 bench scripts).
+pyserial>=3.5,<4

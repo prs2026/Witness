@@ -1,11 +1,9 @@
-"""HITL GUI: vibration picker, worker-thread prepare, batched log."""
+"""HITL vibration helpers (the GUI tests are in witnessOS/tests/test_hitl_tab.py)."""
 
-import json
 import os
 import shutil
 import sys
 import tempfile
-import time
 import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -60,108 +58,6 @@ class VibrationHelperTests(unittest.TestCase):
         settings = hitl_gui.load_settings(os.path.join(tmp, "absent.json"))
         self.assertEqual((settings["vibration_profile"], settings["vibration_scale"]),
                          ("", 1.0))
-
-
-class GuiWorkerTests(unittest.TestCase):
-    def setUp(self):
-        try:
-            import tkinter as tk
-            self.root = tk.Tk()
-        except Exception as exc:  # pragma: no cover - environment specific
-            self.skipTest(f"Tk unavailable: {exc}")
-        self.root.withdraw()
-        self.tmp = tempfile.mkdtemp(prefix="hitl-gui-")
-        self.settings_path = os.path.join(self.tmp, "s.json")
-        self.switch = sys.getswitchinterval()   # before the first prediction
-        self.app = hitl_gui.HitlApp(
-            self.root, settings=hitl_gui.load_settings(self.settings_path),
-            settings_path=self.settings_path, runs_dir=self.tmp)
-
-    def tearDown(self):
-        self.app.on_close()
-        shutil.rmtree(self.tmp, ignore_errors=True)
-
-    def test_load_csv_predicts_off_the_ui_thread_with_vibration_picker(self):
-        app = self.app
-        self.assertTrue(app.wait_idle(60))
-        started = time.perf_counter()
-        app.load_csv(EAYF)
-        self.assertLess(time.perf_counter() - started, 0.5)   # did not block
-        self.assertEqual(app.predict_label.cget("text"), "Predicting…")
-        self.assertTrue(app._busy)
-        self.assertTrue(app.busy_bar.winfo_manager())          # indicator shown
-        self.assertTrue(app.wait_idle(60))
-        self.assertFalse(app.busy_bar.winfo_manager())
-        self.assertEqual(sys.getswitchinterval(), self.switch)  # restored
-        self.assertIn("Boost", app.predict_label.cget("text"))
-        values = app.vibration_picker.cget("values")
-        self.assertEqual(list(values[:2]), [hitl_gui.VIB_AUTO, hitl_gui.VIB_NONE])
-        self.assertIn("eayftrajectory", values)
-        self.assertEqual(app.read_params().vibration_profile, "")
-        if synthesis_available():
-            self.assertIn("'eayftrajectory'", app.vibration_label.cget("text"))
-        # Picking a profile saves it and goes into the run parameters.
-        app.param_vars["vibration_profile"].set(hitl_gui.VIB_NONE)
-        app.param_vars["vibration_scale"].set("0.5")
-        app._vibration_changed()
-        self.assertTrue(app.wait_idle(60))
-        params = app.read_params()
-        self.assertEqual((params.vibration_profile, params.vibration_scale), ("none", 0.5))
-        with open(self.settings_path) as f:
-            saved = json.load(f)
-        self.assertEqual((saved["vibration_profile"], saved["vibration_scale"]), ("none", 0.5))
-        # A later CSV source starts from the saved choice.
-        app.load_preset()
-        app.load_csv(OTHER)
-        self.assertEqual(app.param_vars["vibration_profile"].get(), hitl_gui.VIB_NONE)
-        self.assertTrue(app.wait_idle(60))
-
-    def test_stale_prediction_is_ignored(self):
-        app = self.app
-        app.load_csv(EAYF)
-        app.load_preset()              # a newer prediction supersedes the CSV one
-        self.assertTrue(app.wait_idle(60))
-        self.assertNotIn("CSV", app.predict_label.cget("text"))
-
-    def test_start_sim_builds_the_run_on_a_worker_and_reports_vibration(self):
-        from fake_witness import FakeWitness
-        fake = FakeWitness().start()
-        self.addCleanup(fake.close)
-        app = self.app
-        app.load_csv(OTHER)
-        self.assertTrue(app.wait_idle(60))
-        app.param_vars["imu_synthesis"].set(False)   # keep the test quick
-        app.host_var.set("127.0.0.1")
-        app.port_var.set(str(fake.port))
-        app.toggle_connect()
-        self.assertTrue(app.session.connected)
-        started = time.perf_counter()
-        app.start_sim()
-        self.assertLess(time.perf_counter() - started, 0.5)
-        self.assertTrue(app._preparing)
-        self.assertIn("disabled", app.btn_start.state())
-        self.assertIn("disabled", app.load_csv_btn.state())
-        self.assertTrue(app.wait_idle(60))
-        self.assertIsNotNone(app.session.run)
-        self.assertTrue(app.session.run.running)
-        self.assertIn("synthesis off", app.vibration_label.cget("text"))
-        log = app.logbox.get("1.0", "end")
-        self.assertIn("[csv]", log)
-        self.assertIn("[imu]", log)
-        app.stop_sim()
-        app.session.wait_run(5)
-
-    def test_log_lines_are_written_in_batches(self):
-        app = self.app
-        before = app.logbox.get("1.0", "end")
-        for i in range(2000):
-            app.append_log(f"line {i}")
-        self.assertEqual(app.logbox.get("1.0", "end"), before)   # nothing yet
-        app._flush_log()
-        text = app.logbox.get("1.0", "end")
-        self.assertIn("line 0\n", text)
-        self.assertIn("line 1999\n", text)
-        self.assertEqual(app._pending_log, [])
 
 
 if __name__ == "__main__":

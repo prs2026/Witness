@@ -1,6 +1,7 @@
 """Offline test-source validation, timing, decoding and GUI-to-Horizon checks."""
 
 import json
+import os
 from pathlib import Path
 import tempfile
 import threading
@@ -8,8 +9,10 @@ import time
 import unittest
 from unittest.mock import Mock, patch
 
-from main import PacketDecoder, SerialMonitor, command_line, parse_packet
-from witness_test_source import (
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+from witness_protocol import PacketDecoder, parse_packet  # noqa: E402
+from witness_test_source import (  # noqa: E402
     TestFrame, TestScenario, builtin_scenario, demo_packets, load_scenario,
     play_scenario, validate_speed,
 )
@@ -114,12 +117,7 @@ class SourceTests(unittest.TestCase):
         self.assertFalse(thread.is_alive())
         self.assertEqual(delivered, [])
 
-    def test_cli_and_speed_validation(self):
-        args = command_line(["--test-file", "example.json", "--test-speed", "2", "--test-once"])
-        self.assertEqual(args.test_file, "example.json")
-        self.assertTrue(args.test_once)
-        self.assertEqual(args.test_speed, 2)
-        self.assertTrue(command_line(["--test"]).test)
+    def test_speed_validation(self):
         for speed in (0, -1, 11, float("nan"), float("inf")):
             with self.subTest(speed=speed), self.assertRaises(ValueError):
                 validate_speed(speed)
@@ -127,31 +125,19 @@ class SourceTests(unittest.TestCase):
 
 class TestModeGuiTests(unittest.TestCase):
     def test_replay_flows_to_horizon_and_never_opens_hardware(self):
-        import tkinter as tk
-        from horizon import HorizonGroundStation
-        with tempfile.TemporaryDirectory() as directory, patch("main.LOG_DIR", Path(directory)), \
-                patch("main.DEFAULT_WITNESS_FEED_PORT", 0), patch("main.messagebox.showerror") as error_box:
-            try:
-                app = SerialMonitor(test_source=str(ROOT / "test_data/example_packets.json"),
-                                    test_speed=10, test_loop=False)
-            except tk.TclError as exc:
-                self.skipTest(f"Tk display unavailable: {exc}")
-            app.withdraw()
-            unified = HorizonGroundStation(log_dir=Path(directory), auto_connect=False, broker_enabled=False)
-            unified.withdraw()
-            def pump_until(predicate, timeout=5):
-                deadline = time.monotonic() + timeout
-                while time.monotonic() < deadline:
-                    app.update()
-                    unified.update()
-                    if predicate():
-                        return
-                    time.sleep(0.01)
-                self.fail("GUI test timed out")
+        from horizon_qt_support import make_horizon, make_monitor, pump_until
+        with tempfile.TemporaryDirectory() as directory, patch("monitor_core.LOG_DIR", Path(directory)), \
+                patch("main.show_error") as error_box:
+            app = make_monitor(directory, test_source=str(ROOT / "test_data/example_packets.json"),
+                               test_speed=10, test_loop=False, test_mode=False)
+            unified = make_horizon(directory)
+
+            def wait(predicate, timeout=5):
+                self.assertTrue(pump_until(predicate, timeout), "GUI test timed out")
             try:
                 unified.witness.port.set(str(app.publisher.port))
                 unified.witness.connect()
-                pump_until(lambda: unified.witness.receiver.status.startswith("Connected"))
+                wait(lambda: unified.witness.receiver.status.startswith("Connected"))
                 # Existing real inputs must be explicitly disconnected first.
                 live_port = Mock()
                 app.serials["COM_REAL"] = live_port
@@ -160,19 +146,20 @@ class TestModeGuiTests(unittest.TestCase):
                 app.serials.clear()
                 error_box.reset_mock()
                 with patch("serial.Serial", side_effect=AssertionError("Opened real serial port")), \
-                        patch("main.socket.create_connection", side_effect=AssertionError("Opened raw TCP")):
+                        patch("monitor_core.socket.create_connection", side_effect=AssertionError("Opened raw TCP")):
                     self.assertTrue(app.start_test())
                     self.assertFalse(app.transmit_command("COM_REAL", b"\x05\x68\x69"))
-                    app.connect()
+                    app.core.connect()
                     self.assertTrue(error_box.called)
-                    self.assertEqual(app.command_port_combo["values"], "")
-                    pump_until(lambda: not app.test_active)
+                    self.assertEqual(app.command_port_combo.count(), 0)
+                    self.assertFalse(app.connect_button.isEnabled())
+                    wait(lambda: not app.test_active)
                 live_port.write.assert_not_called()
-                pump_until(lambda: unified.witness.receiver.messages >= 35)
+                wait(lambda: unified.witness.receiver.messages >= 35)
                 source = "TEST_example_packets"
                 view = unified.witness.view
                 row_key = (source, "state", "witness_battery_voltage")
-                pump_until(lambda: row_key in view._rows and view.tree.set(view._rows[row_key], "value") == "4.09")
+                wait(lambda: row_key in view._rows and view.value(row_key) == "4.09")
                 self.assertEqual(app.values["packet.state.witness_battery_voltage"].get(), "4.09")
                 flight = unified.flight.data.snapshot()
                 self.assertEqual(flight[0][0].source, source)
@@ -180,7 +167,7 @@ class TestModeGuiTests(unittest.TestCase):
                 self.assertEqual(len(flight[1][0].points), 10)  # Sensors + equivalent debug samples.
                 self.assertEqual(flight[0][0].latest, 0)  # Landed in the final replay frame.
                 unified.flight.redraw()
-                self.assertIn("TEST DATA", unified.flight.banner.cget("text"))
+                self.assertIn("TEST DATA", unified.flight.banner.text())
                 self.assertIn("simulated", app.test_status.get())
                 self.assertEqual(app.serials, {})
                 self.assertEqual(app.tcp_sockets, {})
@@ -195,18 +182,28 @@ class TestModeGuiTests(unittest.TestCase):
                 self.assertNotIn("BAD_PACKET", debug)
                 # Repeated start/stop must not leave a worker or stale completion event.
                 app.test_file.set("")
+                self.assertEqual(app.test_file_entry.text(), "")
                 self.assertTrue(app.start_test())
                 worker = app._test_thread
                 app.stop_test()
                 self.assertFalse(worker.is_alive())
                 self.assertFalse(app.test_active)
-                self.assertEqual(app.test_button.cget("text"), "Start test")
+                self.assertEqual(app.test_button.text(), "Start test")
             finally:
                 app.stop_test()
-                for callback in app.tk.call("after", "info"):
-                    app.after_cancel(callback)
                 app.close()
                 unified.close()
+
+    def test_test_mode_option_starts_replay_on_the_event_loop(self):
+        from horizon_qt_support import make_monitor, pump_until
+        with tempfile.TemporaryDirectory() as directory, patch("monitor_core.LOG_DIR", Path(directory)):
+            app = make_monitor(directory, test_mode=True, test_speed=10, auto_connect=True)
+            try:
+                self.assertFalse(app.auto_connect.get())     # test mode never auto-opens USB
+                self.assertTrue(pump_until(lambda: app.test_active, 3))
+                self.assertIn("TEST DATA", app.test_status_label.text())
+            finally:
+                app.close()
 
 
 if __name__ == "__main__":

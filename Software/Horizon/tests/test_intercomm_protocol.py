@@ -4,7 +4,8 @@ from pathlib import Path
 import unittest
 
 from converter import parse_packet as convert_packet
-from main import PacketDecoder, SerialMonitor, parse_packet
+from monitor_core import MonitorCore
+from witness_protocol import PacketDecoder, parse_packet
 
 
 class IntercommProtocolTests(unittest.TestCase):
@@ -39,7 +40,7 @@ class IntercommProtocolTests(unittest.TestCase):
     def test_all_shortcuts_cross_aperture_as_canonical_commands(self):
         for opcode in (0x22, 0x31, 0x51, 0xE0, 0xE1, 0x6868, 0x6869, 0x7300):
             with self.subTest(opcode=opcode):
-                frame = SerialMonitor.build_quick_command_packet(opcode)
+                frame = MonitorCore.build_quick_command_packet(opcode)
                 self.assertEqual(len(frame), 10)
                 self.assertEqual(frame[0], 0x05)
                 self.assertEqual(frame[-1], 0x0A)

@@ -11,9 +11,11 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import converter  # noqa: E402
-import viewer  # noqa: E402
+import viewer_data as viewer  # noqa: E402  (data logic)
+from viewer_qt_support import ViewerCase, pump  # noqa: E402
 
 
 def imu_record(us, low, high, gyro, status, sequence):
@@ -131,55 +133,44 @@ class LoadBinTests(BinFixtures):
         self.assertEqual(a.read_bytes(), b.read_bytes())
 
 
-class PanelBinTests(BinFixtures):
+class PanelBinTests(BinFixtures, ViewerCase):
     def setUp(self):
-        super().setUp()
-        try:
-            import tkinter as tk
-            self.root = tk.Tk()
-        except Exception as exc:  # pragma: no cover - environment specific
-            self.skipTest(f"Tk unavailable: {exc}")
+        ViewerCase.setUp(self)
+        BinFixtures.setUp(self)
         self.switch = sys.getswitchinterval()
 
     def tearDown(self):
-        self.root.destroy()
-        super().tearDown()
+        BinFixtures.tearDown(self)
 
     def test_open_bin_in_background_save_csv_and_errors(self):
-        messages = []
-        original = (viewer.messagebox.showerror, viewer.messagebox.showinfo)
-        viewer.messagebox.showerror = lambda *a, **k: messages.append(("error", a))
-        viewer.messagebox.showinfo = lambda *a, **k: messages.append(("info", a))
-        try:
-            panel = viewer.CsvViewerPanel(self.root)
-            panel.pack(fill="both", expand=True)
-            imu = self.imu_file()
-            junk = self.write("Z0000001.BIN", b"\x55" * 4000)
-            panel.add_csvs([imu, junk])
-            self.assertTrue(panel.loading)
-            self.assertTrue(panel.wait_for_loads(60))
-            self.assertEqual(sys.getswitchinterval(), self.switch)   # restored
-            names = [d.label for d in panel.datasets.values()]
-            self.assertEqual(names, ["I0000001.BIN"])
-            self.assertEqual(messages[0][0], "error")
-            self.assertIn("Z0000001.BIN", messages[0][1][1])
-            # Save the decoded log as CSV next to it (worker thread).
-            target = imu.with_suffix(".csv")
-            panel.save_bin_as_csv(imu, target)
-            for _ in range(2000):
-                self.root.update()
-                if panel._save_thread is None:
-                    break
-                import time
-                time.sleep(0.005)
-            self.assertIn("Wrote 3,000 rows", panel.last_save_message)
-            data = imu.read_bytes()
-            reference = self.tmp / "ref.csv"
-            converter.write_csv(converter.decode_imu_log(data)[0], reference)
-            self.assertEqual(target.read_bytes(), reference.read_bytes())
-            self.assertEqual(sys.getswitchinterval(), self.switch)
-        finally:
-            viewer.messagebox.showerror, viewer.messagebox.showinfo = original
+        panel = self.make()
+        imu = self.imu_file()
+        junk = self.write("Z0000001.BIN", b"\x55" * 4000)
+        panel.add_files([imu, junk])
+        self.assertTrue(panel.loading)
+        self.assertTrue(panel.wait_for_loads(60))
+        self.assertEqual(sys.getswitchinterval(), self.switch)   # restored
+        names = [d.label for d in panel.datasets.values()]
+        self.assertEqual(names, ["I0000001.BIN"])
+        errors = [m for m in panel.messages if m[0] == "error"]
+        self.assertEqual(len(errors), 1)
+        self.assertIn("Z0000001.BIN", errors[0][2])
+        # Save the decoded log as CSV next to it (worker thread).
+        target = imu.with_suffix(".csv")
+        panel.save_bin_as_csv(imu, target)
+        import qt_common
+        self.assertTrue(qt_common.process_events_until(
+            lambda: panel._save_worker is None, 30))
+        self.assertIn("Wrote 3,000 rows", panel.last_save_message)
+        data = imu.read_bytes()
+        reference = self.tmp_path("ref.csv")
+        converter.write_csv(converter.decode_imu_log(data)[0], reference)
+        self.assertEqual(target.read_bytes(), reference.read_bytes())
+        self.assertEqual(sys.getswitchinterval(), self.switch)
+        self.assertTrue(panel.load_bar.isHidden())
+
+    def tmp_path(self, name):
+        return Path(self.tmp) / name
 
 
 if __name__ == "__main__":

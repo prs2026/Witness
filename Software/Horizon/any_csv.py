@@ -40,7 +40,7 @@ import os
 import re
 from array import array
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta
 
 import numpy as np
@@ -660,19 +660,26 @@ def _fill_empty(chunk: bytes, delimiter: bytes) -> bytes:
 
 
 def load(path, progress=None, cancel=None, max_bytes: int = csv_columns.MAX_TABLE_BYTES,
-         hex_as_numbers: bool = True, sniffed: Sniff | None = None) -> GenericTable:
+         hex_as_numbers: bool = True, sniffed: Sniff | None = None,
+         columns=None) -> GenericTable:
     """Read any CSV into numpy columns (safe to run off the UI thread).
 
     ``progress(fraction)`` reports progress; setting the ``cancel``
-    threading.Event raises LoadCancelled. Raises ValueError for an empty
-    file or one with nothing to plot, OSError for I/O errors.
+    threading.Event raises LoadCancelled. ``columns`` (a set of names)
+    limits the numeric columns read; the others are skipped, never
+    allocated. Raises ValueError for an empty file or one with nothing to
+    plot, OSError for I/O errors.
     """
     path = str(path)
     sn = sniffed or sniff(path)
+    if columns is not None:
+        wanted = set(columns)
+        sn = replace(sn, kinds=[kind if kind == "text" or name in wanted else "skip"
+                                for name, kind in zip(sn.names, sn.kinds)])
     f, size, _encoding = _open_bytes(path)
     f.close()
     estimated_rows = max(1, int((size - sn.data_offset) / sn.avg_line))
-    n_numeric = max(1, sum(kind != "text" for kind in sn.kinds))
+    n_numeric = max(1, sum(kind not in ("text", "skip") for kind in sn.kinds))
     stride = max(1, math.ceil(estimated_rows * n_numeric * 8 / max_bytes))
     notes = []
     try:
@@ -696,7 +703,7 @@ def load(path, progress=None, cancel=None, max_bytes: int = csv_columns.MAX_TABL
 def _load_fast(path, sn, stride, size, progress, cancel, hex_as_numbers) -> GenericTable:
     acc = _Columns(sn, hex_as_numbers)
     num_index = [j for j, kind in enumerate(sn.kinds) if acc.kind(j) == "num"]
-    str_index = [j for j, kind in enumerate(sn.kinds) if acc.kind(j) != "num"]
+    str_index = [j for j, kind in enumerate(sn.kinds) if acc.kind(j) not in ("num", "skip")]
     delimiter = sn.delimiter.encode()
     total_rows = 0
     phase = 0
@@ -762,7 +769,7 @@ def _load_robust(path, sn, stride, size, progress, cancel, hex_as_numbers):
     width = len(sn.names)
     kinds = [acc.kind(j) for j in range(width)]
     numbers = {j: array("d") for j in range(width) if kinds[j] == "num"}
-    strings = {j: [] for j in range(width) if kinds[j] != "num"}
+    strings = {j: [] for j in range(width) if kinds[j] not in ("num", "skip")}
     bad = Counter()
     present = Counter()
     nan = math.nan

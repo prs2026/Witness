@@ -1,6 +1,7 @@
 """Flight View configuration, full-rate ingestion, drawing and GUI integration."""
 
 import json
+import os
 from pathlib import Path
 import tempfile
 import threading
@@ -9,7 +10,9 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from aim_mqtt import AimMqttReceiver, AimSettings
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+from aim_mqtt import AimMqttReceiver, AimSettings  # noqa: E402
 from flight_data import DEFAULT_LAYOUT, FlightData, load_layout, nice_step, plot_segments, validate_layout
 from ground_receivers import LoggedReceiver
 from flight_render import BG, PANEL, TEXT, MUTED, WARN, BAD, readable_color
@@ -346,63 +349,52 @@ class HistoryTests(unittest.TestCase):
 
 
 class FlightGuiTests(unittest.TestCase):
-    def test_render_reload_pause_fixed_viewport_and_receiver_wiring(self):
-        import tkinter as tk
-        from horizon import HorizonGroundStation
-        from main import PacketDecoder
+    def test_render_reload_pause_resizable_layout_and_receiver_wiring(self):
+        from PyQt6 import QtCore
+        from horizon_qt_support import make_horizon, pump
+        from witness_protocol import PacketDecoder
         from witness_test_source import demo_packets
         with tempfile.TemporaryDirectory() as directory:
-            try:
-                app = HorizonGroundStation(log_dir=Path(directory), auto_connect=False, broker_enabled=False)
-            except tk.TclError as exc:
-                self.skipTest(f"Tk display unavailable: {exc}")
-            app.withdraw()
+            app = make_horizon(directory)
             try:
                 flight = app.flight
-                self.assertEqual(flight.canvas.grid_info()["row"], 1)
-                self.assertIs(flight.banner.master, flight.actions_button.master)
-                labels = [flight.actions_menu.entrycget(i, "label")
-                          for i in range(flight.actions_menu.index("end") + 1)
-                          if flight.actions_menu.type(i) != "separator"]
                 for label in ("Load layout...", "Save layout...", "Default layout", "Pause view",
                               "Clear plots", "Set pad", "Graph time window", "Fullscreen"):
-                    self.assertIn(label, labels)
-                flight.actions_menu.invoke(flight.pause_menu_index)
+                    self.assertIn(label, flight.menu_labels())
+                flight.pause_action.trigger()
                 self.assertTrue(flight.paused)
-                self.assertEqual(flight.actions_menu.entrycget(flight.pause_menu_index, "label"), "Resume live")
-                flight.actions_menu.invoke(flight.pause_menu_index)
+                self.assertEqual(flight.pause_action.text(), "Resume live")
+                flight.pause_action.trigger()
                 self.assertFalse(flight.paused)
-                self.assertEqual(app.notebook.select(), str(flight))
+                self.assertIs(app.notebook.currentWidget(), flight)
+                self.assertEqual(flight.splitter.orientation(), QtCore.Qt.Orientation.Horizontal)
+                self.assertEqual(flight.splitter.count(), 3)
+                self.assertEqual(len(flight.graphs), 6)
                 receiver = app.witness.make_receiver()  # No connection opened.
                 decoder = PacketDecoder(lambda packet: receiver.accept({"source": "TEST_flight",
                     "received_at": time.time(), "packet": packet}))
                 for stamp in range(0, 3000, 100):
                     for frame in demo_packets(stamp).values():
                         decoder.feed(frame)
-                app.update_idletasks()
                 flight.redraw()
-                self.assertIn("TEST DATA", flight.banner.cget("text"))
+                self.assertIn("TEST DATA", flight.banner.text())
                 self.assertEqual(len(flight.data.snapshot()[1][0].points), 60)
-                # Map invisibly to exercise real Tk geometry, not just a hidden canvas.
-                app.attributes("-alpha", 0)
-                app.deiconify()
-                for geometry in ("1000x650", "1366x768"):
-                    app.geometry(geometry)
-                    app.update()
+                # Resizable: shown at small and large sizes, every plot stays visible.
+                app.show()
+                for width, height in ((1000, 650), (1366, 768), (800, 500)):
+                    app.resize(width, height)
+                    pump(0.05)
                     flight.redraw()
-                    self.assertGreaterEqual(flight.canvas.winfo_width(), 950)
-                    self.assertGreaterEqual(flight.canvas.winfo_height(), 450)
-                    before = dict(flight.renderer.panel_bounds)
-                    decoder.feed(demo_packets(1000)[0x02])
-                    flight.redraw()
-                    self.assertEqual(flight.renderer.panel_bounds, before)
+                    for graph in flight.graphs:
+                        self.assertTrue(graph.isVisible())
+                        self.assertGreater(graph.widget.height(), 40)
                 flight.toggle_fullscreen()
-                app.update()
-                self.assertTrue(app.tk.getboolean(app.attributes("-fullscreen")))
+                pump(0.05)
+                self.assertTrue(app.isFullScreen())
                 flight.exit_fullscreen()
-                app.update()
-                self.assertFalse(app.tk.getboolean(app.attributes("-fullscreen")))
-                # The default summary/state/GPS/power and ALL six graphs fit.
+                pump(0.05)
+                self.assertFalse(app.isFullScreen())
+                # The default summary/state/GPS/power and ALL six graphs show their readouts.
                 flight.data.accept_aim('TEST_AIM', 'z_acceleration_payload/v1', {'z_acceleration': 1},
                                        time.monotonic() - 1, False)
                 flight.data.accept_aim('TEST_AIM', 'z_acceleration_payload/v1', {'z_acceleration': 20},
@@ -415,69 +407,51 @@ class FlightGuiTests(unittest.TestCase):
                     flight.data.accept_aim('TEST_AIM', 'orientation_payload/v1',
                                            sample(rotation((1, 0, 0), angle), index * .1),
                                            time.monotonic() - .3 + index * .1, False)
-                for width, height in ((980, 480), (1360, 650), (1760, 900)):
-                    flight.renderer.draw(flight.data.layout, flight.data.snapshot(), time.monotonic(),
-                                         flight.wall_offset, width=width, height=height)
-                    self.assertEqual(len(flight.renderer.panel_bounds), 9)
-                    power_bounds = flight.renderer.panel_bounds["power"]
-                    self.assertLessEqual(power_bounds[2] - power_bounds[0], max(190, width * .20))
-                    for bounds in flight.renderer.panel_bounds.values():
-                        x0, y0, x1, y1 = bounds
-                        self.assertGreaterEqual(x0, 0)
-                        self.assertGreaterEqual(y0, 0)
-                        self.assertLessEqual(x1, width)
-                        self.assertLessEqual(y1, height)
-                    for item, box in flight.renderer.text_boxes:
-                        from tkinter import font as tkfont
-                        font = tkfont.Font(root=app, name=flight.canvas.itemcget(item, 'font'), exists=True)
-                        self.assertGreaterEqual(abs(font.cget('size')), 12)
-                        self.assertGreaterEqual(contrast_on_white(flight.canvas.itemcget(item, "fill")), 7)
-                        bbox = flight.canvas.bbox(item)
-                        self.assertGreaterEqual(bbox[0], box[0] - 2)
-                        self.assertGreaterEqual(bbox[1], box[1] - 2)
-                        self.assertLessEqual(bbox[2], box[2] + 2)
-                        self.assertLessEqual(bbox[3], box[3] + 2)
-                    texts = [flight.canvas.itemcget(item, "text") for item in flight.canvas.find_all()
-                             if flight.canvas.type(item) == "text"]
-                    self.assertIn("PAD IDLE", texts)
-                    self.assertIn("TEST_flight", texts)
-                    # Witness GPS: satellites with the status-byte lock bit beside it.
-                    self.assertRegex(" | ".join(texts), r"GPS sats \d+!?(  | \| )lock [01]")
-                    self.assertTrue(any(value.startswith("HITL off") for value in texts))
-                    self.assertTrue(any("RSSI" in value for value in texts))
-                    self.assertTrue(any('FW tracker battery' in value for value in texts))
-                    self.assertTrue(any('FW local / GS battery' in value for value in texts))
-                    self.assertIn('4.123 raw', texts)
-                    self.assertIn('8.765 raw', texts)
-                    self.assertTrue(any('AX~ 90' in value for value in texts))
-                    self.assertTrue(any('AY~ 0' in value for value in texts))
-                    self.assertTrue(any('AZ~ 0' in value for value in texts))
-                    aim_lines = [i for i in flight.canvas.find_withtag('aim') if flight.canvas.type(i) == 'line']
-                    self.assertTrue(aim_lines)
-                    self.assertTrue(all(flight.canvas.itemcget(i, 'dash') for i in aim_lines))
-                    self.assertEqual(flight.canvas.cget("yscrollcommand"), "")
-                    self.assertEqual(flight.canvas.cget("scrollregion"), "")
+                flight.redraw()
+                texts = flight.texts()
+                self.assertIn("PAD IDLE", texts)
+                self.assertIn("TEST_flight", texts)
+                # Witness GPS: satellites with the status-byte lock bit beside it.
+                self.assertRegex(" | ".join(texts), r"GPS sats \d+!?  lock [01]")
+                self.assertTrue(any(value.startswith("HITL off") for value in texts))
+                self.assertTrue(any("RSSI" in value for value in texts))
+                self.assertTrue(any('FW tracker battery' in value for value in texts))
+                self.assertTrue(any('FW local / GS battery' in value for value in texts))
+                self.assertIn('4.123 raw', texts)
+                self.assertIn('8.765 raw', texts)
+                self.assertTrue(any('AX~ 90' in value for value in texts))
+                self.assertTrue(any('AY~ 0' in value for value in texts))
+                self.assertTrue(any('AZ~ 0' in value for value in texts))
+                # Readable colours, AIM dashed, Witness solid, curves hold data.
+                for graph in flight.graphs:
+                    for label in graph.legend_labels:
+                        color = label.property("fg")
+                        if color:
+                            self.assertGreaterEqual(contrast_on_white(color), 7)
+                    for curve, trace in zip(graph.curves, graph.plot.traces):
+                        style = curve.opts["pen"].style()
+                        expected = QtCore.Qt.PenStyle.DashLine if trace.input == "aim" else QtCore.Qt.PenStyle.SolidLine
+                        self.assertEqual(style, expected)
+                gyro = next(g for g in flight.graphs if g.plot.title.startswith("Gyro"))
+                aim_curves = [c for c, t in zip(gyro.curves, gyro.plot.traces) if t.input == "aim"]
+                self.assertTrue(any(c.xData is not None and len(c.xData) for c in aim_curves))
                 flight.toggle_pause()
                 frozen = flight.frozen
-                flight.window_var.set('30 s')
-                flight.select_window()
+                flight.select_window(30)
                 self.assertEqual(flight.data.layout.window_seconds, 30)
+                self.assertEqual(flight.window_label(), "30 s")
                 self.assertIs(frozen, flight.frozen)
                 decoder.feed(demo_packets(7000)[0x02])
                 flight.redraw()
                 self.assertIs(frozen, flight.frozen)
-                self.assertIn("PAUSED", flight.banner.cget("text"))
+                self.assertIn("PAUSED", flight.banner.text())
                 self.assertEqual(flight.data.snapshot()[0][0].latest, 48)
                 flight.toggle_pause()
-                histories = flight.data.snapshot()
-                flight.renderer.draw(flight.data.layout, histories, time.monotonic() + 12,
-                                     flight.wall_offset, width=1360, height=650)
-                texts = [flight.canvas.itemcget(item, "text") for item in flight.canvas.find_all()
-                         if flight.canvas.type(item) == "text"]
-                self.assertTrue(any("STALE" in value for value in texts))
+                flight.redraw(end=time.monotonic() + 12)
+                self.assertTrue(any("STALE" in value for value in flight.texts()))
                 bad = Path(directory) / "bad.json"
                 bad.write_text('{"version": 5}')
-                with patch("flight_view.messagebox.showerror") as error:
+                with patch("flight_view.show_error") as error:
                     self.assertFalse(flight.load_config(bad))
                     self.assertTrue(error.called)
                     self.assertEqual(len(flight.data.layout.plots), 6)
@@ -485,16 +459,15 @@ class FlightGuiTests(unittest.TestCase):
                 good.write_text(json.dumps(document(title="Custom flight")))
                 self.assertTrue(flight.load_config(good))
                 self.assertEqual(len(flight.data.layout.plots), 1)
+                self.assertEqual(len(flight.graphs), 1)
                 self.assertIsNone(flight.data.snapshot()[0][0].latest)
                 saved = Path(directory) / "saved.json"
-                flight.window_var.set('600 s')
-                flight.select_window()
-                with patch("flight_view.filedialog.asksaveasfilename", return_value=str(saved)):
-                    flight.save_layout()
+                flight.select_window(600)
+                self.assertTrue(flight.save_layout(str(saved)))
                 self.assertEqual(load_layout(saved).title, "Custom flight")
                 self.assertEqual(load_layout(saved).window_seconds, 600)
                 self.assertTrue(flight.load_config(DEFAULT_LAYOUT))
-                self.assertEqual(flight.window_var.get(), '120 s')
+                self.assertEqual(flight.window_label(), "120 s")
                 # AIM tab forwards its callback to the subscriber, no MQTT started.
                 with patch("aim_tab.AimMqttReceiver.start"):
                     app.aim.toggle_connection()
@@ -509,20 +482,38 @@ class FlightGuiTests(unittest.TestCase):
             finally:
                 app.close()
 
+    def test_redraws_are_timer_driven_not_per_record(self):
+        from horizon_qt_support import make_horizon, pump
+        with tempfile.TemporaryDirectory() as directory:
+            app = make_horizon(directory)
+            try:
+                app.show()
+                pump(0.1)
+                flight = app.flight
+                before = flight.redraws
+                started = time.monotonic()
+                for i in range(3000):
+                    flight.data.accept_record("witness", {"source": "COM1", "received_at": time.time(),
+                        "packet": {"packet": "state", "status": 2, "uptime": i, "kalman_altitude": float(i)}})
+                pump(0.6)
+                elapsed = time.monotonic() - started
+                draws = flight.redraws - before
+                self.assertGreaterEqual(draws, 1)
+                self.assertLessEqual(draws, elapsed / (max(33, flight.data.layout.refresh_ms) / 1000) + 3)
+                self.assertEqual(flight.data.snapshot()[0][0].latest, 2999)
+            finally:
+                app.close()
+
     def test_invalid_startup_layout_keeps_other_tabs_working(self):
-        import tkinter as tk
-        from horizon import HorizonGroundStation
-        try:
-            app = HorizonGroundStation(auto_connect=False, broker_enabled=False, flight_layout=Path("missing_layout_file.json"))
-        except tk.TclError as exc:
-            self.skipTest(f"Tk display unavailable: {exc}")
-        app.withdraw()
-        try:
-            app.flight.redraw()
-            self.assertIn("LAYOUT ERROR", app.flight.banner.cget("text"))
-            self.assertEqual(len(app.notebook.tabs()), 6)
-        finally:
-            app.close()
+        from horizon_qt_support import make_horizon
+        with tempfile.TemporaryDirectory() as directory:
+            app = make_horizon(directory, flight_layout=Path("missing_layout_file.json"))
+            try:
+                app.flight.redraw()
+                self.assertIn("LAYOUT ERROR", app.flight.banner.text())
+                self.assertEqual(app.notebook.count(), 6)
+            finally:
+                app.close()
 
 
 if __name__ == "__main__":

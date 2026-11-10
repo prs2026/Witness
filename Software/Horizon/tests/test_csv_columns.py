@@ -12,9 +12,11 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import csv_columns as cc  # noqa: E402
-import viewer  # noqa: E402
+import viewer_data as viewer  # noqa: E402  (data logic)
+from viewer_qt_support import ViewerCase, pump  # noqa: E402
 
 
 class LoadTableTests(unittest.TestCase):
@@ -120,50 +122,10 @@ class SeriesTests(unittest.TestCase):
         np.testing.assert_array_equal(sy, ys[:10])
 
 
-class AsyncLoadTests(unittest.TestCase):
+class SummaryTests(unittest.TestCase):
     def setUp(self):
-        try:
-            import tkinter as tk
-            self.root = tk.Tk()
-        except Exception as exc:  # pragma: no cover - environment specific
-            self.skipTest(f"Tk unavailable: {exc}")
         self.tmp = tempfile.mkdtemp()
-
-    def tearDown(self):
-        self.root.destroy()
-        shutil.rmtree(self.tmp, ignore_errors=True)
-
-    def test_background_load_progress_errors_and_cancel(self):
-        good = Path(self.tmp) / "good.csv"
-        good.write_text("uptime,alt\n" + "".join(f"{i * 10},{i}\n" for i in range(200000)))
-        bad = Path(self.tmp) / "bad.csv"
-        bad.write_text("")
-        panel = viewer.CsvViewerPanel(self.root)
-        panel.pack(fill="both", expand=True)
-        errors = []
-        original = viewer.messagebox.showerror
-        viewer.messagebox.showerror = lambda *a, **k: errors.append(a)
-        try:
-            panel.add_csvs([good, bad])
-            self.assertTrue(panel.loading)
-            self.root.update()
-            # Packed into the toolbar = shown. winfo_ismapped() also needs the
-            # window manager to have mapped the toplevel, which a busy
-            # machine may not have done after one update() (flaky).
-            self.assertEqual(panel.load_bar.winfo_manager(), "pack")  # progress shown
-            self.assertTrue(panel.wait_for_loads(60))
-        finally:
-            viewer.messagebox.showerror = original
-        self.assertEqual([d.path.name for d in panel.datasets.values()], ["good.csv"])
-        self.assertEqual(len(errors), 1)                       # bad.csv reported once
-        self.assertEqual(panel.load_bar.winfo_manager(), "")    # and hidden again
-        dataset = next(iter(panel.datasets.values()))
-        self.assertIsInstance(dataset.numeric_data["alt"], np.ndarray)
-        # Cancel drops the file being read and the queue.
-        panel.add_csvs([good, good])
-        panel.cancel_loads()
-        self.assertTrue(panel.wait_for_loads(60))
-        self.assertLessEqual(len(panel.datasets), 2)
+        self.addCleanup(shutil.rmtree, self.tmp, True)
 
     def test_summary_matches_row_based_code(self):
         path = Path(self.tmp) / "p.csv"
@@ -190,6 +152,44 @@ class AsyncLoadTests(unittest.TestCase):
             ref = [viewer.numeric_value(r.get(name)) for r in rows]
             ref = np.array([math.nan if v is None else v for v in ref])
             np.testing.assert_array_equal(dataset.numeric_data[name], ref, err_msg=name)
+
+    def test_load_table_column_subset(self):
+        path = Path(self.tmp) / "c.csv"
+        path.write_text("t,a,b,c\n" + "".join(f"{i},{i},{-i},{i * 2}\n" for i in range(50)))
+        table = cc.load_table(path, columns={"t", "b"})
+        self.assertEqual(sorted(table.columns), ["b", "t"])
+
+
+class AsyncLoadTests(ViewerCase):
+    def test_background_load_progress_errors_and_cancel(self):
+        good = Path(self.tmp) / "good.csv"
+        good.write_text("uptime,alt\n" + "".join(f"{i * 10},{i}\n" for i in range(200000)))
+        bad = Path(self.tmp) / "bad.csv"
+        bad.write_text("")
+        panel = self.make()
+        panel.add_files([good, bad])
+        self.assertTrue(panel.loading)
+        self.assertFalse(panel.load_bar.isHidden())              # progress shown
+        self.assertTrue(panel.wait_for_loads(60))
+        self.assertEqual([d.path.name for d in panel.datasets.values()], ["good.csv"])
+        errors = [m for m in panel.messages if m[0] == "error"]
+        self.assertEqual(len(errors), 1)                          # bad.csv reported once
+        self.assertIn("bad.csv", errors[0][2])
+        self.assertTrue(panel.load_bar.isHidden())                # and hidden again
+        dataset = next(iter(panel.datasets.values()))
+        self.assertIsInstance(dataset.numeric_data["alt"], np.ndarray)
+        # Cancel drops the file being read and the queue.
+        panel.add_files([good, good])
+        panel.cancel_loads()
+        self.assertTrue(panel.wait_for_loads(60))
+        self.assertLessEqual(len(panel.datasets), 2)
+        # open_files replaces everything; close_all empties the viewer.
+        panel.open_files([good])
+        self.assertTrue(panel.wait_for_loads(60))
+        self.assertEqual(len(panel.datasets), 1)
+        panel.close_all()
+        self.assertEqual(panel.datasets, {})
+        self.assertEqual(panel.slots, [])
 
 
 if __name__ == "__main__":

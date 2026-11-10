@@ -2,14 +2,18 @@
 the orientation tab's quaternion handling, plus a headless GUI smoke test."""
 
 import math
+import os
 from pathlib import Path
 import struct
 import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 
-import attitude_math as am
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+import attitude_math as am  # noqa: E402
 from attitude_data import LiveAttitude, make_sample
 import geodesy as geo
 from map_data import MapData
@@ -299,40 +303,38 @@ def state_frame_record(q, *, state=0, t=None):
             "packet": parse_packet(0x02, payload)}
 
 
+PNG_1PX = ("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==")
+
+
 class VisualizerGui(unittest.TestCase):
     def setUp(self):
-        import tkinter as tk
-        try:
-            self.root = tk.Tk()
-        except tk.TclError as exc:
-            self.skipTest(f"Tk display unavailable: {exc}")
-        self.root.withdraw()
+        from horizon_qt_support import app  # noqa: F401 - creates the QApplication
         self.tmp = tempfile.TemporaryDirectory()
 
     def tearDown(self):
-        self.root.destroy()
         self.tmp.cleanup()
 
-    def test_orientation_tab_valid_then_lost(self):
-        from visualizer import OrientationTab
+    def test_orientation_panel_valid_then_lost(self):
+        from visualizer import OrientationPanel
         live = LiveAttitude()
-        tab = OrientationTab(self.root, live=live)
-        tab.pack(fill="both", expand=True)
-        self.root.update_idletasks()
+        tab = OrientationPanel(live=live, use_gl=False)
         try:
             tab.refresh()
             self.assertEqual(tab.condition[0], "none")
+            self.assertIn("NO ATTITUDE DATA", tab.scene.texts())
             live.accept_record(state_frame_record(TILT_EAST_10, state=1))
             tab.refresh()
             self.assertEqual(tab.condition[0], "ok")
             self.assertEqual(tab.values["tilt"].get(), "10.0°")
             self.assertEqual(tab.values["heading"].get(), "90.0°")
+            self.assertEqual(tab.labels["tilt"].text(), "10.0°")
             live.accept_record(state_frame_record((0, 0, 0, 0), state=2))
             tab.refresh()
             self.assertEqual(tab.condition[0], "lost")
             self.assertEqual(tab.values["tilt"].get(), "--")
             self.assertIn("ATTITUDE LOST", tab.values["status"].get())
-            self.assertTrue(tab.canvas.find_all())
+            self.assertIn("ATTITUDE LOST", tab.scene.texts())
+            self.assertIsNotNone(tab.scene.state[1])      # last valid attitude drawn as a ghost
             # Back on the pad, a zero quaternion is a fresh initialisation, not "lost".
             live.accept_record(state_frame_record((0, 0, 0, 0), state=0))
             tab.refresh()
@@ -340,82 +342,117 @@ class VisualizerGui(unittest.TestCase):
         finally:
             tab.close()
 
-    def test_map_tab_draws_offline_and_sets_pad(self):
-        from visualizer import MapTab
+    def test_map_panel_draws_offline_tiles_and_sets_pad(self):
+        from horizon_qt_support import pump_until
+        from visualizer import MapPanel
         data = MapData()
         tiles = TileCache(self.tmp.name, fetch=None)
-        tab = MapTab(self.root, data=data, tiles=tiles)
-        tab.pack(fill="both", expand=True)
-        self.root.update_idletasks()
+        tab = MapPanel(data=data, tiles=tiles)
+        tab.resize(800, 600)
         try:
             tab.refresh()
             self.assertIn("no data", tab.values["kf"].get())
+            self.assertIn("PAD POSITION UNKNOWN", tab.warning.text())
             data.pad.accept_record("witness", aperture(PAD_LAT, PAD_LON))
             data.accept_record("witness", witness((300, 400, 120), t=time.monotonic(), state=2))
+            tab.set_zoom(16)
             tab._readout_at = 0
             tab.refresh()
             self.assertIn("500 m @ 37", tab.values["kf"].get())
             self.assertIn("120.0 m AGL", tab.values["kf"].get())
             self.assertIn("Aperture", tab.values["pad"].get())
-            texts = [tab.canvas.itemcget(i, "text") for i in tab.canvas.find_all()
-                     if tab.canvas.type(i) == "text"]
+            texts = tab.texts()
             self.assertIn("PAD", texts)
             self.assertIn("N", texts)
+            self.assertIn("KF 120 m", texts)
             self.assertNotIn(map_tiles.ATTRIBUTION, texts)        # offline: no tiles drawn
-            # A cached tile is drawn offline, with attribution.
+            self.assertEqual(tab.view.state["aspectLocked"], 1.0)
+            # Track drawn in ENU metres relative to the pad.
+            line = tab._tracks["kf"][0]
+            self.assertAlmostEqual(line.xData[-1], 300, delta=1)
+            self.assertAlmostEqual(line.yData[-1], 400, delta=1)
+            # A cached tile is drawn offline (decoded on a worker thread), with attribution.
             z = tab.zoom
             x, y = geo.lat_lon_to_tile(PAD_LAT, PAD_LON, z)
             path = tile_path(self.tmp.name, z, x, y)
             path.parent.mkdir(parents=True)
-            png = ("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==")
             import base64
-            path.write_bytes(base64.b64decode(png))
-            tab._invalidate()
+            path.write_bytes(base64.b64decode(PNG_1PX))
+            tab._tiles_dirty = True
             tab.refresh()
-            texts = [tab.canvas.itemcget(i, "text") for i in tab.canvas.find_all()
-                     if tab.canvas.type(i) == "text"]
-            self.assertIn(map_tiles.ATTRIBUTION, texts)
-            # Set pad here: click 100 px right of centre.
+            self.assertTrue(pump_until(lambda: tab.tiles_drawn >= 1, 5))
+            self.assertIn(map_tiles.ATTRIBUTION, tab.texts())
+            item = tab._tile_items[(z, x, y)]
+            rect = item.mapRectToParent(item.boundingRect())
+            east, north, size = __import__("visualizer").tile_rect_enu(z, x, y, PAD_LAT, PAD_LON)
+            self.assertAlmostEqual(rect.left(), east, delta=0.01)
+            self.assertAlmostEqual(rect.width(), size, delta=0.01)
+            self.assertTrue(rect.left() <= 0 <= rect.right() and rect.top() <= 0 <= rect.bottom())
+            # Set pad here: a click 100 m east of the centre.
             tab.toggle_set_pad()
-            w, h = tab._size()
-            tab.set_pad_at(w / 2 + 100, h / 2)
+            self.assertTrue(tab.set_pad_mode)
+            tab.set_pad_at_enu(100.0, 0.0)
             pad = data.pad.position()
             self.assertEqual(pad.source, "manual")
             e, n, _ = geo.geodetic_to_enu(pad.lat, pad.lon, 0, PAD_LAT, PAD_LON, 0)
-            self.assertAlmostEqual(e, 100 * geo.metres_per_pixel(PAD_LAT, z), delta=0.5)
+            self.assertAlmostEqual(e, 100, delta=0.5)
             self.assertAlmostEqual(n, 0, delta=0.5)
             self.assertFalse(tab.set_pad_mode)
             tab.set_zoom(99)
             self.assertEqual(tab.zoom, 19)
+            self.assertAlmostEqual(tab.mpp(), geo.metres_per_pixel(tab._ref_lat(), 19), delta=1e-6)
             tab.follow.set(True)
+            tab._invalidate()
             tab.refresh()
             self.assertNotEqual(tab.pan, (0.0, 0.0))
+            with patch("visualizer.ask_yes_no", return_value=False) as ask, patch("visualizer.inform") as inform:
+                self.assertFalse(tab.precache_dialog())          # offline: told to enable tiles
+                inform.assert_called_once()
+                ask.assert_not_called()
         finally:
             tab.close()
 
+    def test_visualizer_shows_map_and_attitude_side_by_side(self):
+        from PyQt6 import QtCore
+        from horizon_qt_support import pump
+        from visualizer import VisualizerWindow
+        window = VisualizerWindow(map_data=MapData(), tiles=TileCache(self.tmp.name, fetch=None), use_gl=False)
+        try:
+            window.resize(1200, 700)
+            window.show()
+            pump(0.1)
+            self.assertEqual(window.splitter.orientation(), QtCore.Qt.Orientation.Horizontal)
+            self.assertEqual(window.splitter.count(), 2)
+            self.assertIs(window.splitter.widget(0), window.orientation)
+            self.assertIs(window.splitter.widget(1), window.map)
+            # Both visible at the same time (not tabs), next to each other, both usable size.
+            self.assertTrue(window.orientation.isVisible())
+            self.assertTrue(window.map.isVisible())
+            left, right = window.orientation.geometry(), window.map.geometry()
+            self.assertLessEqual(left.right(), right.left())
+            self.assertGreater(left.width(), 200)
+            self.assertGreater(right.width(), 300)
+            self.assertTrue(left.intersects(QtCore.QRect(left.left(), right.top(), left.width(), right.height())))
+            # The splitter is resizable and never collapses either view.
+            window.splitter.setSizes([300, 900])
+            pump(0.05)
+            self.assertAlmostEqual(window.splitter.sizes()[0], 300, delta=10)
+            self.assertFalse(window.splitter.childrenCollapsible())
+            self.assertTrue(window.orientation.scene.isVisible())
+            self.assertTrue(window.map.plot.isVisible())
+        finally:
+            window.close()
+        self.assertFalse(window.is_open())
+
     def test_horizon_opens_visualizer_fed_by_records(self):
-        import tkinter as tk
-        try:
-            from horizon import HorizonGroundStation
-        except ImportError as exc:
-            self.skipTest(f"Horizon dependency unavailable: {exc}")
-        self.root.destroy()
-        try:
-            app = HorizonGroundStation(log_dir=Path(self.tmp.name), auto_connect=False, broker_enabled=False,
-                                       tile_cache=TileCache(self.tmp.name, fetch=None))
-        except tk.TclError as exc:
-            self.skipTest(f"Tk display unavailable: {exc}")
-        self.root = tk.Tk()   # for tearDown
-        self.root.withdraw()
-        app.withdraw()
+        from horizon_qt_support import make_horizon
+        app = make_horizon(self.tmp.name)
         try:
             app._featherweight_record(fw("BASE", PAD_LAT, PAD_LON, alt_ft=2000))
             app._witness_record(state_frame_record(TILT_EAST_10, state=1))
             window = app.open_visualizer()
             self.assertIs(app.open_visualizer(), window)
-            titles = [window.notebook.tab(t, "text") for t in window.notebook.tabs()]
-            self.assertEqual(titles, ["Orientation", "Map"])
-            window.update_idletasks()
+            self.assertEqual(window.splitter.count(), 2)
             window.orientation.refresh()
             self.assertEqual(window.orientation.values["tilt"].get(), "10.0°")
             self.assertEqual(app.pad.position().source, "featherweight")
@@ -430,7 +467,7 @@ class VisualizerGui(unittest.TestCase):
 
 class HorizonAuditHelpers(unittest.TestCase):
     def test_imu_calibration_commands_are_compact_usb_frames(self):
-        from main import IMU_CALIBRATION_COMMANDS, build_imu_calibration_packet
+        from witness_protocol import IMU_CALIBRATION_COMMANDS, build_imu_calibration_packet
         self.assertEqual([build_imu_calibration_packet(a) for _, a in IMU_CALIBRATION_COMMANDS],
                          [b"\x05\x43\x47", b"\x05\x43\x41", b"\x05\x43\x58", b"\x05\x43\x53"])
         with self.assertRaises(ValueError):

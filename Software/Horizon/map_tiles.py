@@ -2,9 +2,9 @@
 
 The map always works without this (pad-centred grid). When online, missing
 tiles are fetched in the background and written to TILE_CACHE_DIR so they are
-available at the launch site without internet. Tk never runs on the worker:
+available at the launch site without internet. The GUI never runs on the worker:
 the UI calls request() (non-blocking, returns a cached path or None) and
-drain_completed() from its timer, then loads the PNG with tk.PhotoImage.
+drain_completed() from its timer, then decodes the PNG on a Qt worker thread (visualizer.load_tile_rgba).
 
 OSM tile usage policy (https://operations.osmfoundation.org/policies/tiles/):
  - a User-Agent that identifies the application (no personal data is sent);
