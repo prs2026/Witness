@@ -18,6 +18,7 @@ import json
 import os
 import queue
 import sys
+import threading
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -36,6 +37,98 @@ DEFAULT_PORT = 7100
 DEFAULT_TOLERANCE_S = 1.0
 TRAJECTORY_DIR = os.path.join(HERE, "trajectories")
 CSV_SOURCE = "CSV trajectory"
+VIBRATION_DIR = os.path.join(HERE, "vibration")
+VIB_AUTO = "Auto (profile for this trajectory)"
+VIB_NONE = "None"
+
+
+def vibration_profiles(directory: str = VIBRATION_DIR) -> list[str]:
+    """Profile folder names (vibration/<name>/profile.json), sorted."""
+    try:
+        names = os.listdir(directory)
+    except OSError:
+        return []
+    return sorted(name for name in names
+                  if os.path.isfile(os.path.join(directory, name, "profile.json")))
+
+
+def vibration_display(value) -> str:
+    """CsvParams.vibration_profile -> picker text."""
+    value = (value or "").strip()
+    if not value:
+        return VIB_AUTO
+    if value.lower() == "none":
+        return VIB_NONE
+    return value
+
+
+def vibration_value(display: str) -> str:
+    """Picker text -> CsvParams.vibration_profile ("" auto, "none", folder)."""
+    display = (display or "").strip()
+    if display in ("", VIB_AUTO):
+        return ""
+    if display == VIB_NONE:
+        return "none"
+    return display
+
+
+def describe_vibration(csv_path: str, choice: str, scale: float) -> str:
+    """What a vibration choice resolves to for a trajectory (for the UI)."""
+    try:
+        import imu_synth as ims
+        profile = ims.find_profile(csv_path, choice)
+    except ImportError as exc:
+        return f"Vibration: unknown ({exc.name} is not installed)"
+    except (OSError, ValueError) as exc:
+        return f"Vibration: {exc}"
+    head = "Auto -> " if not (choice or "").strip() else ""
+    if profile is None or not scale:
+        why = ("scale 0" if profile is not None else
+               "no profile for this trajectory" if head else "none selected")
+        return f"Vibration: {head}none ({why})"
+    return f"Vibration: {head}profile {profile['name']!r} x{scale:g}"
+
+
+def vibration_used(run) -> str:
+    """Which vibration a prepared run actually used (from its IMU report)."""
+    report = getattr(run, "imu_report", None) or {}
+    if not report:
+        return "Last run: 960 Hz IMU synthesis off (no vibration)"
+    profile = report.get("vibration_profile")
+    scale = report.get("params", {}).get("vibration_scale", 1.0)
+    if not profile:
+        return "Last run used: no vibration profile"
+    return f"Last run used: profile {profile['name']!r} x{scale:g}"
+
+
+def compute_prediction(params) -> dict:
+    """Expected transitions and the summary text for a preset or CSV.
+
+    Pure (no Tk): the GUI runs it on a worker thread. Raises OSError /
+    ValueError for a bad CSV.
+    """
+    report = ""
+    vibration = ""
+    if isinstance(params, tc.CsvParams):
+        build = tc.build(params)
+        samples = build.samples
+        expected = hs.expected_from_track(samples, sm.predict_state_track(samples))
+        report = "\n" + tc.format_report(build.report)
+        if getattr(params, "imu_synthesis", False):
+            vibration = describe_vibration(params.csv_path, params.vibration_profile,
+                                           params.vibration_scale)
+        else:
+            vibration = "Vibration: off (imu_synthesis=false)"
+    else:
+        samples = sm.generate(params)
+        expected = sm.predict_transitions(samples)
+    s = sm.summarize(samples)
+    text = (f"Duration {s['duration_s']:.1f} s, apogee "
+            f"{s['apogee_agl_m']:.0f} m AGL at {s['apogee_t_s']:.1f} s\n"
+            + "\n".join(f"{hp.FLIGHT_STATES[k]}: {v:.2f} s"
+                        for k, v in sorted(expected.items(), key=lambda kv: kv[1]))
+            + ("" if expected else "No transitions expected") + report)
+    return {"text": text, "expected": expected, "vibration": vibration}
 
 
 def load_settings(path: str = SETTINGS_PATH) -> dict:
@@ -45,7 +138,10 @@ def load_settings(path: str = SETTINGS_PATH) -> dict:
                     "final_tilt_max_deg"],
                 # FC flash logs fetched through the bench Pi after each run.
                 "fetch_fc_logs": True, "pi_host": "", "pi_user": "",
-                "pi_key": "", "fetch_restart_hub": True}
+                "pi_key": "", "fetch_restart_hub": True,
+                # CSV runs: vibration profile ("" auto, "none", or a folder
+                # under vibration/) and its scale.
+                "vibration_profile": "", "vibration_scale": 1.0}
     try:
         with open(path) as f:
             data = json.load(f)
@@ -310,6 +406,20 @@ class HitlApp:
         ttk.Label(bar2, text="Tolerance s").pack(side="left", padx=(8, 0))
         self.tol_var = tk.StringVar(value=str(self.settings["tolerance_s"]))
         ttk.Entry(bar2, textvariable=self.tol_var, width=5).pack(side="left")
+        # Busy indicator for work done on a worker thread (CSV parsing,
+        # prediction, 960 Hz IMU synthesis), so the window never freezes.
+        self.busy_bar = ttk.Progressbar(bar2, mode="indeterminate", length=90)
+        self.busy_label = ttk.Label(bar2, text="", foreground="#555")
+        self._work_queue: queue.Queue = queue.Queue()
+        self._busy: list[str] = []
+        self._jobs: dict = {}
+        self._job_id = 0
+        self._preparing = False
+        self._predict_token = 0
+        self._pending_log: list[str] = []
+        self._table_rows = None
+        self._ui_cache: dict = {}
+        self._switch_interval = None
 
         self.banner = tk.Label(top, text="", bg="#b00020", fg="white",
                                font=("Segoe UI", 11, "bold"), anchor="w",
@@ -331,11 +441,13 @@ class HitlApp:
         cb = ttk.Combobox(left, textvariable=self.preset_var,
                           values=list(sm.PRESETS), state="readonly", width=28)
         cb.pack(anchor="w", fill="x")
+        self.preset_combo = cb
         cb.bind("<<ComboboxSelected>>", lambda e: self.load_preset())
         csv_row = ttk.Frame(left)
         csv_row.pack(fill="x", pady=(4, 0))
-        ttk.Button(csv_row, text="Load CSV…",
-                   command=self.load_csv).pack(side="left")
+        self.load_csv_btn = ttk.Button(csv_row, text="Load CSV…",
+                                       command=self.load_csv)
+        self.load_csv_btn.pack(side="left")
         self.csv_label = ttk.Label(csv_row, text="(preset source)",
                                    width=26)
         self.csv_label.pack(side="left", padx=4)
@@ -352,10 +464,18 @@ class HitlApp:
         self.predict_label = ttk.Label(left, text="", justify="left",
                                        wraplength=280)
         self.predict_label.pack(side="bottom", anchor="w", fill="x")
-        ttk.Button(left, text="Predict transitions",
-                   command=self.predict).pack(side="bottom", fill="x")
-        left.bind("<Configure>", lambda e: self.predict_label.configure(
-            wraplength=max(120, e.width - 10)))
+        self.predict_btn = ttk.Button(left, text="Predict transitions",
+                                      command=self.predict)
+        self.predict_btn.pack(side="bottom", fill="x")
+        # Which vibration profile the next run would use / the last run used.
+        self.vibration_label = ttk.Label(left, text="", justify="left",
+                                         foreground="#1f5fbf", wraplength=280)
+        self.vibration_label.pack(side="bottom", anchor="w", fill="x")
+
+        def wrap_left(e):
+            for label in (self.predict_label, self.vibration_label):
+                label.configure(wraplength=max(120, e.width - 10))
+        left.bind("<Configure>", wrap_left)
         pf_outer = ttk.LabelFrame(left, text="Parameters", padding=2)
         pf_outer.pack(fill="both", expand=True, pady=4)
         canvas = tk.Canvas(pf_outer, width=250, height=120,
@@ -457,6 +577,15 @@ class HitlApp:
                 ttk.Combobox(self.param_frame, textvariable=var,
                              values=tc.ATTITUDE_MODES, state="readonly",
                              width=9).grid(row=r, column=1, sticky="w")
+            elif f.name == "vibration_profile":
+                var = tk.StringVar()
+                picker = ttk.Combobox(
+                    self.param_frame, textvariable=var, state="readonly", width=22,
+                    values=[VIB_AUTO, VIB_NONE, *vibration_profiles()])
+                picker.grid(row=r, column=1, sticky="w")
+                picker.bind("<<ComboboxSelected>>",
+                            lambda e: self._vibration_changed())
+                self.vibration_picker = picker
             else:
                 var = tk.StringVar()
                 ttk.Entry(self.param_frame, textvariable=var, width=10).grid(
@@ -471,6 +600,8 @@ class HitlApp:
                 continue
             if "bool" in self.param_types[name]:
                 var.set(bool(value))
+            elif name == "vibration_profile":
+                var.set(vibration_display(value))
             else:
                 var.set("" if value is None else str(value))
 
@@ -501,7 +632,12 @@ class HitlApp:
             except ValueError:
                 keep = {}
         self._build_param_grid(tc.CsvParams)
-        self._fill_params(keep or tc.CsvParams().to_dict())
+        if not keep:
+            # A new CSV source starts from the saved vibration choice.
+            keep = tc.CsvParams().to_dict()
+            keep["vibration_profile"] = self.settings.get("vibration_profile", "")
+            keep["vibration_scale"] = self.settings.get("vibration_scale", 1.0)
+        self._fill_params(keep)
         self.csv_path = path
         self.csv_label.config(text=os.path.basename(path))
         self.settings["csv_path"] = path
@@ -514,6 +650,8 @@ class HitlApp:
             t = self.param_types[name]
             if "bool" in t:
                 values[name] = bool(var.get())
+            elif name == "vibration_profile":
+                values[name] = vibration_value(var.get())
             else:
                 try:
                     values[name] = coerce(t, var.get().strip())
@@ -530,36 +668,123 @@ class HitlApp:
         return th
 
     def predict(self):
+        """Expected transitions for the current source, computed off the UI
+        thread (a CSV takes ~1-2 s to build). Returns the params, or None."""
         try:
             params = self.read_params()
         except ValueError as exc:
             self.predict_label.config(text=str(exc))
             return None
-        report = ""
-        if isinstance(params, tc.CsvParams):
-            try:
-                build = tc.build(params)
-            except (OSError, ValueError) as exc:
-                self.predict_label.config(text=f"CSV error: {exc}")
-                return None
-            samples = build.samples
-            exp = hs.expected_from_track(samples,
-                                         sm.predict_state_track(samples))
-            report = "\n" + tc.format_report(build.report)
-        else:
-            samples = sm.generate(params)
-            exp = sm.predict_transitions(samples)
-        s = sm.summarize(samples)
-        text = (f"Duration {s['duration_s']:.1f} s, apogee "
-                f"{s['apogee_agl_m']:.0f} m AGL at {s['apogee_t_s']:.1f} s\n"
-                + "\n".join(f"{hp.FLIGHT_STATES[k]}: {v:.2f} s"
-                            for k, v in sorted(exp.items(),
-                                               key=lambda kv: kv[1]))
-                + ("" if exp else "No transitions expected") + report)
-        self.predict_label.config(text=text)
-        if self.session.run is None or not self.session.run.running:
-            self._fill_table({k: v for k, v in exp.items()}, {})
+        if self.session.run is not None and self.session.run.running:
+            # Never compete with the streaming loop for the CPU.
+            self.predict_label.config(text="(prediction paused during the run)")
+            return params
+        self._predict_token += 1
+        token = self._predict_token
+        self.predict_label.config(text="Predicting\u2026")
+        self._run_in_worker("Predicting", lambda: compute_prediction(params),
+                            lambda result, error: self._show_prediction(
+                                token, result, error))
         return params
+
+    def _show_prediction(self, token, result, error):
+        if token != self._predict_token:
+            return  # a newer prediction is on its way
+        if error is not None:
+            prefix = "CSV error: " if isinstance(error, (OSError, ValueError)) else ""
+            self.predict_label.config(text=f"{prefix}{error}")
+            self.vibration_label.config(text="")
+            return
+        self.predict_label.config(text=result["text"])
+        self.vibration_label.config(text=result["vibration"])
+        if self.session.run is None or not self.session.run.running:
+            self._fill_table(dict(result["expected"]), {})
+
+    def _vibration_changed(self):
+        try:
+            params = self.read_params()
+        except ValueError:
+            return
+        if isinstance(params, tc.CsvParams):
+            self.settings.update(vibration_profile=params.vibration_profile,
+                                 vibration_scale=params.vibration_scale)
+            save_settings(self.settings, self.settings_path)
+        self.predict()
+
+    # ------------------------------------------------------------ workers
+    def _run_in_worker(self, label: str, fn, done):
+        """Run ``fn`` on a thread; ``done(result, error)`` runs on the UI
+        thread from poll(). Shows the busy indicator meanwhile."""
+        self._busy.append(label)
+        self._job_id += 1
+        job = self._job_id
+        # The worker gets only the job id and ``fn`` (which must not hold Tk
+        # objects): if the window closes first, nothing Tk is ever freed on
+        # the worker thread. The UI thread keeps ``done``.
+        self._jobs[job] = (label, done)
+        self._show_busy()
+        results = self._work_queue
+
+        def work():
+            try:
+                result, error = fn(), None
+            except Exception as exc:  # reported to done() on the UI thread
+                result, error = None, exc
+            results.put((job, result, error))
+
+        threading.Thread(target=work, name="hitl-worker", daemon=True).start()
+
+    def _drain_workers(self):
+        while True:
+            try:
+                job, result, error = self._work_queue.get_nowait()
+            except queue.Empty:
+                return
+            label, done = self._jobs.pop(job, (None, None))
+            if done is None:
+                continue
+            if label in self._busy:
+                self._busy.remove(label)
+            self._show_busy()
+            try:
+                done(result, error)
+            except Exception as exc:  # never kill the poll loop
+                self.append_log(f"[tool] {exc}")
+
+    def wait_idle(self, timeout: float = 60.0) -> bool:
+        """Pump Tk until worker jobs finish (tests and scripts)."""
+        deadline = time.monotonic() + timeout
+        while (self._busy or self._preparing) and time.monotonic() < deadline:
+            self.root.update()
+            self._drain_workers()
+            time.sleep(0.01)
+        self._flush_log()
+        return not self._busy and not self._preparing
+
+    # While a worker runs CPU-bound Python, every Tk call made by the UI
+    # thread gives up the GIL and must wait up to sys.getswitchinterval()
+    # (5 ms) to get it back; a poll tick makes ~100 Tk calls, i.e. ~0.5 s of
+    # lag. A short interval while busy keeps the UI smooth; restored after.
+    BUSY_SWITCH_INTERVAL_S = 0.0005
+
+    def _show_busy(self):
+        if self._busy and self._switch_interval is None:
+            self._switch_interval = sys.getswitchinterval()
+            sys.setswitchinterval(self.BUSY_SWITCH_INTERVAL_S)
+        elif not self._busy and self._switch_interval is not None:
+            sys.setswitchinterval(self._switch_interval)
+            self._switch_interval = None
+        if self._busy:
+            self.busy_label.config(text=self._busy[-1] + "\u2026")
+            if not self.busy_bar.winfo_manager():
+                self.busy_bar.pack(side="left", padx=(10, 2))
+                self.busy_label.pack(side="left")
+                self.busy_bar.start(12)
+        elif self.busy_bar.winfo_manager():
+            self.busy_bar.stop()
+            self.busy_bar.pack_forget()
+            self.busy_label.pack_forget()
+        self._refresh_buttons()
 
     # ----------------------------------------------------------- actions
     def toggle_connect(self):
@@ -590,6 +815,8 @@ class HitlApp:
             self._safe(lambda: self.session.send_command(hp.CMD_HITL_EXIT))
 
     def start_sim(self):
+        if self._preparing:
+            return
         try:
             params = self.read_params()
             tol = float(self.tol_var.get())
@@ -599,21 +826,35 @@ class HitlApp:
             return
         self.settings.update(preset=self.preset_var.get(), tolerance_s=tol,
                              att_final_tilt_deg=th["final_tilt_max_deg"])
+        if isinstance(params, tc.CsvParams):
+            self.settings.update(vibration_profile=params.vibration_profile,
+                                 vibration_scale=params.vibration_scale)
         save_settings(self.settings, self.settings_path)
         label = (CSV_SOURCE + " " + os.path.basename(self.csv_path)
                  if self.csv_path else self.preset_var.get())
-        try:
-            run = self.session.prepare_run(params, preset=label,
-                                           tolerance_s=tol,
-                                           att_thresholds=th)
-        except (OSError, ValueError) as exc:
-            self.append_log(f"[tool] cannot build run: {exc}")
+        self._preparing = True
+        self.append_log(f"[tool] building run: {label}")
+        # CSV parsing, 960 Hz IMU synthesis and 0x0E frame encoding take
+        # seconds; they run before streaming starts, off the UI thread.
+        session = self.session
+        self._run_in_worker(
+            "Building run (960 Hz IMU synthesis)",
+            lambda: session.prepare_run(params, preset=label, tolerance_s=tol,
+                                        att_thresholds=th),
+            self._run_prepared)
+
+    def _run_prepared(self, run, error):
+        self._preparing = False
+        if error is not None:
+            self.append_log(f"[tool] cannot build run: {error}")
+            self._refresh_buttons()
             return
         if run.csv_report:
             for line in tc.format_report(run.csv_report).splitlines():
                 self.append_log("[csv] " + line)
             for line in hs.HitlSession.imu_summary(run):
                 self.append_log("[imu] " + line)
+            self.vibration_label.config(text=vibration_used(run))
         self.hide_banner()
         self._safe(lambda: self.session.start_run(run))
         self._refresh_buttons()
@@ -631,6 +872,10 @@ class HitlApp:
     def shutdown(self):
         """Stop timers and disconnect (stops any run / sends EXIT)."""
         self._closing = True
+        self._jobs.clear()       # results of unfinished jobs are dropped
+        if self._switch_interval is not None:
+            sys.setswitchinterval(self._switch_interval)
+            self._switch_interval = None
         for job in (self._poll_id, self._redraw_id, self._plot_job):
             if job is not None:
                 try:
@@ -657,27 +902,57 @@ class HitlApp:
         self.banner.pack_forget()
 
     def append_log(self, line: str):
+        """Queue a log line; poll() writes queued lines in one batch."""
+        self._pending_log.append(line)
+
+    def _flush_log(self):
+        if not self._pending_log:
+            return
+        lines, self._pending_log = self._pending_log[-3000:], []
         lb = self.logbox
         lb.config(state="normal")
-        lb.insert("end", line + "\n")
-        if int(lb.index("end-1c").split(".")[0]) > 3000:
-            lb.delete("1.0", "500.0")
+        lb.insert("end", "\n".join(lines) + "\n")
+        excess = int(lb.index("end-1c").split(".")[0]) - 3000
+        if excess > 0:
+            lb.delete("1.0", f"{excess + 500}.0")
         lb.see("end")
         lb.config(state="disabled")
+
+    def _set(self, widget, **options):
+        """widget.config(**options), skipped when nothing changed."""
+        key = str(widget)
+        if self._ui_cache.get(key) != options:
+            self._ui_cache[key] = options
+            widget.config(**options)
+
+    def _set_state(self, widget, state: list):
+        key = str(widget) + ":state"
+        if self._ui_cache.get(key) != state:
+            self._ui_cache[key] = state
+            widget.state(state)
 
     def _refresh_buttons(self):
         conn = self.session.connected
         running = self.session.run is not None and self.session.run.running
-        self.connect_btn.config(text="Disconnect" if conn else "Connect")
-        self.conn_label.config(text="Connected" if conn else "Disconnected")
-        for b, ok in ((self.btn_enter, conn and not running),
-                      (self.btn_start, conn and not running),
+        busy = self._preparing
+        self._set(self.connect_btn, text="Disconnect" if conn else "Connect")
+        self._set(self.conn_label, text="Connected" if conn else "Disconnected")
+        # Source changes (CSV parse, prediction) wait while a run streams or
+        # is being built, so they never compete with the 0x0E send loop.
+        for b, ok in ((self.btn_enter, conn and not running and not busy),
+                      (self.btn_start, conn and not running and not busy),
                       (self.btn_stop, running),
-                      (self.btn_exit, conn)):
-            b.state(["!disabled"] if ok else ["disabled"])
+                      (self.btn_exit, conn),
+                      (self.load_csv_btn, not running and not busy),
+                      (self.preset_combo, not running and not busy),
+                      (self.predict_btn, not running and not busy)):
+            if b is self.preset_combo:
+                self._set_state(b, ["readonly", "!disabled"] if ok else ["disabled"])
+            else:
+                self._set_state(b, ["!disabled"] if ok else ["disabled"])
 
     def _fill_table(self, expected: dict, observed: dict, tol=None):
-        self.table.delete(*self.table.get_children())
+        rows = []
         for st in hs.TRANSITION_STATES:
             e = expected.get(st)
             o = observed.get(st)
@@ -693,14 +968,20 @@ class HitlApp:
             else:
                 res = "OK" if abs(d) <= tol else ("LATE" if d > 0 else "EARLY")
             fmt = (lambda v: "-" if v is None else f"{v:.2f}")
-            self.table.insert("", "end", values=(
-                hp.FLIGHT_STATES[st], fmt(e), fmt(o), fmt(d), res))
+            rows.append((hp.FLIGHT_STATES[st], fmt(e), fmt(o), fmt(d), res))
+        if rows == self._table_rows:
+            return  # unchanged: no widget churn every poll
+        self._table_rows = rows
+        self.table.delete(*self.table.get_children())
+        for values in rows:
+            self.table.insert("", "end", values=values)
 
     def poll(self):
         if self._closing:
             return
         s = self.session
-        for _ in range(500):
+        self._drain_workers()
+        for _ in range(5000):
             try:
                 kind, payload = s.events.get_nowait()
             except queue.Empty:
@@ -723,7 +1004,7 @@ class HitlApp:
         v = s.view
         state = ("?" if v.flight_state is None
                  else hp.FLIGHT_STATES[v.flight_state])
-        self.state_label.config(text=f"State: {state}")
+        self._set(self.state_label, text=f"State: {state}")
         status = v.last_status
         stale = s.now() - v.last_status_time > 3.0
         for (c, oval), (_n, fn, kind) in zip(self.lamps, STATUS_LAMPS):
@@ -733,21 +1014,25 @@ class HitlApp:
                 color = "#1a9c3a" if kind == "good" else "#d02020"
             else:
                 color = "#555" if kind == "good" else "#c8c8c8"
-            c.itemconfig(oval, fill=color)
+            key = (str(c), oval)
+            if self._ui_cache.get(key) != color:
+                self._ui_cache[key] = color
+                c.itemconfig(oval, fill=color)
         fmt = (lambda x, f: "-" if x is None else format(x, f))
         run = s.run
         sim = (f"sim {run.sim_ms / 1000:7.2f} s  sent {run.frames_sent}"
                f"  late {run.late_ticks}" if run else "")
-        self.info_label.config(text=(
+        self._set(self.info_label, text=(
             f"sats {fmt(v.gps_sats, 'd')}  lock {'Y' if v.gps_locked else 'N'}"
             f"  baro {fmt(v.baro_alt_m, '.1f')} m  gps {fmt(v.gps_alt_m, '.1f')}"
             f" m  accX {fmt(v.accel_x_g, '.2f')} g  batt "
             f"{fmt(v.battery_mv, 'd')} mV  uptime "
             f"{fmt(None if v.uptime_ms is None else v.uptime_ms / 1000, '.1f')}"
             f" s  echo {v.echo_frames}  nmea {v.nmea_lines}   {sim}"))
-        self.bytes_label.config(text=f"rx {v.rx_bytes} / tx {v.tx_bytes} B")
+        self._set(self.bytes_label, text=f"rx {v.rx_bytes} / tx {v.tx_bytes} B")
         if run is not None:
             self._fill_table(run.expected, run.observed, run.tolerance_s)
+        self._flush_log()
         self._refresh_buttons()
         self._poll_id = self.root.after(100, self.poll)
 

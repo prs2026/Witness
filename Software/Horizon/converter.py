@@ -414,8 +414,23 @@ def parse_flash_record(record: bytes) -> dict[str, Any] | None:
     }
 
 
+class DecodeStats:
+    """Filled in by the iter_* decoders: bytes not decoded, when finished."""
+
+    def __init__(self) -> None:
+        self.discarded = 0
+
+
 def decode_flash_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
-    rows: list[dict[str, Any]] = []
+    stats = DecodeStats()
+    rows = list(iter_flash_log(data, stats))
+    return rows, stats.discarded
+
+
+def iter_flash_log(data: bytes, stats: DecodeStats | None = None):
+    """WL flash records (v1 48-byte / v2 24-byte), one row dict at a time."""
+    stats = stats or DecodeStats()
+    count = 0
     size = flash_record_size(data) or FLASH_RECORD_SIZE
     parse = parse_flash_record_v2 if size == 24 else parse_flash_record
     discarded = len(data) % size
@@ -429,7 +444,7 @@ def decode_flash_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
             continue
         uptime_ms = packet["uptime"]
         row: dict[str, Any] = {
-            "packet_index": len(rows),
+            "packet_index": count,
             "byte_offset": offset,
             "packet_id": "WL",
             "packet_type": packet["packet"],
@@ -438,9 +453,10 @@ def decode_flash_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
         }
         row.update(flatten_packet(packet))
         row["raw_packet_hex"] = record.hex(" ")
-        rows.append(row)
+        count += 1
+        yield row
 
-    return rows, discarded
+    stats.discarded = discarded
 
 
 def frame_payload_length(data: bytes, offset: int, lengths: tuple[int, ...]) -> int | None:
@@ -467,8 +483,17 @@ def decode_imu_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
     microsecond counter. ``missing_before`` counts records lost before this
     one, from the 8-bit sequence (it cannot see gaps of 256 or more).
     """
-    rows: list[dict[str, Any]] = []
+    stats = DecodeStats()
+    rows = list(iter_imu_log(data, stats))
+    return rows, stats.discarded
+
+
+def iter_imu_log(data: bytes, stats: DecodeStats | None = None):
+    """decode_imu_log, one row dict at a time (bounded memory)."""
+    stats = stats or DecodeStats()
+    count = 0
     discarded = len(data) % IMU_RECORD_SIZE
+    stats.discarded = discarded
     first_us = None
     previous_raw = None
     wraps = 0
@@ -490,8 +515,9 @@ def decode_imu_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
         low = [signed(record[i:i + 2]) * LSM6_LOW_ACCEL_G_PER_COUNT for i in (4, 6, 8)]
         high = [signed(record[i:i + 2]) * LSM6_HIGH_ACCEL_G_PER_COUNT for i in (10, 12, 14)]
         gyro = [signed(record[i:i + 2]) * GYRO_DPS_PER_COUNT for i in (16, 18, 20)]
-        rows.append({
-            "packet_index": len(rows),
+        count += 1
+        yield {
+            "packet_index": count - 1,
             "byte_offset": offset,
             "packet_id": "IMU",
             "packet_type": "imu_sample",
@@ -511,8 +537,7 @@ def decode_imu_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
             "high_accel_x_g": high[0], "high_accel_y_g": high[1], "high_accel_z_g": high[2],
             "gyro_x_dps": gyro[0], "gyro_y_dps": gyro[1], "gyro_z_dps": gyro[2],
             "raw_packet_hex": record.hex(" "),
-        })
-    return rows, discarded
+        }
 
 
 # Witness store-v4 packet stream (P*.BIN): records of
@@ -528,7 +553,15 @@ def decode_packet_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
     unwrapped). Frames the wire parser does not know are kept with their
     raw bytes; a corrupt record ends the scan and counts as discarded.
     """
-    rows: list[dict[str, Any]] = []
+    stats = DecodeStats()
+    rows = list(iter_packet_log(data, stats))
+    return rows, stats.discarded
+
+
+def iter_packet_log(data: bytes, stats: DecodeStats | None = None):
+    """decode_packet_log, one row dict at a time (bounded memory)."""
+    stats = stats or DecodeStats()
+    count = 0
     offset = 0
     first_us = None
     previous_raw = None
@@ -554,7 +587,7 @@ def decode_packet_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
         except (IndexError, struct.error, ValueError):
             packet = None
         row: dict[str, Any] = {
-            "packet_index": len(rows),
+            "packet_index": count,
             "byte_offset": offset,
             "packet_id": f"0x{packet_id:02X}",
             "packet_type": packet["packet"] if packet else "unknown",
@@ -566,9 +599,10 @@ def decode_packet_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
         if packet:
             row.update(flatten_packet(packet))
         row["raw_packet_hex"] = frame.hex(" ")
-        rows.append(row)
+        count += 1
         offset = start + length
-    return rows, len(data) - offset
+        yield row
+    stats.discarded = len(data) - offset
 
 
 def is_packet_log_name(path: Path) -> bool:
@@ -583,10 +617,18 @@ def is_imu_log_name(path: Path) -> bool:
 
 def decode_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
     """Decode either a flash-record file or a possibly noisy packet stream."""
-    if is_flash_record_log(data):
-        return decode_flash_log(data)
+    stats = DecodeStats()
+    rows = list(iter_log(data, stats))
+    return rows, stats.discarded
 
-    rows: list[dict[str, Any]] = []
+
+def iter_log(data: bytes, stats: DecodeStats | None = None):
+    """decode_log, one row dict at a time (bounded memory)."""
+    stats = stats or DecodeStats()
+    if is_flash_record_log(data):
+        yield from iter_flash_log(data, stats)
+        return
+
     offset = 0
     discarded = 0
     packet_index = 0
@@ -638,11 +680,43 @@ def decode_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
         }
         row.update(flatten_packet(packet))
         row["raw_packet_hex"] = frame.hex(" ")
-        rows.append(row)
         packet_index += 1
         offset += frame_length
+        stats.discarded = discarded
+        yield row
 
-    return rows, discarded
+    stats.discarded = discarded
+
+
+FORMAT_CHOICES = ("auto", "imu", "packets", "flash", "wire")
+
+
+def select_decoder(path: Path, data: bytes, fmt: str = "auto"):
+    """(input format description, iter_* decoder) for a raw log.
+
+    auto: I*.BIN -> IMU records, P*.BIN -> packet log, WL magic -> flash
+    records, anything else -> the wire packet scanner.
+    """
+    if fmt == "imu" or (fmt == "auto" and is_imu_log_name(path)):
+        return "Witness IMU records (24-byte)", iter_imu_log
+    if fmt == "packets" or (fmt == "auto" and is_packet_log_name(path)):
+        return "Witness packet log (store v4 P*.BIN)", iter_packet_log
+    if fmt == "flash" or (fmt == "auto" and is_flash_record_log(data)):
+        return "Witness flash records", iter_flash_log
+    return ("Witness flash records" if is_flash_record_log(data) else "wire packets"), iter_log
+
+
+def csv_fieldnames(rows) -> list[str]:
+    """The CSV header write_csv uses for these rows."""
+    fieldnames = list(BASE_COLUMNS)
+    seen = set(fieldnames)
+    for row in rows:
+        for field in row:
+            if field not in seen and field != "raw_packet_hex":
+                fieldnames.append(field)
+                seen.add(field)
+    fieldnames.append("raw_packet_hex")
+    return fieldnames
 
 
 BASE_COLUMNS = (
@@ -655,15 +729,24 @@ BASE_COLUMNS = (
 )
 
 
+def write_csv_stream(make_rows, output_path: Path) -> int:
+    """write_csv without holding every row: ``make_rows()`` is called twice
+    (once for the header, once to write). Same file as write_csv. Returns
+    the number of rows written."""
+    fieldnames = csv_fieldnames(make_rows())
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    count = 0
+    with output_path.open("w", newline="", encoding="utf-8") as output_file:
+        writer = csv.DictWriter(output_file, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        for row in make_rows():
+            writer.writerow(row)
+            count += 1
+    return count
+
+
 def write_csv(rows: list[dict[str, Any]], output_path: Path) -> None:
-    fieldnames = list(BASE_COLUMNS)
-    seen = set(fieldnames)
-    for row in rows:
-        for field in row:
-            if field not in seen and field != "raw_packet_hex":
-                fieldnames.append(field)
-                seen.add(field)
-    fieldnames.append("raw_packet_hex")
+    fieldnames = csv_fieldnames(rows)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as output_file:
@@ -682,7 +765,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="output CSV path (default: input filename with a .csv extension)",
     )
     parser.add_argument(
-        "--format", choices=("auto", "imu", "packets", "flash", "wire"), default="auto",
+        "--format", choices=FORMAT_CHOICES, default="auto",
         help="input format; auto treats I*.BIN as the Witness IMU stream",
     )
     return parser
@@ -699,23 +782,10 @@ def main() -> int:
 
     try:
         data = input_path.read_bytes()
-        imu = args.format == "imu" or (args.format == "auto" and is_imu_log_name(input_path))
-        packets = args.format == "packets" or (
-            args.format == "auto" and is_packet_log_name(input_path))
-        if imu:
-            input_format = "Witness IMU records (24-byte)"
-            rows, discarded = decode_imu_log(data)
-        elif packets:
-            input_format = "Witness packet log (store v4 P*.BIN)"
-            rows, discarded = decode_packet_log(data)
-        elif args.format == "flash" or (args.format == "auto" and is_flash_record_log(data)):
-            input_format = "Witness flash records"
-            rows, discarded = decode_flash_log(data)
-        else:
-            input_format = (
-                "Witness flash records" if is_flash_record_log(data) else "wire packets"
-            )
-            rows, discarded = decode_log(data)
+        input_format, decoder = select_decoder(input_path, data, args.format)
+        stats = DecodeStats()
+        rows = list(decoder(data, stats))
+        discarded = stats.discarded
         write_csv(rows, output_path)
     except OSError as exc:
         print(f"error: {exc}", file=sys.stderr)

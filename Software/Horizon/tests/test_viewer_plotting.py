@@ -207,12 +207,12 @@ class TimeAxisModelTests(unittest.TestCase):
     def test_set_time_axis_converts_then_offsets(self):
         data = self.write("x.csv", "sim_ms,wall_s,value", [(1000, 5.0, 1), (2000, 6.0, 2)])
         self.assertEqual((data.time_column, data.time_unit), ("sim_ms", "ms"))
-        self.assertEqual(data.times(), [1.0, 2.0])
+        self.assertEqual(data.times().tolist(), [1.0, 2.0])
         data.set_time_axis(unit="s")              # the user says it is seconds
-        self.assertEqual(data.times(), [1000.0, 2000.0])
+        self.assertEqual(data.times().tolist(), [1000.0, 2000.0])
         data.set_time_axis(column="wall_s")       # new column: its own units
         self.assertEqual(data.time_unit, "s")
-        self.assertEqual(data.times(), [5.0, 6.0])
+        self.assertEqual(data.times().tolist(), [5.0, 6.0])
         data.set_time_axis(offset=-5.0)
         self.assertEqual(data.time_axis_text(), "wall_s s, -5 s")
         self.assertNotIn(viewer.AUTO_TIME, data.time_choices())

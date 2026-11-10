@@ -118,6 +118,8 @@ class TkTests(unittest.TestCase):
             hitl_runs_dir=self.tmp,
             monitor_options={"auto_connect": False, "feed_port": 0})
         self.pump()
+        # CSVs load on a worker thread; the window is usable meanwhile.
+        self.assertTrue(app.viewer.wait_for_loads(30))
         self.assertEqual(self.root.nametowidget(app.notebook.select()),
                          app.frames["viewer"])
         self.assertEqual(app.viewer.csv_path, csv_path)

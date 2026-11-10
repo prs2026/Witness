@@ -15,6 +15,9 @@ from __future__ import annotations
 import argparse
 import bisect
 import csv
+import queue
+import sys
+import threading
 from dataclasses import dataclass, field
 import math
 import re
@@ -22,6 +25,11 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import tkinter.font as tkfont
+
+import numpy as np
+
+import converter
+import csv_columns
 
 
 GRAPH_HEIGHT = 230
@@ -526,6 +534,93 @@ def nice_ticks(low: float, high: float, target_intervals: int = 5,
     return step, [index * step for index in range(first, last + 1)]
 
 
+class Series:
+    """One trace: x/y numpy arrays sorted by x (no NaN).
+
+    Indexes like the old list of (x, y) points (``s[0][0]``, ``len(s)``),
+    but the drawing, zoom and hover paths use the arrays directly so a trace
+    of millions of samples never becomes millions of Python objects.
+    """
+    __slots__ = ("xs", "ys")
+
+    def __init__(self, xs, ys):
+        self.xs = np.asarray(xs, dtype=np.float64)
+        self.ys = np.asarray(ys, dtype=np.float64)
+
+    def __len__(self) -> int:
+        return int(self.xs.size)
+
+    def __bool__(self) -> bool:
+        return self.xs.size > 0
+
+    def __getitem__(self, index):
+        return (float(self.xs[index]), float(self.ys[index]))
+
+    def __iter__(self):
+        return iter(zip(self.xs.tolist(), self.ys.tolist()))
+
+    def view(self, x_min: float, x_max: float) -> "Series":
+        """Points inside [x_min, x_max] plus interpolated edge points."""
+        xs, ys = self.xs, self.ys
+        if xs.size == 0:
+            return self
+        first = int(np.searchsorted(xs, x_min, side="left"))
+        last = int(np.searchsorted(xs, x_max, side="right"))
+        out_x = [xs[first:last]]
+        out_y = [ys[first:last]]
+
+        def edge(i, x):
+            xa, xb, ya, yb = xs[i - 1], xs[i], ys[i - 1], ys[i]
+            return x, (ya if xb == xa else ya + (yb - ya) * (x - xa) / (xb - xa))
+
+        if 0 < first < xs.size:
+            ex, ey = edge(first, x_min)
+            out_x.insert(0, np.array([ex]))
+            out_y.insert(0, np.array([ey]))
+        if 0 < last < xs.size:
+            ex, ey = edge(last, x_max)
+            out_x.append(np.array([ex]))
+            out_y.append(np.array([ey]))
+        return Series(np.concatenate(out_x), np.concatenate(out_y))
+
+    def nearest(self, x: float):
+        if self.xs.size == 0:
+            return None
+        index = int(np.searchsorted(self.xs, x))
+        if index >= self.xs.size or (index > 0 and
+                                     abs(self.xs[index - 1] - x) <= abs(self.xs[index] - x)):
+            index -= 1
+        return self[index]
+
+
+def envelope(xs, ys, x_min: float, x_max: float, buckets: int):
+    """Min/max of each of ``buckets`` x columns, in drawing order (numpy).
+
+    Each column contributes its first and last sample's x with the column's
+    min and max (ordered so the line stays continuous), so spikes survive
+    and at most 2 * buckets points are drawn however long the trace is.
+    """
+    buckets = max(1, int(buckets))
+    if xs.size <= 2 * buckets:
+        return xs, ys
+    span = (x_max - x_min) or 1.0
+    column = ((xs - x_min) / span * buckets).astype(np.int64)
+    np.clip(column, 0, buckets - 1, out=column)
+    starts = np.flatnonzero(np.r_[True, column[1:] != column[:-1]])
+    ends = np.r_[starts[1:], xs.size] - 1
+    lows = np.minimum.reduceat(ys, starts)
+    highs = np.maximum.reduceat(ys, starts)
+    first = ys[starts]
+    low_first = np.abs(first - lows) <= np.abs(first - highs)
+    out_x = np.empty(starts.size * 2)
+    out_y = np.empty(starts.size * 2)
+    out_x[0::2] = xs[starts]
+    out_x[1::2] = xs[ends]
+    out_y[0::2] = np.where(low_first, lows, highs)
+    out_y[1::2] = np.where(low_first, highs, lows)
+    return out_x, out_y
+
+
 def decimate_minmax(
         points: list[tuple[float, float]], x_min: float, x_max: float,
         buckets: int,
@@ -536,6 +631,8 @@ def decimate_minmax(
     of canvas coordinates to about 2 * buckets, however long the log is.
     """
     buckets = max(1, int(buckets))
+    if isinstance(points, Series):
+        return Series(*envelope(points.xs, points.ys, x_min, x_max, buckets))
     if len(points) <= 2 * buckets:
         return points
     span = (x_max - x_min) or 1.0
@@ -597,6 +694,8 @@ def view_points(
     added, so a zoomed trace runs right to the plot border instead of
     stopping at the last sample inside it.
     """
+    if isinstance(points, Series):
+        return points.view(x_min, x_max)
     if not points:
         return []
     first = bisect.bisect_left(points, x_min, key=lambda point: point[0])
@@ -649,6 +748,8 @@ def pan_range(view: tuple[float, float], full: tuple[float, float],
 
 def nearest_point(points: list[tuple[float, float]], x: float):
     """The sample of sorted ``points`` whose x is closest to ``x``."""
+    if isinstance(points, Series):
+        return points.nearest(x)
     if not points:
         return None
     index = bisect.bisect_left(points, x, key=lambda point: point[0])
@@ -701,23 +802,349 @@ def infer_time_unit(column: str) -> str:
     return "s"
 
 
+# ---------------------------------------------------------------------------
+# Column-wise (numpy) versions of the per-row derivations and summary above.
+# load_dataset uses these; the row functions stay for callers with row dicts.
+# ---------------------------------------------------------------------------
+
+def _first_of(arrays, n: int) -> np.ndarray:
+    """Per row, the first of ``arrays`` that is not NaN (None entries skipped)."""
+    out = np.full(n, np.nan)
+    for values in arrays:
+        if values is None:
+            continue
+        blank = np.isnan(out)
+        out[blank] = values[blank]
+    return out
+
+
+def _scaled(values, factor):
+    return None if values is None else values * factor
+
+
+def _int(values: np.ndarray, modulo: int) -> np.ndarray:
+    """int(value) & (modulo - 1) per element, NaN kept (two's complement)."""
+    return np.where(np.isnan(values), np.nan, np.mod(np.trunc(values), modulo))
+
+
+def row_times_array(cols: dict, n: int) -> np.ndarray:
+    """row_time_seconds for every row: time_seconds, else uptime/fc_uptime ms."""
+    return _first_of((cols.get("time_seconds"), _scaled(cols.get("uptime"), 1e-3),
+                      _scaled(cols.get("fc_uptime"), 1e-3)), n)
+
+
+def sync_times_array(cols: dict, n: int) -> np.ndarray:
+    """sync_time_seconds for every row: uptime, else fc_uptime, else time_seconds."""
+    return _first_of((_scaled(cols.get("uptime"), 1e-3), _scaled(cols.get("fc_uptime"), 1e-3),
+                      cols.get("time_seconds")), n)
+
+
+def _packet_type(text: dict, n: int) -> np.ndarray:
+    values = text.get("packet_type")
+    if values is None:
+        return csv_columns.TextColumn([""], np.zeros(n, dtype=np.uint16))
+    return values.map(lambda value: value.strip().lower())
+
+
+def status_bytes_array(cols: dict, text: dict, n: int):
+    """witness_status_bytes for every row -> (byte0, byte1) float arrays."""
+    nan = np.full(n, np.nan)
+    byte0 = _int(cols["status_byte0"], 256) if "status_byte0" in cols else nan.copy()
+    byte1 = _int(cols["status_byte1"], 256) if "status_byte1" in cols else nan.copy()
+    kind = _packet_type(text, n)
+    status = cols.get("status", nan)
+    fc_status = cols.get("fc_status", nan)
+    combined = np.where(kind == "camera", fc_status,
+                        np.where(kind == "iris_debug", np.nan, status))
+    combined = _int(combined, 65536)
+    fill0 = np.isnan(byte0) & ~np.isnan(combined)
+    byte0[fill0] = np.floor(combined[fill0] / 256) % 256
+    fill1 = np.isnan(byte1) & ~np.isnan(combined)
+    byte1[fill1] = combined[fill1] % 256
+    return byte0, byte1
+
+
+def flight_state_array(cols: dict, text: dict, n: int) -> np.ndarray:
+    """flight_state() for every row (NaN where it has none)."""
+    state = np.full(n, np.nan)
+    for name in ("flight_state", "global_flight_state", "status_byte1", "fc_status"):
+        values = cols.get(name)
+        if values is not None:
+            blank = np.isnan(state)
+            state[blank] = _int(values, 8)[blank]
+    status = cols.get("status")
+    if status is not None:
+        kind = _packet_type(text, n)
+        usable = np.isnan(state) & ~kind.isin(("camera", "iris_debug"))
+        state[usable] = _int(status, 8)[usable]
+    return state
+
+
+def _wl_transitions(csv_path: Path):
+    """Timestamped state transitions from a WL session's paired .TXT log."""
+    text_path = csv_path.with_suffix(".TXT")
+    if not text_path.exists():
+        text_path = csv_path.with_suffix(".txt")
+    if not text_path.exists():
+        return None, []
+    try:
+        log_text = text_path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None, []
+    transitions = []
+    for match in FLIGHT_STATE_TRANSITION_RE.finditer(log_text):
+        from_name = " ".join(match.group(2).lower().split())
+        to_name = " ".join(match.group(3).lower().split())
+        if from_name in FLIGHT_STATE_VALUES and to_name in FLIGHT_STATE_VALUES:
+            transitions.append((int(match.group(1)) / 1000.0,
+                                FLIGHT_STATE_VALUES[from_name], FLIGHT_STATE_VALUES[to_name]))
+    transitions.sort(key=lambda item: item[0])
+    return text_path, transitions
+
+
+def derive_columns(csv_path: Path, cols: dict, text: dict, header: list[str]):
+    """add_paired_wl_flight_state, add_derived_flight_state, add_status_bit_traces
+    and add_status_flag_columns, on columns. Mutates ``cols``/``text``;
+    returns (numeric column order, paired .TXT path or None, row count)."""
+    n = len(next(iter(cols.values()))) if cols else 0
+    order = [name for name in header if name in cols]
+
+    def add(name):
+        if name not in order:
+            order.append(name)
+
+    # Paired WL .TXT flight-state transitions (WL v1 has no state column).
+    paired = None
+    ids = text.get("packet_id")
+    kinds = text.get("packet_type")
+    is_wl = ((ids is not None and bool(np.any(ids == "WL"))) or
+             (kinds is not None and bool(np.any(kinds == "flash_sample"))))
+    if is_wl:
+        text_path, transitions = _wl_transitions(csv_path)
+        state = cols.get("flight_state")
+        times = row_times_array(cols, n)
+        target = (np.ones(n, bool) if state is None else np.isnan(state)) & ~np.isnan(times)
+        if transitions and target.any():
+            at = np.array([t for t, _f, _s in transitions])
+            to = np.array([s for _t, _f, s in transitions], dtype=np.float64)
+            index = np.searchsorted(at, times[target], side="right")
+            new_state = np.full(n, np.nan) if state is None else state.copy()
+            new_state[target] = np.where(index == 0, transitions[0][1],
+                                         to[np.maximum(index - 1, 0)])
+            cols["flight_state"] = new_state
+            k = len(transitions)
+            for name in list(cols):
+                cols[name] = np.concatenate([cols[name], np.full(k, np.nan)])
+            if "time_seconds" not in cols:
+                cols["time_seconds"] = np.full(n + k, np.nan)
+            cols["time_seconds"][n:] = np.round(at, 3)
+            cols["flight_state"][n:] = to
+            for name, value in (("packet_id", "TXT"), ("packet_type", "flight_state_transition")):
+                old = text.get(name)
+                if old is None:
+                    old = csv_columns.TextColumn([""], np.zeros(n, dtype=np.uint16))
+                text[name] = old.append(value, k)
+            n += k
+            paired = text_path
+            add("time_seconds")
+            add("flight_state")
+
+    # Flight state from status byte 1 (or fc_status / status) where blank.
+    derived = flight_state_array(cols, text, n)
+    if not np.all(np.isnan(derived)):
+        existing = cols.get("flight_state")
+        cols["flight_state"] = derived if existing is None else np.where(
+            np.isnan(existing), derived, existing)
+        add("flight_state")
+
+    # One 0/1 trace per status bit, and gps_locked / hitl_active flags.
+    byte0, byte1 = status_bytes_array(cols, text, n)
+    for byte, fields in ((byte0, STATUS_BYTE0_BIT_FIELDS), (byte1, STATUS_BYTE1_BIT_FIELDS)):
+        have = ~np.isnan(byte)
+        if not have.any():
+            continue
+        ints = np.where(have, byte, 0).astype(np.int64)
+        for bit, name in enumerate(fields):
+            values = cols.get(name, np.full(n, np.nan)).copy()
+            values[have] = (ints[have] >> bit) & 1
+            cols[name] = values
+    for name in STATUS_BIT_FIELDS:
+        if name in cols:
+            add(name)
+    have1 = ~np.isnan(byte1)
+    ints1 = np.where(have1, byte1, 0).astype(np.int64)
+    for name, mask in STATUS_FLAG_COLUMNS.items():
+        values = cols.get(name, np.full(n, np.nan)).copy()
+        fill = np.isnan(values) & have1
+        values[fill] = (ints1[fill] & mask) != 0
+        if not np.all(np.isnan(values)):
+            cols[name] = values
+            add(name)
+    return order, paired, n
+
+
+def _sensor_valid(cols: dict, text: dict, n: int, mask: int, explicit: str) -> np.ndarray:
+    """sensor_flag_is_valid for every row."""
+    valid = np.ones(n, bool)
+    decided = np.zeros(n, bool)
+    values = cols.get(explicit)
+    if values is not None:
+        have = ~np.isnan(values)
+        valid[have] = np.trunc(values[have]) != 0
+        decided |= have
+    byte0 = cols.get("status_byte0")
+    if byte0 is not None:
+        have = ~decided & ~np.isnan(byte0)
+        valid[have] = (np.trunc(byte0[have]).astype(np.int64) & mask) != 0
+        decided |= have
+    kind = _packet_type(text, n)
+    combined = np.where(kind == "camera", cols.get("fc_status", np.full(n, np.nan)),
+                        cols.get("status", np.full(n, np.nan)))
+    have = ~decided & ~np.isnan(combined)
+    valid[have] = ((np.trunc(combined[have]).astype(np.int64) >> 8) & mask) != 0
+    return valid
+
+
+def summarize_columns(cols: dict, text: dict, n: int) -> dict[str, str]:
+    """calculate_summary on columns (same texts, vectorized)."""
+    times = row_times_array(cols, n)
+    timed = ~np.isnan(times)
+    state = flight_state_array(cols, text, n)
+
+    altitude_text = "Not available"
+    altitude = cols.get("barometric_altitude")
+    if altitude is not None:
+        ok = ~np.isnan(altitude) & _sensor_valid(cols, text, n, 0x40, "barometer_valid")
+        if ok.any():
+            index = int(np.flatnonzero(ok)[np.argmax(altitude[ok])])
+            altitude_text = f"{altitude[index]:.3f} m"
+            if timed[index]:
+                altitude_text += f"\nat {times[index]:.3f} s"
+
+    magnitudes, labels = [], []
+    for prefix, label in ACCELERATION_VECTORS:
+        mask, field_name = {"filtered_accel": (0x02, "low_g_valid"),
+                            "low_accel": (0x02, "low_g_valid"),
+                            "high_accel": (0x20, "high_g_valid")}[prefix]
+        parts = [cols.get(f"{prefix}_{axis}") for axis in "xyz"]
+        if any(part is None for part in parts):
+            magnitudes.append(np.full(n, -np.inf))
+        else:
+            magnitude = np.sqrt(parts[0] ** 2 + parts[1] ** 2 + parts[2] ** 2)
+            ok = ~np.isnan(magnitude) & _sensor_valid(cols, text, n, mask, field_name)
+            magnitudes.append(np.where(ok, magnitude, -np.inf))
+        labels.append(label)
+    stack = np.vstack(magnitudes)
+    row_best = stack.argmax(axis=0)
+    row_max = stack.max(axis=0)
+    has_accel = np.isfinite(row_max)
+    acceleration_text = "Not available"
+    if has_accel.any():
+        index = int(np.argmax(np.where(has_accel, row_max, -np.inf)))
+        acceleration_text = f"{row_max[index]:.3f} g"
+        if timed[index]:
+            acceleration_text += f"\nat {times[index]:.3f} s"
+        acceleration_text += f"\n{labels[row_best[index]]}"
+
+    launch_time = None
+    launch_method = ""
+    boost = timed & (state == 1)
+    if boost.any():
+        launch_time = float(times[boost].min())
+        launch_method = "Boost flight state"
+    else:
+        sample = has_accel & timed
+        order = np.argsort(times[sample], kind="stable")
+        sample_times = times[sample][order].tolist()
+        sample_mags = row_max[sample][order].tolist()
+        streak_start = None
+        streak_count = 0
+        previous_time = None
+        for timestamp, magnitude in zip(sample_times, sample_mags):
+            if magnitude < LAUNCH_ACCELERATION_G:
+                streak_start = None
+                streak_count = 0
+                previous_time = timestamp
+                continue
+            if (previous_time is None
+                    or timestamp - previous_time <= LAUNCH_MAX_SAMPLE_GAP_SECONDS):
+                if streak_count == 0:
+                    streak_start = timestamp
+                streak_count += 1
+            else:
+                streak_start = timestamp
+                streak_count = 1
+            if streak_count >= LAUNCH_REQUIRED_SAMPLES:
+                launch_time = streak_start
+                launch_method = f"{LAUNCH_ACCELERATION_G:g} g acceleration threshold"
+                break
+            previous_time = timestamp
+    launch_text = "Not detected"
+    if launch_time is not None:
+        launch_text = f"{launch_time:.3f} s\n{launch_method}"
+
+    has_state = ~np.isnan(state)
+    if has_state.any():
+        rows = np.flatnonzero(has_state)
+        primary = np.where(timed[rows], times[rows], rows.astype(np.float64))
+        order = np.lexsort((rows, primary, ~timed[rows]))
+        ordered = state[rows][order].astype(np.int64)
+        changes = np.r_[True, ordered[1:] != ordered[:-1]]
+        history = ordered[changes].tolist()
+        final_state = int(ordered[-1])
+        final_name = FLIGHT_STATE_NAMES.get(final_state, f"Reserved ({final_state})")
+        history_text = " -> ".join(FLIGHT_STATE_NAMES.get(s, f"Reserved ({s})")
+                                   for s in history)
+        flight_state_text = f"{final_name} ({final_state})\n{history_text}"
+    else:
+        flight_state_text = "Not available in this log"
+
+    _byte0, byte1 = status_bytes_array(cols, text, n)
+    hitl = cols.get("hitl_active", np.full(n, np.nan)).copy()
+    blank = np.isnan(hitl)
+    hitl[blank] = np.where(np.isnan(byte1[blank]), 0,
+                           np.where(np.isnan(byte1[blank]), 0, byte1[blank]).astype(np.int64)
+                           & 0x10)
+    hitl_records = int(np.count_nonzero(np.nan_to_num(hitl)))
+    return {
+        "max_altitude": altitude_text,
+        "launch_time": launch_text,
+        "max_acceleration": acceleration_text,
+        "flight_state": flight_state_text,
+        "hitl": (
+            f"HITL ACTIVE in {hitl_records:,} record(s): simulated sensor data"
+            if hitl_records else "No HITL records"
+        ),
+    }
+
+
 @dataclass
 class Dataset:
-    """One converted CSV, parsed for plotting.
+    """One converted CSV, held as numpy columns.
 
-    Each CSV has its own time axis: ``time_column`` (a numeric column, or
-    AUTO_TIME for the Witness uptime fallback chain), ``time_unit`` (a
-    TIME_UNITS key) and ``offset`` in seconds, added after unit conversion so
-    files can be slid into line with each other.
+    ``numeric_data`` maps each numeric column (including derived flight
+    state / status bits) to a float64 array, NaN where empty. Each CSV has
+    its own time axis: ``time_column`` (a numeric column, or AUTO_TIME for
+    the Witness uptime fallback chain), ``time_unit`` (a TIME_UNITS key) and
+    ``offset`` in seconds, added after unit conversion so files can be slid
+    into line with each other.
     """
     path: Path
     label: str
-    rows: list[dict[str, str]]
     fieldnames: list[str]
     numeric_columns: list[str]
-    numeric_data: dict[str, list[float | None]]
-    sync_times: list[float | None]
+    numeric_data: dict[str, np.ndarray]
+    sync_times: np.ndarray
+    row_times: np.ndarray
+    packet_type: "csv_columns.TextColumn | None"
+    summary: dict[str, str]
+    row_count: int
     paired_state_log: Path | None = None
+    is_wl: bool = False
+    stride: int = 1
+    total_rows: int = 0
+    source_format: str = ""          # set for raw .bin logs decoded here
+    discarded: int = 0               # .bin bytes the decoder could not use
     offset: float = 0.0
     time_column: str = AUTO_TIME
     time_unit: str = "s"
@@ -725,14 +1152,13 @@ class Dataset:
 
     @property
     def packet_types(self) -> list[str]:
-        return sorted({
-            row.get("packet_type", "").strip()
-            for row in self.rows if row.get("packet_type", "").strip()
-        })
+        if self.packet_type is None:
+            return []
+        return sorted(value for value in self.packet_type.unique() if value)
 
     @property
     def has_auto_time(self) -> bool:
-        return any(value is not None for value in self.sync_times)
+        return bool(np.any(~np.isnan(self.sync_times)))
 
     def time_choices(self) -> list[str]:
         """Columns that can be this CSV's time axis."""
@@ -755,8 +1181,8 @@ class Dataset:
                 raise ValueError("the offset must be a finite number of seconds")
             self.offset = float(offset)
 
-    def times(self) -> list[float | None]:
-        """Per-row time in seconds (unit converted, before the offset)."""
+    def times(self) -> np.ndarray:
+        """Per-row time in seconds (unit converted, before the offset; NaN = none)."""
         key = (self.time_column, self.time_unit)
         if self._time_cache is not None and self._time_cache[0] == key:
             return self._time_cache[1]
@@ -764,15 +1190,14 @@ class Dataset:
             values = self.sync_times      # already seconds
         else:
             raw = self.numeric_data.get(self.time_column)
-            scale = TIME_UNITS[self.time_unit]
-            values = ([None] * len(self.rows) if raw is None else
-                      [None if value is None else value * scale for value in raw])
+            values = (np.full(self.row_count, np.nan) if raw is None
+                      else raw * TIME_UNITS[self.time_unit])
         self._time_cache = (key, values)
         return values
 
     @property
     def has_sync_time(self) -> bool:
-        return any(value is not None for value in self.times())
+        return bool(np.any(~np.isnan(self.times())))
 
     def time_axis_text(self) -> str:
         if self.time_column == AUTO_TIME:
@@ -782,6 +1207,12 @@ class Dataset:
         if self.offset:
             text += f", {self.offset:+g} s"
         return text
+
+    def mask_for(self, packet_filter: str) -> np.ndarray | None:
+        """Rows of one packet type (None = all rows)."""
+        if packet_filter == "All" or self.packet_type is None:
+            return None
+        return self.packet_type == packet_filter
 
 
 def default_time_axis(dataset: Dataset) -> tuple[str, str]:
@@ -798,44 +1229,74 @@ def default_time_axis(dataset: Dataset) -> tuple[str, str]:
     return first, infer_time_unit(first)
 
 
-def load_dataset(path: Path, label: str | None = None) -> Dataset:
-    """Read a converted CSV. Raises OSError/csv.Error/ValueError."""
-    with path.open("r", newline="", encoding="utf-8-sig") as csv_file:
-        reader = csv.DictReader(csv_file)
-        if not reader.fieldnames:
-            raise ValueError("the CSV has no header row")
-        rows = list(reader)
-        fieldnames = list(reader.fieldnames)
+def load_dataset(path: Path, label: str | None = None, progress=None,
+                 cancel=None) -> Dataset:
+    """Read a converted CSV into numpy columns (safe to run off the UI thread).
 
-    paired_state_log = add_paired_wl_flight_state(path, rows, fieldnames)
-    add_derived_flight_state(rows, fieldnames)
-    add_status_bit_traces(rows, fieldnames)
-    add_status_flag_columns(rows, fieldnames)
-
-    numeric_columns: list[str] = []
-    numeric_data: dict[str, list[float | None]] = {}
-    for field in fieldnames:
-        values: list[float | None] = []
-        has_number = False
-        has_non_numeric_text = False
-        for row in rows:
-            raw_value = row.get(field, "")
-            value = numeric_value(raw_value)
-            values.append(value)
-            if value is not None:
-                has_number = True
-            elif raw_value is not None and raw_value.strip():
-                has_non_numeric_text = True
-        if has_number and not has_non_numeric_text:
-            numeric_columns.append(field)
-            numeric_data[field] = values
-    if not numeric_columns:
+    ``progress(fraction)`` reports parsing progress; setting the ``cancel``
+    threading.Event aborts with csv_columns.LoadCancelled. Raises OSError,
+    csv.Error or ValueError for unreadable files.
+    """
+    path = Path(path)
+    if is_bin_path(path):
+        return load_bin_dataset(path, label, progress, cancel)
+    table = csv_columns.load_table(path, progress=progress, cancel=cancel)
+    if not table.columns:
         raise ValueError("the CSV contains no numeric columns to graph")
-    dataset = Dataset(path=path, label=label or path.name, rows=rows,
-                      fieldnames=fieldnames, numeric_columns=numeric_columns,
-                      numeric_data=numeric_data,
-                      sync_times=[sync_time_seconds(row) for row in rows],
-                      paired_state_log=paired_state_log)
+    return dataset_from_table(path, table, label)
+
+
+def is_bin_path(path) -> bool:
+    return Path(path).suffix.lower() == ".bin"
+
+
+def load_bin_dataset(path: Path, label: str | None = None, progress=None,
+                     cancel=None) -> Dataset:
+    """Decode a raw Witness log (.bin) straight into a dataset.
+
+    Uses converter.py's decoders (I*.BIN IMU records, P*.BIN packet log, WL
+    flash records, else the wire packet scanner), so the columns, names and
+    time-axis defaults are exactly those of the converted CSV. Rows are
+    turned into numpy columns as they are decoded and never kept.
+    """
+    path = Path(path)
+    data = path.read_bytes()
+    if not data:
+        raise ValueError("the file is empty")
+    fmt, decoder = converter.select_decoder(path, data)
+    stats = converter.DecodeStats()
+    table = csv_columns.table_from_rows(path, decoder(data, stats), converter.BASE_COLUMNS,
+                                        progress=progress, cancel=cancel, size=len(data))
+    if table.row_count == 0 or not table.columns:
+        if path.name.upper().startswith("U"):
+            raise ValueError(
+                "U*.BIN is the raw GPS (NMEA) ring; converter.py does not decode it "
+                "into records, so there is nothing to plot")
+        raise ValueError(
+            f"no records could be decoded (tried: {fmt}; {len(data):,} bytes not "
+            "recognised). Is this a Witness I*/P*/S*.BIN log or packet capture?")
+    dataset = dataset_from_table(path, table, label)
+    dataset.source_format = fmt
+    dataset.discarded = stats.discarded
+    return dataset
+
+
+def dataset_from_table(path: Path, table, label: str | None = None) -> Dataset:
+    """Derived columns, summary and time axis for a loaded table."""
+    cols = dict(table.columns)
+    text = dict(table.text)
+    order, paired, n = derive_columns(path, cols, text, list(table.header))
+    kinds = text.get("packet_type")
+    ids = text.get("packet_id")
+    dataset = Dataset(
+        path=path, label=label or path.name, fieldnames=list(table.header),
+        numeric_columns=order, numeric_data={name: cols[name] for name in order},
+        sync_times=sync_times_array(cols, n), row_times=row_times_array(cols, n),
+        packet_type=kinds,
+        summary=summarize_columns(cols, text, n), row_count=n,
+        paired_state_log=paired,
+        is_wl=ids is not None and bool(np.any(ids == "WL")),
+        stride=table.stride, total_rows=table.total_rows)
     dataset.time_column, dataset.time_unit = default_time_axis(dataset)
     return dataset
 
@@ -948,6 +1409,17 @@ class CsvViewerPanel(ttk.Frame):
         self._press = None
         self._drag = None
         self._ghost = None
+        self._cache_bytes = 0
+        self._cache_sizes: dict = {}
+        self._load_queue: list[Path] = []
+        self._load_events: queue.Queue = queue.Queue()
+        self._load_thread: threading.Thread | None = None
+        self._save_thread: threading.Thread | None = None
+        self._switch_saved: float | None = None
+        self.last_save_message = ""
+        self._load_cancel = threading.Event()
+        self._load_job: str | None = None
+        self._load_errors: list[str] = []
         self.x_view: tuple[float, float] | None = None   # shared zoom
         self._full_x: tuple[float, float] | None = None
         self._zoom_press = None
@@ -972,11 +1444,6 @@ class CsvViewerPanel(ttk.Frame):
         return None if first is None else first.path
 
     @property
-    def rows(self) -> list[dict[str, str]]:
-        first = next(iter(self.datasets.values()), None)
-        return [] if first is None else first.rows
-
-    @property
     def numeric_columns(self) -> list[str]:
         first = next(iter(self.datasets.values()), None)
         return [] if first is None else first.numeric_columns
@@ -987,8 +1454,14 @@ class CsvViewerPanel(ttk.Frame):
         controls.pack(fill="x")
 
         ttk.Button(controls, text="Open CSV…", command=self.choose_csv).pack(side="left")
+        ttk.Button(controls, text="Open .BIN…", command=self.choose_bin).pack(
+            side="left", padx=(4, 0))
         ttk.Button(controls, text="Add CSV…", command=self.choose_add_csv).pack(
             side="left", padx=(4, 0))
+        self.load_cancel_button = ttk.Button(controls, text="Cancel",
+                                             command=self.cancel_loads)
+        self.load_bar = ttk.Progressbar(controls, length=140, maximum=1.0)
+        self.load_label = ttk.Label(controls, text="", width=10)
         self.file_label = ttk.Label(controls, text="No file loaded", anchor="w",
                                     width=10)
         self.file_label.pack(side="left", fill="x", expand=True, padx=10)
@@ -1166,6 +1639,9 @@ class CsvViewerPanel(ttk.Frame):
         buttons.pack(fill="x", padx=2, pady=(0, 4))
         ttk.Button(buttons, text="Plot CSV", command=self.plot_selected_dataset).pack(
             side="left", fill="x", expand=True, padx=(0, 2))
+        self.save_csv_button = ttk.Button(buttons, text="Save CSV",
+                                          command=self.save_selected_as_csv)
+        self.save_csv_button.pack(side="left", fill="x", expand=True, padx=(2, 0))
         ttk.Button(buttons, text="Remove CSV", command=self.remove_selected_dataset).pack(
             side="left", fill="x", expand=True, padx=(2, 0))
 
@@ -1269,6 +1745,8 @@ class CsvViewerPanel(ttk.Frame):
                     pass
         self.redraw_job = self.visible_job = None
         self._end_drag()
+        self.cancel_loads()
+        self._background_busy(False)
 
     @staticmethod
     def _wheel(widget, event, direction: int | None = None):
@@ -1305,8 +1783,59 @@ class CsvViewerPanel(ttk.Frame):
             filetypes=(("CSV files", "*.csv"), ("All files", "*.*")),
         )
         if filenames:
+            self.cancel_loads()
             self.clear_datasets()
             self.add_csvs([Path(name) for name in filenames])
+
+    def choose_bin(self) -> None:
+        """Open raw Witness logs (.bin); they are decoded in the background
+        and added alongside the files already loaded."""
+        filenames = filedialog.askopenfilenames(
+            parent=self,
+            title="Open raw Witness log(s) (.bin)",
+            filetypes=(("Witness logs", "*.bin *.BIN"), ("All files", "*.*")),
+        )
+        if filenames:
+            self.add_csvs([Path(name) for name in filenames])
+
+    def save_selected_as_csv(self) -> None:
+        """Write the selected decoded .bin as a CSV (converter.py output)."""
+        dataset = self.datasets.get(self._selected_dataset_id())
+        if dataset is None:
+            return
+        if not is_bin_path(dataset.path):
+            messagebox.showinfo("Save CSV", f"{dataset.label} is already a CSV file.",
+                                parent=self)
+            return
+        filename = filedialog.asksaveasfilename(
+            parent=self, title="Save decoded log as CSV",
+            initialdir=str(dataset.path.parent),
+            initialfile=dataset.path.with_suffix(".csv").name,
+            defaultextension=".csv", filetypes=(("CSV files", "*.csv"),))
+        if filename:
+            self.save_bin_as_csv(dataset.path, Path(filename))
+
+    def save_bin_as_csv(self, source: Path, target: Path) -> None:
+        """Decode ``source`` again and stream it to ``target`` (worker thread)."""
+        events = self._load_events
+
+        def work():
+            try:
+                data = source.read_bytes()
+                _fmt, decoder = converter.select_decoder(source, data)
+                count = converter.write_csv_stream(lambda: decoder(data), target)
+                events.put(("saved", target, f"Wrote {count:,} rows to {target}"))
+            except (OSError, ValueError) as exc:
+                events.put(("save_error", target, f"Could not save {target}:\n{exc}"))
+
+        self._save_thread = threading.Thread(target=work, name="csv-save", daemon=True)
+        self._show_load_progress(target, 0.0, verb="Saving")
+        self.load_bar.configure(mode="indeterminate")
+        self.load_bar.start(15)
+        self._background_busy(True)
+        self._save_thread.start()
+        if self._load_job is None:
+            self._load_job = self.after(80, self._poll_loads)
 
     def choose_add_csv(self) -> None:
         filenames = filedialog.askopenfilenames(
@@ -1319,34 +1848,149 @@ class CsvViewerPanel(ttk.Frame):
 
     def load_csv(self, path: Path) -> bool:
         """Replace everything with this one CSV (single-file behaviour)."""
+        self.cancel_loads()
         self.clear_datasets()
         return self.add_csv(path)
 
-    def add_csvs(self, paths) -> int:
-        added = 0
-        errors = []
-        for path in paths:
+    @property
+    def loading(self) -> bool:
+        """True while CSVs are being read in the background."""
+        return self._load_thread is not None or bool(self._load_queue)
+
+    def add_csvs(self, paths) -> None:
+        """Read CSVs on a worker thread; each is added when it finishes.
+
+        The UI stays responsive (a progress bar and Cancel button show while
+        files load) however large the files are.
+        """
+        self._load_queue.extend(Path(path) for path in paths)
+        if self._load_thread is None:
+            self._start_next_load()
+
+    # While a worker decodes or parses, every Tk call made by the UI thread
+    # gives up the GIL and can wait a whole switch interval (5 ms) to get it
+    # back; with a CPU-bound decoder that is ~0.1-0.5 s of lag per redraw.
+    # A short interval while background work runs keeps the UI smooth.
+    BUSY_SWITCH_INTERVAL_S = 0.0005
+
+    def _background_busy(self, busy: bool) -> None:
+        if busy and self._switch_saved is None:
+            self._switch_saved = sys.getswitchinterval()
+            sys.setswitchinterval(self.BUSY_SWITCH_INTERVAL_S)
+        elif not busy and self._switch_saved is not None:
+            sys.setswitchinterval(self._switch_saved)
+            self._switch_saved = None
+
+    def _start_next_load(self) -> None:
+        if not self._load_queue:
+            self._show_load_progress(None)
+            if self._load_errors:
+                errors, self._load_errors = self._load_errors, []
+                messagebox.showerror("Open CSV", "Could not open:\n\n" + "\n\n".join(errors),
+                                     parent=self)
+            return
+        path = self._load_queue.pop(0)
+        self._load_cancel = cancel = threading.Event()
+        events = self._load_events
+
+        def work():
             try:
-                self.add_csv(Path(path), report=False)
-                added += 1
-            except (OSError, csv.Error, ValueError) as exc:
-                errors.append(f"{path}:\n{exc}")
-        if errors:
-            messagebox.showerror("Open CSV", "Could not open:\n\n" + "\n\n".join(errors),
-                                 parent=self)
-        return added
+                dataset = load_dataset(
+                    path, progress=lambda f: events.put(("progress", path, f)),
+                    cancel=cancel)
+                events.put(("done", path, dataset))
+            except csv_columns.LoadCancelled:
+                events.put(("cancelled", path, None))
+            except (OSError, csv.Error, ValueError, MemoryError) as exc:
+                events.put(("error", path, f"{path}:\n{exc}"))
+            except Exception as exc:  # never leave the panel stuck "loading"
+                events.put(("error", path, f"{path}:\n{type(exc).__name__}: {exc}"))
+
+        self._load_thread = threading.Thread(target=work, name="csv-load", daemon=True)
+        self._background_busy(True)
+        self._show_load_progress(path, 0.0)
+        self._load_thread.start()
+        if self._load_job is None:
+            self._load_job = self.after(80, self._poll_loads)
+
+    def _poll_loads(self) -> None:
+        self._load_job = None
+        finished = False
+        while True:
+            try:
+                kind, path, payload = self._load_events.get_nowait()
+            except queue.Empty:
+                break
+            if kind == "progress":
+                self._show_load_progress(path, payload)
+                continue
+            if kind in ("saved", "save_error"):
+                self._save_thread = None
+                self.load_bar.stop()
+                self.load_bar.configure(mode="determinate")
+                if self._load_thread is None:
+                    self._show_load_progress(None)
+                self.last_save_message = payload
+                (messagebox.showinfo if kind == "saved" else messagebox.showerror)(
+                    "Save CSV", payload, parent=self)
+                continue
+            finished = True
+            self._load_thread = None
+            if kind == "done":
+                self._add_loaded(payload)
+            elif kind == "error":
+                self._load_errors.append(payload)
+        if finished:
+            self._start_next_load()
+        if self._load_thread is not None or self._save_thread is not None:
+            self._load_job = self.after(80, self._poll_loads)
+        else:
+            self._background_busy(False)
+
+    def cancel_loads(self) -> None:
+        """Stop the file being read and drop the queued ones."""
+        self._load_queue.clear()
+        self._load_cancel.set()
+
+    def wait_for_loads(self, timeout: float = 60.0) -> bool:
+        """Pump Tk until queued loads finish (tests and scripts)."""
+        import time as _time
+        deadline = _time.monotonic() + timeout
+        while self.loading and _time.monotonic() < deadline:
+            self.update()
+            _time.sleep(0.01)
+        return not self.loading
+
+    def _show_load_progress(self, path, fraction: float = 0.0, verb: str = "Loading") -> None:
+        if path is None:
+            for widget in (self.load_cancel_button, self.load_bar, self.load_label):
+                widget.pack_forget()
+            return
+        if not self.load_bar.winfo_manager():
+            self.load_cancel_button.pack(side="right")
+            self.load_bar.pack(side="right", padx=4)
+            self.load_label.pack(side="right")
+        pending = len(self._load_queue)
+        self.load_label.configure(text=f"{verb} {Path(path).name}" +
+                                  (f" (+{pending})" if pending else ""), width=0)
+        self.load_bar["value"] = fraction
 
     def add_csv(self, path: Path, report: bool = True) -> bool:
-        """Open one more CSV alongside the ones already loaded."""
+        """Read one more CSV now (blocking) and add it alongside the others."""
         try:
-            dataset = load_dataset(
-                path, unique_label(path.name, (d.label for d in self.datasets.values())))
+            dataset = load_dataset(path)
         except (OSError, csv.Error, ValueError) as exc:
             if not report:
                 raise
             messagebox.showerror("Open CSV", f"Could not open {path}:\n{exc}",
                                  parent=self)
             return False
+        self._add_loaded(dataset)
+        return True
+
+    def _add_loaded(self, dataset: Dataset) -> None:
+        dataset.label = unique_label(dataset.path.name,
+                                     (d.label for d in self.datasets.values()))
         dataset_id = self._next_dataset_id
         self._next_dataset_id += 1
         first = not self.datasets
@@ -1363,13 +2007,12 @@ class CsvViewerPanel(ttk.Frame):
             self.notebook.select(self.summary_outer)
             self.canvas.yview_moveto(0)
         self.draw_graphs()
-        return True
 
     def clear_datasets(self) -> None:
         self.datasets.clear()
         self.x_view = None
         self.layout.clear()
-        self._points_cache = {}
+        self._drop_cached()
         self.trace_tree.delete(*self.trace_tree.get_children())
         self._refresh_axis_choices(keep=False)
         self._refresh_file_label()
@@ -1382,8 +2025,7 @@ class CsvViewerPanel(ttk.Frame):
             return
         del self.datasets[dataset_id]
         self.layout.remove_dataset(dataset_id)
-        self._points_cache = {key: value for key, value in self._points_cache.items()
-                              if key[0] != dataset_id}
+        self._drop_cached(dataset_id)
         if self.trace_tree.exists(f"d{dataset_id}"):
             self.trace_tree.delete(f"d{dataset_id}")
         self._refresh_axis_choices(keep=True)
@@ -1441,8 +2083,7 @@ class CsvViewerPanel(ttk.Frame):
         if dataset is None:
             return
         dataset.set_time_axis(column, unit, offset)
-        self._points_cache = {key: value for key, value in self._points_cache.items()
-                              if key[0] != dataset_id}
+        self._drop_cached(dataset_id)
         if self.trace_tree.exists(f"d{dataset_id}"):
             self.trace_tree.item(f"d{dataset_id}", text=self._dataset_text(dataset))
         if self._selected_dataset_id() == dataset_id:
@@ -1510,10 +2151,12 @@ class CsvViewerPanel(ttk.Frame):
         self.time_unit_combo.set("s (auto)" if auto else dataset.time_unit)
         self.time_unit_combo.state(["disabled"] if auto else ["!disabled"])
         self.offset_var.set(f"{dataset.offset:g}")
-        times = [value for value in dataset.times() if value is not None]
-        if times:
-            note = (f"{value_text(round(min(times) + dataset.offset, 6))} to "
-                    f"{value_text(round(max(times) + dataset.offset, 6))} s on the shared axis")
+        times = dataset.times()
+        timed = times[~np.isnan(times)]
+        if timed.size:
+            note = (f"{value_text(round(float(timed.min()) + dataset.offset, 6))} to "
+                    f"{value_text(round(float(timed.max()) + dataset.offset, 6))} s "
+                    "on the shared axis")
         else:
             note = "No values in this column"
         self.time_axis_note.configure(text=note)
@@ -1550,7 +2193,7 @@ class CsvViewerPanel(ttk.Frame):
         elif len(paths) == 1:
             text = str(paths[0])
         else:
-            text = f"{len(paths)} CSVs: " + ", ".join(path.name for path in paths)
+            text = f"{len(paths)} files: " + ", ".join(path.name for path in paths)
         self.file_label.configure(text=text)
 
     def _refresh_axis_choices(self, keep: bool) -> None:
@@ -1576,8 +2219,19 @@ class CsvViewerPanel(ttk.Frame):
         if self.packet_filter_combo.get() not in ("All", *packet_types):
             self.packet_filter_combo.set("All")
 
+    def _drop_cached(self, dataset_id: int | None = None) -> None:
+        """Forget cached series (of one CSV, or all)."""
+        if dataset_id is None:
+            self._points_cache = {}
+            self._cache_sizes = {}
+            self._cache_bytes = 0
+            return
+        for key in [k for k in self._points_cache if k[0] == dataset_id]:
+            self._points_cache.pop(key)
+            self._cache_bytes -= self._cache_sizes.pop(key, 0)
+
     def on_axis_changed(self) -> None:
-        self._points_cache = {}
+        self._drop_cached()
         self.x_view = None
         self.draw_graphs()
 
@@ -1601,69 +2255,104 @@ class CsvViewerPanel(ttk.Frame):
                 var.set("--")
             self.summary_details_var.set("Open a CSV file to begin.")
             return
-        rows = dataset.rows
-        summary = calculate_summary(rows)
+        summary = dataset.summary
         self.max_altitude_var.set(summary["max_altitude"])
         self.launch_time_var.set(summary["launch_time"])
         self.max_acceleration_var.set(summary["max_acceleration"])
         self.flight_state_var.set(summary["flight_state"])
-        valid_times = [
-            timestamp for timestamp in (row_time_seconds(row) for row in rows)
-            if timestamp is not None
-        ]
+        times = dataset.row_times[~np.isnan(dataset.row_times)]
         time_span = "unknown"
-        if valid_times:
-            time_span = f"{min(valid_times):.3f} to {max(valid_times):.3f} s"
+        if times.size:
+            time_span = f"{times.min():.3f} to {times.max():.3f} s"
         details = (
-            f"{dataset.path.name}: {len(rows):,} rows | "
+            f"{dataset.path.name}: {dataset.row_count:,} rows | "
             f"{len(dataset.numeric_columns)} numeric fields | time span {time_span}"
         )
+        if dataset.stride > 1:
+            details += (f" | large file: every {dataset.stride}th of "
+                        f"{dataset.total_rows:,} rows loaded (memory cap)")
+        if dataset.source_format:
+            details += f" | decoded from .bin ({dataset.source_format}"
+            details += (f", {dataset.discarded:,} bytes not decoded)" if dataset.discarded
+                        else ")")
         if dataset.paired_state_log is not None:
             details += f" | flight state from {dataset.paired_state_log.name}"
-        elif any(row.get("packet_id") == "WL" for row in rows):
+        elif dataset.is_wl:
             details += " | WL v1 does not contain flight state"
         if summary["hitl"].startswith("HITL ACTIVE"):
             details += f" | {summary['hitl']}"
         self.summary_details_var.set(details)
 
     # ------------------------------------------------------------ points
-    def filtered_indices(self, dataset: Dataset) -> list[int]:
-        packet_filter = self.packet_filter_combo.get()
-        if packet_filter == "All" or "packet_type" not in dataset.fieldnames:
-            return list(range(len(dataset.rows)))
-        return [
-            index for index, row in enumerate(dataset.rows)
-            if row.get("packet_type", "") == packet_filter
-        ]
+    SERIES_CACHE_BYTES = 768 * 1024 ** 2
 
-    def series_points(self, ref) -> list[tuple[float, float]]:
-        """Sorted (x, y) points of one series for the current x axis/filter."""
+    def _row_order(self, dataset_id: int, dataset: Dataset):
+        """(sorted x, row indices) for the current x axis and packet filter."""
+        x_column = self.x_axis_combo.get()
+        packet_filter = self.packet_filter_combo.get()
+        key = (dataset_id, x_column, packet_filter, None)
+        cached = self._points_cache.get(key)
+        if cached is not None:
+            return cached
+        if x_column == SYNC_X:
+            x = dataset.times() + dataset.offset
+        else:
+            x = dataset.numeric_data.get(x_column)
+        if x is None:
+            result = (np.empty(0), np.empty(0, dtype=np.int64))
+        else:
+            keep = ~np.isnan(x)
+            mask = dataset.mask_for(packet_filter)
+            if mask is not None:
+                keep &= mask
+            if keep.all() and (x.size < 2 or bool(np.all(x[1:] >= x[:-1]))):
+                # Logs are nearly always in time order with every row
+                # timed: use the columns as they are (no sort, no copies).
+                result = (x, None)
+            else:
+                rows = np.flatnonzero(keep)
+                xs = x[rows]
+                if xs.size > 1 and not bool(np.all(xs[1:] >= xs[:-1])):
+                    order = np.argsort(xs, kind="stable")
+                    rows, xs = rows[order], xs[order]
+                result = (xs, rows)
+        rows = result[1]
+        self._cache_store(key, result, result[0].nbytes + (0 if rows is None else rows.nbytes))
+        return result
+
+    def _cache_store(self, key, value, nbytes: int) -> None:
+        """Remember a computed series; forget the oldest beyond the budget."""
+        self._points_cache[key] = value
+        self._cache_sizes[key] = nbytes
+        self._cache_bytes += nbytes
+        while self._cache_bytes > self.SERIES_CACHE_BYTES and len(self._points_cache) > 1:
+            old_key = next(iter(self._points_cache))
+            if old_key == key:
+                break
+            self._points_cache.pop(old_key)
+            self._cache_bytes -= self._cache_sizes.pop(old_key, 0)
+
+    def series_points(self, ref) -> Series:
+        """One trace as x-sorted arrays for the current x axis and filter."""
         dataset_id, column = ref
         dataset = self.datasets.get(dataset_id)
-        x_column = self.x_axis_combo.get()
-        key = (dataset_id, x_column, self.packet_filter_combo.get(), column)
+        key = (dataset_id, self.x_axis_combo.get(), self.packet_filter_combo.get(), column)
         points = self._points_cache.get(key)
         if points is not None:
             return points
         if dataset is None or column not in dataset.numeric_data:
-            return []
-        if x_column == SYNC_X:
-            x_data = dataset.times()
-            offset = dataset.offset
+            return Series([], [])
+        xs, rows = self._row_order(dataset_id, dataset)
+        column_values = dataset.numeric_data[column]
+        ys = column_values if rows is None else column_values[rows]
+        keep = ~np.isnan(ys)
+        if keep.all():
+            points = Series(xs, ys)          # shares the arrays
+            nbytes = 0 if ys is column_values else ys.nbytes
         else:
-            x_data = dataset.numeric_data.get(x_column)
-            offset = 0.0
-        if x_data is None:
-            points = []
-        else:
-            y_data = dataset.numeric_data[column]
-            points = [
-                (x_data[index] + offset, y_data[index])
-                for index in self.filtered_indices(dataset)
-                if x_data[index] is not None and y_data[index] is not None
-            ]
-            points.sort(key=lambda point: point[0])
-        self._points_cache[key] = points
+            points = Series(xs[keep], ys[keep])
+            nbytes = points.xs.nbytes + points.ys.nbytes
+        self._cache_store(key, points, nbytes)
         return points
 
     def series_label(self, ref) -> str:
@@ -1856,9 +2545,8 @@ class CsvViewerPanel(ttk.Frame):
             self._legend_items[item] = (index, ref)
             header_lines = 1
             if points:
-                y_values = [point[1] for point in points]
                 stats = (f"n={len(points):,}  latest={points[-1][1]:.6g}  "
-                         f"min={min(y_values):.6g}  max={max(y_values):.6g}")
+                         f"min={points.ys.min():.6g}  max={points.ys.max():.6g}")
                 if self.x_view is not None:
                     stats = "in view: " + stats
                 if self.bold_font.measure(name) + 24 + font.measure(stats) <= width - 60:
@@ -1894,8 +2582,8 @@ class CsvViewerPanel(ttk.Frame):
 
         # The y axis fits the data in view, so zooming in on time also
         # zooms in on the values.
-        data_min = min(point[1] for points in non_empty for point in points)
-        data_max = max(point[1] for points in non_empty for point in points)
+        data_min = float(min(points.ys.min() for points in non_empty))
+        data_max = float(max(points.ys.max() for points in non_empty))
         if all(ref[1] in BINARY_COLUMNS for ref, _points in series):
             y_step, y_ticks = 1.0, [0.0, 1.0]
             y_start, y_end = -0.1, 1.1
@@ -1951,11 +2639,11 @@ class CsvViewerPanel(ttk.Frame):
             styles.append((color, dash))
             if not points:
                 continue
-            reduced = decimate_minmax(points, x_min, x_max, int(right - left))
-            coordinates: list[float] = []
-            for x_value, y_value in reduced:
-                coordinates.append(left + (x_value - x_min) / x_span * (right - left))
-                coordinates.append(to_y(y_value))
+            # Min/max envelope per pixel column of the visible span, so a
+            # trace of millions of samples is drawn with ~2 points per pixel.
+            rx, ry = envelope(points.xs, points.ys, x_min, x_max, int(right - left))
+            coordinates = np.column_stack((
+                left + (rx - x_min) / x_span * (right - left), to_y(ry))).ravel().tolist()
             if len(coordinates) >= 4:
                 canvas.create_line(*coordinates, fill=color, width=1.5, dash=dash)
             else:

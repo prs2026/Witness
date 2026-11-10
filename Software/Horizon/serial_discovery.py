@@ -24,6 +24,21 @@ def enumerate_ports():
         return []
 
 
+def preload_port_listing():
+    """Import pyserial's port listing (and ctypes) on the calling thread.
+
+    enumerate_ports runs on a background scan thread. Done there, the first
+    import allocates enough to trigger the cyclic GC on that thread, which
+    can then free a closed Tk window's variables off the Tk thread (each
+    blocks ~1 s: "main thread is not in main loop"). SerialDiscovery calls
+    this from the thread that creates it, normally the Tk thread.
+    """
+    try:
+        from serial.tools import list_ports  # noqa: F401
+    except ImportError:
+        pass
+
+
 def identity(port):
     vid, pid = getattr(port, "vid", None), getattr(port, "pid", None)
     if vid is None or pid is None:
@@ -47,6 +62,7 @@ class SerialDiscovery:
         self._attempts = {}
         self._lock = threading.Lock()
         self._result = None
+        preload_port_listing()
         try:
             data = json.loads(self.path.read_text(encoding="utf-8"))
             if not isinstance(data, list) or not all(isinstance(item, dict) for item in data):
