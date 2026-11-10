@@ -216,14 +216,17 @@ class HistoryTests(unittest.TestCase):
         self.assertIsNone(model.snapshot()[0][1].latest)
         packet["unit_type"] = "TRACKER"
         accept(2)
-        self.assertEqual(model.snapshot()[0][1].latest, 304.8)
+        self.assertEqual(model.snapshot()[0][1].latest, 0)   # AGL: first tracker fix without a pad altitude
+        packet["altitude_ft"] = 2000
+        accept(2.5)
+        self.assertAlmostEqual(model.snapshot()[0][1].latest, 304.8)
         packet["text_crc_valid"] = False
         accept(3)
-        self.assertEqual(model.snapshot()[0][1].latest, 304.8)
-        self.assertEqual(model.snapshot()[0][1].received, 2)
+        self.assertAlmostEqual(model.snapshot()[0][1].latest, 304.8)
+        self.assertEqual(model.snapshot()[0][1].received, 2.5)
         packet["text_crc_valid"], packet["fix_type"] = True, 0
         accept(4)
-        self.assertEqual(model.snapshot()[0][1].latest, 304.8)
+        self.assertAlmostEqual(model.snapshot()[0][1].latest, 304.8)
         self.assertFalse(any(row.title == "Featherweight fix" for row in model.layout.readouts))
 
     def test_mqtt_full_rate_retained_and_partial_updates(self):
@@ -277,25 +280,46 @@ class HistoryTests(unittest.TestCase):
         def witness(x, y, t, snapshot=False):
             model.accept("witness", "W", "state", {"position[0]": x, "position[1]": y}, t, snapshot=snapshot)
         witness(1000, 2000, 1, snapshot=True)
-        self.assertFalse(model.origins)
-        witness(5, 10, 2)
-        witness(8, 14, 3)
+        self.assertIsNone(model.snapshot()[4][0].latest)   # cached data never counts
+        # Witness Kalman ENU has its origin at the pad: distance = hypot(E, N).
+        witness(3, 4, 2)
         self.assertEqual(model.snapshot()[4][0].latest, 5)
-        witness(0, 0, 2.5)  # Out-of-order updates do not move origin or latest reading.
+        witness(0, 0, 1.5)  # Out-of-order updates do not move the latest reading.
         self.assertEqual(model.snapshot()[4][0].latest, 5)
         model.reset_pad()
         self.assertIsNone(model.snapshot()[4][0].latest)
-        witness(8, 14, 4)
-        self.assertEqual(model.snapshot()[4][0].latest, 0)
-        witness(11, 18, 5)
-        self.assertEqual(model.snapshot()[4][0].latest, 5)
+        witness(6, 8, 4)
+        self.assertEqual(model.snapshot()[4][0].latest, 10)
+        self.assertFalse(model.origins)
         model.accept_aim("A", "gnss_payload/v1", {"gnss_coordinate.latitude": 0,
                          "gnss_coordinate.longitude": 0, "satellites_used": 0}, 6, False)
-        self.assertEqual(len(model.origins), 1)  # No bogus origin with no satellites.
+        self.assertEqual(len(model.origins), 0)  # No bogus origin with no satellites.
         for longitude, stamp in ((0, 7), (.001, 8)):
             model.accept_aim("A", "gnss_payload/v1", {"gnss_coordinate.latitude": 0,
                              "gnss_coordinate.longitude": longitude, "satellites_used": 9}, stamp, False)
         self.assertAlmostEqual(model.snapshot()[4][1].latest, 111.1949, places=3)
+
+    def test_shared_pad_reference_sets_agl_and_distance(self):
+        from pad_reference import PadReference
+        pad = PadReference()
+        model = FlightData(load_layout(DEFAULT_LAYOUT), pad=pad)
+        base = {"packet": "GPS_STAT", "unit_type": "BASE", "altitude_ft": 1000, "fix_type": 3,
+                "latitude_deg": 34.0, "longitude_deg": -117.0, "text_crc_valid": True,
+                "radio_crc_status": "CRC_OK"}
+        record = {"source": "COM22", "received_mono": 1, "packet": base}
+        pad.accept_record("featherweight", record)
+        model.accept_record("featherweight", record)
+        tracker = dict(base, unit_type="TRACKER", altitude_ft=1500, latitude_deg=34.001)
+        model.accept_record("featherweight", {"source": "COM22", "received_mono": 2, "packet": tracker})
+        altitude = next(i for i, row in enumerate(model.layout.plots) if row.title == "Altitude AGL")
+        self.assertAlmostEqual(model.snapshot()[altitude][1].latest, 500 * 0.3048)
+        self.assertAlmostEqual(model.snapshot()[4][2].latest, 111.19, places=1)
+        # Witness GPS AGL needs the GPS-locked bit; pad MSL = 304.8 m.
+        fields = {"gps_altitude": 404.8, "status.gps_locked": 1}
+        derived = model._derive_agl("witness", "W", "state", fields, False, True)
+        self.assertAlmostEqual(derived["_derived.gps_altitude_agl_m"], 100.0)
+        derived = model._derive_agl("witness", "W", "state", dict(fields, **{"status.gps_locked": 0}), False, True)
+        self.assertIsNone(derived["_derived.gps_altitude_agl_m"])
 
     def test_readout_unavailable_state_and_optional_continuity_mapping(self):
         from flight_render import value_text

@@ -228,9 +228,23 @@ class History:
     seen: float | None = None
 
 
+# Derived altitude-above-pad fields (metres), so every altitude trace shares the
+# Witness Kalman altitude's reference (0x02/0xE0 kalman_altitude is already AGL).
+# MSL sources subtract the pad's MSL altitude (pad_reference.PadReference:
+# Featherweight GS, Aperture GPS, Witness on-pad GPS, first tracker fix); without
+# one they use their own first live value. AIM pressure altitude is not MSL, so
+# it is always referenced to its own first live value. Set pad re-references.
+AGL_FIELDS = {
+    ("featherweight", "altitude_ft"): ("_derived.altitude_agl_m", 0.3048, True),
+    ("witness", "gps_altitude"): ("_derived.gps_altitude_agl_m", 1.0, True),
+    ("aim", "_derived.barometric_altitude_m"): ("_derived.barometric_altitude_agl_m", 1.0, False),
+}
+
+
 class FlightData:
-    def __init__(self, layout):
+    def __init__(self, layout, *, pad=None):
         self._lock = threading.Lock()
+        self.pad = pad           # optional pad_reference.PadReference (shared with the map)
         self.configure(layout)
 
     def configure(self, layout):
@@ -238,6 +252,7 @@ class FlightData:
             self.layout = layout
             self.selected = {}
             self.origins = {}
+            self.altitude_origins = {}
             self.aim_rates = AimAngularRateEstimator()
             self.aim_altitude = AimAltitudeEstimator()
             self.histories = [[History(deque(maxlen=layout.max_points if not plot.group else 1),
@@ -264,9 +279,11 @@ class FlightData:
         """Next valid live sample sets each source's origin. Other history stays."""
         with self._lock:
             self.origins.clear()
+            self.altitude_origins.clear()
+            derived = {"_derived.horizontal_distance_m", *(name for name, _, _ in AGL_FIELDS.values())}
             for plot, histories in zip(self.layout.rows, self.histories):
                 for trace, history in zip(plot.traces, histories):
-                    if trace.enabled and trace.field == "_derived.horizontal_distance_m":
+                    if trace.enabled and trace.field in derived:
                         history.points.clear()
                         history.latest = history.received = None
                         history.live = False
@@ -317,6 +334,7 @@ class FlightData:
                 if type(sats) not in (int, float) or not 4 <= sats <= 256:
                     fields = {**fields, "gnss_coordinate.altitude": None}
             fields = self._derive_distance(kind, source, fields, received, snapshot, valid)
+            fields = self._derive_agl(kind, source, packet, fields, snapshot, valid)
             for trace, history in self.routes.get((kind, packet), ()):
                 if trace.field not in fields or any(fields.get(key) != value for key, value in trace.match.items()):
                     continue
@@ -361,11 +379,42 @@ class FlightData:
                     while history.points and history.points[0][0] < cutoff:
                         history.points.popleft()
 
-    def _derive_distance(self, kind, source, fields, received, snapshot, valid):
-        """Horizontal distance from first live position, reset by Set pad.
+    def _pad_msl(self):
+        try:
+            value = self.pad.altitude_msl() if self.pad is not None else None
+        except (AttributeError, TypeError):
+            value = None
+        return value[0] if value else None
 
-        Witness uses estimator X/Y meters; tracker GPS uses great-circle
-        distance (Earth radius 6371000 m). Never initialize from retained data.
+    def _derive_agl(self, kind, source, packet, fields, snapshot, valid):
+        for (field_kind, field), (name, scale, msl) in AGL_FIELDS.items():
+            if kind != field_kind or field not in fields:
+                continue
+            fields = dict(fields, **{name: None})
+            value = fields[field]
+            if kind == "witness" and fields.get("status.gps_locked") != 1:
+                continue   # Witness GPS fields read zero without a fresh fix.
+            if not valid or type(value) not in (int, float) or not math.isfinite(value) or abs(value) > 1e7:
+                continue
+            value *= scale
+            reference = self._pad_msl() if msl else None
+            if reference is None:
+                key = (kind, source, field, fields.get("unit_type", ""), fields.get("unit_id", ""))
+                if key not in self.altitude_origins:
+                    if snapshot or len(self.altitude_origins) >= 128:
+                        continue
+                    self.altitude_origins[key] = value
+                reference = self.altitude_origins[key]
+            fields[name] = value - reference
+        return fields
+
+    def _derive_distance(self, kind, source, fields, received, snapshot, valid):
+        """Horizontal distance from the pad, metres. Not slant range.
+
+        Witness: hypot(E, N) of the Kalman ENU position, whose origin is the pad.
+        Featherweight/AIM GPS: great-circle distance (R 6371000 m) from the
+        shared pad position when known, else from the first valid live fix
+        (reset by Set pad). Never initialised from retained/snapshot data.
         """
         if kind == "witness":
             keys, mode = ("position[0]", "position[1]"), "local"
@@ -379,28 +428,35 @@ class FlightData:
         x, y = (fields[key] for key in keys)
         if not valid or snapshot or not all(type(v) in (int, float) and abs(v) < 1e15 and math.isfinite(v) for v in (x, y)):
             return fields
-        if mode == "gps" and (not -90 <= x <= 90 or not -180 <= y <= 180):
+        if mode == "local":
+            fields["_derived.horizontal_distance_m"] = math.hypot(x, y)
+            return fields
+        if not -90 <= x <= 90 or not -180 <= y <= 180:
             return fields
         if kind == "aim":
             sats = fields.get("satellites_used", 4)
             if type(sats) not in (int, float) or not 4 <= sats <= 256 or not math.isfinite(sats):
                 return fields
-        key = (kind, source, fields.get("unit_type", ""), fields.get("unit_id", ""))
-        if key not in self.origins:
-            if len(self.origins) >= 128:
-                return fields
-            self.origins[key] = (x, y, received)
-        ox, oy, last = self.origins[key]
-        if received < last:
-            return fields
-        self.origins[key] = (ox, oy, received)
-        if mode == "local":
-            distance = math.hypot(x - ox, y - oy)
+        pad = None
+        try:
+            pad = self.pad.position() if self.pad is not None else None
+        except (AttributeError, TypeError):
+            pad = None
+        if pad is not None:
+            ox, oy = pad.lat, pad.lon
         else:
-            lat, lon, olat, olon = map(math.radians, (x, y, ox, oy))
-            hav = math.sin((lat - olat) / 2)**2 + math.cos(lat) * math.cos(olat) * math.sin((lon - olon) / 2)**2
-            distance = 6371000 * 2 * math.asin(math.sqrt(max(0, min(1, hav))))
-        fields["_derived.horizontal_distance_m"] = distance
+            key = (kind, source, fields.get("unit_type", ""), fields.get("unit_id", ""))
+            if key not in self.origins:
+                if len(self.origins) >= 128:
+                    return fields
+                self.origins[key] = (x, y, received)
+            ox, oy, last = self.origins[key]
+            if received < last:
+                return fields
+            self.origins[key] = (ox, oy, received)
+        lat, lon, olat, olon = map(math.radians, (x, y, ox, oy))
+        hav = math.sin((lat - olat) / 2)**2 + math.cos(lat) * math.cos(olat) * math.sin((lon - olon) / 2)**2
+        fields["_derived.horizontal_distance_m"] = 6371000 * 2 * math.asin(math.sqrt(max(0, min(1, hav))))
         return fields
 
     def snapshot(self):

@@ -116,10 +116,10 @@ class FeatherweightStatusTests(unittest.TestCase):
         self.assertEqual(history('FW local / GS battery').received, 1)
         accept(CAPTURE[6], 4)
         self.assertEqual(history('Featherweight satellites').latest, 0)
-        self.assertIsNone(history('Altitude', 1).latest)  # No GPS fix.
+        self.assertIsNone(history('Altitude AGL', 1).latest)  # No GPS fix.
         accept(replace_payload(CAPTURE[6], 'Fix 0', 'Fix 3'), 5)
-        self.assertEqual(history('Altitude', 1).latest, 0)
-        self.assertEqual(history('Altitude', 1).quality, 'LIVE')
+        self.assertEqual(history('Altitude AGL', 1).latest, 0)
+        self.assertEqual(history('Altitude AGL', 1).quality, 'LIVE')
         accept(replace_payload(CAPTURE[5], 'CRC_OK', 'CRC_ERR'), 6)
         self.assertEqual(history('FW tracker battery').latest, 3.513)
         self.assertEqual(history('FW tracker battery').received, 3)

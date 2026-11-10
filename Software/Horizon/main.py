@@ -76,6 +76,24 @@ QUICK_COMMANDS = (
     ("HITL EXIT -> real sensors", 0x4858, False),
 )
 
+# IMU calibration (comms.h IRIS_COMMAND_IMU_CALIBRATION): compact 3-byte USB
+# commands 05 43 <arg>, accepted only on a direct Witness USB link, in Pad Idle
+# with real sensors (not through Aperture/LoRa). Results are Witness log lines.
+IMU_CALIBRATION_COMMAND = 0x43
+IMU_CALIBRATION_COMMANDS = (
+    ("IMU cal: gyro bias (keep still)", 0x47),
+    ("IMU cal: capture face", 0x41),
+    ("IMU cal: clear", 0x58),
+    ("IMU cal: status", 0x53),
+)
+
+
+def build_imu_calibration_packet(argument: int) -> bytes:
+    if argument not in {value for _label, value in IMU_CALIBRATION_COMMANDS}:
+        raise ValueError(f"unknown IMU calibration argument 0x{argument:02X}")
+    return bytes((COMMAND_PACKET_ID, IMU_CALIBRATION_COMMAND, argument))
+
+
 STATUS_FLAG_LABELS = (
     (0x01, "HB phase"),
     (0x02, "Low-g"),
@@ -591,6 +609,16 @@ class MonitorBase:
                 sticky="ew", padx=(5, 0), pady=(0, 3),
             )
             self.quick_command_buttons.append(button)
+        offset = len(QUICK_COMMANDS)
+        offset += (-offset) % command_columns
+        for index, (label, argument) in enumerate(IMU_CALIBRATION_COMMANDS, start=offset):
+            button = ttk.Button(
+                quick_command_grid, text=label + " (USB)",
+                command=lambda name=label, value=argument: self.send_imu_calibration(name, value),
+            )
+            button.grid(row=index // command_columns, column=index % command_columns,
+                        sticky="ew", padx=(5, 0), pady=(0, 3))
+            self.quick_command_buttons.append(button)
         for column in range(command_columns):
             quick_command_grid.columnconfigure(column, weight=1)
         main_pane.add(notebook, weight=4)
@@ -607,11 +635,11 @@ class MonitorBase:
             ],
         "state": [
                 ("status", "Status"), ("uptime", "Uptime"),
-                ("orientation", "Orientation [x, y, z, w]"),
-                ("position", "Position [x, y, z]"),
-                ("velocity", "Velocity [x, y, z]"),
-                ("latitude", "Latitude"), ("longitude", "Longitude"),
-                ("gps_altitude", "GPS altitude"),
+                ("orientation", "Orientation [x, y, z, w; 0 = n/a]"),
+                ("position", "Kalman position [m; E, N, U from pad]"),
+                ("velocity", "Kalman velocity [m/s; E, N, U]"),
+                ("latitude", "Latitude [deg]"), ("longitude", "Longitude [deg]"),
+                ("gps_altitude", "GPS altitude [m MSL]"),
                 ("kalman_altitude", "Kalman altitude above pad [m]"),
                 ("witness_battery_voltage", "Witness battery voltage [V]"),
                 # Shown as "<sats>  lock <0|1>": lock is status byte 1 bit 3.
@@ -644,9 +672,9 @@ class MonitorBase:
                 ("mcu_temperature", "MCU temperature [C]"),
                 ("witness_battery_voltage", "Witness battery voltage [V]"),
                 ("filtered_accel", "Filtered accel [g; x, y, z]"),
-                ("orientation", "Orientation [x, y, z, w]"),
-                ("position", "Position [m; x, y, z]"),
-                ("velocity", "Velocity [m/s; x, y, z]"),
+                ("orientation", "Orientation [x, y, z, w; 0 = n/a]"),
+                ("position", "Kalman position [m; E, N, U from pad]"),
+                ("velocity", "Kalman velocity [m/s; E, N, U]"),
                 ("low_accel", "LSM6 low accel [g; x, y, z]"),
                 ("lsm6_temperature", "LSM6 temperature [C]"),
                 ("high_accel", "LSM6 high accel [g; x, y, z]"),
@@ -655,7 +683,7 @@ class MonitorBase:
                 ("ms5607_temperature", "MS5607 temperature [C]"),
                 ("kalman_altitude", "Kalman altitude above pad [m]"),
                 ("latitude", "Latitude [deg]"), ("longitude", "Longitude [deg]"),
-                ("gps_time", "GPS time [Unix s]"), ("gps_altitude", "GPS altitude [m]"),
+                ("gps_time", "GPS time [Unix s]"), ("gps_altitude", "GPS altitude [m MSL]"),
             ],
             "iris_debug": [
                 ("status", "Status"), ("uptime", "Uptime"),
@@ -986,6 +1014,10 @@ class MonitorBase:
             return
         packet = self.build_quick_command_packet(opcode)
         self.transmit_command(self.command_port_combo.get(), packet, name)
+
+    def send_imu_calibration(self, name, argument):
+        """Compact USB-only calibration command; Aperture does not forward it."""
+        self.transmit_command(self.command_port_combo.get(), build_imu_calibration_packet(argument), name)
 
     def recall_command(self, direction):
         """Navigate successfully transmitted commands with Up and Down."""

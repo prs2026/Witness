@@ -149,7 +149,7 @@ def describe(name: str) -> str:
     if upper.startswith("S") and upper.endswith(".TXT"):
         return "diagnostic log text"
     if upper.startswith("P") and upper.endswith(".BIN"):
-        return "packets: state 50 Hz, CAN in/out, radio commands"
+        return "packets: state 50 Hz, Kalman filter log (0xE2) 25 Hz, CAN in/out, radio commands"
     if upper.startswith("U") and upper.endswith(".BIN"):
         return "raw GPS UART bytes"
     return ""
@@ -199,7 +199,21 @@ def convert(path: Path) -> Path | None:
         print(f"  convert {path.name} failed: {result.stderr.strip() or result.stdout.strip()}")
         return None
     print(f"  converted {path.name} -> {output.name}")
+    if path.name.upper().startswith("P"):
+        rows = count_kalman_rows(output)
+        print(f"    {rows} Kalman filter log rows (packet_type kalman_log: kf_* flags, "
+              "position/velocity sigma, baro/GPS innovations)" if rows else
+              "    no Kalman filter log (0xE2) rows: firmware before the KF flash log")
     return output
+
+
+def count_kalman_rows(csv_path: Path) -> int:
+    """Rows of the 0xE2 Kalman log in a converted P*.BIN CSV (streamed)."""
+    try:
+        with csv_path.open("r", encoding="utf-8", errors="replace") as stream:
+            return sum(1 for line in stream if ",kalman_log," in line)
+    except OSError:
+        return 0
 
 
 def command_setup(pi: Pi) -> int:
