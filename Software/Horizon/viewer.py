@@ -16,6 +16,7 @@ import argparse
 import bisect
 import csv
 import queue
+import sys
 import threading
 from dataclasses import dataclass, field
 import math
@@ -27,6 +28,7 @@ import tkinter.font as tkfont
 
 import numpy as np
 
+import converter
 import csv_columns
 
 
@@ -1141,6 +1143,8 @@ class Dataset:
     is_wl: bool = False
     stride: int = 1
     total_rows: int = 0
+    source_format: str = ""          # set for raw .bin logs decoded here
+    discarded: int = 0               # .bin bytes the decoder could not use
     offset: float = 0.0
     time_column: str = AUTO_TIME
     time_unit: str = "s"
@@ -1234,9 +1238,51 @@ def load_dataset(path: Path, label: str | None = None, progress=None,
     csv.Error or ValueError for unreadable files.
     """
     path = Path(path)
+    if is_bin_path(path):
+        return load_bin_dataset(path, label, progress, cancel)
     table = csv_columns.load_table(path, progress=progress, cancel=cancel)
     if not table.columns:
         raise ValueError("the CSV contains no numeric columns to graph")
+    return dataset_from_table(path, table, label)
+
+
+def is_bin_path(path) -> bool:
+    return Path(path).suffix.lower() == ".bin"
+
+
+def load_bin_dataset(path: Path, label: str | None = None, progress=None,
+                     cancel=None) -> Dataset:
+    """Decode a raw Witness log (.bin) straight into a dataset.
+
+    Uses converter.py's decoders (I*.BIN IMU records, P*.BIN packet log, WL
+    flash records, else the wire packet scanner), so the columns, names and
+    time-axis defaults are exactly those of the converted CSV. Rows are
+    turned into numpy columns as they are decoded and never kept.
+    """
+    path = Path(path)
+    data = path.read_bytes()
+    if not data:
+        raise ValueError("the file is empty")
+    fmt, decoder = converter.select_decoder(path, data)
+    stats = converter.DecodeStats()
+    table = csv_columns.table_from_rows(path, decoder(data, stats), converter.BASE_COLUMNS,
+                                        progress=progress, cancel=cancel, size=len(data))
+    if table.row_count == 0 or not table.columns:
+        if path.name.upper().startswith("U"):
+            raise ValueError(
+                "U*.BIN is the raw GPS (NMEA) ring; converter.py does not decode it "
+                "into records, so there is nothing to plot")
+        raise ValueError(
+            f"no records could be decoded (tried: {fmt}; {len(data):,} bytes not "
+            "recognised). Is this a Witness I*/P*/S*.BIN log or packet capture?")
+    dataset = dataset_from_table(path, table, label)
+    dataset.source_format = fmt
+    dataset.discarded = stats.discarded
+    return dataset
+
+
+def dataset_from_table(path: Path, table, label: str | None = None) -> Dataset:
+    """Derived columns, summary and time axis for a loaded table."""
     cols = dict(table.columns)
     text = dict(table.text)
     order, paired, n = derive_columns(path, cols, text, list(table.header))
@@ -1368,6 +1414,9 @@ class CsvViewerPanel(ttk.Frame):
         self._load_queue: list[Path] = []
         self._load_events: queue.Queue = queue.Queue()
         self._load_thread: threading.Thread | None = None
+        self._save_thread: threading.Thread | None = None
+        self._switch_saved: float | None = None
+        self.last_save_message = ""
         self._load_cancel = threading.Event()
         self._load_job: str | None = None
         self._load_errors: list[str] = []
@@ -1405,6 +1454,8 @@ class CsvViewerPanel(ttk.Frame):
         controls.pack(fill="x")
 
         ttk.Button(controls, text="Open CSV…", command=self.choose_csv).pack(side="left")
+        ttk.Button(controls, text="Open .BIN…", command=self.choose_bin).pack(
+            side="left", padx=(4, 0))
         ttk.Button(controls, text="Add CSV…", command=self.choose_add_csv).pack(
             side="left", padx=(4, 0))
         self.load_cancel_button = ttk.Button(controls, text="Cancel",
@@ -1588,6 +1639,9 @@ class CsvViewerPanel(ttk.Frame):
         buttons.pack(fill="x", padx=2, pady=(0, 4))
         ttk.Button(buttons, text="Plot CSV", command=self.plot_selected_dataset).pack(
             side="left", fill="x", expand=True, padx=(0, 2))
+        self.save_csv_button = ttk.Button(buttons, text="Save CSV",
+                                          command=self.save_selected_as_csv)
+        self.save_csv_button.pack(side="left", fill="x", expand=True, padx=(2, 0))
         ttk.Button(buttons, text="Remove CSV", command=self.remove_selected_dataset).pack(
             side="left", fill="x", expand=True, padx=(2, 0))
 
@@ -1692,6 +1746,7 @@ class CsvViewerPanel(ttk.Frame):
         self.redraw_job = self.visible_job = None
         self._end_drag()
         self.cancel_loads()
+        self._background_busy(False)
 
     @staticmethod
     def _wheel(widget, event, direction: int | None = None):
@@ -1732,6 +1787,56 @@ class CsvViewerPanel(ttk.Frame):
             self.clear_datasets()
             self.add_csvs([Path(name) for name in filenames])
 
+    def choose_bin(self) -> None:
+        """Open raw Witness logs (.bin); they are decoded in the background
+        and added alongside the files already loaded."""
+        filenames = filedialog.askopenfilenames(
+            parent=self,
+            title="Open raw Witness log(s) (.bin)",
+            filetypes=(("Witness logs", "*.bin *.BIN"), ("All files", "*.*")),
+        )
+        if filenames:
+            self.add_csvs([Path(name) for name in filenames])
+
+    def save_selected_as_csv(self) -> None:
+        """Write the selected decoded .bin as a CSV (converter.py output)."""
+        dataset = self.datasets.get(self._selected_dataset_id())
+        if dataset is None:
+            return
+        if not is_bin_path(dataset.path):
+            messagebox.showinfo("Save CSV", f"{dataset.label} is already a CSV file.",
+                                parent=self)
+            return
+        filename = filedialog.asksaveasfilename(
+            parent=self, title="Save decoded log as CSV",
+            initialdir=str(dataset.path.parent),
+            initialfile=dataset.path.with_suffix(".csv").name,
+            defaultextension=".csv", filetypes=(("CSV files", "*.csv"),))
+        if filename:
+            self.save_bin_as_csv(dataset.path, Path(filename))
+
+    def save_bin_as_csv(self, source: Path, target: Path) -> None:
+        """Decode ``source`` again and stream it to ``target`` (worker thread)."""
+        events = self._load_events
+
+        def work():
+            try:
+                data = source.read_bytes()
+                _fmt, decoder = converter.select_decoder(source, data)
+                count = converter.write_csv_stream(lambda: decoder(data), target)
+                events.put(("saved", target, f"Wrote {count:,} rows to {target}"))
+            except (OSError, ValueError) as exc:
+                events.put(("save_error", target, f"Could not save {target}:\n{exc}"))
+
+        self._save_thread = threading.Thread(target=work, name="csv-save", daemon=True)
+        self._show_load_progress(target, 0.0, verb="Saving")
+        self.load_bar.configure(mode="indeterminate")
+        self.load_bar.start(15)
+        self._background_busy(True)
+        self._save_thread.start()
+        if self._load_job is None:
+            self._load_job = self.after(80, self._poll_loads)
+
     def choose_add_csv(self) -> None:
         filenames = filedialog.askopenfilenames(
             parent=self,
@@ -1762,6 +1867,20 @@ class CsvViewerPanel(ttk.Frame):
         if self._load_thread is None:
             self._start_next_load()
 
+    # While a worker decodes or parses, every Tk call made by the UI thread
+    # gives up the GIL and can wait a whole switch interval (5 ms) to get it
+    # back; with a CPU-bound decoder that is ~0.1-0.5 s of lag per redraw.
+    # A short interval while background work runs keeps the UI smooth.
+    BUSY_SWITCH_INTERVAL_S = 0.0005
+
+    def _background_busy(self, busy: bool) -> None:
+        if busy and self._switch_saved is None:
+            self._switch_saved = sys.getswitchinterval()
+            sys.setswitchinterval(self.BUSY_SWITCH_INTERVAL_S)
+        elif not busy and self._switch_saved is not None:
+            sys.setswitchinterval(self._switch_saved)
+            self._switch_saved = None
+
     def _start_next_load(self) -> None:
         if not self._load_queue:
             self._show_load_progress(None)
@@ -1788,6 +1907,7 @@ class CsvViewerPanel(ttk.Frame):
                 events.put(("error", path, f"{path}:\n{type(exc).__name__}: {exc}"))
 
         self._load_thread = threading.Thread(target=work, name="csv-load", daemon=True)
+        self._background_busy(True)
         self._show_load_progress(path, 0.0)
         self._load_thread.start()
         if self._load_job is None:
@@ -1804,6 +1924,16 @@ class CsvViewerPanel(ttk.Frame):
             if kind == "progress":
                 self._show_load_progress(path, payload)
                 continue
+            if kind in ("saved", "save_error"):
+                self._save_thread = None
+                self.load_bar.stop()
+                self.load_bar.configure(mode="determinate")
+                if self._load_thread is None:
+                    self._show_load_progress(None)
+                self.last_save_message = payload
+                (messagebox.showinfo if kind == "saved" else messagebox.showerror)(
+                    "Save CSV", payload, parent=self)
+                continue
             finished = True
             self._load_thread = None
             if kind == "done":
@@ -1812,8 +1942,10 @@ class CsvViewerPanel(ttk.Frame):
                 self._load_errors.append(payload)
         if finished:
             self._start_next_load()
-        if self._load_thread is not None:
+        if self._load_thread is not None or self._save_thread is not None:
             self._load_job = self.after(80, self._poll_loads)
+        else:
+            self._background_busy(False)
 
     def cancel_loads(self) -> None:
         """Stop the file being read and drop the queued ones."""
@@ -1829,7 +1961,7 @@ class CsvViewerPanel(ttk.Frame):
             _time.sleep(0.01)
         return not self.loading
 
-    def _show_load_progress(self, path, fraction: float = 0.0) -> None:
+    def _show_load_progress(self, path, fraction: float = 0.0, verb: str = "Loading") -> None:
         if path is None:
             for widget in (self.load_cancel_button, self.load_bar, self.load_label):
                 widget.pack_forget()
@@ -1839,7 +1971,7 @@ class CsvViewerPanel(ttk.Frame):
             self.load_bar.pack(side="right", padx=4)
             self.load_label.pack(side="right")
         pending = len(self._load_queue)
-        self.load_label.configure(text=f"Loading {Path(path).name}" +
+        self.load_label.configure(text=f"{verb} {Path(path).name}" +
                                   (f" (+{pending})" if pending else ""), width=0)
         self.load_bar["value"] = fraction
 
@@ -2061,7 +2193,7 @@ class CsvViewerPanel(ttk.Frame):
         elif len(paths) == 1:
             text = str(paths[0])
         else:
-            text = f"{len(paths)} CSVs: " + ", ".join(path.name for path in paths)
+            text = f"{len(paths)} files: " + ", ".join(path.name for path in paths)
         self.file_label.configure(text=text)
 
     def _refresh_axis_choices(self, keep: bool) -> None:
@@ -2139,6 +2271,10 @@ class CsvViewerPanel(ttk.Frame):
         if dataset.stride > 1:
             details += (f" | large file: every {dataset.stride}th of "
                         f"{dataset.total_rows:,} rows loaded (memory cap)")
+        if dataset.source_format:
+            details += f" | decoded from .bin ({dataset.source_format}"
+            details += (f", {dataset.discarded:,} bytes not decoded)" if dataset.discarded
+                        else ")")
         if dataset.paired_state_log is not None:
             details += f" | flight state from {dataset.paired_state_log.name}"
         elif dataset.is_wl:

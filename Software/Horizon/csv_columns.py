@@ -315,3 +315,82 @@ def _load_robust(path, header, stride, size, progress, cancel) -> Table:
             columns.pop(header[i], None)
     return Table(path=path, header=header, columns=columns, text=text,
                  stride=stride, total_rows=total_rows)
+
+
+def table_from_rows(path, rows, base_columns=(), progress=None, cancel=None,
+                    size: int = 0) -> Table:
+    """Build a Table from an iterable of row dicts (converter.iter_* output).
+
+    Rows are consumed one at a time and never kept, so a decoded log of
+    millions of records costs only its numeric arrays. Columns are ordered
+    like converter.write_csv's CSV header (``base_columns`` first, then in
+    first-seen order, ``raw_packet_hex`` last); a column is numeric when all
+    its non-empty values are numbers, as when the CSV is loaded.
+    """
+    nan = math.nan
+    numeric: dict[str, array] = {}
+    is_text: set[str] = set()
+    text_codes: dict[str, array] = {}
+    text_lookup: dict[str, dict[str, int]] = {}
+    order: list[str] = []
+    seen: set[str] = set()
+    count = 0
+    for row in rows:
+        for name, value in row.items():
+            if name not in seen:
+                seen.add(name)
+                order.append(name)
+            if name in TEXT_COLUMNS:
+                lookup = text_lookup.setdefault(name, {"": 0})
+                codes = text_codes.setdefault(name, array("H"))
+                if len(codes) < count:
+                    codes.extend([0] * (count - len(codes)))
+                codes.append(lookup.setdefault(str(value).strip(), len(lookup)))
+                continue
+            if name in is_text:
+                continue
+            if isinstance(value, (int, float)):
+                number = float(value)
+            elif value is None or value == "":
+                continue
+            else:
+                try:
+                    number = float(value)
+                except (TypeError, ValueError):
+                    is_text.add(name)
+                    numeric.pop(name, None)
+                    continue
+            values = numeric.get(name)
+            if values is None:
+                values = numeric[name] = array("d")
+            if len(values) < count:
+                values.extend([nan] * (count - len(values)))
+            values.append(number)
+        count += 1
+        if count % 20000 == 0:
+            if cancel is not None and cancel.is_set():
+                raise LoadCancelled()
+            if progress is not None and size:
+                progress(min(0.99, float(row.get("byte_offset", 0)) / size))
+    header = list(base_columns) + [name for name in order
+                                   if name not in base_columns and name != "raw_packet_hex"]
+    if "raw_packet_hex" in seen:
+        header.append("raw_packet_hex")
+    columns = {}
+    for name in header:
+        values = numeric.get(name)
+        if values is None:
+            continue
+        if len(values) < count:
+            values.extend([nan] * (count - len(values)))
+        columns[name] = np.frombuffer(values, dtype=np.float64).copy()
+    text = {}
+    for name, codes in text_codes.items():
+        if len(codes) < count:
+            codes.extend([0] * (count - len(codes)))
+        text[name] = TextColumn(list(text_lookup[name]),
+                                np.frombuffer(codes, dtype=np.uint16).copy())
+    if progress is not None:
+        progress(1.0)
+    return Table(path=str(path), header=header, columns=columns, text=text,
+                 stride=1, total_rows=count)

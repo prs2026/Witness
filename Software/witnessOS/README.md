@@ -91,6 +91,20 @@ apply to `python main.py` too:
    first CSV you open does this automatically. **Remove CSV** removes the
    selected CSV.
 
+**Raw .bin logs.** **Open .BIN…** decodes Witness logs directly and adds them
+alongside the loaded files. It uses `converter.py`'s own decoders:
+- `I*.BIN` as IMU records.
+- `P*.BIN` as the packet log.
+- `S*.BIN` (WL magic) as flash records.
+- Anything else through the wire packet scanner.
+
+Decoding runs on the worker thread, and rows become numpy columns as they are
+decoded. The columns, the paired `.TXT` flight state and the default time
+axis are the same as for the converted CSV. A file nothing decodes from gets
+a clear error. **Save CSV** writes the selected decoded log next to it, with
+exactly what `converter.py` would write. A 2.1M-record (51 MB) `I*.BIN`
+decodes in about 28 s in the background, holding about 400 MB.
+
 **Large files.** Converted flash logs can have millions of rows (`I*.csv` is
 960 Hz). The viewer:
 - Reads files on a worker thread, with a progress bar and **Cancel** in the
