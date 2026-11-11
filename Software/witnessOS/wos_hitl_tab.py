@@ -455,6 +455,15 @@ class HitlWidget(QtWidgets.QWidget):
             (w.valueChanged if isinstance(w, QtWidgets.QSpinBox) else w.toggled).connect(
                 lambda _v: self._gps_settings_changed())
         form.addRow("HackRF TX VGA", hbox_widget(self.tx_gain_spin, self.tx_amp_check))
+        self.galileo_check = QtWidgets.QCheckBox("Add Galileo E1 (galileo-sdr-sim)")
+        self.galileo_check.setToolTip(
+            "Mix Galileo E1-B/C with I/NAV into the GPS L1 IQ (same carrier, one HackRF stream), "
+            "along the same position or trajectory. Needs the galileo-sdr-sim checkout next to the "
+            "Witness repo (branch witness-windows). GLONASS and BeiDou B1I are on other carriers "
+            "and are not simulated.")
+        self.galileo_check.setChecked(bool(self.settings.get("gps_galileo", False)))
+        self.galileo_check.toggled.connect(lambda _v: self._gps_settings_changed())
+        form.addRow("Constellations", self.galileo_check)
         self.btn_gps_flight = QtWidgets.QPushButton("Create flight GPS sim")
         self.btn_gps_flight.setToolTip("gps-sdr-sim IQ file for the current source: lead-in at "
                                        "the pad, then the trajectory (10 Hz motion)")
@@ -1111,7 +1120,8 @@ class HitlWidget(QtWidgets.QWidget):
                              gps_tx_amp=self.tx_amp_check.isChecked(),
                              gps_source="rf" if self.gps_source_combo.currentText() == GPS_RF else "sim",
                              gps_upload_ephemeris=self.upload_eph_check.isChecked(),
-                             gps_cold_start=self.cold_start_check.isChecked())
+                             gps_cold_start=self.cold_start_check.isChecked(),
+                             gps_galileo=self.galileo_check.isChecked())
         hg.save_settings(self.settings, self.settings_path)
         self._update_run_gps_label()
 
@@ -1201,6 +1211,7 @@ class HitlWidget(QtWidgets.QWidget):
         label = self._source_label()
         cancel = self._gps_cancel
         cancel.clear()
+        galileo = self.galileo_check.isChecked()
 
         def work():
             if isinstance(params, tc.CsvParams):
@@ -1212,7 +1223,8 @@ class HitlWidget(QtWidgets.QWidget):
                 samples, site_lat=params.lat_deg, site_lon=params.lon_deg,
                 site_alt_msl=params.site_alt_msl_m, lead_in_s=lead, rinex=rinex,
                 name="flight-" + os.path.splitext(os.path.basename(self.csv_path or label))[0],
-                source=label, progress=self._gps_progress(total), cancel=cancel)
+                source=label, progress=self._gps_progress(total), cancel=cancel,
+                galileo=galileo, log=lambda m: self.append_log(f"[gps] {m}"))
 
         def done(sc, error):
             self._preparing = False
@@ -1220,7 +1232,9 @@ class HitlWidget(QtWidgets.QWidget):
                 self.append_log(f"[gps] flight scenario failed: {error}")
             else:
                 self.append_log(f"[gps] flight scenario {sc.folder.name}: {sc.duration_s:.0f} s, "
-                                f"{len(sc.visible_prns)} SVs in view, {sc.iq_bytes / 1e9:.2f} GB, "
+                                f"{len(sc.visible_prns)} GPS"
+                                + (f" + {len(sc.galileo['visible_prns'])} Galileo" if sc.galileo else "")
+                                + f" SVs in view, {sc.iq_bytes / 1e9:.2f} GB, "
                                 f"geoid N {sc.geoid_sep_m:+.1f} m"
                                 + ("" if gps_rf.geoid_separation(sc.lat_deg, sc.lon_deg) is not None
                                    else " (no static test at this site yet: altitude offset unknown)"))
@@ -1241,6 +1255,7 @@ class HitlWidget(QtWidgets.QWidget):
         rinex = self.rinex_edit.text().strip() or None
         cancel = self._gps_cancel
         cancel.clear()
+        galileo = self.galileo_check.isChecked()
 
         def done(sc, error):
             self._preparing = False
@@ -1249,13 +1264,16 @@ class HitlWidget(QtWidgets.QWidget):
             else:
                 self.append_log(f"[gps] static scenario {sc.folder.name}: {sc.duration_s:.0f} s at "
                                 f"{sc.lat_deg:.5f}, {sc.lon_deg:.5f}, {sc.alt_msl_m:.0f} m MSL; "
-                                f"{len(sc.visible_prns)} SVs in view")
+                                f"{len(sc.visible_prns)} GPS"
+                                + (f" + {len(sc.galileo['visible_prns'])} Galileo" if sc.galileo else "")
+                                + " SVs in view")
                 self.refresh_scenarios(str(sc.folder))
             self._refresh_buttons()
         self._preparing = True
         self._run_in_worker("Creating static GPS sim (gps-sdr-sim)", lambda: gps_rf.create_static(
             params.lat_deg, params.lon_deg, params.site_alt_msl_m, duration, rinex=rinex,
-            name="static", progress=self._gps_progress(duration), cancel=cancel), done)
+            name="static", progress=self._gps_progress(duration), cancel=cancel,
+            galileo=galileo, log=lambda m: self.append_log(f"[gps] {m}")), done)
 
     def verify_gps(self):
         sc = self.selected_scenario()

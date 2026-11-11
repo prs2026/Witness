@@ -1175,7 +1175,13 @@ class HitlSession:
                     path = hitl_report.build_report(run.run_dir)
                     run.result["report_pdf"] = str(path)
                     self.log(f"report: {path}")
+                except ImportError as exc:
+                    import sys as _sys
+                    self._warn(f"report.pdf not written: {exc.name or exc} is not installed in "
+                               f"{_sys.executable}. Install it with: \"{_sys.executable}\" -m pip "
+                               f"install matplotlib, then: py -3.14 hitl_report.py {run.run_dir}")
                 except Exception as exc:  # never lose the run over the report
-                    self.log(f"report PDF failed: {exc!r}")
+                    self._warn(f"report.pdf not written: {exc!r} (retry: py -3.14 hitl_report.py "
+                               f"{run.run_dir})")
             self.set_activity("")
             self._event("run", "finished")

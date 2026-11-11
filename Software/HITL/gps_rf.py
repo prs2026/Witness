@@ -176,6 +176,7 @@ class Scenario:
     iq_bytes: int = 0
     verify: dict | None = None
     visible_prns: list = dataclasses.field(default_factory=list)   # at the start
+    galileo: dict | None = None     # galileo_rf.add_galileo report when Galileo E1 is mixed in
 
     @property
     def iq(self) -> Path:
@@ -287,8 +288,10 @@ def start_time(start_gps: dt.datetime | None) -> dt.datetime:
 
 def create_static(lat_deg, lon_deg, alt_msl_m, duration_s=300.0, *, rinex=None,
                   start_gps=None, geoid_sep_m=None, name="static", base=SCENARIO_DIR,
-                  progress=None, cancel=None, sample_rate=SAMPLE_RATE) -> Scenario:
-    """A fixed-position scenario (static tests)."""
+                  progress=None, cancel=None, sample_rate=SAMPLE_RATE, galileo=False,
+                  log=print) -> Scenario:
+    """A fixed-position scenario (static tests); galileo=True mixes in
+    Galileo E1 (galileo_rf)."""
     t0 = start_time(start_gps)
     n = geoid_separation(lat_deg, lon_deg) if geoid_sep_m is None else geoid_sep_m
     folder = _new_folder(name, base)
@@ -305,8 +308,21 @@ def create_static(lat_deg, lon_deg, alt_msl_m, duration_s=300.0, *, rinex=None,
                   source=f"static {lat_deg:.6f}, {lon_deg:.6f}, {alt_msl_m:.1f} m MSL",
                   rinex_source=str(rinex), created_utc=dt.datetime.now(dt.timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds"),
                   iq_bytes=(folder / "iq.bin").stat().st_size, visible_prns=visible_prns(out))
+    _add_galileo(sc, galileo, None, progress, cancel, log)
     sc.save()
     return sc
+
+
+def _add_galileo(sc, enabled, motion, progress, cancel, log):
+    if not enabled:
+        return
+    import galileo_rf
+    span = max(1.0, sc.duration_s)
+    sc.galileo = galileo_rf.add_galileo(
+        sc, motion=motion, cancel=cancel, log=log,
+        # GPS reported 0..duration (seconds); Galileo and the mix report a fraction
+        progress=(lambda f: progress(span * f)) if progress else None)
+    sc.iq_bytes = sc.iq.stat().st_size
 
 
 def motion_rows(samples, lead_in_s, geoid_sep_m):
@@ -325,8 +341,10 @@ def motion_rows(samples, lead_in_s, geoid_sep_m):
 
 def create_flight(samples, *, site_lat, site_lon, site_alt_msl, lead_in_s=DEFAULT_LEAD_IN_S,
                   rinex=None, start_gps=None, geoid_sep_m=None, name="flight", source="",
-                  base=SCENARIO_DIR, progress=None, cancel=None, sample_rate=SAMPLE_RATE) -> Scenario:
-    """A scenario that follows HITL samples (sm.SimSample list, 100 Hz)."""
+                  base=SCENARIO_DIR, progress=None, cancel=None, sample_rate=SAMPLE_RATE,
+                  galileo=False, log=print) -> Scenario:
+    """A scenario that follows HITL samples (sm.SimSample list, 100 Hz);
+    galileo=True mixes in Galileo E1 along the same motion (galileo_rf)."""
     if not samples:
         raise ValueError("no samples")
     t0 = start_time(start_gps)
@@ -349,6 +367,7 @@ def create_flight(samples, *, site_lat, site_lon, site_alt_msl, lead_in_s=DEFAUL
                   prns=prns, source=source, rinex_source=str(rinex),
                   created_utc=dt.datetime.now(dt.timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds"),
                   iq_bytes=(folder / "iq.bin").stat().st_size, visible_prns=visible_prns(out))
+    _add_galileo(sc, galileo, folder / "motion.csv", progress, cancel, log)
     sc.save()
     return sc
 
@@ -575,15 +594,25 @@ def parse_gga(line: str) -> dict | None:
         return None
 
 
+GSA_SYSTEMS = {1: "GPS", 2: "GLONASS", 3: "Galileo", 4: "BeiDou", 5: "QZSS", 6: "NavIC"}
+GSA_TALKERS = {"GP": "GPS", "GL": "GLONASS", "GA": "Galileo", "GB": "BeiDou", "BD": "BeiDou",
+               "GQ": "QZSS", "GI": "NavIC"}
+
+
 def parse_gsa(line: str) -> dict | None:
-    m = re.search(r"\$(G[PNL])GSA,([^*]*)\*", line)
+    m = re.search(r"\$(G[A-Z]|BD)GSA,([^*]*)\*", line)
     if not m:
         return None
     f = m.group(2).split(",")
     if len(f) < 17:
         return None
     try:
-        return {"fix_type": int(f[1] or 1), "sv": [int(v) for v in f[2:14] if v],
+        # NMEA 4.10+: GNGSA per constellation with the system ID last (1 GPS,
+        # 2 GLONASS, 3 Galileo, 4 BeiDou, 5 QZSS, 6 NavIC); older talkers name it.
+        sysid = int(f[17]) if len(f) > 17 and f[17].strip().isdigit() else None
+        system = GSA_SYSTEMS.get(sysid) or GSA_TALKERS.get(m.group(1), m.group(1))
+        return {"talker": m.group(1), "system": system, "fix_type": int(f[1] or 1),
+                "sv": [int(v) for v in f[2:14] if v],
                 "pdop": float(f[14]) if f[14] else None, "hdop": float(f[15]) if f[15] else None,
                 "vdop": float(f[16].split(",")[0]) if f[16] else None}
     except ValueError:
@@ -603,6 +632,7 @@ class StaticResult:
     geoid_sep_m: float | None
     message: str
     nmea_lines: int = 0
+    used: dict = dataclasses.field(default_factory=dict)   # constellation -> PRNs used in the fix
 
 
 def static_test(scenario: Scenario, nmea_source, *, player: HackRFPlayer | None = None,
@@ -629,6 +659,7 @@ def static_test(scenario: Scenario, nmea_source, *, player: HackRFPlayer | None 
         log(f"ephemeris upload sent: {len(prns)} satellites, {len(frames)} frames")
     first_fix = None
     fixes, errs_h, errs_v, last_gga, last_gsa, lines = 0, [], [], None, None, 0
+    used: dict = {}
     settle_started = None
     deadline = time.monotonic() + timeout_s
     try:
@@ -642,6 +673,7 @@ def static_test(scenario: Scenario, nmea_source, *, player: HackRFPlayer | None 
                 gsa = parse_gsa(line)
                 if gsa and gsa.get("fix_type", 1) >= 2:
                     last_gsa = gsa
+                    used[gsa["system"]] = gsa["sv"]
                 gga = parse_gga(line)
                 if not gga:
                     continue
@@ -686,7 +718,8 @@ def static_test(scenario: Scenario, nmea_source, *, player: HackRFPlayer | None 
         save_geoid_separation(scenario.lat_deg, scenario.lon_deg, n_rx)
         msg += f"; receiver geoid separation {n_rx:+.1f} m saved for this site"
     return StaticResult(passed, first_fix, fixes, h, v, (last_gga or {}).get("sats", 0),
-                        (last_gga or {}).get("hdop"), (last_gsa or {}).get("vdop"), n_rx, msg, lines)
+                        (last_gga or {}).get("hdop"), (last_gsa or {}).get("vdop"), n_rx, msg, lines,
+                        used)
 
 
 # -------------------------------------------------------------------- CLI
@@ -695,8 +728,10 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="gps-sdr-sim + HackRF tools for Witness HITL")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("build", help="compile gps-sdr-sim into rf_tools/bin")
+    sub.add_parser("build-galileo", help="compile galileo-sdr-sim (witness-windows branch) into rf_tools/bin")
     st = sub.add_parser("static", help="create a static scenario")
     st.add_argument("--lat", type=float, default=LAUNCH_LAT_DEG)
+    st.add_argument("--galileo", action="store_true", help="mix Galileo E1 into the GPS signal")
     st.add_argument("--lon", type=float, default=LAUNCH_LON_DEG)
     st.add_argument("--alt", type=float, default=LAUNCH_ALT_MSL_M, help="m MSL (default: FAR)")
     st.add_argument("--duration", type=float, default=300.0)
@@ -707,6 +742,7 @@ def main(argv=None) -> int:
     tt = sub.add_parser("test", help="static RF test: transmit a fixed position and check "
                                      "Witness's GPS fix (Witness must not be in HITL)")
     tt.add_argument("--lat", type=float, default=LAUNCH_LAT_DEG)
+    tt.add_argument("--galileo", action="store_true", help="mix Galileo E1 into the GPS signal")
     tt.add_argument("--lon", type=float, default=LAUNCH_LON_DEG)
     tt.add_argument("--alt", type=float, default=LAUNCH_ALT_MSL_M, help="m MSL (default: FAR)")
     tt.add_argument("--timeout", type=float, default=180.0, help="seconds to wait for a fix")
@@ -719,6 +755,7 @@ def main(argv=None) -> int:
                          "position and time; Pad Idle only)")
     tx = sub.add_parser("tx", help="transmit only (watch the NMEA yourself); Ctrl-C stops")
     tx.add_argument("--lat", type=float, default=LAUNCH_LAT_DEG)
+    tx.add_argument("--galileo", action="store_true", help="mix Galileo E1 into the GPS signal")
     tx.add_argument("--lon", type=float, default=LAUNCH_LON_DEG)
     tx.add_argument("--alt", type=float, default=LAUNCH_ALT_MSL_M, help="m MSL (default: FAR)")
     tx.add_argument("--duration", type=float, default=600.0, help="seconds of signal to generate")
@@ -733,7 +770,8 @@ def main(argv=None) -> int:
         else:
             print(f"generating {args.duration:.0f} s of signal at {args.lat}, {args.lon}, "
                   f"{args.alt} m MSL ...")
-            sc, made = create_static(args.lat, args.lon, args.alt, args.duration, name="tx"), True
+            sc, made = create_static(args.lat, args.lon, args.alt, args.duration, name="tx",
+                                     galileo=args.galileo), True
         player = HackRFPlayer(sc.iq, sample_rate=sc.sample_rate, tx_vga_db=args.tx_gain,
                               amp=args.amp, log=print)
         try:
@@ -769,7 +807,10 @@ def main(argv=None) -> int:
                     print("cold start not confirmed (is Witness in Pad Idle?)")
                     return 1
             print("creating the static scenario ...")
-            sc = create_static(args.lat, args.lon, args.alt, args.timeout + 30, name="static-test")
+            sc = create_static(args.lat, args.lon, args.alt, args.timeout + 30, name="static-test",
+                               galileo=args.galileo)
+            if sc.galileo:
+                print(f"Galileo in view: {sc.galileo['visible_prns']}")
             player = HackRFPlayer(sc.iq, sample_rate=sc.sample_rate, tx_vga_db=args.tx_gain, log=print)
             try:
                 player.start()
@@ -780,15 +821,21 @@ def main(argv=None) -> int:
             print(result.message)
             print(f"satellites {result.sats}, HDOP {result.hdop}, VDOP {result.vdop}, "
                   f"NMEA lines {result.nmea_lines}")
+            for system, svs in sorted(result.used.items()):
+                if svs:
+                    print(f"  used in fix, {system}: {len(svs)} {svs}")
             return 0 if result.passed else 1
         finally:
             session.disconnect(send_exit=False)
             shutil.rmtree(sc.folder, ignore_errors=True) if "sc" in locals() else None
     if args.cmd == "build":
         print(build_gps_sdr_sim())
+    elif args.cmd == "build-galileo":
+        import galileo_rf
+        print(galileo_rf.build_galileo_sim())
     elif args.cmd == "static":
         sc = create_static(args.lat, args.lon, args.alt, args.duration, rinex=args.rinex,
-                           progress=None)
+                           progress=None, galileo=args.galileo)
         print(sc.folder, sc.prns)
     elif args.cmd == "verify":
         sc = Scenario.load(args.scenario)

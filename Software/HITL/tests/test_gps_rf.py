@@ -324,5 +324,58 @@ class Report(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
 
+class MultiConstellation(unittest.TestCase):
+    def test_gsa_system_id(self):
+        # PX1120S after a fix: GNGSA per constellation, system ID last.
+        s = gps_rf.parse_gsa("$GNGSA,A,3,07,13,19,26,33,,,,,,,,1.6,0.8,1.3,3*37")
+        self.assertEqual((s["system"], s["sv"]), ("Galileo", [7, 13, 19, 26, 33]))
+        self.assertEqual(gps_rf.parse_gsa("$GBGSA,A,1,,,,,,,,,,,,,3.4,2.0,2.8,4*35")["system"], "BeiDou")
+        self.assertEqual(gps_rf.parse_gsa("$GLGSA,A,1,,,,,,,,,,,,,3.4,2.0,2.8*00")["system"], "GLONASS")
+
+    @unittest.skipUnless((gps_rf.HERE.parents[2] / "galileo-sdr-sim" / "rinex_files" / "20feb2022.rnx").exists(),
+                         "galileo-sdr-sim checkout not next to the repo")
+    def test_galileo_nav_shift(self):
+        import galileo_rf
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            start = dt.datetime(2026, 11, 11, 9, 43, 54)
+            out, prns = galileo_rf.shift_nav(galileo_rf.BUNDLED_NAV, start, tmp / "nav.rnx")
+            self.assertGreater(len(prns), 15)
+            header, recs = galileo_rf.parse_galileo_nav(out)
+            first_hour = min(galileo_rf._toc(r) for r in recs if galileo_rf._toc(r) >= dt.datetime(2026, 11, 11, 9))
+            self.assertEqual(first_hour, dt.datetime(2026, 11, 11, 9, 0))
+            for r in recs[:50]:
+                toc = galileo_rf._toc(r)
+                week = int(galileo_rf._field(r[5], 2))
+                toe = ga.datetime_from_gps(week, galileo_rf._field(r[3], 0))
+                # toe and toc moved together (I/NAV sets have toe == toc)
+                self.assertLess(abs((toe - toc).total_seconds()), 1.0)
+                self.assertIn(int(galileo_rf._field(r[5], 1)), galileo_rf.INAV_SOURCES)
+            self.assertTrue(any(l.startswith("GAUT") and " 291600 2444" in l for l in header))
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_galileo_mix_scales_per_satellite(self):
+        import numpy as np
+        import galileo_rf
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            rate = 10000
+            rng = np.random.default_rng(1)
+            gps = np.clip(np.rint(rng.normal(0, 20, 2 * rate * 3)), -128, 127).astype(np.int8)
+            gal = np.rint(rng.normal(0, 3000, 2 * rate * 3)).astype(np.int16)
+            (tmp / "g.bin").write_bytes(gps.tobytes())
+            (tmp / "e.bin").write_bytes(gal.tobytes())
+            r = galileo_rf.mix_into(tmp / "g.bin", tmp / "e.bin", tmp / "o.bin", n_gps=9, n_gal=4,
+                                    sample_rate=rate)
+            # one Galileo satellite = one GPS satellite: RMS ratio sqrt(4/9)
+            self.assertAlmostEqual(r["gal_rms"] / r["gps_rms"], (4 / 9) ** 0.5, places=2)
+            out = np.frombuffer((tmp / "o.bin").read_bytes(), dtype=np.int8)
+            self.assertEqual(out.size, gps.size)
+            self.assertLess(r["clipped_fraction"], 1e-3)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
 if __name__ == "__main__":
     unittest.main()

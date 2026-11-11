@@ -78,6 +78,22 @@ void finish_skytraq(GpsReceiver &gps, FakeUart &uart, std::uint32_t time, bool a
     assert(uart.sent.back() == skytraq({0x08, 1, 5, 0, 0, 1, 0, 0, 0}));
     if (acks) feed(gps, skytraq({0x83, 0x08}), time + 3);
     else time = time_out(gps, time + 2);
+    // All constellations, elevation mask, QZSS, SBAS (optional settings).
+    const Bytes optional_cmds[] = {skytraq({0x64, 0x19, 0x00, 0x0F, 0x00}),
+                                   skytraq({0x2B, 0x02, 0x03, 0x00, 0x00}),
+                                   skytraq({0x62, 0x03, 0x01, 0x01, 0x00}),
+                                   skytraq({0x62, 0x01, 0x01, 0x02, 0x08, 0x01, 0x01, 0x07, 0x00})};
+    for (const auto &cmd : optional_cmds) {
+        gps.service(time + 4);
+        assert(uart.sent.back() == cmd);
+        if (acks) {
+            const std::uint8_t id = cmd[4];
+            if (id == 0x64 || id == 0x62) feed(gps, skytraq({0x83, id, cmd[5]}), time + 4);
+            else feed(gps, skytraq({0x83, id}), time + 4);
+        } else {
+            time = time_out(gps, time + 4);
+        }
+    }
     gps.service(time + 4);
     assert(uart.sent.back() == skytraq({0x0E, 25, 0}));
     if (acks) feed(gps, skytraq({0x83, 0x0E}), time + 5);
@@ -182,10 +198,13 @@ int main() {
         GpsReceiver gps(uart.transport());
         auto time = start(gps);
         feed(gps, skytraq({0x64, 0x8B, 0}), time++);
-        for (std::uint8_t id : {0x64, 0x08, 0x0E}) {
+        const Bytes acks[] = {skytraq({0x83, 0x64, 0x17}), skytraq({0x83, 0x08}),
+                              skytraq({0x83, 0x64, 0x19}), skytraq({0x83, 0x2B}),
+                              skytraq({0x83, 0x62, 0x03}), skytraq({0x83, 0x62, 0x01}),
+                              skytraq({0x83, 0x0E})};
+        for (const auto &ack : acks) {
             gps.service(time++);
-            if (id == 0x64) feed(gps, skytraq({0x83, 0x64, 0x17}), time++);
-            else feed(gps, skytraq({0x83, id}), time++);
+            feed(gps, ack, time++);
         }
         gps.service(time++);
         feed(gps, skytraq({0x64, 0x8B, 0x05}), time++);
@@ -468,6 +487,25 @@ int main() {
         FakeUart uart;
         GpsReceiver gps(uart.transport());
         assert(!gps.cold_start(0));
+    }
+    // A rejected optional setting is logged and configuration goes on; an ACK
+    // for another sub-ID message does not count.
+    {
+        FakeUart uart;
+        GpsReceiver gps(uart.transport());
+        auto time = start(gps);
+        feed(gps, skytraq({0x64, 0x8B, 0}), time);
+        gps.service(++time);
+        feed(gps, skytraq({0x83, 0x64, 0x17}), ++time);
+        gps.service(++time);
+        feed(gps, skytraq({0x83, 0x08}), ++time);
+        gps.service(++time);                                    // 64 19 constellations
+        feed(gps, skytraq({0x83, 0x64, 0x17}), ++time);         // wrong sub-ID: ignored
+        assert(uart.sent.back() == skytraq({0x64, 0x19, 0x00, 0x0F, 0x00}));
+        feed(gps, skytraq({0x84, 0x64, 0x19}), ++time);         // NACK: optional
+        assert(gps.status() == Status::Configuring && gps.optional_rejects() == 1);
+        gps.service(++time);
+        assert(uart.sent.back() == skytraq({0x2B, 0x02, 0x03, 0x00, 0x00}));
     }
     // Not configured: refused.
     {

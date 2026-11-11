@@ -11,10 +11,13 @@ struct SkytraqCommand {
     const char *name;
     std::uint8_t payload[9];
     std::uint8_t length;
+    // A NACK from an optional command is logged and configuration goes on
+    // (firmware variants differ in what they accept); a required one fails.
+    bool optional = false;
 };
 
-// Each command is acknowledged by 83 <id> (plus sub-id for 0x64 commands).
-// Settings are written to SRAM only (final attribute byte 0).
+// Each command is acknowledged by 83 <id> (plus the sub-id for the 0x62/0x63/
+// 0x64 sub-ID messages). Settings are written to SRAM only (attribute 0).
 constexpr SkytraqCommand kSkytraqConfigure[] = {
     // 0x64/0x17 navigation mode: airborne.
     {"airborne navigation mode",
@@ -25,6 +28,17 @@ constexpr SkytraqCommand kSkytraqConfigure[] = {
     // Reduced output keeps 115200 baud comfortable at the maximum rate.
     {"NMEA output GGA+RMC, GSA",
      {0x08, 1, GpsReceiver::kGsaEveryFixes, 0, 0, 1, 0, 0, 0x00}, 9},
+    // Use every satellite the receiver can: all constellations for the
+    // solution (bits GPS, GLONASS, Galileo, BeiDou), the lowest elevation
+    // mask the receiver allows and no CNR mask, QZSS, and SBAS corrections
+    // (ranging left to the receiver, one channel reserved).
+    {"all constellations (GPS, GLONASS, Galileo, BeiDou)",
+     {0x64, 0x19, 0x00, 0x0F, 0x00}, 5, true},
+    {"elevation mask 3 deg, no CNR mask",
+     {0x2B, 0x02, GpsReceiver::kSkytraqElevationMaskDeg, 0x00, 0x00}, 5, true},
+    {"QZSS on", {0x62, 0x03, 0x01, 0x01, 0x00}, 5, true},
+    {"SBAS corrections on",
+     {0x62, 0x01, 0x01, 0x02, 0x08, 0x01, 0x01, 0x07, 0x00}, 9, true},
     // 0x0E position update rate.
     {"position update rate",
      {0x0E, GpsReceiver::kSkytraqUpdateRateHz, 0x00}, 3},
@@ -655,11 +669,19 @@ void GpsReceiver::handle_skytraq(const std::uint8_t *payload, const std::size_t 
     if (step_ == Step::Configure) {
         const auto &command = kSkytraqConfigure[index_];
         const std::uint8_t id = command.payload[0];
+        const bool sub_id = id == 0x62 || id == 0x63 || id == 0x64;
         const bool matches = length >= 2 && payload[1] == id &&
-                             (id != 0x64 || length == 2 || payload[2] == command.payload[1]);
+                             (!sub_id || length == 2 || payload[2] == command.payload[1]);
         if (!matches) return;
-        if (payload[0] == kSkytraqNack) fail("PX1120S rejected a configuration command");
-        else if (payload[0] == kSkytraqAck) advance(now_ms);
+        if (payload[0] == kSkytraqNack && command.optional) {
+            ++optional_rejects_;
+            last_optional_reject_ = command.name;
+            advance(now_ms);
+        } else if (payload[0] == kSkytraqNack) {
+            fail("PX1120S rejected a configuration command");
+        } else if (payload[0] == kSkytraqAck) {
+            advance(now_ms);
+        }
         return;
     }
     if (step_ != Step::Verify) return;

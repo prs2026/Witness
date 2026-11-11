@@ -59,6 +59,8 @@ public:
     // 25 Hz is the maximum for the standard PX1120S (50/100 Hz are -H only).
     static constexpr std::uint8_t kSkytraqAirborneMode = 5;
     static constexpr std::uint8_t kSkytraqUpdateRateHz = 25;
+    // Lowest elevation mask the PX1120S accepts (AN0037 0x2B: 3..85 deg).
+    static constexpr std::uint8_t kSkytraqElevationMaskDeg = 3;
     // NEO-M8N: dynamic model 8 is "airborne < 4 g". 10 Hz is the maximum
     // navigation rate with concurrent GNSS (its default GPS + GLONASS).
     static constexpr std::uint8_t kUbloxAirborne4gModel = 8;
@@ -100,6 +102,10 @@ public:
     std::uint32_t update_rate_hz() const;
     // True when the model was assumed from NMEA because no binary reply came.
     bool model_assumed() const { return model_assumed_; }
+    // Optional configuration commands the receiver rejected (NACK), and the
+    // last one's name; configuration carries on without them.
+    unsigned optional_rejects() const { return optional_rejects_; }
+    const char *last_optional_reject() const { return last_optional_reject_; }
 
     // Assistance upload (PX1120S, after Ready). Copies the blob; false if it
     // cannot start (wrong receiver, not ready, upload already running).
@@ -206,5 +212,7 @@ private:
     std::uint32_t assist_sent_ms_ = 0;
     AssistProgress assist_{};
     std::uint32_t cold_starts_ = 0;
+    unsigned optional_rejects_ = 0;
+    const char *last_optional_reject_ = "";
     const char *assist_refusal_ = "";
 };

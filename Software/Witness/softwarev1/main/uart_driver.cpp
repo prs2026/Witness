@@ -520,6 +520,11 @@ void UartDriver::run()
                          gps_.model_name(),
                          static_cast<unsigned long>(gps_.update_rate_hz()),
                          static_cast<unsigned long>(gps_.baud()));
+                if (gps_.optional_rejects() != 0U) {
+                    ESP_LOGW(kTag, "%s rejected %u optional setting(s), last: %s",
+                             gps_.model_name(), gps_.optional_rejects(),
+                             gps_.last_optional_reject());
+                }
             } else if (last_gps_status == GpsReceiver::Status::Failed) {
                 ESP_LOGW(kTag, "%s startup failed: %s; raw logging continues at %lu baud",
                          gps_.model_name(), gps_.failure_reason(),
