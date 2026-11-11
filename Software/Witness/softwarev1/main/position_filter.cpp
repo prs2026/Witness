@@ -64,6 +64,9 @@ void Filter::predict(const float acceleration_world_mps2[3], const float dt_s,
 
     const float a[3] = {ax, ay, az - kGravity};
     const float net = std::sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+    // Peak-hold with exponential decay (first order, cheap at 960 Hz).
+    gps_stress_ -= gps_stress_ * std::fmin(dt_s / config_.gps_stress_tau_s, 1.0F);
+    if (net > gps_stress_) gps_stress_ = net;
     const float sigma_a = config_.accel_noise_mps2 + config_.accel_noise_fraction * net;
     const float q = sigma_a * sigma_a;
     const float dt2 = dt_s * dt_s;
@@ -93,6 +96,7 @@ void Filter::predict_without_imu(const float dt_s, const Phase phase)
     if (!(dt_s > 0.0F) || dt_s > 0.1F) {
         return;
     }
+    gps_stress_ -= gps_stress_ * std::fmin(dt_s / config_.gps_stress_tau_s, 1.0F);
     const float q = config_.no_imu_accel_noise_mps2 * config_.no_imu_accel_noise_mps2;
     const float dt2 = dt_s * dt_s;
     for (Axis &s : axes_) {
@@ -228,15 +232,22 @@ void Filter::gps_sigmas(const std::uint8_t satellites, const float hdop, const f
     const auto clamp = [this](float sigma) {
         return std::fmin(std::fmax(sigma, config_.gps_min_sigma_m), config_.gps_max_sigma_m);
     };
+    float h, v;
     if (std::isfinite(hdop) && hdop > 0.0F) {
-        const float v = std::isfinite(vdop) && vdop > 0.0F ? vdop : hdop * config_.gps_vdop_per_hdop;
-        horizontal_m = clamp(config_.gps_horizontal_uere_m * hdop);
-        vertical_m = clamp(config_.gps_vertical_uere_m * v);
-        return;
+        const float vd = std::isfinite(vdop) && vdop > 0.0F ? vdop : hdop * config_.gps_vdop_per_hdop;
+        h = config_.gps_horizontal_uere_m * hdop;
+        v = config_.gps_vertical_uere_m * vd;
+    } else {
+        const float inflate = satellites >= config_.gps_good_satellites ? 1.0F : 2.0F;
+        h = config_.gps_horizontal_sigma_m * inflate;
+        v = config_.gps_vertical_sigma_m * inflate;
     }
-    const float inflate = satellites >= config_.gps_good_satellites ? 1.0F : 2.0F;
-    horizontal_m = config_.gps_horizontal_sigma_m * inflate;
-    vertical_m = config_.gps_vertical_sigma_m * inflate;
+    // Receiver lag at speed and under (recent) acceleration.
+    const float lag_speed = config_.gps_lag_speed_s * speed();
+    const float lag_accel = config_.gps_lag_accel_s2 * gps_stress_;
+    const float lag2 = lag_speed * lag_speed + lag_accel * lag_accel;
+    horizontal_m = clamp(std::sqrt(h * h + lag2));
+    vertical_m = clamp(std::sqrt(v * v + lag2));
 }
 
 bool Filter::update_gps(const double latitude_deg, const double longitude_deg,

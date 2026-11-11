@@ -52,6 +52,17 @@
           "color": "#5b267d",
           "axis": "right",
           "note": "GPS publisher units unverified; separate raw axis"
+        },
+        {
+          "label": "W GPS",
+          "input": "witness",
+          "packet": [
+            "state",
+            "witness_debug"
+          ],
+          "field": "_derived.gps_altitude_agl_m",
+          "color": "#7a3300",
+          "note": "Witness GNSS altitude (GGA MSL minus pad MSL), only with the GPS-locked bit"
         }
       ]
     },

@@ -25,6 +25,13 @@ import trajectory_csv as tc
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_RUNS_DIR = os.path.join(HERE, "runs")
 HITL_ACTIVE_TIMEOUT_S = 2.0
+
+
+class Stamped(str):
+    """An event text that remembers when it happened (``.t``, time.time()).
+
+    Events stay (kind, text) pairs; consumers that want the time read
+    ``getattr(text, "t", None)``."""
 STATE_CONFIRM_PACKETS = 2
 BACKWARD_CONFIRM_PACKETS = 5
 TRANSITION_STATES = (hp.BOOST, hp.COAST, hp.DESCENT, hp.LANDED)
@@ -396,6 +403,8 @@ class HitlSession:
         # Set when Witness logs that its GPS receiver is configured
         # ("... airborne 4 g mode and N Hz GGA+RMC confirmed ...").
         self._gps_ready = threading.Event()
+        self.activity = ""
+        self.activity_since = time.monotonic()
         # Write runs/<timestamp>/report.pdf after every recorded run.
         self.make_report = True
         self._gps_player = None
@@ -413,7 +422,17 @@ class HitlSession:
         return time.monotonic() - self.t0
 
     def _event(self, kind, payload):
+        if isinstance(payload, str):
+            payload = Stamped(payload)
+            payload.t = time.time()
         self.events.put((kind, payload))
+
+    def set_activity(self, text: str = ""):
+        """What the bench is doing right now ("" = idle). A run is in progress
+        from the GPS lead-in to the report, not only while frames stream."""
+        self.activity = text
+        self.activity_since = time.monotonic()
+        self._event("activity", text)
 
     def log(self, msg: str):
         line = f"[tool] {msg}"
@@ -970,11 +989,13 @@ class HitlSession:
                           "tx_vga_db": player.tx_vga_db, "amp": player.amp}
         if tx.get("cold_start", False):
             # Clear leftovers from earlier scenarios before the HackRF starts.
+            self.set_activity("GPS cold start")
             run.gps_report["cold_start"] = self.cold_start_gps()
             if not run.gps_report["cold_start"]:
                 run.warnings.append("GPS cold start was not confirmed; stored navigation "
                                     "data may slow the first fix")
         self._gps_player = player
+        self.set_activity("Starting HackRF")
         player.start()
         if not player.wait_streaming(15):
             raise RuntimeError("HackRF did not start streaming: "
@@ -983,6 +1004,7 @@ class HitlSession:
         self.log(f"HackRF streaming {sc.folder.name}: {sc.lead_in_s:.0f} s static lead-in "
                  "at the pad, then the trajectory")
         if tx.get("upload_ephemeris", True):
+            self.set_activity("Uploading GPS ephemeris")
             frames, prns = gps_rf.ephemeris_frames(sc, player.elapsed_s())
             self.upload_assist(frames)
             run.gps_report["ephemeris_prns"] = prns
@@ -992,6 +1014,10 @@ class HitlSession:
             elapsed = player.elapsed_s()
             if elapsed >= sc.lead_in_s - 0.5:
                 break
+            label = (f"GPS lead-in (pre-soak) {elapsed:.0f}/{sc.lead_in_s:.0f} s, "
+                     + (f"fix, {self.view.gps_sats or 0} sats" if self.view.gps_locked else "no fix yet"))
+            if label != self.activity:
+                self.activity = label      # no event: polled by the GUI
             if not player.running:
                 raise RuntimeError("HackRF stopped during the lead-in: "
                                    + " | ".join(player.output()[-5:]))
@@ -1024,6 +1050,7 @@ class HitlSession:
                 delay = t0_perf - sm.DT_S - time.perf_counter()
                 if delay > 0:
                     time.sleep(delay)
+            self.set_activity("Streaming sim")
             if not self.view.hitl_active:
                 self.send_command(hp.CMD_HITL_ENTER)
             else:
@@ -1094,6 +1121,7 @@ class HitlSession:
             if player is not None:
                 player.stop()
                 run.gps_report["hackrf_tail"] = player.output()[-5:]
+            self.set_activity("Waiting for trailing telemetry")
             if self.connected:
                 self._try_send_command(hp.CMD_HITL_EXIT)
             # Allow trailing telemetry / log lines to arrive.
@@ -1104,6 +1132,7 @@ class HitlSession:
                 finish_attitude(run)
             except Exception as exc:  # never lose the run over a metric
                 self.log(f"attitude summary failed: {exc!r}")
+            self.set_activity("Writing run outputs")
             run.result = evaluate(run)
             if run.gps_mode == "rf":
                 run.result["gps"] = dict(run.gps_report, mode="rf")
@@ -1131,13 +1160,16 @@ class HitlSession:
                 elif cfg.get("enabled") and run.run_dir and \
                         not is_loopback(self._host) and self.connected:
                     import hitl_outputs
-                    fc = hitl_outputs.fetch_fc_logs(self, run, cfg, self.log)
+                    self.set_activity("Fetching FC logs")
+                    fc = hitl_outputs.fetch_fc_logs(self, run, cfg, self.log,
+                                                    activity=self.set_activity)
                     run.result["fc_logs"] = fc
                     if fc.get("flash_comparison"):
                         run.result["comparison_flash"] = fc["flash_comparison"]
                     with open(os.path.join(run.run_dir, "summary.json"), "w") as f:
                         json.dump(run.result, f, indent=2)
             if run.run_dir and self.make_report:
+                self.set_activity("Writing report.pdf")
                 try:
                     import hitl_report
                     path = hitl_report.build_report(run.run_dir)
@@ -1145,4 +1177,5 @@ class HitlSession:
                     self.log(f"report: {path}")
                 except Exception as exc:  # never lose the run over the report
                     self.log(f"report PDF failed: {exc!r}")
+            self.set_activity("")
             self._event("run", "finished")

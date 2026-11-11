@@ -157,6 +157,33 @@ class GuiWorkerTests(unittest.TestCase):
         self.assertTrue(text.endswith("line 1999"))
         self.assertEqual(app._pending_log, [])
 
+    def test_tool_and_comms_logs_are_separate_and_timestamped(self):
+        import time as _time
+        import hitl_session as hs_mod
+        app = self.app
+        s = app.session
+        s._event("text", "I (123) uart: GPS RX: baud=115201")
+        s._event("log", "[tool] HackRF streaming")
+        stamped = hs_mod.Stamped("I (456) flight_state: pad idle -> boost")
+        stamped.t = _time.time() + 2.5
+        s.events.put(("text", stamped))
+        app.poll()
+        tool, comms = app.logbox.toPlainText(), app.commsbox.toPlainText()
+        self.assertIn("[tool] HackRF streaming", tool)
+        self.assertNotIn("uart: GPS RX", tool)
+        self.assertIn("uart: GPS RX", comms)
+        second = comms.splitlines()[-1]
+        self.assertRegex(second, r"^\d\d:\d\d:\d\d\.\d{3} +\+ *2\.\d{3}  I \(456\)")
+        # A run is in progress while the session reports an activity.
+        s.set_activity("FC logs: downloading P0000001.BIN (1/4, 0.2 MB)")
+        app.poll()
+        self.assertTrue(app.activity_label.isVisibleTo(app))
+        self.assertIn("FC logs: downloading", app.activity_label.text())
+        self.assertTrue(app._running())
+        s.set_activity("")
+        app.poll()
+        self.assertFalse(app.activity_label.isVisibleTo(app))
+
     def test_fc_log_settings_are_saved_and_applied(self):
         app = self.app
         app.pi_user_edit.setText("bench")

@@ -195,7 +195,7 @@ def write_comparison(run, run_dir: str) -> dict | None:
 # FC logs through the bench Pi
 # ---------------------------------------------------------------------------
 
-def fetch_fc_logs(session, run, config: dict, log) -> dict:
+def fetch_fc_logs(session, run, config: dict, log, activity=None) -> dict:
     """Exports Witness's flash logs and downloads this run's session.
 
     Sends the export command over the HITL connection, closes it, then reads
@@ -205,18 +205,21 @@ def fetch_fc_logs(session, run, config: dict, log) -> dict:
     """
     status = {"ok": False, "files": [], "dir": None, "error": None}
     out_dir = os.path.join(run.run_dir, "fc_logs")
+    step = activity or (lambda _text: None)
     try:
         if HORIZON_DIR not in sys.path:
             sys.path.insert(0, HORIZON_DIR)
         import witness_download as wd
         pi = wd.Pi(config.get("pi_host") or session._host, config.get("pi_user") or None,
                    config.get("pi_key") or None)
+        step("FC logs: exporting Witness flash")
         log("FC logs: exporting Witness flash (05 68 68)")
         # Compact 3-byte form; the export command is not in the GUI allowlist.
         session._send(bytes((hp.ID_COMMAND,)) + hp.CMD_MASS_STORAGE.to_bytes(2, "big"))
         time.sleep(0.5)
         session.disconnect(send_exit=False)
         deadline = time.monotonic() + float(config.get("wait_s", 40))
+        step("FC logs: waiting for the log disk on the Pi")
         while True:
             code, out, err = pi.agent_text("find")
             if code == 0:
@@ -236,7 +239,8 @@ def fetch_fc_logs(session, run, config: dict, log) -> dict:
         newest = max(wd.generation(f["name"]) for f in files)
         wanted = [f for f in files if wd.generation(f["name"]) == newest]
         os.makedirs(out_dir, exist_ok=True)
-        for f in wanted:
+        for i, f in enumerate(wanted, 1):
+            step(f"FC logs: downloading {f['name']} ({i}/{len(wanted)}, {f['size'] / 1e6:.1f} MB)")
             path = os.path.join(out_dir, f["name"])
             wd.download(pi, f["name"], f["size"], __import__("pathlib").Path(path))
             status["files"].append(f["name"])
@@ -251,6 +255,7 @@ def fetch_fc_logs(session, run, config: dict, log) -> dict:
         log(f"FC log fetch failed: {status['error']}")
     finally:
         if config.get("restart", True):
+            step("FC logs: power-cycling Pi USB hub 2")
             try:
                 import witness_download as wd
                 pi = wd.Pi(config.get("pi_host") or session._host,
@@ -264,6 +269,7 @@ def fetch_fc_logs(session, run, config: dict, log) -> dict:
             except Exception as exc:
                 log(f"FC logs: hub restart failed: {exc}")
     if status["ok"]:
+        step("Comparing flash log with truth")
         try:
             flash = write_flash_comparison(run, out_dir)
             if flash:

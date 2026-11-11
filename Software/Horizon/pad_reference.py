@@ -7,7 +7,9 @@ position is used, so the pad does not hop between sources as packets arrive:
   manual        "Set pad here" on the map (position only; altitude from the next source)
   featherweight Featherweight ground station GPS_STAT (unit_type BASE), fix 2D/3D
   aperture      Aperture's own LC86G fix in the 0xF0 ground-station status
-  witness       mean of Witness GPS fixes received while it reports Pad Idle + GPS lock
+  witness       mean of Witness GPS fixes received while it reports Pad Idle + GPS lock;
+                frozen from the first packet in any other state (Boost onwards) until
+                Witness reboots (its uptime restarts) or the operator clears the pad
   tracker       first valid Featherweight tracker fix (last resort)
 
 Altitude (m MSL) uses the same order, but needs a 3D fix for Featherweight, and
@@ -64,6 +66,9 @@ class PadReference:
         self._lock = threading.Lock()
         self._fixes = {}
         self._witness = []
+        # Witness left Pad Idle: its pad estimate is frozen (see _accept_witness).
+        self.witness_frozen = False
+        self._witness_uptime = None
         self.version = 0     # bumps whenever the selected pad could have changed
 
     # ------------------------------------------------------------ inputs
@@ -124,7 +129,24 @@ class PadReference:
         if kind not in ("state", "witness_debug"):
             return False
         status = packet.get("status")
-        if type(status) is not int or status & 0x07 != 0 or not status & 0x08:
+        if type(status) is not int:
+            return False
+        uptime = packet.get("uptime")
+        with self._lock:
+            if type(uptime) is int:
+                if self._witness_uptime is not None and uptime + 5000 < self._witness_uptime:
+                    # Witness rebooted: a new session may start a new pad.
+                    self.witness_frozen = False
+                    self._witness.clear()
+                self._witness_uptime = uptime
+            if status & 0x07 != 0:
+                # Boost or later: the pad is where it was; never follow the
+                # vehicle (nor a landing site after the flight).
+                self.witness_frozen = True
+                return False
+            if self.witness_frozen:
+                return False
+        if not status & 0x08:
             return False   # Only Pad Idle with the GPS-locked bit describes the pad.
         lat, lon, alt = packet.get("latitude"), packet.get("longitude"), packet.get("gps_altitude")
         if not valid_lat_lon(lat, lon):
@@ -146,14 +168,18 @@ class PadReference:
         return self._store(PadFix("manual", float(lat), float(lon), None, time.monotonic(), "operator"))
 
     def clear_manual(self):
+        """"Auto pad": drop the manual pad and let Witness define it again."""
         with self._lock:
             self._fixes.pop("manual", None)
+            self.witness_frozen = False
             self.version += 1
 
     def clear(self):
         with self._lock:
             self._fixes.clear()
             self._witness.clear()
+            self.witness_frozen = False
+            self._witness_uptime = None
             self.version += 1
 
     # ------------------------------------------------------------ output
