@@ -102,6 +102,8 @@ bool decode_frame(const std::uint8_t *frame, const std::size_t length,
     const std::uint8_t *payload = frame + kId;
     Sample s{};
     s.sim_time_ms = u32(payload + IRIS_PACKET_HITL_SIM_TIME_OFFSET);
+    s.gps_from_receiver =
+        (payload[IRIS_PACKET_HITL_STATUS_OFFSET] & IRIS_HITL_STATUS_GPS_FROM_RECEIVER) != 0U;
     for (std::size_t axis = 0; axis < 3U; ++axis) {
         s.low_g_accel_raw[axis] =
             i16(payload + IRIS_PACKET_HITL_LOW_ACCEL_X_OFFSET + 2U * axis);

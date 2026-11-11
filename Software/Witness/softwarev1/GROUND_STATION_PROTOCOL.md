@@ -239,13 +239,45 @@ Command values currently defined:
 | `0x4849` | Enter HITL mode (USB only, Pad Idle only; see section 4a) |
 | `0x4858` | Exit HITL mode (USB or LoRa) |
 | `0x6868` | Enter read-only USB mass-storage mode |
-| `0x6869` | Erase all stored log sessions |
+| `0x6869` | Erase all stored log sessions (every block; slow) |
+| `0x686A` | Clear all stored log sessions (fast: only the two session headers are erased; the session number keeps counting) |
+| `0x4741` / `0x4744` / `0x4745` / `0x4751` | GPS assistance upload BEGIN / DATA / COMMIT / STATUS (ephemeris for the receiver; chunked, Witness-local, never forwarded; see section 4b) |
+| `0x4752` | GPS cold start: the receiver forgets ephemerides, almanac, position and time; Witness then reconfigures it (Pad Idle only; Witness-local, never forwarded) |
 | `0x7300` through `0x7304` | Set flight state using the values above |
 
 The last three commands also have legacy compact USB forms described in
 section 7. Canonical commands received from USB or LoRa are retransmitted
 byte-for-byte through the Iris CAN link. The firmware does not rewrite their status or uptime.
 Radio commands are additionally interpreted locally.
+
+### 4b. GPS assistance upload (ground -> Witness -> GPS)
+
+The SkyTraq PX1120S has no almanac-upload message (AN0037), but it accepts
+GPS ephemeris over UART: message 0x41 "Set GPS Ephemeris", 87 bytes (SV id,
+then subframes 1-3 as a reserved byte plus the 24 data bits of words 2-10),
+answered by ACK `83 41` or NACK `84 41`. Ephemeris is more useful than an
+almanac: the receiver needs no subframe decoding before its first fix.
+
+The ground builds a blob of records `[u16 length][SkyTraq body]` (at most
+4096 bytes; 29 ephemerides are 2,581 bytes) and sends it in ordinary
+canonical command frames `05 d0 d1 d2 d3 d4 d5 HH LL 0A`:
+
+| Opcode | Data bytes d0-d5 |
+|---|---|
+| `0x4741` BEGIN | total length (u16 BE), CRC-16/CCITT-FALSE of the blob (u16 BE), format 1 (SkyTraq), transfer id |
+| `0x4744` DATA | byte offset (u16 BE, multiple of 4), 4 data bytes (last chunk zero padded) |
+| `0x4745` COMMIT | transfer id |
+| `0x4751` STATUS | none; Witness logs the transfer and receiver progress |
+
+Chunks may arrive out of order or repeated. COMMIT checks every chunk and the
+CRC; Witness then writes the records to the receiver one at a time (waiting
+up to 1 s for each ACK/NACK, one retry) and logs `GPS assist done: A/N
+acknowledged, R rejected, U unanswered`. A COMMIT with missing chunks logs
+how many arrived, so the ground can resend. The frames work over USB and the
+radio; they are never forwarded to CAN or retransmitted by radio.
+`Horizon/gps_assist.py` builds them from a RINEX broadcast-ephemeris file;
+Horizon's Witness monitor has an "Upload GPS ephemeris…" button and the HITL
+bench sends the RF scenario's ephemerides before a run.
 
 ### `0xFF` Heartbeat packet, 8 bytes
 

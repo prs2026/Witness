@@ -296,8 +296,10 @@ a linear Kalman filter with a constant-acceleration kinematic model:
   The PX1120S at 25 Hz gets every fix used; the u-blox M8 at 10 Hz appears
   every 2nd or 3rd tick.
   - **GPS:** E/N/U from latitude/longitude/altitude using WGS-84 metres per
-    degree at the origin. Sigma is 2.5 m horizontal and 5 m vertical, doubled
-    below 6 satellites. GGA has no HDOP or velocity, so it is position only.
+    degree at the origin. Sigma scales with the dilution of precision:
+    2.5 m x HDOP horizontal and 3.3 m x VDOP vertical (see "Kalman GPS
+    weighting (DOP)"); without DOPs 2.5 m / 5 m, doubled below 6 satellites.
+    Position only (no GPS velocity). Each fix is applied when it is parsed.
     The origin is set on the pad. A first fix in flight is aligned to the
     current estimate.
   - **Barometer:** U, relative to a pad reference that is tracked while still
@@ -725,7 +727,9 @@ the bench; append CR/LF. Hex shown here is text unless sent as actual binary.
 | `E0` or raw byte `E0` | Enables Witness debug output; no corresponding stop command |
 | `05 73 00` through `05 73 04` | Sets flight state; `01` from Pad Idle is a launch trigger |
 | `05 68 68` | Freezes logs and switches USB to read-only mass storage until reset |
-| `05 68 69` | Destructively erases all stored sessions and creates a fresh session |
+| `05 68 69` | Destructively erases all stored sessions (all 1,004 blocks) and creates fresh session 1 |
+| `05 68 6A` | Fast clear: erases only the two slot header blocks, so no session is listed, and creates the next session number (never resets) |
+| `05 .. .. 47 41/44/45/51 0A` (canonical) | GPS assistance upload (ephemeris for the PX1120S), see "GPS assistance" |
 | `05 43 47` / `05 43 41` / `05 43 58` / `05 43 53` | IMU calibration: gyro, face, clear, status (USB, Pad Idle; see "IMU calibration") |
 | `05 00 00 00 00 00 00 48 49 0A` (canonical only) | Enter HITL mode; USB and Pad Idle only |
 | `05 00 00 00 00 00 00 48 58 0A` (canonical only) | Exit HITL mode |
@@ -822,6 +826,50 @@ firmware. The rate and NMEA changes, and the whole u-blox path, are covered by
 host tests only and are not yet verified on hardware. Five-second `GPS RX`
 diagnostics report baud, byte count, GGA count, fix freshness and idle time.
 
+### Kalman GPS weighting (DOP)
+
+`NmeaGps` parses GGA field 8 (HDOP) on every fix and GSA (PDOP/HDOP/VDOP;
+fix type 2/3 only; 99.99 means none). A GSA older than 2 s is not attached.
+Both receivers output GSA every 5th fix (5 Hz at the PX1120S's 25 Hz, which
+keeps the UART at about 60% of 115200 baud). `position::Filter::update_gps`
+then uses sigma_h = 2.5 m x HDOP and sigma_v = 3.3 m x VDOP (VDOP unknown:
+1.6 x HDOP), clamped to [1, 200] m, so HDOP 1 / VDOP 1.5 reproduce the former
+fixed 2.5 m / 5 m. Without any DOP the fixed sigmas apply, doubled below 6
+satellites. Every new GGA is applied when it is parsed (the sensor loop
+checks `Fix::sequence` each pass), not on the 25 Hz baro tick, so a 25 Hz
+receiver never has a fix skipped by tick aliasing; the 0xE2 log of each tick
+carries the latest GPS innovation since the previous tick. Simulated HITL GPS
+(0x0C fields) is used at 25 Hz of sim time.
+
+### GPS assistance (ephemeris upload)
+
+`gps_assist.{h,cpp}` (host test `tests/gps_assist_test.cpp`) reassembles a
+chunked upload from 0x05 command frames (opcodes 0x4741/44/45/51, see
+GROUND_STATION_PROTOCOL.md section 4b), checks a CRC-16 and the record
+framing, and `UsbSerialEcho` hands the blob to `UartDriver::submit_gps_assist`
+(a spinlocked mailbox). The GPS task passes it to `GpsReceiver::begin_assist`,
+which, once the PX1120S is Ready, writes each SkyTraq 0x41 "Set GPS
+Ephemeris" message and waits for its ACK/NACK (1 s, one retry). SkyTraq has
+no almanac-upload message; ephemeris is better for time to first fix. The
+u-blox path (UBX-MGA-GPS-EPH/ALM) is not implemented and is refused with a
+log line. Assistance frames are never forwarded to CAN or the radio.
+
+**Cold start** (`0x4752`, USB or radio, Pad Idle only): `GpsReceiver::cold_start`
+sends SkyTraq 0x01 System Restart mode 3 (u-blox: CFG-RST navBbrMask 0xFFFF,
+GNSS-only reset), so the receiver discards its ephemerides, almanac, last
+position and time; after 2 s Witness configures it again (airborne mode,
+25 Hz, NMEA set) and logs the usual `... confirmed` line. Simulated GPS
+scenarios leave such data behind; stale copies kept a receiver from locking
+on later scenarios until it was reset.
+
+**Identification and wiring:** at boot the UART task measures the RX line on
+both pins with the UART autobaud counters (edges and shortest pulse, so the
+bit rate), listens on the pin with traffic, and never routes its TX output
+until checksum-valid NMEA has been heard; identification then polls. Without
+a clear signal it scans 115200, 9600, 230400, 460800, 921600, 57600, 38400,
+19200 and 4800 baud on one pin orientation, then the other. A receiver found
+at another rate is moved to 115200 in RAM.
+
 ## HITL mode
 
 Hardware-in-the-loop mode lets a USB host drive the flight software with
@@ -844,7 +892,10 @@ a spinlock and the USB task feeds it.
   pass. A new sample is copied into `working_sample_` and counts as one IMU,
   barometer and battery update, so the flight state machine, `0x01`, `0x02`,
   `0xE0`, `latest_sample()` and flash capture all use it.
-  `Sensors::current_gps_fix()` returns the simulated fix in place of
+  0x0C status bit 0 (`IRIS_HITL_STATUS_GPS_FROM_RECEIVER`) keeps the real
+  receiver as the GPS source during HITL, for RF GPS simulation (a HackRF
+  playing a gps-sdr-sim scenario into the antenna input; see the HITL
+  README). Otherwise `Sensors::current_gps_fix()` returns the simulated fix in place of
   `UartDriver::latest_gps_fix()` for state, debug and the GPS-locked bit. The
   UART parser and raw GPS logging keep running.
 - **Attitude**: the estimator is reset on enter, exit, timeout or re-entry and
@@ -1153,7 +1204,11 @@ g++ -std=c++17 -Wall -Wextra -Werror -I main tests/nmea_gps_test.cpp main/nmea_g
 if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 & .\build\nmea_gps_test.exe
 
-g++ -std=c++17 -Wall -Wextra -Werror -I main tests/gps_receiver_test.cpp main/gps_receiver.cpp -o build/gps_receiver_test.exe
+g++ -std=c++17 -Wall -Wextra -Werror -I main tests/gps_assist_test.cpp main/gps_assist.cpp -o build/gps_assist_test.exe
+if ($LASTEXITCODE -ne 0) { throw "compile failed" }
+& .\build\gps_assist_test.exe
+
+g++ -std=c++17 -Wall -Wextra -Werror -I main tests/gps_receiver_test.cpp main/gps_receiver.cpp main/gps_assist.cpp -o build/gps_receiver_test.exe
 if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 & .\build\gps_receiver_test.exe
 

@@ -52,15 +52,22 @@ def isa_density(alt_msl_m: float) -> float:
     return isa_pressure_pa(alt_msl_m) / (_R * t)
 
 
+# Default launch site: FAR (Friends of Amateur Rocketry), Mojave Desert.
+LAUNCH_SITE_NAME = "FAR"
+LAUNCH_LAT_DEG = 35.34705005064222
+LAUNCH_LON_DEG = -117.80906435293228
+LAUNCH_ALT_MSL_M = 609.0
+
+
 @dataclass
 class SimParams:
     """All model parameters. Times in s, altitudes in m, rates in m/s."""
     seed: int = 1
     pad_time_s: float = 10.0
     ignite: bool = True
-    site_alt_msl_m: float = 1401.0
-    lat_deg: float = 32.9903
-    lon_deg: float = -106.9750
+    site_alt_msl_m: float = LAUNCH_ALT_MSL_M
+    lat_deg: float = LAUNCH_LAT_DEG
+    lon_deg: float = LAUNCH_LON_DEG
     sea_level_pressure_pa: float = 101325.0
     ground_temp_c: float = 25.0
     thrust_accel_g: float = 14.0       # average thrust / mass

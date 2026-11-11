@@ -2,3 +2,6 @@ hitl_settings.json
 runs/
 __pycache__/
 *.pyc
+gps_sim/
+rf_tools/bin/
+rf_tools/sites.json

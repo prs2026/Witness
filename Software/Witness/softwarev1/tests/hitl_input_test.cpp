@@ -38,7 +38,7 @@ std::vector<std::uint8_t> encode(const Input &in)
 {
     std::vector<std::uint8_t> f(hitl::kFrameLength, 0);
     f[0] = IRIS_PACKET_ID_HITL_SENSORS;
-    f[1] = 0xA5;  // Sender status: ignored.
+    f[1] = 0xA4;  // Sender status: bits other than 0 (GPS from receiver) are ignored.
     f[2] = 0x5A;
     put(f, IRIS_PACKET_HITL_SIM_TIME_OFFSET, in.sim_time_ms, 4);
     for (std::size_t a = 0; a < 3; ++a) {
@@ -436,5 +436,13 @@ int main()
     test_assembler();
     test_controller();
     test_imu_batch();
+    {
+        // Status bit 0: GPS from the real receiver (RF simulation).
+        auto f = encode(typical());
+        hitl::Sample s;
+        assert(hitl::decode_frame(f.data(), f.size(), s) && !s.gps_from_receiver);
+        f[1 + IRIS_PACKET_HITL_STATUS_OFFSET] = IRIS_HITL_STATUS_GPS_FROM_RECEIVER;
+        assert(hitl::decode_frame(f.data(), f.size(), s) && s.gps_from_receiver);
+    }
     std::puts("HITL input tests passed");
 }

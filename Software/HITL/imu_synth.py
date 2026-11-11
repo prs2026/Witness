@@ -76,6 +76,33 @@ def find_profile(csv_path: str, choice: str = "") -> dict | None:
     profile["full_scale_g"] = float(data["full_scale_g"])
     return profile
 
+DEFAULT_FILE_FULL_SCALE_G = 150.67
+
+
+def resolve_profile(csv_path: str, choice: str = "", thrust_file: str = "",
+                    lateral_file: str = "", full_scale_g: float = 0.0) -> dict | None:
+    """find_profile(), or the specific recordings picked by the user.
+
+    Files win over the profile choice. Returns the same dict shape as
+    find_profile ("name" is "files: <thrust> / <lateral>")."""
+    thrust_file = (thrust_file or "").strip()
+    lateral_file = (lateral_file or "").strip() or thrust_file
+    if thrust_file:
+        for path in (thrust_file, lateral_file):
+            if not os.path.isfile(path):
+                raise ValueError(f"vibration file not found: {path}")
+        thrust, lateral = os.path.basename(thrust_file), os.path.basename(lateral_file)
+        return {"name": f"files: {thrust} / {lateral}", "dir": os.path.dirname(thrust_file),
+                "thrust": thrust, "lateral": lateral, "thrust_path": thrust_file,
+                "lateral_path": lateral_file,
+                "full_scale_g": float(full_scale_g or DEFAULT_FILE_FULL_SCALE_G),
+                "description": "recordings selected for this run"}
+    profile = find_profile(csv_path, choice)
+    if profile is not None and full_scale_g:
+        profile["full_scale_g"] = float(full_scale_g)
+    return profile
+
+
 RAW_RATE_HZ = 7680
 OUT_RATE_HZ = 960
 DECIMATION = RAW_RATE_HZ // OUT_RATE_HZ  # 8

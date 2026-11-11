@@ -263,8 +263,47 @@ void test_innovation_record()
 
 }  // namespace
 
+void test_gps_dop_sigmas()
+{
+    const position::Filter filter;
+    float h = 0.0F, v = 0.0F;
+    const float nan = std::numeric_limits<float>::quiet_NaN();
+    filter.gps_sigmas(10, nan, nan, h, v);   // no DOP: fixed sigmas
+    CHECK(h == 2.5F && v == 5.0F);
+    filter.gps_sigmas(4, nan, nan, h, v);    // few satellites: doubled
+    CHECK(h == 5.0F && v == 10.0F);
+    filter.gps_sigmas(4, 1.0F, 1.5F, h, v);  // DOP overrides the satellite rule
+    CHECK(std::fabs(h - 2.5F) < 1e-5F && std::fabs(v - 4.95F) < 1e-5F);
+    filter.gps_sigmas(10, 4.0F, nan, h, v);  // VDOP unknown: 1.6 x HDOP
+    CHECK(std::fabs(h - 10.0F) < 1e-5F && std::fabs(v - 3.3F * 6.4F) < 1e-4F);
+    filter.gps_sigmas(10, 0.1F, 0.1F, h, v); // clamped to the minimum
+    CHECK(h == 1.0F && v == 1.0F);
+    filter.gps_sigmas(10, 90.0F, 90.0F, h, v);  // and the maximum
+    CHECK(h == 200.0F && v == 200.0F);
+
+    // Higher DOP -> less weight: one GPS update moves the estimate less.
+    auto pull = [](float hdop) {
+        position::Filter f;
+        f.reset();
+        const float a[3] = {0.0F, 0.0F, position::kGravity};
+        f.predict(a, 0.01F, position::Phase::Coast);
+        CHECK(f.update_gps(10.0, 20.0, 100.0F, 10, position::Phase::Coast, hdop, hdop));
+        f.predict(a, 0.01F, position::Phase::Coast);
+        f.begin_update_cycle();
+        const double lat = 10.0 + 5.0 / 110575.0;  // 5 m north of the origin
+        CHECK(f.update_gps(lat, 20.0, 100.0F, 10, position::Phase::Coast, hdop, hdop));
+        return f.north().p;
+    };
+    const float good = pull(0.8F);
+    const float poor = pull(6.0F);
+    CHECK(good > poor && poor > 0.0F);
+    position::Filter f;
+    CHECK(f.last_gps_horizontal_sigma_m() == 0.0F);
+}
+
 int main()
 {
+    test_gps_dop_sigmas();
     test_atmosphere_and_baro_sigma();
     test_pad_hold();
     test_flights();

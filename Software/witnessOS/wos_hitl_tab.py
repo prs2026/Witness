@@ -1,5 +1,13 @@
 """witnessOS "HITL bench" tab: PyQt6 widgets with pyqtgraph plots.
 
+The left side has two pages. **Preparation** holds everything done before a
+run: the source (preset or trajectory CSV) and its parameters, transition
+prediction, the 960 Hz IMU synthesis with the vibration recordings, and the
+GPS simulation (gps-sdr-sim scenarios, offline IQ check, HackRF static test,
+ephemeris upload). **Run** holds what a run uses: the GPS source (simulated
+0x0C fields or an RF scenario through the HackRF), pass/fail settings, the FC
+log fetch and the report PDF.
+
     from wos_hitl_tab import HitlWidget
 
 The bench logic lives in Software/HITL (hitl_session.py, sim_model.py,
@@ -29,6 +37,7 @@ import numpy as np  # noqa: E402
 import pyqtgraph as pg  # noqa: E402
 from PyQt6 import QtCore, QtGui, QtWidgets  # noqa: E402
 
+import gps_rf  # noqa: E402
 import hitl_gui as hg  # noqa: E402
 import hitl_protocol as hp  # noqa: E402
 import hitl_session as hs  # noqa: E402
@@ -50,9 +59,31 @@ STATUS_LAMPS = (
     ("Flash log fail", lambda s: s["flash_log_failed"], "bad"),
 )
 TABLE_COLUMNS = ("State", "Expected", "Witness", "Delta", "Result")
+# CsvParams fields edited in the "Vibration recordings" box, not the grid.
+VIB_FILE_FIELDS = ("vibration_thrust_file", "vibration_lateral_file", "vibration_full_scale_g")
+GPS_SIMULATED = "Simulated (0x0C GPS fields)"
+GPS_RF = "RF: Witness receiver + HackRF scenario"
+AUDIO_FILTER = "Audio (*.ogg *.wav *.flac *.aiff *.aif);;All files (*.*)"
 LOG_MAX_LINES = 3000
 POLL_MS = 100
 PLOT_MS = 150
+
+
+def hbox_widget(*widgets) -> QtWidgets.QWidget:
+    """Widgets side by side in one form cell."""
+    w = QtWidgets.QWidget()
+    lay = QtWidgets.QHBoxLayout(w)
+    lay.setContentsMargins(0, 0, 0, 0)
+    lay.setSpacing(4)
+    for item in widgets:
+        lay.addWidget(item)
+    lay.addStretch(1)
+    return w
+
+
+def run_signature(params, label: str, tol: float, th: dict):
+    """What a prepared run was built from (Start reuses it while equal)."""
+    return (label, repr(params), tol, repr(sorted(th.items())))
 
 
 class ParamField:
@@ -166,6 +197,9 @@ class HitlWidget(QtWidgets.QWidget):
         self.param_vars: dict[str, ParamField] = {}
         self.param_types: dict[str, str] = {}
         self.vibration_picker = None
+        self.prepared_run = None          # (signature, RunState) from "Synthesize IMU"
+        self._gps_cancel = threading.Event()
+        self._static_running = False
 
         self._build_ui()
         self.load_preset()
@@ -252,9 +286,26 @@ class HitlWidget(QtWidgets.QWidget):
         self.main_split.addWidget(self._build_right())
         self.main_split.setStretchFactor(0, 0)
         self.main_split.setStretchFactor(1, 1)
-        self.main_split.setSizes([300, 900])
+        self.main_split.setSizes([400, 900])
 
     def _build_left(self) -> QtWidgets.QWidget:
+        self.left_tabs = QtWidgets.QTabWidget()
+        self.left_tabs.setDocumentMode(True)
+        self.left_tabs.addTab(self._build_prep_page(), "Preparation")
+        self.left_tabs.addTab(self._build_run_page(), "Run")
+        self.left_tabs.setMinimumWidth(360)
+        return self.left_tabs
+
+    @staticmethod
+    def _scroll_page(inner: QtWidgets.QWidget) -> QtWidgets.QScrollArea:
+        area = QtWidgets.QScrollArea()
+        area.setWidgetResizable(True)
+        area.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+        area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        area.setWidget(inner)
+        return area
+
+    def _build_prep_page(self) -> QtWidgets.QWidget:
         left = QtWidgets.QWidget()
         lay = QtWidgets.QVBoxLayout(left)
         lay.setContentsMargins(0, 0, 4, 0)
@@ -278,15 +329,6 @@ class HitlWidget(QtWidgets.QWidget):
         csv_row.addWidget(self.csv_label, 1)
         lay.addLayout(csv_row)
 
-        att_row = QtWidgets.QHBoxLayout()
-        att_row.addWidget(QtWidgets.QLabel("Final tilt max deg"))
-        self.att_tilt_edit = QtWidgets.QLineEdit(
-            str(self.settings.get("att_final_tilt_deg", 5.0)))
-        self.att_tilt_edit.setMaximumWidth(60)
-        att_row.addWidget(self.att_tilt_edit)
-        att_row.addStretch(1)
-        lay.addLayout(att_row)
-
         box = QtWidgets.QGroupBox("Parameters")
         box_lay = QtWidgets.QVBoxLayout(box)
         box_lay.setContentsMargins(2, 2, 2, 2)
@@ -294,10 +336,12 @@ class HitlWidget(QtWidgets.QWidget):
         self.param_scroll.setWidgetResizable(True)
         self.param_scroll.setMinimumSize(250, 120)
         box_lay.addWidget(self.param_scroll)
+        self.param_scroll.setMinimumHeight(180)
         lay.addWidget(box, 1)
         self._build_param_grid(sm.SimParams)
 
-        lay.addWidget(self._build_fc_box())
+        lay.addWidget(self._build_vibration_box())
+        lay.addWidget(self._build_gps_box())
 
         # Which vibration profile the next run would use / the last run used.
         self.vibration_label = QtWidgets.QLabel("")
@@ -322,7 +366,175 @@ class HitlWidget(QtWidgets.QWidget):
         predict_scroll.setMinimumHeight(60)
         predict_scroll.setMaximumHeight(170)
         lay.addWidget(predict_scroll)
-        return left
+        self.synth_btn = QtWidgets.QPushButton("Synthesize IMU (build run)")
+        self.synth_btn.setToolTip("Build the run now: trajectory, 960 Hz IMU synthesis with the "
+                                  "vibration recordings and frame encoding. Start sim reuses it "
+                                  "while the source and parameters are unchanged.")
+        self.synth_btn.clicked.connect(self.synthesize)
+        lay.addWidget(self.synth_btn)
+        self.synth_label = QtWidgets.QLabel("Not built yet (Start sim builds it if needed)")
+        self.synth_label.setWordWrap(True)
+        self.synth_label.setStyleSheet("color: #555;")
+        lay.addWidget(self.synth_label)
+        return self._scroll_page(left)
+
+    def _build_vibration_box(self) -> QtWidgets.QGroupBox:
+        """Specific vibration recordings (CSV runs); empty = the profile above."""
+        box = QtWidgets.QGroupBox("Vibration recordings (CSV runs)")
+        box.setToolTip("Pick the thrust (body x) and lateral (body y/z) recordings for the "
+                       "960 Hz synthesis. Empty: the vibration_profile choice in Parameters.")
+        form = QtWidgets.QFormLayout(box)
+        form.setContentsMargins(4, 2, 4, 2)
+        self.vib_edits = {}
+        for key, label in (("vibration_thrust_file", "Thrust"), ("vibration_lateral_file", "Lateral")):
+            row = QtWidgets.QHBoxLayout()
+            edit = QtWidgets.QLineEdit(str(self.settings.get(key, "") or ""))
+            edit.setPlaceholderText("profile" if key.endswith("thrust_file") else "same as thrust")
+            edit.editingFinished.connect(self._vibration_changed)
+            browse = QtWidgets.QPushButton("…")
+            browse.setFixedWidth(28)
+            browse.clicked.connect(lambda _c=False, k=key: self.pick_vibration_file(k))
+            row.addWidget(edit, 1)
+            row.addWidget(browse)
+            form.addRow(label, row)
+            self.vib_edits[key] = edit
+        self.vib_fullscale_edit = QtWidgets.QLineEdit(str(self.settings.get("vibration_full_scale_g", 0.0)))
+        self.vib_fullscale_edit.setToolTip("g represented by sample value 1.0 (0 = the profile's, "
+                                           "or 150.67 g for picked files)")
+        self.vib_fullscale_edit.setMaximumWidth(80)
+        self.vib_fullscale_edit.editingFinished.connect(self._vibration_changed)
+        self.vib_edits["vibration_full_scale_g"] = self.vib_fullscale_edit
+        clear = QtWidgets.QPushButton("Use profile")
+        clear.clicked.connect(self.clear_vibration_files)
+        form.addRow("Full scale g", hbox_widget(self.vib_fullscale_edit, clear))
+        self.vib_box = box
+        return box
+
+    def _build_gps_box(self) -> QtWidgets.QGroupBox:
+        """gps-sdr-sim scenarios, offline check, HackRF static test, ephemeris."""
+        box = QtWidgets.QGroupBox("GPS simulation (gps-sdr-sim + HackRF)")
+        box.setToolTip("Transmit only into a closed RF path (coax and attenuators into the GPS "
+                       "antenna input, or a shielded box). Radiating L1 is illegal.")
+        form = QtWidgets.QFormLayout(box)
+        form.setContentsMargins(4, 2, 4, 2)
+        row = QtWidgets.QHBoxLayout()
+        self.rinex_edit = QtWidgets.QLineEdit(str(self.settings.get("gps_rinex", "") or ""))
+        self.rinex_edit.setPlaceholderText("newest in rf_tools/, else gps-sdr-sim's")
+        self.rinex_edit.editingFinished.connect(self._gps_settings_changed)
+        browse = QtWidgets.QPushButton("…")
+        browse.setFixedWidth(28)
+        browse.clicked.connect(self.pick_rinex)
+        row.addWidget(self.rinex_edit, 1)
+        row.addWidget(browse)
+        form.addRow("RINEX nav", row)
+        self.lead_in_edit = QtWidgets.QLineEdit(str(self.settings.get("gps_lead_in_s", gps_rf.DEFAULT_LEAD_IN_S)))
+        self.lead_in_edit.setMaximumWidth(60)
+        self.lead_in_edit.setToolTip("Static signal at the pad before sim time 0, for acquisition")
+        self.static_dur_edit = QtWidgets.QLineEdit(str(self.settings.get("gps_static_s", 180)))
+        self.static_dur_edit.setMaximumWidth(60)
+        form.addRow("Lead-in s / static s", hbox_widget(self.lead_in_edit, self.static_dur_edit))
+        self.tx_gain_spin = QtWidgets.QSpinBox()
+        self.tx_gain_spin.setRange(0, 47)
+        self.tx_gain_spin.setValue(int(self.settings.get("gps_tx_vga_db", 0)))
+        self.tx_gain_spin.setSuffix(" dB")
+        self.tx_amp_check = QtWidgets.QCheckBox("TX amp (+14 dB)")
+        self.tx_amp_check.setChecked(bool(self.settings.get("gps_tx_amp", False)))
+        for w in (self.tx_gain_spin, self.tx_amp_check):
+            (w.valueChanged if isinstance(w, QtWidgets.QSpinBox) else w.toggled).connect(
+                lambda _v: self._gps_settings_changed())
+        form.addRow("HackRF TX VGA", hbox_widget(self.tx_gain_spin, self.tx_amp_check))
+        self.btn_gps_flight = QtWidgets.QPushButton("Create flight GPS sim")
+        self.btn_gps_flight.setToolTip("gps-sdr-sim IQ file for the current source: lead-in at "
+                                       "the pad, then the trajectory (10 Hz motion)")
+        self.btn_gps_flight.clicked.connect(self.create_flight_gps)
+        self.btn_gps_static = QtWidgets.QPushButton("Create static GPS sim")
+        self.btn_gps_static.setToolTip("Fixed position at the launch site (static tests)")
+        self.btn_gps_static.clicked.connect(self.create_static_gps)
+        form.addRow(hbox_widget(self.btn_gps_flight, self.btn_gps_static))
+        self.scenario_combo = QtWidgets.QComboBox()
+        self.scenario_combo.setSizeAdjustPolicy(
+            QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.scenario_combo.setMinimumContentsLength(16)
+        self.scenario_combo.currentIndexChanged.connect(lambda _i: self._scenario_changed())
+        form.addRow("Scenario", self.scenario_combo)
+        self.btn_gps_verify = QtWidgets.QPushButton("Verify IQ")
+        self.btn_gps_verify.setToolTip("Acquire the C/A codes in the IQ file (offline, no RF)")
+        self.btn_gps_verify.clicked.connect(self.verify_gps)
+        self.btn_gps_static_test = QtWidgets.QPushButton("Static test (TX)")
+        self.btn_gps_static_test.setToolTip("Play a static scenario through the HackRF and check "
+                                            "Witness's fix (needs a connection; Witness not in HITL)")
+        self.btn_gps_static_test.clicked.connect(self.static_test)
+        self.btn_gps_upload = QtWidgets.QPushButton("Upload ephemeris")
+        self.btn_gps_upload.setToolTip("Send the scenario's ephemerides to Witness, which writes "
+                                       "them to the PX1120S (SkyTraq 0x41)")
+        self.btn_gps_upload.clicked.connect(self.upload_ephemeris)
+        self.btn_gps_cold = QtWidgets.QPushButton("GPS cold start")
+        self.btn_gps_cold.setToolTip("The receiver forgets its ephemerides, almanac, position and "
+                                     "time (leftovers from earlier scenarios), then Witness "
+                                     "reconfigures it. Pad Idle only.")
+        self.btn_gps_cold.clicked.connect(self.cold_start_gps)
+        form.addRow(hbox_widget(self.btn_gps_verify, self.btn_gps_static_test, self.btn_gps_upload))
+        form.addRow(hbox_widget(self.btn_gps_cold))
+        self.gps_label = QtWidgets.QLabel("")
+        self.gps_label.setWordWrap(True)
+        self.gps_label.setStyleSheet("color: #1f5fbf;")
+        form.addRow(self.gps_label)
+        self.gps_box = box
+        self.refresh_scenarios()
+        return box
+
+    def _build_run_page(self) -> QtWidgets.QWidget:
+        page = QtWidgets.QWidget()
+        lay = QtWidgets.QVBoxLayout(page)
+        lay.setContentsMargins(0, 0, 4, 0)
+        gps = QtWidgets.QGroupBox("GPS source")
+        gl = QtWidgets.QVBoxLayout(gps)
+        gl.setContentsMargins(4, 2, 4, 2)
+        self.gps_source_combo = QtWidgets.QComboBox()
+        self.gps_source_combo.addItems([GPS_SIMULATED, GPS_RF])
+        self.gps_source_combo.setCurrentText(GPS_RF if self.settings.get("gps_source") == "rf"
+                                             else GPS_SIMULATED)
+        self.gps_source_combo.currentIndexChanged.connect(lambda _i: self._gps_settings_changed())
+        gl.addWidget(self.gps_source_combo)
+        self.upload_eph_check = QtWidgets.QCheckBox("Upload the scenario's ephemerides before the run")
+        self.upload_eph_check.setChecked(bool(self.settings.get("gps_upload_ephemeris", True)))
+        self.upload_eph_check.toggled.connect(lambda _v: self._gps_settings_changed())
+        gl.addWidget(self.upload_eph_check)
+        self.cold_start_check = QtWidgets.QCheckBox("Cold-start the GPS before RF runs and static tests")
+        self.cold_start_check.setToolTip("Clears ephemerides, almanac, position and time left in the "
+                                         "receiver by earlier scenarios")
+        self.cold_start_check.setChecked(bool(self.settings.get("gps_cold_start", True)))
+        self.cold_start_check.toggled.connect(lambda _v: self._gps_settings_changed())
+        gl.addWidget(self.cold_start_check)
+        self.run_gps_label = QtWidgets.QLabel("")
+        self.run_gps_label.setWordWrap(True)
+        self.run_gps_label.setStyleSheet("color: #555;")
+        gl.addWidget(self.run_gps_label)
+        lay.addWidget(gps)
+
+        att_row = QtWidgets.QHBoxLayout()
+        att_row.addWidget(QtWidgets.QLabel("Final tilt max deg"))
+        self.att_tilt_edit = QtWidgets.QLineEdit(
+            str(self.settings.get("att_final_tilt_deg", 5.0)))
+        self.att_tilt_edit.setMaximumWidth(60)
+        att_row.addWidget(self.att_tilt_edit)
+        att_row.addStretch(1)
+        lay.addLayout(att_row)
+        lay.addWidget(self._build_fc_box())
+        rep_row = QtWidgets.QHBoxLayout()
+        self.report_check = QtWidgets.QCheckBox("Write report.pdf after each run")
+        self.report_check.setChecked(bool(self.settings.get("make_report", True)))
+        self.report_check.toggled.connect(self._report_changed)
+        self.session.make_report = self.report_check.isChecked()
+        self.open_report_btn = QtWidgets.QPushButton("Open last report")
+        self.open_report_btn.setEnabled(False)
+        self.open_report_btn.clicked.connect(self.open_report)
+        rep_row.addWidget(self.report_check)
+        rep_row.addWidget(self.open_report_btn)
+        lay.addLayout(rep_row)
+        lay.addStretch(1)
+        self._update_run_gps_label()
+        return self._scroll_page(page)
 
     def _build_fc_box(self) -> QtWidgets.QGroupBox:
         """FC flash log fetch through the bench Pi after each run."""
@@ -470,7 +682,7 @@ class HitlWidget(QtWidgets.QWidget):
         form.setContentsMargins(2, 2, 2, 2)
         form.setVerticalSpacing(2)
         for f in dataclasses.fields(cls):
-            if f.name == "csv_path":
+            if f.name == "csv_path" or f.name in VIB_FILE_FIELDS:
                 continue
             t = str(f.type)
             self.param_types[f.name] = t
@@ -557,8 +769,39 @@ class HitlWidget(QtWidgets.QWidget):
                 except ValueError:
                     raise ValueError(f"bad value for {name}: {raw!r}")
         if self.param_cls is tc.CsvParams:
+            values.update(self.vibration_files())
             return tc.CsvParams(csv_path=self.csv_path or "", **values)
         return sm.SimParams(**values)
+
+    # ------------------------------------------------------- vibration files
+    def vibration_files(self) -> dict:
+        raw = self.vib_fullscale_edit.text().strip() or "0"
+        try:
+            full_scale = float(raw)
+        except ValueError:
+            raise ValueError(f"bad vibration full scale g: {raw!r}")
+        return {"vibration_thrust_file": self.vib_edits["vibration_thrust_file"].text().strip(),
+                "vibration_lateral_file": self.vib_edits["vibration_lateral_file"].text().strip(),
+                "vibration_full_scale_g": full_scale}
+
+    def pick_vibration_file(self, key: str):
+        current = self.vib_edits[key].text().strip()
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Vibration recording", os.path.dirname(current) if current else hg.VIBRATION_DIR,
+            AUDIO_FILTER)
+        if path:
+            self.vib_edits[key].setText(path)
+            self._vibration_changed()
+
+    def set_vibration_files(self, thrust: str = "", lateral: str = "", full_scale_g: float = 0.0):
+        """Programmatic equivalent of the file pickers (tests, scripts)."""
+        self.vib_edits["vibration_thrust_file"].setText(thrust)
+        self.vib_edits["vibration_lateral_file"].setText(lateral)
+        self.vib_fullscale_edit.setText(str(full_scale_g))
+        self._vibration_changed()
+
+    def clear_vibration_files(self):
+        self.set_vibration_files("", "", 0.0)
 
     def _att_thresholds(self) -> dict:
         raw = self.att_tilt_edit.text().strip()
@@ -606,7 +849,10 @@ class HitlWidget(QtWidgets.QWidget):
             return
         if isinstance(params, tc.CsvParams):
             self.settings.update(vibration_profile=params.vibration_profile,
-                                 vibration_scale=params.vibration_scale)
+                                 vibration_scale=params.vibration_scale,
+                                 vibration_thrust_file=params.vibration_thrust_file,
+                                 vibration_lateral_file=params.vibration_lateral_file,
+                                 vibration_full_scale_g=params.vibration_full_scale_g)
             hg.save_settings(self.settings, self.settings_path)
         self.predict()
 
@@ -729,18 +975,74 @@ class HitlWidget(QtWidgets.QWidget):
             self.settings.update(vibration_profile=params.vibration_profile,
                                  vibration_scale=params.vibration_scale)
         hg.save_settings(self.settings, self.settings_path)
-        label = (hg.CSV_SOURCE + " " + os.path.basename(self.csv_path)
-                 if self.csv_path else self.preset_combo.currentText())
+        label = self._source_label()
+        try:
+            gps = self._gps_choice()
+        except ValueError as exc:
+            self.append_log(f"[tool] {exc}")
+            return
+        sig = run_signature(params, label, tol, th)
+        session = self.session
+        cached = self.prepared_run if self.prepared_run and self.prepared_run[0] == sig else None
         self._preparing = True
-        self.append_log(f"[tool] building run: {label}")
+        if cached is not None:
+            self.append_log(f"[tool] using the prepared run: {label}")
+            run = cached[1]
+            self.prepared_run = None       # a RunState is used once
+        else:
+            self.append_log(f"[tool] building run: {label}")
+
+        def build():
+            r = run if cached is not None else session.prepare_run(
+                params, preset=label, tolerance_s=tol, att_thresholds=th)
+            if gps is not None:
+                session._prepare_gps(r, gps)
+            return r
         # CSV parsing, 960 Hz IMU synthesis and 0x0E frame encoding take
         # seconds; they run before streaming starts, off the GUI thread.
+        self._run_in_worker("Building run (960 Hz IMU synthesis)", build, self._run_prepared)
+
+    def _source_label(self) -> str:
+        return (hg.CSV_SOURCE + " " + os.path.basename(self.csv_path)
+                if self.csv_path else self.preset_combo.currentText())
+
+    def synthesize(self):
+        """Preparation: build the run (IMU synthesis) now; Start reuses it."""
+        if self._preparing:
+            return
+        try:
+            params = self.read_params()
+            tol = float(self.tol_edit.text())
+            th = self._att_thresholds()
+        except ValueError as exc:
+            self.append_log(f"[tool] {exc}")
+            return
+        label = self._source_label()
+        sig = run_signature(params, label, tol, th)
         session = self.session
-        self._run_in_worker(
-            "Building run (960 Hz IMU synthesis)",
-            lambda: session.prepare_run(params, preset=label, tolerance_s=tol,
-                                        att_thresholds=th),
-            self._run_prepared)
+        self._preparing = True
+        self.synth_label.setText("Building…")
+
+        def done(run, error):
+            self._preparing = False
+            if error is not None:
+                self.synth_label.setText(f"Build failed: {error}")
+                self.append_log(f"[tool] cannot build run: {error}")
+                self.prepared_run = None
+            else:
+                self.prepared_run = (sig, run)
+                n_imu = len(run.imu_frames)
+                lines = [f"Built: {len(run.frames)} 0x0C frames ({run.samples[-1].t_ms / 1000:.1f} s)"
+                         + (f", {n_imu} 0x0E IMU frames" if n_imu else "")]
+                if run.csv_report:
+                    lines += hs.HitlSession.imu_summary(run)
+                self.synth_label.setText("\n".join(lines))
+                for line in lines:
+                    self.append_log("[imu] " + line)
+            self._refresh_buttons()
+        self._run_in_worker("Synthesizing IMU", lambda: session.prepare_run(
+            params, preset=label, tolerance_s=tol, att_thresholds=th), done)
+        self._refresh_buttons()
 
     def _run_prepared(self, run, error):
         self._preparing = False
@@ -748,6 +1050,9 @@ class HitlWidget(QtWidgets.QWidget):
             self.append_log(f"[tool] cannot build run: {error}")
             self._refresh_buttons()
             return
+        if run.gps_mode == "rf":
+            self.append_log(f"[gps] RF GPS: scenario {run.gps_scenario.folder.name}, "
+                            f"{run.gps_scenario.lead_in_s:.0f} s lead-in before sim time 0")
         if run.csv_report:
             for line in tc.format_report(run.csv_report).splitlines():
                 self.append_log("[csv] " + line)
@@ -763,6 +1068,287 @@ class HitlWidget(QtWidgets.QWidget):
         self.session.stop_run("stopped by user")
         self._refresh_buttons()
 
+    # ------------------------------------------------------------- GPS sim
+    def _gps_settings_changed(self):
+        try:
+            lead = float(self.lead_in_edit.text())
+            static_s = float(self.static_dur_edit.text())
+        except ValueError:
+            lead, static_s = gps_rf.DEFAULT_LEAD_IN_S, 180.0
+        self.settings.update(gps_rinex=self.rinex_edit.text().strip(), gps_lead_in_s=lead,
+                             gps_static_s=static_s, gps_tx_vga_db=self.tx_gain_spin.value(),
+                             gps_tx_amp=self.tx_amp_check.isChecked(),
+                             gps_source="rf" if self.gps_source_combo.currentText() == GPS_RF else "sim",
+                             gps_upload_ephemeris=self.upload_eph_check.isChecked(),
+                             gps_cold_start=self.cold_start_check.isChecked())
+        hg.save_settings(self.settings, self.settings_path)
+        self._update_run_gps_label()
+
+    def pick_rinex(self):
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "RINEX navigation file", str(gps_rf.RF_DIR),
+            "RINEX nav (*.??n *.??N *.rnx *.nav);;All files (*.*)")
+        if path:
+            self.rinex_edit.setText(path)
+            self._gps_settings_changed()
+
+    def refresh_scenarios(self, select: str | None = None):
+        current = select or (self.scenario_combo.currentData() or self.settings.get("gps_scenario"))
+        self.scenario_combo.blockSignals(True)
+        self.scenario_combo.clear()
+        self._scenarios = {str(sc.folder): sc for sc in gps_rf.list_scenarios()}
+        for key, sc in sorted(self._scenarios.items(), reverse=True):
+            self.scenario_combo.addItem(f"{sc.folder.name} ({sc.kind}, {sc.duration_s:.0f} s)", key)
+        index = self.scenario_combo.findData(current) if current else -1
+        self.scenario_combo.setCurrentIndex(max(index, 0) if self.scenario_combo.count() else -1)
+        self.scenario_combo.blockSignals(False)
+        self._scenario_changed()
+
+    def selected_scenario(self):
+        key = self.scenario_combo.currentData()
+        return getattr(self, "_scenarios", {}).get(key) if key else None
+
+    def _scenario_changed(self):
+        sc = self.selected_scenario()
+        if sc is not None:
+            self.settings["gps_scenario"] = str(sc.folder)
+            hg.save_settings(self.settings, self.settings_path)
+            self.gps_label.setText(
+                f"{sc.kind}: {sc.source or ''}; start {sc.start_gps} GPS, {sc.duration_s:.0f} s, "
+                f"lead-in {sc.lead_in_s:.0f} s, {len(sc.visible_prns)} SVs in view, geoid N "
+                f"{sc.geoid_sep_m:+.1f} m, {sc.iq_bytes / 1e9:.2f} GB"
+                + (f"; IQ check: {len(sc.verify.get('detected', []))} detected" if sc.verify else ""))
+        else:
+            self.gps_label.setText("No GPS scenarios yet")
+        if hasattr(self, "run_gps_label"):
+            self._update_run_gps_label()
+
+    def _update_run_gps_label(self):
+        if not hasattr(self, "gps_source_combo"):
+            return
+        if self.gps_source_combo.currentText() != GPS_RF:
+            self.run_gps_label.setText("Witness uses the GPS fields of the 0x0C frames.")
+            return
+        sc = self.selected_scenario()
+        exe = gps_rf.hackrf_transfer_path(self.settings.get("hackrf_transfer") or None)
+        self.run_gps_label.setText(
+            ("Scenario: " + (f"{sc.folder.name} ({sc.kind})" if sc else "none selected (Preparation)"))
+            + ("" if exe else "\nhackrf_transfer not found: put it in HITL/rf_tools/bin or on PATH"))
+
+    def _gps_choice(self) -> dict | None:
+        if self.gps_source_combo.currentText() != GPS_RF:
+            return None
+        sc = self.selected_scenario()
+        if sc is None:
+            raise ValueError("RF GPS selected but no scenario: create one under Preparation")
+        return {"scenario": sc, "tx_vga_db": self.tx_gain_spin.value(),
+                "amp": self.tx_amp_check.isChecked(),
+                "exe": self.settings.get("hackrf_transfer") or None,
+                "upload_ephemeris": self.upload_eph_check.isChecked(),
+                "cold_start": self.cold_start_check.isChecked()}
+
+    def _gps_progress(self, total_s):
+        """progress callback for gps-sdr-sim (worker thread -> label via log)."""
+        state = {"last": -10.0}
+
+        def cb(t):
+            if t - state["last"] >= 30:
+                state["last"] = t
+                self.session.events.put(("log", f"[gps] gps-sdr-sim {t:.0f}/{total_s:.0f} s"))
+        return cb
+
+    def create_flight_gps(self):
+        if self._preparing:
+            return
+        try:
+            params = self.read_params()
+            lead = float(self.lead_in_edit.text())
+        except ValueError as exc:
+            self.append_log(f"[tool] {exc}")
+            return
+        rinex = self.rinex_edit.text().strip() or None
+        label = self._source_label()
+        cancel = self._gps_cancel
+        cancel.clear()
+
+        def work():
+            if isinstance(params, tc.CsvParams):
+                samples = tc.build(params).samples
+            else:
+                samples = sm.generate(params)
+            total = lead + samples[-1].t_ms / 1000
+            return gps_rf.create_flight(
+                samples, site_lat=params.lat_deg, site_lon=params.lon_deg,
+                site_alt_msl=params.site_alt_msl_m, lead_in_s=lead, rinex=rinex,
+                name="flight-" + os.path.splitext(os.path.basename(self.csv_path or label))[0],
+                source=label, progress=self._gps_progress(total), cancel=cancel)
+
+        def done(sc, error):
+            self._preparing = False
+            if error is not None:
+                self.append_log(f"[gps] flight scenario failed: {error}")
+            else:
+                self.append_log(f"[gps] flight scenario {sc.folder.name}: {sc.duration_s:.0f} s, "
+                                f"{len(sc.visible_prns)} SVs in view, {sc.iq_bytes / 1e9:.2f} GB, "
+                                f"geoid N {sc.geoid_sep_m:+.1f} m"
+                                + ("" if gps_rf.geoid_separation(sc.lat_deg, sc.lon_deg) is not None
+                                   else " (no static test at this site yet: altitude offset unknown)"))
+                self.refresh_scenarios(str(sc.folder))
+            self._refresh_buttons()
+        self._preparing = True
+        self._run_in_worker("Creating flight GPS sim (gps-sdr-sim)", work, done)
+
+    def create_static_gps(self):
+        if self._preparing:
+            return
+        try:
+            params = self.read_params()
+            duration = float(self.static_dur_edit.text())
+        except ValueError as exc:
+            self.append_log(f"[tool] {exc}")
+            return
+        rinex = self.rinex_edit.text().strip() or None
+        cancel = self._gps_cancel
+        cancel.clear()
+
+        def done(sc, error):
+            self._preparing = False
+            if error is not None:
+                self.append_log(f"[gps] static scenario failed: {error}")
+            else:
+                self.append_log(f"[gps] static scenario {sc.folder.name}: {sc.duration_s:.0f} s at "
+                                f"{sc.lat_deg:.5f}, {sc.lon_deg:.5f}, {sc.alt_msl_m:.0f} m MSL; "
+                                f"{len(sc.visible_prns)} SVs in view")
+                self.refresh_scenarios(str(sc.folder))
+            self._refresh_buttons()
+        self._preparing = True
+        self._run_in_worker("Creating static GPS sim (gps-sdr-sim)", lambda: gps_rf.create_static(
+            params.lat_deg, params.lon_deg, params.site_alt_msl_m, duration, rinex=rinex,
+            name="static", progress=self._gps_progress(duration), cancel=cancel), done)
+
+    def verify_gps(self):
+        sc = self.selected_scenario()
+        if sc is None or self._preparing:
+            return
+
+        def work():
+            offset = min(max(sc.lead_in_s, 2.0), max(sc.duration_s - 1, 0))
+            r = gps_rf.verify_iq(sc.iq, sc.sample_rate, offset_s=min(2.0, offset))
+            sc.verify = {"detected": r["detected"], "visible": sc.visible_prns,
+                         "ratio": {str(k): round(v, 1) for k, v in r["ratio"].items()}}
+            sc.save()
+            return r
+
+        def done(r, error):
+            self._preparing = False
+            if error is not None:
+                self.append_log(f"[gps] IQ check failed: {error}")
+            else:
+                missing = sorted(set(sc.visible_prns) - set(r["detected"]))
+                extra = sorted(set(r["detected"]) - set(sc.visible_prns))
+                ok = not missing and not extra
+                self.append_log(f"[gps] IQ check {'PASS' if ok else 'FAIL'}: detected {r['detected']}, "
+                                f"in view {sc.visible_prns}"
+                                + (f", missing {missing}" if missing else "")
+                                + (f", unexpected {extra}" if extra else ""))
+                self._scenario_changed()
+            self._refresh_buttons()
+        self._preparing = True
+        self._run_in_worker("Checking IQ (C/A acquisition)", work, done)
+
+    def upload_ephemeris(self):
+        sc = self.selected_scenario()
+        if sc is None:
+            self.append_log("[gps] no scenario selected")
+            return
+        try:
+            frames, prns = gps_rf.ephemeris_frames(sc)
+            self.session.upload_assist(frames)
+            self.session.upload_assist([__import__("gps_assist").status_frame()], pace_s=0)
+            self.append_log(f"[gps] ephemeris for {len(prns)} SVs sent ({len(frames)} frames); "
+                            "Witness logs 'GPS assist done: N/N acknowledged'")
+        except (OSError, ValueError, ConnectionError) as exc:
+            self.append_log(f"[gps] ephemeris upload failed: {exc}")
+
+    def cold_start_gps(self):
+        """Cold-start Witness's GPS receiver on a worker (waits for the
+        reconfiguration log line)."""
+        if not self.session.connected or self._preparing:
+            self.append_log("[gps] connect to Witness first")
+            return
+        session = self.session
+
+        def done(ok, error):
+            self._preparing = False
+            if error is not None:
+                self.append_log(f"[gps] cold start failed: {error}")
+            else:
+                self.append_log("[gps] cold start done; receiver reconfigured" if ok else
+                                "[gps] cold start not confirmed (Witness must be in Pad Idle)")
+            self._refresh_buttons()
+        self._preparing = True
+        self._run_in_worker("GPS cold start", session.cold_start_gps, done)
+
+    def static_test(self):
+        """Play the selected static scenario and judge Witness's fix."""
+        sc = self.selected_scenario()
+        if sc is None or self._preparing:
+            return
+        if sc.kind != "static":
+            self.append_log("[gps] select a static scenario for the static test")
+            return
+        if not self.session.connected:
+            self.append_log("[gps] connect to Witness first (the test reads its NMEA)")
+            return
+        session, cancel = self.session, self._gps_cancel
+        cancel.clear()
+        session.nmea_since()        # drop old lines
+        upload = session.upload_assist if self.upload_eph_check.isChecked() else None
+        cold = self.cold_start_check.isChecked()
+        player = gps_rf.HackRFPlayer(sc.iq, sample_rate=sc.sample_rate,
+                                     tx_vga_db=self.tx_gain_spin.value(),
+                                     amp=self.tx_amp_check.isChecked(),
+                                     exe=self.settings.get("hackrf_transfer") or None,
+                                     log=lambda m: session.events.put(("log", "[gps] " + m)))
+
+        def work():
+            if cold and not session.cold_start_gps():
+                raise RuntimeError("GPS cold start not confirmed (Witness must be in Pad Idle)")
+            player.start()
+            return gps_rf.static_test(sc, session.nmea_since, player=player,
+                                      timeout_s=min(sc.duration_s - 5, 240),
+                                      log=lambda m: session.events.put(("log", "[gps] " + m)),
+                                      cancel=cancel, upload=upload)
+
+        def done(result, error):
+            player.stop()
+            self._preparing = False
+            self._static_running = False
+            if error is not None:
+                self.append_log(f"[gps] static test failed to run: {error}")
+            else:
+                self.append_log(f"[gps] static test {result.message}")
+                if not result.passed:
+                    self.show_banner("GPS static test FAILED: " + result.message)
+                self._scenario_changed()
+            self._refresh_buttons()
+        self._preparing = True
+        self._static_running = True
+        self._run_in_worker("GPS static test (HackRF TX)", work, done)
+        self._refresh_buttons()
+
+    # -------------------------------------------------------------- report
+    def _report_changed(self, on):
+        self.session.make_report = bool(on)
+        self.settings["make_report"] = bool(on)
+        hg.save_settings(self.settings, self.settings_path)
+
+    def open_report(self):
+        run = self.session.run
+        path = (run.result or {}).get("report_pdf") if run else None
+        if path and os.path.exists(path):
+            QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(path))
+
     def _safe(self, fn):
         try:
             fn()
@@ -775,6 +1361,7 @@ class HitlWidget(QtWidgets.QWidget):
             return
         self._closing = True
         self._closing_evt.set()
+        self._gps_cancel.set()
         # Results of unfinished jobs are dropped (_job_finished checks
         # _closing); the entries stay so their workers' signals stay alive.
         self._busy.clear()
@@ -825,7 +1412,18 @@ class HitlWidget(QtWidgets.QWidget):
                       (self.btn_exit, conn),
                       (self.load_csv_btn, not running and not busy),
                       (self.preset_combo, not running and not busy),
-                      (self.predict_btn, not running and not busy)):
+                      (self.predict_btn, not running and not busy),
+                      (self.synth_btn, not running and not busy),
+                      (self.btn_gps_flight, not running and not busy),
+                      (self.btn_gps_static, not running and not busy),
+                      (self.btn_gps_verify, not running and not busy
+                       and self.selected_scenario() is not None),
+                      (self.btn_gps_static_test, conn and not running and not busy
+                       and self.selected_scenario() is not None),
+                      (self.btn_gps_upload, conn and not running and not busy
+                       and self.selected_scenario() is not None),
+                      (self.btn_gps_cold, conn and not running and not busy),
+                      (self.gps_source_combo, not running and not busy)):
             if b.isEnabled() != bool(ok):
                 b.setEnabled(bool(ok))
 
@@ -923,6 +1521,7 @@ class HitlWidget(QtWidgets.QWidget):
         if not run or not run.result:
             return
         result = run.result
+        self.open_report_btn.setEnabled(bool(result.get("report_pdf")))
         for line in hs.format_table(result).splitlines():
             self.append_log("[result] " + line)
         for line in hg.result_lines(run, result):

@@ -24,7 +24,7 @@
 // Broken-out MCU UART1 interface (115200 baud, 8N1 by default).
 // Normal wiring is ESP32 RX = GPIO4, TX = GPIO5. Set to 1 to exchange them for
 // a GPS harness or breakout whose RX/TX are crossed the other way.
-#define HW_MCU_UART_SWAP_RX_TX 1
+#define HW_MCU_UART_SWAP_RX_TX 0
 #if HW_MCU_UART_SWAP_RX_TX
 #define HW_PIN_MCU_UART_TX    GPIO_NUM_4
 #define HW_PIN_MCU_UART_RX    GPIO_NUM_5

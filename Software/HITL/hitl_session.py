@@ -14,6 +14,7 @@ import queue
 import socket
 import threading
 import time
+from collections import deque
 from dataclasses import dataclass, field
 
 import attitude as att
@@ -121,6 +122,13 @@ class RunState:
     # Witness 0xE0 estimates for the observed-vs-expected comparison.
     debug_records: list = field(default_factory=list)  # (sim s, packet)
     comparison: dict | None = None
+    # GPS source: "sim" (0x0C GPS fields) or "rf" (Witness's own receiver,
+    # fed a gps-sdr-sim scenario by a HackRF; see gps_rf.py).
+    gps_mode: str = "sim"
+    gps_scenario: object = None        # gps_rf.Scenario
+    gps_tx: dict = field(default_factory=dict)   # tx_vga_db, amp, exe, upload_ephemeris
+    gps_report: dict = field(default_factory=dict)
+    nmea_records: list = field(default_factory=list)  # (sim s, NMEA line)
 
 
 class RunRecorder:
@@ -384,6 +392,13 @@ class HitlSession:
         self._hitl_off_count = 0
         self._entered = False
         self._host = None
+        self._nmea_tap: deque = deque(maxlen=20000)
+        # Set when Witness logs that its GPS receiver is configured
+        # ("... airborne 4 g mode and N Hz GGA+RMC confirmed ...").
+        self._gps_ready = threading.Event()
+        # Write runs/<timestamp>/report.pdf after every recorded run.
+        self.make_report = True
+        self._gps_player = None
         # End-of-run FC log fetch through the bench Pi (hitl_outputs.py):
         # {"enabled", "pi_host", "pi_user", "pi_key", "restart", "wait_s"}.
         self.fc_log_config: dict = {}
@@ -523,8 +538,48 @@ class HitlSession:
         run = self.run
         return run.sim_ms / 1000.0 if run is not None else 0.0
 
+    def nmea_since(self) -> list:
+        """NMEA lines received since the previous call (static tests)."""
+        out = []
+        while self._nmea_tap:
+            out.append(self._nmea_tap.popleft())
+        return out
+
+    def upload_assist(self, frames, pace_s: float = 0.003) -> int:
+        """Send GPS assistance frames (gps_assist.assist_frames); every frame
+        is checked to be an assistance opcode. Returns the number sent."""
+        for frame in frames:
+            if not hp.is_assist_frame(frame):
+                raise ValueError("refusing to send a non-assistance frame: " + frame.hex(" "))
+        for frame in frames:
+            self._send(frame)
+            if pace_s:
+                time.sleep(pace_s)
+        self.log(f"sent GPS ephemeris upload ({len(frames)} frames)")
+        return len(frames)
+
+    def cold_start_gps(self, timeout: float = 12.0) -> bool:
+        """Cold-start Witness's GPS receiver (it forgets ephemerides, almanac,
+        position and time; Witness reconfigures it). Waits until Witness logs
+        the receiver as configured again, so an ephemeris upload right after
+        is accepted. Witness refuses it outside Pad Idle."""
+        self._gps_ready.clear()
+        self.send_command(hp.CMD_GPS_COLD_START)
+        ok = self._gps_ready.wait(timeout)
+        self.log("GPS receiver cold-started and reconfigured" if ok else
+                 f"GPS receiver not reconfigured within {timeout:.0f} s of the cold start "
+                 "(not in Pad Idle, or no receiver)")
+        return ok
+
     def _on_text(self, line: str):
+        if "GGA+RMC confirmed" in line:
+            self._gps_ready.set()
         nmea = hp.is_nmea(line)
+        if nmea:
+            self._nmea_tap.append(line)
+            run = self.run
+            if run is not None and run.running and run.gps_mode == "rf":
+                run.nmea_records.append((self._sim_s(), line))
         run = self.run
         if self._recorder:
             self._recorder.text(self.now(), run.sim_ms if run else 0, line,
@@ -709,18 +764,57 @@ class HitlSession:
     def prepare_run(self, params, preset: str = "custom",
                     tolerance_s: float = 1.0, time_scale: int = 1,
                     att_thresholds: dict | None = None,
-                    att_latency_ms: int = 0) -> RunState:
-        """Build the frames for a preset (SimParams) or CSV (CsvParams)."""
+                    att_latency_ms: int = 0, gps: dict | None = None) -> RunState:
+        """Build the frames for a preset (SimParams) or CSV (CsvParams).
+
+        gps: None for simulated GPS in the 0x0C frames, or {"scenario":
+        gps_rf.Scenario, "tx_vga_db", "amp", "exe", "upload_ephemeris"} for an
+        RF GPS run (Witness uses its own receiver; the HackRF plays the
+        scenario, starting its lead-in before sim time 0)."""
         if isinstance(params, tc.CsvParams):
-            return self._prepare_csv(params, preset, tolerance_s, time_scale,
-                                     att_thresholds, att_latency_ms)
-        samples = sm.generate(params)
-        frames = [hp.encode_hitl(s.hitl) for s in samples]
-        expected = sm.predict_transitions(samples)
-        return RunState(params=params, preset=preset, samples=samples,
-                        frames=frames, expected=expected,
-                        tolerance_s=tolerance_s,
-                        time_scale=max(1, int(time_scale)))
+            run = self._prepare_csv(params, preset, tolerance_s, time_scale,
+                                    att_thresholds, att_latency_ms)
+        else:
+            samples = sm.generate(params)
+            frames = [hp.encode_hitl(s.hitl) for s in samples]
+            expected = sm.predict_transitions(samples)
+            # The 10 Hz 0xE0 estimates and the expected-state track give
+            # preset runs the same comparison files and report as CSV runs.
+            run = RunState(params=params, preset=preset, samples=samples,
+                           frames=frames, expected=expected,
+                           tolerance_s=tolerance_s,
+                           time_scale=max(1, int(time_scale)),
+                           state_track=sm.predict_state_track(samples),
+                           request_debug=True)
+        if gps and gps.get("scenario") is not None:
+            self._prepare_gps(run, gps)
+        return run
+
+    @staticmethod
+    def _prepare_gps(run: RunState, gps: dict):
+        sc = gps["scenario"]
+        if run.time_scale != 1:
+            raise ValueError("RF GPS runs are real time only")
+        if getattr(sc, "kind", "") != "flight":
+            raise ValueError(f"GPS scenario {sc.folder.name} is a {sc.kind} scenario; "
+                             "a run needs a flight scenario made from this trajectory")
+        run_s = run.samples[-1].t_ms / 1000.0 if run.samples else 0.0
+        if sc.duration_s + 0.05 < sc.lead_in_s + run_s:
+            raise ValueError(f"GPS scenario {sc.folder.name} lasts {sc.duration_s:.0f} s but this "
+                             f"run needs {sc.lead_in_s + run_s:.0f} s (lead-in + run); "
+                             "create it again from this source")
+        first = run.samples[0].hitl
+        import gps_rf
+        off = gps_rf.horizontal_error_m(sc.lat_deg, sc.lon_deg, first.lat_deg, first.lon_deg)
+        if off > 50:
+            raise ValueError(f"GPS scenario {sc.folder.name} starts {off:.0f} m from this run's "
+                             "launch site; create it again from this source")
+        run.gps_mode = "rf"
+        run.gps_scenario = sc
+        run.gps_tx = {k: gps[k] for k in ("tx_vga_db", "amp", "exe", "upload_ephemeris", "cold_start")
+                      if k in gps}
+        run.frames = [hp.encode_hitl(s.hitl, hp.HITL_STATUS_GPS_FROM_RECEIVER)
+                      for s in run.samples]
 
     def _prepare_csv(self, params, preset, tolerance_s, time_scale,
                      att_thresholds, att_latency_ms) -> RunState:
@@ -773,7 +867,10 @@ class HitlSession:
                 "install numpy scipy soundfile (or set imu_synthesis=false for "
                 "100 Hz IMU values)")
         import numpy as np
-        profile = ims.find_profile(params.csv_path, getattr(params, "vibration_profile", ""))
+        profile = ims.resolve_profile(params.csv_path, getattr(params, "vibration_profile", ""),
+                                      getattr(params, "vibration_thrust_file", ""),
+                                      getattr(params, "vibration_lateral_file", ""),
+                                      getattr(params, "vibration_full_scale_g", 0.0))
         stream = ims.from_samples(run.samples, ims.ImuSynthParams(
             seed=params.seed, vibration_scale=params.vibration_scale,
             noise_scale=params.imu_noise_scale,
@@ -859,15 +956,84 @@ class HitlSession:
         self._sender.join(timeout)
         return not self._sender.is_alive()
 
+    def _gps_lead_in(self, run: RunState):
+        """RF GPS runs: start the HackRF on the scenario, upload the
+        ephemerides, and wait out the lead-in (receiver acquisition at the
+        pad). Returns the perf_counter time of sim t = 0, or None to start now."""
+        import gps_rf
+        sc = run.gps_scenario
+        tx = run.gps_tx
+        player = gps_rf.HackRFPlayer(sc.iq, sample_rate=sc.sample_rate,
+                                     tx_vga_db=tx.get("tx_vga_db", 0), amp=tx.get("amp", False),
+                                     exe=tx.get("exe"), log=self.log)
+        run.gps_report = {"scenario": str(sc.folder), "lead_in_s": sc.lead_in_s,
+                          "tx_vga_db": player.tx_vga_db, "amp": player.amp}
+        if tx.get("cold_start", False):
+            # Clear leftovers from earlier scenarios before the HackRF starts.
+            run.gps_report["cold_start"] = self.cold_start_gps()
+            if not run.gps_report["cold_start"]:
+                run.warnings.append("GPS cold start was not confirmed; stored navigation "
+                                    "data may slow the first fix")
+        self._gps_player = player
+        player.start()
+        if not player.wait_streaming(15):
+            raise RuntimeError("HackRF did not start streaming: "
+                               + " | ".join(player.output()[-5:]))
+        started_perf = time.perf_counter() - player.elapsed_s()
+        self.log(f"HackRF streaming {sc.folder.name}: {sc.lead_in_s:.0f} s static lead-in "
+                 "at the pad, then the trajectory")
+        if tx.get("upload_ephemeris", True):
+            frames, prns = gps_rf.ephemeris_frames(sc, player.elapsed_s())
+            self.upload_assist(frames)
+            run.gps_report["ephemeris_prns"] = prns
+        fix_at = None
+        last_note = 0.0
+        while not self._stop_run.is_set():
+            elapsed = player.elapsed_s()
+            if elapsed >= sc.lead_in_s - 0.5:
+                break
+            if not player.running:
+                raise RuntimeError("HackRF stopped during the lead-in: "
+                                   + " | ".join(player.output()[-5:]))
+            if fix_at is None and self.view.gps_locked:
+                fix_at = elapsed
+                self.log(f"GPS fix from the RF simulation after {elapsed:.1f} s "
+                         f"({self.view.gps_sats} satellites)")
+            if elapsed - last_note >= 15:
+                last_note = elapsed
+                self.log(f"lead-in {elapsed:.0f}/{sc.lead_in_s:.0f} s: "
+                         f"{'fix' if self.view.gps_locked else 'no fix yet'}, "
+                         f"{self.view.gps_sats or 0} satellites")
+            time.sleep(0.1)
+        run.gps_report["first_fix_s"] = fix_at
+        if fix_at is None:
+            msg = (f"no GPS fix during the {sc.lead_in_s:.0f} s lead-in; the run continues "
+                   "but GPS will join late (check attenuation / TX gain)")
+            run.warnings.append(msg)
+            self._warn(msg)
+        return started_perf + sc.lead_in_s
+
     def _send_loop(self, run: RunState, abort_on_no_hitl: bool):
         try:
+            t0_perf = None
+            if run.gps_mode == "rf":
+                t0_perf = self._gps_lead_in(run)
+                if self._stop_run.is_set():
+                    raise RuntimeError("stopped during the GPS lead-in")
+                # HITL ENTER goes out one tick before sim t = 0.
+                delay = t0_perf - sm.DT_S - time.perf_counter()
+                if delay > 0:
+                    time.sleep(delay)
             if not self.view.hitl_active:
                 self.send_command(hp.CMD_HITL_ENTER)
             else:
                 run.hitl_seen = True
             period = sm.DT_S
             per_tick = run.time_scale
-            start = time.perf_counter()
+            start = t0_perf if t0_perf is not None else time.perf_counter()
+            if run.gps_mode == "rf":
+                run.gps_report["sim_t0_offset_s"] = round(
+                    start - (time.perf_counter() - self._gps_player.elapsed_s()), 3)
             wall0 = self.now()
             tick = 0
             i = 0
@@ -918,8 +1084,16 @@ class HitlSession:
             run.aborted = True
             run.abort_reason = f"send failed: {exc}"
             self.log(run.abort_reason)
+        except (RuntimeError, FileNotFoundError, ValueError) as exc:
+            run.aborted = True
+            run.abort_reason = str(exc)
+            self.log(f"run aborted: {exc}")
         finally:
             run.streaming = False
+            player, self._gps_player = getattr(self, "_gps_player", None), None
+            if player is not None:
+                player.stop()
+                run.gps_report["hackrf_tail"] = player.output()[-5:]
             if self.connected:
                 self._try_send_command(hp.CMD_HITL_EXIT)
             # Allow trailing telemetry / log lines to arrive.
@@ -931,6 +1105,8 @@ class HitlSession:
             except Exception as exc:  # never lose the run over a metric
                 self.log(f"attitude summary failed: {exc!r}")
             run.result = evaluate(run)
+            if run.gps_mode == "rf":
+                run.result["gps"] = dict(run.gps_report, mode="rf")
             if self._recorder:
                 try:
                     import hitl_outputs
@@ -961,4 +1137,12 @@ class HitlSession:
                         run.result["comparison_flash"] = fc["flash_comparison"]
                     with open(os.path.join(run.run_dir, "summary.json"), "w") as f:
                         json.dump(run.result, f, indent=2)
+            if run.run_dir and self.make_report:
+                try:
+                    import hitl_report
+                    path = hitl_report.build_report(run.run_dir)
+                    run.result["report_pdf"] = str(path)
+                    self.log(f"report: {path}")
+                except Exception as exc:  # never lose the run over the report
+                    self.log(f"report PDF failed: {exc!r}")
             self._event("run", "finished")

@@ -6,3 +6,4 @@
 -r ../Horizon/requirements.txt
 scipy>=1.11
 soundfile>=0.12           # vibration profile recordings (.ogg)
+matplotlib>=3.8          # post-run report.pdf (hitl_report.py)

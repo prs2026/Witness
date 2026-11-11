@@ -69,7 +69,15 @@ esp_err_t CommandBridge::submit_radio_command(
     std::uint8_t canonical[IRIS_PACKET_COMMAND_FRAME_LENGTH]{};
     if (length == 0 || !canonical_command(data, length, canonical))
         return ESP_ERR_INVALID_ARG;
-    const esp_err_t transport_result = forward_command(canonical, sizeof(canonical));
+    // GPS assistance chunks are for Witness only (hundreds per upload).
+    const std::uint16_t opcode = static_cast<std::uint16_t>((canonical[7] << 8U) | canonical[8]);
+    const bool local_only = opcode == IRIS_COMMAND_GPS_ASSIST_BEGIN ||
+                            opcode == IRIS_COMMAND_GPS_ASSIST_DATA ||
+                            opcode == IRIS_COMMAND_GPS_ASSIST_COMMIT ||
+                            opcode == IRIS_COMMAND_GPS_ASSIST_STATUS ||
+                            opcode == IRIS_COMMAND_GPS_COLD_START;
+    const esp_err_t transport_result =
+        local_only ? ESP_OK : forward_command(canonical, sizeof(canonical));
 
     if (radio_command_queue_ == nullptr) {
         return transport_result == ESP_OK ? ESP_ERR_INVALID_STATE : transport_result;

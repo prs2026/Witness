@@ -135,6 +135,11 @@ public:
     // Destructively erases both session slots, then creates a fresh empty
     // session. NAND access remains owned by the logger task throughout.
     esp_err_t erase_all_sessions(TickType_t timeout = portMAX_DELAY);
+    // Fast clear: deletes every stored session by erasing only the two slot
+    // headers, then creates a fresh session whose number continues upward
+    // (never reset), so stale data pages carry other session tags and are
+    // never exported. Data blocks are erased lazily before they are rewritten.
+    esp_err_t clear_all_sessions(TickType_t timeout = portMAX_DELAY);
     std::size_t export_file_count() const;
     const ExportFile &export_file(std::size_t index) const;
     esp_err_t read_export_file(
@@ -201,6 +206,11 @@ private:
     static constexpr std::uint32_t sequence_tag(std::uint32_t generation)
     {
         return generation & 0xFFFU;
+    }
+    // Pages written before tagging carry tag 0, so no session uses it.
+    static constexpr std::uint32_t next_usable_generation(std::uint32_t generation)
+    {
+        return sequence_tag(generation) == 0 ? generation + 1 : generation;
     }
     static constexpr std::uint32_t sequence_base(std::uint32_t generation)
     {
@@ -274,6 +284,8 @@ private:
     esp_err_t scan_sessions(bool build_export_table);
     esp_err_t run_startup_self_test();
     esp_err_t erase_session_blocks();
+    esp_err_t clear_session_headers();
+    void reset_session_buffers();
     esp_err_t create_session();
     esp_err_t write_flight_marker();
     esp_err_t append_bytes(Writer &writer,
@@ -332,6 +344,7 @@ private:
     std::atomic<bool> console_output_enabled_{true};
     std::atomic<bool> export_requested_{false};
     std::atomic<bool> erase_requested_{false};
+    std::atomic<bool> erase_quick_{false};  // the pending erase is a fast clear
     std::atomic<bool> frozen_{false};
     std::atomic<bool> capture_binary_records_{true};
     std::atomic<bool> capture_imu_records_{false};

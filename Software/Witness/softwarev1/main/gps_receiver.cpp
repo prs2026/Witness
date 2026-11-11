@@ -19,11 +19,12 @@ constexpr SkytraqCommand kSkytraqConfigure[] = {
     // 0x64/0x17 navigation mode: airborne.
     {"airborne navigation mode",
      {0x64, 0x17, GpsReceiver::kSkytraqAirborneMode, 0x00}, 4},
-    // 0x08 NMEA intervals per fix: GGA GSA GSV GLL RMC VTG ZDA, attributes.
-    // Reduce output to GGA + RMC before raising the rate, so the stream fits
-    // 115200 baud at the maximum update rate.
-    {"NMEA output GGA+RMC",
-     {0x08, 1, 0, 0, 0, 1, 0, 0, 0x00}, 9},
+    // 0x08 NMEA intervals: GGA GSA GSV GLL RMC VTG ZDA, attributes. Interval
+    // 1 is every fix; larger values are seconds (AN0037), so GSA (DOPs for
+    // the Kalman filter) comes every kGsaEveryFixes s, one per constellation.
+    // Reduced output keeps 115200 baud comfortable at the maximum rate.
+    {"NMEA output GGA+RMC, GSA",
+     {0x08, 1, GpsReceiver::kGsaEveryFixes, 0, 0, 1, 0, 0, 0x00}, 9},
     // 0x0E position update rate.
     {"position update rate",
      {0x0E, GpsReceiver::kSkytraqUpdateRateHz, 0x00}, 3},
@@ -64,7 +65,8 @@ constexpr std::uint8_t kNmeaClass = 0xF0;
 // measurement period, one navigation solution per measurement, GPS time.
 constexpr UbxCommand kUbxConfigure[] = {
     {"disable NMEA GLL", kUbxClassCfg, kUbxIdCfgMsg, {kNmeaClass, 0x01, 0}, 3},
-    {"disable NMEA GSA", kUbxClassCfg, kUbxIdCfgMsg, {kNmeaClass, 0x02, 0}, 3},
+    {"NMEA GSA every 5th fix", kUbxClassCfg, kUbxIdCfgMsg,
+     {kNmeaClass, 0x02, GpsReceiver::kGsaEveryFixes}, 3},
     {"disable NMEA GSV", kUbxClassCfg, kUbxIdCfgMsg, {kNmeaClass, 0x03, 0}, 3},
     {"disable NMEA VTG", kUbxClassCfg, kUbxIdCfgMsg, {kNmeaClass, 0x05, 0}, 3},
     {"enable NMEA GGA", kUbxClassCfg, kUbxIdCfgMsg, {kNmeaClass, 0x00, 1}, 3},
@@ -101,6 +103,27 @@ constexpr std::size_t count_of(const T (&)[N]) { return N; }
 
 }  // namespace
 
+std::uint32_t GpsReceiver::nearest_scan_baud(const std::uint32_t measured_baud)
+{
+    for (const std::uint32_t rate : kScanBauds) {
+        const std::uint32_t diff = measured_baud > rate ? measured_baud - rate : rate - measured_baud;
+        if (diff * 100U <= rate * 8U) return rate;
+    }
+    return 0;
+}
+
+void GpsReceiver::set_baud_hint(const std::uint32_t measured_baud)
+{
+    std::uint32_t hint = nearest_scan_baud(measured_baud);
+    if (hint == 0 && measured_baud >= 2400 && measured_baud <= 1000000) hint = measured_baud;
+    if (hint == 0) return;
+    std::size_t n = 0;
+    scan_order_[n++] = hint;
+    for (const std::uint32_t rate : kScanBauds)
+        if (rate != hint) scan_order_[n++] = rate;
+    scan_count_ = n;
+}
+
 const char *GpsReceiver::model_name() const
 {
     switch (model_) {
@@ -121,7 +144,7 @@ std::uint32_t GpsReceiver::update_rate_hz() const
 
 bool GpsReceiver::send_skytraq(const std::uint8_t *payload, const std::size_t length)
 {
-    std::array<std::uint8_t, 16> packet{};
+    std::array<std::uint8_t, kSkytraqTxCapacity> packet{};
     if (length == 0 || length + 7 > packet.size()) return false;
     packet[0] = 0xA0;
     packet[1] = 0xA1;
@@ -185,10 +208,11 @@ void GpsReceiver::fail(const char *reason)
 void GpsReceiver::identified(const Model model, const std::uint32_t now_ms)
 {
     model_ = model;
-    if (model == Model::UbloxM8 && baud_ != kOperationalBaud)
-        begin_step(Step::UbloxSwitchBaud, now_ms);
-    else
+    found_baud_ = baud_;
+    if (baud_ == kOperationalBaud)
         begin_step(Step::Configure, now_ms);
+    else
+        begin_step(model == Model::UbloxM8 ? Step::UbloxSwitchBaud : Step::SkytraqSwitchBaud, now_ms);
 }
 
 std::size_t GpsReceiver::configure_count() const
@@ -218,6 +242,9 @@ bool GpsReceiver::send_current(const std::uint32_t now_ms)
     (void)now_ms;
     switch (step_) {
         case Step::Identify: {
+            // Poll only once valid NMEA proves this RX pin is the receiver's
+            // TX (the host TX is then its RX); until then just listen.
+            if (!nmea_seen_) return true;
             // Both polls are ignored by the other receiver family.
             const std::uint8_t skytraq_query[] = {0x64, 0x18};
             const bool skytraq = send_skytraq(skytraq_query, sizeof(skytraq_query));
@@ -226,6 +253,10 @@ bool GpsReceiver::send_current(const std::uint32_t now_ms)
         }
         case Step::UbloxConfirmBaud:
             return send_ubx(kUbxClassMon, kUbxIdMonVer, nullptr, 0);
+        case Step::SkytraqConfirmBaud: {
+            const std::uint8_t skytraq_query[] = {0x64, 0x18};
+            return send_skytraq(skytraq_query, sizeof(skytraq_query));
+        }
         case Step::Configure:
             if (model_ == Model::UbloxM8) {
                 const auto &command = kUbxConfigure[index_];
@@ -249,23 +280,142 @@ bool GpsReceiver::send_current(const std::uint32_t now_ms)
     }
 }
 
+bool GpsReceiver::begin_assist(const std::uint8_t *blob, const std::size_t length,
+                               const std::uint32_t now_ms)
+{
+    std::size_t records = 0;
+    if (status_ != Status::Ready || model_ != Model::Px1120s) {
+        assist_refusal_ = model_ == Model::UbloxM8
+                              ? "ephemeris upload is implemented for the PX1120S only"
+                              : "GPS receiver is not configured";
+        return false;
+    }
+    if (assist_.active) {
+        assist_refusal_ = "an upload is already running";
+        return false;
+    }
+    if (blob == nullptr || length > assist_blob_.size() ||
+        !gps_assist::Assembler::parse_records(blob, length, records)) {
+        assist_refusal_ = "malformed assistance data";
+        return false;
+    }
+    for (std::size_t i = 0; i < length; ++i) assist_blob_[i] = blob[i];
+    assist_length_ = length;
+    assist_offset_ = 0;
+    assist_attempts_ = 0;
+    assist_waiting_ = false;
+    const std::uint32_t uploads = assist_.uploads;
+    assist_ = {};
+    assist_.uploads = uploads;
+    assist_.active = true;
+    assist_.total = static_cast<std::uint16_t>(records);
+    assist_refusal_ = "";
+    (void)now_ms;
+    return true;
+}
+
+bool GpsReceiver::cold_start(const std::uint32_t now_ms)
+{
+    if (model_ == Model::Unknown || baud_ != kOperationalBaud) return false;
+    bool sent = false;
+    if (model_ == Model::Px1120s) {
+        // 0x01 System Restart, mode 3 (cold). A cold start ignores the time
+        // and position fields; they only need valid ranges (2026-01-01).
+        const std::uint8_t restart[] = {0x01, 0x03, 0x07, 0xEA, 1, 1, 0, 0, 0,
+                                        0, 0, 0, 0, 0, 0};
+        sent = send_skytraq(restart, sizeof(restart));
+    } else {
+        // CFG-RST: navBbrMask 0xFFFF (cold), resetMode 2 (GNSS only; the
+        // port and other settings survive). No ACK is sent for CFG-RST.
+        const std::uint8_t reset[] = {0xFF, 0xFF, 0x02, 0x00};
+        sent = send_ubx(kUbxClassCfg, 0x04, reset, sizeof(reset));
+    }
+    if (!sent) return false;
+    ++cold_starts_;
+    assist_.active = false;           // an upload in progress is moot now
+    assist_waiting_ = false;
+    status_ = Status::Configuring;
+    begin_step(Step::RestartWait, now_ms);
+    return true;
+}
+
+void GpsReceiver::finish_assist_record(const std::uint32_t now_ms)
+{
+    (void)now_ms;
+    const std::size_t n = (static_cast<std::size_t>(assist_blob_[assist_offset_]) << 8U) |
+                          assist_blob_[assist_offset_ + 1];
+    assist_offset_ += 2 + n;
+    assist_attempts_ = 0;
+    assist_waiting_ = false;
+    if (assist_offset_ >= assist_length_) {
+        assist_.active = false;
+        ++assist_.uploads;
+    }
+}
+
+void GpsReceiver::service_assist(const std::uint32_t now_ms)
+{
+    if (!assist_.active) return;
+    if (assist_waiting_) {
+        if (now_ms - assist_sent_ms_ < kReplyTimeoutMs) return;
+        if (assist_attempts_ >= kAssistAttempts) {
+            ++assist_.timed_out;
+            finish_assist_record(now_ms);
+            if (!assist_.active) return;
+        }
+    }
+    const std::size_t n = (static_cast<std::size_t>(assist_blob_[assist_offset_]) << 8U) |
+                          assist_blob_[assist_offset_ + 1];
+    const std::uint8_t *body = assist_blob_.data() + assist_offset_ + 2;
+    if (!send_skytraq(body, n)) {
+        assist_.active = false;
+        assist_refusal_ = "GPS command transmission failed";
+        return;
+    }
+    if (assist_attempts_ == 0) ++assist_.sent;
+    ++assist_attempts_;
+    assist_message_id_ = body[0];
+    assist_waiting_ = true;
+    assist_sent_ms_ = now_ms;
+}
+
 void GpsReceiver::service(const std::uint32_t now_ms)
 {
+    if (status_ == Status::Ready) {
+        service_assist(now_ms);
+        return;
+    }
     if (status_ != Status::Configuring) return;
     if (!started_) {
         started_ = true;
         step_time_ms_ = now_ms;
     }
 
+    if (step_ == Step::RestartWait) {
+        if (now_ms - step_time_ms_ < kRestartDelayMs) return;
+        begin_step(Step::Configure, now_ms);   // and send the first command below
+    }
+
     if (step_ == Step::BootDelay) {
-        if (now_ms - step_time_ms_ >= kStartupDelayMs)
+        if (now_ms - step_time_ms_ >= kStartupDelayMs) {
+            // Start at the first rate of the scan order (the measured one).
+            if (scan_order_[0] != baud_ && transport_.set_baud &&
+                transport_.set_baud(transport_.context, scan_order_[0]))
+                baud_ = scan_order_[0];
             begin_step(Step::Identify, now_ms);
+        }
         return;
     }
 
-    if (step_ == Step::UbloxSwitchBaud) {
+    if (step_ == Step::UbloxSwitchBaud || step_ == Step::SkytraqSwitchBaud) {
+        const bool ublox = step_ == Step::UbloxSwitchBaud;
         if (!waiting_) {
-            if (!send_ubx(kUbxClassCfg, kUbxIdCfgPrt, kUbxPrtUart1, sizeof(kUbxPrtUart1))) {
+            // SkyTraq 0x05: COM1, baud index, attribute 0 = SRAM only.
+            const std::uint8_t skytraq_port[] = {0x05, 0x00, kSkytraqOperationalBaudIndex, 0x00};
+            const bool sent = ublox
+                ? send_ubx(kUbxClassCfg, kUbxIdCfgPrt, kUbxPrtUart1, sizeof(kUbxPrtUart1))
+                : send_skytraq(skytraq_port, sizeof(skytraq_port));
+            if (!sent) {
                 fail("GPS command transmission failed");
                 return;
             }
@@ -281,7 +431,7 @@ void GpsReceiver::service(const std::uint32_t now_ms)
         }
         baud_ = kOperationalBaud;
         nmea_seen_ = false;
-        begin_step(Step::UbloxConfirmBaud, now_ms);
+        begin_step(ublox ? Step::UbloxConfirmBaud : Step::SkytraqConfirmBaud, now_ms);
         return;
     }
 
@@ -290,30 +440,57 @@ void GpsReceiver::service(const std::uint32_t now_ms)
     if (attempts_ >= kMaximumAttempts) {
         switch (step_) {
             case Step::Identify:
-                if (baud_ == kOperationalBaud && nmea_seen_) {
-                    // Valid NMEA but no binary reply: keep the stream untouched
-                    // and treat it as the PX1120S, whose mode query has been
-                    // seen to go unanswered. Mode readback still decides.
+                if (nmea_seen_) {
+                    // Valid NMEA but no binary reply: treat it as the
+                    // PX1120S, whose mode query has been seen to go
+                    // unanswered. Mode readback still decides. At another
+                    // rate it is first moved to the operational rate.
                     model_assumed_ = true;
                     identified(Model::Px1120s, now_ms);
-                } else if (baud_ == kOperationalBaud && transport_.set_baud) {
-                    // A silent link: try the u-blox factory rate.
-                    if (!transport_.set_baud(transport_.context, kUbloxFactoryBaud)) {
+                } else if (scan_index_ + 1 < scan_count_ && transport_.set_baud) {
+                    // No valid NMEA here: try the next rate.
+                    const std::uint32_t next = scan_order_[scan_index_ + 1];
+                    if (!transport_.set_baud(transport_.context, next)) {
                         fail("could not change host UART baud");
                         return;
                     }
-                    baud_ = kUbloxFactoryBaud;
+                    ++scan_index_;
+                    baud_ = next;
+                    nmea_seen_ = false;
+                    begin_step(Step::Identify, now_ms);
+                } else if (!pins_swapped_ && transport_.swap_pins && transport_.set_baud &&
+                           transport_.swap_pins(transport_.context)) {
+                    // Every rate tried on one RX/TX orientation: flip the
+                    // pins and scan again from the first rate.
+                    pins_swapped_ = true;
+                    scan_index_ = 0;
+                    if (!transport_.set_baud(transport_.context, scan_order_[0])) {
+                        fail("could not change host UART baud");
+                        return;
+                    }
+                    baud_ = scan_order_[0];
                     nmea_seen_ = false;
                     begin_step(Step::Identify, now_ms);
                 } else {
-                    fail("no GPS replied at 115200 or 9600 baud");
+                    fail("no GPS replied at any scanned baud rate on either RX/TX orientation");
                 }
+                return;
+            case Step::SkytraqConfirmBaud:
+                if (nmea_seen_) {
+                    begin_step(Step::Configure, now_ms);
+                    return;
+                }
+                // The receiver kept its old rate; follow it there for logging.
+                if (transport_.set_baud &&
+                    transport_.set_baud(transport_.context, found_baud_))
+                    baud_ = found_baud_;
+                fail("PX1120S did not follow the change to 115200 baud");
                 return;
             case Step::UbloxConfirmBaud:
                 // The receiver most likely kept its old rate; follow it there.
                 if (transport_.set_baud &&
-                    transport_.set_baud(transport_.context, kUbloxFactoryBaud))
-                    baud_ = kUbloxFactoryBaud;
+                    transport_.set_baud(transport_.context, found_baud_))
+                    baud_ = found_baud_;
                 fail("u-blox did not answer after switching to 115200 baud");
                 return;
             case Step::Configure:
@@ -345,15 +522,22 @@ void GpsReceiver::service(const std::uint32_t now_ms)
 void GpsReceiver::consume(const std::uint8_t *data, const std::size_t length,
                           const std::uint32_t now_ms)
 {
-    if (status_ != Status::Configuring) return;
+    const bool assisting = status_ == Status::Ready && assist_.active;
+    if (status_ != Status::Configuring && !assisting) return;
     if ((skytraq_used_ || ubx_state_) && now_ms - last_byte_ms_ > kFrameIdleTimeoutMs) {
         skytraq_used_ = skytraq_expected_ = 0;
         ubx_state_ = 0;
     }
     last_byte_ms_ = now_ms;
-    for (std::size_t i = 0; i < length && status_ == Status::Configuring; ++i) {
-        consume_skytraq(data[i], now_ms);
-        consume_ubx(data[i], now_ms);
+    for (std::size_t i = 0; i < length; ++i) {
+        if (status_ == Status::Configuring) {
+            consume_skytraq(data[i], now_ms);
+            consume_ubx(data[i], now_ms);
+        } else if (status_ == Status::Ready && assist_.active) {
+            consume_skytraq(data[i], now_ms);
+        } else {
+            break;
+        }
     }
 }
 
@@ -446,7 +630,22 @@ void GpsReceiver::consume_ubx(const std::uint8_t byte, const std::uint32_t now_m
 void GpsReceiver::handle_skytraq(const std::uint8_t *payload, const std::size_t length,
                                  const std::uint32_t now_ms)
 {
+    if (status_ == Status::Ready) {
+        // Assistance upload: 83 <id> ACK / 84 <id> NACK for the record sent.
+        if (!assist_.active || !assist_waiting_ || length < 2 ||
+            payload[1] != assist_message_id_ ||
+            (payload[0] != kSkytraqAck && payload[0] != kSkytraqNack))
+            return;
+        if (payload[0] == kSkytraqAck) ++assist_.acked;
+        else ++assist_.nacked;
+        finish_assist_record(now_ms);
+        return;
+    }
     if (!waiting_ || length == 0) return;
+    if (step_ == Step::SkytraqConfirmBaud) {
+        begin_step(Step::Configure, now_ms);  // it answers at 115200 now
+        return;
+    }
     if (step_ == Step::Identify) {
         // Any checksum-valid SkyTraq frame (mode reply, ACK or NACK) identifies it.
         identified(Model::Px1120s, now_ms);

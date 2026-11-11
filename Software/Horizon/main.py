@@ -449,6 +449,12 @@ class MonitorPanel(QtWidgets.QWidget):
             button.clicked.connect(lambda _c=False, n=label, a=argument: core.send_imu_calibration(n, a))
             grid.addWidget(button, index // columns, index % columns)
             self.quick_command_buttons.append(button)
+        index = offset + len(IMU_CALIBRATION_COMMANDS)
+        eph = QtWidgets.QPushButton("Upload GPS ephemeris…")
+        eph.setToolTip("RINEX broadcast ephemeris -> Witness -> PX1120S (works over USB and radio)")
+        eph.clicked.connect(lambda _c=False: self.upload_gps_ephemeris())
+        grid.addWidget(eph, index // columns, index % columns)
+        self.quick_command_buttons.append(eph)
         for widget in (self.command_entry, self.send_command_button, *self.quick_command_buttons):
             bind_enabled(core.commands_enabled, widget)
         layout.addLayout(hbox(QtWidgets.QLabel("Commands:"), grid_widget))
@@ -481,6 +487,25 @@ class MonitorPanel(QtWidgets.QWidget):
 
     def send_hex_command(self):
         return self.core.send_hex_command()
+
+    def upload_gps_ephemeris(self, path=None):
+        """Pick a RINEX nav file and upload the ephemerides valid now to
+        Witness's GPS (SkyTraq 0x41 via the chunked 0x05 command frames)."""
+        import gps_assist
+        if path is None:
+            path, _ = QtWidgets.QFileDialog.getOpenFileName(
+                self, "RINEX navigation file (broadcast ephemeris)", "",
+                "RINEX nav (*.??n *.??N *.rnx *.nav);;All files (*.*)")
+            if not path:
+                return False
+        try:
+            nav = gps_assist.parse_rinex_nav(path)
+            blob, prns = gps_assist.ephemeris_upload(nav)
+        except (OSError, ValueError) as exc:
+            self._alert("GPS ephemeris", f"Cannot use {path}: {exc}")
+            return False
+        return self.core.send_gps_assist(gps_assist.assist_frames(blob),
+                                         f"GPS ephemeris upload ({len(prns)} SVs)")
 
     def browse_test_source(self):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName(

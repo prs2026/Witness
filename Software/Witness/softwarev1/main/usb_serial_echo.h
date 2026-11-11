@@ -7,6 +7,7 @@
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "gps_assist.h"
 #include "hitl_input.h"
 #include "usb_mass_storage.h"
 
@@ -76,6 +77,9 @@ private:
     void process_tx_command();
     void start_mass_storage();
     void erase_log_sessions();
+    void clear_log_sessions();
+    // GPS assistance chunks (gps_assist.h); data = the six data bytes.
+    void handle_gps_assist(std::uint16_t command, const std::uint8_t *data, const char *source);
     void set_flight_state(std::uint8_t state);
     void set_camera_state(std::size_t camera_index, bool enabled);
     void run();
@@ -98,6 +102,9 @@ private:
     // Set just before the Serial/JTAG driver is uninstalled for export.
     bool usb_driver_removed_ = false;
     hitl::FrameAssembler hitl_frames_{};
+    // One assistance transfer at a time, from USB or radio (same task).
+    gps_assist::Assembler gps_assist_{};
+    std::uint32_t gps_assist_rejects_ = 0;
     TickType_t hitl_last_byte_time_ = 0;
     std::uint32_t hitl_frame_errors_ = 0;
     TickType_t hitl_last_error_report_ = 0;

@@ -21,12 +21,13 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(hp.encode_command(hp.CMD_WITNESS_DEBUG_START),
                          bytes.fromhex("05 00 00 00 00 00 00 00 E0 0A"))
 
-    def test_only_three_commands_allowed(self):
+    def test_only_four_commands_allowed(self):
+        # HITL enter/exit, debug start, and the GPS cold start (Pad Idle only).
         self.assertEqual(set(hp.ALLOWED_COMMANDS),
-                         {0x4849, 0x4858, 0x00E0})
+                         {0x4849, 0x4858, 0x00E0, 0x4752})
 
     def test_destructive_commands_refused(self):
-        for cmd in (0x6868, 0x6869, 0x7300, 0x7301, 0x7304, 0x0051, 0x00E1):
+        for cmd in (0x6868, 0x6869, 0x686A, 0x7300, 0x7301, 0x7304, 0x0051, 0x00E1):
             with self.assertRaises(ValueError):
                 hp.encode_command(cmd)
 

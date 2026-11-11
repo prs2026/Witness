@@ -26,7 +26,10 @@ QUICK_COMMANDS = (
     ("Iris Debug 10 Hz", 0x00E1, False),
     ("Iris Ping", 0x0022, False),
     ("USB Mass Storage", 0x6868, False),
-    ("Erase Logs", 0x6869, True),
+    ("Clear Logs (fast)", 0x686A, True),
+    ("Erase Logs (full, slow)", 0x6869, True),
+    # Receiver forgets ephemerides, almanac, position and time (Pad Idle only).
+    ("GPS cold start", 0x4752, True),
     ("State: Pad", 0x7300, False),
     ("State: Boost", 0x7301, False),
     ("State: Coast", 0x7302, False),

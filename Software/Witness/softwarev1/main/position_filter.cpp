@@ -222,9 +222,26 @@ bool Filter::update_baro(const float altitude_m, const float pressure_pa, const 
     return true;
 }
 
+void Filter::gps_sigmas(const std::uint8_t satellites, const float hdop, const float vdop,
+                        float &horizontal_m, float &vertical_m) const
+{
+    const auto clamp = [this](float sigma) {
+        return std::fmin(std::fmax(sigma, config_.gps_min_sigma_m), config_.gps_max_sigma_m);
+    };
+    if (std::isfinite(hdop) && hdop > 0.0F) {
+        const float v = std::isfinite(vdop) && vdop > 0.0F ? vdop : hdop * config_.gps_vdop_per_hdop;
+        horizontal_m = clamp(config_.gps_horizontal_uere_m * hdop);
+        vertical_m = clamp(config_.gps_vertical_uere_m * v);
+        return;
+    }
+    const float inflate = satellites >= config_.gps_good_satellites ? 1.0F : 2.0F;
+    horizontal_m = config_.gps_horizontal_sigma_m * inflate;
+    vertical_m = config_.gps_vertical_sigma_m * inflate;
+}
+
 bool Filter::update_gps(const double latitude_deg, const double longitude_deg,
                         const float altitude_m, const std::uint8_t satellites,
-                        const Phase phase)
+                        const Phase phase, const float hdop, const float vdop)
 {
     if (!std::isfinite(latitude_deg) || !std::isfinite(longitude_deg) ||
         !std::isfinite(altitude_m)) {
@@ -253,9 +270,11 @@ bool Filter::update_gps(const double latitude_deg, const double longitude_deg,
     const float east = static_cast<float>((longitude_deg - gps_origin_lon_) * meters_per_deg_lon_);
     const float north = static_cast<float>((latitude_deg - gps_origin_lat_) * meters_per_deg_lat_);
     const float up = altitude_m - gps_origin_alt_;
-    const float inflate = satellites >= config_.gps_good_satellites ? 1.0F : 2.0F;
-    const float h = config_.gps_horizontal_sigma_m * inflate;
-    const float v = config_.gps_vertical_sigma_m * inflate;
+    float h = 0.0F;
+    float v = 0.0F;
+    gps_sigmas(satellites, hdop, vdop, h, v);
+    last_gps_sigma_h_ = h;
+    last_gps_sigma_v_ = v;
     bool used = false;
     const float measurement[3] = {east, north, up};
     const float variance[3] = {h * h, h * h, v * v};
