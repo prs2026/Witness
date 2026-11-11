@@ -146,6 +146,13 @@ class RingHistory:
             yield self[index]
 
 
+# Confirmation text for quick commands that ask first (default: log erase).
+CONFIRM_TEXT = {
+    0x4752: "the GPS receiver forgets its ephemerides, almanac, position and time and "
+            "needs a new fix (30 s or more). Witness accepts it only in Pad Idle.",
+}
+
+
 class MonitorCore:
     """The Witness monitor's state and behaviour, minus widgets."""
 
@@ -419,10 +426,39 @@ class MonitorCore:
     build_quick_command_packet = staticmethod(build_command_packet)
 
     def send_quick_command(self, name, opcode, confirm=False):
-        if confirm and not self.confirm(
-                "Confirm command", "Erase all stored log sessions? This cannot be undone."):
+        text = CONFIRM_TEXT.get(opcode, "delete all stored log sessions? This cannot be undone.")
+        if confirm and not self.confirm("Confirm command", f"{name}: {text}"):
             return False
         return self.transmit_command(self.command_target.get(), build_command_packet(opcode), name)
+
+    def send_gps_assist(self, frames, description="GPS ephemeris upload", pace_s=None):
+        """Send GPS assistance frames (gps_assist.assist_frames) to the
+        selected target on a background thread, one console line per upload.
+        Serial (USB) is paced at 3 ms per frame; TCP (Aperture/radio bridge)
+        at 60 ms so the radio queue keeps up."""
+        import gps_assist
+        target_name = self.command_target.get()
+        if self.test_active:
+            self.console_write("TX_BLOCKED test mode never sends commands to hardware")
+            return False
+        serial_port = self.serials.get(target_name)
+        tcp_socket = self.tcp_sockets.get(target_name)
+        if serial_port is None and tcp_socket is None:
+            self.console_write("TX_ERROR no connected serial/TCP target selected")
+            return False
+        write = serial_port.write if serial_port is not None else tcp_socket.sendall
+        pace = pace_s if pace_s is not None else (0.003 if serial_port is not None else 0.06)
+        frames = list(frames) + [gps_assist.status_frame()]
+
+        def worker():
+            try:
+                gps_assist.send_frames(write, frames, pace)
+                self.console_write(f"TX[{target_name}] {description}: {len(frames)} frames sent; "
+                                   "Witness logs 'GPS assist done: N/N acknowledged'")
+            except Exception as exc:  # noqa: BLE001
+                self.console_write(f"TX_ERROR[{target_name}] {description}: {exc}")
+        threading.Thread(target=worker, name="gps-assist", daemon=True).start()
+        return True
 
     def send_imu_calibration(self, name, argument):
         """Compact USB-only calibration command; Aperture does not forward it."""

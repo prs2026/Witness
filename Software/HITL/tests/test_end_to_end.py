@@ -60,10 +60,12 @@ class EndToEndTests(unittest.TestCase):
             self.assertRegex(text, name + r" .* OK")
         self.assertEqual([t[2] for t in fake.transitions],
                          [hp.BOOST, hp.COAST, hp.DESCENT, hp.LANDED])
-        # Safety: only ENTER and EXIT were ever sent.
+        # Safety: only ENTER, EXIT and one debug start (0xE0 estimates for the
+        # comparison and report) were ever sent.
         self.assertTrue(fake.commands)
-        self.assertTrue(set(fake.commands) <= {hp.CMD_HITL_ENTER,
-                                               hp.CMD_HITL_EXIT})
+        self.assertTrue(set(fake.commands) <= {hp.CMD_HITL_ENTER, hp.CMD_HITL_EXIT,
+                                               hp.CMD_WITNESS_DEBUG_START})
+        self.assertLessEqual(fake.commands.count(hp.CMD_WITNESS_DEBUG_START), 1)
         self.assertEqual(fake.commands[0], hp.CMD_HITL_ENTER)
         self.assertEqual(fake.commands[-1], hp.CMD_HITL_EXIT)
         self.assertGreater(fake.hitl_frames, 5000)

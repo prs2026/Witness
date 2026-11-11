@@ -46,6 +46,15 @@ def _tick_index(samples, sim_s: float) -> int:
     return max(0, min(len(samples) - 1, k))
 
 
+def truth_pos_vel(samples, s):
+    """Truth ENU position and velocity of a sample. CSV samples carry them;
+    preset samples (vertical flight model) have altitude and vertical speed
+    only, so position is (0, 0, altitude above the first sample)."""
+    if hasattr(s, "pos_enu_m"):
+        return s.pos_enu_m, s.vel_enu_mps
+    return (0.0, 0.0, s.alt_msl_m - samples[0].alt_msl_m), (0.0, 0.0, s.vel_mps)
+
+
 def write_truth_csv(path: str, samples, state_track) -> None:
     with open(path, "w", newline="") as f:
         w = csv.writer(f)
@@ -55,8 +64,7 @@ def write_truth_csv(path: str, samples, state_track) -> None:
                     "f_body_z_g", "w_body_x_dps", "w_body_y_dps", "w_body_z_dps",
                     "q_x", "q_y", "q_z", "q_w", "tilt_deg"])
         for k, s in enumerate(samples):
-            pos = getattr(s, "pos_enu_m", (0.0, 0.0, 0.0))
-            vel = getattr(s, "vel_enu_mps", (0.0, 0.0, 0.0))
+            pos, vel = truth_pos_vel(samples, s)
             fb = getattr(s, "f_body_g", (0.0, 0.0, 0.0))
             wb = getattr(s, "w_body_dps", (0.0, 0.0, 0.0))
             q = getattr(s, "q_truth", att.IDENTITY)
@@ -91,8 +99,8 @@ COMPARISON_HEADER = [
 def _compare_row(samples, state_track, sim_s, uptime_ms, state, pos, vel, quat, kalman_alt):
     k = _tick_index(samples, sim_s)
     s = samples[k]
-    tp = getattr(s, "pos_enu_m", (0.0, 0.0, 0.0))
-    tv = getattr(s, "vel_enu_mps", (0.0, 0.0, 0.0))
+    tp, tv = truth_pos_vel(samples, s)
+    has_att = hasattr(s, "q_truth")      # preset runs have no truth attitude
     tq = getattr(s, "q_truth", att.IDENTITY)
     err = [pos[i] - tp[i] for i in range(3)]
     speed_err = math.sqrt(sum(c * c for c in vel)) - math.sqrt(sum(c * c for c in tv))
@@ -113,8 +121,9 @@ def _compare_row(samples, state_track, sim_s, uptime_ms, state, pos, vel, quat, 
         "witness_vel_up_mps": vel[2], "truth_vel_up_mps": tv[2],
         "error_speed_mps": speed_err,
         "witness_kalman_alt_m": kalman_alt, "truth_alt_msl_m": s.alt_msl_m,
-        "witness_tilt_deg": w_tilt, "truth_tilt_deg": att.tilt_from_vertical_deg(tq),
-        "error_attitude_deg": _att_error_deg(tq, quat) if quat else None,
+        "witness_tilt_deg": w_tilt,
+        "truth_tilt_deg": att.tilt_from_vertical_deg(tq) if has_att else None,
+        "error_attitude_deg": _att_error_deg(tq, quat) if quat and has_att else None,
     }
 
 

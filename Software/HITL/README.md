@@ -29,7 +29,7 @@ as a raw bidirectional TCP socket. The ports are raw 7100, 7101 and 7102 and
 follow `/dev/ttyACM` enumeration order. Defaults are `prs2026hitl:7100`, where
 Witness is today. **The ports have moved between boards before.** If the
 stream doesn't look like Witness, check `/dev/serial/by-id` on the bench host,
-or run `esptool read-mac`. The Witness MAC is `84:c7:bb:17:62:24`. ser2net
+or run `esptool read-mac`. The Witness MAC is `84:c5:b9:15:60:24` (it was `84:c7:bb:17:62:24` before 2026-11-10). Flash with `Witness/softwarev1/flash_verified.ps1`, which checks the MAC first. ser2net
 serves one TCP client per board at a time, so close Horizon or any other
 client first.
 
@@ -129,9 +129,13 @@ every tick (`q_truth_x..w`).
 
 ## Presets
 
+The default launch site for presets, CSV runs and `gps_rf.py` is FAR:
+35.34705005064222, -117.80906435293228, 609 m MSL (`sim_model.LAUNCH_*`).
+Older runs in `runs/` used 32.9903, -106.975 at 1400-1401 m.
+
 | Preset | What it does |
 |---|---|
-| Nominal 10 g | 14 g average thrust for 2 s, launched from 1401 m MSL (about 1.7 km apogee). Drogue at 25 m/s, main at 200 m AGL at 6 m/s, landing detected 30 s after touchdown. |
+| Nominal 10 g | 14 g average thrust for 2 s, launched from FAR at 609 m MSL (about 1.7 km apogee). Drogue at 25 m/s, main at 200 m AGL at 6 m/s, landing detected 30 s after touchdown. |
 | Long burn | 11.5 g for 6 s, about 5.7 km apogee. Long descent, about 330 s. |
 | High-g short burn | 40 g for 0.6 s with a 120 dps roll. Low-g saturates at 16 g, so launch detection uses high-g. |
 | GPS dropout | No fix and 0 sats from 11 s to 40 s. |
@@ -208,7 +212,7 @@ comment:
 | After apogee | From the earlier of apogee (max altitude) and the aero-nan time, the attitude is held (`after_apogee_attitude=hold`, the default). It does not follow the descending velocity vector, which would flip the body 180°. `pendulum` adds a swing about body Y of `pendulum_amp_deg` (10°) with period `pendulum_period_s` (4 s), faded in after apogee and out before touchdown. The final attitude is held on the ground. On the bundled flight the nose is about 90° from vertical (horizontal) at apogee and stays there. |
 | Gyro | `omega_k = log(q_{k-1}^-1 q_k) / dt` in BODY. Integrating `q_k = q_{k-1} exp(omega_k dt)` reproduces the truth, so gyro and attitude are consistent by construction. Noise `gyro_noise_dps` (0.05, seeded) and biases `gyro_bias_[xyz]_dps` (0) are added. The values are then quantised to exact 70 mdps counts with error feedback, so rounding does not accumulate as a bias. They saturate at ±2000 dps. |
 | Accelerometers | `f_body = R(q)^T (a + (0, 0, g0))` in g. On the pad this is (+1, 0, 0). Noise is 0.003 g on low-g and 0.01 g on high-g. Low-g saturates at ±16 g, which encodes as ±15.99 g. High-g saturates at ±320 g. |
-| Baro / temperature | ISA 1976, multi-layer to 85 km, at geopotential altitude `site_alt_msl_m` (default 1400 m) + AGL, with optional `baro_noise_pa` (1 Pa). Baro and IMU temperature are the ISA temperature + `temp_offset_c`. |
+| Baro / temperature | ISA 1976, multi-layer to 85 km, at geopotential altitude `site_alt_msl_m` (default 609 m, FAR) + AGL, with optional `baro_noise_pa` (1 Pa). Baro and IMU temperature are the ISA temperature + `temp_offset_c`. |
 | GPS | Lat/lon is the launch site (`lat_deg`, `lon_deg`) offset by north/east metres (111 320 m/deg). Altitude is MSL. `gps_sats` (10) and `gps_fix` are configurable. Battery is constant. |
 | Expected transitions | The reference rule model (`sim_model.ReferenceStateMachine`) runs on exactly the encoded values. |
 
@@ -525,6 +529,8 @@ handoff, "Attitude estimator").
   - HITL ENTER `0x4849`;
   - HITL EXIT `0x4858`;
   - Witness debug start `0x00E0`, which the tool sends once per CSV run;
+  - GPS cold start `0x4752`, only when asked for (button, Run-page checkbox,
+    `gps_rf.py test --cold-start`); Witness accepts it only in Pad Idle;
   - 0x0C sensor frames and 0x0E IMU batch frames.
 
   The one exception is the end-of-run FC log fetch. It sends the export
@@ -532,8 +538,9 @@ handoff, "Attitude estimator").
   hub 2 (`--no-fetch-logs` disables it).
 
   `encode_command` refuses every other value, including mass storage
-  `0x6868`, log erase `0x6869` and flight-state commands `0x7300` to
-  `0x7304`.
+  `0x6868`, log erase `0x6869`, log clear `0x686A` and flight-state commands
+  `0x7300` to `0x7304`. GPS assistance frames (`0x4741/44/45/51`) are sent
+  only through `HitlSession.upload_assist`, which checks every frame.
 
 ## Protocol summary
 
@@ -581,6 +588,82 @@ rest of the wire protocol is in `Software/Horizon/GROUND_STATION_PROTOCOL.md`.
   | 45 | EOF |
 
   Values are saturated to the int16 range.
+
+## Preparation and RF GPS simulation
+
+The witnessOS HITL tab has two pages on the left:
+
+- **Preparation**: the source (preset or trajectory CSV) and parameters,
+  Predict transitions, **Synthesize IMU** (builds the run now, including the
+  960 Hz synthesis; Start sim reuses it while nothing changed), the
+  **vibration recordings** (pick a thrust and a lateral file and their full
+  scale g; empty = the profile; also `--set vibration_thrust_file=...`,
+  `vibration_lateral_file`, `vibration_full_scale_g`), and the **GPS
+  simulation** box.
+- **Run**: the GPS source, the final-tilt limit, the FC log fetch and the
+  report PDF.
+
+### GPS simulation (gps-sdr-sim + HackRF)
+
+`gps_rf.py` drives [gps-sdr-sim](https://github.com/osqzss/gps-sdr-sim) (the
+checkout next to this repository, built into `rf_tools/bin/` with a
+10,000 s motion limit; `py -3.14 gps_rf.py build`) and `hackrf_transfer`.
+
+**RF safety: transmit only into a closed path** (coax and attenuators into the
+GPS antenna input, or a shielded enclosure). Radiating L1 is illegal and
+spoofs every receiver nearby. The TX VGA defaults to 0 dB with the amplifier
+off; raise it only as far as the receiver needs.
+
+1. **RINEX nav**: a broadcast-ephemeris file (newest `*.??n`/`*.rnx` in
+   `rf_tools/`, else gps-sdr-sim's bundled `brdc0010.22n`). Its orbits are moved
+   to the scenario start (the current hour, GPS time) and written as
+   `nav.n` in the scenario, so what is transmitted and what is uploaded to
+   the receiver are the same ephemerides. Each scenario gets new
+   issue-of-data numbers (IODE = 16 x scenario hour + set index, IODC =
+   IODE), so a receiver holding ephemerides from an earlier scenario sees
+   changed data and replaces it; two scenarios less than 16 h apart never
+   share an IODE. Older leftovers: **GPS cold start** (button; the Run-page
+   checkbox, on by default, cold-starts before every RF run and static test;
+   `gps_rf.py test --cold-start`).
+2. **Create static GPS sim**: a fixed position at the launch site
+   (`lat_deg`, `lon_deg`, `site_alt_msl_m`).
+3. **Verify IQ**: offline C/A acquisition of the IQ file (FFT code-phase
+   search over Doppler); PASS when exactly the satellites gps-sdr-sim put in
+   view are detected. No RF.
+4. **Static test (TX)**: connect to Witness (not in HITL), play the static
+   scenario, optionally upload the ephemerides, and watch the NMEA until 25
+   fixes: PASS when the median horizontal error is under 30 m and vertical
+   under 50 m. It records the receiver's geoid separation (GGA field 11) for
+   the site in `rf_tools/sites.json`: gps-sdr-sim takes ellipsoid heights,
+   so flight scenarios use h = MSL + N.
+5. **Create flight GPS sim**: lead-in (default 90 s) of static signal at the
+   pad, then the run's truth trajectory at gps-sdr-sim's 10 Hz motion rate
+   (one row every 10 HITL ticks). About 2.7 GB for the 436 s bundled run.
+6. **Run** page: GPS source "RF: Witness receiver + HackRF scenario". Start
+   sim then starts the HackRF, uploads the ephemerides (checkbox), waits out
+   the lead-in (logging when the receiver gets a fix), sends HITL ENTER and
+   starts the 100 Hz frames so that sim time 0 is the end of the lead-in.
+   The 0x0C frames carry status bit 0 (`HITL_STATUS_GPS_FROM_RECEIVER`), so
+   Witness keeps its own receiver as the GPS source; the GPS fields still
+   hold the truth for comparison. A scenario that is too short or from
+   another launch site is refused. `received NMEA` with sim times is in
+   `nmea.txt`.
+
+Limits: the receiver's altitude/velocity limits (COCOM, typically 18 km and
+515 m/s) apply to the RF simulation as to a real flight, and the report
+shows where the fix was lost. gps-sdr-sim models no multipath and a perfect
+clock; the HackRF's oscillator offset appears as a common Doppler offset.
+
+### Report PDF
+
+After every recorded run `hitl_report.py` writes `report.pdf` in the run
+folder (Run page checkbox; `py -3.14 hitl_report.py runs/<timestamp>` for an
+old run): summary and transitions; altitude and speed (truth, Witness
+Kalman live and flash, GPS) with errors; GNSS performance (satellites, fix
+quality, HDOP/VDOP/PDOP, availability, outages, GPS error against truth);
+Kalman performance (error per phase, error traces, and with the flash 0xE2
+log: innovations against 3 sigma, baro NIS, position sigma, counters); and
+attitude for CSV runs. Needs matplotlib.
 
 ## Tests
 

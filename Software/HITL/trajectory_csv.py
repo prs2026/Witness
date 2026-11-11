@@ -353,9 +353,9 @@ class CsvParams:
     """Parameters of a CSV-driven run. Times s, altitudes m, rates m/s."""
     csv_path: str = ""
     seed: int = 1
-    site_alt_msl_m: float = 1400.0
-    lat_deg: float = 32.9903
-    lon_deg: float = -106.9750
+    site_alt_msl_m: float = sm.LAUNCH_ALT_MSL_M     # default site: FAR
+    lat_deg: float = sm.LAUNCH_LAT_DEG
+    lon_deg: float = sm.LAUNCH_LON_DEG
     sea_level_pressure_pa: float = 101325.0
     temp_offset_c: float = 0.0          # added to ISA temperature
     pad_hold_s: float = 20.0
@@ -387,6 +387,14 @@ class CsvParams:
     # "none" = no vibration; or a profile folder under vibration/.
     vibration_profile: str = ""
     vibration_scale: float = 1.0      # 0 = no vibration
+    # Specific recordings instead of a profile folder (audio files readable
+    # by soundfile, e.g. .ogg/.wav/.flac): thrust goes on body x, lateral on
+    # y and (delayed) z; an empty lateral file reuses the thrust file.
+    # vibration_full_scale_g is the g that sample value 1.0 represents
+    # (0 = the profile's, or 150.67 g for files).
+    vibration_thrust_file: str = ""
+    vibration_lateral_file: str = ""
+    vibration_full_scale_g: float = 0.0
     imu_noise_scale: float = 1.0      # 1 = datasheet noise density
     imu_offset_scale: float = 1.0     # 1 = datasheet worst-case zero levels
     # Parachute deployment event (0 = none): from deployment_delay_s after the

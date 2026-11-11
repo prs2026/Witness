@@ -5,9 +5,11 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 
 #include "comms.h"
 #include "esp_log.h"
+#include "hal/uart_ll.h"
 #include "esp_timer.h"
 #include "hardware_pins.h"
 #include "flash_logger.h"
@@ -97,9 +99,11 @@ esp_err_t UartDriver::initialize()
         return result;
     }
 
+    // RX only; TX is connected by the first transmit (see tx_connected_).
+    gpio_reset_pin(tx_pin_);
     result = uart_set_pin(
         port_,
-        tx_pin_,
+        UART_PIN_NO_CHANGE,
         rx_pin_,
         UART_PIN_NO_CHANGE,
         UART_PIN_NO_CHANGE);
@@ -150,6 +154,12 @@ esp_err_t UartDriver::transmit(
         return ESP_ERR_INVALID_ARG;
     }
 
+    if (!tx_connected_) {
+        if (uart_set_pin(port_, current_tx(), current_rx(), UART_PIN_NO_CHANGE,
+                         UART_PIN_NO_CHANGE) != ESP_OK)
+            return ESP_FAIL;
+        tx_connected_ = true;
+    }
     const int written = uart_write_bytes(port_, data, length);
     if (written < 0) {
         return ESP_FAIL;
@@ -169,6 +179,71 @@ esp_err_t UartDriver::send_loopback_request()
         pdMS_TO_TICKS(100));
 }
 
+UartDriver::RxProbe UartDriver::probe_rx(const std::uint32_t window_ms)
+{
+    RxProbe probe{};
+    uart_dev_t *const hw = UART_LL_GET_HW(port_);
+    (void)uart_get_sclk_freq(UART_SCLK_DEFAULT, &probe.sclk_hz);
+    // Clearing autobaud_en resets the edge and pulse counters.
+    uart_ll_set_autobaud_en(hw, false);
+    uart_ll_set_autobaud_en(hw, true);
+    vTaskDelay(pdMS_TO_TICKS(window_ms));
+    probe.edges = uart_ll_get_rxd_edge_cnt(hw);
+    probe.low_min_cycles = uart_ll_get_low_pulse_cnt(hw);
+    probe.high_min_cycles = uart_ll_get_high_pulse_cnt(hw);
+    uart_ll_set_autobaud_en(hw, false);
+    // A single-bit pulse is the shortest in either level for NMEA text.
+    const std::uint32_t shortest = std::min(probe.low_min_cycles, probe.high_min_cycles);
+    // Valid only with real pulses of both levels (counters at 0 or 4095 mean
+    // a glitch from reconfiguring the pin, or no complete pulse).
+    if (probe.edges >= kProbeMinimumEdges && probe.low_min_cycles > 0 && probe.high_min_cycles > 0 &&
+        std::max(probe.low_min_cycles, probe.high_min_cycles) < 4095U && probe.sclk_hz)
+        probe.baud_estimate = (probe.sclk_hz + shortest / 2U) / shortest;
+    else
+        probe.edges = probe.edges >= kProbeMinimumEdges ? 0 : probe.edges;   // not a signal
+    return probe;
+}
+
+void UartDriver::select_gps_pins()
+{
+    // Try the configured RX pin, then the swapped one; the receiver's TX is
+    // the pin with traffic. Pins and the rate hint go to the GPS startup.
+    const gpio_num_t pins[2][2] = {{tx_pin_, rx_pin_}, {rx_pin_, tx_pin_}};
+    RxProbe probes[2]{};
+    for (int i = 0; i < 2; ++i) {
+        listen_on(i == 1);   // listen only: nothing drives either line
+        probes[i] = probe_rx(kProbeWindowMs);
+        const RxProbe &p = probes[i];
+        ESP_LOGI(kTag, "GPS RX probe on GPIO%d (TX GPIO%d): %lu edges in %lu ms, shortest low %lu / high %lu "
+                       "clocks at %lu Hz -> about %lu baud",
+                 static_cast<int>(pins[i][1]), static_cast<int>(pins[i][0]),
+                 static_cast<unsigned long>(p.edges), static_cast<unsigned long>(kProbeWindowMs),
+                 static_cast<unsigned long>(p.low_min_cycles), static_cast<unsigned long>(p.high_min_cycles),
+                 static_cast<unsigned long>(p.sclk_hz), static_cast<unsigned long>(p.baud_estimate));
+    }
+    const bool swap = probes[0].edges < kProbeMinimumEdges && probes[1].edges >= kProbeMinimumEdges;
+    const int use = swap ? 1 : 0;
+    listen_on(swap);
+    if (swap) {
+        ESP_LOGW(kTag, "GPS TX found on GPIO%d: RX/TX swapped from the configured pins",
+                 static_cast<int>(pins[use][1]));
+    } else if (probes[0].edges < kProbeMinimumEdges) {
+        ESP_LOGW(kTag, "GPS RX probe: no signal on either pin; identification scans both orientations");
+    }
+    const std::uint32_t estimate = probes[use].baud_estimate;
+    const std::uint32_t hint = GpsReceiver::nearest_scan_baud(estimate);
+    if (estimate != 0) {
+        gps_.set_baud_hint(estimate);
+        if (hint != 0) {
+            ESP_LOGI(kTag, "GPS identification starts at %lu baud (measured %lu)",
+                     static_cast<unsigned long>(hint), static_cast<unsigned long>(estimate));
+        } else {
+            ESP_LOGW(kTag, "GPS RX bit rate %lu baud matches no standard rate; trying it first",
+                     static_cast<unsigned long>(estimate));
+        }
+    }
+}
+
 void UartDriver::task_entry(void *const context)
 {
     static_cast<UartDriver *>(context)->run();
@@ -181,6 +256,26 @@ bool UartDriver::gps_send(void *context, const std::uint8_t *data,
                data, length, pdMS_TO_TICKS(100)) == ESP_OK;
 }
 
+void UartDriver::listen_on(const bool swapped)
+{
+    // Both pins back to plain GPIO (no output), then route only RX.
+    gpio_reset_pin(tx_pin_);
+    gpio_reset_pin(rx_pin_);
+    pins_swapped_ = swapped;
+    tx_connected_ = false;
+    (void)uart_set_pin(port_, UART_PIN_NO_CHANGE, current_rx(), UART_PIN_NO_CHANGE,
+                       UART_PIN_NO_CHANGE);
+}
+
+bool UartDriver::gps_swap_pins(void *context)
+{
+    auto *self = static_cast<UartDriver *>(context);
+    self->listen_on(!self->pins_swapped_);
+    ESP_LOGW(kTag, "GPS: listening on RX GPIO%d (TX GPIO%d once the receiver is heard)",
+             static_cast<int>(self->current_rx()), static_cast<int>(self->current_tx()));
+    return true;
+}
+
 bool UartDriver::gps_set_baud(void *context, const std::uint32_t baud)
 {
     auto *self = static_cast<UartDriver *>(context);
@@ -190,9 +285,10 @@ bool UartDriver::gps_set_baud(void *context, const std::uint32_t baud)
 void UartDriver::run()
 {
     NmeaGps nmea;
+    select_gps_pins();
     ESP_LOGI(
         kTag,
-        "UART%d ready at %" PRIu32 " baud on TX=%d RX=%d",
+        "UART%d ready at %" PRIu32 " baud on TX=%d RX=%d (before the GPS pin probe)",
         static_cast<int>(port_),
         kBaudRate,
         static_cast<int>(tx_pin_),
@@ -235,8 +331,62 @@ void UartDriver::run()
     if (last_gps_status == GpsReceiver::Status::Configuring)
         ESP_LOGI(kTag, "GPS startup: identifying PX1120S or u-blox M8 at %lu baud",
                  static_cast<unsigned long>(kBaudRate));
+    GpsReceiver::AssistProgress last_assist{};
     for (;;) {
+        {
+            // Pick up an assistance upload handed over by the USB/radio task.
+            static std::uint8_t blob[gps_assist::kMaximumBlob];
+            std::size_t length = 0;
+            portENTER_CRITICAL(&assist_lock_);
+            if (assist_pending_length_ != 0U) {
+                length = assist_pending_length_;
+                std::memcpy(blob, assist_pending_, length);
+                assist_pending_length_ = 0;
+            }
+            portEXIT_CRITICAL(&assist_lock_);
+            if (length != 0U) {
+                const auto now = static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
+                if (gps_.begin_assist(blob, length, now)) {
+                    ESP_LOGI(kTag, "GPS assist: writing %u ephemeris records to the %s",
+                             static_cast<unsigned>(gps_.assist_progress().total), gps_.model_name());
+                } else {
+                    ESP_LOGW(kTag, "GPS assist refused: %s", gps_.assist_refusal());
+                }
+            }
+        }
+        if (cold_start_requested_) {
+            cold_start_requested_ = false;
+            if (gps_.cold_start(static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL))) {
+                ESP_LOGW(kTag, "GPS cold start sent to the %s (ephemerides, almanac, position and "
+                               "time cleared); reconfiguring in %lu ms",
+                         gps_.model_name(), static_cast<unsigned long>(GpsReceiver::kRestartDelayMs));
+            } else {
+                ESP_LOGW(kTag, "GPS cold start refused: no receiver identified at %lu baud",
+                         static_cast<unsigned long>(GpsReceiver::kOperationalBaud));
+            }
+        }
         gps_.service(static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL));
+        {
+            const auto progress = gps_.assist_progress();
+            if (last_assist.active && !progress.active) {
+                ESP_LOGI(kTag, "GPS assist done: %u/%u acknowledged, %u rejected, %u unanswered",
+                         static_cast<unsigned>(progress.acked), static_cast<unsigned>(progress.total),
+                         static_cast<unsigned>(progress.nacked),
+                         static_cast<unsigned>(progress.timed_out));
+            }
+            if (assist_status_requested_) {
+                assist_status_requested_ = false;
+                ESP_LOGI(kTag, "GPS assist status: %s, %u/%u sent, %u acknowledged, %u rejected, "
+                               "%u unanswered, %lu uploads since boot; receiver %s %s",
+                         progress.active ? "uploading" : "idle",
+                         static_cast<unsigned>(progress.sent), static_cast<unsigned>(progress.total),
+                         static_cast<unsigned>(progress.acked), static_cast<unsigned>(progress.nacked),
+                         static_cast<unsigned>(progress.timed_out),
+                         static_cast<unsigned long>(progress.uploads), gps_.model_name(),
+                         gps_.status() == GpsReceiver::Status::Ready ? "ready" : "not ready");
+            }
+            last_assist = progress;
+        }
         const int bytes_read = uart_read_bytes(
             port_,
             receive_buffer.data(),
@@ -405,6 +555,22 @@ void UartDriver::run()
                 kLoopbackReplyTimeoutMs);
         }
     }
+}
+
+esp_err_t UartDriver::submit_gps_assist(const std::uint8_t *blob, const std::size_t length)
+{
+    if (blob == nullptr || length == 0U || length > sizeof(assist_pending_))
+        return ESP_ERR_INVALID_ARG;
+    esp_err_t result = ESP_OK;
+    portENTER_CRITICAL(&assist_lock_);
+    if (assist_pending_length_ != 0U) {
+        result = ESP_ERR_INVALID_STATE;
+    } else {
+        std::memcpy(assist_pending_, blob, length);
+        assist_pending_length_ = length;
+    }
+    portEXIT_CRITICAL(&assist_lock_);
+    return result;
 }
 
 NmeaGps::Fix UartDriver::latest_gps_fix() const

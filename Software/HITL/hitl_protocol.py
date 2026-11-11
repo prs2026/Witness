@@ -68,15 +68,18 @@ TELEMETRY_STATUS_PACKETS = (ID_SENSORS, ID_STATE, ID_WITNESS_DEBUG,
 CMD_HITL_ENTER = 0x4849
 CMD_HITL_EXIT = 0x4858
 CMD_WITNESS_DEBUG_START = 0x00E0
+# GPS receiver cold start (Witness: Pad Idle only; see comms.h).
+CMD_GPS_COLD_START = 0x4752
 # Safety: the only commands this tool will ever encode. Mass storage (0x6868),
-# log erase (0x6869) and flight-state commands (0x7300-0x7304) are
+# log erase (0x6869), log clear (0x686A) and flight-state commands (0x7300-0x7304) are
 # deliberately impossible to build here.
 # Export logs as a USB disk. Deliberately NOT in ALLOWED_COMMANDS: only the
 # end-of-run FC log fetch sends it (hitl_outputs.fetch_fc_logs).
 CMD_MASS_STORAGE = 0x6868
 IMU_FRAME_LENGTH = 150
 ALLOWED_COMMANDS = {CMD_HITL_ENTER: "HITL ENTER", CMD_HITL_EXIT: "HITL EXIT",
-                    CMD_WITNESS_DEBUG_START: "WITNESS DEBUG START"}
+                    CMD_WITNESS_DEBUG_START: "WITNESS DEBUG START",
+                    CMD_GPS_COLD_START: "GPS COLD START"}
 
 FLIGHT_STATES = ("Pad idle", "Boost", "Coast", "Descent", "Landed")
 PAD_IDLE, BOOST, COAST, DESCENT, LANDED = range(5)
@@ -238,9 +241,27 @@ def encode_imu_batch(first_index: int, low_g, high_g, gyro) -> bytes:
     return bytes(out)
 
 
-def encode_hitl(sample: HitlInput) -> bytes:
-    """Build the 47-byte 0x0C frame (status field always zero)."""
-    out = bytearray((ID_HITL, 0, 0))
+# 0x0C status flag (comms.h IRIS_HITL_STATUS_GPS_FROM_RECEIVER): Witness takes
+# GPS from its own receiver, which hears an RF simulation (gps_rf.py).
+HITL_STATUS_GPS_FROM_RECEIVER = 0x01
+
+# GPS assistance upload frames (Horizon/gps_assist.py; comms.h
+# IRIS_COMMAND_GPS_ASSIST_*). The only other 0x05 frames this tool sends.
+ASSIST_COMMANDS = {0x4741: "GPS ASSIST BEGIN", 0x4744: "GPS ASSIST DATA",
+                   0x4745: "GPS ASSIST COMMIT", 0x4751: "GPS ASSIST STATUS"}
+
+
+def is_assist_frame(frame: bytes) -> bool:
+    """A canonical 10-byte 0x05 frame carrying a GPS assistance opcode."""
+    return (len(frame) == 10 and frame[0] == ID_COMMAND and frame[9] == EOF
+            and ((frame[7] << 8) | frame[8]) in ASSIST_COMMANDS)
+
+
+def encode_hitl(sample: HitlInput, status: int = 0) -> bytes:
+    """Build the 47-byte 0x0C frame. status: 0, or HITL_STATUS_GPS_FROM_RECEIVER."""
+    if status not in (0, HITL_STATUS_GPS_FROM_RECEIVER):
+        raise ValueError(f"unsupported 0x0C status 0x{status:02X}")
+    out = bytearray((ID_HITL, status, 0))
     out += struct.pack(">I", int(sample.sim_time_ms) & 0xFFFFFFFF)
     for v in sample.low_g:
         out += struct.pack(">h", to_counts16(v, LOW_G_PER_COUNT))

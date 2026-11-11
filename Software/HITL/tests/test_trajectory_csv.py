@@ -119,7 +119,7 @@ class ConversionTests(SyntheticBase):
         tr = b.trajectory
         expect = 5.0 + (tr.t_end - tr.t[0]) + 0.2 + 10.0
         self.assertAlmostEqual(len(ts) * 0.01, expect, delta=0.02)
-        self.assertEqual(b.samples[0].alt_msl_m, 1400.0)
+        self.assertEqual(b.samples[0].alt_msl_m, sm.LAUNCH_ALT_MSL_M)
         self.assertEqual(b.samples[-1].phase, "landed")
 
     def test_specific_force_signs(self):

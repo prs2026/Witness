@@ -216,11 +216,29 @@ class MonitorThroughputTests(unittest.TestCase):
         monitor.recall_command(1)
         self.assertEqual(monitor.command_entry.text(), "")
         with patch("main.ask_yes_no", return_value=False):
-            erase = next(b for b in monitor.quick_command_buttons if b.text() == "Erase Logs")
+            erase = next(b for b in monitor.quick_command_buttons if b.text() == "Erase Logs (full, slow)")
             erase.click()
         self.assertEqual(len(sent), 1)          # declined confirmation sends nothing
         monitor.quick_command_buttons[1].click()   # CH1 On
         self.assertEqual(int.from_bytes(sent[-1][7:9], "big"), 0x0031)
+        # GPS ephemeris upload: chunked assist frames, on a worker thread.
+        rinex = Path(__file__).resolve().parents[4] / "gps-sdr-sim" / "brdc0010.22n"
+        if rinex.exists():
+            import datetime as dt
+            import gps_assist
+            from horizon_qt_support import pump_until
+            before = len(sent)
+            when = dt.datetime(2022, 1, 1, 0, 30)
+            with patch("gps_assist.gps_now", return_value=when):
+                self.assertTrue(monitor.upload_gps_ephemeris(str(rinex)))
+            nav = gps_assist.parse_rinex_nav(rinex)
+            blob, _prns = gps_assist.ephemeris_upload(nav, when)
+            expected = len(gps_assist.assist_frames(blob)) + 1      # + STATUS
+            self.assertTrue(pump_until(lambda: len(sent) - before >= expected, 20))
+            frames = sent[before:]
+            self.assertEqual(frames[0][7:9], b"GA")
+            self.assertEqual(frames[-1][7:9], b"GQ")
+            self.assertTrue(all(len(f) == 10 and f[-1] == 0x0A for f in frames))
         monitor.serials.clear()
 
     def test_panel_api_used_by_witnessos(self):

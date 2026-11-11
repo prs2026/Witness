@@ -318,7 +318,7 @@ esp_err_t FlashLogger::scan_sessions(bool build_exports) {
     } else {
         current_slot_ = static_cast<std::uint8_t>(1 - newest);
     }
-    current_generation_ = newest >= 0 ? info[newest].generation + 1 : 1;
+    current_generation_ = next_usable_generation(newest >= 0 ? info[newest].generation + 1 : 1);
 
     if (!build_exports) return ESP_OK;
     for (std::uint8_t slot = 0; slot < kSlotCount; ++slot) {
@@ -414,6 +414,31 @@ esp_err_t FlashLogger::erase_session_blocks()
 
     current_slot_ = 0;
     current_generation_ = 1;
+    reset_session_buffers();
+    return create_session();
+}
+
+esp_err_t FlashLogger::clear_session_headers()
+{
+    // Block 0 of each slot holds its session header and flight marker; with
+    // both erased no session is listed and no flight is protected.
+    esp_err_t first_error = ESP_OK;
+    for (std::uint8_t slot = 0; slot < kSlotCount; ++slot) {
+        bool bad = false;
+        esp_err_t result = flash_.is_bad_block(slot_base(slot), bad);
+        if (result == ESP_OK && !bad) result = flash_.erase_block(slot_base(slot));
+        if (result != ESP_OK && first_error == ESP_OK) first_error = result;
+    }
+    if (first_error != ESP_OK) return first_error;
+    // Keep counting: stale pages carry older tags and never match this one.
+    current_slot_ = 0;
+    current_generation_ = next_usable_generation(current_generation_ + 1);
+    reset_session_buffers();
+    return create_session();
+}
+
+void FlashLogger::reset_session_buffers()
+{
     binary_buffer_used_ = 0;
     imu_buffer_used_ = 0;
     text_buffer_used_ = 0;
@@ -427,7 +452,6 @@ esp_err_t FlashLogger::erase_session_blocks()
     imu_dump_pending_ = true;
     imu_descent_counter_ = 0;
     ++prelaunch_reset_generation_;
-    return create_session();
 }
 
 esp_err_t FlashLogger::append_bytes(Writer &writer, const std::uint8_t *data, std::size_t length) {
@@ -658,7 +682,7 @@ esp_err_t FlashLogger::scan_file(const std::uint8_t slot, const std::uint8_t typ
             const std::uint32_t sequence = read_u32_be(h + 8);
             const bool valid = read_u32_be(h) == kPageMagic && h[4] == type &&
                                h[5] == version && n <= kPagePayloadSize &&
-                               (!tagged || (sequence >> kSequenceTagShift) == tag);
+                               (sequence >> kSequenceTagShift) == (tagged ? tag : 0U);
             if (!valid) {
                 if (!ring) break;  // linear files end at the first page not theirs
                 continue;
@@ -706,9 +730,8 @@ esp_err_t FlashLogger::load_export_page(
                            export_read_page_[4] == file.type &&
                            export_read_page_[5] == file.store_version &&
                            payload_length <= kPagePayloadSize &&
-                           (!file.tagged ||
-                            (read_u32_be(export_read_page_ + 8) >> kSequenceTagShift) ==
-                                sequence_tag(file.generation));
+                           (read_u32_be(export_read_page_ + 8) >> kSequenceTagShift) ==
+                               (file.tagged ? sequence_tag(file.generation) : 0U);
         if (!valid) {
             if (!ring) return ESP_ERR_INVALID_RESPONSE;
             continue;
@@ -781,6 +804,14 @@ esp_err_t FlashLogger::erase_all_sessions(const TickType_t timeout)
         return ESP_ERR_TIMEOUT;
     }
     return erase_result_;
+}
+
+esp_err_t FlashLogger::clear_all_sessions(const TickType_t timeout)
+{
+    if (frozen_.load() || !task_handle_) return ESP_ERR_INVALID_STATE;
+    if (erase_requested_.load()) return ESP_ERR_INVALID_STATE;
+    erase_quick_.store(true);
+    return erase_all_sessions(timeout);
 }
 
 std::size_t FlashLogger::export_file_count() const { return export_file_count_; }
@@ -902,7 +933,10 @@ void FlashLogger::run() {
             vTaskDelay(kLogPeriod);
             xQueueReset(binary_record_queue_);
             capture_logs_.store(false);
-            erase_result_ = erase_session_blocks();
+            const bool quick = erase_quick_.exchange(false);
+            const std::uint32_t erase_start_ms = static_cast<std::uint32_t>(esp_timer_get_time() / 1000);
+            erase_result_ = quick ? clear_session_headers() : erase_session_blocks();
+            const std::uint32_t erase_ms = static_cast<std::uint32_t>(esp_timer_get_time() / 1000) - erase_start_ms;
             capture_logs_.store(erase_result_ == ESP_OK);
             capture_binary_records_.store(erase_result_ == ESP_OK);
             capture_imu_records_.store(erase_result_ == ESP_OK);
@@ -911,7 +945,14 @@ void FlashLogger::run() {
             if (erase_result_ != ESP_OK) {
                 r = erase_result_;
             } else {
-                ESP_LOGI(kLogTag, "all stored sessions erased; new session 1 created");
+                if (quick) {
+                    ESP_LOGI(kLogTag, "all stored sessions cleared (headers only, %lu ms); new session %lu",
+                             static_cast<unsigned long>(erase_ms),
+                             static_cast<unsigned long>(current_generation_));
+                } else {
+                    ESP_LOGI(kLogTag, "all stored sessions erased (%lu ms); new session 1 created",
+                             static_cast<unsigned long>(erase_ms));
+                }
                 last_flush = xTaskGetTickCount();
             }
         }

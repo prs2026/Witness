@@ -47,6 +47,9 @@ struct Sample {
     double longitude_degrees = 0.0;
     // GGA quality 1..8 with a finite altitude, as the NMEA parser requires.
     bool gps_fix = false;
+    // Status flag IRIS_HITL_STATUS_GPS_FROM_RECEIVER: GPS comes from the real
+    // receiver (RF simulation); the packet's GPS fields are ignored.
+    bool gps_from_receiver = false;
 };
 
 // Decodes a complete frame: length 47, ID 0x0C and EOF 0x0A at offset 46.

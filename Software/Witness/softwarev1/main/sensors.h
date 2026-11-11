@@ -51,6 +51,8 @@ public:
     // rate. 25 Hz suits both GPS options: a 25 Hz receiver (PX1120S) gets
     // every fix used, a 10 Hz one (u-blox M8) appears on every 2nd-3rd tick.
     static constexpr std::uint32_t kPositionUpdateRateHz = 25;
+    // Simulated HITL GPS fixes (0x0C GPS fields) are used at this rate.
+    static constexpr std::uint32_t kHitlGpsRateHz = 25;
     // State packets are logged to NAND at 50 Hz, the barometer's rate (USB and
     // radio keep 1 Hz).
     static constexpr std::uint32_t kStateLogRateHz = 50;
@@ -198,6 +200,8 @@ public:
     // position predict, NAND IMU log), without calibration.
     bool submit_hitl_imu_batch(const hitl::ImuBatch &batch);
     bool hitl_active() const;
+    // The GPS UART (receiver configuration, assistance uploads).
+    UartDriver &gps_uart() { return gps_uart_; }
 
     // IMU calibration command from USB (argument: IRIS_IMU_CALIBRATION_*).
     // Thread-safe; the capture runs in the sensor task and logs its result.
@@ -505,7 +509,9 @@ private:
     std::uint64_t position_last_predict_us_ = 0;
     std::uint64_t position_last_update_us_ = 0;
     std::uint64_t position_report_us_ = 0;
-    std::uint32_t position_last_gps_ms_ = 0;
+    std::uint32_t position_last_gps_sequence_ = 0;
+    std::uint8_t position_gps_satellites_ = 0;
+    bool position_gps_accepted_ = false;
     bool position_baro_pending_ = false;
     std::uint64_t state_log_last_us_ = 0;
 

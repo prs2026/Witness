@@ -52,10 +52,20 @@ struct Config {
     // Barometer: effective pressure error (noise, lag, model) and a floor.
     float baro_pressure_sigma_pa = 10.0F;
     float baro_min_sigma_m = 0.5F;
-    // GPS position sigma (no HDOP in GGA as parsed), inflated with few sats.
+    // GPS position sigma. With dilution of precision (GGA HDOP, GSA VDOP) it is
+    // the user range error times the DOP: sigma_h = uere_h * HDOP, sigma_v =
+    // uere_v * VDOP (HDOP 1 -> 2.5 m, VDOP 1.5 -> 5 m, the old fixed values at
+    // typical geometry), clamped to [min, max]. VDOP unknown but HDOP known
+    // uses vdop = kVdopPerHdop * HDOP. Without any DOP: the fixed sigmas,
+    // doubled below gps_good_satellites.
     float gps_horizontal_sigma_m = 2.5F;
     float gps_vertical_sigma_m = 5.0F;
     std::uint8_t gps_good_satellites = 6;
+    float gps_horizontal_uere_m = 2.5F;
+    float gps_vertical_uere_m = 3.3F;
+    float gps_vdop_per_hdop = 1.6F;
+    float gps_min_sigma_m = 1.0F;
+    float gps_max_sigma_m = 200.0F;
     // Innovation gate (sigmas); a measurement stream rejected this many
     // times in a row is accepted anyway so the filter can re-synchronize.
     float gate_sigma = 5.0F;
@@ -102,8 +112,16 @@ public:
     // and pressure. Returns true if it was used.
     bool update_baro(float altitude_m, float pressure_pa, Phase phase);
     // GPS fix (WGS-84 degrees, MSL metres). Returns true if it was used.
+    // hdop/vdop: NaN when unknown (see Config). Returns true if it was used.
     bool update_gps(double latitude_deg, double longitude_deg, float altitude_m,
-                    std::uint8_t satellites, Phase phase);
+                    std::uint8_t satellites, Phase phase,
+                    float hdop = std::numeric_limits<float>::quiet_NaN(),
+                    float vdop = std::numeric_limits<float>::quiet_NaN());
+    // Measurement sigmas (m) update_gps uses for these inputs.
+    void gps_sigmas(std::uint8_t satellites, float hdop, float vdop,
+                    float &horizontal_m, float &vertical_m) const;
+    float last_gps_horizontal_sigma_m() const { return last_gps_sigma_h_; }
+    float last_gps_vertical_sigma_m() const { return last_gps_sigma_v_; }
     // Pad/landed pseudo-measurements; call at the update rate.
     void update_constraints(Phase phase);
     // Clears the per-cycle innovations; call before each update cycle.
@@ -152,6 +170,8 @@ private:
     bool imu_ignored_ = false;
     bool baro_gated_ = false;
     float last_baro_sigma_m_ = 0.0F;
+    float last_gps_sigma_h_ = 0.0F;
+    float last_gps_sigma_v_ = 0.0F;
     // Pad references (tracked while still on the pad).
     bool baro_reference_set_ = false;
     float baro_reference_m_ = 0.0F;

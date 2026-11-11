@@ -504,6 +504,7 @@ bool Sensors::service_hitl(const std::uint32_t now_ms, bool &new_sample)
         position_filter_.reset();
         position_last_predict_us_ = 0;
         position_baro_pending_ = false;
+        position_gps_accepted_ = false;
         portENTER_CRITICAL(&hitl_lock_);
         hitl_imu_count_ = 0;
         hitl_imu_head_ = 0;
@@ -596,7 +597,8 @@ void Sensors::reset_sensor_sample()
 
 NmeaGps::Fix Sensors::current_gps_fix() const
 {
-    if (!hitl_in_use_) {
+    if (!hitl_in_use_ || (hitl_has_sample_ && hitl_sample_.gps_from_receiver)) {
+        // Real receiver; in HITL with an RF GPS simulation it hears the sim.
         return gps_uart_.latest_gps_fix();
     }
     // Same shape as a fresh UART GGA: satellites even without a fix, and
@@ -607,6 +609,8 @@ NmeaGps::Fix Sensors::current_gps_fix() const
     }
     fix.gga = true;
     fix.received_ms = uptime_ms();
+    // A new simulated fix every 1/kHitlGpsRateHz of sim time (the PX1120S rate).
+    fix.sequence = hitl_sample_.sim_time_ms / (1000U / kHitlGpsRateHz);
     fix.satellites = hitl_sample_.satellites;
     fix.fix_quality = hitl_sample_.fix_quality;
     fix.valid = hitl_sample_.gps_fix;
@@ -1598,6 +1602,21 @@ void Sensors::predict_position(const std::uint64_t timestamp_us)
 
 void Sensors::service_position(const std::uint64_t now_us)
 {
+    // GPS: each new fix is used as soon as it is parsed (every fix at the
+    // receiver's 25 Hz), not on the next update tick, which could skip one.
+    if (position_filter_.initialized()) {
+        const NmeaGps::Fix fix = current_gps_fix();
+        if (fix.valid && fix.sequence != position_last_gps_sequence_) {
+            position_last_gps_sequence_ = fix.sequence;
+            position_gps_satellites_ = fix.satellites;
+            const auto gps_phase = static_cast<position::Phase>(flight_state_machine_.state());
+            if (position_filter_.update_gps(fix.latitude_degrees, fix.longitude_degrees,
+                                            fix.altitude_meters, fix.satellites, gps_phase,
+                                            fix.hdop, fix.vdop)) {
+                position_gps_accepted_ = true;
+            }
+        }
+    }
     constexpr std::uint64_t kPeriodUs = 1'000'000ULL / kPositionUpdateRateHz;
     if (position_last_update_us_ != 0 && now_us - position_last_update_us_ < kPeriodUs) {
         return;
@@ -1610,9 +1629,7 @@ void Sensors::service_position(const std::uint64_t now_us)
         return;  // no predict yet (attitude not initialized)
     }
     const auto phase = static_cast<position::Phase>(flight_state_machine_.state());
-    position_filter_.begin_update_cycle();
     const std::uint32_t baro_updates_before = position_filter_.baro_updates();
-    const std::uint32_t gps_updates_before = position_filter_.gps_updates();
     if (position_baro_pending_) {
         position_baro_pending_ = false;
         // MS5607 pressure is in centi-mbar, i.e. pascals.
@@ -1620,15 +1637,13 @@ void Sensors::service_position(const std::uint64_t now_us)
             working_sample_.barometric_altitude_meters,
             static_cast<float>(working_sample_.pressure_centi_mbar), phase);
     }
-    const NmeaGps::Fix fix = current_gps_fix();
-    if (fix.valid && fix.received_ms != position_last_gps_ms_) {
-        position_last_gps_ms_ = fix.received_ms;
-        (void)position_filter_.update_gps(fix.latitude_degrees, fix.longitude_degrees,
-                                          fix.altitude_meters, fix.satellites, phase);
-    }
     position_filter_.update_constraints(phase);
+    // The log carries this tick's baro update and the latest GPS update since
+    // the previous tick; then the innovation records start over.
     log_kalman_packet(phase, position_filter_.baro_updates() != baro_updates_before,
-                      position_filter_.gps_updates() != gps_updates_before, fix.satellites);
+                      position_gps_accepted_, position_gps_satellites_);
+    position_gps_accepted_ = false;
+    position_filter_.begin_update_cycle();
 }
 
 void Sensors::log_kalman_packet(const position::Phase phase, const bool baro_accepted,
@@ -1694,10 +1709,11 @@ void Sensors::report_position(const std::uint64_t now_us)
     float v[3];
     position_filter_.position(p);
     position_filter_.velocity(v);
+    const NmeaGps::Fix gps_dop = current_gps_fix();   // DOPs used for the GPS sigmas
     defer_log(
              "position: ENU %.1f %.1f %.1f m, velocity %.1f %.1f %.1f m/s, Mach %.2f, "
              "alt MSL %.0f m; baro %lu used/%lu gated/%lu rejected, sigma %.1f m; "
-             "GPS %lu used/%lu rejected%s; %s",
+             "GPS %lu used/%lu rejected, sigma %.1f/%.1f m (HDOP %.1f VDOP %.1f)%s; %s",
              static_cast<double>(p[0]), static_cast<double>(p[1]), static_cast<double>(p[2]),
              static_cast<double>(v[0]), static_cast<double>(v[1]), static_cast<double>(v[2]),
              static_cast<double>(position_filter_.mach()),
@@ -1708,6 +1724,9 @@ void Sensors::report_position(const std::uint64_t now_us)
              static_cast<double>(position_filter_.last_baro_sigma_m()),
              static_cast<unsigned long>(position_filter_.gps_updates()),
              static_cast<unsigned long>(position_filter_.gps_rejects()),
+             static_cast<double>(position_filter_.last_gps_horizontal_sigma_m()),
+             static_cast<double>(position_filter_.last_gps_vertical_sigma_m()),
+             static_cast<double>(gps_dop.hdop), static_cast<double>(gps_dop.vdop),
              position_filter_.gps_origin_set() ? "" : " (no GPS origin)",
              !position_filter_.initialized() ? "waiting for attitude"
              : position_filter_.imu_ignored() ? "IMU ignored (attitude lost)"

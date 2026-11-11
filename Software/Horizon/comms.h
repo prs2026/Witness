@@ -43,6 +43,21 @@
 #define IRIS_COMMAND_MASS_STORAGE_START 0x6868U
 // Protected destructive command: erase every stored flash log session.
 #define IRIS_COMMAND_ERASE_LOG_SESSIONS 0x6869U
+// Protected fast clear: deletes every stored session by erasing only the two
+// session headers (2 blocks, not 1,004). Data pages stay on the chip but carry
+// older session tags, so no export ever shows them; each block is erased
+// again just before it is rewritten. The session number keeps counting up.
+#define IRIS_COMMAND_CLEAR_LOG_SESSIONS 0x686AU
+// GPS assistance upload (ephemeris for the receiver), chunked in ordinary
+// 10-byte 0x05 frames over USB or radio; see gps_assist.h. Never forwarded.
+#define IRIS_COMMAND_GPS_ASSIST_BEGIN 0x4741U
+#define IRIS_COMMAND_GPS_ASSIST_DATA 0x4744U
+#define IRIS_COMMAND_GPS_ASSIST_COMMIT 0x4745U
+#define IRIS_COMMAND_GPS_ASSIST_STATUS 0x4751U
+// GPS cold start: the receiver discards its ephemerides, almanac, position
+// and time (SkyTraq 0x01 mode 3; u-blox CFG-RST, all BBR sections), then
+// Witness reapplies its configuration. Witness-local, USB or radio, Pad Idle only.
+#define IRIS_COMMAND_GPS_COLD_START 0x4752U
 // Three-byte state command: 0x05, 0x73, then one of these state values.
 #define IRIS_COMMAND_SET_FLIGHT_STATE 0x73U
 #define IRIS_FLIGHT_STATE_PAD_IDLE 0x00U
@@ -714,7 +729,10 @@
 
 #define IRIS_PACKET_ID_HITL_SENSORS 0x0CU
 
-#define IRIS_PACKET_HITL_STATUS_OFFSET 0U             // sender status, ignored
+#define IRIS_PACKET_HITL_STATUS_OFFSET 0U             // sender flags (below)
+// 0x0C status flag: take GPS from Witness's own receiver (fed an RF GPS
+// simulation, e.g. gps-sdr-sim + HackRF) instead of the packet's GPS fields.
+#define IRIS_HITL_STATUS_GPS_FROM_RECEIVER 0x01U
 #define IRIS_PACKET_HITL_SIM_TIME_OFFSET 2U           // uint32 simulation ms
 #define IRIS_PACKET_HITL_LOW_ACCEL_X_OFFSET 6U        // int16, 0.488 mg/count
 #define IRIS_PACKET_HITL_LOW_ACCEL_Y_OFFSET 8U

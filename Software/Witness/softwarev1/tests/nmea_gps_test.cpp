@@ -83,5 +83,44 @@ int main() {
     assert(NmeaGps::fresh(fix, 100)); // Millisecond clock wrap.
     assert(NmeaGps::gga_fresh(fix, 100));
     assert(!NmeaGps::gga_fresh(NmeaGps::Fix{}, 0)); // Never received.
+    // Dilution of precision: HDOP from every GGA, PDOP/VDOP from a fresh GSA.
+    {
+        NmeaGps p;
+        feed(p, sentence("GNGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,"), 1000);
+        auto f = p.latest_fix();
+        assert(std::abs(f.hdop - 0.9F) < 1e-6F && std::isnan(f.vdop) && std::isnan(f.pdop));
+        assert(f.sequence == 1);
+        feed(p, sentence("GNGSA,A,3,01,02,03,04,05,06,,,,,,,1.8,1.0,1.5,1"), 1010);
+        f = p.latest_fix();  // GSA attaches to the current fix
+        assert(std::abs(f.vdop - 1.5F) < 1e-6F && std::abs(f.pdop - 1.8F) < 1e-6F);
+        assert(p.gsa_sentence_count() == 1);
+        feed(p, sentence("GNGGA,123519.04,4807.038,N,01131.000,E,1,08,1.1,545.4,M,46.9,M,,"), 1040);
+        f = p.latest_fix();
+        assert(std::abs(f.hdop - 1.1F) < 1e-6F && std::abs(f.vdop - 1.5F) < 1e-6F);
+        assert(f.sequence == 2);
+        // GSA too old: VDOP dropped; HDOP still from GGA.
+        feed(p, sentence("GNGGA,123522,4807.038,N,01131.000,E,1,08,1.2,545.4,M,46.9,M,,"),
+             1010 + NmeaGps::kDopTimeoutMs);
+        f = p.latest_fix();
+        assert(std::isnan(f.vdop) && std::abs(f.hdop - 1.2F) < 1e-6F);
+        // No-fix GSA and 99.99 DOPs are not used; empty GGA HDOP falls back to GSA.
+        feed(p, sentence("GNGSA,A,1,,,,,,,,,,,,,99.99,99.99,99.99,1"), 20000);
+        feed(p, sentence("GNGGA,123523,4807.038,N,01131.000,E,1,08,,545.4,M,46.9,M,,"), 20010);
+        f = p.latest_fix();
+        assert(std::isnan(f.hdop) && std::isnan(f.vdop));
+        feed(p, sentence("GPGSA,A,3,01,02,03,04,,,,,,,,,2.5,2.0,1.6"), 20020);
+        feed(p, sentence("GNGGA,123524,4807.038,N,01131.000,E,1,08,,545.4,M,46.9,M,,"), 20030);
+        f = p.latest_fix();
+        assert(std::abs(f.hdop - 2.0F) < 1e-6F && std::abs(f.vdop - 1.6F) < 1e-6F);
+        // PX1120S: one GSA per constellation; Galileo/BeiDou with no
+        // satellites report "no fix" and 0.0, which must not clear GPS's DOPs.
+        feed(p, sentence("GAGSA,A,1,,,,,,,,,,,,,0.0,0.0,0.0,3"), 20040);
+        feed(p, sentence("GBGSA,A,1,,,,,,,,,,,,,0.0,0.0,0.0,4"), 20041);
+        feed(p, sentence("GNGGA,123525,4807.038,N,01131.000,E,1,08,1.3,545.4,M,46.9,M,,"), 25000);
+        f = p.latest_fix();
+        assert(std::abs(f.vdop - 1.6F) < 1e-6F && std::abs(f.hdop - 1.3F) < 1e-6F);
+        feed(p, sentence("GNGGA,123525,,,,,0,00,99.99,,,,,,"), 25040);
+        assert(std::isnan(p.latest_fix().hdop));
+    }
     std::puts("NMEA GPS tests passed");
 }

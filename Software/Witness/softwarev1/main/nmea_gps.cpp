@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 
 namespace {
 int hex(char c) {
@@ -24,6 +25,13 @@ bool number(const char *s, double &value) {
     if (!digit) return false;
     value = std::strtod(s, nullptr);
     return std::isfinite(value);
+}
+// DOP fields: positive and finite; 99.99 is the receivers' "no solution".
+float dop(const char *s) {
+    double value;
+    if (!number(s, value) || value <= 0.0 || value >= 99.0)
+        return std::numeric_limits<float>::quiet_NaN();
+    return static_cast<float>(value);
 }
 bool coordinate(const char *s, const char *hemisphere, bool latitude, double &value) {
     double raw;
@@ -69,6 +77,10 @@ void NmeaGps::parse(std::uint32_t now_ms) {
             *p = '\0'; fields[count++] = p + 1;
         }
     }
+    if (std::strlen(fields[0]) == 5 && std::strcmp(fields[0] + 2, "GSA") == 0) {
+        parse_gsa(fields, count, now_ms);
+        return;
+    }
     if (count < 11 || std::strlen(fields[0]) != 5 ||
         std::strcmp(fields[0] + 2, "GGA") != 0) return;
     ++gga_sentence_count_;
@@ -77,12 +89,15 @@ void NmeaGps::parse(std::uint32_t now_ms) {
     fix_ = {};
     fix_.gga = true;
     fix_.received_ms = now_ms;
+    fix_.sequence = gga_sentence_count_;
     if (std::strlen(fields[6]) == 1 && fields[6][0] >= '0' && fields[6][0] <= '9')
         fix_.fix_quality = static_cast<std::uint8_t>(fields[6][0] - '0');
     double satellites;
     if (number(fields[7], satellites) && satellites >= 0 && satellites <= 255 &&
         satellites == std::floor(satellites))
         fix_.satellites = static_cast<std::uint8_t>(satellites);
+    fix_.hdop = dop(fields[8]);
+    if (fix_.fix_quality >= 1 && fix_.fix_quality <= 8) attach_dop(fix_, now_ms);
     if (fix_.fix_quality < 1 || fix_.fix_quality > 8 ||
         std::strcmp(fields[10], "M") != 0) return;
     Fix next = fix_;
@@ -94,4 +109,35 @@ void NmeaGps::parse(std::uint32_t now_ms) {
     if (!std::isfinite(next.altitude_meters)) return;
     next.valid = true;
     fix_ = next;
+}
+
+// $xxGSA,mode,fix type,12 x SV,PDOP,HDOP,VDOP[,system ID]
+void NmeaGps::parse_gsa(char *const *fields, const std::size_t count, const std::uint32_t now_ms)
+{
+    if (count < 18) return;
+    ++gsa_sentence_count_;
+    // Fix type 1 = no fix: ignored, not cleared. A multi-GNSS receiver sends
+    // one GSA per constellation, and a system with no satellites in use
+    // reports "no fix" (DOPs 0.0) while the combined solution is fine; the
+    // timeout drops old values instead.
+    if (std::strcmp(fields[2], "2") != 0 && std::strcmp(fields[2], "3") != 0) return;
+    const float pdop = dop(fields[15]);
+    const float hdop = dop(fields[16]);
+    const float vdop = dop(fields[17]);
+    if (!std::isfinite(hdop) && !std::isfinite(vdop)) return;
+    gsa_pdop_ = pdop;
+    gsa_hdop_ = hdop;
+    gsa_vdop_ = vdop;
+    gsa_ms_ = now_ms;
+    gsa_seen_ = true;
+    if (fix_.fix_quality >= 1 && fix_.fix_quality <= 8) attach_dop(fix_, now_ms);
+}
+
+void NmeaGps::attach_dop(Fix &fix, const std::uint32_t now_ms) const
+{
+    const bool fresh = gsa_seen_ && now_ms - gsa_ms_ < kDopTimeoutMs;
+    fix.pdop = fresh ? gsa_pdop_ : std::numeric_limits<float>::quiet_NaN();
+    fix.vdop = fresh ? gsa_vdop_ : std::numeric_limits<float>::quiet_NaN();
+    // GGA HDOP is per fix; fall back to the GSA value if GGA left it empty.
+    if (!std::isfinite(fix.hdop) && fresh) fix.hdop = gsa_hdop_;
 }

@@ -15,6 +15,7 @@
 #include "sdkconfig.h"
 #include "sensors.h"
 #include "spi_data_forwarder.h"
+#include "uart_driver.h"
 
 namespace {
 
@@ -356,10 +357,19 @@ void UsbSerialEcho::finish_binary_command()
         }
     }
 
+    const std::uint16_t frame_opcode = static_cast<std::uint16_t>(
+        (static_cast<std::uint8_t>(command_buffer_[7]) << 8U) |
+        static_cast<std::uint8_t>(command_buffer_[8]));
+    const bool assist_frame =
+        packet_length == IRIS_PACKET_COMMAND_FRAME_LENGTH &&
+        (gps_assist::is_assist_command(frame_opcode) ||
+         frame_opcode == IRIS_COMMAND_GPS_COLD_START);
     if (packet_length > 1U) {
-        forward_usb_command(
-            reinterpret_cast<const std::uint8_t *>(command_buffer_),
-            packet_length);
+        if (!assist_frame) {
+            forward_usb_command(
+                reinterpret_cast<const std::uint8_t *>(command_buffer_),
+                packet_length);
+        }
 
         if (packet_length == 3U) {
             process_compact_binary_command(
@@ -410,6 +420,20 @@ void UsbSerialEcho::process_canonical_binary_command(
         process_protocol_command(command);
         return;
     }
+    if (gps_assist::is_assist_command(command)) {
+        handle_gps_assist(command, data + IRIS_PACKET_ID_LENGTH, "USB");
+        return;
+    }
+    if (command == IRIS_COMMAND_GPS_COLD_START) {
+        // Only on the pad: a cold start loses the fix for 30 s or more.
+        if (flight_state_machine_.state() != FlightStateMachine::State::PadIdle) {
+            ESP_LOGW(kLogTag, "GPS cold start over USB refused: not in Pad Idle");
+            return;
+        }
+        ESP_LOGW(kLogTag, "GPS cold start requested over USB");
+        sensors_.gps_uart().request_gps_cold_start();
+        return;
+    }
     process_compact_binary_command(
         data[kCommandFrameOffset], data[kCommandFrameOffset + 1U]);
 }
@@ -430,6 +454,12 @@ void UsbSerialEcho::process_compact_binary_command(
                argument == static_cast<std::uint8_t>(
                                IRIS_COMMAND_ERASE_LOG_SESSIONS)) {
         erase_log_sessions();
+    } else if (command ==
+                   static_cast<std::uint8_t>(
+                       IRIS_COMMAND_CLEAR_LOG_SESSIONS >> 8) &&
+               argument == static_cast<std::uint8_t>(
+                               IRIS_COMMAND_CLEAR_LOG_SESSIONS)) {
+        clear_log_sessions();
     } else if (command == IRIS_COMMAND_SET_FLIGHT_STATE) {
         set_flight_state(argument);
     } else if (command == IRIS_COMMAND_IMU_CALIBRATION) {
@@ -483,6 +513,21 @@ void UsbSerialEcho::process_radio_command(
         return;
     }
 
+    if (gps_assist::is_assist_command(command)) {
+        // Chunked upload: logged per transfer, not per frame.
+        handle_gps_assist(command, data + IRIS_PACKET_ID_LENGTH, "radio");
+        return;
+    }
+    if (command == IRIS_COMMAND_GPS_COLD_START) {
+        // Only on the pad: a cold start loses the fix for 30 s or more.
+        if (flight_state_machine_.state() != FlightStateMachine::State::PadIdle) {
+            ESP_LOGW(kLogTag, "GPS cold start over radio refused: not in Pad Idle");
+            return;
+        }
+        ESP_LOGW(kLogTag, "GPS cold start requested over radio");
+        sensors_.gps_uart().request_gps_cold_start();
+        return;
+    }
     ESP_LOGI(kLogTag, "acting on radio command 0x%04X", command);
     switch (command) {
         case IRIS_COMMAND_WITNESS_DEBUG_START:
@@ -493,6 +538,9 @@ void UsbSerialEcho::process_radio_command(
             break;
         case IRIS_COMMAND_ERASE_LOG_SESSIONS:
             erase_log_sessions();
+            break;
+        case IRIS_COMMAND_CLEAR_LOG_SESSIONS:
+            clear_log_sessions();
             break;
         case IRIS_COMMAND_HITL_ENTER:
             // Rejected and logged: HITL can only be entered over USB.
@@ -556,6 +604,9 @@ void UsbSerialEcho::process_command()
         start_mass_storage();
     } else if (std::strcmp(command_buffer_, "05 68 69") == 0) {
         erase_log_sessions();
+    } else if (std::strcmp(command_buffer_, "05 68 6A") == 0 ||
+               std::strcmp(command_buffer_, "05 68 6a") == 0) {
+        clear_log_sessions();
     } else if (std::strlen(command_buffer_) == 8U &&
                std::strncmp(command_buffer_, "05 73 0", 7) == 0 &&
                hex_nibble(command_buffer_[7]) >= 0) {
@@ -687,6 +738,70 @@ void UsbSerialEcho::erase_log_sessions()
         ESP_LOGI(kLogTag, "all flash log sessions erased");
     } else {
         ESP_LOGE(kLogTag, "log erase failed: %s", esp_err_to_name(result));
+    }
+}
+
+void UsbSerialEcho::clear_log_sessions()
+{
+    ESP_LOGW(kLogTag, "protected clear command accepted; deleting all log sessions");
+    const esp_err_t result = flash_logger_.clear_all_sessions();
+    if (result == ESP_OK) {
+        ESP_LOGI(kLogTag, "all flash log sessions cleared");
+    } else {
+        ESP_LOGE(kLogTag, "log clear failed: %s", esp_err_to_name(result));
+    }
+}
+
+void UsbSerialEcho::handle_gps_assist(const std::uint16_t command, const std::uint8_t *data,
+                                      const char *source)
+{
+    using gps_assist::Assembler;
+    const Assembler::Result result = gps_assist_.handle(command, data);
+    switch (result) {
+        case Assembler::Result::Accepted:
+            if (command == gps_assist::kCommandBegin) {
+                ESP_LOGI(kLogTag, "GPS assist upload from %s: %u bytes in %u chunks", source,
+                         static_cast<unsigned>(gps_assist_.size()),
+                         static_cast<unsigned>(gps_assist_.chunks_expected()));
+            }
+            return;
+        case Assembler::Result::Rejected:
+            if (++gps_assist_rejects_ % 50U == 1U) {
+                ESP_LOGW(kLogTag, "GPS assist frame 0x%04X rejected (%lu so far): no matching transfer",
+                         command, static_cast<unsigned long>(gps_assist_rejects_));
+            }
+            return;
+        case Assembler::Result::Incomplete:
+            ESP_LOGW(kLogTag, "GPS assist commit: %u of %u chunks received; resend the missing ones",
+                     static_cast<unsigned>(gps_assist_.chunks_received()),
+                     static_cast<unsigned>(gps_assist_.chunks_expected()));
+            return;
+        case Assembler::Result::BadCrc:
+            ESP_LOGW(kLogTag, "GPS assist commit: CRC mismatch; upload discarded");
+            return;
+        case Assembler::Result::BadFormat:
+            ESP_LOGW(kLogTag, "GPS assist commit: records do not parse; upload discarded");
+            return;
+        case Assembler::Result::Status:
+            ESP_LOGI(kLogTag, "GPS assist transfer: %s, %u/%u chunks",
+                     gps_assist_.active() ? "receiving" : "idle",
+                     static_cast<unsigned>(gps_assist_.chunks_received()),
+                     static_cast<unsigned>(gps_assist_.chunks_expected()));
+            sensors_.gps_uart().request_gps_assist_status();
+            return;
+        case Assembler::Result::Complete: {
+            const esp_err_t r = sensors_.gps_uart().submit_gps_assist(gps_assist_.blob(),
+                                                                       gps_assist_.size());
+            if (r == ESP_OK) {
+                ESP_LOGI(kLogTag, "GPS assist received: %u records, CRC ok; passing to the GPS",
+                         static_cast<unsigned>(gps_assist_.records()));
+            } else {
+                ESP_LOGW(kLogTag, "GPS assist could not be queued: %s", esp_err_to_name(r));
+            }
+            return;
+        }
+        default:
+            return;
     }
 }
 

@@ -75,21 +75,24 @@ def vibration_value(display: str) -> str:
     return display
 
 
-def describe_vibration(csv_path: str, choice: str, scale: float) -> str:
+def describe_vibration(csv_path: str, choice: str, scale: float, thrust_file: str = "",
+                       lateral_file: str = "", full_scale_g: float = 0.0) -> str:
     """What a vibration choice resolves to for a trajectory (for the UI)."""
     try:
         import imu_synth as ims
-        profile = ims.find_profile(csv_path, choice)
+        profile = ims.resolve_profile(csv_path, choice, thrust_file, lateral_file, full_scale_g)
     except ImportError as exc:
         return f"Vibration: unknown ({exc.name} is not installed)"
     except (OSError, ValueError) as exc:
         return f"Vibration: {exc}"
-    head = "Auto -> " if not (choice or "").strip() else ""
+    head = "Auto -> " if not (choice or "").strip() and not (thrust_file or "").strip() else ""
     if profile is None or not scale:
         why = ("scale 0" if profile is not None else
                "no profile for this trajectory" if head else "none selected")
         return f"Vibration: {head}none ({why})"
-    return f"Vibration: {head}profile {profile['name']!r} x{scale:g}"
+    extra = (f", {profile['full_scale_g']:g} g full scale"
+             if str(profile["name"]).startswith("files:") else "")
+    return f"Vibration: {head}profile {profile['name']!r} x{scale:g}{extra}"
 
 
 def vibration_used(run) -> str:
@@ -119,7 +122,10 @@ def compute_prediction(params) -> dict:
         report = "\n" + tc.format_report(build.report)
         if getattr(params, "imu_synthesis", False):
             vibration = describe_vibration(params.csv_path, params.vibration_profile,
-                                           params.vibration_scale)
+                                           params.vibration_scale,
+                                           params.vibration_thrust_file,
+                                           params.vibration_lateral_file,
+                                           params.vibration_full_scale_g)
         else:
             vibration = "Vibration: off (imu_synthesis=false)"
     else:
