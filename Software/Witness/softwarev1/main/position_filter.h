@@ -65,7 +65,17 @@ struct Config {
     float gps_vertical_uere_m = 3.3F;
     float gps_vdop_per_hdop = 1.6F;
     float gps_min_sigma_m = 1.0F;
-    float gps_max_sigma_m = 200.0F;
+    float gps_max_sigma_m = 1000.0F;
+    // Receiver dynamics: under acceleration and at speed a GNSS receiver's own
+    // navigation filter lags (the PX1120S airborne model is rated for 4 g;
+    // HITL with RF GPS showed 50-80 m lag in boost and coast). Added in
+    // quadrature to the DOP sigma: gps_lag_speed_s * speed and
+    // gps_lag_accel_s2 * stress, where stress is the net (non-gravity)
+    // acceleration, held as a peak that decays with gps_stress_tau_s because
+    // the receiver keeps lagging for seconds after a burn ends.
+    float gps_lag_speed_s = 0.1F;
+    float gps_lag_accel_s2 = 0.5F;   // ~2x the lag seen in HITL (0.25-0.3 s^2)
+    float gps_stress_tau_s = 5.0F;
     // Innovation gate (sigmas); a measurement stream rejected this many
     // times in a row is accepted anyway so the filter can re-synchronize.
     float gate_sigma = 5.0F;
@@ -121,6 +131,8 @@ public:
     void gps_sigmas(std::uint8_t satellites, float hdop, float vdop,
                     float &horizontal_m, float &vertical_m) const;
     float last_gps_horizontal_sigma_m() const { return last_gps_sigma_h_; }
+    // Decaying peak of the net acceleration (m/s^2) used for the GPS sigmas.
+    float gps_dynamics_stress_mps2() const { return gps_stress_; }
     float last_gps_vertical_sigma_m() const { return last_gps_sigma_v_; }
     // Pad/landed pseudo-measurements; call at the update rate.
     void update_constraints(Phase phase);
@@ -171,6 +183,7 @@ private:
     bool baro_gated_ = false;
     float last_baro_sigma_m_ = 0.0F;
     float last_gps_sigma_h_ = 0.0F;
+    float gps_stress_ = 0.0F;
     float last_gps_sigma_v_ = 0.0F;
     // Pad references (tracked while still on the pad).
     bool baro_reference_set_ = false;

@@ -30,6 +30,7 @@ import os
 import queue
 import sys
 import threading
+import time
 
 import wos_paths  # noqa: F401  (HITL and Horizon on sys.path)
 
@@ -186,7 +187,9 @@ class HitlWidget(QtWidgets.QWidget):
         self._preparing = False
         self._connecting = False
         self._predict_token = 0
-        self._pending_log: list[str] = []
+        self._pending_log: list[str] = []     # tool log (formatted)
+        self._pending_comms: list[str] = []   # Witness comms log (formatted)
+        self._last_log_t = {"tool": None, "comms": None}
         self._table_rows = None
         self._lamp_colors: list = [None] * len(STATUS_LAMPS)
         self._switch_interval = None
@@ -269,6 +272,15 @@ class HitlWidget(QtWidgets.QWidget):
         bar2.addWidget(self.busy_label)
         self.busy_bar.hide()
         self.busy_label.hide()
+        # What the run is doing (GPS lead-in, streaming, log fetch, report):
+        # shown from Start until the report is written, not only while frames
+        # stream.
+        self.activity_label = QtWidgets.QLabel("")
+        self.activity_label.setStyleSheet(
+            "color: white; background: #1f5fbf; font-weight: bold; padding: 1px 6px; border-radius: 3px;")
+        self.activity_label.hide()
+        bar2.addSpacing(10)
+        bar2.addWidget(self.activity_label)
         bar2.addStretch(1)
         outer.addLayout(bar2)
 
@@ -615,13 +627,29 @@ class HitlWidget(QtWidgets.QWidget):
         self.table.setMinimumWidth(300)
         self.table.setMaximumWidth(420)
         low.addWidget(self.table)
-        self.logbox = QtWidgets.QPlainTextEdit()
-        self.logbox.setReadOnly(True)
-        self.logbox.setMaximumBlockCount(LOG_MAX_LINES)
-        self.logbox.setLineWrapMode(QtWidgets.QPlainTextEdit.LineWrapMode.NoWrap)
-        self.logbox.setFont(QtGui.QFontDatabase.systemFont(
-            QtGui.QFontDatabase.SystemFont.FixedFont))
-        low.addWidget(self.logbox, 1)
+        logs = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
+        logs.setChildrenCollapsible(False)
+
+        def log_pane(title):
+            box = QtWidgets.QWidget()
+            lay_ = QtWidgets.QVBoxLayout(box)
+            lay_.setContentsMargins(0, 0, 0, 0)
+            lay_.setSpacing(1)
+            head = QtWidgets.QLabel(title)
+            head.setStyleSheet("color: #555; font-weight: bold;")
+            edit = QtWidgets.QPlainTextEdit()
+            edit.setReadOnly(True)
+            edit.setMaximumBlockCount(LOG_MAX_LINES)
+            edit.setLineWrapMode(QtWidgets.QPlainTextEdit.LineWrapMode.NoWrap)
+            edit.setFont(QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.SystemFont.FixedFont))
+            lay_.addWidget(head)
+            lay_.addWidget(edit, 1)
+            logs.addWidget(box)
+            return edit
+        self.logbox = log_pane("Tool log (time, +seconds since the previous line)")
+        self.commsbox = log_pane("Witness comms (its log lines)")
+        logs.setSizes([500, 500])
+        low.addWidget(logs, 1)
         vsplit.addWidget(lower)
         vsplit.setStretchFactor(0, 3)
         vsplit.setStretchFactor(1, 1)
@@ -808,7 +836,10 @@ class HitlWidget(QtWidgets.QWidget):
         return {"final_tilt_max_deg": None if raw.lower() in ("", "none") else float(raw)}
 
     def _running(self) -> bool:
-        return self.session.run is not None and self.session.run.running
+        """A run is in progress from Start (GPS lead-in) until its report is
+        written, not only while frames stream."""
+        return bool(self.session.activity) or (
+            self.session.run is not None and self.session.run.running)
 
     def predict(self):
         """Expected transitions for the current source, computed off the GUI
@@ -1381,11 +1412,28 @@ class HitlWidget(QtWidgets.QWidget):
     def hide_banner(self):
         self.banner.hide()
 
+    def _stamp(self, pane: str, line: str) -> str:
+        t = getattr(line, "t", None) or time.time()
+        last = self._last_log_t[pane]
+        self._last_log_t[pane] = t
+        delta = "" if last is None else f"+{t - last:7.3f}"
+        clock = time.strftime("%H:%M:%S", time.localtime(t)) + f".{int(t * 1000) % 1000:03d}"
+        return f"{clock} {delta:>8}  {line}"
+
+    def append_comms(self, line: str):
+        """Queue a Witness log line for the comms pane (timestamped)."""
+        self._pending_comms.append(self._stamp("comms", line))
+
     def append_log(self, line: str):
         """Queue a log line; poll() writes queued lines in one batch."""
-        self._pending_log.append(line)
+        self._pending_log.append(self._stamp("tool", line))
 
     def _flush_log(self):
+        if self._pending_comms:
+            lines, self._pending_comms = self._pending_comms[-LOG_MAX_LINES:], []
+            self.commsbox.appendPlainText("\n".join(lines))
+            bar = self.commsbox.verticalScrollBar()
+            bar.setValue(bar.maximum())
         if not self._pending_log:
             return
         lines, self._pending_log = self._pending_log[-LOG_MAX_LINES:], []
@@ -1394,7 +1442,8 @@ class HitlWidget(QtWidgets.QWidget):
         bar.setValue(bar.maximum())
 
     def log_text(self) -> str:
-        return self.logbox.toPlainText()
+        """Tool log, then the Witness comms log."""
+        return "\n".join(t for t in (self.logbox.toPlainText(), self.commsbox.toPlainText()) if t)
 
     def _refresh_buttons(self):
         conn = self.session.connected
@@ -1477,12 +1526,15 @@ class HitlWidget(QtWidgets.QWidget):
                 kind, payload = s.events.get_nowait()
             except queue.Empty:
                 break
-            if kind in ("log", "text"):
+            if kind == "text":
+                self.append_comms(payload)
+            elif kind == "log":
                 self.append_log(payload)
             elif kind == "warning":
                 self.show_banner("WARNING: " + payload)
             elif kind == "run" and payload == "finished":
                 self._run_finished(s.run)
+        self._show_activity()
         v = s.view
         state = "?" if v.flight_state is None else hp.FLIGHT_STATES[v.flight_state]
         self.state_label.setText(f"State: {state}")
@@ -1516,6 +1568,18 @@ class HitlWidget(QtWidgets.QWidget):
             self._plot_throttle.request()
         self._flush_log()
         self._refresh_buttons()
+
+    def _show_activity(self):
+        s = self.session
+        text = s.activity
+        run = s.run
+        if text == "Streaming sim" and run is not None:
+            text = f"Streaming sim {run.sim_ms / 1000:.1f} s"
+        if text:
+            text = f"{text}  ({time.monotonic() - s.activity_since:.0f} s)"
+        if self.activity_label.text() != text:
+            self.activity_label.setText(text)
+        self.activity_label.setVisible(bool(text))
 
     def _run_finished(self, run):
         if not run or not run.result:

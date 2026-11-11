@@ -191,7 +191,10 @@ void test_flights()
         std::printf("GPS %2d Hz:  max |up error| %.1f m, at apogee %.1f m, max |east error| "
                     "%.1f m, gps used %u\n", rate, g.max_up_error, g.up_error_at_apogee,
                     g.max_horizontal_error, static_cast<unsigned>(g.gps_used));
-        CHECK(g.max_up_error < 25.0F);
+        // This GPS has no lag, but the filter now down-weights GPS under
+        // acceleration and at speed (real receivers lag there: HITL RF runs
+        // showed 50-80 m), so the boost relies more on the IMU.
+        CHECK(g.max_up_error < 30.0F);
         CHECK(g.up_error_at_apogee < 10.0F);
         CHECK(g.max_horizontal_error < 8.0F);  // ~2.5 sigma of 2.5 m GPS noise
         CHECK(g.gps_used > 100);
@@ -278,8 +281,8 @@ void test_gps_dop_sigmas()
     CHECK(std::fabs(h - 10.0F) < 1e-5F && std::fabs(v - 3.3F * 6.4F) < 1e-4F);
     filter.gps_sigmas(10, 0.1F, 0.1F, h, v); // clamped to the minimum
     CHECK(h == 1.0F && v == 1.0F);
-    filter.gps_sigmas(10, 90.0F, 90.0F, h, v);  // and the maximum
-    CHECK(h == 200.0F && v == 200.0F);
+    filter.gps_sigmas(10, 900.0F, 900.0F, h, v);  // and the maximum
+    CHECK(h == 1000.0F && v == 1000.0F);
 
     // Higher DOP -> less weight: one GPS update moves the estimate less.
     auto pull = [](float hdop) {
@@ -301,8 +304,37 @@ void test_gps_dop_sigmas()
     CHECK(f.last_gps_horizontal_sigma_m() == 0.0F);
 }
 
+void test_gps_dynamics_sigmas()
+{
+    // At rest: DOP only. During a 35 g burn the receiver lags: GPS sigma grows
+    // with the net acceleration and speed, then the acceleration part decays
+    // with gps_stress_tau_s after burnout.
+    position::Filter f;
+    f.reset();
+    float h = 0.0F, v = 0.0F;
+    const float rest[3] = {0.0F, 0.0F, position::kGravity};
+    for (int i = 0; i < 960; ++i) f.predict(rest, 1.0F / 960.0F, position::Phase::PadIdle);
+    f.gps_sigmas(10, 1.0F, 1.5F, h, v);
+    CHECK(std::fabs(h - 2.5F) < 0.01F && std::fabs(v - 4.95F) < 0.01F);
+    const float burn[3] = {0.0F, 0.0F, 36.0F * position::kGravity};   // 35 g net
+    for (int i = 0; i < 960 * 3; ++i) f.predict(burn, 1.0F / 960.0F, position::Phase::Boost);
+    const float net = 35.0F * position::kGravity;
+    CHECK(std::fabs(f.gps_dynamics_stress_mps2() - net) < 1.0F);
+    f.gps_sigmas(10, 1.0F, 1.5F, h, v);
+    const float speed = f.speed();                               // about 1030 m/s
+    const float expected = std::sqrt(2.5F * 2.5F + 0.25F * net * net + 0.01F * speed * speed);
+    CHECK(std::fabs(h - std::fmin(expected, 1000.0F)) < 1.0F);
+    CHECK(h > 150.0F);                                           // a lagging fix barely counts
+    const float coast[3] = {0.0F, 0.0F, 0.0F};                   // ballistic: -1 g net
+    for (int i = 0; i < 960 * 10; ++i) f.predict(coast, 1.0F / 960.0F, position::Phase::Coast);
+    // Two time constants later the burn's share is down to ~e^-2 (plus 1 g).
+    CHECK(f.gps_dynamics_stress_mps2() < 0.2F * net);
+    CHECK(f.gps_dynamics_stress_mps2() >= position::kGravity * 0.99F);
+}
+
 int main()
 {
+    test_gps_dynamics_sigmas();
     test_gps_dop_sigmas();
     test_atmosphere_and_baro_sigma();
     test_pad_hold();
