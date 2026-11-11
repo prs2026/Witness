@@ -67,6 +67,19 @@ std::uint32_t time_out(GpsReceiver &gps, std::uint32_t time) {
 
 const Bytes kMonVerPoll{0xB5, 0x62, 0x0A, 0x04, 0x00, 0x00, 0x0E, 0x34};
 
+// After a restart: the restart wait ends, the receiver is identified again at
+// the rate it answered at boot (it may come back at its default rate), then
+// configuration starts. Returns the time to continue from.
+std::uint32_t reidentify(GpsReceiver &gps, std::uint32_t time, bool ublox = false) {
+    if (GpsReceiver::kFixedBaud) return time;   // configured straight away
+    gps.service(time);                 // RestartWait -> Identify
+    gps.observe_nmea();                // the receiver is talking again
+    gps.service(time + 1);             // identification poll
+    if (ublox) feed(gps, ubx(0x0A, 0x04, {}), time + 2);
+    else feed(gps, skytraq({0x64, 0x8B, 0}), time + 2);
+    return time + 3;
+}
+
 void finish_skytraq(GpsReceiver &gps, FakeUart &uart, std::uint32_t time, bool acks = true) {
     // Airborne mode (frame verified on hardware), NMEA GGA+RMC, then 25 Hz.
     gps.service(time);
@@ -225,7 +238,7 @@ int main() {
         assert(uart.baud_changes.empty());
     }
     // u-blox at factory 9600: silent at 115200, found at 9600, moved to 115200.
-    {
+    if (!GpsReceiver::kFixedBaud) {   // baud scanning is off on the bench
         FakeUart uart;
         GpsReceiver gps(uart.transport());
         auto time = start(gps, false);
@@ -256,7 +269,7 @@ int main() {
         assert(uart.baud_changes.size() == 2);
     }
     // u-blox that does not answer after the baud change: host follows it back.
-    {
+    if (!GpsReceiver::kFixedBaud) {   // baud scanning is off on the bench
         FakeUart uart;
         GpsReceiver gps(uart.transport());
         auto time = time_out(gps, start(gps, false));
@@ -273,7 +286,7 @@ int main() {
     }
     // Nothing at any rate: every rate is tried, then the host returns to the
     // operational rate.
-    {
+    if (!GpsReceiver::kFixedBaud) {   // baud scanning is off on the bench
         FakeUart uart;
         GpsReceiver gps(uart.transport());
         auto time = time_out(gps, start(gps, false));
@@ -290,7 +303,7 @@ int main() {
     }
     // PX1120S streaming NMEA at 460800: found by the scan (NMEA, no binary
     // reply), moved to 115200 with SkyTraq 0x05 in SRAM, then configured.
-    {
+    if (!GpsReceiver::kFixedBaud) {   // baud scanning is off on the bench
         FakeUart uart;
         GpsReceiver gps(uart.transport());
         auto time = time_out(gps, start(gps, false));   // 115200: garbage only
@@ -314,7 +327,7 @@ int main() {
         finish_skytraq(gps, uart, time + 1);
     }
     // A measured rate is tried first: 460800 measured -> polls at 460800.
-    {
+    if (!GpsReceiver::kFixedBaud) {   // baud scanning is off on the bench
         assert(GpsReceiver::nearest_scan_baud(452000) == 460800);
         assert(GpsReceiver::nearest_scan_baud(118000) == 115200);
         assert(GpsReceiver::nearest_scan_baud(75000) == 0);
@@ -329,7 +342,7 @@ int main() {
     }
     // Nothing on one orientation: the pins are flipped and every rate tried
     // again; a receiver found there is configured normally.
-    {
+    if (!GpsReceiver::kFixedBaud) {   // baud scanning is off on the bench
         static int swaps = 0;
         FakeUart uart;
         GpsReceiver::Transport t = uart.transport();
@@ -348,7 +361,7 @@ int main() {
         finish_skytraq(gps, uart, time + 1);
     }
     // A non-standard measured rate is tried as measured, first.
-    {
+    if (!GpsReceiver::kFixedBaud) {   // baud scanning is off on the bench
         FakeUart uart;
         GpsReceiver gps(uart.transport());
         gps.set_baud_hint(88398);
@@ -356,7 +369,7 @@ int main() {
         assert(gps.baud() == 88398);
     }
     // A PX1120S that ignores the change: the host follows it back and fails.
-    {
+    if (!GpsReceiver::kFixedBaud) {   // baud scanning is off on the bench
         FakeUart uart;
         GpsReceiver gps(uart.transport());
         auto time = time_out(gps, start(gps, false));
@@ -370,6 +383,38 @@ int main() {
         gps.service(++time);
         time = time_out(gps, time);
         assert(gps.status() == Status::Failed && gps.baud() == 9600);
+    }
+    // One that ignores the change at a fast enough rate (88.4 kbaud seen after
+    // a SkyTraq firmware update) is configured where it talks; cold start works.
+    if (!GpsReceiver::kFixedBaud) {   // baud scanning is off on the bench
+        FakeUart uart;
+        GpsReceiver gps(uart.transport());
+        gps.set_baud_hint(88398);
+        auto time = start(gps);
+        feed(gps, skytraq({0x64, 0x8B, 0}), ++time);    // binary reply at 88398
+        gps.service(++time);                            // 0x05
+        time += GpsReceiver::kBaudSwitchDelayMs;
+        gps.service(time);                              // host to 115200
+        gps.service(++time);
+        time = time_out(gps, time);                     // silent there: back to 88398
+        assert(gps.baud() == 88398 && gps.status() == Status::Configuring);
+        finish_skytraq(gps, uart, time + 1);
+        assert(gps.status() == Status::Ready && gps.baud() == 88398);
+        assert(gps.cold_start(time + 1000));
+    }
+    // Fixed baud: a silent receiver is never hunted at other rates; the host
+    // stays at 115200 and no baud command is sent.
+    if (GpsReceiver::kFixedBaud) {
+        FakeUart uart;
+        GpsReceiver gps(uart.transport());
+        gps.set_baud_hint(88398);                       // ignored
+        auto time = time_out(gps, start(gps, false));
+        for (int i = 0; i < 20; ++i) {
+            gps.service(++time);
+            time = time_out(gps, time);
+        }
+        assert(uart.baud_changes.empty() && gps.baud() == 115200);
+        for (const auto &frame : uart.sent) assert(frame.size() < 5 || frame[4] != 0x05);
     }
     // u-blox NAK and readback mismatch both fail.
     {
@@ -468,7 +513,30 @@ int main() {
         const auto sent = uart.sent.size();
         gps.service(time + GpsReceiver::kRestartDelayMs - 1);   // still waiting
         assert(uart.sent.size() == sent);
-        finish_skytraq(gps, uart, time + GpsReceiver::kRestartDelayMs);
+        finish_skytraq(gps, uart, reidentify(gps, time + GpsReceiver::kRestartDelayMs));
+    }
+    // Host hot start through the assist path: 0x01 mode 1 with UTC and
+    // position; once acknowledged, the receiver is reconfigured as after a
+    // cold start and later records are dropped.
+    {
+        FakeUart uart;
+        GpsReceiver gps(uart.transport());
+        auto time = start(gps);
+        feed(gps, skytraq({0x64, 0x8B, 0}), time);
+        finish_skytraq(gps, uart, time + 1);
+        time += 50;
+        Bytes blob{0, 15, 0x01, 0x01, 0x07, 0xEA, 11, 11, 10, 31, 20, 0x0D, 0xCE, 0xD1, 0xFA, 0x02, 0x61,
+                   0, 2, 0x0E, 0x01};
+        assert(gps.begin_assist(blob.data(), blob.size(), time));
+        gps.service(++time);
+        assert(uart.sent.back()[4] == 0x01 && uart.sent.back()[5] == 0x01);
+        feed(gps, skytraq({0x83, 0x01}), ++time);
+        assert(gps.status() == Status::Configuring && gps.restarts() == 1);
+        assert(!gps.assist_progress().active && gps.assist_progress().acked == 1);
+        const auto sent = uart.sent.size();
+        gps.service(time + GpsReceiver::kRestartDelayMs - 1);   // still waiting
+        assert(uart.sent.size() == sent);
+        finish_skytraq(gps, uart, reidentify(gps, time + GpsReceiver::kRestartDelayMs));
     }
     // u-blox cold start: CFG-RST (no ACK), then reconfiguration.
     {
@@ -480,7 +548,7 @@ int main() {
         time += 100;
         assert(gps.cold_start(time));
         assert(uart.sent.back() == ubx(0x06, 0x04, {0xFF, 0xFF, 0x02, 0x00}));
-        finish_ublox(gps, uart, time + GpsReceiver::kRestartDelayMs);
+        finish_ublox(gps, uart, reidentify(gps, time + GpsReceiver::kRestartDelayMs, true));
     }
     // Nothing identified: refused.
     {

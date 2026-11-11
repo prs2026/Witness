@@ -148,10 +148,13 @@ class Scenarios(unittest.TestCase):
         samples = sm.generate(sm.preset_params("Quick hop (test)"))
         rows = gps_rf.motion_rows(samples, 2.0, -20.0)
         self.assertEqual(rows[0][0], 0.0)
-        self.assertEqual(rows[20][0], 2.0)            # lead-in is 20 rows at 10 Hz
-        self.assertEqual(len(rows), 20 + len(samples[::10]))
+        rate = gps_rf.MOTION_RATE_HZ
+        n_lead = int(2.0 * rate)
+        step = 100 // rate                             # HITL samples are 100 Hz
+        self.assertEqual(rows[n_lead][0], 2.0)         # the lead-in is 2 s of rows
+        self.assertEqual(len(rows), n_lead + len(samples[::step]))
         self.assertAlmostEqual(rows[0][3], samples[0].alt_msl_m - 20.0)
-        self.assertAlmostEqual(rows[-1][0], 2.0 + samples[::10][-1].t_ms / 1000)
+        self.assertAlmostEqual(rows[-1][0], 2.0 + samples[::step][-1].t_ms / 1000)
 
     @unittest.skipUnless(gps_rf.gps_sdr_sim_path() and RINEX.exists(), "gps-sdr-sim not built")
     def test_static_scenario_iq_contains_the_visible_satellites(self):

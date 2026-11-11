@@ -36,7 +36,16 @@
 class GpsReceiver final {
 public:
     static constexpr bool kConfigureAtStartup = true;
+    // The receiver is at kOperationalBaud and the rate is never changed:
+    // no scan of other rates, no measured-rate hint, no SkyTraq 0x05 /
+    // UBX CFG-PRT switch, no rescan after a restart. (Bench decision
+    // 2026-11-11 after the PX1120S firmware update: it is set to 115200
+    // and 25 Hz in its flash.) false restores the scan for unknown wiring.
+    static constexpr bool kFixedBaud = true;
     static constexpr std::uint32_t kOperationalBaud = 115200;
+    // A receiver that will not move to kOperationalBaud is configured where
+    // it talks if that is at least this fast (25 Hz GGA+RMC needs ~40 kbaud).
+    static constexpr std::uint32_t kMinimumConfigureBaud = 57600;
     static constexpr std::uint32_t kUbloxFactoryBaud = 9600;
     // Identification order: operational, u-blox factory, then the others.
     static constexpr std::uint32_t kScanBauds[] = {115200, 9600, 230400, 460800, 921600,
@@ -126,6 +135,10 @@ public:
     bool cold_start(std::uint32_t now_ms);
     static constexpr std::uint32_t kRestartDelayMs = 2000;
     std::uint32_t cold_starts() const { return cold_starts_; }
+    // Host-sent 0x01 System Restart records (assist path) the receiver
+    // acknowledged; each is followed by RestartWait and reconfiguration.
+    static constexpr std::uint8_t kSkytraqSystemRestart = 0x01;
+    std::uint32_t restarts() const { return restarts_; }
     // Why begin_assist() refused, or "".
     const char *assist_refusal() const { return assist_refusal_; }
 
@@ -212,6 +225,8 @@ private:
     std::uint32_t assist_sent_ms_ = 0;
     AssistProgress assist_{};
     std::uint32_t cold_starts_ = 0;
+    std::uint32_t restarts_ = 0;
+    bool baud_fallback_ = false;   // configured at found_baud_, not kOperationalBaud
     unsigned optional_rejects_ = 0;
     const char *last_optional_reject_ = "";
     const char *assist_refusal_ = "";

@@ -5,3 +5,4 @@ __pycache__/
 gps_sim/
 rf_tools/bin/
 rf_tools/sites.json
+runs_limits/

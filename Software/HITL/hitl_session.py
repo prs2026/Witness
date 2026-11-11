@@ -982,7 +982,7 @@ class HitlSession:
         import gps_rf
         sc = run.gps_scenario
         tx = run.gps_tx
-        player = gps_rf.HackRFPlayer(sc.iq, sample_rate=sc.sample_rate,
+        player = gps_rf.make_player(sc.iq, remote=tx.get("remote"), sample_rate=sc.sample_rate,
                                      tx_vga_db=tx.get("tx_vga_db", 0), amp=tx.get("amp", False),
                                      exe=tx.get("exe"), log=self.log)
         run.gps_report = {"scenario": str(sc.folder), "lead_in_s": sc.lead_in_s,
@@ -1003,6 +1003,19 @@ class HitlSession:
         started_perf = time.perf_counter() - player.elapsed_s()
         self.log(f"HackRF streaming {sc.folder.name}: {sc.lead_in_s:.0f} s static lead-in "
                  "at the pad, then the trajectory")
+        if tx.get("hot_start", False):
+            # Hot restart with the scenario's time and the pad position: the
+            # receiver drops whatever it was tracking and searches the right
+            # satellites at once (TTFF seconds, so a short lead-in is enough).
+            # Witness reconfigures it after the ACK; wait for that before the
+            # ephemeris upload, which it refuses while configuring.
+            self.set_activity("GPS hot start")
+            self._gps_ready.clear()
+            self.upload_assist(gps_rf.hot_restart_frames(sc, player.elapsed_s() + 0.5))
+            ok = self._gps_ready.wait(10.0)
+            run.gps_report["hot_start"] = ok
+            self.log("GPS hot start (scenario time, pad position): "
+                     + ("receiver reconfigured" if ok else "no reconfiguration seen within 10 s"))
         if tx.get("upload_ephemeris", True):
             self.set_activity("Uploading GPS ephemeris")
             frames, prns = gps_rf.ephemeris_frames(sc, player.elapsed_s())

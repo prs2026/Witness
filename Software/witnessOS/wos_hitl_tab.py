@@ -455,6 +455,13 @@ class HitlWidget(QtWidgets.QWidget):
             (w.valueChanged if isinstance(w, QtWidgets.QSpinBox) else w.toggled).connect(
                 lambda _v: self._gps_settings_changed())
         form.addRow("HackRF TX VGA", hbox_widget(self.tx_gain_spin, self.tx_amp_check))
+        self.hackrf_pi_check = QtWidgets.QCheckBox("HackRF is on the bench Pi")
+        self.hackrf_pi_check.setToolTip(
+            "Play the scenario on the Pi's HackRF over SSH (Pi host/user/key from the FC log box). "
+            "The IQ file is copied to the Pi before the run, then played from its disk.")
+        self.hackrf_pi_check.setChecked(bool(self.settings.get("hackrf_on_pi", False)))
+        self.hackrf_pi_check.toggled.connect(lambda _v: self._gps_settings_changed())
+        form.addRow("HackRF location", self.hackrf_pi_check)
         self.galileo_check = QtWidgets.QCheckBox("Add Galileo E1 (galileo-sdr-sim)")
         self.galileo_check.setToolTip(
             "Mix Galileo E1-B/C with I/NAV into the GPS L1 IQ (same carrier, one HackRF stream), "
@@ -1121,7 +1128,8 @@ class HitlWidget(QtWidgets.QWidget):
                              gps_source="rf" if self.gps_source_combo.currentText() == GPS_RF else "sim",
                              gps_upload_ephemeris=self.upload_eph_check.isChecked(),
                              gps_cold_start=self.cold_start_check.isChecked(),
-                             gps_galileo=self.galileo_check.isChecked())
+                             gps_galileo=self.galileo_check.isChecked(),
+                             hackrf_on_pi=self.hackrf_pi_check.isChecked())
         hg.save_settings(self.settings, self.settings_path)
         self._update_run_gps_label()
 
@@ -1171,10 +1179,20 @@ class HitlWidget(QtWidgets.QWidget):
             self.run_gps_label.setText("Witness uses the GPS fields of the 0x0C frames.")
             return
         sc = self.selected_scenario()
-        exe = gps_rf.hackrf_transfer_path(self.settings.get("hackrf_transfer") or None)
+        exe = (self.hackrf_pi_check.isChecked()
+               or gps_rf.hackrf_transfer_path(self.settings.get("hackrf_transfer") or None))
         self.run_gps_label.setText(
             ("Scenario: " + (f"{sc.folder.name} ({sc.kind})" if sc else "none selected (Preparation)"))
             + ("" if exe else "\nhackrf_transfer not found: put it in HITL/rf_tools/bin or on PATH"))
+
+    def _hackrf_remote(self) -> dict | None:
+        """SSH target for a HackRF on the bench Pi, or None (this PC)."""
+        if not self.hackrf_pi_check.isChecked():
+            return None
+        return {"host": self.pi_host_edit.text().strip() or os.environ.get("WITNESS_PI_HOST", ""),
+                "user": self.pi_user_edit.text().strip() or os.environ.get("WITNESS_PI_USER", ""),
+                "key": self.pi_key_edit.text().strip() or os.environ.get("WITNESS_PI_KEY", ""),
+                "exe": self.settings.get("hackrf_pi_exe") or ""}
 
     def _gps_choice(self) -> dict | None:
         if self.gps_source_combo.currentText() != GPS_RF:
@@ -1185,6 +1203,7 @@ class HitlWidget(QtWidgets.QWidget):
         return {"scenario": sc, "tx_vga_db": self.tx_gain_spin.value(),
                 "amp": self.tx_amp_check.isChecked(),
                 "exe": self.settings.get("hackrf_transfer") or None,
+                "remote": self._hackrf_remote(),
                 "upload_ephemeris": self.upload_eph_check.isChecked(),
                 "cold_start": self.cold_start_check.isChecked()}
 
@@ -1354,7 +1373,7 @@ class HitlWidget(QtWidgets.QWidget):
         session.nmea_since()        # drop old lines
         upload = session.upload_assist if self.upload_eph_check.isChecked() else None
         cold = self.cold_start_check.isChecked()
-        player = gps_rf.HackRFPlayer(sc.iq, sample_rate=sc.sample_rate,
+        player = gps_rf.make_player(sc.iq, remote=self._hackrf_remote(), sample_rate=sc.sample_rate,
                                      tx_vga_db=self.tx_gain_spin.value(),
                                      amp=self.tx_amp_check.isChecked(),
                                      exe=self.settings.get("hackrf_transfer") or None,

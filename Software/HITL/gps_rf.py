@@ -61,7 +61,12 @@ SITE_FILE = RF_DIR / "sites.json"          # geoid separation measured per site
 GPS_SDR_SIM_SOURCE = HERE.parents[2] / "gps-sdr-sim"   # sibling of the Witness repo
 L1_HZ = 1575420000
 SAMPLE_RATE = 2600000
-MOTION_RATE_HZ = 10
+# gps-sdr-sim range/Doppler refresh and user-motion rate (built with
+# -DSIM_UPDATE_HZ). Upstream refreshes at 10 Hz and holds the Doppler constant
+# for 100 ms, so under acceleration the carrier steps (20 g: ~100 Hz every
+# 100 ms), which tracking loops see as dynamics real flight never has.
+MOTION_RATE_HZ = 100
+GALILEO_MOTION_RATE_HZ = 10       # galileo-sdr-sim reads 10 Hz motion
 DEFAULT_LEAD_IN_S = 90.0
 EXE = ".exe" if os.name == "nt" else ""
 CA_CHIP_RATE = 1.023e6
@@ -87,7 +92,8 @@ def build_gps_sdr_sim(source: Path = GPS_SDR_SIM_SOURCE, compiler: str = "gcc") 
     sources = [str(source / "gpssim.c")]
     if os.name == "nt" and (source / "getopt.c").exists():
         sources.append(str(source / "getopt.c"))
-    cmd = [compiler, "-O3", "-DUSER_MOTION_SIZE=100000", "-o", str(out), *sources, "-lm"]
+    cmd = [compiler, "-O3", "-DUSER_MOTION_SIZE=200000", f"-DSIM_UPDATE_HZ={MOTION_RATE_HZ}",
+           "-o", str(out), *sources, "-lm"]
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
         raise RuntimeError(f"gps-sdr-sim build failed:\n{result.stderr[-2000:]}")
@@ -326,8 +332,8 @@ def _add_galileo(sc, enabled, motion, progress, cancel, log):
 
 
 def motion_rows(samples, lead_in_s, geoid_sep_m):
-    """10 Hz (t, lat, lon, h) rows: lead-in at the first sample's position,
-    then every 10th 100 Hz HITL sample (truth position, MSL -> ellipsoid)."""
+    """MOTION_RATE_HZ (t, lat, lon, h) rows: lead-in at the first sample's position,
+    then the 100 Hz HITL samples at that rate (truth position, MSL -> ellipsoid)."""
     first = samples[0].hitl
     rows = []
     n_lead = int(round(lead_in_s * MOTION_RATE_HZ))
@@ -355,21 +361,67 @@ def create_flight(samples, *, site_lat, site_lon, site_alt_msl, lead_in_s=DEFAUL
     rows = motion_rows(samples, lead_in_s, n or 0.0)
     with open(folder / "motion.csv", "w", encoding="ascii") as f:
         for t, lat, lon, h in rows:
-            f.write(f"{t:.1f},{lat:.9f},{lon:.9f},{h:.3f}\n")
+            f.write(f"{t:.2f},{lat:.9f},{lon:.9f},{h:.3f}\n")
     duration = len(rows) / MOTION_RATE_HZ
     out = _run_gps_sdr_sim(["-e", str(nav), "-x", str(folder / "motion.csv"),
-                      "-t", t0.strftime("%Y/%m/%d,%H:%M:%S"), "-d", f"{duration:.1f}",
+                      "-t", t0.strftime("%Y/%m/%d,%H:%M:%S"), "-d", f"{duration:.2f}",
                       "-b", "8", "-s", str(sample_rate), "-o", str(folder / "iq.bin")],
                      progress, cancel)
+    check_motion_rate(out, duration)
     sc = Scenario(folder=folder, kind="flight", start_gps=t0.isoformat(), duration_s=duration,
                   lead_in_s=float(lead_in_s), lat_deg=site_lat, lon_deg=site_lon,
                   alt_msl_m=site_alt_msl, geoid_sep_m=float(n or 0.0), sample_rate=sample_rate,
                   prns=prns, source=source, rinex_source=str(rinex),
                   created_utc=dt.datetime.now(dt.timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds"),
                   iq_bytes=(folder / "iq.bin").stat().st_size, visible_prns=visible_prns(out))
-    _add_galileo(sc, galileo, folder / "motion.csv", progress, cancel, log)
+    gal_motion = None
+    if galileo:
+        gal_motion = folder / "motion_gal.csv"
+        keep = max(1, MOTION_RATE_HZ // GALILEO_MOTION_RATE_HZ)
+        with open(gal_motion, "w", encoding="ascii") as f:
+            for t, lat, lon, h in rows[::keep]:
+                f.write(f"{t:.1f},{lat:.9f},{lon:.9f},{h:.3f}\n")
+    _add_galileo(sc, galileo, gal_motion, progress, cancel, log)
     sc.save()
     return sc
+
+
+def check_motion_rate(output: str, expected_s: float) -> None:
+    """gps-sdr-sim reports the duration it generated; a binary built for
+    another update rate reads the motion file at the wrong speed (an old
+    10 Hz build plays a 100 Hz file 10x too slowly). Rebuild with
+    `python gps_rf.py build` if this fails."""
+    m = re.search(r"Duration = ([\d.]+)", output)
+    if m and abs(float(m.group(1)) - expected_s) > 0.5:
+        raise RuntimeError(
+            f"gps-sdr-sim generated {float(m.group(1)):.1f} s for {expected_s:.1f} s of motion: the binary "
+            f"is not built for {MOTION_RATE_HZ} Hz updates; run `python gps_rf.py build`")
+
+
+def hot_restart_body(scenario: Scenario, at_s: float, lat_deg=None, lon_deg=None, alt_msl_m=None,
+                     mode: int = 1) -> bytes:
+    """SkyTraq 0x01 System Restart (mode 1 hot, 2 warm) with the scenario's
+    UTC at IQ time `at_s` (rounded to the nearest second) and a position
+    (default: the scenario site). Hot keeps the receiver's ephemerides and
+    almanac, and the time and position seed the search: TTFF is a few
+    seconds instead of the ~30 s of a cold start. Altitude is clamped to the
+    message's -1000..18300 m range; lat/lon have 0.01 deg resolution."""
+    import struct
+    utc = (dt.datetime.fromisoformat(scenario.start_gps)
+           + dt.timedelta(seconds=at_s - ga.GPS_UTC_LEAP_S))
+    utc = utc.replace(microsecond=0) + dt.timedelta(seconds=1 if utc.microsecond >= 500000 else 0)
+    lat = scenario.lat_deg if lat_deg is None else lat_deg
+    lon = scenario.lon_deg if lon_deg is None else lon_deg
+    alt = scenario.alt_msl_m if alt_msl_m is None else alt_msl_m
+    return bytes((0x01, mode)) + struct.pack(
+        ">HBBBBBhhh", utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second,
+        round(lat * 100), round(lon * 100), int(max(-1000, min(18300, round(alt)))))
+
+
+def hot_restart_frames(scenario: Scenario, at_s: float, **kwargs) -> list:
+    """0x05 assist frames carrying hot_restart_body (Witness passes the
+    record to the receiver and reconfigures it after the ACK)."""
+    return ga.assist_frames(ga.build_blob([hot_restart_body(scenario, at_s, **kwargs)]), transfer_id=0x48)
 
 
 def ephemeris_frames(scenario: Scenario, at_s: float = 0.0) -> tuple[list, list]:
@@ -566,6 +618,132 @@ class HackRFPlayer:
         return False
 
 
+# --------------------------------------------------- HackRF on the bench Pi
+REMOTE_IQ_DIR = "hitl_iq"        # under the Pi user's home
+REMOTE_IQ_KEEP = 3               # scenario IQ files kept on the Pi (SD card space)
+
+
+def remote_config(remote: dict | None = None) -> dict | None:
+    """Where the HackRF is: None for this PC, else {host, user, key, exe}.
+    From `remote` (e.g. HITL settings) or the environment: WITNESS_HACKRF
+    = "pi" plus WITNESS_PI_HOST / _USER / _KEY and WITNESS_HACKRF_EXE."""
+    cfg = dict(remote or {})
+    if not cfg and os.environ.get("WITNESS_HACKRF", "").lower() == "pi":
+        cfg = {"host": os.environ.get("WITNESS_PI_HOST", ""), "user": os.environ.get("WITNESS_PI_USER", ""),
+               "key": os.environ.get("WITNESS_PI_KEY", ""), "exe": os.environ.get("WITNESS_HACKRF_EXE", "")}
+    if not cfg:
+        return None
+    cfg["host"] = cfg.get("host") or "prs2026hitl"
+    cfg["exe"] = cfg.get("exe") or "hackrf_transfer"
+    if not cfg.get("user"):
+        raise ValueError("HackRF on the Pi needs the Pi user (pi_user / WITNESS_PI_USER)")
+    return cfg
+
+
+def _ssh_base(cfg: dict, tool: str = "ssh") -> list:
+    cmd = [tool, "-o", "BatchMode=yes", "-o", "ConnectTimeout=10"]
+    if cfg.get("key"):
+        cmd += ["-i", str(cfg["key"])]
+    return cmd
+
+
+class RemoteHackRFPlayer(HackRFPlayer):
+    """``hackrf_transfer -t`` on the bench Pi, over SSH.
+
+    The IQ file is copied to the Pi first (stage(); a 2-3 GB scenario takes a
+    minute or two, and is skipped when the same file is already there), then
+    played from the Pi's disk, so the network never has to keep up with the
+    5.2 MB/s sample stream. Timing comes from hackrf_transfer's per-second
+    rate lines, as for the local player. Stopping sends SIGINT on the Pi:
+    hackrf_transfer stops TX and releases the device itself (on Linux a kill
+    also frees the USB device, unlike a forced kill on Windows)."""
+
+    def __init__(self, iq_path, *, remote: dict, sample_rate=SAMPLE_RATE, tx_vga_db=0, amp=False,
+                 log=print, **_ignored):
+        super().__init__(iq_path, sample_rate=sample_rate, tx_vga_db=tx_vga_db, amp=amp, log=log)
+        self.remote = remote
+        self.target = f"{remote['user']}@{remote['host']}"
+        name = f"{self.iq_path.parent.name}-{self.iq_path.name}"
+        self.remote_path = f"{REMOTE_IQ_DIR}/{name}"
+        self._tag = name
+
+    def _ssh(self, command: str, timeout=60) -> subprocess.CompletedProcess:
+        return subprocess.run(_ssh_base(self.remote) + [self.target, command], capture_output=True,
+                              text=True, timeout=timeout,
+                              creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+
+    def stage(self, progress=None) -> bool:
+        """Copy the IQ file to the Pi unless it is already there; prunes old
+        scenario files. True if a copy was made."""
+        size = self.iq_path.stat().st_size
+        r = self._ssh(f"mkdir -p {REMOTE_IQ_DIR} && stat -c %s {self.remote_path} 2>/dev/null || true")
+        if r.stdout.strip() == str(size):
+            return False
+        r = self._ssh(f"cd {REMOTE_IQ_DIR} && ls -1t | tail -n +{REMOTE_IQ_KEEP} | xargs -r rm -f; df -B1 --output=avail . | tail -1")
+        avail = int((r.stdout.strip().splitlines() or ["0"])[-1] or 0)
+        if avail and avail < size + 2e9:
+            raise RuntimeError(f"not enough space on the Pi for {size / 1e9:.1f} GB of IQ")
+        self.log(f"HackRF: copying {size / 1e9:.2f} GB of IQ to the Pi ...")
+        t0 = time.monotonic()
+        tmp = self.remote_path + ".part"
+        r = subprocess.run(_ssh_base(self.remote, "scp") + ["-q", str(self.iq_path), f"{self.target}:{tmp}"],
+                           capture_output=True, text=True,
+                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        if r.returncode != 0:
+            raise RuntimeError("copying the IQ to the Pi failed: " + (r.stderr or r.stdout)[-400:])
+        self._ssh(f"mv -f {tmp} {self.remote_path}")
+        dt_s = time.monotonic() - t0
+        self.log(f"HackRF: IQ copied in {dt_s:.0f} s ({size / 1e6 / max(dt_s, 0.1):.0f} MB/s)")
+        return True
+
+    def command(self) -> list:
+        remote = (f"exec {self.remote['exe']} -t {self.remote_path} -f {L1_HZ} -s {self.sample_rate} "
+                  f"-x {self.tx_vga_db} -a {'1' if self.amp else '0'} 2>&1")
+        return _ssh_base(self.remote) + [self.target, remote]
+
+    def start(self):
+        self.stage()
+        exe = Path(self.remote['exe']).name
+        self._ssh(f"pkill -INT -f '[{exe[0]}]{exe[1:]} -t ' || true")   # stale player
+        cmd = self.command()
+        self.log("HackRF (Pi): " + cmd[-1])
+        self.launched_at = time.monotonic()
+        self._stop_feed = threading.Event()
+        self.proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                     stderr=subprocess.STDOUT,
+                                     creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        self._reader = threading.Thread(target=self._read, name="hackrf-transfer", daemon=True)
+        self._reader.start()
+
+    def stop(self) -> bool:
+        proc = self.proc
+        if proc is None:
+            return True
+        try:
+            self._ssh(f"pkill -INT -f '[{self.remote_path[0]}]{self.remote_path[1:]}' || true", timeout=20)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+        try:
+            proc.wait(timeout=8)
+        except subprocess.TimeoutExpired:
+            try:
+                self._ssh(f"pkill -KILL -f '[{self.remote_path[0]}]{self.remote_path[1:]}' || true", timeout=20)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+            proc.kill()
+            proc.wait(timeout=4)
+        return True
+
+
+def make_player(iq_path, *, remote: dict | None = None, **kwargs) -> HackRFPlayer:
+    """HackRF player on this PC, or on the bench Pi when remote_config()
+    says so (pass `remote` or set WITNESS_HACKRF=pi)."""
+    cfg = remote_config(remote)
+    if cfg:
+        return RemoteHackRFPlayer(iq_path, remote=cfg, **kwargs)
+    return HackRFPlayer(iq_path, **kwargs)
+
+
 # ------------------------------------------------------------ NMEA tools
 def parse_gga(line: str) -> dict | None:
     m = re.search(r"\$(G[PNL])GGA,([^*]*)\*", line)
@@ -644,7 +822,7 @@ def static_test(scenario: Scenario, nmea_source, *, player: HackRFPlayer | None 
     upload(frames): optional, sends the ephemeris upload once streaming.
     """
     own = player is None
-    player = player or HackRFPlayer(scenario.iq, sample_rate=scenario.sample_rate, log=log)
+    player = player or make_player(scenario.iq, sample_rate=scenario.sample_rate, log=log)
     if own:
         player.start()
     if not player.wait_streaming(15):
@@ -772,7 +950,7 @@ def main(argv=None) -> int:
                   f"{args.alt} m MSL ...")
             sc, made = create_static(args.lat, args.lon, args.alt, args.duration, name="tx",
                                      galileo=args.galileo), True
-        player = HackRFPlayer(sc.iq, sample_rate=sc.sample_rate, tx_vga_db=args.tx_gain,
+        player = make_player(sc.iq, sample_rate=sc.sample_rate, tx_vga_db=args.tx_gain,
                               amp=args.amp, log=print)
         try:
             player.start()
@@ -811,7 +989,7 @@ def main(argv=None) -> int:
                                galileo=args.galileo)
             if sc.galileo:
                 print(f"Galileo in view: {sc.galileo['visible_prns']}")
-            player = HackRFPlayer(sc.iq, sample_rate=sc.sample_rate, tx_vga_db=args.tx_gain, log=print)
+            player = make_player(sc.iq, sample_rate=sc.sample_rate, tx_vga_db=args.tx_gain, log=print)
             try:
                 player.start()
                 result = static_test(sc, session.nmea_since, player=player, timeout_s=args.timeout,

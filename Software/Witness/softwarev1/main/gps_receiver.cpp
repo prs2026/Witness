@@ -128,6 +128,7 @@ std::uint32_t GpsReceiver::nearest_scan_baud(const std::uint32_t measured_baud)
 
 void GpsReceiver::set_baud_hint(const std::uint32_t measured_baud)
 {
+    if (kFixedBaud) return;
     std::uint32_t hint = nearest_scan_baud(measured_baud);
     if (hint == 0 && measured_baud >= 2400 && measured_baud <= 1000000) hint = measured_baud;
     if (hint == 0) return;
@@ -223,7 +224,7 @@ void GpsReceiver::identified(const Model model, const std::uint32_t now_ms)
 {
     model_ = model;
     found_baud_ = baud_;
-    if (baud_ == kOperationalBaud)
+    if (kFixedBaud || baud_ == kOperationalBaud)
         begin_step(Step::Configure, now_ms);
     else
         begin_step(model == Model::UbloxM8 ? Step::UbloxSwitchBaud : Step::SkytraqSwitchBaud, now_ms);
@@ -330,7 +331,7 @@ bool GpsReceiver::begin_assist(const std::uint8_t *blob, const std::size_t lengt
 
 bool GpsReceiver::cold_start(const std::uint32_t now_ms)
 {
-    if (model_ == Model::Unknown || baud_ != kOperationalBaud) return false;
+    if (model_ == Model::Unknown || (baud_ != kOperationalBaud && !baud_fallback_)) return false;
     bool sent = false;
     if (model_ == Model::Px1120s) {
         // 0x01 System Restart, mode 3 (cold). A cold start ignores the time
@@ -407,7 +408,22 @@ void GpsReceiver::service(const std::uint32_t now_ms)
 
     if (step_ == Step::RestartWait) {
         if (now_ms - step_time_ms_ < kRestartDelayMs) return;
-        begin_step(Step::Configure, now_ms);   // and send the first command below
+        if (kFixedBaud) {
+            begin_step(Step::Configure, now_ms);   // and send the first command below
+        } else {
+            // A restart may bring the receiver back at its firmware default
+            // rate (the operational rate was set in SRAM only), so identify
+            // it again, starting at the rate it answered at boot, then
+            // switch and configure.
+            set_baud_hint(found_baud_);
+            scan_index_ = 0;
+            nmea_seen_ = false;
+            if (scan_order_[0] != baud_ && transport_.set_baud &&
+                transport_.set_baud(transport_.context, scan_order_[0]))
+                baud_ = scan_order_[0];
+            begin_step(Step::Identify, now_ms);
+            return;
+        }
     }
 
     if (step_ == Step::BootDelay) {
@@ -461,7 +477,7 @@ void GpsReceiver::service(const std::uint32_t now_ms)
                     // rate it is first moved to the operational rate.
                     model_assumed_ = true;
                     identified(Model::Px1120s, now_ms);
-                } else if (scan_index_ + 1 < scan_count_ && transport_.set_baud) {
+                } else if (!kFixedBaud && scan_index_ + 1 < scan_count_ && transport_.set_baud) {
                     // No valid NMEA here: try the next rate.
                     const std::uint32_t next = scan_order_[scan_index_ + 1];
                     if (!transport_.set_baud(transport_.context, next)) {
@@ -494,10 +510,18 @@ void GpsReceiver::service(const std::uint32_t now_ms)
                     begin_step(Step::Configure, now_ms);
                     return;
                 }
-                // The receiver kept its old rate; follow it there for logging.
+                // The receiver kept its old rate (seen with a SkyTraq
+                // firmware update that talks at ~88.4 kbaud and ignores the
+                // switch). Follow it there and configure at that rate if it
+                // is fast enough for 25 Hz GGA+RMC; otherwise give up.
                 if (transport_.set_baud &&
                     transport_.set_baud(transport_.context, found_baud_))
                     baud_ = found_baud_;
+                if (baud_ >= kMinimumConfigureBaud) {
+                    baud_fallback_ = true;
+                    begin_step(Step::Configure, now_ms);
+                    return;
+                }
                 fail("PX1120S did not follow the change to 115200 baud");
                 return;
             case Step::UbloxConfirmBaud:
@@ -652,6 +676,18 @@ void GpsReceiver::handle_skytraq(const std::uint8_t *payload, const std::size_t 
             return;
         if (payload[0] == kSkytraqAck) ++assist_.acked;
         else ++assist_.nacked;
+        if (payload[0] == kSkytraqAck && assist_message_id_ == kSkytraqSystemRestart) {
+            // A host-sent System Restart (hot/warm start with time and
+            // position aiding): the receiver restarts, so reconfigure it as
+            // after a cold start. Records after the restart are dropped.
+            ++restarts_;
+            assist_.active = false;
+            ++assist_.uploads;
+            assist_waiting_ = false;
+            status_ = Status::Configuring;
+            begin_step(Step::RestartWait, now_ms);
+            return;
+        }
         finish_assist_record(now_ms);
         return;
     }
