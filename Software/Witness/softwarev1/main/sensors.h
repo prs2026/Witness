@@ -505,6 +505,8 @@ private:
     std::atomic<std::uint8_t> calibration_request_{0};
     imu_calibration::Calibration calibration_{};
     accel_filter::FilteredAccel filtered_accel_{};
+    // High-g scale/offset fitted against the low-g (accel_filter.h).
+    accel_filter::HighGCalibration high_g_calibration_{};
     position::Filter position_filter_{};
     std::uint64_t position_last_predict_us_ = 0;
     std::uint64_t position_last_update_us_ = 0;

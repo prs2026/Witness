@@ -77,14 +77,37 @@ void Filter::predict(const float acceleration_world_mps2[3], const float dt_s,
         Axis &s = axes_[i];
         s.p += s.v * dt_s + 0.5F * a[i] * dt2;
         s.v += a[i] * dt_s;
-        // P = F P F' + Q with F = [1 dt; 0 1].
+        // P = F P F' + Q with F = [1 dt 0; 0 1 0; 0 0 1].
         const float p00 = s.P00 + 2.0F * dt_s * s.P01 + dt2 * s.P11 + q00;
         const float p01 = s.P01 + dt_s * s.P11 + q01;
         const float p11 = s.P11 + q11;
         s.P00 = p00;
         s.P01 = p01;
         s.P11 = p11;
+        s.P02 += dt_s * s.P12;
     }
+    grow_baro_scale(dt_s);
+}
+
+void Filter::grow_baro_scale(const float dt_s)
+{
+    // k is 0 (and certain) while held on the pad, where the reference tracks
+    // the pad; on leaving it, it gets its prior, then a random walk per
+    // distance travelled vertically.
+    if (!(config_.baro_scale_sigma > 0.0F)) return;
+    Axis &up = axes_[2];
+    if (still_) {
+        baro_scale_started_ = false;
+        return;
+    }
+    if (!baro_scale_started_) {
+        baro_scale_started_ = true;
+        up.b = 0.0F;
+        up.P02 = up.P12 = 0.0F;
+        up.P22 = config_.baro_scale_sigma * config_.baro_scale_sigma;
+    }
+    const float km = std::fabs(up.v) * dt_s * 1e-3F;
+    up.P22 += config_.baro_scale_rate * config_.baro_scale_rate * km;
 }
 
 void Filter::predict_without_imu(const float dt_s, const Phase phase)
@@ -107,7 +130,9 @@ void Filter::predict_without_imu(const float dt_s, const Phase phase)
         s.P00 = p00;
         s.P01 = p01;
         s.P11 = p11;
+        s.P02 += dt_s * s.P12;
     }
+    grow_baro_scale(dt_s);
 }
 
 void Filter::symmetrize(Axis &axis)
@@ -117,65 +142,84 @@ void Filter::symmetrize(Axis &axis)
     const float limit = std::sqrt(axis.P00 * axis.P11);
     if (axis.P01 > limit) axis.P01 = limit;
     if (axis.P01 < -limit) axis.P01 = -limit;
+    if (axis.P22 < 0.0F) axis.P22 = 0.0F;
+    const float l02 = std::sqrt(axis.P00 * axis.P22);
+    const float l12 = std::sqrt(axis.P11 * axis.P22);
+    axis.P02 = std::fmax(-l02, std::fmin(l02, axis.P02));
+    axis.P12 = std::fmax(-l12, std::fmin(l12, axis.P12));
 }
 
 void Filter::begin_update_cycle()
 {
+    if (cycles_since_baro_ < 0xFFFFFFFFU) ++cycles_since_baro_;
+    if (cycles_since_gps_up_ < 0xFFFFFFFFU) ++cycles_since_gps_up_;
     baro_innovation_ = Innovation{};
     for (Innovation &innovation : gps_innovation_) innovation = Innovation{};
 }
 
 bool Filter::update_position(Axis &axis, const float measurement, const float variance,
-                             std::uint32_t &consecutive_rejects, Innovation *record)
+                             std::uint32_t &consecutive_rejects, Innovation *record,
+                             const float lag_s, const bool allow_resync)
 {
-    const float innovation = measurement - axis.p;
-    const float s = axis.P00 + variance;
+    // Measurement of the position lag_s ago: h = p - lag_s v (extrapolation
+    // form of a delayed-measurement update; lag_s = 0 is the plain position).
+    return update_axis(axis, 1.0F, -lag_s, 0.0F, measurement, variance, &consecutive_rejects, record,
+                       allow_resync);
+}
+
+bool Filter::update_axis(Axis &axis, const float hp, const float hv, const float hb,
+                         const float measurement, const float variance,
+                         std::uint32_t *consecutive_rejects, Innovation *record,
+                         const bool allow_resync, const float predicted)
+{
+    // g = P H', S = H P H' + R, K = g / S, x += K (z - H x), P -= g g' / S.
+    const float g0 = hp * axis.P00 + hv * axis.P01 + hb * axis.P02;
+    const float g1 = hp * axis.P01 + hv * axis.P11 + hb * axis.P12;
+    const float g2 = hp * axis.P02 + hv * axis.P12 + hb * axis.P22;
+    const float model = std::isfinite(predicted) ? predicted : hp * axis.p + hv * axis.v + hb * axis.b;
+    const float innovation = measurement - model;
+    const float s = hp * g0 + hv * g1 + hb * g2 + variance;
     if (record != nullptr) {
         record->value = innovation;
         record->variance = s;
         record->accepted = false;
     }
-    if (innovation * innovation > config_.gate_sigma * config_.gate_sigma * s &&
-        consecutive_rejects < config_.max_consecutive_rejects) {
-        ++consecutive_rejects;
-        return false;
+    if (consecutive_rejects != nullptr) {
+        if (innovation * innovation > config_.gate_sigma * config_.gate_sigma * s &&
+            (!allow_resync || *consecutive_rejects < config_.max_consecutive_rejects)) {
+            ++*consecutive_rejects;
+            return false;
+        }
+        *consecutive_rejects = 0;
     }
     if (record != nullptr) record->accepted = true;
-    consecutive_rejects = 0;
-    const float k0 = axis.P00 / s;
-    const float k1 = axis.P01 / s;
+    const float k0 = g0 / s;
+    const float k1 = g1 / s;
+    const float k2 = g2 / s;
     axis.p += k0 * innovation;
     axis.v += k1 * innovation;
-    const float p00 = (1.0F - k0) * axis.P00;
-    const float p01 = (1.0F - k0) * axis.P01;
-    const float p11 = axis.P11 - k1 * axis.P01;
-    axis.P00 = p00;
-    axis.P01 = p01;
-    axis.P11 = p11;
+    axis.b += k2 * innovation;
+    axis.P00 -= k0 * g0;
+    axis.P01 -= k0 * g1;
+    axis.P11 -= k1 * g1;
+    axis.P02 -= k0 * g2;
+    axis.P12 -= k1 * g2;
+    axis.P22 -= k2 * g2;
     symmetrize(axis);
     return true;
 }
 
 void Filter::update_velocity(Axis &axis, const float measurement, const float variance)
 {
-    const float innovation = measurement - axis.v;
-    const float s = axis.P11 + variance;
-    const float k0 = axis.P01 / s;
-    const float k1 = axis.P11 / s;
-    axis.p += k0 * innovation;
-    axis.v += k1 * innovation;
-    const float p00 = axis.P00 - k0 * axis.P01;
-    const float p01 = (1.0F - k1) * axis.P01;
-    const float p11 = (1.0F - k1) * axis.P11;
-    axis.P00 = p00;
-    axis.P01 = p01;
-    axis.P11 = p11;
-    symmetrize(axis);
+    (void)update_axis(axis, 0.0F, 1.0F, 0.0F, measurement, variance, nullptr, nullptr);
 }
 
 void Filter::update_constraints(const Phase phase)
 {
     if (phase == Phase::PadIdle && still_) {
+        Axis &up = axes_[2];
+        up.b = 0.0F;
+        up.P02 = up.P12 = up.P22 = 0.0F;
         for (Axis &axis : axes_) {
             std::uint32_t unused = 0;
             update_position(axis, 0.0F, kPadPositionSigmaM * kPadPositionSigmaM, unused);
@@ -217,12 +261,29 @@ bool Filter::update_baro(const float altitude_m, const float pressure_pa, const 
 
     const float sigma = baro_sigma_m(pressure_pa, altitude_msl_m());
     last_baro_sigma_m_ = sigma;
-    if (!update_position(axes_[2], altitude_m - baro_reference_m_, sigma * sigma,
-                         baro_consecutive_rejects_, &baro_innovation_)) {
+    // Barometer height (1 + k) p: EKF row H = [1 + k, 0, p] (k = 0 and
+    // H = [1, 0, 0] with the scale state off). Without a recent GPS altitude
+    // k is not observable: it is then a "consider" parameter (Schmidt): held
+    // fixed, decorrelated, and its uncertainty widens the barometer noise by
+    // (p sigma_k)^2, so IMU drift found when the barometer resumes goes into
+    // the altitude, not into k.
+    Axis &up = axes_[2];
+    const bool scaled = config_.baro_scale_sigma > 0.0F;
+    const float k = scaled ? up.b : 0.0F;
+    const bool observable = scaled && cycles_since_gps_up_ < kBaroHealthyCycles;
+    float variance = sigma * sigma;
+    if (scaled && !observable) {
+        up.P02 = up.P12 = 0.0F;
+        variance += up.p * up.p * up.P22;
+    }
+    if (!update_axis(up, 1.0F + k, 0.0F, observable ? up.p : 0.0F, altitude_m - baro_reference_m_,
+                     variance, &baro_consecutive_rejects_, &baro_innovation_, true,
+                     (1.0F + k) * up.p)) {
         ++baro_rejects_total_;
         return false;
     }
     ++baro_updates_;
+    cycles_since_baro_ = 0;
     return true;
 }
 
@@ -290,14 +351,21 @@ bool Filter::update_gps(const double latitude_deg, const double longitude_deg,
     const float measurement[3] = {east, north, up};
     const float variance[3] = {h * h, h * h, v * v};
     for (int i = 0; i < 3; ++i) {
+        // A GPS altitude stream that keeps failing the gate is forced in
+        // (re-synchronization after an outage) only when no barometer was
+        // accepted for kBaroHealthyCycles: a healthy subsonic barometer
+        // outranks a receiver reporting km-off fixes (seen in HITL after a
+        // bad reacquisition).
+        const bool resync = i != 2 || cycles_since_baro_ >= kBaroHealthyCycles;
         if (update_position(axes_[i], measurement[i], variance[i], gps_consecutive_rejects_[i],
-                            &gps_innovation_[i])) {
+                            &gps_innovation_[i], config_.gps_latency_s, resync)) {
             used = true;
         } else {
             ++gps_rejects_total_;
         }
     }
     if (used) ++gps_updates_;
+    if (gps_innovation_[2].accepted) cycles_since_gps_up_ = 0;
     return used;
 }
 

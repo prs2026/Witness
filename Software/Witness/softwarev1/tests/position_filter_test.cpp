@@ -146,9 +146,10 @@ void test_atmosphere_and_baro_sigma()
     const float s10 = filter.baro_sigma_m(isa_pressure(10000.0F), 10000.0F);
     const float s20 = filter.baro_sigma_m(isa_pressure(20000.0F), 20000.0F);
     std::printf("baro sigma: %.2f m at 0 km, %.2f m at 10 km, %.2f m at 20 km\n", s0, s10, s20);
-    CHECK(s0 > 0.8F && s0 < 1.1F);
-    CHECK(s10 > 2.2F && s10 < 3.0F);
-    CHECK(s20 > 10.0F && s20 < 13.0F);
+    // sigma_p 5 Pa (tuned; an atmosphere off ISA is the bias state's job).
+    CHECK(s0 > 0.55F && s0 < 0.8F);
+    CHECK(s10 > 1.1F && s10 < 1.6F);
+    CHECK(s20 > 5.0F && s20 < 6.6F);
     CHECK(s0 < s10 && s10 < s20);  // trust falls with altitude
     // Out of the MS5607's range: never used.
     CHECK(!filter.update_baro(30000.0F, 900.0F, Phase::Coast));
@@ -181,7 +182,15 @@ void test_flights()
                 r.speed_error_at_boost);
     CHECK(r.max_mach > 1.2F);
     CHECK(r.baro_gated > 50);
-    CHECK(r.max_up_error < 40.0F);           // a 150 m baro error never entered
+    // Without GPS the barometer scale is a consider parameter: the barometer
+    // is trusted to (height x baro_scale_sigma), so IMU drift while it is
+    // gated is pulled out more slowly than with a fully trusted ISA
+    // barometer (peak ~125 m, back to a few m by apogee).
+    CHECK(r.max_up_error < 150.0F);
+    // A 150 m transonic baro error never entered: the result is the same
+    // as with no transonic error at all.
+    const FlightResult clean = fly(0, 0.0F, 0.05F, 1);
+    CHECK(std::fabs(r.max_up_error - clean.max_up_error) < 2.0F);
     CHECK(r.up_error_at_apogee < 15.0F);
     CHECK(r.speed_error_at_boost < 3.0F);    // ~32 m/s before Boost was integrated, not lost
 
@@ -191,14 +200,62 @@ void test_flights()
         std::printf("GPS %2d Hz:  max |up error| %.1f m, at apogee %.1f m, max |east error| "
                     "%.1f m, gps used %u\n", rate, g.max_up_error, g.up_error_at_apogee,
                     g.max_horizontal_error, static_cast<unsigned>(g.gps_used));
-        // This GPS has no lag, but the filter now down-weights GPS under
-        // acceleration and at speed (real receivers lag there: HITL RF runs
-        // showed 50-80 m), so the boost relies more on the IMU.
-        CHECK(g.max_up_error < 30.0F);
+        // This GPS has no lag, but the filter down-weights GPS under
+        // acceleration and for gps_stress_tau_s after it (the real PX1120S
+        // lagged 60 m in boost and 870 m in the 43 g sustainer in HITL RF
+        // runs; tuning on Monte Carlo replays of those fixes chose strong
+        // de-weighting), so through the burn this test's IMU drift shows.
+        CHECK(g.max_up_error < 40.0F);
         CHECK(g.up_error_at_apogee < 10.0F);
-        CHECK(g.max_horizontal_error < 8.0F);  // ~2.5 sigma of 2.5 m GPS noise
+        CHECK(g.max_horizontal_error < 20.0F);
         CHECK(g.gps_used > 100);
     }
+}
+
+// Barometer bias state: a subsonic climb to 1800 m where the barometer reads
+// 5 % of the climb high (warm day: the ISA conversion is off) and GPS is
+// exact. With the bias state the estimate follows GPS and the bias takes up
+// the 90 m; without it the barometer (tighter sigma) pulls the estimate high.
+float climb_with_baro_scale_error(const float scale_sigma, float &scale_estimate)
+{
+    position::Config config;
+    config.baro_scale_sigma = scale_sigma;
+    Filter filter(config);
+    const float still[3] = {0.0F, 0.0F, kG};
+    for (int n = 0; n < 960; ++n) {
+        filter.predict(still, 1.0F / 960.0F, Phase::PadIdle);
+        if (n % 38 == 0) {
+            filter.update_baro(kPadAltMsl, isa_pressure(kPadAltMsl), Phase::PadIdle);
+            filter.update_gps(kPadLat, kPadLon, kPadAltMsl, 10, Phase::PadIdle, 1.0F, 1.5F);
+            filter.update_constraints(Phase::PadIdle);
+        }
+    }
+    const float climb[3] = {0.0F, 0.0F, kG + 1.0F};   // 1 m/s^2 up
+    float worst = 0.0F;
+    for (int n = 1; n <= 60 * 960; ++n) {
+        filter.predict(climb, 1.0F / 960.0F, Phase::Boost);
+        if (n % 38 != 0) continue;   // ~25 Hz
+        const float t = n / 960.0F;
+        const float h = 0.5F * t * t;
+        filter.update_baro(kPadAltMsl + 1.05F * h, isa_pressure(kPadAltMsl + h), Phase::Boost);
+        filter.update_gps(kPadLat, kPadLon, kPadAltMsl + h, 10, Phase::Boost, 1.0F, 1.5F);
+        worst = std::fmax(worst, std::fabs(filter.up().p - h));
+    }
+    scale_estimate = filter.baro_scale();
+    return worst;
+}
+
+void test_baro_bias_state()
+{
+    float k_on = 0.0F, k_off = 0.0F;
+    const float with_scale = climb_with_baro_scale_error(0.03F, k_on);
+    const float without = climb_with_baro_scale_error(0.0F, k_off);
+    std::printf("baro +5%%:   max |up error| %.1f m with the scale state (k %.4f), %.1f m without\n",
+                with_scale, k_on, without);
+    CHECK(with_scale < 12.0F);
+    CHECK(without > 2.0F * with_scale);
+    CHECK(std::fabs(k_on - 0.05F) < 0.01F);   // the barometer read 5 % high
+    CHECK(k_off == 0.0F);
 }
 
 void test_gate_and_resync()
@@ -281,8 +338,9 @@ void test_gps_dop_sigmas()
     CHECK(std::fabs(h - 10.0F) < 1e-5F && std::fabs(v - 3.3F * 6.4F) < 1e-4F);
     filter.gps_sigmas(10, 0.1F, 0.1F, h, v); // clamped to the minimum
     CHECK(h == 1.0F && v == 1.0F);
-    filter.gps_sigmas(10, 900.0F, 900.0F, h, v);  // and the maximum
-    CHECK(h == 1000.0F && v == 1000.0F);
+    filter.gps_sigmas(10, 1e6F, 1e6F, h, v);  // and the maximum
+    const float cap = position::Config{}.gps_max_sigma_m;
+    CHECK(h == cap && v == cap);
 
     // Higher DOP -> less weight: one GPS update moves the estimate less.
     auto pull = [](float hdop) {
@@ -322,8 +380,11 @@ void test_gps_dynamics_sigmas()
     CHECK(std::fabs(f.gps_dynamics_stress_mps2() - net) < 1.0F);
     f.gps_sigmas(10, 1.0F, 1.5F, h, v);
     const float speed = f.speed();                               // about 1030 m/s
-    const float expected = std::sqrt(2.5F * 2.5F + 0.25F * net * net + 0.01F * speed * speed);
-    CHECK(std::fabs(h - std::fmin(expected, 1000.0F)) < 1.0F);
+    const position::Config cfg{};
+    const float la = cfg.gps_lag_accel_s2 * net;
+    const float ls = cfg.gps_lag_speed_s * speed;
+    const float expected = std::sqrt(2.5F * 2.5F + la * la + ls * ls);
+    CHECK(std::fabs(h - std::fmin(expected, cfg.gps_max_sigma_m)) < 1.0F);
     CHECK(h > 150.0F);                                           // a lagging fix barely counts
     const float coast[3] = {0.0F, 0.0F, 0.0F};                   // ballistic: -1 g net
     for (int i = 0; i < 960 * 10; ++i) f.predict(coast, 1.0F / 960.0F, position::Phase::Coast);
@@ -342,6 +403,7 @@ int main()
     test_gate_and_resync();
     test_predict_without_imu();
     test_innovation_record();
+    test_baro_bias_state();
     if (failures == 0) {
         std::printf("position_filter_test: all passed\n");
         return EXIT_SUCCESS;

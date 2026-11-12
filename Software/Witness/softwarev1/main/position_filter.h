@@ -34,6 +34,7 @@
 //
 // No ESP-IDF dependencies (host-tested in tests/position_filter_test.cpp).
 
+#include <cmath>
 #include <cstdint>
 #include <limits>
 
@@ -45,12 +46,16 @@ inline constexpr float kBaroMachResume = 0.75F;
 inline constexpr float kBaroMinPressurePa = 1000.0F;  // MS5607: 10 mbar
 
 struct Config {
+    // Defaults tuned 2026-11-11 with HITL/kalman_mc.py (coordinate search on
+    // 16 Monte Carlo replays of the eayf flight with realistic sensor,
+    // attitude and atmosphere errors; objective: worst ascent altitude error,
+    // descent kept under 5 %). See HITL/KALMAN_TUNING_REPORT.md.
     // White acceleration noise: base plus a fraction of |a| (attitude error
     // turns a share of the thrust into a wrong direction).
     float accel_noise_mps2 = 0.5F;
     float accel_noise_fraction = 0.05F;
     // Barometer: effective pressure error (noise, lag, model) and a floor.
-    float baro_pressure_sigma_pa = 10.0F;
+    float baro_pressure_sigma_pa = 5.0F;
     float baro_min_sigma_m = 0.5F;
     // GPS position sigma. With dilution of precision (GGA HDOP, GSA VDOP) it is
     // the user range error times the DOP: sigma_h = uere_h * HDOP, sigma_v =
@@ -65,7 +70,7 @@ struct Config {
     float gps_vertical_uere_m = 3.3F;
     float gps_vdop_per_hdop = 1.6F;
     float gps_min_sigma_m = 1.0F;
-    float gps_max_sigma_m = 1000.0F;
+    float gps_max_sigma_m = 100000.0F;   // no practical cap: a lagging fix under 40 g is km off
     // Receiver dynamics: under acceleration and at speed a GNSS receiver's own
     // navigation filter lags (the PX1120S airborne model is rated for 4 g;
     // HITL with RF GPS showed 50-80 m lag in boost and coast). Added in
@@ -74,8 +79,23 @@ struct Config {
     // acceleration, held as a peak that decays with gps_stress_tau_s because
     // the receiver keeps lagging for seconds after a burn ends.
     float gps_lag_speed_s = 0.1F;
-    float gps_lag_accel_s2 = 0.5F;   // ~2x the lag seen in HITL (0.25-0.3 s^2)
-    float gps_stress_tau_s = 5.0F;
+    float gps_lag_accel_s2 = 5.0F;
+    float gps_stress_tau_s = 2.0F;
+    // Age of a GPS fix when Witness parses it (receiver solution + NMEA
+    // output + UART). The fix is compared with the state that long ago,
+    // p - latency * v, so at 1000 m/s a 0.12 s latency is not a 120 m error.
+    float gps_latency_s = 0.0F;
+    // Barometer scale (up axis): the filter converts pressure with the ISA,
+    // and a real atmosphere a few K off standard reads a few % of the height
+    // above the pad wrong (more on a hot or cold day). The barometer is
+    // modelled as measuring (1 + k) p, k a state that starts at 0 with
+    // baro_scale_sigma when the vehicle leaves the pad and wanders by
+    // baro_scale_rate per sqrt(km) of vertical travel. GPS observes k
+    // whenever both are available; without GPS the error still shrinks to
+    // zero towards the pad's altitude, which a constant bias would not.
+    // baro_scale_sigma = 0 disables it (the barometer measures p).
+    float baro_scale_sigma = 0.03F;
+    float baro_scale_rate = 0.005F;
     // Innovation gate (sigmas); a measurement stream rejected this many
     // times in a row is accepted anyway so the filter can re-synchronize.
     float gate_sigma = 5.0F;
@@ -98,10 +118,15 @@ struct Innovation {
     bool accepted = false;
 };
 
+// [position, velocity, barometer bias]. The bias state is used on the up
+// axis only (the barometer measures p + b); on east/north b stays 0 with zero
+// variance, so their gains on it are zero and they are 2-state filters.
 struct Axis {
     float p = 0.0F;
     float v = 0.0F;
+    float b = 0.0F;
     float P00 = 1.0F, P01 = 0.0F, P11 = 1.0F;
+    float P02 = 0.0F, P12 = 0.0F, P22 = 0.0F;
 };
 
 class Filter {
@@ -171,9 +196,27 @@ private:
     // Returns false if gated out.
     bool update_position(Axis &axis, float measurement, float variance,
                          std::uint32_t &consecutive_rejects,
-                         Innovation *record = nullptr);
+                         Innovation *record = nullptr, float lag_s = 0.0F,
+                         bool allow_resync = true);
     void update_velocity(Axis &axis, float measurement, float variance);
+    // Scalar measurement z = hp p + hv v + hb b with variance R, gated at
+    // gate_sigma (consecutive_rejects == nullptr: never gated). Returns false
+    // if gated out.
+    // predicted: the measurement model's value when it is not H x (EKF);
+    // NaN uses H x.
+    bool update_axis(Axis &axis, float hp, float hv, float hb, float measurement, float variance,
+                     std::uint32_t *consecutive_rejects, Innovation *record,
+                     bool allow_resync = true,
+                     float predicted = std::numeric_limits<float>::quiet_NaN());
     static void symmetrize(Axis &axis);
+    void grow_baro_scale(float dt_s);
+    bool baro_scale_started_ = false;
+public:
+    // Barometer scale estimate k (the barometer reads (1 + k) x height) and
+    // its standard deviation.
+    float baro_scale() const { return axes_[2].b; }
+    float baro_scale_sigma() const { return std::sqrt(axes_[2].P22); }
+private:
 
     Config config_;
     Axis axes_[3]{};
@@ -197,6 +240,13 @@ private:
     std::uint32_t baro_consecutive_rejects_ = 0;
     std::uint32_t gps_consecutive_rejects_[3]{};
     std::uint32_t baro_updates_ = 0;
+    // Update cycles (begin_update_cycle) since a barometer update was
+    // accepted; the barometer counts as healthy below kBaroHealthyCycles.
+    static constexpr std::uint32_t kBaroHealthyCycles = 50;   // 2 s at 25 Hz
+    std::uint32_t cycles_since_baro_ = 0xFFFFFFFFU;
+    // Same for an accepted GPS altitude (the barometer scale is only
+    // estimated while GPS altitude is recent).
+    std::uint32_t cycles_since_gps_up_ = 0xFFFFFFFFU;
     std::uint32_t gps_updates_ = 0;
     std::uint32_t baro_rejects_total_ = 0;
     std::uint32_t gps_rejects_total_ = 0;

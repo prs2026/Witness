@@ -22,9 +22,15 @@
 
 namespace accel_filter {
 
-inline constexpr float kSwitchToHighMg = 15000.0F;
-inline constexpr float kSwitchToLowMg = 13000.0F;
-inline constexpr std::uint32_t kReturnSamples = 10;
+// Margins for vibration: under the flight's predicted vibration the low-g
+// channel clips on peaks from ~12 g of steady thrust and its (post-clip,
+// on-chip filtered) average reads 0.5-2 g low; HITL eayf with vibration lost
+// ~8 m in the first second of boost by dropping back to it between peaks.
+// The high-g channel's extra noise costs nothing measurable in position, so
+// it takes over early and is left only after 100 ms clearly below.
+inline constexpr float kSwitchToHighMg = 12000.0F;
+inline constexpr float kSwitchToLowMg = 10000.0F;
+inline constexpr std::uint32_t kReturnSamples = 96;   // 100 ms at 960 Hz
 
 class Biquad {
 public:
@@ -58,6 +64,67 @@ private:
     std::uint32_t below_count_ = 0;
     std::uint32_t switches_to_high_ = 0;
     float peak_mg_ = 0.0F;
+};
+
+// High-g accelerometer calibrated against the low-g one while both are in
+// range. The high-g channel's zero-g level is specified only to about
+// +/-1.5 g and its sensitivity is looser than the low-g's, yet it carries the
+// whole burn above 15 g: in HITL eayf an uncorrected 1.5 g offset was 45 m/s
+// by burnout, and in the Monte Carlo a few % of sensitivity error on the
+// thrust axis was most of the dead-reckoning error through the GPS outage
+// after the sustainer.
+//
+// Both accelerometers sit on one die, so whenever the low-g reading is valid
+// (every |axis| below kOverlapMaxMg on both sensors: no clipping, no handoff
+// region) they measure the same specific force and per axis
+//     high = scale * low + offset.
+// The fit is least squares over those samples: on the pad (1 g on one axis)
+// it pins the offset; once the vehicle is flying, coasting phases spread the
+// samples (eayf: -0.5 to -5 g between boost and sustainer) and the scale
+// becomes observable. Pad samples are forgotten with a kPadWindowSamples time
+// constant (temperature drift while waiting); flight samples are all kept.
+// Until the spread of the low-g readings on an axis reaches kMinSpreadMg (and
+// while the fitted scale is outside [kMinScale, kMaxScale]) only the offset,
+// mean(high - low), is corrected on that axis. A stored six-face calibration
+// is applied to both readings first; this fit absorbs what is left.
+class HighGCalibration {
+public:
+    static constexpr float kOverlapMaxMg = 13000.0F;
+    static constexpr float kPadMaxMg = 2000.0F;               // still on the pad
+    static constexpr double kPadWindowSamples = 9600.0;       // 10 s at 960 Hz
+    static constexpr std::uint32_t kMinSamples = 960;         // 1 s before any correction
+    static constexpr float kMinSpreadMg = 700.0F;             // std of low-g readings
+    static constexpr float kMinScale = 0.85F;
+    static constexpr float kMaxScale = 1.15F;
+    void reset();
+    // on_pad: Pad Idle (pad samples need |low| < kPadMaxMg and are forgotten
+    // with the pad window); otherwise flight samples (kept).
+    void observe(const float low_g_mg[3], const float high_g_mg[3], bool on_pad);
+    // Corrects high_g_mg in place: (high - offset) / scale, or high - offset.
+    void apply(float high_g_mg[3]) const;
+    bool valid() const { return samples_ >= kMinSamples; }
+    // Current per-axis estimates (scale 1 when not yet observable).
+    float scale(int axis) const;
+    float offset_mg(int axis) const;
+
+private:
+    struct Sums {
+        double n = 0, x = 0, y = 0, xx = 0, xy = 0;
+    };
+    Sums sums_[3]{};
+    std::uint32_t samples_ = 0;
+    // Flight samples are averaged in blocks of kBlockSamples before the fit
+    // (vibration averages out, so an axis only shows spread from real
+    // low-frequency acceleration), and none are used for kHoldoffSamples
+    // after any reading reached kOverlapMaxMg (the low-g output recovers from
+    // clipping through its on-chip filter and reads low meanwhile).
+    static constexpr std::uint32_t kBlockSamples = 48;     // 50 ms
+    static constexpr std::uint32_t kHoldoffSamples = 96;   // 100 ms
+    double block_x_[3]{};
+    double block_y_[3]{};
+    std::uint32_t block_n_ = 0;
+    std::uint32_t holdoff_ = 0;
+    void add(const double x[3], const double y[3], double keep);
 };
 
 }  // namespace accel_filter

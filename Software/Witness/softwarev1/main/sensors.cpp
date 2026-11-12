@@ -553,8 +553,13 @@ void Sensors::apply_hitl_sample()
         working_sample_.high_g_accel_mg[axis] = input.high_g_accel_mg[axis];
         working_sample_.gyro_mdps[axis] = input.gyro_mdps[axis];
     }
-    hitl_filtered_accel_.step(working_sample_.low_g_accel_mg,
-                              working_sample_.high_g_accel_mg,
+    float high_g_mg[3] = {working_sample_.high_g_accel_mg[0], working_sample_.high_g_accel_mg[1],
+                          working_sample_.high_g_accel_mg[2]};
+    high_g_calibration_.observe(
+        working_sample_.low_g_accel_mg, high_g_mg,
+        flight_state_machine_.state() == FlightStateMachine::State::PadIdle);
+    high_g_calibration_.apply(high_g_mg);
+    hitl_filtered_accel_.step(working_sample_.low_g_accel_mg, high_g_mg,
                               working_sample_.filtered_accel_mg);
     working_sample_.high_g_accel_active = hitl_filtered_accel_.high_g_active();
     working_sample_.temperature_raw = input.temperature_raw;
@@ -1765,8 +1770,15 @@ void Sensors::process_imu_batch(const bool hitl)
     const bool high_g_ready = working_sample_.high_g_accel_ready;
     for (std::size_t i = 0; i < imu_batch_count_; ++i) {
         apply_imu_sample(imu_batch_[i], !hitl, !hitl);
-        filtered_accel_.step(working_sample_.low_g_accel_mg,
-                             working_sample_.high_g_accel_mg,
+        // High-g scale/offset against the low-g while both are in range; the
+        // log keeps the uncorrected reading.
+        float high_g_mg[3] = {working_sample_.high_g_accel_mg[0], working_sample_.high_g_accel_mg[1],
+                              working_sample_.high_g_accel_mg[2]};
+        high_g_calibration_.observe(
+            working_sample_.low_g_accel_mg, high_g_mg,
+            flight_state_machine_.state() == FlightStateMachine::State::PadIdle);
+        high_g_calibration_.apply(high_g_mg);
+        filtered_accel_.step(working_sample_.low_g_accel_mg, high_g_mg,
                              working_sample_.filtered_accel_mg);
         working_sample_.high_g_accel_active = filtered_accel_.high_g_active();
         log_imu_sample(imu_batch_[i].timestamp_us, hitl);
@@ -1816,7 +1828,7 @@ void Sensors::log_calibration(const char *prefix) const
     if (c.accel_valid) {
         ESP_LOGI(kLogTag,
                  "%s: low-g offset %.1f %.1f %.1f mg, scale %.4f %.4f %.4f; "
-                 "high-g offset %.0f %.0f %.0f mg",
+                 "high-g offset %.0f %.0f %.0f mg, scale %.4f %.4f %.4f",
                  prefix, static_cast<double>(c.accel_offset_mg[0]),
                  static_cast<double>(c.accel_offset_mg[1]),
                  static_cast<double>(c.accel_offset_mg[2]),
@@ -1825,7 +1837,9 @@ void Sensors::log_calibration(const char *prefix) const
                  static_cast<double>(c.accel_scale[2]),
                  static_cast<double>(c.high_g_offset_mg[0]),
                  static_cast<double>(c.high_g_offset_mg[1]),
-                 static_cast<double>(c.high_g_offset_mg[2]));
+                 static_cast<double>(c.high_g_offset_mg[2]),
+                 static_cast<double>(c.high_g_scale[0]), static_cast<double>(c.high_g_scale[1]),
+                 static_cast<double>(c.high_g_scale[2]));
     } else {
         ESP_LOGI(kLogTag, "%s: accelerometers not calibrated", prefix);
     }

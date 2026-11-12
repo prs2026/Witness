@@ -5,7 +5,7 @@
 // Corrections, in engineering units:
 //   gyro_mdps    = raw_mdps - gyro_bias_mdps
 //   low_g_mg     = (raw_mg - accel_offset_mg) / accel_scale
-//   high_g_mg    = raw_mg - high_g_offset_mg
+//   high_g_mg    = (raw_mg - high_g_offset_mg) / high_g_scale
 //
 // Gyro bias: one capture with the board still in any orientation.
 // Accelerometers: six captures, one per face (+X, -X, +Y, -Y, +Z, -Z up or
@@ -14,8 +14,11 @@
 // starting from offset = (up + down) / 2, scale = (up - down) / 2 / 1 g) so
 // every corrected capture has magnitude exactly 1 g. That makes the result
 // independent of how square each face sits (a face 10 deg off reads only
-// cos 10 deg = 0.985 g on its axis). The high-g offset is the mean difference
-// between the high-g reading and the corrected low-g reading over the faces.
+// cos 10 deg = 0.985 g on its axis). The high-g scale and offset per axis are
+// a least-squares fit of the high-g reading against the corrected low-g
+// reading over the six faces (two at +/-1 g on that axis, four near 0): the
+// high-g sensitivity tolerance is looser than the low-g's, and uncorrected it
+// is the largest dead-reckoning error through a burn.
 //
 // This file has no ESP-IDF dependencies so it can be host-tested.
 
@@ -29,6 +32,7 @@ struct Calibration {
     float accel_offset_mg[3]{};
     float accel_scale[3]{1.0F, 1.0F, 1.0F};
     float high_g_offset_mg[3]{};
+    float high_g_scale[3]{1.0F, 1.0F, 1.0F};
     bool gyro_valid = false;
     bool accel_valid = false;
 };
@@ -76,6 +80,8 @@ struct Limits {
     float min_accel_scale = 0.9F;
     float max_accel_scale = 1.1F;
     float max_high_g_offset_mg = 5000.0F;
+    float min_high_g_scale = 0.85F;
+    float max_high_g_scale = 1.15F;
 };
 
 enum class Status : std::uint8_t {

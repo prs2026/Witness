@@ -975,18 +975,22 @@ class HitlSession:
         self._sender.join(timeout)
         return not self._sender.is_alive()
 
-    def _gps_lead_in(self, run: RunState):
-        """RF GPS runs: start the HackRF on the scenario, upload the
-        ephemerides, and wait out the lead-in (receiver acquisition at the
-        pad). Returns the perf_counter time of sim t = 0, or None to start now."""
+    # No fix during the lead-in: power-cycle the bench USB ports (Witness and
+    # its GPS receiver restart), then give the receiver this long to fix
+    # before the test is stopped.
+    GPS_RETRY_FIX_S = 45.0
+    HUB_POWER_CYCLE = "sudo -n /usr/sbin/uhubctl -l 2 -a 2"   # Pi 4: all ports (ganged)
+
+    def _start_gps_stream(self, run: RunState):
+        """Cold start (optional), HackRF from the start of the IQ, hot start
+        (optional), ephemeris upload. Returns (player, perf time of IQ t=0)."""
         import gps_rf
         sc = run.gps_scenario
         tx = run.gps_tx
         player = gps_rf.make_player(sc.iq, remote=tx.get("remote"), sample_rate=sc.sample_rate,
                                      tx_vga_db=tx.get("tx_vga_db", 0), amp=tx.get("amp", False),
                                      exe=tx.get("exe"), log=self.log)
-        run.gps_report = {"scenario": str(sc.folder), "lead_in_s": sc.lead_in_s,
-                          "tx_vga_db": player.tx_vga_db, "amp": player.amp}
+        run.gps_report.update({"tx_vga_db": player.tx_vga_db, "amp": player.amp})
         if tx.get("cold_start", False):
             # Clear leftovers from earlier scenarios before the HackRF starts.
             self.set_activity("GPS cold start")
@@ -1006,9 +1010,9 @@ class HitlSession:
         if tx.get("hot_start", False):
             # Hot restart with the scenario's time and the pad position: the
             # receiver drops whatever it was tracking and searches the right
-            # satellites at once (TTFF seconds, so a short lead-in is enough).
-            # Witness reconfigures it after the ACK; wait for that before the
-            # ephemeris upload, which it refuses while configuring.
+            # satellites at once. Witness reconfigures it after the ACK; wait
+            # for that before the ephemeris upload, which it refuses while
+            # configuring.
             self.set_activity("GPS hot start")
             self._gps_ready.clear()
             self.upload_assist(gps_rf.hot_restart_frames(sc, player.elapsed_s() + 0.5))
@@ -1021,13 +1025,19 @@ class HitlSession:
             frames, prns = gps_rf.ephemeris_frames(sc, player.elapsed_s())
             self.upload_assist(frames)
             run.gps_report["ephemeris_prns"] = prns
+        return player, started_perf
+
+    def _wait_for_fix(self, player, until_s: float, stop_at_fix: bool = False):
+        """Waits (lead-in) until the IQ reaches until_s; returns the IQ time of
+        the first fix or None. stop_at_fix returns at the fix."""
+        sc_lead = until_s
         fix_at = None
-        last_note = 0.0
+        last_note = player.elapsed_s()
         while not self._stop_run.is_set():
             elapsed = player.elapsed_s()
-            if elapsed >= sc.lead_in_s - 0.5:
+            if elapsed >= sc_lead:
                 break
-            label = (f"GPS lead-in (pre-soak) {elapsed:.0f}/{sc.lead_in_s:.0f} s, "
+            label = (f"GPS lead-in (pre-soak) {elapsed:.0f}/{sc_lead:.0f} s, "
                      + (f"fix, {self.view.gps_sats or 0} sats" if self.view.gps_locked else "no fix yet"))
             if label != self.activity:
                 self.activity = label      # no event: polled by the GUI
@@ -1038,12 +1048,93 @@ class HitlSession:
                 fix_at = elapsed
                 self.log(f"GPS fix from the RF simulation after {elapsed:.1f} s "
                          f"({self.view.gps_sats} satellites)")
+                if stop_at_fix:
+                    return fix_at
             if elapsed - last_note >= 15:
                 last_note = elapsed
-                self.log(f"lead-in {elapsed:.0f}/{sc.lead_in_s:.0f} s: "
+                self.log(f"lead-in {elapsed:.0f}/{sc_lead:.0f} s: "
                          f"{'fix' if self.view.gps_locked else 'no fix yet'}, "
                          f"{self.view.gps_sats or 0} satellites")
             time.sleep(0.1)
+        return fix_at
+
+    def _power_cycle_bench(self) -> int:
+        """Power-cycles the bench Pi's USB ports (Witness reboots, its GPS
+        receiver loses power), finds Witness's raw port again (the ttyACM
+        order, so the port, can change) and reconnects. Returns the port."""
+        import subprocess
+        import bench_ports
+        cfg = self.fc_log_config or {}
+        user = cfg.get("pi_user") or os.environ.get("WITNESS_PI_USER", "")
+        host = cfg.get("pi_host") or os.environ.get("WITNESS_PI_HOST", "") or self._host
+        key = cfg.get("pi_key") or os.environ.get("WITNESS_PI_KEY", "")
+        if not user:
+            raise RuntimeError("cannot power-cycle the bench: no Pi user set (pi_user / WITNESS_PI_USER)")
+        # Close our side first, quietly: a dropped ser2net connection would
+        # otherwise read as Witness going away and stop the run.
+        self._closing.set()
+        sock, self._sock = self._sock, None
+        if sock is not None:
+            try:
+                sock.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+            sock.close()
+        if self._reader is not None and self._reader is not threading.current_thread():
+            self._reader.join(timeout=2)
+        cmd = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10"]
+        if key:
+            cmd += ["-i", key]
+        self.set_activity("Power-cycling the bench USB ports")
+        self.log(f"power-cycling the bench USB ports ({self.HUB_POWER_CYCLE} on {host})")
+        r = subprocess.run(cmd + [f"{user}@{host}", self.HUB_POWER_CYCLE],
+                           capture_output=True, text=True, timeout=60)
+        if r.returncode != 0:
+            raise RuntimeError("bench power cycle failed: " + (r.stderr or r.stdout).strip()[-300:])
+        deadline = time.monotonic() + 40.0
+        port, last = None, None
+        time.sleep(6.0)                       # USB re-enumeration and Witness boot
+        while time.monotonic() < deadline and not self._stop_run.is_set():
+            try:
+                port = bench_ports.witness_port(self._host)
+                break
+            except (LookupError, OSError) as exc:
+                last = exc
+                time.sleep(2.0)
+        if port is None:
+            raise RuntimeError(f"Witness not found after the power cycle: {last}")
+        self.connect(self._host, port)
+        self.log(f"reconnected to Witness on port {port} after the power cycle")
+        return port
+
+    def _gps_lead_in(self, run: RunState):
+        """RF GPS runs: start the HackRF on the scenario, upload the
+        ephemerides, and wait out the lead-in (receiver acquisition at the
+        pad). Without a fix by the end of the lead-in the bench USB ports are
+        power-cycled and the stream restarted; no fix within GPS_RETRY_FIX_S
+        after that stops the test (tx "power_cycle_retry": False keeps the old
+        behaviour: warn and fly on). Returns the perf_counter time of sim t = 0."""
+        sc = run.gps_scenario
+        tx = run.gps_tx
+        run.gps_report = {"scenario": str(sc.folder), "lead_in_s": sc.lead_in_s}
+        player, started_perf = self._start_gps_stream(run)
+        fix_at = self._wait_for_fix(player, sc.lead_in_s - 0.5)
+        if fix_at is None and not self._stop_run.is_set() and tx.get("power_cycle_retry", True):
+            msg = (f"no GPS fix during the {sc.lead_in_s:.0f} s lead-in: power-cycling the bench "
+                   f"and retrying for {self.GPS_RETRY_FIX_S:.0f} s")
+            self._warn(msg)
+            run.warnings.append(msg)
+            player.stop()
+            self._power_cycle_bench()
+            run.gps_report["power_cycled"] = True
+            player, started_perf = self._start_gps_stream(run)
+            window = min(self.GPS_RETRY_FIX_S, sc.lead_in_s - 0.5)
+            fix_at = self._wait_for_fix(player, window, stop_at_fix=True)
+            if fix_at is None:
+                player.stop()
+                raise RuntimeError(f"no GPS fix within {window:.0f} s after power-cycling the bench; "
+                                   "test stopped")
+            self._wait_for_fix(player, sc.lead_in_s - 0.5)   # rest of the lead-in
         run.gps_report["first_fix_s"] = fix_at
         if fix_at is None:
             msg = (f"no GPS fix during the {sc.lead_in_s:.0f} s lead-in; the run continues "

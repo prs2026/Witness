@@ -84,7 +84,7 @@ void test_instant_switch_and_hysteresis()
     CHECK(!accel.high_g_active());
     CHECK(out[0] == 5000.0F);  // low-g below the threshold
 
-    run(15500.0F);  // first sample at/above 15 g: high-g on this very sample
+    run(15500.0F);  // first sample at/above 12 g: high-g on this very sample
     CHECK(accel.high_g_active());
     CHECK(out[0] == 15500.0F + high_offset);
     CHECK(accel.switches_to_high() == 1);
@@ -92,14 +92,14 @@ void test_instant_switch_and_hysteresis()
     run(40000.0F);  // low-g clipped at 16 g, high-g follows the truth
     CHECK(out[0] == 40000.0F + high_offset);
 
-    // Between 13 and 15 g: stays on high-g.
-    for (int n = 0; n < 50; ++n) run(14000.0F);
+    // Between 10 and 12 g: stays on high-g.
+    for (int n = 0; n < 50; ++n) run(11000.0F);
     CHECK(accel.high_g_active());
 
-    // Below 13 g: returns after kReturnSamples consecutive samples.
+    // Below 10 g: returns after kReturnSamples consecutive samples.
     for (std::uint32_t n = 0; n + 1 < accel_filter::kReturnSamples; ++n) run(8000.0F);
     CHECK(accel.high_g_active());
-    run(14000.0F);  // a sample above 13 g restarts the count
+    run(14000.0F);  // a sample above 10 g restarts the count
     for (std::uint32_t n = 0; n + 1 < accel_filter::kReturnSamples; ++n) run(8000.0F);
     CHECK(accel.high_g_active());
     run(8000.0F);
@@ -145,6 +145,50 @@ void test_filtered_switch_is_continuous()
     CHECK(!accel.high_g_active());                // back on low-g after the pulse
 }
 
+// High-g calibration: the pad pins the offset; coasting in flight (one axis
+// spread over -5..-0.5 g, the others near 0) makes that axis's scale
+// observable; clipped stretches and the 100 ms after them are not used.
+void test_high_g_calibration()
+{
+    accel_filter::HighGCalibration cal;
+    const float offset[3] = {1500.0F, -1400.0F, 300.0F};
+    const float scale_x = 0.95F;
+    float low[3], high[3];
+    // 2 s on the pad, 1 g on x.
+    for (int i = 0; i < 1920; ++i) {
+        low[0] = 1000.0F; low[1] = 3.0F; low[2] = -2.0F;
+        for (int a = 0; a < 3; ++a) high[a] = (a == 0 ? scale_x : 1.0F) * low[a] + offset[a];
+        cal.observe(low, high, true);
+    }
+    CHECK(cal.valid());
+    CHECK(std::fabs(cal.scale(0) - 1.0F) < 1e-6F);    // no spread yet: offset only
+    float h[3] = {1000.0F * scale_x + offset[0], offset[1], offset[2]};
+    cal.apply(h);
+    CHECK(std::fabs(h[0] - 1000.0F) < 1.0F);          // matches low-g at the pad's 1 g
+    CHECK(std::fabs(h[1]) < 1.0F && std::fabs(h[2]) < 1.0F);
+    // Boost: clipped (not used), then 10 s of coast from -5 g to -0.5 g. The
+    // first 100 ms after the clip read 2 g low (filter recovery) and must be
+    // ignored or the scale would come out high.
+    for (int i = 0; i < 2000; ++i) {
+        low[0] = 16000.0F; low[1] = low[2] = 0.0F;
+        high[0] = 25000.0F; high[1] = high[2] = 0.0F;
+        cal.observe(low, high, false);
+    }
+    for (int i = 0; i < 9600; ++i) {
+        const float x = -5000.0F + 4500.0F * static_cast<float>(i) / 9600.0F;
+        low[0] = i < 96 ? x - 2000.0F : x;
+        low[1] = 10.0F * std::sin(0.1F * i); low[2] = -5.0F;
+        for (int a = 0; a < 3; ++a) high[a] = (a == 0 ? scale_x * x : low[a]) + offset[a];
+        cal.observe(low, high, false);
+    }
+    CHECK(std::fabs(cal.scale(0) - scale_x) < 0.002F);
+    CHECK(std::fabs(cal.offset_mg(0) - offset[0]) < 10.0F);
+    CHECK(std::fabs(cal.scale(1) - 1.0F) < 1e-6F);    // lateral axes: no real spread
+    float burn[3] = {scale_x * 40000.0F + offset[0], offset[1], offset[2]};
+    cal.apply(burn);
+    CHECK(std::fabs(burn[0] - 40000.0F) < 120.0F);    // 40 g read right after the fit
+}
+
 }  // namespace
 
 int main()
@@ -152,6 +196,7 @@ int main()
     test_response();
     test_instant_switch_and_hysteresis();
     test_filtered_switch_is_continuous();
+    test_high_g_calibration();
     if (failures == 0) {
         std::printf("accel_filter_test: all passed\n");
         return EXIT_SUCCESS;

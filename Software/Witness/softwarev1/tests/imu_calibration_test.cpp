@@ -74,6 +74,7 @@ void test_six_faces()
     const float offset[3] = {12.0F, -25.0F, 40.0F};
     const float scale[3] = {0.985F, 1.012F, 0.998F};
     const float high_offset[3] = {300.0F, -150.0F, 80.0F};
+    const float high_scale[3] = {0.96F, 1.03F, 1.0F};   // looser than the low-g
     SixFaceSolver solver;
     // Faces in a scrambled order: -Z, +X, +Y, -X, +Z, -Y.
     const int order[6] = {5, 0, 2, 1, 4, 3};
@@ -89,7 +90,7 @@ void test_six_faces()
         float high[3];
         for (int axis = 0; axis < 3; ++axis) {
             low[axis] = truth[axis] * scale[axis] + offset[axis];
-            high[axis] = truth[axis] + high_offset[axis];
+            high[axis] = truth[axis] * high_scale[axis] + high_offset[axis];
         }
         std::size_t classified = 99;
         CHECK(solver.add_face(low, high, Limits{}, classified) == Status::Ok);
@@ -103,6 +104,7 @@ void test_six_faces()
         CHECK(near(calibration.accel_offset_mg[axis], offset[axis], 0.5F));
         CHECK(near(calibration.accel_scale[axis], scale[axis], 0.0005F));
         CHECK(near(calibration.high_g_offset_mg[axis], high_offset[axis], 1.0F));
+        CHECK(near(calibration.high_g_scale[axis], high_scale[axis], 0.001F));
     }
 
     // Applying the result recovers the truth on a new orientation.
@@ -112,7 +114,7 @@ void test_six_faces()
     const float truth[3] = {577.0F, -577.0F, 577.0F};
     for (int axis = 0; axis < 3; ++axis) {
         low[axis] = truth[axis] * scale[axis] + offset[axis];
-        high[axis] = truth[axis] + high_offset[axis];
+        high[axis] = truth[axis] * high_scale[axis] + high_offset[axis];
     }
     apply(calibration, gyro, low, high);
     for (int axis = 0; axis < 3; ++axis) {

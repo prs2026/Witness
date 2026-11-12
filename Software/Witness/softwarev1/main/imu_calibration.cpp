@@ -231,16 +231,26 @@ Status SixFaceSolver::solve(const Limits &limits, Calibration &calibration) cons
             return Status::OutOfRange;
         }
     }
-    // High-g offset: mean of (high-g - corrected low-g) over all faces.
+    // High-g scale and offset: least squares of the high-g reading against
+    // the corrected low-g reading over the six faces, per axis.
     float high_offset[3]{};
-    for (std::size_t face = 0; face < kFaces; ++face) {
-        for (std::size_t axis = 0; axis < 3; ++axis) {
-            const float corrected = (low_[face][axis] - offset[axis]) / scale[axis];
-            high_offset[axis] += (high_[face][axis] - corrected) / kFaces;
-        }
-    }
+    float high_scale[3]{};
     for (std::size_t axis = 0; axis < 3; ++axis) {
-        if (std::fabs(high_offset[axis]) > limits.max_high_g_offset_mg) {
+        double sx = 0, sy = 0, sxx = 0, sxy = 0;
+        for (std::size_t face = 0; face < kFaces; ++face) {
+            const double x = (low_[face][axis] - offset[axis]) / scale[axis];
+            const double y = high_[face][axis];
+            sx += x; sy += y; sxx += x * x; sxy += x * y;
+        }
+        const double n = static_cast<double>(kFaces);
+        const double var = sxx / n - (sx / n) * (sx / n);
+        const double k = var > 0.0 ? (sxy / n - (sx / n) * (sy / n)) / var : 1.0;
+        high_scale[axis] = static_cast<float>(k);
+        high_offset[axis] = static_cast<float>(sy / n - k * sx / n);
+        if (!std::isfinite(high_scale[axis]) || !std::isfinite(high_offset[axis]) ||
+            std::fabs(high_offset[axis]) > limits.max_high_g_offset_mg ||
+            high_scale[axis] < limits.min_high_g_scale ||
+            high_scale[axis] > limits.max_high_g_scale) {
             return Status::OutOfRange;
         }
     }
@@ -248,6 +258,7 @@ Status SixFaceSolver::solve(const Limits &limits, Calibration &calibration) cons
         calibration.accel_offset_mg[axis] = offset[axis];
         calibration.accel_scale[axis] = scale[axis];
         calibration.high_g_offset_mg[axis] = high_offset[axis];
+        calibration.high_g_scale[axis] = high_scale[axis];
     }
     calibration.accel_valid = true;
     return Status::Ok;
@@ -290,7 +301,8 @@ void apply(const Calibration &calibration, float gyro_mdps[3], float low_g_mg[3]
         if (calibration.accel_valid) {
             low_g_mg[axis] = (low_g_mg[axis] - calibration.accel_offset_mg[axis]) /
                              calibration.accel_scale[axis];
-            high_g_mg[axis] -= calibration.high_g_offset_mg[axis];
+            high_g_mg[axis] = (high_g_mg[axis] - calibration.high_g_offset_mg[axis]) /
+                              calibration.high_g_scale[axis];
         }
     }
 }

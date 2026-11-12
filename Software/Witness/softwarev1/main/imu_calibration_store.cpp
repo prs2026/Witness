@@ -16,11 +16,28 @@ namespace {
 constexpr const char *kLogTag = "imu_cal";
 constexpr const char *kNamespace = "imu_cal";
 constexpr const char *kKey = "cal";
-constexpr std::uint32_t kLayoutVersion = 1;
+// Layout 2 added the high-g scale. A layout-1 blob (no scale) still loads,
+// with the scale at 1, so an existing gyro/accelerometer calibration survives
+// the update.
+constexpr std::uint32_t kLayoutVersion = 2;
 
 struct Stored {
     std::uint32_t version = kLayoutVersion;
     Calibration calibration{};
+};
+
+struct CalibrationV1 {
+    float gyro_bias_mdps[3]{};
+    float accel_offset_mg[3]{};
+    float accel_scale[3]{1.0F, 1.0F, 1.0F};
+    float high_g_offset_mg[3]{};
+    bool gyro_valid = false;
+    bool accel_valid = false;
+};
+
+struct StoredV1 {
+    std::uint32_t version = 1;
+    CalibrationV1 calibration{};
 };
 
 std::atomic_bool busy{false};
@@ -86,17 +103,41 @@ esp_err_t load(Calibration &calibration)
     if (result != ESP_OK) {
         return result == ESP_ERR_NVS_NOT_FOUND ? ESP_ERR_NOT_FOUND : result;
     }
-    Stored stored{};
-    std::size_t length = sizeof(stored);
-    result = nvs_get_blob(handle, kKey, &stored, &length);
-    nvs_close(handle);
-    if (result == ESP_ERR_NVS_NOT_FOUND) return ESP_ERR_NOT_FOUND;
-    if (result != ESP_OK) return result;
-    if (length != sizeof(stored) || stored.version != kLayoutVersion) {
-        return ESP_ERR_NOT_FOUND;
+    std::size_t length = 0;
+    result = nvs_get_blob(handle, kKey, nullptr, &length);
+    if (result != ESP_OK) {
+        nvs_close(handle);
+        return result == ESP_ERR_NVS_NOT_FOUND ? ESP_ERR_NOT_FOUND : result;
     }
-    calibration = stored.calibration;
-    return ESP_OK;
+    if (length == sizeof(Stored)) {
+        Stored stored{};
+        result = nvs_get_blob(handle, kKey, &stored, &length);
+        nvs_close(handle);
+        if (result != ESP_OK) return result;
+        if (stored.version != kLayoutVersion) return ESP_ERR_NOT_FOUND;
+        calibration = stored.calibration;
+        return ESP_OK;
+    }
+    if (length == sizeof(StoredV1)) {
+        StoredV1 old{};
+        result = nvs_get_blob(handle, kKey, &old, &length);
+        nvs_close(handle);
+        if (result != ESP_OK) return result;
+        if (old.version != 1) return ESP_ERR_NOT_FOUND;
+        calibration = Calibration{};
+        for (int axis = 0; axis < 3; ++axis) {
+            calibration.gyro_bias_mdps[axis] = old.calibration.gyro_bias_mdps[axis];
+            calibration.accel_offset_mg[axis] = old.calibration.accel_offset_mg[axis];
+            calibration.accel_scale[axis] = old.calibration.accel_scale[axis];
+            calibration.high_g_offset_mg[axis] = old.calibration.high_g_offset_mg[axis];
+        }
+        calibration.gyro_valid = old.calibration.gyro_valid;
+        calibration.accel_valid = old.calibration.accel_valid;
+        ESP_LOGI(kLogTag, "calibration layout 1 loaded (high-g scale 1 until the next six-face calibration)");
+        return ESP_OK;
+    }
+    nvs_close(handle);
+    return ESP_ERR_NOT_FOUND;
 }
 
 esp_err_t save_async(const Calibration &calibration)
