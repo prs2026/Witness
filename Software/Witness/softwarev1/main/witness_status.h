@@ -37,7 +37,7 @@ public:
     }
 
     // Byte-1 flags: IRIS_WITNESS_STATUS_GPS_LOCKED_MASK,
-    // IRIS_WITNESS_STATUS_HITL_ACTIVE_MASK and _MAINTENANCE_MASK. Other bits
+    // IRIS_WITNESS_STATUS_HITL_ACTIVE_MASK, _MAINTENANCE_MASK and _RESUMED_MASK. Other bits
     // are ignored.
     void set_state_flag(const std::uint8_t mask, const bool active)
     {
@@ -66,7 +66,8 @@ private:
     static constexpr std::uint8_t kStateFlagMask =
         IRIS_WITNESS_STATUS_GPS_LOCKED_MASK |
         IRIS_WITNESS_STATUS_HITL_ACTIVE_MASK |
-        IRIS_WITNESS_STATUS_MAINTENANCE_MASK;
+        IRIS_WITNESS_STATUS_MAINTENANCE_MASK |
+        IRIS_WITNESS_STATUS_RESUMED_MASK;
     static_assert((kStateFlagMask & IRIS_WITNESS_STATUS_FLIGHT_STATE_MASK) == 0U,
                   "byte-1 flags must not overlap the flight state");
 

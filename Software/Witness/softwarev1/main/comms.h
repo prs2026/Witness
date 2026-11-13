@@ -165,8 +165,13 @@
 // reboot back to normal mode (Wi-Fi off, auto-off, or power cycle).
 #define IRIS_WITNESS_STATUS_MAINTENANCE_BYTE_OFFSET 1U
 #define IRIS_WITNESS_STATUS_MAINTENANCE_MASK (1U << 5)
-// Status byte 1, bits 6..7: reserved and transmitted as zero.
-#define IRIS_WITNESS_STATUS_RESERVED_MASK 0xC0U
+// Status byte 1, bit 6: Witness RESUMED an in-flight flight state (Boost,
+// Coast or Descent) after an MCU reset (panic, watchdog, brownout, software
+// restart) instead of starting in Pad Idle. Stays set until power-on.
+#define IRIS_WITNESS_STATUS_RESUMED_BYTE_OFFSET 1U
+#define IRIS_WITNESS_STATUS_RESUMED_MASK (1U << 6)
+// Status byte 1, bit 7: reserved and transmitted as zero.
+#define IRIS_WITNESS_STATUS_RESERVED_MASK 0x80U
 
 // Witness uptime: big-endian uint32, milliseconds since boot. The counter
 // wraps after approximately 49.7 days.

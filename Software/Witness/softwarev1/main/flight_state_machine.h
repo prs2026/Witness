@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 
 #include "esp_err.h"
@@ -39,6 +40,22 @@ public:
     static constexpr float kLandingMaximumAccelerationG = 1.2F;
     static constexpr float kLandingAltitudeStabilityMeters = 10.0F;
     static constexpr std::uint32_t kLandingQualificationMs = 30'000;
+    // Barometer outlier rejection: the FSM works on the median of the last
+    // kAltitudeMedianWindow fresh barometer samples, and the tracked maximum
+    // may not rise faster than kMaxClimbRateMps (plus a small margin).
+    static constexpr std::size_t kAltitudeMedianWindow = 5;
+    static constexpr std::size_t kAltitudeMedianMinimum = 3;
+    static constexpr float kMaxClimbRateMps = 2000.0F;
+    static constexpr float kMaxClimbMarginMeters = 50.0F;
+    // Velocity-only Descent path, used when the barometer is gated or has no
+    // usable altitude: filtered vertical velocity below
+    // kDescentVelocityMps for kDescentVelocityQualificationMs, at least
+    // kDescentMinimumCoastMs after burnout, and only after the vehicle was
+    // seen climbing faster than kApogeeSeenVelocityMps (an apogee happened).
+    static constexpr float kDescentVelocityMps = -30.0F;
+    static constexpr std::uint32_t kDescentVelocityQualificationMs = 2000;
+    static constexpr std::uint32_t kDescentMinimumCoastMs = 3000;
+    static constexpr float kApogeeSeenVelocityMps = 20.0F;
 
     struct Observation {
         float axial_acceleration_g = 0.0F;
@@ -52,7 +69,35 @@ public:
         bool acceleration_valid = false;
         bool angular_rate_valid = false;
         bool barometric_altitude_valid = false;
+        // True only on the pass that delivered a NEW barometer sample (the
+        // altitude above repeats between samples). Feeds the median window.
+        bool barometric_altitude_new = false;
+        // Position filter has the barometer gated out (transonic/supersonic).
+        bool barometer_gated = false;
+        // Position filter vertical velocity (up positive), for corroborating
+        // Descent.
+        bool vertical_velocity_valid = false;
+        float vertical_velocity_mps = 0.0F;
     };
+
+    // Called (from any task) on every state change with the new state, the
+    // tracked maximum altitude and whether it is valid. Used to persist the
+    // state across a reset (flight_state_store).
+    using PersistFn = void (*)(std::uint8_t state, float maximum_altitude_m,
+                               bool maximum_valid);
+    void set_persist_callback(PersistFn fn) { persist_ = fn; }
+    // Boot-time restore after an in-flight reset: sets the state and the
+    // tracked maximum without logging a transition or invoking the persist
+    // callback.
+    void restore(State state, float maximum_altitude_m, bool maximum_valid);
+    // Discards the tracked maximum, the altitude median window and pending
+    // qualification timers (sensor source changed, e.g. HITL entry/exit).
+    // Thread-safe; takes effect on the next update().
+    void rebaseline() { rebaseline_requested_.store(true); }
+    // Median-filtered altitude used by the state machine (for tests/logs).
+    bool robust_altitude(float &meters) const;
+    float maximum_altitude() const { return maximum_altitude_meters_; }
+    bool maximum_altitude_valid() const { return maximum_altitude_valid_; }
 
     explicit FlightStateMachine(WitnessStatus &witness_status);
     FlightStateMachine(const FlightStateMachine &) = delete;
@@ -92,6 +137,8 @@ private:
     void reset_condition();
     void reset_landing_condition();
     void reset_for_state(State state, const Observation &observation);
+    void clear_altitude_history();
+    void persist() const;
 
     std::atomic<State> state_{State::PadIdle};
     WitnessStatus &witness_status_;
@@ -102,6 +149,16 @@ private:
     bool landing_condition_active_ = false;
     float maximum_altitude_meters_ = 0.0F;
     bool maximum_altitude_valid_ = false;
+    float altitude_window_[kAltitudeMedianWindow]{};
+    std::size_t altitude_window_count_ = 0;
+    std::size_t altitude_window_head_ = 0;
+    std::uint64_t maximum_updated_us_ = 0;
+    std::atomic<bool> rebaseline_requested_{false};
+    PersistFn persist_ = nullptr;
+    std::uint64_t coast_entered_us_ = 0;
+    bool climb_seen_ = false;
+    bool velocity_condition_active_ = false;
+    std::uint64_t velocity_condition_started_us_ = 0;
     float landing_minimum_altitude_meters_ = 0.0F;
     float landing_maximum_altitude_meters_ = 0.0F;
 };

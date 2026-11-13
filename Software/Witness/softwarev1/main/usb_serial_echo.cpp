@@ -6,6 +6,7 @@
 #include <cstring>
 
 #include "command_bridge.h"
+#include "command_policy.h"
 #include "driver/usb_serial_jtag.h"
 #include "driver/usb_serial_jtag_vfs.h"
 #include "esp_log.h"
@@ -456,6 +457,20 @@ void UsbSerialEcho::process_canonical_binary_command(
         send_ack(false, command, args, IRIS_ACK_OK);
         return;
     }
+    if (command_policy::is_log_maintenance_command(command)) {
+        // Ack first: mass storage stops the USB serial port.
+        const bool allowed = command_policy::allow_log_maintenance(
+            command_policy::Source::Usb,
+            static_cast<std::uint8_t>(flight_state_machine_.state()));
+        send_ack(false, command, args, allowed ? IRIS_ACK_OK : IRIS_ACK_REFUSED);
+        (void)run_log_maintenance(command, false);
+        return;
+    }
+    if ((command >> 8U) == IRIS_COMMAND_SET_FLIGHT_STATE) {
+        const esp_err_t r = set_flight_state(static_cast<std::uint8_t>(command), false);
+        send_ack(false, command, args, r == ESP_OK ? IRIS_ACK_OK : IRIS_ACK_REFUSED);
+        return;
+    }
     // The compact handler acts on (or forwards) the rest; the ack confirms
     // reception (it does not report a result for these).
     send_ack(false, command, args, IRIS_ACK_OK);
@@ -467,26 +482,12 @@ void UsbSerialEcho::process_compact_binary_command(
     const std::uint8_t command,
     const std::uint8_t argument)
 {
-    if (command ==
-            static_cast<std::uint8_t>(
-                IRIS_COMMAND_MASS_STORAGE_START >> 8) &&
-        argument ==
-            static_cast<std::uint8_t>(IRIS_COMMAND_MASS_STORAGE_START)) {
-        start_mass_storage();
-    } else if (command ==
-                   static_cast<std::uint8_t>(
-                       IRIS_COMMAND_ERASE_LOG_SESSIONS >> 8) &&
-               argument == static_cast<std::uint8_t>(
-                               IRIS_COMMAND_ERASE_LOG_SESSIONS)) {
-        erase_log_sessions();
-    } else if (command ==
-                   static_cast<std::uint8_t>(
-                       IRIS_COMMAND_CLEAR_LOG_SESSIONS >> 8) &&
-               argument == static_cast<std::uint8_t>(
-                               IRIS_COMMAND_CLEAR_LOG_SESSIONS)) {
-        clear_log_sessions();
+    const std::uint16_t opcode = static_cast<std::uint16_t>(
+        (static_cast<std::uint16_t>(command) << 8U) | argument);
+    if (command_policy::is_log_maintenance_command(opcode)) {
+        (void)run_log_maintenance(opcode, false);
     } else if (command == IRIS_COMMAND_SET_FLIGHT_STATE) {
-        set_flight_state(argument);
+        (void)set_flight_state(argument, false);
     } else if (command == IRIS_COMMAND_IMU_CALIBRATION) {
         (void)sensors_.request_calibration(argument);
     } else if (command == static_cast<std::uint8_t>(IRIS_COMMAND_HITL_ENTER >> 8) &&
@@ -581,16 +582,12 @@ void UsbSerialEcho::process_radio_command(
             ack(IRIS_ACK_OK);
             break;
         case IRIS_COMMAND_MASS_STORAGE_START:
-            ack(IRIS_ACK_OK);   // before: mass storage stops the radio
-            start_mass_storage();
-            break;
         case IRIS_COMMAND_ERASE_LOG_SESSIONS:
-            ack(IRIS_ACK_OK);
-            erase_log_sessions();
-            break;
         case IRIS_COMMAND_CLEAR_LOG_SESSIONS:
-            ack(IRIS_ACK_OK);
-            clear_log_sessions();
+            // Bench operations: never over LoRa (they freeze logging, silence
+            // the radio or wipe the flight logs). Use USB or Wi-Fi maintenance.
+            ESP_LOGW(kLogTag, "radio command 0x%04X refused: log maintenance is USB-only", command);
+            ack(IRIS_ACK_REFUSED);
             break;
         case IRIS_COMMAND_HITL_ENTER:
             // Rejected and logged: HITL can only be entered over USB.
@@ -607,8 +604,8 @@ void UsbSerialEcho::process_radio_command(
         case 0x7302U:
         case 0x7303U:
         case 0x7304U:
-            ack(set_flight_state(static_cast<std::uint8_t>(command)) == ESP_OK ? IRIS_ACK_OK
-                                                                               : IRIS_ACK_REFUSED);
+            ack(set_flight_state(static_cast<std::uint8_t>(command), true) == ESP_OK ? IRIS_ACK_OK
+                                                                                     : IRIS_ACK_REFUSED);
             break;
         case IRIS_COMMAND_CH1_LOAD_OFF:
         case IRIS_COMMAND_CH1_LOAD_ON:
@@ -657,17 +654,17 @@ void UsbSerialEcho::process_command()
     if (std::strncmp(command_buffer_, "TX ", 3) == 0) {
         process_tx_command();
     } else if (std::strcmp(command_buffer_, "05 68 68") == 0) {
-        start_mass_storage();
+        (void)run_log_maintenance(IRIS_COMMAND_MASS_STORAGE_START, false);
     } else if (std::strcmp(command_buffer_, "05 68 69") == 0) {
-        erase_log_sessions();
+        (void)run_log_maintenance(IRIS_COMMAND_ERASE_LOG_SESSIONS, false);
     } else if (std::strcmp(command_buffer_, "05 68 6A") == 0 ||
                std::strcmp(command_buffer_, "05 68 6a") == 0) {
-        clear_log_sessions();
+        (void)run_log_maintenance(IRIS_COMMAND_CLEAR_LOG_SESSIONS, false);
     } else if (std::strlen(command_buffer_) == 8U &&
                std::strncmp(command_buffer_, "05 73 0", 7) == 0 &&
                hex_nibble(command_buffer_[7]) >= 0) {
-        set_flight_state(
-            static_cast<std::uint8_t>(hex_nibble(command_buffer_[7])));
+        (void)set_flight_state(
+            static_cast<std::uint8_t>(hex_nibble(command_buffer_[7])), false);
     } else if (std::strcmp(command_buffer_, "05 48 49") == 0 ||
                std::strcmp(command_buffer_, "05 48 58") == 0) {
         ESP_LOGW(kLogTag, "HITL command ignored: send it as a canonical 10-byte 0x05 frame");
@@ -1010,8 +1007,34 @@ void UsbSerialEcho::handle_wifi(const std::uint8_t *data, const char *source, co
     ESP_LOGW(kLogTag, "Wi-Fi off over %s: %s", source, off ? "done" : "still stopping");
 }
 
-esp_err_t UsbSerialEcho::set_flight_state(const std::uint8_t state)
+std::uint8_t UsbSerialEcho::run_log_maintenance(const std::uint16_t command, const bool radio)
 {
+    const std::uint8_t current = static_cast<std::uint8_t>(flight_state_machine_.state());
+    if (!command_policy::allow_log_maintenance(
+            radio ? command_policy::Source::Radio : command_policy::Source::Usb, current)) {
+        ESP_LOGW(kLogTag, "command 0x%04X over %s refused in flight state 0x%02X (USB, Pad Idle/Landed only)",
+                 command, radio ? "radio" : "USB", current);
+        return IRIS_ACK_REFUSED;
+    }
+    if (command == IRIS_COMMAND_MASS_STORAGE_START) {
+        start_mass_storage();
+    } else if (command == IRIS_COMMAND_ERASE_LOG_SESSIONS) {
+        erase_log_sessions();
+    } else if (command == IRIS_COMMAND_CLEAR_LOG_SESSIONS) {
+        clear_log_sessions();
+    }
+    return IRIS_ACK_OK;
+}
+
+esp_err_t UsbSerialEcho::set_flight_state(const std::uint8_t state, const bool radio)
+{
+    const std::uint8_t current = static_cast<std::uint8_t>(flight_state_machine_.state());
+    if (!command_policy::allow_set_flight_state(
+            radio ? command_policy::Source::Radio : command_policy::Source::Usb, current, state)) {
+        ESP_LOGW(kLogTag, "flight state 0x%02X -> 0x%02X over %s refused", current, state,
+                 radio ? "radio" : "USB");
+        return ESP_ERR_NOT_ALLOWED;
+    }
     const bool commanded_launch =
         flight_state_machine_.state() == FlightStateMachine::State::PadIdle &&
         state == static_cast<std::uint8_t>(FlightStateMachine::State::Boost);

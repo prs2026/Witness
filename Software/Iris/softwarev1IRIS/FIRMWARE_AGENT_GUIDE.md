@@ -49,6 +49,24 @@ voltage, accepts commands and emits binary telemetry.
 6. Enters a permanent loop which reads battery voltage at its configured
    interval, calls `UsbSerialEcho::poll()`, then calls `vTaskDelay(1)`.
 
+### Reset recovery (C4)
+
+`app_main` first calls `load_state::begin_boot()`. The commanded load mask
+(OUT1..3, 5V; MCP pin bits 0..3) is kept in `RTC_NOINIT` memory with magic +
+CRC32 (`load_state_logic.h`, host test `tests/load_state_test.cpp`) and updated
+in `set_expander_output`. Warm resets (software, panic, INT/TASK/RTC watchdog,
+brownout, CPU lockup) with a valid record re-apply the mask: GPIO9 is driven
+high without pulsing the expander reset, OLAT then IODIR are written (retried
+on I2C errors). Power-on, external, USB and unknown resets, or an invalid
+record, keep the safe default (all off). Loads still drop during the reset
+itself (R55 10k pulldown on GPIO9/RESET and the EN pulldowns), so expect
+roughly the ROM+bootloader+app-start time (a few hundred ms) before outputs
+return. Witness re-sends commands as a backup (see its handoff). Expander
+bring-up never aborts: it retries, then keeps retrying from the main loop; ADC
+and USB-driver init failures are non-fatal. The expander cache is re-pushed
+(OLAT, IODIR) once per second and `write_pin` always writes, so a failed I2C
+write or an expander-only reset self-heals within 1 s.
+
 PAC193x initialization failure is nonfatal: it is logged and the application
 continues. MCP23008, ADC, UART or USB initialization failure is fatal through
 `ESP_ERROR_CHECK`.

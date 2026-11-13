@@ -727,8 +727,8 @@ the bench; append CR/LF. Hex shown here is text unless sent as actual binary.
 | `LED 1`, `LED ON`, `LED 0`, `LED OFF` | Sets the red LED baseline; heartbeat still pulses it |
 | `CAM 1 ON/OFF`, `CAM 2 ON/OFF` | Updates in-memory camera flags and logs; no camera hardware driver |
 | `E0` or raw byte `E0` | Enables Witness debug output; no corresponding stop command |
-| `05 73 00` through `05 73 04` | Sets flight state; `01` from Pad Idle is a launch trigger |
-| `05 68 68` | Freezes logs and switches USB to read-only mass storage until reset |
+| `05 73 00` through `05 73 04` | Sets flight state; `01` from Pad Idle is a launch trigger (USB only). Policy in `main/command_policy.h` (host test `tests/command_policy_test.cpp`): over LoRa only Landed -> Pad Idle is accepted; over USB from Boost/Coast/Descent only Landed is accepted; refusals ack `IRIS_ACK_REFUSED` |
+| `05 68 68` | USB only, Pad Idle/Landed only (refused over LoRa and in flight, as are `05 68 69` / `05 68 6A`). Freezes logs and switches USB to read-only mass storage until reset |
 | `05 68 69` | Destructively erases all stored sessions (all 1,004 blocks) and creates fresh session 1 |
 | `05 68 6A` | Fast clear: erases only the two slot header blocks, so no session is listed, and creates the next session number (never resets) |
 | `05 .. .. 47 41/44/45/51 0A` (canonical) | GPS assistance upload (ephemeris for the PX1120S), see "GPS assistance" |
@@ -750,6 +750,17 @@ Load opcodes `30..35` and regulator opcodes `50..51` are external-device command
 not implemented local output controls. For radio debug enable, use command value
 `00 E0` in the compact or canonical representation; do not infer arbitrary
 one-byte USB shortcuts work over radio.
+
+### Iris load-state backup re-send
+
+`iris_load_tracker.h` (host test `tests/iris_load_tracker_test.cpp`) is driven
+from the CAN task in `can_link.cpp`. It records the last 0x30-0x35/0x50/0x51
+commands actually dequeued for Iris and watches every Iris 0x03 packet. It
+re-sends the commanded state of every channel ever commanded when Iris uptime
+goes backwards (reboot; limit 500 ms) or when the reported OUT/5V flags differ
+from the commanded state for >= 0.9 s with no command in the last 1.5 s
+(limit 2 s). Re-sends precede queued user commands. Primary recovery is
+Iris's own RTC-memory restore; this is the backup if that memory was lost.
 
 ## Radio behavior
 
@@ -1278,6 +1289,7 @@ Host tests are standalone C++17 programs, not an integrated CTest suite. With
 `g++` available, examples for PowerShell are:
 
 ```powershell
+g++ -std=c++17 -Wall -Wextra -Werror -I main tests/command_policy_test.cpp -o build/command_policy_test.exe   # header-only
 g++ -std=c++17 -Wall -Wextra -Werror -I main tests/wifi_ota_logic_test.cpp main/wifi_ota_logic.cpp -o build/wifi_ota_logic_test.exe
 if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 & .\build\wifi_ota_logic_test.exe
@@ -1366,3 +1378,62 @@ workspace. Do not copy stale absolute tool paths into project source files.
 
 
 
+
+## Flight state across resets and robust altitude (FSM)
+
+Files: `main/flight_state_machine.{h,cpp}`, `main/flight_state_store.{h,cpp}`,
+`main/main.cpp`, `main/sensors.cpp`, host test `tests/flight_state_machine_test.cpp`.
+
+Robust altitude (audit NEW-1, sensing finding 2, NEW-4). The FSM no longer
+uses the raw barometer altitude. It keeps the last 5 FRESH barometer samples
+(`Observation::barometric_altitude_new`, set from `ms5607_updated`) and uses
+their median (needs at least 3). One outlier, or a burst of two, cannot move
+it. The tracked maximum may also rise at most 2000 m/s (+50 m) since it was
+last confirmed. While the position filter has the barometer gated
+(`barometer_gated`, Mach >= 0.8) the window is flushed and neither the maximum
+nor the Coast -> Descent test runs. Descent also requires the filter vertical
+velocity (`vertical_velocity_mps`) to be negative for the whole 500 ms dwell
+(waived only if the filter is not initialised). Worst-case added latency is
+the median lag, 3 baro samples (about 60-120 ms), on top of the 500 ms dwell
+(host test: 560 ms at 50 Hz). HITL entry/exit calls `rebaseline()` (from the
+sensor-source change in `Sensors`), which drops the maximum, window and timers,
+so bench pressure after HITL cannot trigger Descent.
+
+Velocity-only Descent path. The barometer path above is primary, but it cannot run
+while the baro is gated (Mach >= 0.8, which returns on the way down on the eayf
+trajectory from about t=115 s, only ~7 s after the 5 % drop) or when no robust
+altitude exists. In Coast, if the baro is gated/unusable, Descent also fires when
+the filtered vertical velocity is below -30 m/s continuously for 2 s, at least 3 s
+after Coast entry, and only after the vehicle was seen climbing faster than +20
+m/s in Boost/Coast (an apogee happened; a restored state counts as seen). The
+log line says which path fired ("barometer path" or "velocity path").
+
+Reset resume (audit NEW-2 / comms N1). `flight_state_store` keeps
+{magic, state, max altitude, checksum} in `RTC_NOINIT`, rewritten on every
+state change through `FlightStateMachine::set_persist_callback`. At boot
+(first thing in `app_main`) it resumes Boost/Coast/Descent only if the reset
+reason is ESP_RST_PANIC, INT_WDT, TASK_WDT, WDT, SW or BROWNOUT AND the record
+is valid. Power-on, EN pin, USB/JTAG, deep sleep and unknown start in Pad Idle
+and rewrite the record. Brownout is accepted because the ESP32-S3 brownout
+reset is a core reset that normally keeps RTC memory; if the supply collapsed
+far enough to corrupt it the checksum rejects the record. Pad Idle and Landed
+are not resumed (Landed resume would trap the bench in Landed after the
+maintenance round trip and has no flight-logic value). A resume restores the
+state and the tracked maximum, logs at error level, and sets status byte 1
+bit 6 (`IRIS_WITNESS_STATUS_RESUMED_MASK`, 0x40, all four comms.h copies;
+Horizon label "RESUMED AFTER RESET", HITL decoder `resumed_after_reset`). The
+flag stays until power-on. Maintenance interaction: a resumed boot calls
+`maintenance_mode::cancel()` before `consume_boot_request()`, so it can never
+be a maintenance boot; the deliberate OTA reboot happens only from Pad Idle or
+Landed (not resumed), so it still boots to maintenance. The flash logger starts
+a normal new session; in a resumed state binary logging is on immediately.
+Caveats: the position filter, attitude and IMU calibration restart from scratch
+after a resume; a bench state commanded to Boost/Coast/Descent followed by a
+panic/SW reset also resumes (command Pad Idle or power-cycle to clear).
+
+Host test:
+
+```powershell
+g++ -std=c++17 -Wall -Wextra -Werror -I tests/stubs -I main tests/flight_state_machine_test.cpp main/flight_state_machine.cpp -o build/flight_state_machine_test.exe
+& .\build\flight_state_machine_test.exe
+```

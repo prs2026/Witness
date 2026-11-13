@@ -24,6 +24,9 @@ public:
 
     // Configure the hardware once, then call poll() repeatedly from app_main.
     esp_err_t initialize();
+    // Warm-reset restore: seed the OUT1..OUT3/5V status flags from the mask
+    // (MCP pin bits 0..3) that app_main re-applied to the expander.
+    void set_restored_load_mask(std::uint8_t mask);
     void update_battery_voltage(std::uint32_t millivolts, bool valid);
     void poll();
 
@@ -60,6 +63,7 @@ private:
     void set_expander_output(std::uint8_t pin, const char *name, bool enabled);
     esp_err_t set_led(bool on);
     void poll_heartbeat(std::int64_t now_us);
+    void poll_expander_resync(std::int64_t now_us);
     void poll_current_monitor(std::int64_t now_us);
     void poll_debug_report(std::int64_t now_us);
     void send_camera_report(std::int64_t now_us);
@@ -75,6 +79,8 @@ private:
     std::uint32_t fc_uptime_ms_ = 0;
     std::int64_t fc_last_received_us_ = 0;
     bool initialized_ = false;
+    bool usb_ready_ = false;
+    std::int64_t next_expander_resync_us_ = 0;
     char command_buffer_[kCommandBufferSize]{};
     std::size_t command_length_ = 0;
     bool command_overflow_ = false;

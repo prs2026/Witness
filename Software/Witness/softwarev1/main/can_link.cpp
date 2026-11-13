@@ -96,6 +96,16 @@ void CanLink::pump_transmit()
     pending_length_ = 0;
 }
 
+void CanLink::queue_resend(const iris_load_tracker::Action &action)
+{
+    if (action.count == 0) return;
+    ESP_LOGW(kTag, "Iris load state mismatch or reboot: re-sending %u load command(s)",
+             static_cast<unsigned>(action.count));
+    for (std::uint8_t i = 0; i < action.count; ++i) resend_opcodes_[i] = action.opcodes[i];
+    resend_count_ = action.count;
+    resend_index_ = 0;
+}
+
 void CanLink::receive_packets()
 {
     TwaiDriver::Frame native{};
@@ -115,6 +125,17 @@ void CanLink::receive_packets()
             (data[0] == IRIS_PACKET_ID_CAMERA && length == IRIS_PACKET_CAMERA_FRAME_LENGTH) ||
             (data[0] == IRIS_PACKET_ID_IRIS_DEBUG && length == IRIS_PACKET_IRIS_DEBUG_FRAME_LENGTH) ||
             (data[0] == IRIS_PACKET_ID_COMMAND && length == IRIS_PACKET_COMMAND_FRAME_LENGTH);
+        if (data[0] == IRIS_PACKET_ID_CAMERA && length == IRIS_PACKET_CAMERA_FRAME_LENGTH &&
+            data[length - 1] == IRIS_PACKET_EOF_VALUE) {
+            const std::uint8_t *payload = data + IRIS_PACKET_ID_LENGTH;
+            const std::uint32_t iris_uptime =
+                (static_cast<std::uint32_t>(payload[IRIS_PACKET_CAMERA_UPTIME_OFFSET]) << 24U) |
+                (static_cast<std::uint32_t>(payload[IRIS_PACKET_CAMERA_UPTIME_OFFSET + 1]) << 16U) |
+                (static_cast<std::uint32_t>(payload[IRIS_PACKET_CAMERA_UPTIME_OFFSET + 2]) << 8U) |
+                payload[IRIS_PACKET_CAMERA_UPTIME_OFFSET + 3];
+            queue_resend(load_tracker_.on_status(
+                esp_timer_get_time() / 1000, payload[IRIS_PACKET_CAMERA_STATUS_OFFSET], iris_uptime));
+        }
         if (allowed && data[length - 1] == IRIS_PACKET_EOF_VALUE)
             (void)forwarder_.queue_packet(data[0], data + 1, length - 2);
         // Iris responses never enter CommandBridge, preventing command loops.
@@ -130,8 +151,24 @@ void CanLink::run()
         receive_packets();
         pump_transmit();
         Command command{};
-        if (pending_length_ == 0 && xQueueReceive(commands_, &command, 0) == pdTRUE)
+        // Backup re-sends go first so any newer user command is sent after
+        // them and wins.
+        if (pending_length_ == 0 && resend_index_ < resend_count_) {
+            std::uint8_t frame[IRIS_PACKET_COMMAND_FRAME_LENGTH]{};
+            const std::uint16_t opcode = resend_opcodes_[resend_index_++];
+            const std::uint32_t uptime = static_cast<std::uint32_t>(esp_timer_get_time() / 1000U);
+            frame[0] = IRIS_PACKET_ID_COMMAND;
+            write_u32(frame + 3, uptime);
+            frame[7] = static_cast<std::uint8_t>(opcode >> 8U);
+            frame[8] = static_cast<std::uint8_t>(opcode);
+            frame[9] = IRIS_PACKET_EOF_VALUE;
+            send_packet(frame, sizeof(frame));
+        } else if (pending_length_ == 0 && xQueueReceive(commands_, &command, 0) == pdTRUE) {
+            load_tracker_.note_command(
+                static_cast<std::uint16_t>((command.data[7] << 8U) | command.data[8]),
+                esp_timer_get_time() / 1000);
             send_packet(command.data, sizeof(command.data));
+        }
         const std::int64_t now = esp_timer_get_time();
         if (pending_length_ == 0 && now >= next_heartbeat) {
             std::uint8_t heartbeat[IRIS_PACKET_HEARTBEAT_FRAME_LENGTH]{};

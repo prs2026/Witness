@@ -4,6 +4,7 @@
 #include "esp_err.h"
 #include "flash_logger.h"
 #include "flight_state_machine.h"
+#include "flight_state_store.h"
 #include "heartbeat.h"
 #include "imu_calibration_store.h"
 #include "maintenance_mode.h"
@@ -18,12 +19,31 @@
 
 extern "C" void app_main(void)
 {
-    // Consume the one-shot maintenance request first (see maintenance_mode.h).
+    // Decide first whether this boot resumes an in-flight state after an MCU
+    // reset (see flight_state_store.h). A resumed flight must never enter a
+    // maintenance boot, so any armed maintenance request is dropped before it
+    // is consumed.
+    flight_state_store::Snapshot resume_snapshot{};
+    const bool resumed = flight_state_store::take_boot_snapshot(resume_snapshot);
+    if (resumed) {
+        maintenance_mode::cancel();
+    }
+    // Consume the one-shot maintenance request (see maintenance_mode.h).
     maintenance_mode::consume_boot_request();
     const bool maintenance = maintenance_mode::active();
     static SpiDataForwarder spi_data_forwarder;
     static WitnessStatus witness_status;
     static FlightStateMachine flight_state_machine(witness_status);
+    if (resumed) {
+        flight_state_machine.restore(
+            static_cast<FlightStateMachine::State>(resume_snapshot.state),
+            resume_snapshot.maximum_altitude_m, resume_snapshot.maximum_valid);
+        witness_status.set_state_flag(IRIS_WITNESS_STATUS_RESUMED_MASK, true);
+        ESP_LOGE("main", "RESET IN FLIGHT: resumed state '%s' (max altitude %.1f m)",
+                 FlightStateMachine::state_name(flight_state_machine.state()),
+                 static_cast<double>(resume_snapshot.maximum_altitude_m));
+    }
+    flight_state_machine.set_persist_callback(flight_state_store::save);
     static Heartbeat heartbeat(spi_data_forwarder, witness_status);
     static UartDriver gps_uart(spi_data_forwarder, UART_NUM_1,
                                HW_PIN_MCU_UART_TX, HW_PIN_MCU_UART_RX);

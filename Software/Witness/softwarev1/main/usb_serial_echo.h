@@ -89,7 +89,11 @@ private:
     void handle_radio_power(const std::uint8_t *data, const char *source, bool radio);
     // IRIS_COMMAND_WIFI (comms.h): d0 on/off, d1 TX dBm, d2 auto-off minutes.
     void handle_wifi(const std::uint8_t *data, const char *source, bool radio);
-    esp_err_t set_flight_state(std::uint8_t state);
+    // Applies command_policy for the source; returns ESP_ERR_NOT_ALLOWED when refused.
+    esp_err_t set_flight_state(std::uint8_t state, bool radio);
+    // Mass storage / erase / clear (0x6868/9/A) gated by command_policy.
+    // Runs the command when allowed; returns the ack result (OK or REFUSED).
+    std::uint8_t run_log_maintenance(std::uint16_t command, bool radio);
     // 0x06 command acknowledgement / 0x07 transfer status (comms.h), sent on
     // the link the command arrived on. data6 = the command's six data bytes.
     void send_ack(bool radio, std::uint16_t command, const std::uint8_t *data6, std::uint8_t result,

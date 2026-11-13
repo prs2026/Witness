@@ -4,14 +4,21 @@
 
 #include "driver/gpio.h"
 #include "esp_rom_sys.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "hardware.h"
 
-esp_err_t Mcp23008::initialize()
+esp_err_t Mcp23008::initialize(const bool pulse_reset)
 {
     if (bus_handle_ != nullptr || device_handle_ != nullptr) {
         return ESP_ERR_INVALID_STATE;
     }
 
+    // Latch the pin level before enabling the driver so GPIO9 never glitches
+    // low (the board has a 10k pulldown on this net, R55).
+    if (!pulse_reset) {
+        (void)gpio_set_level(IRIS_PIN_MCP23008_RESET, 1);
+    }
     gpio_config_t reset_config{};
     reset_config.pin_bit_mask = 1ULL << IRIS_PIN_MCP23008_RESET;
     reset_config.mode = GPIO_MODE_OUTPUT;
@@ -24,13 +31,15 @@ esp_err_t Mcp23008::initialize()
         return result;
     }
 
-    // The MCP23008 requires RESET low for at least 1 us. Resetting also puts
-    // every port in input mode and clears the output latch.
-    result = gpio_set_level(IRIS_PIN_MCP23008_RESET, 0);
-    if (result != ESP_OK) {
-        return result;
+    if (pulse_reset) {
+        // The MCP23008 requires RESET low for at least 1 us. Resetting also
+        // puts every port in input mode and clears the output latch.
+        result = gpio_set_level(IRIS_PIN_MCP23008_RESET, 0);
+        if (result != ESP_OK) {
+            return result;
+        }
+        esp_rom_delay_us(2);
     }
-    esp_rom_delay_us(2);
     result = gpio_set_level(IRIS_PIN_MCP23008_RESET, 1);
     if (result != ESP_OK) {
         return result;
@@ -66,6 +75,7 @@ esp_err_t Mcp23008::initialize()
 
     direction_ = 0xFF;
     output_latch_ = 0x00;
+    configured_ = false;
     return ESP_OK;
 }
 
@@ -102,6 +112,47 @@ esp_err_t Mcp23008::configure_output(
     return result;
 }
 
+esp_err_t Mcp23008::configure_outputs(
+    const std::uint8_t output_mask,
+    const std::uint8_t latch)
+{
+    if (device_handle_ == nullptr) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    const std::uint8_t new_latch = static_cast<std::uint8_t>(latch & output_mask);
+    const std::uint8_t new_direction = static_cast<std::uint8_t>(~output_mask);
+    esp_err_t result = ESP_FAIL;
+    for (int attempt = 0; attempt < 3; ++attempt) {
+        // Latch first so an output never momentarily drives the wrong level.
+        result = write_register(kRegisterOlat, new_latch);
+        if (result == ESP_OK) {
+            result = write_register(kRegisterIodir, new_direction);
+        }
+        if (result == ESP_OK) {
+            break;
+        }
+        vTaskDelay(1);
+    }
+    if (result == ESP_OK) {
+        output_latch_ = new_latch;
+        direction_ = new_direction;
+        configured_ = true;
+    }
+    return result;
+}
+
+esp_err_t Mcp23008::resync()
+{
+    if (device_handle_ == nullptr || !configured_) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    esp_err_t result = write_register(kRegisterOlat, output_latch_);
+    if (result == ESP_OK) {
+        result = write_register(kRegisterIodir, direction_);
+    }
+    return result;
+}
+
 esp_err_t Mcp23008::write_pin(
     const std::uint8_t pin,
     const bool level)
@@ -121,15 +172,11 @@ esp_err_t Mcp23008::write_pin(
     const std::uint8_t new_latch = level
         ? static_cast<std::uint8_t>(output_latch_ | mask)
         : static_cast<std::uint8_t>(output_latch_ & ~mask);
-    if (new_latch == output_latch_) {
-        return ESP_OK;
-    }
-
-    const esp_err_t result = write_register(kRegisterOlat, new_latch);
-    if (result == ESP_OK) {
-        output_latch_ = new_latch;
-    }
-    return result;
+    // Always write (no "unchanged" early-out) and always adopt the intended
+    // latch: if the transaction failed after the chip latched it, the cache
+    // must not drift from what the chip may hold; resync() re-pushes it.
+    output_latch_ = new_latch;
+    return write_register(kRegisterOlat, new_latch);
 }
 
 esp_err_t Mcp23008::write_register(

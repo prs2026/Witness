@@ -247,15 +247,15 @@ Command values currently defined:
 | `0x00E0` | Enable Witness debug packets at 10 Hz |
 | `0x4849` | Enter HITL mode (USB only, Pad Idle only; see section 4a) |
 | `0x4858` | Exit HITL mode (USB or LoRa) |
-| `0x6868` | Enter read-only USB mass-storage mode |
-| `0x6869` | Erase all stored log sessions (every block; slow) |
-| `0x686A` | Clear all stored log sessions (fast: only the two session headers are erased; the session number keeps counting) |
+| `0x6868` | Enter read-only USB mass-storage mode. USB only, and only in Pad Idle or Landed; over LoRa it is always refused (`IRIS_ACK_REFUSED`) |
+| `0x6869` | Erase all stored log sessions (every block; slow). USB only, Pad Idle or Landed only; refused over LoRa |
+| `0x686A` | Clear all stored log sessions (fast: only the two session headers are erased; the session number keeps counting). USB only, Pad Idle or Landed only; refused over LoRa |
 | `0x4741` / `0x4744` / `0x4745` / `0x4751` | GPS assistance upload BEGIN / DATA / COMMIT / STATUS (ephemeris for the receiver; chunked, Witness-local, never forwarded; see section 4b) |
 | `0x4752` | GPS cold start: the receiver forgets ephemerides, almanac, position and time; Witness then reconfigures it (Pad Idle only; Witness-local, never forwarded) |
 | `0x4844` | Pad heading: body axis and azimuth (Pad Idle only; Witness-local; see section 4c) |
 | `0x5250` | Radio power, RAM only: d0 target (`0x00` Witness, `0x01` ground station), d1 SX1262 drive in dBm as int8, -9..+3 (Ra-01SH-P output is about 26 dB higher). Both radios boot at -9 dBm. Witness applies target 0 from USB or radio. Aperture applies target 1 to its own radio, acks on USB and does not transmit it. The ack's detail is the drive now in use (int16); out of range is answered with "bad argument". |
 | `0x5746` | Wi-Fi OTA / log download, Witness only, USB or radio, Pad Idle or Landed only (otherwise refused): d0 `0` off / `1` on, d1 Wi-Fi max TX power in dBm as int8 (`0` keeps the default +8; 2..20), d2 auto-off minutes (`0` = 15; up to 240). Never starts at boot. `0x5746` now reboots Witness into maintenance mode (status byte 1 bit 5); d0 `2` is a status query whose ack detail is: bit 8 AP up, bit 9 start watchdog fired, low byte last start step (`0xEE` = start failed). While on, Witness stops all LoRa transmission (telemetry and acks) but keeps receiving; the ack of a radio off command is sent after Wi-Fi is off. Turns off by itself without HTTP activity and on any flight state change out of Pad Idle/Landed. Out-of-range arguments are answered with "bad argument". Use `witness_ota.py` on the access point `witness-XXXX` (192.168.4.1). |
-| `0x7300` through `0x7304` | Set flight state using the values above |
+| `0x7300` through `0x7304` | Set flight state using the values above. Over LoRa only Landed -> Pad Idle (`0x7300` while Landed, to re-arm after recovery) is accepted; everything else, including the `0x7301` launch trigger, is refused. Over USB any state is accepted from Pad Idle or Landed, but from Boost/Coast/Descent only Landed (`0x7304`) is; other requests are refused. Refusals ack `IRIS_ACK_REFUSED` |
 
 The last three commands also have legacy compact USB forms described in
 section 7. Canonical commands received from USB or LoRa are retransmitted
@@ -678,7 +678,7 @@ all radio output use only the per-packet latest-frame schedule.
 Every valid received radio packet up to the canonical maximum of 103 bytes is
 forwarded unchanged to USB. A received packet beginning with `0x05` is also
 queued unchanged for Iris CAN transmission and local interpretation. Debug enable,
-mass storage, log erase, flight-state and HITL-exit commands execute locally;
+debug enable and HITL-exit execute locally; mass storage and log erase/clear are refused over LoRa (USB only, Pad Idle/Landed); flight-state commands are limited to Landed -> Pad Idle over LoRa;
 HITL enter is rejected over LoRa. Load and
 5 V regulator commands have no Witness-local hardware action because they are
 implemented by the external device. The GPS UART never receives these

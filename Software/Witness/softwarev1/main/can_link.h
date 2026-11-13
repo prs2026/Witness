@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../../Intercomm/can_transport.h"
+#include "iris_load_tracker.h"
 #include "twai_driver.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
@@ -26,7 +27,13 @@ private:
     void send_packet(const std::uint8_t *data, std::size_t length);
     void pump_transmit();
     void receive_packets();
+    void queue_resend(const iris_load_tracker::Action &action);
     TwaiDriver driver_;
+    // Backup for an Iris reset that lost its RTC state (CAN task only).
+    iris_load_tracker::Tracker load_tracker_;
+    std::uint16_t resend_opcodes_[4]{};
+    std::uint8_t resend_count_ = 0;
+    std::uint8_t resend_index_ = 0;
     SpiDataForwarder &forwarder_;
     WitnessStatus &status_;
     QueueHandle_t commands_ = nullptr;

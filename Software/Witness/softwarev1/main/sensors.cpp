@@ -484,6 +484,10 @@ bool Sensors::service_hitl(const std::uint32_t now_ms, bool &new_sample)
         hitl_in_use_ = active;
         hitl_session_in_use_ = session;
         hitl_has_sample_ = false;
+        // The barometer source changed: drop the FSM's tracked maximum and
+        // altitude history so bench pressure after HITL cannot be compared
+        // with the simulated peak (or the reverse).
+        flight_state_machine_.rebaseline();
         hitl_samples_since_summary_ = 0;
         hitl_last_summary_ms_ = now_ms;
         reset_sensor_sample();
@@ -2386,6 +2390,15 @@ void Sensors::run()
                     working_sample_.gyro_mdps[axis] / 1000.0F;
             }
             observation.barometric_altitude_valid = barometer_healthy;
+            observation.barometric_altitude_new =
+                ms5607_updated && barometer_healthy;
+            observation.barometer_gated = position_filter_.baro_gated();
+            if (position_filter_.initialized()) {
+                float velocity[3];
+                position_filter_.velocity(velocity);
+                observation.vertical_velocity_valid = true;
+                observation.vertical_velocity_mps = velocity[2];
+            }
             observation.barometric_altitude_meters =
                 working_sample_.barometric_altitude_meters;
             observation.timestamp_us = working_sample_.timestamp_us;

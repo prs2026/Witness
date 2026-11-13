@@ -42,6 +42,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 AGENT_SOURCE = (HERE / "witness_pi_agent.py").read_bytes()
 EXPORT_COMMAND = bytes([0x05, 0x68, 0x68])
+SET_LANDED_COMMAND = bytes((0x05, 0x73, 0x04))   # compact set-flight-state: Landed
 UDEV_RULE = (
     'SUBSYSTEM=="block", ATTRS{idVendor}=="303a", ATTRS{idProduct}=="4012", '
     'MODE="0660", GROUP="plugdev"'
@@ -92,6 +93,11 @@ def send_export(host: str, port: int) -> None:
             if b"in use" in greeting:
                 raise DownloadError(
                     f"{host}:{port} is busy (another client, e.g. Horizon, has it); close it first")
+            # Export is refused in flight states (Boost/Coast/Descent); USB may
+            # always move Witness to Landed, so set it first. The board needs a
+            # reset after the export anyway, which returns it to Pad Idle.
+            link.sendall(SET_LANDED_COMMAND)
+            time.sleep(0.3)
             link.sendall(EXPORT_COMMAND)
             time.sleep(0.5)
     except OSError as error:

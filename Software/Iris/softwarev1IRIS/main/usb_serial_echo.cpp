@@ -14,6 +14,7 @@
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "comms.h"
+#include "load_state.h"
 #include "mcp23008.h"
 #include "pac1931.h"
 #include "sdkconfig.h"
@@ -160,13 +161,17 @@ esp_err_t UsbSerialEcho::initialize()
     usb_config.tx_buffer_size = kBufferSize;
     usb_config.rx_buffer_size = kBufferSize;
     result = usb_serial_jtag_driver_install(&usb_config);
-    if (result != ESP_OK) {
-        gpio_reset_pin(kHeartbeatGpio);
-        return result;
+    // A USB driver failure must not take down CAN/UART1 load control.
+    usb_ready_ = result == ESP_OK;
+    if (!usb_ready_) {
+        ESP_LOGE(kLogTag, "USB Serial/JTAG driver install failed: %s (continuing without USB)",
+                 esp_err_to_name(result));
     }
 
 #if CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
-    usb_serial_jtag_vfs_use_driver();
+    if (usb_ready_) {
+        usb_serial_jtag_vfs_use_driver();
+    }
 #endif
 
     // CAN failure does not prevent direct USB/UART control or power monitoring.
@@ -197,7 +202,9 @@ void UsbSerialEcho::poll()
     }
 
     std::uint8_t buffer[kBufferSize];
-    const int bytes_read = usb_serial_jtag_read_bytes(buffer, sizeof(buffer), 0);
+    const int bytes_read = usb_ready_
+        ? usb_serial_jtag_read_bytes(buffer, sizeof(buffer), 0)
+        : 0;
     if (bytes_read > 0) {
         const std::size_t byte_count = static_cast<std::size_t>(bytes_read);
         echo_bytes(buffer, byte_count);
@@ -208,8 +215,35 @@ void UsbSerialEcho::poll()
     poll_can();
     poll_uart1();
     poll_heartbeat(now_us);
+    poll_expander_resync(now_us);
     poll_current_monitor(now_us);
     poll_debug_report(now_us);
+}
+
+void UsbSerialEcho::set_restored_load_mask(const std::uint8_t mask)
+{
+    iris_status_flags_ &= static_cast<std::uint8_t>(
+        ~(IRIS_STATUS_OUT1_ENABLED_FLAG | IRIS_STATUS_OUT2_ENABLED_FLAG |
+          IRIS_STATUS_OUT3_ENABLED_FLAG | IRIS_STATUS_5V_ENABLED_FLAG));
+    if (mask & 0x01U) iris_status_flags_ |= IRIS_STATUS_OUT1_ENABLED_FLAG;
+    if (mask & 0x02U) iris_status_flags_ |= IRIS_STATUS_OUT2_ENABLED_FLAG;
+    if (mask & 0x04U) iris_status_flags_ |= IRIS_STATUS_OUT3_ENABLED_FLAG;
+    if (mask & 0x08U) iris_status_flags_ |= IRIS_STATUS_5V_ENABLED_FLAG;
+}
+
+void UsbSerialEcho::poll_expander_resync(const std::int64_t now_us)
+{
+    // Once a second re-push OLAT and IODIR from the cache. This heals an
+    // expander-only reset (LS_EN glitch, 3V3 dip) and any write that failed
+    // after the chip latched it.
+    if (now_us < next_expander_resync_us_) {
+        return;
+    }
+    next_expander_resync_us_ = now_us + 1000000;
+    const esp_err_t result = gpio_expander_.resync();
+    if (result != ESP_OK && result != ESP_ERR_INVALID_STATE) {
+        ESP_LOGE(kLogTag, "expander resync failed: %s", esp_err_to_name(result));
+    }
 }
 
 void UsbSerialEcho::update_battery_voltage(
@@ -226,6 +260,9 @@ void UsbSerialEcho::echo_bytes(
     const std::uint8_t *data,
     const std::size_t length)
 {
+    if (!usb_ready_) {
+        return;
+    }
     std::size_t bytes_echoed = 0;
     while (bytes_echoed < length) {
         const int bytes_written = usb_serial_jtag_write_bytes(
@@ -368,11 +405,15 @@ void UsbSerialEcho::set_expander_output(
     const char *const name,
     const bool enabled)
 {
+    // The commanded state is adopted even if the I2C write failed: the
+    // expander cache already holds it and the 1 Hz resync re-pushes it.
     const esp_err_t result = gpio_expander_.write_pin(pin, enabled);
     if (result != ESP_OK) {
-        ESP_LOGE(kLogTag, "%s set failed: %s",
+        ESP_LOGE(kLogTag, "%s set failed: %s (will be re-pushed by resync)",
                  name, esp_err_to_name(result));
-        return;
+        if (result == ESP_ERR_INVALID_STATE || result == ESP_ERR_INVALID_ARG) {
+            return;
+        }
     }
 
     if (pin == IRIS_MCP23008_PIN_LED_BLUE) {
@@ -400,6 +441,12 @@ void UsbSerialEcho::set_expander_output(
         iris_status_flags_ |= status_flag;
     } else {
         iris_status_flags_ &= static_cast<std::uint8_t>(~status_flag);
+    }
+
+    if (status_flag != 0) {
+        // Remember the commanded load mask across warm resets (RTC_NOINIT).
+        load_state::store(static_cast<std::uint8_t>(
+            (iris_status_flags_ >> 3U) & 0x0FU));
     }
 
     ESP_LOGI(kLogTag, "%s %s", name, enabled ? "ON" : "OFF");
@@ -793,6 +840,9 @@ void UsbSerialEcho::write_usb_packet(
     const std::uint8_t *data,
     const std::size_t length)
 {
+    if (!usb_ready_) {
+        return;
+    }
     std::size_t bytes_written_total = 0;
     while (bytes_written_total < length) {
         const int bytes_written = usb_serial_jtag_write_bytes(

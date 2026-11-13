@@ -101,7 +101,8 @@ STATUS0_BITS = (
 STATUS1_GPS_LOCKED = 0x08
 STATUS1_HITL_ACTIVE = 0x10
 STATUS1_MAINTENANCE = 0x20   # maintenance (Wi-Fi) boot: not logging, not flight ready
-STATUS1_RESERVED = 0xC0
+STATUS1_RESUMED = 0x40      # resumed an in-flight state after an MCU reset
+STATUS1_RESERVED = 0x80
 
 # Scale factors.
 FILTERED_ACCEL_G_PER_COUNT = 0.000040
@@ -301,6 +302,7 @@ def decode_status(b0: int, b1: int) -> dict:
     status["gps_locked"] = bool(b1 & STATUS1_GPS_LOCKED)
     status["hitl_active"] = bool(b1 & STATUS1_HITL_ACTIVE)
     status["maintenance"] = bool(b1 & STATUS1_MAINTENANCE)
+    status["resumed_after_reset"] = bool(b1 & STATUS1_RESUMED)
     status["raw"] = (b0 << 8) | b1
     return status
 

@@ -82,10 +82,12 @@ FLIGHT_STATE_MASK = 0x07
 GPS_LOCKED_MASK = 0x08   # bit 3: fresh GPS fix
 HITL_ACTIVE_MASK = 0x10  # bit 4: HITL active, sensor values are simulated
 MAINTENANCE_MASK = 0x20  # bit 5: maintenance boot (Wi-Fi), NOT logging, NOT flight ready
+RESUMED_MASK = 0x40      # bit 6: resumed an in-flight state after an MCU reset
 STATUS_BYTE1_FLAG_LABELS = (
     (GPS_LOCKED_MASK, "GPS lock"),
     (HITL_ACTIVE_MASK, "HITL (SIM)"),
     (MAINTENANCE_MASK, "MAINTENANCE"),
+    (RESUMED_MASK, "RESUMED AFTER RESET"),
 )
 
 
@@ -573,6 +575,6 @@ def decode_status(value: int, camera: bool = False) -> dict:
     state = value & FLIGHT_STATE_MASK
     result["state"] = state
     result["state_valid"] = state in dict(FLIGHT_STATE_LABELS)
-    result["byte1"] = [(mask, text, bool(value & mask), mask in (HITL_ACTIVE_MASK, MAINTENANCE_MASK))
+    result["byte1"] = [(mask, text, bool(value & mask), mask in (HITL_ACTIVE_MASK, MAINTENANCE_MASK, RESUMED_MASK))
                        for mask, text in STATUS_BYTE1_FLAG_LABELS]
     return result

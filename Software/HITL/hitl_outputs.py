@@ -213,7 +213,12 @@ def fetch_fc_logs(session, run, config: dict, log, activity=None) -> dict:
         pi = wd.Pi(config.get("pi_host") or session._host, config.get("pi_user") or None,
                    config.get("pi_key") or None)
         step("FC logs: exporting Witness flash")
-        log("FC logs: exporting Witness flash (05 68 68)")
+        # Witness only exports in Pad Idle or Landed (USB; refused in flight
+        # states), and after a HITL flight it is usually in Descent: set
+        # Landed first (USB may always move a flight state to Landed).
+        log("FC logs: setting Witness to Landed (05 73 04), then exporting flash (05 68 68)")
+        session._send(bytes((hp.ID_COMMAND, 0x73, hp.LANDED)))
+        time.sleep(0.3)
         # Compact 3-byte form; the export command is not in the GUI allowlist.
         session._send(bytes((hp.ID_COMMAND,)) + hp.CMD_MASS_STORAGE.to_bytes(2, "big"))
         time.sleep(0.5)
