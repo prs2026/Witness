@@ -100,6 +100,36 @@ extern "C" void app_main(void)
             command[command_length++] = byte;
 
             if (command_length == command.size()) {
+                const std::uint16_t opcode = static_cast<std::uint16_t>(
+                    (command[7] << 8U) | command[8]);
+                if (command.back() == IRIS_PACKET_EOF_VALUE &&
+                    opcode == IRIS_COMMAND_RADIO_POWER &&
+                    command[1] == IRIS_RADIO_POWER_TARGET_GROUND) {
+                    // Ground-station radio power: applied here, acked on
+                    // USB (0x06, detail = dBm now in use), never transmitted.
+                    const std::uint8_t front_end = command[3];
+                    const bool ok = front_end <= IRIS_RADIO_FRONT_END_OFF &&
+                                    radio.set_tx_power_dbm(static_cast<std::int8_t>(command[2]));
+                    if (ok && front_end != IRIS_RADIO_FRONT_END_UNCHANGED) {
+                        radio.set_front_end_enabled(front_end == IRIS_RADIO_FRONT_END_ON);
+                    }
+                    const std::int16_t now = radio.tx_power_dbm();
+                    const bool fem = radio.front_end_enabled();
+                    std::array<std::uint8_t, IRIS_PACKET_COMMAND_ACK_FRAME_LENGTH> ack{};
+                    ack[0] = IRIS_PACKET_ID_COMMAND_ACK;
+                    ack[1] = command[7];
+                    ack[2] = command[8];
+                    for (std::size_t i = 0; i < 6U; ++i) ack[3U + i] = command[1U + i];
+                    ack[9] = ok ? IRIS_ACK_OK : IRIS_ACK_BAD_ARGUMENT;
+                    ack[10] = fem ? 1U : 0U;
+                    ack[11] = static_cast<std::uint8_t>(now);
+                    ack[12] = IRIS_PACKET_EOF_VALUE;
+                    (void)usb_serial_jtag_write_bytes(ack.data(), ack.size(), pdMS_TO_TICKS(50));
+                    ESP_LOGI(kLogTag, "ground radio TX drive %s: %d dBm, front end %s",
+                             ok ? "set" : "refused", static_cast<int>(now), fem ? "on" : "off");
+                    command_length = 0U;
+                    continue;
+                }
                 if (command.back() == IRIS_PACKET_EOF_VALUE) {
                     ESP_LOGI(kLogTag, "Sending command to Witness");
                     const esp_err_t result = radio.transmit(

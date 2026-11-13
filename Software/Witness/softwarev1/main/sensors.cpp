@@ -35,10 +35,6 @@ constexpr std::array<std::uint8_t, Sensors::kRadioPacketTypeCount>
         IRIS_PACKET_ID_SENSORS,
         IRIS_PACKET_ID_STATE,
         IRIS_PACKET_ID_CAMERA,
-        IRIS_PACKET_ID_COMMAND,
-        IRIS_PACKET_ID_HEARTBEAT,
-        IRIS_PACKET_ID_WITNESS_DEBUG,
-        IRIS_PACKET_ID_IRIS_DEBUG,
 };
 
 constexpr std::array<std::uint32_t, Sensors::kRadioPacketTypeCount>
@@ -46,10 +42,6 @@ constexpr std::array<std::uint32_t, Sensors::kRadioPacketTypeCount>
         Sensors::kRadioSensorPacketRateHz,
         Sensors::kRadioStatePacketRateHz,
         Sensors::kRadioCameraPacketRateHz,
-        Sensors::kRadioCommandPacketRateHz,
-        Sensors::kRadioHeartbeatPacketRateHz,
-        Sensors::kRadioWitnessDebugPacketRateHz,
-        Sensors::kRadioIrisDebugPacketRateHz,
 };
 
 constexpr bool valid_radio_rate(const std::uint32_t rate_hz)
@@ -61,10 +53,6 @@ constexpr bool valid_radio_rate(const std::uint32_t rate_hz)
 static_assert(valid_radio_rate(Sensors::kRadioSensorPacketRateHz));
 static_assert(valid_radio_rate(Sensors::kRadioStatePacketRateHz));
 static_assert(valid_radio_rate(Sensors::kRadioCameraPacketRateHz));
-static_assert(valid_radio_rate(Sensors::kRadioCommandPacketRateHz));
-static_assert(valid_radio_rate(Sensors::kRadioHeartbeatPacketRateHz));
-static_assert(valid_radio_rate(Sensors::kRadioWitnessDebugPacketRateHz));
-static_assert(valid_radio_rate(Sensors::kRadioIrisDebugPacketRateHz));
 
 static_assert(IRIS_PACKET_STATE_GPS_SATELLITES_LENGTH == 1U,
               "0x02 satellites field is one byte");
@@ -502,6 +490,7 @@ bool Sensors::service_hitl(const std::uint32_t now_ms, bool &new_sample)
         filtered_accel_.reset();
         hitl_filtered_accel_.reset();
         position_filter_.reset();
+        heading_aligner_.reset();
         position_last_predict_us_ = 0;
         position_baro_pending_ = false;
         position_gps_accepted_ = false;
@@ -1437,7 +1426,19 @@ void Sensors::poll_radio_commands()
 
 void Sensors::service_radio_transmit(const TickType_t now)
 {
-    if (!radio_transmission_enabled_.load() || !radio_ready_) {
+    if (!radio_ready_) return;
+    if (!radio_transmission_enabled_.load()) {
+        if (!radio_beacon_only_.load() || radio_.transmit_in_progress() ||
+            (now - radio_last_beacon_) < pdMS_TO_TICKS(kRadioBeaconPeriodMs)) {
+            return;
+        }
+        SpiDataForwarder::RadioPacket beacon{};
+        std::uint32_t generation = 0;
+        if (data_forwarder_.latest_radio_packet(IRIS_PACKET_ID_STATE, beacon, generation)) {
+            radio_last_beacon_ = now;
+            ++radio_tx_started_;
+            if (radio_.start_transmit(beacon.data, beacon.length) != ESP_OK) ++radio_tx_failed_;
+        }
         return;
     }
 
@@ -1603,6 +1604,79 @@ void Sensors::predict_position(const std::uint64_t timestamp_us)
     };
     position_filter_.predict(world, dt_s,
                              static_cast<position::Phase>(flight_state_machine_.state()));
+    heading_aligner_.add_inertial(world[0], world[1], dt_s, in_flight());
+}
+
+esp_err_t Sensors::set_pad_heading(const std::uint8_t axis_code, const std::uint16_t azimuth_centideg)
+{
+    if (flight_state_machine_.state() != FlightStateMachine::State::PadIdle) return ESP_ERR_INVALID_STATE;
+    float axis[3];
+    if (axis_code != 0xFFU && (!heading::pad_heading_axis(axis_code, axis) || azimuth_centideg >= 36000U))
+        return ESP_ERR_INVALID_ARG;
+    portENTER_CRITICAL(&pad_heading_lock_);
+    pad_heading_request_ = true;
+    pad_heading_request_axis_ = axis_code;
+    pad_heading_request_cdeg_ = azimuth_centideg;
+    portEXIT_CRITICAL(&pad_heading_lock_);
+    return ESP_OK;
+}
+
+void Sensors::service_pad_heading(const bool attitude_reinitialized)
+{
+    bool request = false;
+    std::uint8_t axis_code = 0;
+    std::uint16_t centideg = 0;
+    portENTER_CRITICAL(&pad_heading_lock_);
+    if (pad_heading_request_) {
+        request = true;
+        pad_heading_request_ = false;
+        axis_code = pad_heading_request_axis_;
+        centideg = pad_heading_request_cdeg_;
+    }
+    portEXIT_CRITICAL(&pad_heading_lock_);
+    if (request) {
+        if (axis_code == 0xFFU) {
+            pad_heading_active_ = false;
+            heading_aligner_.set_trusted(false);
+            ESP_LOGI(kLogTag, "pad heading cleared: GPS heading alignment only");
+            return;
+        }
+        pad_heading_active_ = true;
+        pad_heading_axis_ = axis_code;
+        pad_heading_azimuth_rad_ = static_cast<float>(centideg) * (3.14159265F / 18000.0F);
+        pad_heading_pending_apply_ = true;
+    }
+    if (!pad_heading_active_ || !attitude_.valid() ||
+        flight_state_machine_.state() != FlightStateMachine::State::PadIdle) {
+        return;
+    }
+    if (!pad_heading_pending_apply_ && !attitude_reinitialized) return;
+    pad_heading_pending_apply_ = false;
+    float body[3];
+    (void)heading::pad_heading_axis(pad_heading_axis_, body);
+    const attitude::Vector3 w =
+        attitude::Estimator::rotate(attitude_.quaternion(), attitude::Vector3{body[0], body[1], body[2]});
+    const float world[3] = {w.x, w.y, w.z};
+    const float yaw = heading::pad_heading_yaw(world, pad_heading_azimuth_rad_);
+    if (!std::isfinite(yaw)) {
+        ESP_LOGW(kLogTag, "pad heading not applied: that body axis is within 30 deg of vertical; "
+                          "pick an axis across the rocket");
+        return;
+    }
+    attitude_.rotate_heading(yaw);
+    heading_aligner_.set_trusted(true);
+    ESP_LOGI(kLogTag, "pad heading applied: body %s at %.1f deg (turned %+.1f deg); GPS alignment "
+                      "limited to small corrections",
+             pad_heading_axis_ == 0 ? "+Y" : pad_heading_axis_ == 1 ? "-Y" : pad_heading_axis_ == 2 ? "+Z" : "-Z",
+             static_cast<double>(pad_heading_azimuth_rad_ * 57.2957795F),
+             static_cast<double>(yaw * 57.2957795F));
+}
+
+bool Sensors::in_flight() const
+{
+    const auto state = flight_state_machine_.state();
+    return state == FlightStateMachine::State::Boost || state == FlightStateMachine::State::Coast ||
+           state == FlightStateMachine::State::Descent;
 }
 
 void Sensors::service_position(const std::uint64_t now_us)
@@ -1619,6 +1693,24 @@ void Sensors::service_position(const std::uint64_t now_us)
                                             fix.altitude_meters, fix.satellites, gps_phase,
                                             fix.hdop, fix.vdop)) {
                 position_gps_accepted_ = true;
+            }
+            // Heading: the GPS course against the inertial horizontal
+            // velocity (no magnetometer, so the pad leaves heading unknown).
+            float east = 0.0F, north = 0.0F;
+            if (position_filter_.gps_to_local(fix.latitude_degrees, fix.longitude_degrees, east,
+                                              north)) {
+                const float correction = heading_aligner_.add_gps(
+                    east, north, static_cast<double>(now_us) * 1e-6,
+                    position_filter_.gps_dynamics_stress_mps2(), in_flight());
+                if (correction != 0.0F && attitude_.valid()) {
+                    attitude_.rotate_heading(correction);
+                    ESP_LOGI(kLogTag, "heading aligned to GPS: %+.1f deg (total %+.1f deg, GPS %.0f m/s, "
+                                      "inertial %.0f m/s)",
+                             static_cast<double>(correction * 57.2957795F),
+                             static_cast<double>(heading_aligner_.total_correction_rad() * 57.2957795F),
+                             static_cast<double>(heading_aligner_.last_gps_speed_mps()),
+                             static_cast<double>(heading_aligner_.inertial_speed_mps()));
+                }
             }
         }
     }
@@ -2014,6 +2106,7 @@ void Sensors::update_attitude(const std::uint64_t timestamp_us)
         static_cast<attitude::FlightPhase>(flight_state_machine_.state());
     const attitude::StepResult result = attitude_.update(step);
     ++attitude_updates_since_report_;
+    service_pad_heading(result.initialized_now);
     if (result.lost_now) {
         defer_log("gyro saturated (|rate| >= %.0f dps on an axis for %lu samples): attitude "
                   "tracking stopped for this flight; the position filter now ignores the IMU",

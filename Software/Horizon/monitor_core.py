@@ -40,6 +40,7 @@ from ground_settings import WITNESS_FEED_HOST, WITNESS_FEED_PORT, WITNESS_REMOTE
 from nmea_capture import NmeaExtractor, summarize_gga
 from observable import Cell
 from serial_discovery import RETRY_SECONDS, SerialDiscovery, SerialOpenJob
+from command_link import CommandLink
 from witness_link import WitnessPublisher, is_tailscale_address, tailscale_ipv4
 from witness_protocol import (
     IMU_CALIBRATION_COMMANDS, QUICK_COMMANDS, SECTION_SPECS, PacketDecoder,
@@ -189,6 +190,8 @@ class MonitorCore:
         self.raw_values = {}        # key -> newest raw value (status decoders)
         self.last_packet_time = {}
         self.command_history = []
+        self.command_link = CommandLink()     # 0x06 acks / 0x07 transfer status
+        self.ack_attempts = 5
         self.command_history_index = 0
         self.command_history_draft = ""
         self.graphs_dirty = False
@@ -394,21 +397,46 @@ class MonitorCore:
         if serial_port is None and tcp_socket is None:
             self.console_write("TX_ERROR no connected serial/TCP target selected")
             return False
+        write = serial_port.write if serial_port is not None else tcp_socket.sendall
+        acked = CommandLink.is_acked_command(command)
         try:
-            if serial_port is not None:
-                serial_port.write(command)
-            else:
-                tcp_socket.sendall(command)
+            if acked:
+                self.command_link.forget(command)
+            write(command)
             sent_text = command.hex(" ")
             label = f" {description}:" if description else ""
             self.console_write(f"TX[{target_name}]{label}  {sent_text}")
             self.command_history.append(sent_text)
             self.command_history_index = len(self.command_history)
             self.command_history_draft = ""
-            return True
         except Exception as exc:
             self.console_write(f"TX_ERROR[{target_name}] {exc}")
             return False
+        if acked:
+            # Radio round trips (Aperture -> LoRa -> Witness -> back) take far
+            # longer than USB; resend until Witness acknowledges.
+            timeout = 0.5 if serial_port is not None else 1.5
+            threading.Thread(target=self._await_ack, name="command-ack", daemon=True,
+                             args=(target_name, write, command, description or sent_text, timeout)).start()
+        return True
+
+    def _await_ack(self, target_name, write, command, label, timeout):
+        try:
+            ack = self.command_link.send_reliable(write, command, timeout=timeout, attempts=self.ack_attempts,
+                                                  cancel=self.stop_event, first_sent=True)
+        except Exception as exc:  # noqa: BLE001
+            self.console_write(f"TX_ERROR[{target_name}] {label}: resend failed: {exc}")
+            return
+        if self.stop_event.is_set():
+            return
+        if ack is None:
+            self.console_write(f"NO_ACK[{target_name}] {label}: no acknowledgement after "
+                               f"{self.ack_attempts} tries (link down or Witness off?)")
+        elif ack.get("result") == 0:
+            self.console_write(f"ACK[{target_name}] {label}: ok")
+        else:
+            self.console_write(f"NAK[{target_name}] {label}: {ack.get('result_name')} "
+                               f"(detail {ack.get('detail')})")
 
     def send_hex_command(self):
         target_name = self.command_target.get()
@@ -457,6 +485,46 @@ class MonitorCore:
                                    "Witness logs 'GPS assist done: N/N acknowledged'")
             except Exception as exc:  # noqa: BLE001
                 self.console_write(f"TX_ERROR[{target_name}] {description}: {exc}")
+        threading.Thread(target=worker, name="gps-assist", daemon=True).start()
+        return True
+
+    def upload_gps_assist(self, blob, description="GPS ephemeris upload", transfer_id=1, pace_s=None,
+                          resume_deadline_s=600.0):
+        """Acknowledged, resumable GPS-assist upload (command_link): BEGIN,
+        chunks, STATUS bitmap, resend missing, COMMIT. Survives link drops by
+        waiting (up to resume_deadline_s) and resuming where Witness left off."""
+        target_name = self.command_target.get()
+        if self.test_active:
+            self.console_write("TX_BLOCKED test mode never sends commands to hardware")
+            return False
+        serial_port = self.serials.get(target_name)
+        tcp_socket = self.tcp_sockets.get(target_name)
+        if serial_port is None and tcp_socket is None:
+            self.console_write("TX_ERROR no connected serial/TCP target selected")
+            return False
+        write = serial_port.write if serial_port is not None else tcp_socket.sendall
+        pace = pace_s if pace_s is not None else (0.003 if serial_port is not None else 0.06)
+        timeout = 0.5 if serial_port is not None else 1.5
+        last = [0.0, None]
+
+        def progress(received, expected, note):
+            now = time.monotonic()
+            if note != last[1] or now - last[0] > 5.0:
+                got = "?" if received is None else received
+                self.console_write(f"TX[{target_name}] {description}: {got}/{expected} chunks ({note})")
+                last[0], last[1] = now, note
+
+        def worker():
+            try:
+                ok, message = self.command_link.upload_assist(
+                    write, blob, transfer_id=transfer_id, pace_s=pace, timeout=timeout,
+                    resume_deadline_s=resume_deadline_s, progress=progress, cancel=self.stop_event)
+            except Exception as exc:  # noqa: BLE001
+                ok, message = False, str(exc)
+            if not self.stop_event.is_set():
+                tag = "TX" if ok else "TX_ERROR"
+                self.console_write(f"{tag}[{target_name}] {description}: {message}")
+        self.console_write(f"TX[{target_name}] {description}: {len(blob)} bytes, acknowledged upload started")
         threading.Thread(target=worker, name="gps-assist", daemon=True).start()
         return True
 
@@ -719,6 +787,9 @@ class MonitorCore:
         # The arrival time travels with the packet so graphs plot when it was
         # received, not when the GUI got round to it.
         received_at = time.time()
+        link = getattr(self, "command_link", None)
+        if link is not None and test_token is None and isinstance(packet, dict):
+            link.feed(packet)
         try:
             self.publisher.publish(source, packet, received_at=received_at)
         except Exception as exc:

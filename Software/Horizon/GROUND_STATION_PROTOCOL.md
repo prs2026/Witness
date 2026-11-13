@@ -32,6 +32,8 @@ Packet lengths include the packet ID and EOF:
 | `0x02` | Estimated state | 63 | 65 | 1 Hz | latest frame at 1 Hz |
 | `0x03` | Camera telemetry | 17 | 19 | Iris CAN, 1 Hz | latest frame at 1 Hz |
 | `0x05` | Command | 8 | 10 | received externally | immediate; latest local frame at 1 Hz |
+| `0x06` | Command acknowledgement | 11 | 13 | reply to each canonical command, on the link it arrived on | same, immediate |
+| `0x07` | GPS-assist transfer status | 74 | 76 | reply to GPS-assist STATUS, on the link it arrived on | same, immediate |
 | `0x0C` | HITL sensor input | 45 | 47 | host to Witness over USB only, ~100 Hz | never transmitted |
 | `0x0E` | HITL IMU batch (8 samples at 960 Hz) | 148 | 150 | host to Witness over USB only, 120 Hz | never transmitted |
 | `0xE0` | Witness debug | 101 | 103 | 10 Hz after debug enable | latest frame at 1 Hz |
@@ -95,13 +97,20 @@ Status byte 0 contains active-high flags:
 | 6 | `0x40` | Valid MS5607 sample available |
 | 7 | `0x80` | Flash initialized but logging later failed |
 
-Status byte 1 bits 0 through 2 contain the flight state. Bits 3 and 4 are
-flags; bits 5 through 7 are reserved and transmitted as zero.
+Status byte 1 bits 0 through 2 contain the flight state. Bits 3, 4 and 5 are
+flags; bits 6 and 7 are reserved and transmitted as zero.
 
 | Bit | Mask | Meaning |
 |---:|---:|---|
 | 3 | `0x08` | GPS locked: a fresh GGA fix (quality >= 1, within 3 s) exists |
 | 4 | `0x10` | HITL mode active: sensor, GPS and battery values are simulated |
+| 5 | `0x20` | MAINTENANCE boot (Wi-Fi OTA / log download mode): flight logging is OFF and Witness is NOT flight ready (`IRIS_WITNESS_STATUS_MAINTENANCE_MASK`) |
+
+In maintenance mode Witness's LoRa sends only one `0x02` state packet every 5 s
+(a beacon), so over the radio only state packets arrive, about every 5 s; over
+USB everything still arrives. Horizon shows a red banner and a
+`MAINTENANCE - NOT FLIGHT READY` window-title prefix while the bit is set, and
+clears them when a packet with the bit clear arrives (not on age alone).
 
 Decode the flight state as `byte1 & 0x07`, not as the whole byte.
 
@@ -243,12 +252,69 @@ Command values currently defined:
 | `0x686A` | Clear all stored log sessions (fast: only the two session headers are erased; the session number keeps counting) |
 | `0x4741` / `0x4744` / `0x4745` / `0x4751` | GPS assistance upload BEGIN / DATA / COMMIT / STATUS (ephemeris for the receiver; chunked, Witness-local, never forwarded; see section 4b) |
 | `0x4752` | GPS cold start: the receiver forgets ephemerides, almanac, position and time; Witness then reconfigures it (Pad Idle only; Witness-local, never forwarded) |
+| `0x4844` | Pad heading: body axis and azimuth (Pad Idle only; Witness-local; see section 4c) |
+| `0x5250` | Radio power, RAM only: d0 target (`0x00` Witness, `0x01` ground station), d1 SX1262 drive in dBm as int8, -9..+3 (Ra-01SH-P output is about 26 dB higher). Both radios boot at -9 dBm. Witness applies target 0 from USB or radio. Aperture applies target 1 to its own radio, acks on USB and does not transmit it. The ack's detail is the drive now in use (int16); out of range is answered with "bad argument". |
+| `0x5746` | Wi-Fi OTA / log download, Witness only, USB or radio, Pad Idle or Landed only (otherwise refused): d0 `0` off / `1` on, d1 Wi-Fi max TX power in dBm as int8 (`0` keeps the default +8; 2..20), d2 auto-off minutes (`0` = 15; up to 240). Never starts at boot. `0x5746` now reboots Witness into maintenance mode (status byte 1 bit 5); d0 `2` is a status query whose ack detail is: bit 8 AP up, bit 9 start watchdog fired, low byte last start step (`0xEE` = start failed). While on, Witness stops all LoRa transmission (telemetry and acks) but keeps receiving; the ack of a radio off command is sent after Wi-Fi is off. Turns off by itself without HTTP activity and on any flight state change out of Pad Idle/Landed. Out-of-range arguments are answered with "bad argument". Use `witness_ota.py` on the access point `witness-XXXX` (192.168.4.1). |
 | `0x7300` through `0x7304` | Set flight state using the values above |
 
 The last three commands also have legacy compact USB forms described in
 section 7. Canonical commands received from USB or LoRa are retransmitted
 byte-for-byte through the Iris CAN link. The firmware does not rewrite their status or uptime.
 Radio commands are additionally interpreted locally.
+
+### `0x06` Command acknowledgement packet, 13 bytes
+
+Witness sends one `0x06` for each canonical 10-byte `0x05` command it handles,
+on the link the command arrived on (USB, or radio through Aperture, which
+forwards the frame to USB unchanged). Two commands are not acknowledged this
+way: GPS-assist DATA (`0x4744`) is confirmed in bulk by `0x07`, and GPS-assist
+STATUS (`0x4751`) is answered only by `0x07`. The host matches an
+acknowledgement to a command by opcode and the six data bytes.
+
+| Frame offset | Size | Field |
+|---:|---:|---|
+| 0 | 1 | Packet ID `0x06` |
+| 1 | 2 | Opcode of the command acknowledged, uint16 BE (command bytes 7-8) |
+| 3 | 6 | The command's six data bytes (frame bytes 1-6), echoed |
+| 9 | 1 | Result (table below) |
+| 10 | 2 | Detail, uint16 BE; zero unless stated below |
+| 12 | 1 | EOF `0x0A` |
+
+| Value | Name | Meaning |
+|---:|---|---|
+| `0x00` | ok | Applied or accepted |
+| `0x01` | refused | Not allowed now (flight state or mode) |
+| `0x02` | bad argument | Malformed or out-of-range data, or a GPS-assist BEGIN/COMMIT with no matching transfer |
+| `0x03` | unknown command | Opcode not recognized |
+| `0x04` | busy | Try again later; GPS-assist COMMIT could not be queued to the receiver |
+| `0x05` | incomplete | GPS-assist COMMIT with chunks missing; detail = chunks received; transfer stays open |
+| `0x06` | bad CRC | GPS-assist COMMIT: CRC mismatch; transfer discarded |
+| `0x07` | bad format | GPS-assist COMMIT: records do not parse; transfer discarded |
+
+Example, pad heading command accepted:
+
+```text
+06 48 44 00 69 78 00 00 00 00 00 0A
+```
+
+### `0x07` Transfer status packet, 76 bytes
+
+Witness sends this in reply to GPS-assist STATUS (`0x4751`), on the link the
+STATUS arrived on. The STATUS data bytes d0-d1 give the first chunk of the
+bitmap window; `0xFFFF` (or zero) means the window starts at the first missing
+chunk. Chunks are 4 bytes each (section 4b).
+
+| Frame offset | Size | Field |
+|---:|---:|---|
+| 0 | 1 | Packet ID `0x07` |
+| 1 | 1 | Transfer id |
+| 2 | 1 | State: 0 idle, 1 receiving, 2 complete (last transfer committed and passed to the receiver), 3 failed (CRC or format) |
+| 3 | 2 | Blob length, uint16 BE |
+| 5 | 2 | Chunks expected, uint16 BE |
+| 7 | 2 | Chunks received, uint16 BE |
+| 9 | 2 | First chunk of the bitmap window, uint16 BE |
+| 11 | 64 | Bitmap: bit `i` of byte `i // 8` (LSB first) is chunk `window + i`; set = received. Chunks past the end of the blob read as set |
+| 75 | 1 | EOF `0x0A` |
 
 ### 4b. GPS assistance upload (ground -> Witness -> GPS)
 
@@ -278,6 +344,71 @@ radio; they are never forwarded to CAN or retransmitted by radio.
 `Horizon/gps_assist.py` builds them from a RINEX broadcast-ephemeris file;
 Horizon's Witness monitor has an "Upload GPS ephemeris…" button and the HITL
 bench sends the RF scenario's ephemerides before a run.
+
+**Resume.** A BEGIN with the same id, length and CRC as the transfer in progress
+is accepted without clearing it, so chunks already received are kept. A BEGIN
+with any other id, length or CRC starts over and discards the chunks. A COMMIT
+repeated after a successful commit is answered `ok` again (`AlreadyComplete` in
+the firmware) without passing the records to the receiver a second time, so a
+lost COMMIT acknowledgement is harmless.
+
+**Acknowledgements.** BEGIN is acknowledged `ok` when accepted (detail 0) and
+`bad argument` when rejected. DATA is never acknowledged; a rejected DATA frame
+is dropped silently. STATUS is answered only by `0x07`. COMMIT is answered with
+the result codes of section 4 (`0x06`).
+
+### 4c. Pad heading command (ground -> Witness)
+
+Canonical command `0x4844` tells Witness which body axis points to which
+azimuth while the rocket is on the pad. Witness has no magnetometer, so without
+it the heading stays arbitrary until GPS shows the course. The data bytes are
+the usual six bytes of frame offsets 1-6:
+
+| Frame offset | Data | Field |
+|---:|---:|---|
+| 1 | d0 | Body axis: `0` +Y, `1` -Y, `2` +Z, `3` -Z; `0xFF` clears the setting |
+| 2-3 | d1-d2 | Azimuth in 0.01 degree clockwise from true north, uint16 BE, 0 to 35999 |
+| 4-6 | d3-d5 | Zero |
+
+Examples (the axis is set so that it points to the azimuth):
+
+```text
+05 00 69 78 00 00 00 48 44 0A    +Y points to 270.00 degrees
+05 FF 00 00 00 00 00 48 44 0A    clear
+```
+
+Witness applies the setting by turning its attitude about the vertical, and
+re-applies it after every attitude re-initialization on the pad. Pad Idle only:
+otherwise the acknowledgement is `refused`. An unknown axis code or an azimuth of
+36000 or more is `bad argument`. Accepted over USB and radio. Horizon's
+"Set pad heading…" button builds the frame with `build_pad_heading_packet`.
+
+### 4d. Ground-station acknowledgement and retry (Horizon)
+
+Horizon (`command_link.py`, `monitor_core.py`) handles acknowledged commands as
+follows:
+
+- Each canonical command except GPS-assist DATA is written and then waited on
+  for a matching `0x06`. It waits 0.5 s per try on USB or 1.5 s via TCP
+  (Aperture/radio), resending the frame before each retry, for up to 5 tries.
+- Console lines: `ACK[target] label: ok`, `NAK[target] label: <result> (detail n)`,
+  or `NO_ACK[target] label: no acknowledgement after 5 tries`.
+
+GPS-assist upload (`upload_gps_assist` / `CommandLink.upload_assist`):
+
+1. BEGIN is sent and acknowledged (3 tries per round). Without an answer Horizon
+   waits 1 s and tries again, for up to 600 s.
+2. All DATA chunks are sent, paced at 3 ms per frame on USB or 60 ms via TCP.
+3. A STATUS (window from the first missing chunk) is sent and the `0x07` bitmap is
+   read. If there is no reply, Horizon waits 1 s, sends BEGIN again (resume, which
+   must be acknowledged) and asks STATUS again, until the 600 s limit.
+4. Only the chunks the bitmap reports missing are resent, followed by STATUS, until
+   every chunk is held.
+5. If the reply shows a different transfer id or a state other than receiving (for
+   example after a Witness reboot), Horizon sends BEGIN again and resends every
+   chunk. A complete transfer with the same id ends the upload as already complete.
+6. COMMIT is sent and acknowledged (5 tries). `ok` ends the upload; any other
+   result is reported as a refusal with its detail.
 
 ### `0xFF` Heartbeat packet, 8 bytes
 
@@ -506,7 +637,7 @@ The RA-01/SX1262 link uses:
 | RF frequency | 926,000,000 Hz |
 | TX power | -8 dBm (Witness), -2 dBm (Aperture) |
 | Spreading factor | SF7 |
-| Bandwidth | 125 kHz |
+| Bandwidth | 500 kHz (SX1262 erratum 15.1 applied before every TX; see HITL/LORA_MODULATION_OPTIONS.md) |
 | Coding rate | 4/5 |
 | Preamble | 8 symbols |
 | Header | Explicit |
@@ -530,7 +661,7 @@ are serviced round-robin, so simultaneous deadlines do not permanently favor
 one ID. The requested rates are upper targets: LoRa airtime and immediate
 traffic can reduce the achieved aggregate rate. Transmission is non-blocking:
 the sensor task loads the frame and issues SetTx, then checks DIO1 for TxDone on
-later 10 ms passes (about 170 ms of airtime for a 103-byte frame at SF7/125
+later 10 ms passes (about 43 ms of airtime for a 103-byte frame at SF7/500
 kHz), so radio traffic no longer slows the 100 Hz sensor loop. A new frame is
 started only after the previous one completes; reception is impossible while
 transmitting. After each transmission the radio is returned to continuous
@@ -774,6 +905,8 @@ FRAME_LENGTH = {
     0x02: 65,
     0x03: 19,
     0x05: 10,
+    0x06: 13,
+    0x07: 76,
     0xE0: 103,
     0xE1: 14,
     0xFF: 8,

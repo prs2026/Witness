@@ -16,6 +16,8 @@
 #include "sensors.h"
 #include "spi_data_forwarder.h"
 #include "uart_driver.h"
+#include "wifi_ota.h"
+#include "wifi_ota_logic.h"
 
 namespace {
 
@@ -92,13 +94,15 @@ UsbSerialEcho::UsbSerialEcho(
     SpiDataForwarder &spi_interface,
     FlashLogger &flash_logger,
     FlightStateMachine &flight_state_machine,
-    CommandBridge &command_bridge)
+    CommandBridge &command_bridge,
+    WifiOta &wifi_ota)
     : heartbeat_(heartbeat),
       sensors_(sensors),
       spi_interface_(spi_interface),
       flash_logger_(flash_logger),
       flight_state_machine_(flight_state_machine),
       command_bridge_(command_bridge),
+      wifi_ota_(wifi_ota),
       mass_storage_(flash_logger)
 {
 }
@@ -406,34 +410,55 @@ void UsbSerialEcho::process_canonical_binary_command(
     const std::uint16_t command = static_cast<std::uint16_t>(
         (static_cast<std::uint16_t>(data[kCommandFrameOffset]) << 8U) |
         data[kCommandFrameOffset + 1U]);
+    const std::uint8_t *const args = data + IRIS_PACKET_ID_LENGTH;
     if (command == IRIS_COMMAND_HITL_ENTER) {
-        (void)sensors_.enter_hitl(hitl::Source::Usb);
+        const esp_err_t r = sensors_.enter_hitl(hitl::Source::Usb);
+        send_ack(false, command, args, r == ESP_OK ? IRIS_ACK_OK : IRIS_ACK_REFUSED);
         return;
     }
     if (command == IRIS_COMMAND_HITL_EXIT) {
-        (void)sensors_.exit_hitl(hitl::Source::Usb);
+        const esp_err_t r = sensors_.exit_hitl(hitl::Source::Usb);
+        send_ack(false, command, args, r == ESP_OK ? IRIS_ACK_OK : IRIS_ACK_REFUSED);
         return;
     }
     if (command == IRIS_COMMAND_WITNESS_DEBUG_START) {
         // Canonical 05 .. 00 E0 0A, as the HITL tool sends it. The compact
         // handler has no 0x00E0 form, so without this the request was ignored.
         process_protocol_command(command);
+        send_ack(false, command, args, IRIS_ACK_OK);
         return;
     }
     if (gps_assist::is_assist_command(command)) {
-        handle_gps_assist(command, data + IRIS_PACKET_ID_LENGTH, "USB");
+        handle_gps_assist(command, args, "USB", false);
+        return;
+    }
+    if (command == IRIS_COMMAND_PAD_HEADING) {
+        handle_pad_heading(args, "USB", false);
+        return;
+    }
+    if (command == IRIS_COMMAND_RADIO_POWER) {
+        handle_radio_power(args, "USB", false);
+        return;
+    }
+    if (command == IRIS_COMMAND_WIFI) {
+        handle_wifi(args, "USB", false);
         return;
     }
     if (command == IRIS_COMMAND_GPS_COLD_START) {
         // Only on the pad: a cold start loses the fix for 30 s or more.
         if (flight_state_machine_.state() != FlightStateMachine::State::PadIdle) {
             ESP_LOGW(kLogTag, "GPS cold start over USB refused: not in Pad Idle");
+            send_ack(false, command, args, IRIS_ACK_REFUSED);
             return;
         }
         ESP_LOGW(kLogTag, "GPS cold start requested over USB");
         sensors_.gps_uart().request_gps_cold_start();
+        send_ack(false, command, args, IRIS_ACK_OK);
         return;
     }
+    // The compact handler acts on (or forwards) the rest; the ack confirms
+    // reception (it does not report a result for these).
+    send_ack(false, command, args, IRIS_ACK_OK);
     process_compact_binary_command(
         data[kCommandFrameOffset], data[kCommandFrameOffset + 1U]);
 }
@@ -513,48 +538,77 @@ void UsbSerialEcho::process_radio_command(
         return;
     }
 
+    // Acknowledgements only for canonical 10-byte frames (the 3-byte compact
+    // form has no data bytes to echo).
+    const bool canonical = length == IRIS_PACKET_COMMAND_FRAME_LENGTH;
+    const std::uint8_t *const args = data + IRIS_PACKET_ID_LENGTH;
+    const auto ack = [&](std::uint8_t result, std::uint16_t detail = 0) {
+        if (canonical) send_ack(true, command, args, result, detail);
+    };
     if (gps_assist::is_assist_command(command)) {
         // Chunked upload: logged per transfer, not per frame.
-        handle_gps_assist(command, data + IRIS_PACKET_ID_LENGTH, "radio");
+        if (canonical) handle_gps_assist(command, args, "radio", true);
+        return;
+    }
+    if (command == IRIS_COMMAND_PAD_HEADING) {
+        if (canonical) handle_pad_heading(args, "radio", true);
+        return;
+    }
+    if (command == IRIS_COMMAND_RADIO_POWER) {
+        if (canonical) handle_radio_power(args, "radio", true);
+        return;
+    }
+    if (command == IRIS_COMMAND_WIFI) {
+        if (canonical) handle_wifi(args, "radio", true);
         return;
     }
     if (command == IRIS_COMMAND_GPS_COLD_START) {
         // Only on the pad: a cold start loses the fix for 30 s or more.
         if (flight_state_machine_.state() != FlightStateMachine::State::PadIdle) {
             ESP_LOGW(kLogTag, "GPS cold start over radio refused: not in Pad Idle");
+            ack(IRIS_ACK_REFUSED);
             return;
         }
         ESP_LOGW(kLogTag, "GPS cold start requested over radio");
         sensors_.gps_uart().request_gps_cold_start();
+        ack(IRIS_ACK_OK);
         return;
     }
     ESP_LOGI(kLogTag, "acting on radio command 0x%04X", command);
     switch (command) {
         case IRIS_COMMAND_WITNESS_DEBUG_START:
             process_protocol_command(command);
+            ack(IRIS_ACK_OK);
             break;
         case IRIS_COMMAND_MASS_STORAGE_START:
+            ack(IRIS_ACK_OK);   // before: mass storage stops the radio
             start_mass_storage();
             break;
         case IRIS_COMMAND_ERASE_LOG_SESSIONS:
+            ack(IRIS_ACK_OK);
             erase_log_sessions();
             break;
         case IRIS_COMMAND_CLEAR_LOG_SESSIONS:
+            ack(IRIS_ACK_OK);
             clear_log_sessions();
             break;
         case IRIS_COMMAND_HITL_ENTER:
             // Rejected and logged: HITL can only be entered over USB.
             (void)sensors_.enter_hitl(hitl::Source::Radio);
+            ack(IRIS_ACK_REFUSED);
             break;
-        case IRIS_COMMAND_HITL_EXIT:
-            (void)sensors_.exit_hitl(hitl::Source::Radio);
+        case IRIS_COMMAND_HITL_EXIT: {
+            const esp_err_t r = sensors_.exit_hitl(hitl::Source::Radio);
+            ack(r == ESP_OK ? IRIS_ACK_OK : IRIS_ACK_REFUSED);
             break;
+        }
         case 0x7300U:
         case 0x7301U:
         case 0x7302U:
         case 0x7303U:
         case 0x7304U:
-            set_flight_state(static_cast<std::uint8_t>(command));
+            ack(set_flight_state(static_cast<std::uint8_t>(command)) == ESP_OK ? IRIS_ACK_OK
+                                                                               : IRIS_ACK_REFUSED);
             break;
         case IRIS_COMMAND_CH1_LOAD_OFF:
         case IRIS_COMMAND_CH1_LOAD_ON:
@@ -566,10 +620,12 @@ void UsbSerialEcho::process_radio_command(
         case IRIS_COMMAND_5V_REGULATOR_ON:
             // These commands are implemented by the external device.
             // They were already retransmitted by CommandBridge.
+            ack(IRIS_ACK_OK);
             break;
         default:
             ESP_LOGW(kLogTag, "radio command 0x%04X has no local handler",
                      command);
+            ack(IRIS_ACK_UNKNOWN);
             break;
     }
 }
@@ -709,6 +765,7 @@ void UsbSerialEcho::start_mass_storage()
 {
     // Stop scheduled and immediate RA-01 transmissions before changing the
     // USB peripheral into mass-storage mode.
+    wifi_ota_.note_mass_storage_active();   // stops Wi-Fi; it must not re-enable the radio
     sensors_.set_radio_transmission_enabled(false);
     ESP_LOGI(kLogTag, "freezing logs for read-only USB export");
     const esp_err_t freeze_result = flash_logger_.prepare_mass_storage();
@@ -753,34 +810,43 @@ void UsbSerialEcho::clear_log_sessions()
 }
 
 void UsbSerialEcho::handle_gps_assist(const std::uint16_t command, const std::uint8_t *data,
-                                      const char *source)
+                                      const char *source, const bool radio)
 {
     using gps_assist::Assembler;
     const Assembler::Result result = gps_assist_.handle(command, data);
+    const bool data_chunk = command == gps_assist::kCommandData;
     switch (result) {
         case Assembler::Result::Accepted:
             if (command == gps_assist::kCommandBegin) {
-                ESP_LOGI(kLogTag, "GPS assist upload from %s: %u bytes in %u chunks", source,
-                         static_cast<unsigned>(gps_assist_.size()),
-                         static_cast<unsigned>(gps_assist_.chunks_expected()));
+                ESP_LOGI(kLogTag, "GPS assist upload from %s: %u bytes in %u chunks (%u already here)",
+                         source, static_cast<unsigned>(gps_assist_.size()),
+                         static_cast<unsigned>(gps_assist_.chunks_expected()),
+                         static_cast<unsigned>(gps_assist_.chunks_received()));
             }
+            // DATA chunks are confirmed in bulk by the 0x07 status bitmap.
+            if (!data_chunk) send_ack(radio, command, data, IRIS_ACK_OK);
             return;
         case Assembler::Result::Rejected:
             if (++gps_assist_rejects_ % 50U == 1U) {
                 ESP_LOGW(kLogTag, "GPS assist frame 0x%04X rejected (%lu so far): no matching transfer",
                          command, static_cast<unsigned long>(gps_assist_rejects_));
             }
+            if (!data_chunk) send_ack(radio, command, data, IRIS_ACK_BAD_ARGUMENT);
             return;
         case Assembler::Result::Incomplete:
             ESP_LOGW(kLogTag, "GPS assist commit: %u of %u chunks received; resend the missing ones",
                      static_cast<unsigned>(gps_assist_.chunks_received()),
                      static_cast<unsigned>(gps_assist_.chunks_expected()));
+            send_ack(radio, command, data, IRIS_ACK_INCOMPLETE,
+                     static_cast<std::uint16_t>(gps_assist_.chunks_received()));
             return;
         case Assembler::Result::BadCrc:
             ESP_LOGW(kLogTag, "GPS assist commit: CRC mismatch; upload discarded");
+            send_ack(radio, command, data, IRIS_ACK_BAD_CRC);
             return;
         case Assembler::Result::BadFormat:
             ESP_LOGW(kLogTag, "GPS assist commit: records do not parse; upload discarded");
+            send_ack(radio, command, data, IRIS_ACK_BAD_FORMAT);
             return;
         case Assembler::Result::Status:
             ESP_LOGI(kLogTag, "GPS assist transfer: %s, %u/%u chunks",
@@ -788,6 +854,10 @@ void UsbSerialEcho::handle_gps_assist(const std::uint16_t command, const std::ui
                      static_cast<unsigned>(gps_assist_.chunks_received()),
                      static_cast<unsigned>(gps_assist_.chunks_expected()));
             sensors_.gps_uart().request_gps_assist_status();
+            send_transfer_status(radio, data);
+            return;
+        case Assembler::Result::AlreadyComplete:
+            send_ack(radio, command, data, IRIS_ACK_OK);
             return;
         case Assembler::Result::Complete: {
             const esp_err_t r = sensors_.gps_uart().submit_gps_assist(gps_assist_.blob(),
@@ -798,6 +868,7 @@ void UsbSerialEcho::handle_gps_assist(const std::uint16_t command, const std::ui
             } else {
                 ESP_LOGW(kLogTag, "GPS assist could not be queued: %s", esp_err_to_name(r));
             }
+            send_ack(radio, command, data, r == ESP_OK ? IRIS_ACK_OK : IRIS_ACK_BUSY);
             return;
         }
         default:
@@ -805,7 +876,141 @@ void UsbSerialEcho::handle_gps_assist(const std::uint16_t command, const std::ui
     }
 }
 
-void UsbSerialEcho::set_flight_state(const std::uint8_t state)
+void UsbSerialEcho::send_reply(const bool radio, const std::uint8_t packet_id,
+                               const std::uint8_t *payload, const std::size_t length)
+{
+    if (!radio) {
+        (void)spi_interface_.queue_packet(packet_id, payload, length);
+        return;
+    }
+    std::uint8_t frame[SpiDataForwarder::kMaximumFrameLength]{};
+    if (length + IRIS_PACKET_ID_LENGTH + IRIS_PACKET_EOF_LENGTH > sizeof(frame)) return;
+    frame[0] = packet_id;
+    std::memcpy(frame + IRIS_PACKET_ID_LENGTH, payload, length);
+    frame[IRIS_PACKET_ID_LENGTH + length] = IRIS_PACKET_EOF_VALUE;
+    (void)spi_interface_.queue_immediate_radio_packet(
+        frame, length + IRIS_PACKET_ID_LENGTH + IRIS_PACKET_EOF_LENGTH);
+}
+
+void UsbSerialEcho::send_ack(const bool radio, const std::uint16_t command, const std::uint8_t *data6,
+                             const std::uint8_t result, const std::uint16_t detail)
+{
+    std::uint8_t payload[IRIS_PACKET_COMMAND_ACK_DATA_LENGTH]{};
+    payload[0] = static_cast<std::uint8_t>(command >> 8U);
+    payload[1] = static_cast<std::uint8_t>(command);
+    std::memcpy(payload + 2, data6, 6);
+    payload[8] = result;
+    payload[9] = static_cast<std::uint8_t>(detail >> 8U);
+    payload[10] = static_cast<std::uint8_t>(detail);
+    send_reply(radio, IRIS_PACKET_ID_COMMAND_ACK, payload, sizeof(payload));
+}
+
+void UsbSerialEcho::send_transfer_status(const bool radio, const std::uint8_t *data6)
+{
+    // d0-d1 of the STATUS command: first chunk of the bitmap window, 0xFFFF
+    // (or zero data, as older hosts send) = start at the first missing chunk.
+    std::size_t start = static_cast<std::size_t>((data6[0] << 8U) | data6[1]);
+    if (start == 0xFFFFU || start == 0U) start = gps_assist_.first_missing_chunk();
+    std::uint8_t payload[IRIS_PACKET_TRANSFER_STATUS_DATA_LENGTH]{};
+    const auto put16 = [&payload](std::size_t at, std::size_t v) {
+        payload[at] = static_cast<std::uint8_t>(v >> 8U);
+        payload[at + 1] = static_cast<std::uint8_t>(v);
+    };
+    payload[0] = gps_assist_.transfer_id();
+    payload[1] = static_cast<std::uint8_t>(gps_assist_.state());
+    put16(2, gps_assist_.size());
+    put16(4, gps_assist_.chunks_expected());
+    put16(6, gps_assist_.chunks_received());
+    put16(8, start);
+    gps_assist_.bitmap_window(start, payload + 10, IRIS_PACKET_TRANSFER_STATUS_BITMAP_BYTES);
+    send_reply(radio, IRIS_PACKET_ID_TRANSFER_STATUS, payload, sizeof(payload));
+}
+
+void UsbSerialEcho::handle_pad_heading(const std::uint8_t *data, const char *source, const bool radio)
+{
+    // d0 axis code (0xFF clears), d1-d2 azimuth in 0.01 deg (comms.h).
+    const std::uint8_t axis = data[0];
+    const std::uint16_t centideg = static_cast<std::uint16_t>((data[1] << 8U) | data[2]);
+    const esp_err_t r = sensors_.set_pad_heading(axis, centideg);
+    send_ack(radio, IRIS_COMMAND_PAD_HEADING, data,
+             r == ESP_OK ? IRIS_ACK_OK
+             : r == ESP_ERR_INVALID_STATE ? IRIS_ACK_REFUSED : IRIS_ACK_BAD_ARGUMENT);
+    if (r == ESP_OK) {
+        if (axis == 0xFFU) {
+            ESP_LOGI(kLogTag, "pad heading cleared over %s", source);
+        } else {
+            ESP_LOGI(kLogTag, "pad heading over %s: body %s at %.2f deg; applied on the pad", source,
+                     axis == 0 ? "+Y" : axis == 1 ? "-Y" : axis == 2 ? "+Z" : "-Z",
+                     static_cast<double>(centideg) / 100.0);
+        }
+    } else {
+        ESP_LOGW(kLogTag, "pad heading over %s refused (%s): Pad Idle only, axis 0-3 or 0xFF, "
+                          "azimuth 0-35999",
+                 source, esp_err_to_name(r));
+    }
+}
+
+void UsbSerialEcho::handle_radio_power(const std::uint8_t *data, const char *source, const bool radio)
+{
+    // d0 target, d1 drive dBm (int8) (comms.h). The ack goes out before the
+    // new level takes effect only if it is already queued; either way it
+    // reports the level now in use in detail (int16).
+    const int requested = static_cast<std::int8_t>(data[1]);
+    const std::uint8_t front_end = data[2];
+    std::uint8_t result = IRIS_ACK_OK;
+    if (data[0] != IRIS_RADIO_POWER_TARGET_WITNESS || front_end > IRIS_RADIO_FRONT_END_OFF) {
+        result = IRIS_ACK_BAD_ARGUMENT;   // GROUND is Aperture's; it never forwards it
+    } else if (!sensors_.set_radio_tx_power_dbm(requested)) {
+        result = IRIS_ACK_BAD_ARGUMENT;
+    } else if (front_end != IRIS_RADIO_FRONT_END_UNCHANGED) {
+        sensors_.set_radio_front_end_enabled(front_end == IRIS_RADIO_FRONT_END_ON);
+    }
+    const int now = sensors_.radio_tx_power_dbm();
+    const bool fem = sensors_.radio_front_end_enabled();
+    send_ack(radio, IRIS_COMMAND_RADIO_POWER, data, result,
+             static_cast<std::uint16_t>((fem ? 0x100U : 0U) | static_cast<std::uint8_t>(now)));
+    if (result == IRIS_ACK_OK) {
+        ESP_LOGI(kLogTag, "radio TX drive %d dBm over %s, front end %s (%s)", now, source,
+                 fem ? "on" : "OFF", fem ? "~+26 dB" : "PA unpowered, bench only");
+    } else {
+        ESP_LOGW(kLogTag, "radio TX power over %s refused: target %u, %d dBm (allowed -9..%d); still %d dBm",
+                 source, data[0], requested, IRIS_RADIO_TX_POWER_MAX_DBM, now);
+    }
+}
+
+void UsbSerialEcho::handle_wifi(const std::uint8_t *data, const char *source, const bool radio)
+{
+    if (data[0] == 2U) {
+        // Status query: answered here, never through the Wi-Fi task.
+        send_ack(radio, IRIS_COMMAND_WIFI, data, IRIS_ACK_OK, wifi_ota_.status_word());
+        return;
+    }
+    const wifi_ota_logic::WifiCommand command = wifi_ota_logic::parse_wifi_command(
+        data, WifiOta::kDefaultTxPowerDbm, WifiOta::kDefaultAutoOffMinutes);
+    if (!command.valid) {
+        send_ack(radio, IRIS_COMMAND_WIFI, data, IRIS_ACK_BAD_ARGUMENT);
+        ESP_LOGW(kLogTag, "Wi-Fi command over %s: bad argument (on/off 0-1, %d..%d dBm, <= %u min)",
+                 source, wifi_ota_logic::kMinTxPowerDbm, wifi_ota_logic::kMaxTxPowerDbm,
+                 static_cast<unsigned>(wifi_ota_logic::kMaxAutoOffMinutes));
+        return;
+    }
+    if (command.on) {
+        // Radio: acknowledge first; the enable is delayed so the ack is
+        // transmitted before LoRa transmission stops.
+        const std::uint8_t result =
+            wifi_ota_.request_enable(command.tx_power_dbm, command.auto_off_minutes, radio);
+        send_ack(radio, IRIS_COMMAND_WIFI, data, result);
+        ESP_LOGW(kLogTag, "Wi-Fi on over %s: %s", source, result == IRIS_ACK_OK ? "accepted" : "refused");
+        return;
+    }
+    // Off: wait until Wi-Fi is down and LoRa transmission is back, so a radio
+    // ack can go out.
+    const bool off = wifi_ota_.request_disable_and_wait(pdMS_TO_TICKS(kWifiOffWaitMs));
+    send_ack(radio, IRIS_COMMAND_WIFI, data, off ? IRIS_ACK_OK : IRIS_ACK_BUSY);
+    ESP_LOGW(kLogTag, "Wi-Fi off over %s: %s", source, off ? "done" : "still stopping");
+}
+
+esp_err_t UsbSerialEcho::set_flight_state(const std::uint8_t state)
 {
     const bool commanded_launch =
         flight_state_machine_.state() == FlightStateMachine::State::PadIdle &&
@@ -820,6 +1025,7 @@ void UsbSerialEcho::set_flight_state(const std::uint8_t state)
         ESP_LOGW(kLogTag, "flight state 0x%02X rejected: %s",
                  state, esp_err_to_name(result));
     }
+    return result;
 }
 
 void UsbSerialEcho::process_protocol_command(const std::uint16_t command)

@@ -1,0 +1,9 @@
+# Witness: ESP32-S3FN8 with 8 MB in-package flash, two OTA app slots.
+# nvs (IMU calibration) and phy_init keep the offsets of the old 2 MB single-app
+# layout so a one-time USB migration flash does not disturb the calibration.
+# Name,   Type, SubType, Offset,   Size,     Flags
+nvs,      data, nvs,     0x9000,   0x6000,
+phy_init, data, phy,     0xf000,   0x1000,
+otadata,  data, ota,     0x10000,  0x2000,
+ota_0,    app,  ota_0,   0x20000,  0x300000,
+ota_1,    app,  ota_1,   0x320000, 0x300000,

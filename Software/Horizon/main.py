@@ -31,6 +31,7 @@ from monitor_core import (  # noqa: F401 - re-exported API
 from qt_widgets import (LogConsole, RetilingGrid, age_color, bind_check, bind_combo, bind_enabled,
                         bind_label, bind_line_edit, hbox, scroll_area, set_background, wrap_label)
 from witness_protocol import *  # noqa: F401,F403 - re-exported protocol API
+from witness_protocol import status_maintenance  # noqa: E402
 from witness_protocol import (  # explicit for linters / readers
     CAMERA_STATUS_FLAG_LABELS, FLIGHT_STATE_LABELS, IMU_CALIBRATION_COMMANDS, QUICK_COMMANDS,
     SECTION_SPECS, STATUS_BYTE1_FLAG_LABELS, STATUS_FLAG_LABELS, PacketDecoder, build_command_packet,
@@ -39,6 +40,10 @@ from witness_protocol import (  # explicit for linters / readers
 )
 
 OFF_BG, OFF_FG, ON_FG = "#f7f7f7", "#777777", "#111111"
+MAINTENANCE_STATUS_KEYS = ("packet.state.status", "packet.sensors.status")
+MAINTENANCE_TITLE_PREFIX = "MAINTENANCE - NOT FLIGHT READY | "
+MAINTENANCE_BANNER_TEXT = ("WITNESS IN MAINTENANCE MODE (Wi-Fi OTA / log download)\n"
+                           "FLIGHT LOGGING OFF - NOT READY FOR FLIGHT - turn Wi-Fi off to reboot into flight mode")
 GOOD_BG, BAD_BG, STATE_BG, WARN_BG = "#74c476", "#fb6a4a", "#6baed6", "#fff2a8"
 EVENT_MS = 30          # event pump: drains the worker queue (batched)
 GRAPH_MS = 50          # graph redraw throttle (<= 20 Hz)
@@ -102,7 +107,7 @@ class StatusIndicator(QtWidgets.QWidget):
         self.invalid = _indicator("Invalid")
         grid.addWidget(self.invalid, 1, 2)
         layout.addLayout(grid)
-        layout.addWidget(QtWidgets.QLabel("Byte 1 bit 3: GPS lock; bit 4: HITL"))
+        layout.addWidget(QtWidgets.QLabel("Byte 1 bit 3: GPS lock; bit 4: HITL; bit 5: maintenance"))
         row = QtWidgets.QHBoxLayout()
         row.setSpacing(2)
         for mask, text in STATUS_BYTE1_FLAG_LABELS:
@@ -208,8 +213,12 @@ class MonitorPanel(QtWidgets.QWidget):
         self._shut_down = False
         self.age_labels = {}
         self.status_indicators = {}
+        self._maintenance_on = False
         self._build()
         self.core.window_title.subscribe(self._title_changed)
+        for key in MAINTENANCE_STATUS_KEYS:
+            if key in self.core.values:
+                self.core.values[key].subscribe(lambda _text, key=key: self._update_maintenance(key))
         self._graph_throttle = Throttle(self.draw_graphs, GRAPH_MS, self)
         self._events_timer = self._timer(EVENT_MS, self.process_events)
         self._auto_timer = self._timer(AUTO_MS, self.core.auto_poll)
@@ -217,6 +226,22 @@ class MonitorPanel(QtWidgets.QWidget):
         self.process_events()
         if self.core._test_start_id is not None:
             QtCore.QTimer.singleShot(0, self._start_requested_test)
+
+    def _update_maintenance(self, key):
+        """Show/hide the maintenance banner from the newest Witness status."""
+        value = self.core.raw_values.get(key)
+        if not isinstance(value, int):
+            return
+        on = status_maintenance(value)
+        if on != self._maintenance_on:
+            self._maintenance_on = on
+            self.maintenance_banner.setVisible(on)
+            self.core.maintenance_active = on
+            self._title_changed(self.core.window_title.get())
+            if on:
+                self.core.console_write("WITNESS MAINTENANCE MODE: Wi-Fi up, flight logging OFF, NOT FLIGHT READY")
+            else:
+                self.core.console_write("Witness left maintenance mode: back in flight mode")
 
     def __getattr__(self, name):
         if name in ("core", "__setstate__") or name.startswith("__"):
@@ -259,6 +284,17 @@ class MonitorPanel(QtWidgets.QWidget):
         root.addLayout(hbox(QtWidgets.QLabel("Port A:"), self.port_a_combo, QtWidgets.QLabel("Port B:"),
                             self.port_b_combo, refresh, QtWidgets.QLabel("Baud:"), self.baud_combo,
                             self.connect_button, self.status_label, None))
+        # Impossible to miss: Witness reports its maintenance (Wi-Fi) boot in
+        # status byte 1 bit 5. It is not logging and must not fly like this.
+        self.maintenance_banner = QtWidgets.QLabel(MAINTENANCE_BANNER_TEXT)
+        self.maintenance_banner.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.maintenance_banner.setWordWrap(True)
+        self.maintenance_banner.setStyleSheet(
+            "background:#c00000; color:white; font-size:18pt; font-weight:bold; padding:10px;"
+            "border:4px solid #ffdd00;")
+        root.addWidget(self.maintenance_banner)
+        # Hide only after parenting: reparenting a hidden widget un-hides it.
+        self.maintenance_banner.setVisible(False)
 
         self.tcp_entries = []
         tcp_widgets = []
@@ -455,6 +491,21 @@ class MonitorPanel(QtWidgets.QWidget):
         eph.clicked.connect(lambda _c=False: self.upload_gps_ephemeris())
         grid.addWidget(eph, index // columns, index % columns)
         self.quick_command_buttons.append(eph)
+        index += 1
+        heading = QtWidgets.QPushButton("Set pad heading…")
+        heading.setToolTip("On the rail: which body axis points to which azimuth (Witness has no "
+                           "magnetometer). Pad Idle only; works over USB and radio.")
+        heading.clicked.connect(lambda _c=False: self.set_pad_heading())
+        grid.addWidget(heading, index // columns, index % columns)
+        self.quick_command_buttons.append(heading)
+        index += 1
+        power = QtWidgets.QPushButton("Radio power…")
+        power.setToolTip("Set the Witness or ground-station (Aperture) radio drive, -17..+3 dBm "
+                         "(below -9 uses the SX1262 low-power PA). Both boot at -17 dBm for the "
+                         "bench; not saved.")
+        power.clicked.connect(lambda _c=False: self.set_radio_power())
+        grid.addWidget(power, index // columns, index % columns)
+        self.quick_command_buttons.append(power)
         for widget in (self.command_entry, self.send_command_button, *self.quick_command_buttons):
             bind_enabled(core.commands_enabled, widget)
         layout.addLayout(hbox(QtWidgets.QLabel("Commands:"), grid_widget))
@@ -476,6 +527,8 @@ class MonitorPanel(QtWidgets.QWidget):
         show_error(self, title, text)
 
     def _title_changed(self, text):
+        if self._maintenance_on:
+            text = MAINTENANCE_TITLE_PREFIX + text
         self.titleChanged.emit(text)
         if self.on_title is not None:
             self.on_title(text)
@@ -487,6 +540,54 @@ class MonitorPanel(QtWidgets.QWidget):
 
     def send_hex_command(self):
         return self.core.send_hex_command()
+
+    def set_pad_heading(self, axis=None, azimuth_deg=None):
+        """Ask which body axis points where on the rail and send the pad
+        heading command (comms.h IRIS_COMMAND_PAD_HEADING)."""
+        if axis is None:
+            choices = list(PAD_HEADING_AXES) + ["Clear (GPS alignment only)"]
+            axis, ok = QtWidgets.QInputDialog.getItem(
+                self, "Pad heading", "Body axis across the rocket that you can see:", choices, 0, False)
+            if not ok:
+                return False
+            if axis.startswith("Clear"):
+                axis = None
+        if axis is not None and azimuth_deg is None:
+            azimuth_deg, ok = QtWidgets.QInputDialog.getDouble(
+                self, "Pad heading", f"Azimuth that body {axis} points to (deg from true north):",
+                0.0, 0.0, 359.99, 1)
+            if not ok:
+                return False
+        frame = build_pad_heading_packet(axis, azimuth_deg or 0.0)
+        label = "pad heading cleared" if axis is None else f"pad heading: body {axis} at {azimuth_deg:.1f} deg"
+        return self.core.transmit_command(self.core.command_target.get(), frame, label)
+
+    def set_radio_power(self, target=None, drive_dbm=None):
+        """Ask which radio and what drive level, then send IRIS_COMMAND_RADIO_POWER.
+        The console shows ACK/NAK; the ack's detail is the level now in use."""
+        from witness_protocol import (RADIO_FRONT_END_GAIN_DB, RADIO_POWER_MAX_DBM,
+                                      RADIO_POWER_MIN_DBM, build_radio_power_packet)
+        labels = {"Witness (rocket)": "witness", "Ground station (Aperture)": "ground"}
+        if target is None:
+            choice, ok = QtWidgets.QInputDialog.getItem(
+                self, "Radio power", "Radio:", list(labels), 0, False)
+            if not ok:
+                return False
+            target = labels[choice]
+        if drive_dbm is None:
+            drive_dbm, ok = QtWidgets.QInputDialog.getInt(
+                self, "Radio power",
+                f"SX1262 drive, dBm ({RADIO_POWER_MIN_DBM}..{RADIO_POWER_MAX_DBM}; output is about "
+                f"+{RADIO_FRONT_END_GAIN_DB} dB more; below -9 the low-power PA is used).\n"
+                "Bench: keep -17 unless the boards have their "
+                "own supply; the transmit current can brown them out on USB power.",
+                RADIO_POWER_MIN_DBM, RADIO_POWER_MIN_DBM, RADIO_POWER_MAX_DBM, 1)
+            if not ok:
+                return False
+        frame = build_radio_power_packet(target, drive_dbm)
+        label = (f"{'Witness' if target == 'witness' else 'ground'} radio drive {drive_dbm:+d} dBm "
+                 f"(~{drive_dbm + RADIO_FRONT_END_GAIN_DB:+d} dBm out)")
+        return self.core.transmit_command(self.core.command_target.get(), frame, label)
 
     def upload_gps_ephemeris(self, path=None):
         """Pick a RINEX nav file and upload the ephemerides valid now to
@@ -504,8 +605,7 @@ class MonitorPanel(QtWidgets.QWidget):
         except (OSError, ValueError) as exc:
             self._alert("GPS ephemeris", f"Cannot use {path}: {exc}")
             return False
-        return self.core.send_gps_assist(gps_assist.assist_frames(blob),
-                                         f"GPS ephemeris upload ({len(prns)} SVs)")
+        return self.core.upload_gps_assist(blob, f"GPS ephemeris upload ({len(prns)} SVs)")
 
     def browse_test_source(self):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName(

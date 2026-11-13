@@ -36,8 +36,17 @@ constexpr std::uint8_t kReadBuffer = 0x1E;
 constexpr std::uint16_t kIrqRxDone = 0x0002;
 constexpr std::uint16_t kIrqTxDone = 0x0001;
 constexpr std::uint16_t kIrqCrcError = 0x0040;
-static_assert(IRIS_RADIO_TX_POWER_DBM >= -9 && IRIS_RADIO_TX_POWER_DBM <= 22,
-              "IRIS_RADIO_TX_POWER_DBM must be between -9 and +22 dBm");
+static_assert(IRIS_RADIO_TX_POWER_DBM >= -17 && IRIS_RADIO_TX_POWER_DBM <= 22,
+              "IRIS_RADIO_TX_POWER_DBM must be between -17 (low-power PA) and +22 dBm");
+
+constexpr std::uint8_t radio_bandwidth_code()
+{
+    // SX1261/2 SetModulationParams LoRa BW codes (datasheet 13.4.5).
+    static_assert(IRIS_RADIO_BANDWIDTH_HZ == 125000U || IRIS_RADIO_BANDWIDTH_HZ == 250000U ||
+                      IRIS_RADIO_BANDWIDTH_HZ == 500000U,
+                  "Add the SX1262 bandwidth code for this configured rate");
+    return IRIS_RADIO_BANDWIDTH_HZ == 500000U ? 0x06U : IRIS_RADIO_BANDWIDTH_HZ == 250000U ? 0x05U : 0x04U;
+}
 
 void store_u32_be(std::uint8_t *data, const std::uint32_t value)
 {
@@ -91,7 +100,7 @@ esp_err_t Ra01::initialize()
     vTaskDelay(pdMS_TO_TICKS(2));
     gpio_set_level(IRIS_PIN_RADIO_RESET, 1);
     vTaskDelay(pdMS_TO_TICKS(10));
-    gpio_set_level(IRIS_PIN_RADIO_RF_ENABLE, 1);
+    gpio_set_level(IRIS_PIN_RADIO_RF_ENABLE, front_end_enabled_.load() ? 1 : 0);
     vTaskDelay(pdMS_TO_TICKS(10));
     ESP_LOGI(kLogTag, "After reset: RESET=%d RF_EN=%d BUSY=%d",
              gpio_get_level(IRIS_PIN_RADIO_RESET),
@@ -136,8 +145,8 @@ esp_err_t Ra01::initialize()
     // SX1262 high-power PA configuration. The RA-01SH-P front end is driven
     // with the requested 2 dBm from SetTxParams below; this configuration is
     // still required to select the SX1262 PA path.
-    const std::uint8_t pa_config[] = {0x04U, 0x07U, 0x00U, 0x01U};
-    result = write_command(kSetPaConfig, pa_config, sizeof(pa_config));
+    pa_low_configured_ = -1;
+    result = configure_pa_for(tx_power_dbm_.load());
     if (result != ESP_OK) return result;
 
     // Let the SX1262 drive DIO2 automatically during RX/TX for an external
@@ -155,7 +164,7 @@ esp_err_t Ra01::initialize()
 
     const std::uint8_t modulation[] = {
         static_cast<std::uint8_t>(IRIS_RADIO_SPREADING_FACTOR),
-        0x04U,  // 125 kHz bandwidth
+        radio_bandwidth_code(),
         static_cast<std::uint8_t>(IRIS_RADIO_CODING_RATE), 0x00U};
     result = write_command(kSetModulationParams, modulation,
                            sizeof(modulation));
@@ -204,9 +213,14 @@ esp_err_t Ra01::transmit(const std::uint8_t *data, const std::size_t length)
     esp_err_t result = write_command(kSetStandby, standby, sizeof(standby));
     if (result != ESP_OK) return result;
 
+    const std::int8_t power_dbm = tx_power_dbm_.load();
+    result = configure_pa_for(power_dbm);
+    if (result != ESP_OK) return result;
+    result = apply_tx_modulation_erratum();
+    if (result != ESP_OK) return result;
     // The SX1262 power byte is a signed dBm value encoded as uint8_t.
     const std::uint8_t tx_params[] = {
-        static_cast<std::uint8_t>(static_cast<std::int8_t>(IRIS_RADIO_TX_POWER_DBM)),
+        static_cast<std::uint8_t>(power_dbm),
         0x04U};
     result = write_command(kSetTxParams, tx_params, sizeof(tx_params));
     if (result != ESP_OK) return result;
@@ -402,4 +416,56 @@ esp_err_t Ra01::read_buffer(const std::uint8_t offset, std::uint8_t *data,
         remaining -= chunk;
     }
     return ESP_OK;
+}
+
+bool Ra01::set_tx_power_dbm(const int dbm)
+{
+    if (dbm < IRIS_RADIO_TX_POWER_MIN_DBM || dbm > IRIS_RADIO_TX_POWER_MAX_DBM) return false;
+    tx_power_dbm_.store(static_cast<std::int8_t>(dbm));
+    return true;
+}
+
+void Ra01::set_front_end_enabled(const bool on)
+{
+    front_end_enabled_.store(on);
+    if (initialized_) gpio_set_level(IRIS_PIN_RADIO_RF_ENABLE, on ? 1 : 0);
+}
+
+esp_err_t Ra01::configure_pa_for(const std::int8_t dbm)
+{
+    // SX1261/2 datasheet 13.1.14: deviceSel 0 = SX1262 high-power PA (SetTxParams
+    // -9..+22), 1 = low-power PA (-17..+14; paDutyCycle <= 0x07 above 400 MHz).
+    // Both drive the RFO pin. The low-power PA rows of Table 13-21 use
+    // hpMax 0x00; 0x01 is the lowest-duty (+10 dBm-class) setting.
+    const int low = dbm < -9 ? 1 : 0;
+    if (low == pa_low_configured_) return ESP_OK;
+    const std::uint8_t high_pa[] = {0x04U, 0x07U, 0x00U, 0x01U};
+    const std::uint8_t low_pa[] = {0x01U, 0x00U, 0x01U, 0x01U};
+    const esp_err_t result = write_command(kSetPaConfig, low ? low_pa : high_pa, 4U);
+    if (result == ESP_OK) pa_low_configured_ = low;
+    return result;
+}
+
+esp_err_t Ra01::apply_tx_modulation_erratum()
+{
+    // SX1261/2 datasheet 15.1: before every transmission, TxModulation
+    // register 0x0889 bit 2 must be 0 for LoRa BW 500 kHz and 1 otherwise,
+    // or receivers see degraded sensitivity.
+    esp_err_t result = wait_until_ready();
+    if (result != ESP_OK) return result;
+    std::array<std::uint8_t, 5> tx{0x1DU, 0x08U, 0x89U, 0x00U, 0x00U};   // ReadRegister
+    std::array<std::uint8_t, 5> rx{};
+    spi_transaction_t transaction{};
+    transaction.length = tx.size() * 8U;
+    transaction.rxlength = transaction.length;
+    transaction.tx_buffer = tx.data();
+    transaction.rx_buffer = rx.data();
+    result = spi_device_polling_transmit(spi_device_, &transaction);
+    if (result != ESP_OK) return result;
+    const std::uint8_t value = IRIS_RADIO_BANDWIDTH_HZ == 500000U
+        ? static_cast<std::uint8_t>(rx[4] & ~0x04U)
+        : static_cast<std::uint8_t>(rx[4] | 0x04U);
+    if (value == rx[4]) return ESP_OK;
+    const std::uint8_t write[] = {0x08U, 0x89U, value};
+    return write_command(0x0DU, write, sizeof(write));               // WriteRegister
 }

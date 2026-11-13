@@ -142,6 +142,11 @@ public:
     Vector3 gyro_bias_rad_s() const { return bias_; }
     // Angle between body +X and world +Z, degrees; 0 upright, 90 horizontal.
     float tilt_from_vertical_deg() const;
+    // Rotates the attitude about world +Z (up) by yaw_rad, counter-clockwise
+    // seen from above: heading correction from GPS (heading_align.h). Pitch
+    // and roll are unchanged. No effect while the attitude is not valid.
+    void rotate_heading(float yaw_rad);
+    float heading_corrections_rad() const { return heading_corrected_rad_; }
     std::uint32_t steps() const { return steps_; }            // Integrated
     std::uint32_t gaps() const { return gaps_; }
     std::uint32_t late_steps() const { return late_steps_; }
@@ -194,6 +199,7 @@ private:
     // Stationary window.
     float window_gyro_[3][kMaxWindowSamples]{};
     float scratch_[kMaxWindowSamples]{};
+    float heading_corrected_rad_ = 0.0F;
     double window_accel_sum_[3]{};
     double window_accel_sq_[3]{};
     std::size_t window_count_ = 0;

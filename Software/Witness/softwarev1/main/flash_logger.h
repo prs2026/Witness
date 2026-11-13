@@ -119,6 +119,11 @@ public:
     FlashLogger &operator=(const FlashLogger &) = delete;
 
     esp_err_t start();
+    // Maintenance boot: mount the NAND read-only for export (log download)
+    // without creating the write path (queues, capture task, console hook),
+    // which is what frees the RAM Wi-Fi needs. Logging calls are no-ops and
+    // frozen() turns true once the export table is built.
+    esp_err_t start_export_only();
     // Exact external GPS bytes, recorded continuously regardless of flight state.
     // No framing or timestamps are added.
     esp_err_t log_external_bytes(const std::uint8_t *data, std::size_t length);
@@ -148,6 +153,8 @@ public:
         std::uint8_t *destination,
         std::size_t length);
     void disable_console_output();
+    // True once prepare_mass_storage() has frozen logging (until reset).
+    bool frozen() const { return frozen_.load(); }
 
 private:
     static constexpr TickType_t kLogPeriod =
@@ -276,6 +283,8 @@ private:
     static_assert(kImuRateHz % kImuDescentDecimation == 0);
 
     static void task_entry(void *context);
+    static void export_task_entry(void *context);
+    void run_export_only();
     static void capture_task_entry(void *context);
     static int log_vprintf(const char *format, va_list arguments);
     static FlashLogger *log_sink_;

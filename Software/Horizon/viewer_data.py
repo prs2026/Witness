@@ -1389,15 +1389,196 @@ def unique_label(name: str, taken) -> str:
     return f"{name} ({index})"
 
 
+class AxisGroup:
+    """One y axis of a graph: the side it sits on and the series drawn on it."""
+
+    def __init__(self, side: str, refs=()):
+        self.side = side
+        self.refs = list(refs)
+
+    def __repr__(self) -> str:
+        return f"AxisGroup({self.side!r}, {self.refs!r})"
+
+    def __eq__(self, other) -> bool:
+        return isinstance(other, AxisGroup) and (self.side, self.refs) == (other.side, other.refs)
+
+
+class GraphRefs(list):
+    """The series of one graph, plus how they share y axes.
+
+    ``groups`` is None (every series on one left axis) or an ordered list of
+    AxisGroup: each group is one y axis, on the left or right, autoranged over
+    its own series. Group 0 is drawn first; on each side axes are listed from
+    the plot outwards. Empty groups vanish; one left group is the same as None.
+    """
+
+    groups: list | None = None
+
+    def _prune(self) -> None:
+        if self.groups is None:
+            return
+        for group in self.groups:
+            group.refs = [ref for ref in group.refs if ref in self]
+        self.groups = [group for group in self.groups if group.refs]
+        placed = {ref for group in self.groups for ref in group.refs}
+        loose = [ref for ref in self if ref not in placed]
+        if loose:
+            if self.groups:
+                self.groups[0].refs.extend(loose)
+            else:
+                self.groups = [AxisGroup("left", loose)]
+        if len(self.groups) <= 1 and all(group.side == "left" for group in self.groups):
+            self.groups = None
+
+    def axis_groups(self) -> list:
+        """The y axes, in order (a fresh single left group when shared)."""
+        self._prune()
+        if self.groups is not None:
+            return self.groups
+        return [AxisGroup("left", self)] if len(self) else []
+
+    @property
+    def custom(self) -> bool:
+        """More than one y axis, or an axis moved to the right."""
+        self._prune()
+        return self.groups is not None
+
+    @property
+    def separate(self) -> bool:
+        return len(self.axis_groups()) > 1
+
+    def group_index(self, ref) -> int | None:
+        for number, group in enumerate(self.axis_groups()):
+            if ref in group.refs:
+                return number
+        return None
+
+    def _explicit(self) -> list:
+        self._prune()
+        if self.groups is None:
+            self.groups = [AxisGroup("left", self)]
+        return self.groups
+
+    def auto_side(self) -> str:
+        """Side for a new axis: the one with fewer axes, right when tied."""
+        groups = self.axis_groups()
+        left = sum(group.side == "left" for group in groups)
+        return "right" if len(groups) - left <= left else "left"
+
+    def assign(self, ref, group: int | None = None, side: str | None = None) -> None:
+        """Put ``ref`` on axis ``group``, or on a new axis on ``side`` (None: auto)."""
+        if ref not in self:
+            self.append(ref)
+        new_side = side if side in ("left", "right") else self.auto_side()
+        groups = self._explicit()
+        if group is not None:
+            target = groups[group] if 0 <= group < len(groups) else groups[0]
+        else:
+            target = AxisGroup(new_side)
+            groups.append(target)
+        for other in groups:
+            if other is not target and ref in other.refs:
+                other.refs.remove(ref)
+        if ref not in target.refs:
+            target.refs.append(ref)
+        self._prune()
+
+    def merge(self, source: int, target: int) -> None:
+        """Move every series of axis ``source`` onto axis ``target``."""
+        groups = self._explicit()
+        if source == target or not (0 <= source < len(groups) and 0 <= target < len(groups)):
+            return
+        groups[target].refs.extend(groups[source].refs)
+        groups[source].refs = []
+        self._prune()
+
+    def move_group(self, index: int, side: str) -> None:
+        groups = self._explicit()
+        if 0 <= index < len(groups) and side in ("left", "right"):
+            groups[index].side = side
+            self._prune()
+
+    def split(self) -> None:
+        """One axis per series (the first on the left, the rest on the right)."""
+        self.groups = [AxisGroup("left" if number == 0 else "right", [ref])
+                       for number, ref in enumerate(self)]
+        self._prune()
+
+    def merge_all(self) -> None:
+        self.groups = None
+
+    def set_groups(self, groups) -> None:
+        """Use ``groups`` ([(side, refs)]); series not named join the first axis."""
+        self.groups = [AxisGroup(side, refs) for side, refs in groups]
+        self._prune()
+
+    def copy_without(self, dataset_id: int) -> "GraphRefs":
+        kept = GraphRefs(ref for ref in self if ref[0] != dataset_id)
+        if self.groups is not None:
+            kept.groups = [AxisGroup(group.side, group.refs) for group in self.groups]
+            kept._prune()
+        return kept
+
+
+class DropTarget(tuple):
+    """Where a drag would land on a graph: ``kind`` "group" (merge onto axis
+    number ``value``) or "new" (a new axis on side ``value``); ``x0``/``x1``
+    the span to highlight; ``zone`` "axis", "edge" or "middle"."""
+
+    __slots__ = ()
+
+    def __new__(cls, kind, value, x0, x1, zone):
+        return super().__new__(cls, (kind, value, x0, x1, zone))
+
+    kind = property(lambda self: self[0])
+    value = property(lambda self: self[1])
+    x0 = property(lambda self: self[2])
+    x1 = property(lambda self: self[3])
+    zone = property(lambda self: self[4])
+
+    @property
+    def axis(self) -> tuple:
+        """The (kind, value) pair GraphLayout.add / move take."""
+        return (self[0], self[1])
+
+
+EDGE_FRACTION = 0.15     # of the plot width, either side, that means "new axis here"
+EDGE_MIN_PX = 24
+
+
+def classify_drop(x: float, spans, plot_left: float, plot_right: float,
+                  left_count: int = 1, right_count: int = 0,
+                  edge_fraction: float = EDGE_FRACTION) -> DropTarget:
+    """What a drop at horizontal position ``x`` does to a graph.
+
+    ``spans`` is [(x0, x1, group_index)] for the y axes; the plot area runs
+    from ``plot_left`` to ``plot_right``. On an axis: merge onto it. Left or
+    right of the plot, or within the edge zone of either side: a new axis on
+    that side. Anywhere else in the plot: a new axis on the side with fewer
+    axes (right when tied).
+    """
+    for x0, x1, group in spans:
+        if x0 <= x <= x1:
+            return DropTarget("group", group, x0, x1, "axis")
+    edge = max(EDGE_MIN_PX, (plot_right - plot_left) * edge_fraction)
+    if x < plot_left + edge:
+        return DropTarget("new", "left", min(x, plot_left), plot_left + edge, "edge")
+    if x > plot_right - edge:
+        return DropTarget("new", "right", plot_right - edge, max(x, plot_right), "edge")
+    side = "right" if right_count <= left_count else "left"
+    return DropTarget("new", side, plot_left + edge, plot_right - edge, "middle")
+
+
 class GraphLayout:
     """Which series are drawn on which graph.
 
     A series is (dataset_id, column). Each graph holds one or more series
-    that are overlaid on shared axes. Pure data: no Tk, so it is testable.
+    that are overlaid, on one shared y axis or grouped onto several (see
+    GraphRefs). Pure data: no Tk, so it is testable.
     """
 
     def __init__(self):
-        self.graphs: list[list[tuple[int, str]]] = []
+        self.graphs: list[GraphRefs] = []
 
     def __len__(self) -> int:
         return len(self.graphs)
@@ -1405,23 +1586,59 @@ class GraphLayout:
     def clear(self) -> None:
         self.graphs = []
 
-    def add(self, refs, target: int | None = None) -> None:
-        """Overlay ``refs`` on graph ``target``; None adds one graph each."""
+    def is_separate(self, index: int) -> bool:
+        return 0 <= index < len(self.graphs) and self.graphs[index].separate
+
+    def set_separate(self, index: int, separate: bool) -> None:
+        """One y axis per series, or all on one."""
+        if 0 <= index < len(self.graphs):
+            if separate:
+                self.graphs[index].split()
+            else:
+                self.graphs[index].merge_all()
+
+    @staticmethod
+    def _place(graph: GraphRefs, ref, fresh: bool, separate, axis) -> None:
+        if axis is not None:
+            if axis[0] == "group":
+                graph.assign(ref, group=axis[1])
+            else:
+                graph.assign(ref, side=axis[1])
+        elif fresh:
+            if separate and len(graph) > 1:
+                graph.assign(ref, side=None)
+            elif graph.custom:
+                graph.assign(ref, group=0)
+
+    def add(self, refs, target: int | None = None, separate: bool | None = None,
+            axis: tuple | None = None) -> None:
+        """Overlay ``refs`` on graph ``target``; None adds one graph each.
+        ``axis`` is ("group", n) to share axis n or ("new", side) for a new
+        axis (all of ``refs`` share it); ``separate`` True gives a new axis."""
         refs = list(refs)
         if target is None or not 0 <= target < len(self.graphs):
             for ref in refs:
-                self.graphs.append([ref])
+                self.graphs.append(GraphRefs([ref]))
             return
         graph = self.graphs[target]
         for ref in refs:
-            if ref not in graph:
+            fresh = ref not in graph
+            if fresh:
                 graph.append(ref)
+            self._place(graph, ref, fresh, separate, axis)
+            if axis is not None and axis[0] == "new":
+                number = graph.group_index(ref)
+                axis = ("group", number if number is not None else 0)
 
-    def move(self, source: int, ref, target: int | None) -> None:
-        """Move one series to another graph (None: a new graph of its own)."""
+    def move(self, source: int, ref, target: int | None, separate: bool | None = None,
+             axis: tuple | None = None) -> None:
+        """Move one series to another graph (None: a new graph of its own), or,
+        when ``target`` is its own graph, to another axis of it."""
         if not 0 <= source < len(self.graphs) or ref not in self.graphs[source]:
             return
         if target == source:
+            if axis is not None:
+                self._place(self.graphs[source], ref, False, None, axis)
             return
         if target is not None and 0 <= target < len(self.graphs) \
                 and ref in self.graphs[target]:
@@ -1429,11 +1646,43 @@ class GraphLayout:
             return
         self.graphs[source].remove(ref)
         if target is None or not 0 <= target < len(self.graphs):
-            self.graphs.append([ref])
+            self.graphs.append(GraphRefs([ref]))
         else:
-            self.graphs[target].append(ref)
+            graph = self.graphs[target]
+            graph.append(ref)
+            self._place(graph, ref, True, separate, axis)
         if not self.graphs[source]:
             del self.graphs[source]
+
+    def move_axis(self, source: int, group: int, target: int, axis: tuple | None) -> None:
+        """Drop axis ``group`` of graph ``source`` on graph ``target``: onto one
+        of its axes (merge), or to an edge / the middle (its own axis there;
+        in the same graph that moves the axis to the side)."""
+        if not (0 <= source < len(self.graphs) and 0 <= target < len(self.graphs)):
+            return
+        groups = self.graphs[source].axis_groups()
+        if not 0 <= group < len(groups) or axis is None:
+            return
+        if source == target:
+            graph = self.graphs[source]
+            if axis[0] == "group":
+                graph.merge(group, axis[1])
+            else:
+                graph.move_group(group, axis[1])
+            return
+        source_graph, target_graph = self.graphs[source], self.graphs[target]
+
+        def where(graph):
+            return next((n for n, g in enumerate(self.graphs) if g is graph), None)
+
+        for ref in list(groups[group].refs):
+            src, dst = where(source_graph), where(target_graph)
+            if src is None or dst is None:
+                return
+            self.move(src, ref, dst, axis=axis)
+            number = target_graph.group_index(ref)
+            if axis[0] == "new" and number is not None:
+                axis = ("group", number)
 
     def remove_series(self, index: int, ref) -> None:
         if 0 <= index < len(self.graphs) and ref in self.graphs[index]:
@@ -1446,12 +1695,8 @@ class GraphLayout:
             del self.graphs[index]
 
     def remove_dataset(self, dataset_id: int) -> None:
-        self.graphs = [
-            kept for kept in (
-                [ref for ref in graph if ref[0] != dataset_id]
-                for graph in self.graphs)
-            if kept
-        ]
+        self.graphs = [kept for kept in (graph.copy_without(dataset_id)
+                                         for graph in self.graphs) if kept]
 
 
 
@@ -1868,3 +2113,115 @@ def spectrum_status_text(analysis) -> str:
     if analysis.warnings:
         text += "\nWARNING: " + "\nWARNING: ".join(analysis.warnings)
     return text
+
+
+# ---------------------------------------------------------------------------
+# Syncing logs on a flight-state transition
+# ---------------------------------------------------------------------------
+
+# Transitions the viewer can line logs up on: label -> (from state, to state).
+SYNC_TRANSITIONS = {
+    "Pad idle → Boost": (0, 1),
+    "Boost → Coast": (1, 2),
+    "Coast → Descent": (2, 3),
+    "Descent → Landed": (3, 4),
+}
+
+
+def sync_label(transition) -> str | None:
+    """The SYNC_TRANSITIONS label of a (from, to) pair, if it is one."""
+    for label, pair in SYNC_TRANSITIONS.items():
+        if tuple(pair) == tuple(transition):
+            return label
+    return None
+
+
+def state_transition_time(dataset: Dataset, from_state: int, to_state: int) -> float | None:
+    """When a log's flight state first rises into ``to_state`` from
+    ``from_state``: the time of the first sample in the new state, on the
+    log's own time axis (seconds, before its offset). The new state must also
+    hold for the next sample, so a one-sample glitch is not an edge. None when
+    the log has no state column or never makes that transition."""
+    state = dataset.numeric_data.get("flight_state")
+    if state is None:
+        return None
+    times = dataset.times()
+    ok = np.isfinite(state) & np.isfinite(times)
+    if ok.sum() < 2:
+        return None
+    t, s = times[ok], state[ok]
+    order = np.argsort(t, kind="stable")
+    t, s = t[order], s[order]
+    hit = (s[1:] == to_state) & (s[:-1] == from_state)
+    if s.size > 2:
+        hit[:-1] &= s[2:] == to_state
+    found = np.flatnonzero(hit)
+    return float(t[found[0] + 1]) if found.size else None
+
+
+def session_key(path: Path) -> str | None:
+    """The session part of a Witness log name (S0000434.csv, I0000434.BIN and
+    P0000434.TXT all give "0000434"), or None for other names."""
+    stem = Path(path).stem
+    if len(stem) > 1 and stem[0].isalpha() and all(c in "0123456789abcdefABCDEF"
+                                                   for c in stem[1:]):
+        return stem[1:].lower()
+    return None
+
+
+def paired_text_logs(path: Path) -> list[Path]:
+    """The .TXT log(s) of the same session as ``path`` (same name first)."""
+    path = Path(path)
+    found = []
+    for suffix in (".TXT", ".txt"):
+        own = path.with_suffix(suffix)
+        if own.exists():
+            found.append(own)
+    key = session_key(path)
+    if key is not None:
+        try:
+            for other in sorted(path.parent.iterdir()):
+                if (other.suffix.lower() == ".txt" and other not in found
+                        and session_key(other) == key):
+                    found.append(other)
+        except OSError:
+            pass
+    return found
+
+
+def text_log_transition_time(path: Path, from_state: int, to_state: int) -> float | None:
+    """First ``from -> to`` flight_state line in the session's .TXT log(s), in
+    seconds of device uptime (the clock the logs' time axes use)."""
+    for text_path in paired_text_logs(path):
+        try:
+            log_text = text_path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for match in FLIGHT_STATE_TRANSITION_RE.finditer(log_text):
+            names = [" ".join(match.group(g).lower().split()) for g in (2, 3)]
+            if all(name in FLIGHT_STATE_VALUES for name in names) and \
+                    (FLIGHT_STATE_VALUES[names[0]], FLIGHT_STATE_VALUES[names[1]]) \
+                    == (from_state, to_state):
+                return int(match.group(1)) / 1000.0
+    return None
+
+
+def find_sync_times(datasets: dict, from_state: int, to_state: int) -> dict:
+    """{dataset id: transition time or None} for every log. A log without its
+    own state uses its session's .TXT log, then another open log of the same
+    session that has one (same uptime clock). Times are on each log's own
+    axis before its offset."""
+    times = {did: state_transition_time(dataset, from_state, to_state)
+             for did, dataset in datasets.items()}
+    for did, dataset in datasets.items():
+        if times[did] is None:
+            times[did] = text_log_transition_time(dataset.path, from_state, to_state)
+    for did, dataset in datasets.items():
+        key = session_key(dataset.path)
+        if times[did] is None and key is not None:
+            for other_id, other in datasets.items():
+                if other_id != did and times[other_id] is not None \
+                        and session_key(other.path) == key:
+                    times[did] = times[other_id]
+                    break
+    return times

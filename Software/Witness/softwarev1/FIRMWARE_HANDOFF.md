@@ -25,9 +25,11 @@ with the user before changing them:
   only in Boost, Coast and Descent; idle samples go to a RAM prelaunch ring.
 - The heartbeat buzzer is currently **disabled** for bench work
   (`HEARTBEAT_BUZZER_ENABLED 0` in `heartbeat.cpp`). Set it to 1 before flight.
-- The current `sdkconfig` selects a 2 MB boot-flash image configuration, despite
-  the board header identifying an ESP32-S3FN8. Do not conflate boot flash with
-  the separate 128 MiB logging NAND, or change image geometry casually.
+- The image is built for the ESP32-S3FN8's 8 MB in-package flash with two OTA
+  app slots (`partitions.csv`, see "Wi-Fi OTA and log download"). Do not
+  conflate boot flash with the separate 128 MiB logging NAND, or change image
+  geometry casually. A board flashed before 2026-11-12 still has the old 2 MB
+  single-app layout and needs one USB migration flash.
 
 This handoff describes the source at the time it was written. Follow the current
 source when it differs from an older conversation, workbook, or prose document.
@@ -753,7 +755,7 @@ one-byte USB shortcuts work over radio.
 
 Despite the `Ra01` class name, this driver uses **SX1262 command semantics**, not
 an SX127x register interface. Verify the actual fitted module before substituting
-a driver. Current RF macros specify 926 MHz, -8 dBm, SF7, 125 kHz bandwidth,
+a driver. Current RF macros specify 926 MHz, -17 dBm (low-power PA; raise with 0x5250), SF7, 500 kHz bandwidth,
 coding rate 4/5 and preamble length 8. Packet configuration uses explicit headers,
 hardware CRC and normal IQ. Read `ra01.cpp` for the complete setup.
 
@@ -1159,6 +1161,82 @@ problems; never load an entire file into RAM as the export mechanism. Export and
 erase waits can be indefinite by default, so keep failure handling in view when
 changing synchronization.
 
+## Wi-Fi OTA and log download
+
+Once Witness is soldered to the backplane its USB port is unreachable, so
+firmware update and log download use the ESP32-S3's own 2.4 GHz Wi-Fi (u.FL
+antenna). `wifi_ota.{h,cpp}` (pure helpers in `wifi_ota_logic.{h,cpp}`, host
+test `tests/wifi_ota_logic_test.cpp`); host tool `Horizon/witness_ota.py`.
+Bluetooth stays off; no web UI, TLS or mDNS.
+
+**Partitions** (`partitions.csv`, 8 MB flash): `nvs` 0x9000/0x6000 and
+`phy_init` 0xF000/0x1000 are unchanged from the 2 MB layout, so IMU
+calibration in NVS survives the migration; `otadata` 0x10000/0x2000; `ota_0`
+0x20000 and `ota_1` 0x320000, 3 MB each (app is about 1.1 MB). **One-time
+migration over USB:** `flash_verified.ps1` (now driven by `build/flash_args`:
+bootloader, partition table, ota_data_initial, app at ota_0) on a board with the
+old layout; `-CheckOnly` reads the app descriptor at ota_0, ota_1, then the old
+0x10000. Afterwards every update can go over Wi-Fi.
+
+**Rollback:** `CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE`. A freshly uploaded image
+boots pending-verify; `WifiOta` marks it valid only when, within 30 s of boot,
+low-g and gyro are ready, no flash init/log failure flag is set and the radio
+initialized. Otherwise (or on any reset/crash first) the bootloader returns to
+the previous slot. A manual `/reboot` while pending also rolls back.
+
+**Turning it on:** `IRIS_COMMAND_WIFI` 0x5746 (`build_wifi_packet(on, tx_dbm,
+minutes)`), USB or radio, Pad Idle or Landed only (else `IRIS_ACK_REFUSED`).
+d1 = Wi-Fi max TX dBm (0 = default +8, allowed 2..20), d2 = auto-off minutes
+(0 = 15). Wi-Fi never starts at boot, except for the confirmation window below.
+It turns off on the auto-off timeout without HTTP activity, on any flight state
+change out of Pad Idle/Landed, and when USB mass storage starts. While it is on
+all LoRa transmission (telemetry and acks) is stopped via
+`Sensors::set_radio_transmission_enabled(false)` (the same switch mass storage
+uses; `UsbSerialEcho::start_mass_storage` tells `WifiOta` so Wi-Fi never
+re-enables the radio behind it); LoRa receive keeps running so an off command
+over radio works. A radio on-command is acked first, then the radio is cut
+after 600 ms; a radio off-command is acked after Wi-Fi is down and TX is back.
+The first boot after an OTA (once valid) opens Wi-Fi for
+`CONFIG_WITNESS_WIFI_CONFIRM_MINUTES` (5) so the host can read `/info`; set 0 to
+disable.
+
+**Access point:** WPA2, SSID `witness-XXXX` (last two MAC bytes) or
+`CONFIG_WITNESS_WIFI_SSID_OVERRIDE`, password `CONFIG_WITNESS_WIFI_PASSWORD`
+(default `witness-ota-2026`; **change it**), channel 6, 2 stations, 192.168.4.1
+with DHCP. The Pi's wlan0 joins it. Wi-Fi, lwIP and the HTTP server run on core
+0 (`wifi_ota` task, httpd priority 2); the sensor task on core 1 is untouched,
+but flash writes during an OTA stall both cores' flash cache for tens of ms,
+which is why OTA is Pad Idle/Landed only. The Wi-Fi stack is initialised on
+enable and torn down on disable, so it costs no heap while off.
+
+**HTTP** (`esp_http_server`, 4 KB transfer buffer): `GET /info` (project,
+version, idf, running/next slot, app_state valid/pending, uptime, flight state,
+Wi-Fi TX, free heap, logging_frozen, log_files); `POST /ota` (raw .bin with
+Content-Length; image header, ESP32-S3 chip id and project name "softwarev1"
+checked from the first 288 bytes before any flash write; streamed into the
+other slot; reboot 1 s later, Pad Idle/Landed only); `GET /logs` and
+`GET /logs/<name>` (the FlashLogger export table, chunked); `POST /reboot`;
+`POST /wifi/off`.
+
+**Logs freeze logging.** `FlashLogger::read_export_file` needs the logger
+frozen (`prepare_mass_storage`, irreversible until reset), exactly as USB mass
+storage. The first `/logs` call therefore freezes flash logging; Wi-Fi off after
+that reboots Witness (about 2 s, Pad Idle/Landed only) to restore it. Because
+that thaw reboot never happens in flight, a launch after a download on the pad
+would fly unlogged, so `/logs` and `/logs/<name>` are refused (409) unless the
+flight state is **Landed**. On the bench, set Landed first (`05 73 04`) or use
+USB mass storage. `/info` shows `logging_frozen`.
+
+**Host:** `python3 witness_ota.py [--base URL] info | upload <bin> | logs | get
+<name|all> [-o dir] | reboot | wifi-off`. `upload` checks the image locally,
+streams it, waits for the reboot and confirms the new version with app_state
+valid.
+
+**Not bench verified** (written without hardware): everything above on a real
+board, in particular heap headroom with Wi-Fi up, throughput, rollback, and the
+interaction with LoRa/mass storage. Check `cpu` log lines (`wifi on/off`,
+heap) and the `wifi_ota` tag.
+
 ## Heartbeat indicators
 
 The heartbeat task toggles status bit 0, produces `FF`, pulses the red LED for
@@ -1200,6 +1278,10 @@ Host tests are standalone C++17 programs, not an integrated CTest suite. With
 `g++` available, examples for PowerShell are:
 
 ```powershell
+g++ -std=c++17 -Wall -Wextra -Werror -I main tests/wifi_ota_logic_test.cpp main/wifi_ota_logic.cpp -o build/wifi_ota_logic_test.exe
+if ($LASTEXITCODE -ne 0) { throw "compile failed" }
+& .\build\wifi_ota_logic_test.exe
+
 g++ -std=c++17 -Wall -Wextra -Werror -I main tests/nmea_gps_test.cpp main/nmea_gps.cpp -o build/nmea_gps_test.exe
 if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 & .\build\nmea_gps_test.exe

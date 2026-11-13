@@ -58,6 +58,39 @@
 // and time (SkyTraq 0x01 mode 3; u-blox CFG-RST, all BBR sections), then
 // Witness reapplies its configuration. Witness-local, USB or radio, Pad Idle only.
 #define IRIS_COMMAND_GPS_COLD_START 0x4752U
+// Pad heading: d0 = the body axis that points to the azimuth (0 +Y, 1 -Y,
+// 2 +Z, 3 -Z; 0xFF clears the setting), d1-d2 = its azimuth in 0.01 deg
+// clockwise from true north (u16 BE, 0-35999), d3-d5 0. Witness turns its
+// attitude about the vertical so that axis points there (no magnetometer: the
+// pad leaves heading unknown) and re-applies it after every attitude
+// re-initialization on the pad. Witness-local, USB or radio, Pad Idle only.
+#define IRIS_COMMAND_PAD_HEADING 0x4844U
+// Radio transmit power (RAM only; every boot starts at the bench-safe
+// IRIS_RADIO_TX_POWER_DBM). d0 = target, d1 = SX1262 drive in dBm as int8
+// (-17..+3; below -9 the SX1262 low-power PA is used; the Ra-01SH-P front end
+// adds ~26 dB). Boot default -17 dBm.
+// d2 = front end (RF_EN): 0 unchanged, 1 on (normal), 2 off (bench: no PA
+// current; the SX1262 output passes the disabled FEM attenuated).
+// Target WITNESS: Witness applies it (USB or radio). Target GROUND: Aperture
+// applies it to its own radio, acks on USB and does not transmit the frame.
+// Ack detail: high byte = front end on (1/0), low byte = drive dBm (int8).
+// Out of range -> IRIS_ACK_BAD_ARGUMENT.
+#define IRIS_COMMAND_RADIO_POWER 0x5250U
+#define IRIS_RADIO_POWER_TARGET_WITNESS 0x00U
+#define IRIS_RADIO_POWER_TARGET_GROUND 0x01U
+#define IRIS_RADIO_FRONT_END_UNCHANGED 0x00U
+#define IRIS_RADIO_FRONT_END_ON 0x01U
+#define IRIS_RADIO_FRONT_END_OFF 0x02U
+// Wi-Fi OTA / log download (Witness only; USB or radio; Pad Idle or Landed
+// only, otherwise IRIS_ACK_REFUSED). d0 = 0 off / 1 on, d1 = Wi-Fi maximum TX
+// power in dBm as int8 (0 keeps the default, +8; allowed 2..20), d2 =
+// auto-off minutes (0 = default 15; 1..240). Never starts at boot. While Wi-Fi
+// is on, Witness stops all LoRa transmission (telemetry and acks) but keeps
+// receiving, so an off command over radio still works; its ack is sent after
+// Wi-Fi is off. Wi-Fi also turns off by itself after the auto-off time without
+// HTTP activity and on any flight state change out of Pad Idle/Landed.
+// Out-of-range arguments -> IRIS_ACK_BAD_ARGUMENT; busy/rebooting -> IRIS_ACK_BUSY.
+#define IRIS_COMMAND_WIFI 0x5746U
 // Three-byte state command: 0x05, 0x73, then one of these state values.
 #define IRIS_COMMAND_SET_FLIGHT_STATE 0x73U
 #define IRIS_FLIGHT_STATE_PAD_IDLE 0x00U
@@ -127,8 +160,13 @@
 // Status byte 1, bit 4: HITL mode is active; sensor values are simulated.
 #define IRIS_WITNESS_STATUS_HITL_ACTIVE_BYTE_OFFSET 1U
 #define IRIS_WITNESS_STATUS_HITL_ACTIVE_MASK (1U << 4)
-// Status byte 1, bits 5..7: reserved and transmitted as zero.
-#define IRIS_WITNESS_STATUS_RESERVED_MASK 0xE0U
+// Status byte 1, bit 5: MAINTENANCE boot (Wi-Fi OTA / log download). Flight
+// logging is NOT running: Witness is NOT ready for flight. Cleared by the
+// reboot back to normal mode (Wi-Fi off, auto-off, or power cycle).
+#define IRIS_WITNESS_STATUS_MAINTENANCE_BYTE_OFFSET 1U
+#define IRIS_WITNESS_STATUS_MAINTENANCE_MASK (1U << 5)
+// Status byte 1, bits 6..7: reserved and transmitted as zero.
+#define IRIS_WITNESS_STATUS_RESERVED_MASK 0xC0U
 
 // Witness uptime: big-endian uint32, milliseconds since boot. The counter
 // wraps after approximately 49.7 days.
@@ -613,6 +651,44 @@
 
 // ---------------------------------------------------------------------------
 // Heartbeat packet (0xFF)
+// ---------------------------------------------------------------------------
+// 0x06 Command acknowledgement (Witness -> host, on the link the command came
+// in on). Sent for every canonical 0x05 command Witness handles except GPS
+// assist DATA chunks (those are confirmed in bulk by 0x07). Payload:
+//   [0..1] command opcode (u16 BE)
+//   [2..7] the command's six data bytes, echoed (frame bytes 1..6)
+//   [8]    result (IRIS_ACK_*)
+//   [9..10] detail (u16 BE; e.g. chunks received for INCOMPLETE)
+// The host matches an ack to its command by opcode + data and retries a
+// command that is not acknowledged.
+#define IRIS_PACKET_ID_COMMAND_ACK 0x06U
+#define IRIS_PACKET_COMMAND_ACK_DATA_LENGTH 11U
+#define IRIS_PACKET_COMMAND_ACK_FRAME_LENGTH     (IRIS_PACKET_ID_LENGTH + IRIS_PACKET_COMMAND_ACK_DATA_LENGTH + IRIS_PACKET_EOF_LENGTH)
+#define IRIS_ACK_OK 0x00U            // applied / accepted
+#define IRIS_ACK_REFUSED 0x01U       // not allowed now (flight state, mode)
+#define IRIS_ACK_BAD_ARGUMENT 0x02U
+#define IRIS_ACK_UNKNOWN 0x03U       // command not recognized
+#define IRIS_ACK_BUSY 0x04U          // try again later
+#define IRIS_ACK_INCOMPLETE 0x05U    // assist COMMIT with chunks missing (detail = received)
+#define IRIS_ACK_BAD_CRC 0x06U       // assist COMMIT: CRC mismatch, transfer discarded
+#define IRIS_ACK_BAD_FORMAT 0x07U    // assist COMMIT: records do not parse
+
+// 0x07 Transfer status (Witness -> host), the reply to a GPS assist STATUS
+// command (0x4751). d0-d1 of the STATUS command select the first chunk of the
+// bitmap window (0xFFFF: start at the first missing chunk). Payload:
+//   [0]    transfer id
+//   [1]    state: 0 idle, 1 receiving, 2 complete (last transfer committed
+//          and passed to the receiver), 3 failed (CRC or format)
+//   [2..3] blob length (u16 BE)   [4..5] chunks expected   [6..7] chunks received
+//   [8..9] first chunk of the bitmap window (u16 BE)
+//   [10..73] bitmap: bit i (LSB first in each byte) = chunk window+i received
+// A transfer survives a lost link: re-sending the same BEGIN (same id,
+// length and CRC) keeps the chunks already received, so an upload resumes.
+#define IRIS_PACKET_ID_TRANSFER_STATUS 0x07U
+#define IRIS_PACKET_TRANSFER_STATUS_DATA_LENGTH 74U
+#define IRIS_PACKET_TRANSFER_STATUS_BITMAP_BYTES 64U
+#define IRIS_PACKET_TRANSFER_STATUS_FRAME_LENGTH     (IRIS_PACKET_ID_LENGTH + IRIS_PACKET_TRANSFER_STATUS_DATA_LENGTH + IRIS_PACKET_EOF_LENGTH)
+
 // ---------------------------------------------------------------------------
 
 #define IRIS_PACKET_ID_HEARTBEAT 0xFFU

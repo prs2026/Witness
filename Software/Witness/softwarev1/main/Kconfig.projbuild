@@ -1,0 +1,48 @@
+menu "Witness Wi-Fi OTA and log download"
+
+    config WITNESS_WIFI_SSID_OVERRIDE
+        string "Fixed access point SSID (empty = witness-XXXX from the MAC)"
+        default ""
+        help
+            The default SSID is "witness-" plus the last two bytes of the
+            chip's MAC address. Set this to use a fixed name instead, for
+            example when the eFuse MAC cannot be read reliably.
+
+    config WITNESS_WIFI_PASSWORD
+        string "Access point WPA2 password (8..63 characters)"
+        default "witness-ota-2026"
+        help
+            Anyone with this password can upload firmware while Wi-Fi is on
+            (Pad Idle or Landed only). Change it for your own build.
+
+    config WITNESS_WIFI_CHANNEL
+        int "Access point channel"
+        range 1 13
+        default 6
+
+    config WITNESS_WIFI_TX_POWER_DBM
+        int "Default Wi-Fi maximum TX power (dBm)"
+        range 2 20
+        default 8
+        help
+            Applied with esp_wifi_set_max_tx_power (0.25 dBm units). The Wi-Fi
+            enable command can override it for one session.
+
+    config WITNESS_WIFI_AUTO_OFF_MINUTES
+        int "Default Wi-Fi auto-off time without HTTP activity (minutes)"
+        range 1 240
+        default 15
+
+    config WITNESS_WIFI_CONFIRM_MINUTES
+        int "Wi-Fi window after an OTA update's first boot (minutes, 0 = none)"
+        range 0 240
+        default 5
+        help
+            The one exception to "Wi-Fi never starts at boot": the first boot of
+            a freshly uploaded image (pending verification), once its self-test
+            passes and the image is marked valid, opens the access point for
+            this long so the host can confirm the new version over HTTP. It is
+            skipped outside Pad Idle/Landed. 0 disables it; the host then has
+            to send the Wi-Fi on command again.
+
+endmenu

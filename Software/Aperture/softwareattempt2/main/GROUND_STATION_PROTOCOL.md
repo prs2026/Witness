@@ -407,7 +407,7 @@ The RA-01/SX1262 link uses:
 | RF frequency | 926,000,000 Hz |
 | TX power | -8 dBm (Witness), -2 dBm (Aperture) |
 | Spreading factor | SF7 |
-| Bandwidth | 125 kHz |
+| Bandwidth | 500 kHz (SX1262 erratum 15.1 applied before every TX; see HITL/LORA_MODULATION_OPTIONS.md) |
 | Coding rate | 4/5 |
 | Preamble | 8 symbols |
 | Header | Explicit |
@@ -431,7 +431,7 @@ are serviced round-robin, so simultaneous deadlines do not permanently favor
 one ID. The requested rates are upper targets: LoRa airtime and immediate
 traffic can reduce the achieved aggregate rate. Transmission is non-blocking:
 the sensor task loads the frame and issues SetTx, then checks DIO1 for TxDone on
-later 10 ms passes (about 170 ms of airtime for a 103-byte frame at SF7/125
+later 10 ms passes (about 43 ms of airtime for a 103-byte frame at SF7/500
 kHz), so radio traffic no longer slows the 100 Hz sensor loop. A new frame is
 started only after the previous one completes; reception is impossible while
 transmitting. After each transmission the radio is returned to continuous

@@ -599,6 +599,9 @@ def decode_imu_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
     return rows, stats.discarded
 
 
+_WRAP_THRESHOLD_US = 1 << 31   # half the u32 microsecond range
+
+
 def iter_imu_log(data: bytes, stats: DecodeStats | None = None):
     """decode_imu_log, one row dict at a time (bounded memory)."""
     stats = stats or DecodeStats()
@@ -612,10 +615,15 @@ def iter_imu_log(data: bytes, stats: DecodeStats | None = None):
     for offset in range(0, len(data) - discarded, IMU_RECORD_SIZE):
         record = data[offset:offset + IMU_RECORD_SIZE]
         raw_us = unsigned(record[0:4])
-        if previous_raw is not None and raw_us < previous_raw:
+        # A real wrap of the 32-bit microsecond counter steps back by ~2^32;
+        # a record logged a few ms out of order (task race) must not add one.
+        if previous_raw is not None and previous_raw - raw_us > _WRAP_THRESHOLD_US:
             wraps += 1
-        previous_raw = raw_us
-        timestamp_us = raw_us + (wraps << 32)
+        if previous_raw is not None and raw_us - previous_raw > _WRAP_THRESHOLD_US and wraps:
+            timestamp_us = raw_us + ((wraps - 1) << 32)   # straggler from before the wrap
+        else:
+            previous_raw = raw_us
+            timestamp_us = raw_us + (wraps << 32)
         if first_us is None:
             first_us = timestamp_us
         status = record[22]
@@ -687,10 +695,15 @@ def iter_packet_log(data: bytes, stats: DecodeStats | None = None):
         if source not in PACKET_SOURCES or length < 2 or len(frame) != length \
                 or frame[-1] != 0x0A:
             break
-        if previous_raw is not None and raw_us < previous_raw:
+        # A real wrap of the 32-bit microsecond counter steps back by ~2^32;
+        # a record logged a few ms out of order (task race) must not add one.
+        if previous_raw is not None and previous_raw - raw_us > _WRAP_THRESHOLD_US:
             wraps += 1
-        previous_raw = raw_us
-        timestamp_us = raw_us + (wraps << 32)
+        if previous_raw is not None and raw_us - previous_raw > _WRAP_THRESHOLD_US and wraps:
+            timestamp_us = raw_us + ((wraps - 1) << 32)   # straggler from before the wrap
+        else:
+            previous_raw = raw_us
+            timestamp_us = raw_us + (wraps << 32)
         if first_us is None:
             first_us = timestamp_us
         packet_id = frame[0]

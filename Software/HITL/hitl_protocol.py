@@ -43,6 +43,8 @@ FRAME_LENGTHS = {
     ID_WITNESS_DEBUG: 103,
     ID_IRIS_DEBUG: 14,
     ID_HEARTBEAT: 8,
+    0x06: 13,   # command acknowledgement (comms.h IRIS_PACKET_ID_COMMAND_ACK)
+    0x07: 76,   # GPS assist transfer status (IRIS_PACKET_ID_TRANSFER_STATUS)
 }
 
 PACKET_NAMES = {
@@ -55,6 +57,8 @@ PACKET_NAMES = {
     ID_WITNESS_DEBUG: "witness_debug",
     ID_IRIS_DEBUG: "iris_debug",
     ID_HEARTBEAT: "heartbeat",
+    0x06: "command_ack",
+    0x07: "transfer_status",
 }
 
 # Packets whose bytes 1-2 are the Witness status field.
@@ -96,7 +100,8 @@ STATUS0_BITS = (
 )
 STATUS1_GPS_LOCKED = 0x08
 STATUS1_HITL_ACTIVE = 0x10
-STATUS1_RESERVED = 0xE0
+STATUS1_MAINTENANCE = 0x20   # maintenance (Wi-Fi) boot: not logging, not flight ready
+STATUS1_RESERVED = 0xC0
 
 # Scale factors.
 FILTERED_ACCEL_G_PER_COUNT = 0.000040
@@ -295,6 +300,7 @@ def decode_status(b0: int, b1: int) -> dict:
                                    else f"invalid({state})")
     status["gps_locked"] = bool(b1 & STATUS1_GPS_LOCKED)
     status["hitl_active"] = bool(b1 & STATUS1_HITL_ACTIVE)
+    status["maintenance"] = bool(b1 & STATUS1_MAINTENANCE)
     status["raw"] = (b0 << 8) | b1
     return status
 
@@ -330,6 +336,15 @@ def decode_frame(frame: bytes) -> dict | None:
     if len(frame) != FRAME_LENGTHS.get(pid, -1) or frame[-1] != EOF:
         return None
     pkt = {"id": pid, "name": PACKET_NAMES[pid]}
+    if pid == 0x06:
+        # data as hex text: decoded packets are written to the run log as JSON.
+        pkt.update(command=(frame[1] << 8) | frame[2], data=bytes(frame[3:9]).hex(" "), result=frame[9],
+                   detail=(frame[10] << 8) | frame[11])
+        return pkt
+    if pid == 0x07:
+        pkt.update(transfer_id=frame[1], state=frame[2], chunks_expected=(frame[5] << 8) | frame[6],
+                   chunks_received=(frame[7] << 8) | frame[8])
+        return pkt
     if pid in TELEMETRY_STATUS_PACKETS or pid == ID_CAMERA:
         if not _status_plausible(frame[2]):
             return None

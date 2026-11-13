@@ -17,6 +17,7 @@ class SpiDataForwarder;
 class FlashLogger;
 class FlightStateMachine;
 class CommandBridge;
+class WifiOta;
 
 class UsbSerialEcho final {
 public:
@@ -26,7 +27,8 @@ public:
         SpiDataForwarder &spi_interface,
         FlashLogger &flash_logger,
         FlightStateMachine &flight_state_machine,
-        CommandBridge &command_bridge);
+        CommandBridge &command_bridge,
+        WifiOta &wifi_ota);
 
     UsbSerialEcho(const UsbSerialEcho &) = delete;
     UsbSerialEcho &operator=(const UsbSerialEcho &) = delete;
@@ -43,6 +45,7 @@ private:
     static constexpr std::uint32_t kTaskStackSize = 3072;
     static constexpr std::uint32_t kBinaryCommandIdleMs = 20;
     static constexpr std::uint32_t kHitlErrorReportIntervalMs = 1000;
+    static constexpr std::uint32_t kWifiOffWaitMs = 15000;
     static constexpr std::uint32_t kHitlIgnoredReportIntervalMs = 5000;
 
     static void task_entry(void *context);
@@ -79,8 +82,21 @@ private:
     void erase_log_sessions();
     void clear_log_sessions();
     // GPS assistance chunks (gps_assist.h); data = the six data bytes.
-    void handle_gps_assist(std::uint16_t command, const std::uint8_t *data, const char *source);
-    void set_flight_state(std::uint8_t state);
+    // radio: the command came over LoRa (replies go back by radio), else USB.
+    void handle_gps_assist(std::uint16_t command, const std::uint8_t *data, const char *source,
+                           bool radio);
+    void handle_pad_heading(const std::uint8_t *data, const char *source, bool radio);
+    void handle_radio_power(const std::uint8_t *data, const char *source, bool radio);
+    // IRIS_COMMAND_WIFI (comms.h): d0 on/off, d1 TX dBm, d2 auto-off minutes.
+    void handle_wifi(const std::uint8_t *data, const char *source, bool radio);
+    esp_err_t set_flight_state(std::uint8_t state);
+    // 0x06 command acknowledgement / 0x07 transfer status (comms.h), sent on
+    // the link the command arrived on. data6 = the command's six data bytes.
+    void send_ack(bool radio, std::uint16_t command, const std::uint8_t *data6, std::uint8_t result,
+                  std::uint16_t detail = 0);
+    void send_transfer_status(bool radio, const std::uint8_t *data6);
+    void send_reply(bool radio, std::uint8_t packet_id, const std::uint8_t *payload,
+                    std::size_t length);
     void set_camera_state(std::size_t camera_index, bool enabled);
     void run();
 
@@ -90,6 +106,7 @@ private:
     FlashLogger &flash_logger_;
     FlightStateMachine &flight_state_machine_;
     CommandBridge &command_bridge_;
+    WifiOta &wifi_ota_;
     UsbMassStorage mass_storage_;
     TaskHandle_t task_handle_ = nullptr;
     char command_buffer_[kCommandBufferSize]{};

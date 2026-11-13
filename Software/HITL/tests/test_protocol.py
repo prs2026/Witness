@@ -193,5 +193,19 @@ class DecoderTests(unittest.TestCase):
         self.assertAlmostEqual(hp.pressure_altitude_m(89874.6), 1000, delta=1)
 
 
+class AckFrameTests(unittest.TestCase):
+    def test_ack_and_status_decode_to_json(self):
+        # The session writes every decoded packet to rx.jsonl; a bytes field
+        # there crashed the reader thread on the first command ack.
+        import json
+        ack = hp.decode_frame(bytes((0x06, 0x48, 0x44, 0, 0x0B, 0xB8, 0, 0, 0, 0, 0, 0, 0x0A)))
+        self.assertEqual(ack["command"], 0x4844)
+        self.assertEqual(ack["data"], "00 0b b8 00 00 00")
+        status = hp.decode_frame(bytes((0x07,)) + bytes(74) + bytes((0x0A,)))
+        self.assertEqual(status["name"], "transfer_status")
+        json.dumps(ack)
+        json.dumps(status)
+
+
 if __name__ == "__main__":
     unittest.main()

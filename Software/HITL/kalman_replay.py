@@ -34,8 +34,10 @@ FW = HERE.parent / "Witness" / "softwarev1"
 EXE = HERE / "rf_tools" / "bin" / ("kalman_replay.exe" if os.name == "nt" else "kalman_replay")
 FLOOR_M = 100.0
 PHASES = {"Pad idle": 0, "Boost": 1, "Coast": 2, "Descent": 3, "Landed": 4}
-SOURCES = ["tools/kalman_replay.cpp", "main/position_filter.cpp", "main/accel_filter.cpp"]
-HEADERS = ["main/position_filter.h", "main/accel_filter.h", "main/pressure_altitude.h"]
+SOURCES = ["tools/kalman_replay.cpp", "main/position_filter.cpp", "main/accel_filter.cpp",
+           "main/heading_align.cpp"]
+HEADERS = ["main/position_filter.h", "main/accel_filter.h", "main/pressure_altitude.h",
+           "main/heading_align.h"]
 
 
 def build(force: bool = False, compiler: str = "g++") -> Path:

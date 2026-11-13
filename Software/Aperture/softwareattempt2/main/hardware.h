@@ -17,7 +17,15 @@
 
 // These settings must match the transmitting radio.
 #define IRIS_RADIO_FREQUENCY_HZ 926000000U
-#define IRIS_RADIO_TX_POWER_DBM -2 // SX1262 range: -9 through +22 dBm
+// SX1262 drive level into the Ra-01SH-P front end (PA gain ~26 dB, +29 dBm
+// saturated). Ai-Thinker: the FEM input must not exceed +3 dBm (0 dBm with the
+// antenna port unloaded) or the PA is damaged; 0..+3 dBm is recommended for
+// full output. The SX1262's own -9..+22 dBm range does NOT apply here.
+#define IRIS_RADIO_TX_POWER_DBM -17  // boot default: SX1262 low-power PA, bench-safe; raise with IRIS_COMMAND_RADIO_POWER
+#define IRIS_RADIO_TX_POWER_MIN_DBM -17  // below -9 the SX1262 low-power PA is used
+#define IRIS_RADIO_TX_POWER_MAX_DBM 3
+static_assert(IRIS_RADIO_TX_POWER_DBM >= IRIS_RADIO_TX_POWER_MIN_DBM && IRIS_RADIO_TX_POWER_DBM <= IRIS_RADIO_TX_POWER_MAX_DBM,
+              "Ra-01SH-P: SX1262 TX power must be -17..+3 dBm (FEM input limit)");
 #define IRIS_RADIO_DIO2_RF_SWITCH_ENABLE 1
 // The SX1262 command has no separate polarity bit. Set to 1 to select the
 // opposite DIO2 control state for an RF switch with opposite polarity.
@@ -26,7 +34,7 @@
 #define IRIS_RADIO_DIO2_MCU_INPUT 1
 #define IRIS_RADIO_MAX_PACKET_LENGTH 128U
 #define IRIS_RADIO_SPREADING_FACTOR 7U
-#define IRIS_RADIO_BANDWIDTH_HZ 125000U
+#define IRIS_RADIO_BANDWIDTH_HZ 500000U  // SF7/500: ~6 % downlink duty, tolerant of untrimmed crystals (no TCXO); see HITL/LORA_MODULATION_OPTIONS.md
 #define IRIS_RADIO_CODING_RATE 1U // 4/5
 #define IRIS_RADIO_PREAMBLE_LENGTH 8U
 

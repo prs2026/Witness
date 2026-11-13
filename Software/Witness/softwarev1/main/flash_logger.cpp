@@ -236,6 +236,36 @@ int FlashLogger::log_vprintf(const char *format, va_list args) {
 }
 
 void FlashLogger::task_entry(void *context) { static_cast<FlashLogger *>(context)->run(); }
+void FlashLogger::export_task_entry(void *context) { static_cast<FlashLogger *>(context)->run_export_only(); }
+
+esp_err_t FlashLogger::start_export_only() {
+    if (task_handle_) return ESP_ERR_INVALID_STATE;
+    frozen_semaphore_ = xSemaphoreCreateBinary();
+    if (!frozen_semaphore_) return ESP_ERR_NO_MEM;
+    // Idle priority: the one-time NAND scan takes seconds without blocking;
+    // above idle it starved IDLE0 and tripped the task watchdog.
+    if (xTaskCreatePinnedToCore(export_task_entry, "flash_export", kTaskStackSize, this,
+                    tskIDLE_PRIORITY, &task_handle_, task_cores::kSystem) != pdPASS) {
+        task_handle_ = nullptr;
+        return ESP_ERR_NO_MEM;
+    }
+    return ESP_OK;
+}
+
+void FlashLogger::run_export_only() {
+    esp_err_t r = flash_.initialize();
+    if (r == ESP_OK) r = scan_sessions(true);
+    if (r != ESP_OK) {
+        witness_status_.set(IRIS_WITNESS_STATUS_FLASH_INIT_FAILED_MASK, true);
+        ESP_LOGE(kLogTag, "maintenance: flash read-only mount failed: %s", esp_err_to_name(r));
+    } else {
+        ESP_LOGW(kLogTag, "maintenance: flash mounted read-only, %u export file(s), NOT logging",
+                 static_cast<unsigned>(export_file_count_));
+        frozen_.store(true);
+        xSemaphoreGive(frozen_semaphore_);
+    }
+    for (;;) vTaskDelay(portMAX_DELAY);
+}
 void FlashLogger::capture_task_entry(void *context) { static_cast<FlashLogger *>(context)->run_capture(); }
 
 esp_err_t FlashLogger::run_startup_self_test() {

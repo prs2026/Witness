@@ -202,7 +202,13 @@ class MonitorThroughputTests(unittest.TestCase):
         # Commands: disabled without a target, typed hex sent to the selected input.
         self.assertFalse(monitor.command_entry.isEnabled())
         sent = []
-        port = type("Port", (), {"write": lambda self, data: sent.append(data), "close": lambda self: None})()
+        from test_command_link import FakeWitness
+        witness = FakeWitness(monitor.core.command_link)     # answers with 0x06 / 0x07
+
+        def write(_self, data):
+            sent.append(data)
+            witness.write(data)
+        port = type("Port", (), {"write": write, "close": lambda self: None})()
         monitor.serials["COM_X"] = port
         monitor.refresh_command_targets()
         self.assertTrue(monitor.command_entry.isEnabled())
@@ -221,7 +227,7 @@ class MonitorThroughputTests(unittest.TestCase):
         self.assertEqual(len(sent), 1)          # declined confirmation sends nothing
         monitor.quick_command_buttons[1].click()   # CH1 On
         self.assertEqual(int.from_bytes(sent[-1][7:9], "big"), 0x0031)
-        # GPS ephemeris upload: chunked assist frames, on a worker thread.
+        # GPS ephemeris upload: acknowledged, chunked, on a worker thread.
         rinex = Path(__file__).resolve().parents[4] / "gps-sdr-sim" / "brdc0010.22n"
         if rinex.exists():
             import datetime as dt
@@ -233,11 +239,12 @@ class MonitorThroughputTests(unittest.TestCase):
                 self.assertTrue(monitor.upload_gps_ephemeris(str(rinex)))
             nav = gps_assist.parse_rinex_nav(rinex)
             blob, _prns = gps_assist.ephemeris_upload(nav, when)
-            expected = len(gps_assist.assist_frames(blob)) + 1      # + STATUS
-            self.assertTrue(pump_until(lambda: len(sent) - before >= expected, 20))
+            self.assertTrue(pump_until(lambda: witness.committed is not None, 20))
+            self.assertEqual(witness.committed, blob)
             frames = sent[before:]
-            self.assertEqual(frames[0][7:9], b"GA")
-            self.assertEqual(frames[-1][7:9], b"GQ")
+            self.assertEqual(frames[0][7:9], b"GA")      # BEGIN
+            self.assertEqual(frames[-1][7:9], b"GE")     # COMMIT, after STATUS confirmed all chunks
+            self.assertIn(b"GQ", {f[7:9] for f in frames})
             self.assertTrue(all(len(f) == 10 and f[-1] == 0x0A for f in frames))
         monitor.serials.clear()
 

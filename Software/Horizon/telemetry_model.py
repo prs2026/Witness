@@ -32,6 +32,9 @@ WITNESS_FIELDS = {
                         ("position", 3), ("velocity", 3), ("low_accel", 3), ("high_accel", 3), ("gyro", 3))
                         for i in range(count)), "lsm6_temperature", "pressure", "ms5607_temperature",
                       "kalman_altitude", "latitude", "longitude", "gps_time", "gps_altitude"),
+    "command_ack": ("command_value", "command_data", "result", "result_name", "detail"),
+    "transfer_status": ("transfer_id", "state", "length", "chunks_expected", "chunks_received",
+                        "window_start", "bitmap"),
     "iris_debug": ("status", "uptime", "mcu_temperature", "iris_battery_voltage",
                    "current_sense[0]", "current_sense[1]", "current_sense[2]"),
 }

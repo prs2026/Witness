@@ -44,21 +44,24 @@ import pyqtgraph as pg
 import csv_columns
 import qt_common
 import spectrum
+import viewer_board as vb_file
 import viewer_data as vd
 from qt_common import add_curve, Debounce, ensure_app, run_in_thread, Throttle
 # Compatibility: the data helpers were importable from viewer before the Qt
 # port (Horizon main.py imports these four; tests and scripts use the rest).
 from viewer_data import *  # noqa: F401,F403
 from viewer_data import (  # noqa: F401
+    classify_drop,
     AUTO_TIME, BINARY_COLUMNS, DROP_ZONE_HEIGHT, MIN_ZOOM_DRAG_PX, PAN_FRACTION,
     PLOT_COLORS, ROW_INDEX, SYNC_X, TEXT_READOUT_COLUMNS, TIME_UNITS, ZOOM_FACTOR,
-    Dataset, GraphLayout, LAUNCH_NOTE, MemoryBudgetError, Series, decimate_minmax,
+    Dataset, GraphLayout, GraphRefs, LAUNCH_NOTE, MemoryBudgetError, Series, decimate_minmax,
     elide, graph_height_for, nice_ticks, tick_text, unique_label, value_text,
 )
 
 
 TRACES_MIME = "application/x-horizon-traces"
 LEGEND_MIME = "application/x-horizon-legend"
+AXIS_MIME = "application/x-horizon-axis"
 PEN_STYLES = (QtCore.Qt.PenStyle.SolidLine, QtCore.Qt.PenStyle.DashLine,
               QtCore.Qt.PenStyle.DotLine, QtCore.Qt.PenStyle.DashDotLine,
               QtCore.Qt.PenStyle.DashDotDotLine)
@@ -80,6 +83,8 @@ SERIES_CACHE_BYTES = 768 * 1024 ** 2
 BUSY_SWITCH_INTERVAL_S = 0.0005
 CSV_FILTER = "CSV / text logs (*.csv *.CSV *.txt *.tsv);;All files (*)"
 BIN_FILTER = "Witness logs (*.bin *.BIN);;All files (*)"
+DOCK_HEIGHT = 460             # a spectrogram docked in the board
+COLORBAR_PAD = 95             # right-hand space a docked spectrogram's colour bar takes
 
 
 def _refs_to_json(refs) -> bytes:
@@ -156,7 +161,26 @@ class OffsetSpinBox(QtWidgets.QDoubleSpinBox):
 # Plot pieces
 # ---------------------------------------------------------------------------
 
-class TimeViewBox(pg.ViewBox):
+class ExactXViewBox(pg.ViewBox):
+    """ViewBox that copies a linked view's x range exactly."""
+
+    def linkedViewChanged(self, view, axis):  # noqa: N802
+        # Every graph has the same width and axis width, so a linked x range
+        # is copied exactly (pyqtgraph's default lines views up by screen
+        # position, which is wrong for a plot built before it is laid out).
+        if axis != pg.ViewBox.XAxis or self.linksBlocked or view is None:
+            super().linkedViewChanged(view, axis)
+            return
+        low, high = view.viewRange()[0]
+        view.blockLink(True)
+        try:
+            self.enableAutoRange(pg.ViewBox.XAxis, False)
+            self.setXRange(low, high, padding=0)
+        finally:
+            view.blockLink(False)
+
+
+class TimeViewBox(ExactXViewBox):
     """ViewBox with the viewer's mouse conventions.
 
     Drag across a plot: zoom x (every graph). Ctrl+wheel: zoom about the
@@ -178,21 +202,6 @@ class TimeViewBox(pg.ViewBox):
         if pending is None or self.owner.x_view is None:
             return 0.0
         return self.owner.x_view[0] - pending[0][0]
-
-    def linkedViewChanged(self, view, axis):  # noqa: N802
-        # Every graph has the same width and axis width, so a linked x range
-        # is copied exactly (pyqtgraph's default lines views up by screen
-        # position, which is wrong for a plot built before it is laid out).
-        if axis != pg.ViewBox.XAxis or self.linksBlocked or view is None:
-            super().linkedViewChanged(view, axis)
-            return
-        low, high = view.viewRange()[0]
-        view.blockLink(True)
-        try:
-            self.enableAutoRange(pg.ViewBox.XAxis, False)
-            self.setXRange(low, high, padding=0)
-        finally:
-            view.blockLink(False)
 
     def mouseDragEvent(self, ev, axis=None):  # noqa: N802
         left = ev.button() == QtCore.Qt.MouseButton.LeftButton
@@ -251,6 +260,26 @@ class TimeViewBox(pg.ViewBox):
         super().mouseClickEvent(ev)
 
 
+class AuxViewBox(ExactXViewBox):
+    """The view box of an extra y axis: x-linked to the graph's main box,
+    y autoranged on its own, and blind to the mouse (the main box has it)."""
+
+    def __init__(self):
+        super().__init__(enableMenu=False)
+        self.setMouseEnabled(x=False, y=False)
+        self.setAcceptedMouseButtons(QtCore.Qt.MouseButton.NoButton)
+        self.setAcceptHoverEvents(False)
+
+    def wheelEvent(self, ev, axis=None):  # noqa: N802
+        ev.ignore()
+
+    def mouseDragEvent(self, ev, axis=None):  # noqa: N802
+        ev.ignore()
+
+    def mouseClickEvent(self, ev):  # noqa: N802
+        ev.ignore()
+
+
 class LegendButton(QtWidgets.QToolButton):
     """A trace name in a graph header; drag it to another graph or the list."""
 
@@ -278,6 +307,8 @@ class LegendButton(QtWidgets.QToolButton):
     def _menu(self, pos) -> None:
         menu = QtWidgets.QMenu(self)
         menu.addAction("Spectrogram / FFT…", lambda: self.owner.open_spectrogram(self.ref))
+        menu.addAction("Add spectrogram to board",
+                       lambda: self.owner.add_board_spectrogram(self.ref, self.graph_index + 1))
         menu.addAction("Remove from graph", lambda: self.owner.drop(
             ("legend", self.graph_index, self.ref), ("list",)))
         menu.popup(self.mapToGlobal(pos))
@@ -308,6 +339,9 @@ class LegendButton(QtWidgets.QToolButton):
 def _drop_payload(mime: QtCore.QMimeData):
     if mime.hasFormat(TRACES_MIME):
         return ("traces", _refs_from_json(mime.data(TRACES_MIME)))
+    if mime.hasFormat(AXIS_MIME):
+        source, group = json.loads(bytes(mime.data(AXIS_MIME)).decode())
+        return ("axis", int(source), int(group))
     if mime.hasFormat(LEGEND_MIME):
         source, dataset_id, column = json.loads(bytes(mime.data(LEGEND_MIME)).decode())
         return ("legend", int(source), (int(dataset_id), str(column)))
@@ -377,6 +411,89 @@ class ResizeGrip(QtWidgets.QWidget):
         self.slot.owner.set_graph_height(self.slot.index, None)
 
 
+NEUTRAL_AXIS = "#555555"
+
+
+class GroupAxis(pg.AxisItem):
+    """A y axis of a graph (one group of traces). Drag it onto another axis of
+    the graph to merge them, or to the edge / middle of a plot to move it;
+    right-click for the menu."""
+
+    def __init__(self, side: str, slot: "GraphSlot", number: int):
+        super().__init__(side)
+        self.slot = slot
+        self.number = number
+        self.setToolTip("Drag onto another axis to merge, to a plot edge to move; "
+                        "right-click for more")
+
+    def mouseDragEvent(self, ev):  # noqa: N802
+        if ev.button() != QtCore.Qt.MouseButton.LeftButton or self.slot.plot is None:
+            ev.ignore()
+            return
+        ev.accept()
+        if not ev.isStart():
+            return
+        mime = QtCore.QMimeData()
+        mime.setData(AXIS_MIME, json.dumps([self.slot.index, self.number]).encode("utf-8"))
+        drag = QtGui.QDrag(self.slot.plot)
+        drag.setMimeData(mime)
+        drag.exec(QtCore.Qt.DropAction.MoveAction)
+
+    def mouseClickEvent(self, ev):  # noqa: N802
+        if ev.button() == QtCore.Qt.MouseButton.RightButton:
+            ev.accept()
+            self.slot.owner.axis_menu(self.slot.index, self.number, ev.screenPos().toPoint())
+        else:
+            super().mouseClickEvent(ev)
+
+
+class DropHint(QtWidgets.QWidget):
+    """Translucent overlay on a plot showing where a drag would land."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.rect_f = QtCore.QRectF()
+        self.text = ""
+        self.hide()
+
+    def show_target(self, rect: QtCore.QRectF, text: str) -> None:
+        self.rect_f, self.text = rect, text
+        self.setGeometry(self.parentWidget().rect())
+        self.raise_()
+        self.show()
+        self.update()
+
+    def paintEvent(self, event) -> None:  # noqa: N802
+        painter = QtGui.QPainter(self)
+        painter.fillRect(self.rect_f, QtGui.QColor(21, 101, 192, 70))
+        painter.setPen(QtGui.QPen(QtGui.QColor("#1565c0"), 2))
+        painter.drawRect(self.rect_f)
+        painter.setPen(QtGui.QColor("#0d3c75"))
+        painter.drawText(self.rect_f, QtCore.Qt.AlignmentFlag.AlignCenter
+                         | QtCore.Qt.TextFlag.TextWordWrap, self.text)
+        painter.end()
+
+
+def _autorange_y(view: pg.ViewBox, refs) -> None:
+    """Y autorange over the visible x range, or a fixed 0..1 for status bits."""
+    if refs and all(ref[1] in BINARY_COLUMNS for ref in refs):
+        view.disableAutoRange(axis=pg.ViewBox.YAxis)
+        view.setYRange(-0.1, 1.1, padding=0)
+    else:
+        view.enableAutoRange(axis=pg.ViewBox.YAxis)
+        view.setAutoVisible(y=True)
+
+
+def _map_between(source: pg.ViewBox, target: pg.ViewBox, y: float) -> float:
+    """A y value of one view box expressed in another's coordinates (same screen height)."""
+    low, high = source.viewRange()[1]
+    t_low, t_high = target.viewRange()[1]
+    if high == low:
+        return (t_low + t_high) / 2
+    return t_low + (y - low) / (high - low) * (t_high - t_low)
+
+
 class GraphSlot(QtWidgets.QFrame):
     """One graph of the stack: a cheap placeholder until it scrolls into view,
     then a header (names, statistics, close) and a pyqtgraph plot."""
@@ -389,6 +506,13 @@ class GraphSlot(QtWidgets.QFrame):
         self.plot: pg.PlotWidget | None = None
         self.vb: TimeViewBox | None = None
         self.curves: list = []           # [(ref, ShiftableCurve)]
+        self.aux_views: dict = {}        # ref -> AuxViewBox (traces not on the first axis)
+        self.axes: list = []             # GroupAxis per y axis, in group order
+        self.group_views: list = []      # the ViewBox of each y axis
+        self.hint: DropHint | None = None
+        graph = owner.layout_model.graphs[index] if index < len(owner.layout_model.graphs) \
+            else GraphRefs(self.refs)
+        self.spec = [(group.side, list(group.refs)) for group in graph.axis_groups()]
         self.stats_label: QtWidgets.QLabel | None = None
         self.hover_line = self.hover_marks = self.hover_text = None
         self.setObjectName("graphSlot")
@@ -415,6 +539,83 @@ class GraphSlot(QtWidgets.QFrame):
     def realized(self) -> bool:
         return self.plot is not None
 
+    @property
+    def separate(self) -> bool:
+        """More than one y axis."""
+        return len(self.spec) > 1
+
+    def view_for(self, ref):
+        """The ViewBox a trace is drawn in (the main one unless on a later axis)."""
+        return self.aux_views.get(ref, self.vb)
+
+    def _build_axes(self) -> None:
+        """One GroupAxis (and view box, for all but the first) per y axis, placed
+        left or right of the plot, nearest the plot first."""
+        item = self.plot.getPlotItem()
+        for name in ("left", "right"):
+            built_in = item.getAxis(name)
+            item.layout.removeItem(built_in)
+            built_in.hide()
+        lefts, rights = [], []
+        for number, (side, refs) in enumerate(self.spec):
+            if number == 0:
+                view = self.vb
+            else:
+                view = AuxViewBox()
+                item.scene().addItem(view)
+                view.setXLink(self.vb)
+                view.setZValue(self.vb.zValue() - 1)
+
+                def sync(_vb=None, view=view):
+                    if self.vb is not None:
+                        view.setGeometry(self.vb.sceneBoundingRect())
+                self.vb.sigResized.connect(sync)
+                sync()
+            axis = GroupAxis(side, self, number)
+            axis.setWidth(AXIS_WIDTH)
+            axis.linkToView(view)
+            self.group_views.append(view)
+            self.axes.append(axis)
+            (lefts if side == "left" else rights).append(axis)
+            for ref in refs:
+                if number > 0:
+                    self.aux_views[ref] = view
+        row_left = QtWidgets.QGraphicsLinearLayout(QtCore.Qt.Orientation.Horizontal)
+        row_right = QtWidgets.QGraphicsLinearLayout(QtCore.Qt.Orientation.Horizontal)
+        for row in (row_left, row_right):
+            row.setContentsMargins(0, 0, 0, 0)
+            row.setSpacing(0)
+        row_left.addStretch(1)
+        for axis in reversed(lefts):        # outermost first
+            row_left.addItem(axis)
+        for axis in rights:
+            row_right.addItem(axis)
+        row_right.addStretch(1)
+        item.layout.addItem(row_left, 2, 0)
+        item.layout.addItem(row_right, 2, 2)
+        self._rows = (row_left, row_right)
+
+    def _style_axes(self) -> None:
+        """Label and colour each axis like its trace (neutral when it carries several)."""
+        owner = self.owner
+        for number, (axis, (side, refs)) in enumerate(zip(self.axes, self.spec)):
+            if len(self.spec) < 2:
+                break
+            if len(refs) == 1:
+                color = owner.series_style(self.index, self.refs.index(refs[0]),
+                                           len(self.refs), refs[0])[0]
+                text = owner.series_label(refs[0])
+            else:
+                color = NEUTRAL_AXIS
+                text = f"{owner.series_label(refs[0])} +{len(refs) - 1}"
+            axis.setLabel(text, color=color)
+            axis.setPen(pg.mkPen(color))
+            axis.setTextPen(pg.mkPen(color))
+
+    def axis_summary(self, number: int) -> str:
+        side, refs = self.spec[number]
+        return ", ".join(self.owner.series_label(ref) for ref in refs)
+
     # ------------------------------------------------------------ build
     def realize(self) -> None:
         if self.plot is not None:
@@ -432,27 +633,33 @@ class GraphSlot(QtWidgets.QFrame):
         plot.viewport().setAcceptDrops(False)
         plot.viewport().installEventFilter(owner)
         item = plot.getPlotItem()
-        item.getAxis("left").setWidth(AXIS_WIDTH)
         item.setLabel("bottom", owner.x_column())
         item.hideButtons()
         self.plot = plot
         self._layout.addWidget(plot, 1)
+        self.hint = DropHint(plot.viewport())
 
         vb = self.vb
         vb.disableAutoRange(axis=pg.ViewBox.XAxis)
-        if self.refs and all(ref[1] in BINARY_COLUMNS for ref in self.refs):
-            vb.disableAutoRange(axis=pg.ViewBox.YAxis)
-            vb.setYRange(-0.1, 1.1, padding=0)
-        else:
-            vb.enableAutoRange(axis=pg.ViewBox.YAxis)
-            vb.setAutoVisible(y=True)
+        separate = self.separate
+        self._build_axes()
+        # Each axis autoranges over its own traces (status bits: a fixed 0..1 axis).
+        for view, (_side, refs) in zip(self.group_views, self.spec):
+            _autorange_y(view, refs)
         x_column = owner.x_column()
         any_data = False
         for series_index, ref in enumerate(self.refs):
             xs, ys = owner.series(ref)
             color, style = owner.series_style(self.index, series_index, len(self.refs), ref)
             pen = pg.mkPen(color, width=1.0 if xs.size > DENSE_POINTS else 1.5, style=style)
-            curve = add_curve(plot, xs, ys, pen=pen)
+            aux = self.aux_views.get(ref)
+            if aux is not None:
+                curve = qt_common.ShiftableCurve(xs, ys, pen=pen)
+                aux.addItem(curve)
+                curve.setClipToView(True)
+                curve.setDownsampling(auto=True, method="peak")
+            else:
+                curve = add_curve(plot, xs, ys, pen=pen)
             curve.setSkipFiniteCheck(True)        # series arrays are finite
             dataset = owner.datasets.get(ref[0])
             if dataset is not None:
@@ -465,6 +672,8 @@ class GraphSlot(QtWidgets.QFrame):
             plot.addItem(message, ignoreBounds=True)
             full = owner.current_x_range()
             message.setPos((full[0] + full[1]) / 2, 0.5)
+        self._style_axes()
+        owner._pad_sides(self)
         # Hover crosshair, sample markers and the readout box.
         self.hover_line = pg.InfiniteLine(angle=90, movable=False,
                                           pen=pg.mkPen("#9e9e9e", style=QtCore.Qt.PenStyle.DashLine))
@@ -482,6 +691,13 @@ class GraphSlot(QtWidgets.QFrame):
         for ref in self.refs:
             menu.addAction(f"Spectrogram / FFT: {owner.series_label(ref)}",
                            lambda r=ref: owner.open_spectrogram(r))
+            menu.addAction(f"Add spectrogram to board: {owner.series_label(ref)}",
+                           lambda r=ref: owner.add_board_spectrogram(r, self.index + 1))
+        if len(self.refs) > 1:
+            toggle = menu.addAction("Each trace on its own y axis")
+            toggle.setCheckable(True)
+            toggle.setChecked(separate and len(self.spec) == len(self.refs))
+            toggle.triggered.connect(lambda on: owner.set_separate_axes(self.index, on))
         menu.addAction("Remove this graph", lambda: owner.remove_graph(self.index))
         owner._attach_view(self)
         plot.scene().sigMouseMoved.connect(self._mouse_moved)
@@ -515,6 +731,14 @@ class GraphSlot(QtWidgets.QFrame):
                 button.setStyleSheet(f"color: {color};")
                 row.addWidget(button)
             row.addStretch(1)
+            own = QtWidgets.QToolButton()
+            own.setText("Own axes")
+            own.setCheckable(True)
+            own.setChecked(self.separate)
+            own.setAutoRaise(True)
+            own.setToolTip("Draw each trace on its own y axis, each autoranged separately")
+            own.clicked.connect(lambda on: owner.set_separate_axes(self.index, on))
+            row.addWidget(own)
         close = QtWidgets.QToolButton()
         close.setText("✕")
         close.setAutoRaise(True)
@@ -531,6 +755,10 @@ class GraphSlot(QtWidgets.QFrame):
         plot, self.plot = self.plot, None
         self.vb = None
         self.curves = []
+        self.aux_views = {}
+        self.axes = []
+        self.group_views = []
+        self.hint = None
         self.stats_label = None
         self.hover_line = self.hover_marks = self.hover_text = None
         while self._layout.count():
@@ -570,6 +798,41 @@ class GraphSlot(QtWidgets.QFrame):
         return float(self.vb.mapSceneToView(pos).x())
 
     # ------------------------------------------------------------ drops
+    def drop_target(self, pos):
+        """Where a drop at ``pos`` (slot coordinates) lands on the axes, or None
+        (header, margins, unbuilt plot: the plain overlay)."""
+        if self.plot is None or self.vb is None:
+            return None
+        point = self.plot.mapFrom(self, QtCore.QPoint(int(pos.x()), int(pos.y())))
+        scene = self.plot.mapToScene(point)
+        rect = self.vb.sceneBoundingRect()
+        if not self.plot.rect().contains(point) or not rect.top() <= scene.y() <= rect.bottom():
+            return None
+        spans = []
+        for number, axis in enumerate(self.axes):
+            # The layout cell, not boundingRect(): that includes grid lines over the plot.
+            cell = axis.parentItem().mapRectToScene(axis.geometry())
+            spans.append((cell.left(), cell.right(), number))
+        lefts = sum(side == "left" for side, _refs in self.spec)
+        return classify_drop(scene.x(), spans, rect.left(), rect.right(),
+                             lefts, len(self.spec) - lefts)
+
+    def _show_hint(self, target) -> None:
+        if self.hint is None:
+            return
+        if target is None:
+            self.hint.hide()
+            return
+        top = self.plot.mapFromScene(self.vb.sceneBoundingRect().topLeft()).y()
+        bottom = self.plot.mapFromScene(self.vb.sceneBoundingRect().bottomLeft()).y()
+        x0 = self.plot.mapFromScene(QtCore.QPointF(target.x0, 0)).x()
+        x1 = self.plot.mapFromScene(QtCore.QPointF(target.x1, 0)).x()
+        if target.kind == "group":
+            text = "same axis:\n" + self.axis_summary(target.value)
+        else:
+            text = f"new axis\n({target.value})"
+        self.hint.show_target(QtCore.QRectF(x0, top, x1 - x0, bottom - top), text)
+
     def dragEnterEvent(self, event) -> None:  # noqa: N802
         if _drop_payload(event.mimeData()) is not None:
             event.acceptProposedAction()
@@ -580,21 +843,26 @@ class GraphSlot(QtWidgets.QFrame):
     def dragMoveEvent(self, event) -> None:  # noqa: N802
         if _drop_payload(event.mimeData()) is not None:
             event.acceptProposedAction()
+            self._show_hint(self.drop_target(event.position()))
         else:
             event.ignore()
 
     def dragLeaveEvent(self, event) -> None:  # noqa: N802
         self.setStyleSheet("")
+        self._show_hint(None)
 
     def dropEvent(self, event) -> None:  # noqa: N802
         self.setStyleSheet("")
         payload = _drop_payload(event.mimeData())
+        target = self.drop_target(event.position())
+        self._show_hint(None)
         if payload is None:
             event.ignore()
             return
         event.acceptProposedAction()
         index = self.index
-        QtCore.QTimer.singleShot(0, lambda: self.owner.drop(payload, ("graph", index)))
+        where = ("graph", index) if target is None else ("graph", index, target.axis)
+        QtCore.QTimer.singleShot(0, lambda: self.owner.drop(payload, where))
 
 
 class DropZone(QtWidgets.QLabel):
@@ -822,6 +1090,9 @@ class CsvViewerWidget(QtWidgets.QWidget):
         self._hover_pending = None
         self._hover_visible = False
         self.graph_columns = 1
+        self.docks: list[SpectrogramDock] = []   # spectrograms docked in the board
+        self.sync_transition: tuple | None = None   # (from, to) state the logs are synced on
+        self.overlay_own_axes = False    # new overlays get a y axis each
         self._height_overrides: dict[tuple, int] = {}   # graph refs -> height set by dragging
         self._wheel_zoom = 0.0          # queued Ctrl+wheel steps (+ = in)
         self._wheel_pan = 0.0           # queued Shift+wheel steps (+ = later)
@@ -977,10 +1248,25 @@ class CsvViewerWidget(QtWidgets.QWidget):
         self.columns_spin.setToolTip("Tile graphs side by side")
         self.columns_spin.valueChanged.connect(self.set_columns)
         controls.addWidget(self.columns_spin)
+        self.own_axes_check = QtWidgets.QCheckBox("Overlays on own y axes")
+        self.own_axes_check.setToolTip(
+            "Traces dropped onto a graph get their own autoranging y axis each "
+            "(also switchable per graph: Own axes in its header)")
+        self.own_axes_check.toggled.connect(self._own_axes_default_changed)
+        controls.addWidget(self.own_axes_check)
         auto_heights = QtWidgets.QPushButton("Auto heights")
         auto_heights.setToolTip("Undo graph resizing (drag a graph's bottom edge to resize it)")
         auto_heights.clicked.connect(self.reset_graph_heights)
         controls.addWidget(auto_heights)
+        for text, tip, slot in (
+                ("Save board…", "Save the graphs, axes and spectrograms as a data board file",
+                 self.choose_save_board),
+                ("Load board…", "Rebuild a saved data board on the open log(s), by column name",
+                 self.choose_load_board)):
+            button = QtWidgets.QPushButton(text)
+            button.setToolTip(tip)
+            button.clicked.connect(slot)
+            controls.addWidget(button)
         controls.addStretch(1)
         layout.addLayout(controls)
 
@@ -1031,9 +1317,10 @@ class CsvViewerWidget(QtWidgets.QWidget):
         title.setFont(font)
         layout.addWidget(title)
         self.help_label = QtWidgets.QLabel(
-            "Drag traces onto a graph to overlay them, or below the last graph for a "
-            "new one. Double-click adds a graph. Drag a legend entry to another graph, "
-            "or back here to remove it.\nZoom (all graphs): drag across a plot, or "
+            "Drag traces onto a graph's y axis to share it, onto its left/right edge or "
+            "middle for a new y axis, or below the last graph for a new graph. "
+            "Double-click adds a graph. Drag an axis onto another to merge them. Drag a "
+            "legend entry to another graph, or back here to remove it.\nZoom (all graphs): drag across a plot, or "
             "Ctrl+wheel; Shift+wheel pans; double-click a plot to reset. Hover a plot "
             "for exact values. Drop files anywhere to open them.")
         self.help_label.setWordWrap(True)
@@ -1053,6 +1340,10 @@ class CsvViewerWidget(QtWidgets.QWidget):
         spectrum_button = QtWidgets.QPushButton("Spectrogram / FFT of selected trace…")
         spectrum_button.clicked.connect(self.spectrogram_selected)
         layout.addWidget(spectrum_button)
+        board_button = QtWidgets.QPushButton("Add spectrogram of selected trace to board")
+        board_button.setToolTip("Dock a spectrogram between the graphs, on the same time axis")
+        board_button.clicked.connect(self.board_spectrogram_selected)
+        layout.addWidget(board_button)
 
         self.time_axis_box = QtWidgets.QGroupBox("Time axis")
         grid = QtWidgets.QGridLayout(self.time_axis_box)
@@ -1082,6 +1373,19 @@ class CsvViewerWidget(QtWidgets.QWidget):
         grid.addWidget(self.time_axis_note, 4, 0, 1, 2)
         grid.setColumnStretch(1, 1)
         layout.addWidget(self.time_axis_box)
+        sync_row = QtWidgets.QHBoxLayout()
+        sync_row.addWidget(QtWidgets.QLabel("Sync logs on"))
+        self.sync_combo = QtWidgets.QComboBox()
+        self.sync_combo.setToolTip(
+            "Shift every open Witness log's time offset so the first rise into the chosen "
+            "flight state is t = 0 (from the log's state, else its session's .TXT log or "
+            "another open log of the session). The offsets stay editable above.")
+        self.sync_combo.addItem("(not synced)", None)
+        for label, pair in vd.SYNC_TRANSITIONS.items():
+            self.sync_combo.addItem(label, pair)
+        self.sync_combo.activated.connect(lambda _i: self._sync_choice_changed())
+        sync_row.addWidget(self.sync_combo, 1)
+        layout.addLayout(sync_row)
 
         self.trace_tree = TraceTree(self)
         self.trace_tree.itemSelectionChanged.connect(self._sync_time_axis_controls)
@@ -1113,6 +1417,9 @@ class CsvViewerWidget(QtWidgets.QWidget):
             except RuntimeError:
                 pass
         self._spectrum_windows = []
+        for dock in self.docks:
+            dock.dispose()
+        self.docks = []
         self._background_busy(False)
 
     def closeEvent(self, event) -> None:  # noqa: N802
@@ -1331,6 +1638,8 @@ class CsvViewerWidget(QtWidgets.QWidget):
         if first and not self.layout_model.graphs:
             self.plot_dataset(dataset_id)
         self._refresh_summary_choices(select=dataset_id)
+        if self.sync_transition is not None:
+            self.sync_logs(self.sync_transition, report=False)
         if first:
             self.notebook.setCurrentWidget(self.summary_tab)
             self.graph_scroll.verticalScrollBar().setValue(0)
@@ -1341,6 +1650,7 @@ class CsvViewerWidget(QtWidgets.QWidget):
         self.datasets.clear()
         self.x_view = None
         self.layout_model.clear()
+        self._clear_docks()
         self._drop_cached()
         self.trace_tree.clear()
         self._refresh_axis_choices(keep=False)
@@ -1356,6 +1666,8 @@ class CsvViewerWidget(QtWidgets.QWidget):
                 window.close()
         del self.datasets[dataset_id]
         self.layout_model.remove_dataset(dataset_id)
+        for dock in [d for d in self.docks if d.ref[0] == dataset_id]:
+            self.remove_board_spectrogram(dock, rebuild=False)
         self._drop_cached(dataset_id)
         item = self._tree_item(dataset_id)
         if item is not None:
@@ -1527,6 +1839,8 @@ class CsvViewerWidget(QtWidgets.QWidget):
         ref = self._item_ref(item)
         if ref is not None:
             menu.addAction("Spectrogram / FFT…", lambda: self.open_spectrogram(ref))
+            menu.addAction("Add spectrogram to board",
+                           lambda: self.add_board_spectrogram(ref))
             menu.addAction("Add graph", lambda: (self.layout_model.add([ref]),
                                                  self.rebuild_graphs()))
         else:
@@ -1563,6 +1877,7 @@ class CsvViewerWidget(QtWidgets.QWidget):
         self._drop_cached()
         self.x_view = None
         self.rebuild_graphs()
+        self._refresh_docks()
 
     # ===================================================== per-file time
     def set_time_axis(self, dataset_id: int, column: str | None = None,
@@ -1598,6 +1913,41 @@ class CsvViewerWidget(QtWidgets.QWidget):
         if self._selected_dataset_id() == dataset_id:
             self._sync_time_axis_controls()
         self._update_status()
+        self._refresh_docks(dataset_id)
+
+    def _sync_choice_changed(self) -> None:
+        pair = self.sync_combo.currentData()
+        self.sync_logs(tuple(pair) if pair else None)
+
+    def sync_logs(self, transition, report: bool = True) -> dict:
+        """Slide every open log so its first rise into a flight state is t = 0.
+
+        ``transition`` is (from state, to state) as in vd.SYNC_TRANSITIONS, or
+        None to stop syncing. Each log's per-file offset is set (so it shows
+        in, and can be edited from, the Time axis box); logs where the
+        transition is not found keep their offset and are reported. Returns
+        {"synced": [labels], "skipped": [labels]}.
+        """
+        result = {"synced": [], "skipped": []}
+        label = vd.sync_label(transition) if transition else None
+        self.sync_transition = tuple(transition) if label else None
+        self.sync_combo.setCurrentIndex(self.sync_combo.findText(label) if label else 0)
+        if not label:
+            return result
+        times = vd.find_sync_times(self.datasets, *self.sync_transition)
+        for dataset_id in sorted(self.datasets):
+            dataset = self.datasets[dataset_id]
+            moment = times.get(dataset_id)
+            if moment is None:
+                result["skipped"].append(dataset.label)
+                continue
+            self.set_time_axis(dataset_id, offset=round(-float(moment), 9))
+            result["synced"].append(dataset.label)
+        if result["skipped"] and report:
+            self._message("warning", "Sync logs",
+                          f"No {label} found in: " + ", ".join(result["skipped"])
+                          + ". Their offsets were left as they were.")
+        return result
 
     def apply_offset(self) -> None:
         """Use the offset typed (or spun) for the selected CSV."""
@@ -1767,7 +2117,8 @@ class CsvViewerWidget(QtWidgets.QWidget):
             self.slots.append(GraphSlot(self, index, refs, self._graph_height()))
         self._place_slots()
         self._apply_heights()
-        self.drop_zone.set_empty(not self.slots)
+        self.drop_zone.set_empty(not self.slots and not self.docks)
+        self._pad_docks()
         self._update_status()
         self._schedule_realize()
 
@@ -1777,19 +2128,43 @@ class CsvViewerWidget(QtWidgets.QWidget):
         rows = -(-len(self.layout_model.graphs) // max(1, self.graph_columns))
         return graph_height_for(rows, view_height - DROP_ZONE_HEIGHT)
 
+    def _slot_rows(self) -> list[list[GraphSlot]]:
+        """Graph slots grouped into grid rows; a docked spectrogram ends a row."""
+        columns = max(1, self.graph_columns)
+        count = len(self.slots)
+        cuts = sorted({min(max(dock.after, 0), count) for dock in self.docks} | {count})
+        rows, start = [], 0
+        for cut in cuts:
+            for first in range(start, cut, columns):
+                rows.append(self.slots[first:min(first + columns, cut)])
+            start = cut
+        return rows
+
     def _place_slots(self) -> None:
-        """Put the graphs in the grid, ``graph_columns`` per row, then the drop zone."""
+        """Put the graphs in the grid, ``graph_columns`` per row, the docked
+        spectrograms between them, then the drop zone."""
         grid = self.graph_layout
-        for widget in [*self.slots, self.drop_zone]:
+        for widget in [*self.slots, *self.docks, self.drop_zone]:
             grid.removeWidget(widget)
         for row in range(grid.rowCount()):
             grid.setRowStretch(row, 0)
         columns = max(1, self.graph_columns)
-        for index, slot in enumerate(self.slots):
-            grid.addWidget(slot, index // columns, index % columns)
-        rows = -(-len(self.slots) // columns)
-        grid.addWidget(self.drop_zone, rows, 0, 1, columns)
-        grid.setRowStretch(rows + 1, 1)
+        count = len(self.slots)
+        docks = sorted(self.docks, key=lambda dock: dock.after)    # stable: ties keep order
+        row, placed = 0, 0
+        cuts = sorted({min(max(dock.after, 0), count) for dock in docks} | {count})
+        for cut in cuts:
+            for index in range(placed, cut):
+                grid.addWidget(self.slots[index], row + (index - placed) // columns,
+                               (index - placed) % columns)
+            row += -(-(cut - placed) // columns)
+            placed = cut
+            for dock in docks:
+                if min(max(dock.after, 0), count) == cut:
+                    grid.addWidget(dock, row, 0, 1, columns)
+                    row += 1
+        grid.addWidget(self.drop_zone, row, 0, 1, columns)
+        grid.setRowStretch(row + 1, 1)
         for column in range(MAX_COLUMNS):
             grid.setColumnStretch(column, 1 if column < columns else 0)
 
@@ -1799,9 +2174,7 @@ class CsvViewerWidget(QtWidgets.QWidget):
     def _apply_heights(self) -> None:
         """Each row takes its tallest graph's height, so tiles line up."""
         auto = self._graph_height()
-        columns = max(1, self.graph_columns)
-        for start in range(0, len(self.slots), columns):
-            row = self.slots[start:start + columns]
+        for row in self._slot_rows():
             height = max(self._slot_height(slot, auto) for slot in row)
             for slot in row:
                 if slot.height() != height:
@@ -1824,9 +2197,8 @@ class CsvViewerWidget(QtWidgets.QWidget):
         """Height of graph ``index`` (and its row when tiled); None = automatic."""
         if not 0 <= index < len(self.slots):
             return
-        columns = max(1, self.graph_columns)
-        start = index - index % columns
-        for slot in self.slots[start:start + columns]:
+        row = next((r for r in self._slot_rows() if self.slots[index] in r), [])
+        for slot in row:
             key = tuple(slot.refs)
             if height is None:
                 self._height_overrides.pop(key, None)
@@ -1902,6 +2274,7 @@ class CsvViewerWidget(QtWidgets.QWidget):
         else:
             vb.setXLink(self._link_root)
         vb.sigXRangeChanged.connect(self._x_range_changed)
+        self._relink_docks()
 
     def _detach_view(self, slot: GraphSlot) -> None:
         vb = slot.vb
@@ -1920,6 +2293,7 @@ class CsvViewerWidget(QtWidgets.QWidget):
                     other.setXLink(self._link_root)
         else:
             vb.setXLink(None)
+        self._relink_docks()
 
     def _apply_limits(self, vb: TimeViewBox) -> None:
         full = self.current_x_range(full=True)
@@ -2097,6 +2471,9 @@ class CsvViewerWidget(QtWidgets.QWidget):
 
     def remove_graph(self, index: int) -> None:
         self.layout_model.remove_graph(index)
+        for dock in self.docks:
+            if dock.after > index:
+                dock.after -= 1
         QtCore.QTimer.singleShot(0, self.rebuild_graphs)
 
     def drop(self, payload, target) -> None:
@@ -2106,7 +2483,8 @@ class CsvViewerWidget(QtWidgets.QWidget):
         if payload[0] == "traces":
             refs = [ref for ref in payload[1] if ref[0] in self.datasets]
             if target[0] == "graph":
-                self.layout_model.add(refs, target[1])
+                self.layout_model.add(refs, target[1], separate=self.overlay_own_axes,
+                                      axis=target[2] if len(target) > 2 else None)
             elif target[0] == "new":
                 self.layout_model.add(refs)
             else:
@@ -2114,11 +2492,24 @@ class CsvViewerWidget(QtWidgets.QWidget):
         elif payload[0] == "legend":
             source, ref = payload[1], payload[2]
             if target[0] == "graph":
-                self.layout_model.move(source, ref, target[1])
+                self.layout_model.move(source, ref, target[1], separate=self.overlay_own_axes,
+                                       axis=target[2] if len(target) > 2 else None)
             elif target[0] == "new":
                 self.layout_model.move(source, ref, None)
             elif target[0] == "list":
                 self.layout_model.remove_series(source, ref)
+        elif payload[0] == "axis":
+            if target[0] == "graph":
+                self.layout_model.move_axis(payload[1], payload[2], target[1],
+                                            target[2] if len(target) > 2 else None)
+            elif target[0] == "new":
+                groups = self.layout_model.graphs[payload[1]].axis_groups() \
+                    if payload[1] < len(self.layout_model.graphs) else []
+                if payload[2] < len(groups):
+                    for ref in list(groups[payload[2]].refs):
+                        self.layout_model.move(payload[1], ref, None)
+            else:
+                return
         self.rebuild_graphs()
 
     # ============================================================= hover
@@ -2203,7 +2594,11 @@ class CsvViewerWidget(QtWidgets.QWidget):
                 index = vd.nearest_index(xs, x_value - offset)
                 color, _style = self.series_style(slot.index, series_index,
                                                   len(slot.refs), ref)
-                spots.append({"pos": (float(xs[index]) + offset, float(ys[index])),
+                y = float(ys[index])
+                aux = slot.aux_views.get(ref)
+                if aux is not None:
+                    y = _map_between(aux, slot.vb, y)
+                spots.append({"pos": (float(xs[index]) + offset, y),
                               "pen": pg.mkPen(color, width=2)})
             slot.hover_marks.setData(spots)
             slot.hover_marks.show()
@@ -2231,6 +2626,336 @@ class CsvViewerWidget(QtWidgets.QWidget):
                 item.hide()
 
     clear_hover = _clear_hover
+
+    # ===================================================== separate axes
+    def _own_axes_default_changed(self, on: bool) -> None:
+        self.overlay_own_axes = bool(on)
+
+    def set_separate_axes(self, index: int, separate: bool = True) -> None:
+        """Draw each trace of graph ``index`` on its own autoranging y axis (or
+        back on one shared axis)."""
+        if not 0 <= index < len(self.layout_model.graphs) \
+                or self.layout_model.is_separate(index) == bool(separate):
+            return
+        self.layout_model.set_separate(index, separate)
+        QtCore.QTimer.singleShot(0, self.rebuild_graphs)
+
+    def axis_menu(self, graph_index: int, number: int, global_pos) -> None:
+        """Right-click menu of a y axis."""
+        if not 0 <= graph_index < len(self.layout_model.graphs):
+            return
+        graph = self.layout_model.graphs[graph_index]
+        groups = graph.axis_groups()
+        if not 0 <= number < len(groups):
+            return
+        menu = QtWidgets.QMenu(self)
+        other = "right" if groups[number].side == "left" else "left"
+        menu.addAction(f"Move axis to {other}",
+                       lambda: self.move_axis_side(graph_index, number, other))
+        for target, group in enumerate(groups):
+            if target != number:
+                names = ", ".join(self.series_label(ref) for ref in group.refs)
+                menu.addAction(f"Merge into the {group.side} axis: {names}"[:90],
+                               lambda t=target: self.merge_axes(graph_index, number, t))
+        if len(groups[number].refs) > 1:
+            menu.addAction("Split into one axis per trace",
+                           lambda: self.split_axis(graph_index, number))
+        menu.popup(global_pos)
+
+    def _graph_changed(self) -> None:
+        QtCore.QTimer.singleShot(0, self.rebuild_graphs)
+
+    def move_axis_side(self, graph_index: int, number: int, side: str) -> None:
+        if 0 <= graph_index < len(self.layout_model.graphs):
+            self.layout_model.graphs[graph_index].move_group(number, side)
+            self._graph_changed()
+
+    def merge_axes(self, graph_index: int, source: int, target: int) -> None:
+        if 0 <= graph_index < len(self.layout_model.graphs):
+            self.layout_model.graphs[graph_index].merge(source, target)
+            self._graph_changed()
+
+    def split_axis(self, graph_index: int, number: int) -> None:
+        """Give each trace of an axis its own axis (on that axis' side)."""
+        if not 0 <= graph_index < len(self.layout_model.graphs):
+            return
+        graph = self.layout_model.graphs[graph_index]
+        groups = graph.axis_groups()
+        if 0 <= number < len(groups):
+            for ref in list(groups[number].refs)[1:]:
+                graph.assign(ref, side=groups[number].side)
+            self._graph_changed()
+
+    def _side_counts(self) -> tuple[int, int]:
+        """Most axes any graph has on the left, on the right."""
+        lefts = rights = 0
+        for graph in self.layout_model.graphs:
+            groups = graph.axis_groups()
+            left = sum(group.side == "left" for group in groups)
+            lefts, rights = max(lefts, left), max(rights, len(groups) - left)
+        return lefts, rights
+
+    def left_total(self) -> int:
+        """Left-hand width reserved in every graph (at least one y axis)."""
+        return max(1, self._side_counts()[0]) * AXIS_WIDTH
+
+    def right_total(self) -> int:
+        """Right-hand width reserved in every graph (y axes, or the spectrogram colour bar)."""
+        return max(self._side_counts()[1] * AXIS_WIDTH, COLORBAR_PAD if self.docks else 0)
+
+    def _pad_docks(self) -> None:
+        for dock in self.docks:
+            dock.window.set_pads(self.left_total(), self.right_total() - COLORBAR_PAD)
+
+    def _pad_sides(self, slot: GraphSlot) -> None:
+        """Reserve the same width left and right in every graph, so their time
+        axes line up whatever number of y axes each has (and with the
+        colour bar of docked spectrograms)."""
+        layout = slot.plot.getPlotItem().layout
+        layout.setColumnFixedWidth(0, self.left_total())
+        layout.setColumnFixedWidth(2, self.right_total())
+
+    # ===================================================== board spectrograms
+    def add_board_spectrogram(self, ref, after: int | None = None):
+        """Dock a spectrogram of ``ref`` in the board, ``after`` graphs down
+        (default: at the bottom)."""
+        if ref is None or ref[0] not in self.datasets:
+            return None
+        count = len(self.layout_model.graphs)
+        dock = SpectrogramDock(self, ref, count if after is None else max(0, min(after, count)))
+        self.docks.append(dock)
+        self._after_docks_changed()
+        return dock
+
+    def board_spectrogram_selected(self):
+        ref = self._selected_ref()
+        if ref is None:
+            self._message("info", "Spectrogram", "Select a trace (a column under a CSV) in "
+                          "the list first, or right-click a trace or graph.")
+            return None
+        return self.add_board_spectrogram(ref)
+
+    def remove_board_spectrogram(self, dock: SpectrogramDock, rebuild: bool = True) -> None:
+        if dock in self.docks:
+            self.docks.remove(dock)
+            self.graph_layout.removeWidget(dock)
+            dock.dispose()
+            if rebuild:
+                self._after_docks_changed()
+
+    def move_board_spectrogram(self, dock: SpectrogramDock, step: int) -> None:
+        """Move a docked spectrogram up (-1) or down (+1) past one graph."""
+        count = len(self.layout_model.graphs)
+        dock.after = max(0, min(count, dock.after + step))
+        self._after_docks_changed()
+
+    def _clear_docks(self) -> None:
+        for dock in self.docks:
+            self.graph_layout.removeWidget(dock)
+            dock.dispose()
+        self.docks = []
+
+    def _after_docks_changed(self) -> None:
+        """Re-place the grid, re-pad the plots' right edge and re-link the time axes."""
+        self._place_slots()
+        self._apply_heights()
+        for slot in self.live_slots():
+            self._pad_sides(slot)
+        self._pad_docks()
+        self._relink_docks()
+        self.drop_zone.set_empty(not self.slots and not self.docks)
+        self._schedule_realize()
+
+    def _relink_docks(self) -> None:
+        """Link every docked spectrogram's time axis to the graphs' (time x axis only)."""
+        root = self._link_root if self.x_column() == SYNC_X else None
+        for dock in self.docks:
+            view = dock.window.p1.vb
+            if view.linkedView(pg.ViewBox.XAxis) is not root:
+                view.setXLink(root)
+
+    def _refresh_docks(self, dataset_id: int | None = None) -> None:
+        """A time axis or packet filter changed: recompute the docked spectrograms."""
+        for dock in self.docks:
+            if dataset_id is None or dock.ref[0] == dataset_id:
+                dock.window.refresh_source()
+        self._relink_docks()
+
+    # =========================================================== boards
+    def board_dict(self) -> dict:
+        """The current dashboard as a data board (see viewer_board)."""
+        ids = sorted(self.datasets)
+        index_of = {dataset_id: i for i, dataset_id in enumerate(ids)}
+        sources = [{"label": self.datasets[i].label,
+                    "time_column": self.datasets[i].time_column,
+                    "time_unit": self.datasets[i].time_unit,
+                    "offset": float(self.datasets[i].offset)} for i in ids]
+
+        def trace(ref):
+            return {"source": index_of[ref[0]], "column": ref[1]}
+
+        panels = []
+        docks = sorted(self.docks, key=lambda dock: dock.after)
+
+        def emit_docks(upto: int) -> None:
+            while docks and docks[0].after <= upto:
+                dock = docks.pop(0)
+                panels.append({"type": "spectrogram", "trace": trace(dock.ref),
+                               **dock.window.board_settings()})
+
+        for position, refs in enumerate(self.layout_model.graphs):
+            emit_docks(position)
+            panels.append({"type": "plot",
+                           "height": self._height_overrides.get(tuple(refs)),
+                           "traces": [trace(ref) for ref in refs],
+                           "axes": [{"side": group.side,
+                                     "traces": [trace(ref) for ref in group.refs]}
+                                    for group in refs.axis_groups()]})
+        emit_docks(len(self.layout_model.graphs))
+        return {"format": vb_file.BOARD_FORMAT, "version": vb_file.BOARD_VERSION,
+                "x_axis": self.x_column() or None, "packet_filter": self.packet_filter(),
+                "sync": list(self.sync_transition) if self.sync_transition else None,
+                "graphs_per_row": self.graph_columns, "sources": sources, "panels": panels}
+
+    def save_board(self, path) -> None:
+        vb_file.write_board(path, self.board_dict())
+
+    def load_board(self, source, apply_time: bool = True) -> "vb_file.BoardReport":
+        """Rebuild a board on the open files (path or board dict).
+
+        Columns are matched by name; those the open logs lack are listed in
+        the report and skipped. Source 0 of the board goes to the first open
+        file, and so on. Raises BoardError for an unusable board file.
+        """
+        board = vb_file.validate(source) if isinstance(source, dict) \
+            else vb_file.read_board(source)
+        report = vb_file.BoardReport()
+        ids = sorted(self.datasets)
+        if not ids:
+            report.notes.append("No log is open: open one, then load the board.")
+            return report
+        targets = {i: ids[i] for i in range(min(len(ids), len(board["sources"]) or 1))}
+        for i in range(len(board["sources"])):
+            if i not in targets:
+                report.notes.append(f"Board file {i + 1} ({board['sources'][i]['label']}) "
+                                    "has no matching open log: its traces were skipped.")
+        if apply_time:
+            for i, entry in enumerate(board["sources"]):
+                dataset = self.datasets.get(targets.get(i))
+                if dataset is None:
+                    continue
+                column = entry["time_column"]
+                try:
+                    if column and column in dataset.time_choices():
+                        self.set_time_axis(targets[i], column=column,
+                                           unit=entry["time_unit"] or None,
+                                           offset=entry["offset"])
+                    else:
+                        if column:
+                            report.notes.append(f"{dataset.label}: time column {column!r} "
+                                                "not found; time axis unchanged.")
+                        self.set_time_axis(targets[i], offset=entry["offset"])
+                except ValueError as exc:
+                    report.notes.append(f"{dataset.label}: time axis not applied ({exc}).")
+        if apply_time and board["sync"]:
+            outcome = self.sync_logs(board["sync"], report=False)
+            if outcome["skipped"]:
+                report.notes.append(
+                    f"No {vd.sync_label(board['sync'])} found in: "
+                    + ", ".join(outcome["skipped"]) + "; their offsets were kept.")
+        elif apply_time:
+            self.sync_logs(None)
+        for name, combo in (("x_axis", self.x_axis_combo),
+                            ("packet_filter", self.packet_filter_combo)):
+            wanted = board[name]
+            if wanted is None:
+                continue
+            if combo.findText(wanted) >= 0:
+                combo.setCurrentText(wanted)
+            elif name == "x_axis":
+                report.notes.append(f"x axis {wanted!r} not found; kept {self.x_column()!r}.")
+        self._drop_cached()
+        self.x_view = None
+
+        def resolve(trace, quiet=False):
+            dataset_id = targets.get(trace["source"])
+            if dataset_id is None:
+                return None
+            if trace["column"] not in self.datasets[dataset_id].numeric_data:
+                if not quiet:
+                    report.missing.append(self.series_label((dataset_id, trace["column"])))
+                return None
+            return (dataset_id, trace["column"])
+
+        self.layout_model.clear()
+        self._height_overrides.clear()
+        self._clear_docks()
+        pending_docks = []
+        for number, panel in enumerate(board["panels"], 1):
+            if panel["type"] == "plot":
+                refs = [ref for ref in (resolve(t) for t in panel["traces"]) if ref is not None]
+                if not refs:
+                    report.notes.append(f"Graph {number} skipped: none of its columns are here.")
+                    continue
+                graph = GraphRefs(dict.fromkeys(refs))
+                groups = []
+                for entry in panel["axes"]:
+                    found = [ref for ref in (resolve(t, quiet=True) for t in entry["traces"])
+                             if ref is not None]
+                    if found:
+                        groups.append((entry["side"], found))
+                if groups:
+                    graph.set_groups(groups)
+                self.layout_model.graphs.append(graph)
+                if panel["height"]:
+                    self._height_overrides[tuple(graph)] = panel["height"]
+                report.plots += 1
+            else:
+                ref = resolve(panel["trace"])
+                if ref is None:
+                    report.notes.append(f"Spectrogram {number} skipped: its column is not here.")
+                    continue
+                pending_docks.append((ref, len(self.layout_model.graphs), panel))
+                report.spectrograms += 1
+        self.columns_spin.setValue(max(1, min(MAX_COLUMNS, board["graphs_per_row"])))
+        self.graph_columns = self.columns_spin.value()
+        self.rebuild_graphs()
+        for ref, after, panel in pending_docks:
+            dock = SpectrogramDock(self, ref, after)
+            dock.window.apply_board_settings(panel)
+            self.docks.append(dock)
+        self._after_docks_changed()
+        report.missing = list(dict.fromkeys(report.missing))
+        if report.missing or report.notes:
+            self._message("warning", "Data board", report.text())
+        return report
+
+    def choose_save_board(self) -> None:
+        name, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Save data board", "", vb_file.BOARD_FILTER)
+        if not name:
+            return
+        path = Path(name)
+        if not path.name.endswith(".json"):
+            path = path.with_name(path.name + vb_file.BOARD_SUFFIX)
+        try:
+            self.save_board(path)
+        except (OSError, ValueError) as exc:
+            self._message("error", "Save data board", f"Could not save {path.name}: {exc}")
+
+    def choose_load_board(self) -> None:
+        name, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Load data board", "", vb_file.BOARD_FILTER)
+        if name:
+            self.open_board(name)
+
+    def open_board(self, path):
+        """Load a board file; problems with the file are reported, not raised."""
+        try:
+            return self.load_board(path)
+        except vb_file.BoardError as exc:
+            self._message("error", "Load data board", str(exc))
+            return None
 
     # ======================================================= spectrogram
     def spectrum_source(self, ref):
@@ -2270,6 +2995,9 @@ def _html_escape(text: str) -> str:
 # Spectrogram / FFT window
 # ---------------------------------------------------------------------------
 
+PAD_COLUMN = 12               # unused PlotItem layout column holding a spectrogram's right pad
+
+
 class SpectrogramWindow(QtWidgets.QWidget):
     """Spectrogram (waterfall) of one trace over a time window.
 
@@ -2279,14 +3007,21 @@ class SpectrogramWindow(QtWidgets.QWidget):
     worker thread; the maths is in spectrum.py.
     """
 
-    def __init__(self, panel: CsvViewerWidget, ref):
-        super().__init__(panel, QtCore.Qt.WindowType.Window)
-        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
+    def __init__(self, panel: CsvViewerWidget, ref, embedded: bool = False):
+        # Embedded: a child widget of a board dock (its time axis follows the
+        # board's graphs); otherwise a window of its own.
+        if embedded:
+            super().__init__(panel)
+        else:
+            super().__init__(panel, QtCore.Qt.WindowType.Window)
+            self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.embedded = embedded
         self.panel = panel
         self.ref = ref
         self.label = panel.series_label(ref)
-        self.setWindowTitle(f"Spectrogram - {self.label}")
-        self.resize(1000, 720)
+        if not embedded:
+            self.setWindowTitle(f"Spectrogram - {self.label}")
+            self.resize(1000, 720)
         self.t, self.y = panel.spectrum_source(ref)
         self.result: vd.SpectrogramResult | None = None
         self.error = ""
@@ -2294,7 +3029,7 @@ class SpectrogramWindow(QtWidgets.QWidget):
         self._pending = False
         self._closed = False
         self._build()
-        zoom = panel.current_time_zoom()
+        zoom = None if embedded else panel.current_time_zoom()
         self.set_window(*(zoom or self.full_range()))
         QtCore.QTimer.singleShot(0, self.compute)
 
@@ -2305,6 +3040,8 @@ class SpectrogramWindow(QtWidgets.QWidget):
     # ---------------------------------------------------------------- UI
     def _build(self) -> None:
         layout = QtWidgets.QVBoxLayout(self)
+        if self.embedded:
+            layout.setContentsMargins(0, 0, 0, 0)
         row1 = QtWidgets.QHBoxLayout()
         name = QtWidgets.QLabel(f"Trace: {self.label}")
         font = name.font()
@@ -2352,7 +3089,7 @@ class SpectrogramWindow(QtWidgets.QWidget):
         self.detrend_combo.addItems(list(spectrum.DETRENDS))
         row2.addWidget(self.detrend_combo)
         self.welch_check = QtWidgets.QCheckBox("Average spectrum (Welch)")
-        self.welch_check.setChecked(True)
+        self.welch_check.setChecked(not self.embedded)
         self.welch_check.toggled.connect(lambda _c: self.render())
         row2.addWidget(self.welch_check)
         self.compute_button = QtWidgets.QPushButton("Compute")
@@ -2389,7 +3126,12 @@ class SpectrogramWindow(QtWidgets.QWidget):
 
         self.graphics = pg.GraphicsLayoutWidget()
         layout.addWidget(self.graphics, 1)
-        self.p1 = self.graphics.addPlot(row=0, col=0)
+        if self.embedded:
+            self.graphics.ci.layout.setContentsMargins(0, 0, 0, 0)   # line up with the graphs
+            self.p1 = self.graphics.addPlot(row=0, col=0, viewBox=ExactXViewBox())
+            self.p1.getAxis("left").setWidth(AXIS_WIDTH)
+        else:
+            self.p1 = self.graphics.addPlot(row=0, col=0)
         self.p1.setLabel("bottom", "time [s] (shared axis)")
         self.p1.setLabel("left", "frequency [Hz]")
         self.p1.setMouseEnabled(x=True, y=True)
@@ -2456,6 +3198,57 @@ class SpectrogramWindow(QtWidgets.QWidget):
     def use_full(self) -> None:
         self.set_window(*self.full_range())
         self.compute()
+
+    def set_pads(self, left: int, right: int) -> None:
+        """Match the graphs: left axis width, and empty space right of the
+        colour bar, so the time axis starts and ends where the graphs' do."""
+        self.p1.getAxis("left").setWidth(int(left))
+        self.p1.layout.setColumnFixedWidth(PAD_COLUMN, max(0, int(right)))
+
+    def refresh_source(self) -> None:
+        """Re-read the trace (new time axis, offset or packet filter) and recompute."""
+        self.t, self.y = self.panel.spectrum_source(self.ref)
+        self.use_full()
+
+    def board_settings(self) -> dict:
+        """The settings a data board remembers (see viewer_board)."""
+        full = self.full_range()
+        try:
+            window = [float(self.start_edit.text()), float(self.end_edit.text())]
+        except ValueError:
+            window = list(full)
+        same = (abs(window[0] - round(full[0], 6)) < 1e-6
+                and abs(window[1] - round(full[1], 6)) < 1e-6)
+        if self.auto_range_check.isChecked():
+            colours = "auto"
+        else:
+            try:
+                colours = [float(self.db_min_edit.text()), float(self.db_max_edit.text())]
+            except ValueError:
+                colours = "auto"
+        return {"nfft": int(self.nfft_combo.currentText()),
+                "overlap": int(self.overlap_spin.value()),
+                "window": self.window_combo.currentText(),
+                "detrend": self.detrend_combo.currentText(),
+                "welch": self.welch_check.isChecked(),
+                "colour_range": colours,
+                "time_window": "full" if same else window}
+
+    def apply_board_settings(self, settings: dict) -> None:
+        for combo, value in ((self.nfft_combo, str(settings["nfft"])),
+                             (self.window_combo, settings["window"]),
+                             (self.detrend_combo, settings["detrend"])):
+            if combo.findText(value) >= 0:
+                combo.setCurrentText(value)
+        self.overlap_spin.setValue(max(0, min(95, int(settings["overlap"]))))
+        self.welch_check.setChecked(bool(settings["welch"]))
+        colours = settings["colour_range"]
+        if colours != "auto":
+            self.db_min_edit.setText(value_text(colours[0]))
+            self.db_max_edit.setText(value_text(colours[1]))
+        self.auto_range_check.setChecked(colours == "auto")
+        window = settings["time_window"]
+        self.set_window(*(self.full_range() if window == "full" else window))
 
     def settings(self) -> dict:
         return vd.spectrum_settings(self.start_edit.text(), self.end_edit.text(),
@@ -2563,8 +3356,15 @@ class SpectrogramWindow(QtWidgets.QWidget):
         self.image.setImage(result.image, autoLevels=False, levels=(low, high))
         self.image.setRect(QtCore.QRectF(a.t_start, 0.0, a.t_end - a.t_start, fmax))
         self.colorbar.setLevels((low, high))
-        self.p1.setLimits(xMin=a.t_start, xMax=a.t_end, yMin=0.0, yMax=fmax)
-        self.p1.setRange(xRange=(a.t_start, a.t_end), yRange=(0.0, fmax), padding=0)
+        if self.embedded:
+            # The board's graphs own the time zoom; only the data fixes y.
+            self.p1.setLimits(yMin=0.0, yMax=fmax)
+            self.p1.setYRange(0.0, fmax, padding=0)
+            if self.p1.vb.linkedView(pg.ViewBox.XAxis) is None:
+                self.p1.setXRange(a.t_start, a.t_end, padding=0)
+        else:
+            self.p1.setLimits(xMin=a.t_start, xMax=a.t_end, yMin=0.0, yMax=fmax)
+            self.p1.setRange(xRange=(a.t_start, a.t_end), yRange=(0.0, fmax), padding=0)
         welch = np.where(a.welch_db > -299, a.welch_db, np.nan)
         self.welch_curve.setData(a.freqs, welch)
         self.p2.setLimits(xMin=0.0, xMax=fmax)
@@ -2612,6 +3412,54 @@ class SpectrogramWindow(QtWidgets.QWidget):
                 self.welch_line.show()
         if text is not None:
             self.hover_label.setText(text)
+
+
+class SpectrogramDock(QtWidgets.QFrame):
+    """A spectrogram docked in the board between the graphs. Its time axis is
+    x-linked to the graphs (when the x axis is time), so zooming either moves
+    both. ``after`` is how many graphs sit above it."""
+
+    def __init__(self, owner: "CsvViewerWidget", ref, after: int):
+        super().__init__()
+        self.owner = owner
+        self.ref = ref
+        self.after = after
+        self.setObjectName("spectrogramDock")
+        self.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
+        self.setFixedHeight(DOCK_HEIGHT)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(4, 2, 4, 2)
+        layout.setSpacing(0)
+        header = QtWidgets.QHBoxLayout()
+        title = QtWidgets.QLabel(f"Spectrogram: {owner.series_label(ref)}")
+        font = title.font()
+        font.setBold(True)
+        title.setFont(font)
+        header.addWidget(title)
+        header.addStretch(1)
+        for text, tip, step in (("\u25b2", "Move up the board", -1),
+                                ("\u25bc", "Move down the board", 1)):
+            button = QtWidgets.QToolButton()
+            button.setText(text)
+            button.setAutoRaise(True)
+            button.setToolTip(tip)
+            button.clicked.connect(lambda _c=False, d=step: owner.move_board_spectrogram(self, d))
+            header.addWidget(button)
+        close = QtWidgets.QToolButton()
+        close.setText("\u2715")
+        close.setAutoRaise(True)
+        close.setToolTip("Remove this spectrogram from the board")
+        close.clicked.connect(lambda: owner.remove_board_spectrogram(self))
+        header.addWidget(close)
+        layout.addLayout(header)
+        self.window = SpectrogramWindow(owner, ref, embedded=True)
+        layout.addWidget(self.window, 1)
+
+    def dispose(self) -> None:
+        self.window.shutdown()
+        self.window.p1.vb.setXLink(None)
+        self.setParent(None)
+        self.deleteLater()
 
 
 # ---------------------------------------------------------------------------

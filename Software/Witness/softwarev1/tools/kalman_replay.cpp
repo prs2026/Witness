@@ -13,6 +13,8 @@
 //   kalman_replay events.txt out.csv [key=value ...]
 // Keys: any position::Config field listed in kConfigKeys, plus
 //   highg_offset=0|1   estimate the high-g zero offset on the pad (default 1)
+//   yaw_error_deg=X    rotate the given attitude by X deg about up (a wrong pad heading)
+//   heading_align=0|1  align the heading to the GPS course (heading_align.h, default 1)
 //
 // Event lines (time in sim seconds, sorted):
 //   I t low_x low_y low_z high_x high_y high_z qx qy qz qw   (mg, body->ENU quaternion)
@@ -22,6 +24,7 @@
 // Output: CSV at 100 Hz: t,phase,e,n,u,ve,vn,vu,alt_msl,baro_used,gps_used,gps_rejects
 
 #include "accel_filter.h"
+#include "heading_align.h"
 #include "position_filter.h"
 #include "pressure_altitude.h"
 
@@ -92,6 +95,8 @@ int main(int argc, char **argv)
     }
     position::Config config;
     bool highg_offset = true;
+    float yaw_error = 0.0F;
+    bool heading_align = true;
     for (int i = 3; i < argc; ++i) {
         std::string arg = argv[i];
         const auto eq = arg.find('=');
@@ -101,6 +106,8 @@ int main(int argc, char **argv)
         }
         const std::string key = arg.substr(0, eq), value = arg.substr(eq + 1);
         if (key == "highg_offset") highg_offset = std::atoi(value.c_str()) != 0;
+        else if (key == "yaw_error_deg") yaw_error = static_cast<float>(std::atof(value.c_str())) * 0.0174532925F;
+        else if (key == "heading_align") heading_align = std::atoi(value.c_str()) != 0;
         else if (!set_key(config, key.c_str(), value.c_str())) {
             std::fprintf(stderr, "unknown key %s\n", key.c_str());
             return 2;
@@ -119,6 +126,12 @@ int main(int argc, char **argv)
     accel.configure(100.0F, 960.0F);   // as sensors.cpp: kFilteredAccelCutoffHz at the IMU rate
     accel_filter::HighGCalibration offset;
     position::Phase phase = position::Phase::PadIdle;
+    heading::Aligner aligner;
+    float yaw = yaw_error;   // heading error of the attitude in use (shrinks as it is aligned)
+    auto flying = [&phase]() {
+        return phase == position::Phase::Boost || phase == position::Phase::Coast ||
+               phase == position::Phase::Descent;
+    };
     double last_imu = -1.0, next_update = 0.0, next_out = 0.0;
     float pressure = NAN;
     bool baro_pending = false;
@@ -144,7 +157,12 @@ int main(int argc, char **argv)
             hdop = std::strcmp(hs, "nan") == 0 ? NAN : static_cast<float>(std::atof(hs));
             vdop = std::strcmp(vs, "nan") == 0 ? NAN : static_cast<float>(std::atof(vs));
             if (filter.initialized())
+            {
                 filter.update_gps(lat, lon, alt, static_cast<std::uint8_t>(sats), phase, hdop, vdop);
+                float e = 0.0F, n = 0.0F;
+                if (heading_align && filter.gps_to_local(lat, lon, e, n))
+                    yaw += aligner.add_gps(e, n, t, filter.gps_dynamics_stress_mps2(), flying());
+            }
         } else if (kind == 'I') {
             float low[3], high[3], q[4];
             std::sscanf(line + 2, "%lf %f %f %f %f %f %f %f %f %f %f", &t, &low[0], &low[1], &low[2],
@@ -159,6 +177,15 @@ int main(int argc, char **argv)
             const float body[3] = {mg[0] * kMgToMps2, mg[1] * kMgToMps2, mg[2] * kMgToMps2};
             float world[3];
             rotate(q, body, world);
+            if (yaw != 0.0F) {   // the attitude in use is rotated by yaw about up
+                const float c = std::cos(yaw), sn = std::sin(yaw);
+                const float we = c * world[0] - sn * world[1];
+                const float wn = sn * world[0] + c * world[1];
+                world[0] = we;
+                world[1] = wn;
+            }
+            aligner.add_inertial(world[0], world[1], last_imu >= 0.0 ? static_cast<float>(t - last_imu) : 0.0F,
+                                 flying());
             if (last_imu >= 0.0) filter.predict(world, static_cast<float>(t - last_imu), phase);
             last_imu = t;
             if (t >= next_update) {
@@ -189,6 +216,9 @@ int main(int argc, char **argv)
     }
     std::fclose(in);
     std::fclose(out);
+    std::fprintf(stderr, "heading: start error %.1f deg, left %.1f deg after %u corrections\n",
+                 yaw_error * 57.29578F, std::remainder(yaw, 6.2831853F) * 57.29578F,
+                 static_cast<unsigned>(aligner.corrections()));
     std::fprintf(stderr, "highg_cal scale %.4f %.4f %.4f offset_mg %.1f %.1f %.1f baro_scale %.4f +- %.4f\n",
                  offset.scale(0), offset.scale(1), offset.scale(2), offset.offset_mg(0),
                  offset.offset_mg(1), offset.offset_mg(2), filter.baro_scale(),

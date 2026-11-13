@@ -53,7 +53,9 @@ public:
         BadCrc,       // COMMIT with every chunk but a CRC mismatch
         BadFormat,    // COMMIT: records do not parse
         Status,       // STATUS request
+        AlreadyComplete,  // COMMIT repeated for the transfer that already completed
     };
+    enum class State : std::uint8_t { Idle = 0, Receiving = 1, Complete = 2, Failed = 3 };
 
     // data: the six data bytes of the command frame (bytes 1..6).
     Result handle(std::uint16_t command, const std::uint8_t data[6]);
@@ -64,6 +66,13 @@ public:
     bool active() const { return active_; }
     std::size_t chunks_received() const { return received_; }
     std::size_t chunks_expected() const { return chunk_count(); }
+    std::uint8_t transfer_id() const { return id_; }
+    State state() const { return state_; }
+    // First chunk not yet received (chunks_expected() when none is missing).
+    std::size_t first_missing_chunk() const;
+    // Received-chunk bitmap from `start`: bit i of out (LSB first per byte)
+    // is chunk start + i; `bytes` bytes are written (chunks past the end read 1).
+    void bitmap_window(std::size_t start, std::uint8_t *out, std::size_t bytes) const;
     // Number of records in a complete blob (valid after Complete).
     std::size_t records() const { return records_; }
 
@@ -82,6 +91,7 @@ private:
     std::uint8_t format_ = 0;
     std::uint8_t id_ = 0;
     bool active_ = false;
+    State state_ = State::Idle;
 };
 
 // Iterates the records of a verified blob.

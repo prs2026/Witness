@@ -62,6 +62,7 @@ Estimator::Estimator(const Config &config)
 void Estimator::reset()
 {
     q_ = Quaternion{1.0F, 0.0F, 0.0F, 0.0F};
+    heading_corrected_rad_ = 0.0F;
     bias_ = Vector3{};
     valid_ = false;
     lost_ = false;
@@ -389,6 +390,16 @@ Quaternion Estimator::multiply(const Quaternion &a, const Quaternion &b)
     };
 }
 
+
+void Estimator::rotate_heading(const float yaw_rad)
+{
+    if (!valid_ || !std::isfinite(yaw_rad)) return;
+    // q maps BODY -> WORLD, so a world-frame rotation multiplies on the left.
+    const Quaternion r = exp_rotation(Vector3{0.0F, 0.0F, yaw_rad});
+    q_ = normalized(multiply(r, q_));
+    window_start_q_ = normalized(multiply(r, window_start_q_));
+    heading_corrected_rad_ += yaw_rad;
+}
 Quaternion Estimator::exp_rotation(const Vector3 &r)
 {
     // Exact unit quaternion for rotation vector r: [cos(t/2), sin(t/2) r/t].

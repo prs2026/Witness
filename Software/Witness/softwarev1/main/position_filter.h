@@ -181,6 +181,15 @@ public:
     bool still() const { return still_; }
     bool initialized() const { return initialized_; }
     bool gps_origin_set() const { return gps_origin_set_; }
+    // A GPS position in this filter's local frame (m from the GPS origin);
+    // false before the origin is set.
+    bool gps_to_local(double latitude_deg, double longitude_deg, float &east_m, float &north_m) const
+    {
+        if (!gps_origin_set_) return false;
+        east_m = static_cast<float>((longitude_deg - gps_origin_lon_) * meters_per_deg_lon_);
+        north_m = static_cast<float>((latitude_deg - gps_origin_lat_) * meters_per_deg_lat_);
+        return true;
+    }
     std::uint32_t baro_updates() const { return baro_updates_; }
     std::uint32_t gps_updates() const { return gps_updates_; }
     std::uint32_t baro_rejects() const { return baro_rejects_total_; }

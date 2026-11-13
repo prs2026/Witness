@@ -7,6 +7,7 @@
 
 #include "attitude_estimator.h"
 #include "accel_filter.h"
+#include "heading_align.h"
 #include "imu_calibration.h"
 #include "position_filter.h"
 #include "comms.h"
@@ -68,14 +69,14 @@ public:
     // Independent LoRa downlink rates. Each transmission uses the most recent
     // canonical frame generated at the packet's normal producer/USB rate.
     // Rates must be non-zero integer divisors of 1000 Hz.
+    // Only sensors, state and camera go over the air (~59 ms of airtime per
+    // second at SF7/500). Heartbeat, command relay and the debug packets stay
+    // on USB/CAN; command acks (0x06) and transfer status (0x07) are replies
+    // sent through the immediate queue, not this rotation.
     static constexpr std::uint32_t kRadioSensorPacketRateHz = 1;
     static constexpr std::uint32_t kRadioStatePacketRateHz = 1;
     static constexpr std::uint32_t kRadioCameraPacketRateHz = 1;
-    static constexpr std::uint32_t kRadioCommandPacketRateHz = 1;
-    static constexpr std::uint32_t kRadioHeartbeatPacketRateHz = 1;
-    static constexpr std::uint32_t kRadioWitnessDebugPacketRateHz = 1;
-    static constexpr std::uint32_t kRadioIrisDebugPacketRateHz = 1;
-    static constexpr std::size_t kRadioPacketTypeCount = 7;
+    static constexpr std::size_t kRadioPacketTypeCount = 3;
 
     // GPIO1 uses ADC1 channel 0. The board divider is 15k high / 5k low.
     static constexpr adc_unit_t kBatteryAdcUnit = ADC_UNIT_1;
@@ -185,8 +186,23 @@ public:
     // NAND IMU stream: one record per fresh IMU sample. Set before start().
     void set_imu_log_sink(FlashLogger *logger) { imu_log_sink_ = logger; }
     esp_err_t latest_sample(Sample &sample, TickType_t timeout = 0) const;
+    // Pad heading: body axis code (0 +Y, 1 -Y, 2 +Z, 3 -Z; 0xFF clears) and
+    // its azimuth in 0.01 deg from north. Pad Idle only; any task.
+    esp_err_t set_pad_heading(std::uint8_t axis_code, std::uint16_t azimuth_centideg);
+    // Radio transmit drive, dBm (IRIS_COMMAND_RADIO_POWER); RAM only.
+    bool set_radio_tx_power_dbm(int dbm) { return radio_.set_tx_power_dbm(dbm); }
+    int radio_tx_power_dbm() const { return radio_.tx_power_dbm(); }
+    void set_radio_front_end_enabled(bool on) { radio_.set_front_end_enabled(on); }
+    bool radio_front_end_enabled() const { return radio_.front_end_enabled(); }
     esp_err_t handle_command(std::uint16_t command);
     void set_radio_transmission_enabled(bool enabled);
+    // While transmission is disabled (Wi-Fi up), still send the latest 0x02
+    // state packet every kRadioBeaconPeriodMs so the ground station sees the
+    // MAINTENANCE status bit. ~120 ms on air per beacon (about 2 % duty).
+    void set_radio_beacon_only(bool on) { radio_beacon_only_.store(on); }
+    static constexpr std::uint32_t kRadioBeaconPeriodMs = 5000;
+    // True once the RA-01 radio initialized (OTA self-test, wifi_ota.cpp).
+    bool radio_ready() const { return radio_ready_; }
 
     // HITL mode (see hitl_input.h). Thread-safe; called from the USB command
     // task. Entry requires USB and Pad Idle; every outcome is logged.
@@ -354,6 +370,9 @@ private:
     std::size_t take_hitl_imu_samples(std::uint64_t now_us);
     // Position filter: predict from the filtered acceleration rotated to ENU
     // (needs a valid attitude), and the 25 Hz baro/GPS update.
+    bool in_flight() const;   // Boost, Coast or Descent
+    // Applies a pending/stored pad heading to the attitude (sensors task).
+    void service_pad_heading(bool attitude_reinitialized);
     void predict_position(std::uint64_t timestamp_us);
     void service_position(std::uint64_t now_us);
     void report_position(std::uint64_t now_us);
@@ -417,6 +436,8 @@ private:
     std::array<TickType_t, kRadioPacketTypeCount> radio_last_sent_{};
     std::size_t next_radio_packet_index_ = 0;
     std::atomic_bool radio_transmission_enabled_{true};
+    std::atomic_bool radio_beacon_only_{false};
+    TickType_t radio_last_beacon_ = 0;
     std::atomic_bool debug_packet_output_enabled_{false};
     Sample working_sample_{};
     Sample latest_sample_{};
@@ -507,6 +528,18 @@ private:
     accel_filter::FilteredAccel filtered_accel_{};
     // High-g scale/offset fitted against the low-g (accel_filter.h).
     accel_filter::HighGCalibration high_g_calibration_{};
+    // Inertial heading aligned to the GPS course in flight (heading_align.h).
+    heading::Aligner heading_aligner_{};
+    // Pad heading (IRIS_COMMAND_PAD_HEADING): set from the command task,
+    // applied on the sensors task while the attitude is valid in Pad Idle.
+    mutable portMUX_TYPE pad_heading_lock_ = portMUX_INITIALIZER_UNLOCKED;
+    bool pad_heading_request_ = false;        // new command waiting (under the lock)
+    std::uint8_t pad_heading_request_axis_ = 0xFF;
+    std::uint16_t pad_heading_request_cdeg_ = 0;
+    bool pad_heading_active_ = false;         // sensors task only
+    std::uint8_t pad_heading_axis_ = 0;
+    float pad_heading_azimuth_rad_ = 0.0F;
+    bool pad_heading_pending_apply_ = false;
     position::Filter position_filter_{};
     std::uint64_t position_last_predict_us_ = 0;
     std::uint64_t position_last_update_us_ = 0;

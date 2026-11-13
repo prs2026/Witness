@@ -7,7 +7,31 @@
 
 #include "esp_heap_caps.h"
 #include "esp_log.h"
+#include "esp_system.h"
 #include "freertos/idf_additions.h"
+#include "wifi_ota.h"
+
+// Repeated every report (not only at boot): after a reset the USB console
+// reconnects late, so a one-off boot line is usually lost. BROWNOUT here
+// means the supply sagged, e.g. under the RA-01SH-P transmit current.
+static const char *reset_reason_name(const esp_reset_reason_t reason)
+{
+    switch (reason) {
+    case ESP_RST_POWERON: return "POWERON";
+    case ESP_RST_EXT: return "EXT";
+    case ESP_RST_SW: return "SW";
+    case ESP_RST_PANIC: return "PANIC";
+    case ESP_RST_INT_WDT: return "INT_WDT";
+    case ESP_RST_TASK_WDT: return "TASK_WDT";
+    case ESP_RST_WDT: return "WDT";
+    case ESP_RST_DEEPSLEEP: return "DEEPSLEEP";
+    case ESP_RST_BROWNOUT: return "BROWNOUT";
+    case ESP_RST_SDIO: return "SDIO";
+    case ESP_RST_USB: return "USB";
+    case ESP_RST_JTAG: return "JTAG";
+    default: return "UNKNOWN";
+    }
+}
 
 namespace {
 constexpr char kLogTag[] = "cpu";
@@ -89,11 +113,12 @@ void CpuLoadMonitor::report()
         return a.percent > b.percent;
     });
     ESP_LOGI(kLogTag,
-             "core0 %.1f%% busy, core1 %.1f%% busy; heap free %u (min %u), internal free %u",
+             "core0 %.1f%% busy, core1 %.1f%% busy; heap free %u (min %u), internal free %u; last reset %s; wifi %s",
              100.0 - idle_percent[0], 100.0 - idle_percent[1],
              static_cast<unsigned>(heap_caps_get_free_size(MALLOC_CAP_DEFAULT)),
              static_cast<unsigned>(heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT)),
-             static_cast<unsigned>(heap_caps_get_free_size(MALLOC_CAP_INTERNAL)));
+             static_cast<unsigned>(heap_caps_get_free_size(MALLOC_CAP_INTERNAL)),
+             reset_reason_name(esp_reset_reason()), wifi_ota_state_text());
     // One short line per task: the USB stream interleaves GPS bytes, so a
     // long single line is easily split.
     std::size_t listed = 0;

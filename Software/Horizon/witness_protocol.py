@@ -81,10 +81,17 @@ FLIGHT_STATE_LABELS = (
 FLIGHT_STATE_MASK = 0x07
 GPS_LOCKED_MASK = 0x08   # bit 3: fresh GPS fix
 HITL_ACTIVE_MASK = 0x10  # bit 4: HITL active, sensor values are simulated
+MAINTENANCE_MASK = 0x20  # bit 5: maintenance boot (Wi-Fi), NOT logging, NOT flight ready
 STATUS_BYTE1_FLAG_LABELS = (
     (GPS_LOCKED_MASK, "GPS lock"),
     (HITL_ACTIVE_MASK, "HITL (SIM)"),
+    (MAINTENANCE_MASK, "MAINTENANCE"),
 )
+
+
+def status_maintenance(status) -> bool:
+    """Witness is in its maintenance (Wi-Fi) boot: not logging, not flight ready."""
+    return isinstance(status, int) and bool(status & MAINTENANCE_MASK)
 
 
 def status_gps_locked(status: int) -> int:
@@ -135,6 +142,13 @@ LSM6_TEMPERATURE_C_PER_COUNT = 1.0 / 256.0
 MS5607_TEMPERATURE_C_PER_COUNT = 0.01
 LSM6_LOW_ACCEL_G_PER_COUNT = 0.000488
 LSM6_HIGH_ACCEL_G_PER_COUNT = 0.010417
+
+
+# 0x06 command acknowledgement result codes (comms.h IRIS_ACK_*).
+ACK_RESULTS = {0: "ok", 1: "refused", 2: "bad argument", 3: "unknown command", 4: "busy",
+               5: "incomplete", 6: "bad CRC", 7: "bad format"}
+# 0x07 transfer status states.
+TRANSFER_STATES = {0: "idle", 1: "receiving", 2: "complete", 3: "failed"}
 
 
 def parse_packet(packet_id: int, payload: bytes):
@@ -206,6 +220,20 @@ def parse_packet(packet_id: int, payload: bytes):
             "gps_time": number(payload[93:97]),
             "gps_altitude": round(float32(payload[97:101]), 6),
         }
+    if packet_id == 0x06 and len(payload) == 11:
+        # Command acknowledgement (comms.h IRIS_PACKET_ID_COMMAND_ACK).
+        return {"packet": "command_ack", "command_value": number(payload[0:2]),
+                "command_data": bytes(payload[2:8]).hex(" "), "result": payload[8],
+                "result_name": ACK_RESULTS.get(payload[8], f"0x{payload[8]:02X}"),
+                "detail": number(payload[9:11])}
+    if packet_id == 0x07 and len(payload) == 74:
+        # GPS assist transfer status (comms.h IRIS_PACKET_ID_TRANSFER_STATUS).
+        start = number(payload[8:10])
+        bitmap = payload[10:74]
+        return {"packet": "transfer_status", "transfer_id": payload[0],
+                "state": TRANSFER_STATES.get(payload[1], payload[1]), "length": number(payload[2:4]),
+                "chunks_expected": number(payload[4:6]), "chunks_received": number(payload[6:8]),
+                "window_start": start, "bitmap": bytes(bitmap).hex()}
     if packet_id == 0xE1 and len(payload) == 12:
         return {
             "packet": "iris_debug", "status": number(payload[0:2]),
@@ -224,7 +252,8 @@ class PacketDecoder:
     # State: 63-byte payload (65-byte frame, with GPS satellites) is current;
     # 62 bytes is the legacy 64-byte frame from older firmware/logs.
     payload_lengths = {0x01: (23, 21), 0x02: (63, 62), 0x03: (17,), 0xFF: (6,),
-                       0xF0: (27, 11), 0x05: (8,), 0xE0: (101,), 0xE1: (12,)}
+                       0xF0: (27, 11), 0x05: (8,), 0xE0: (101,), 0xE1: (12,),
+                       0x06: (11,), 0x07: (74,)}
     # Host -> Witness packets that Witness may echo on USB. They are deframed
     # (fixed length + EOF) and skipped, never decoded or shown as telemetry.
     # 0x0C = HITL sensor input, 47-byte frame.
@@ -339,6 +368,81 @@ def build_command_packet(opcode: int) -> bytes:
         + opcode.to_bytes(2, byteorder="big")
         + bytes((COMMAND_PACKET_EOF,))
     )
+
+
+# Pad heading (comms.h IRIS_COMMAND_PAD_HEADING): which body axis points to
+# which azimuth while the rocket is on the rail. Witness has no magnetometer,
+# so without it the heading is unknown until GPS shows the course.
+PAD_HEADING_COMMAND = 0x4844
+PAD_HEADING_AXES = {"+Y": 0, "-Y": 1, "+Z": 2, "-Z": 3}
+PAD_HEADING_CLEAR = 0xFF
+
+
+def build_pad_heading_packet(axis: str | None, azimuth_deg: float = 0.0) -> bytes:
+    """Command frame setting the pad heading: `axis` ("+Y", "-Y", "+Z", "-Z")
+    points to `azimuth_deg` (clockwise from true north). axis None clears it.
+    Data bytes ride in the status/uptime fields: d0 axis code, d1-d2
+    azimuth in 0.01 deg (u16 BE), d3-d5 zero."""
+    if axis is None:
+        code, centideg = PAD_HEADING_CLEAR, 0
+    else:
+        if axis not in PAD_HEADING_AXES:
+            raise ValueError(f"axis must be one of {sorted(PAD_HEADING_AXES)}")
+        code = PAD_HEADING_AXES[axis]
+        centideg = int(round((azimuth_deg % 360.0) * 100.0)) % 36000
+    data = bytes((code,)) + centideg.to_bytes(2, "big") + bytes(3)
+    return (bytes((COMMAND_PACKET_ID,)) + data + PAD_HEADING_COMMAND.to_bytes(2, "big")
+            + bytes((COMMAND_PACKET_EOF,)))
+
+
+# comms.h IRIS_COMMAND_RADIO_POWER: RAM-only radio drive level. Both radios
+# boot at the bench-safe minimum (-17 dBm drive on the SX1262 low-power PA).
+RADIO_POWER_COMMAND = 0x5250
+RADIO_POWER_TARGETS = {"witness": 0x00, "ground": 0x01}
+RADIO_POWER_MIN_DBM, RADIO_POWER_MAX_DBM = -17, 3   # below -9: SX1262 low-power PA
+RADIO_FRONT_END = {None: 0x00, True: 0x01, False: 0x02}   # unchanged / on / off (RF_EN)
+RADIO_FRONT_END_GAIN_DB = 26     # Ra-01SH-P PA, ~+29 dBm saturated
+
+
+def build_radio_power_packet(target: str, drive_dbm: int, front_end: bool | None = None) -> bytes:
+    """Command frame setting a radio's SX1262 drive (dBm, -17..+3).
+    front_end: None leaves RF_EN as is, True turns the Ra-01SH-P front end on,
+    False powers it down (bench only: no PA current, signal passes attenuated).
+    target "witness" (Witness applies and acks, USB or radio) or "ground"
+    (Aperture applies it to its own radio and acks on USB; not transmitted).
+    d0 target, d1 drive as int8, d2 front end, d3-d5 zero."""
+    if target not in RADIO_POWER_TARGETS:
+        raise ValueError(f"target must be one of {sorted(RADIO_POWER_TARGETS)}")
+    drive = int(drive_dbm)
+    if not RADIO_POWER_MIN_DBM <= drive <= RADIO_POWER_MAX_DBM:
+        raise ValueError(f"drive must be {RADIO_POWER_MIN_DBM}..{RADIO_POWER_MAX_DBM} dBm "
+                         "(Ra-01SH-P front-end input limit)")
+    data = bytes((RADIO_POWER_TARGETS[target], drive & 0xFF, RADIO_FRONT_END[front_end])) + bytes(3)
+    return (bytes((COMMAND_PACKET_ID,)) + data + RADIO_POWER_COMMAND.to_bytes(2, "big")
+            + bytes((COMMAND_PACKET_EOF,)))
+
+
+# comms.h IRIS_COMMAND_WIFI: Wi-Fi access point for OTA firmware update and log
+# download. Pad Idle or Landed only; LoRa transmission stops while it is on.
+WIFI_COMMAND = 0x5746
+WIFI_TX_MIN_DBM, WIFI_TX_MAX_DBM = 2, 20
+WIFI_AUTO_OFF_MAX_MINUTES = 240
+
+
+def build_wifi_packet(on: bool, tx_dbm: int = 0, minutes: int = 0) -> bytes:
+    """Command frame turning Witness's Wi-Fi access point on or off.
+    d0 0 off / 1 on, d1 Wi-Fi maximum TX power in dBm as int8 (0 keeps the
+    firmware default, +8; otherwise 2..20), d2 auto-off minutes (0 = default
+    15, else 1..240), d3-d5 zero. USB or radio; Witness acks (0x06)."""
+    tx = int(tx_dbm)
+    if tx != 0 and not WIFI_TX_MIN_DBM <= tx <= WIFI_TX_MAX_DBM:
+        raise ValueError(f"tx_dbm must be 0 (default) or {WIFI_TX_MIN_DBM}..{WIFI_TX_MAX_DBM} dBm")
+    mins = int(minutes)
+    if not 0 <= mins <= WIFI_AUTO_OFF_MAX_MINUTES:
+        raise ValueError(f"minutes must be 0 (default) or 1..{WIFI_AUTO_OFF_MAX_MINUTES}")
+    data = bytes((1 if on else 0, tx & 0xFF, mins)) + bytes(3)
+    return (bytes((COMMAND_PACKET_ID,)) + data + WIFI_COMMAND.to_bytes(2, "big")
+            + bytes((COMMAND_PACKET_EOF,)))
 
 
 def build_quick_command_packet(opcode: int) -> bytes:
@@ -469,6 +573,6 @@ def decode_status(value: int, camera: bool = False) -> dict:
     state = value & FLIGHT_STATE_MASK
     result["state"] = state
     result["state_valid"] = state in dict(FLIGHT_STATE_LABELS)
-    result["byte1"] = [(mask, text, bool(value & mask), mask == HITL_ACTIVE_MASK)
+    result["byte1"] = [(mask, text, bool(value & mask), mask in (HITL_ACTIVE_MASK, MAINTENANCE_MASK))
                        for mask, text in STATUS_BYTE1_FLAG_LABELS]
     return result
