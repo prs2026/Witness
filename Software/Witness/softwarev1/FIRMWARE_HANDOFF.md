@@ -1172,81 +1172,179 @@ problems; never load an entire file into RAM as the export mechanism. Export and
 erase waits can be indefinite by default, so keep failure handling in view when
 changing synchronization.
 
-## Wi-Fi OTA and log download
+## Two-image boot: flight image and maintenance image (Wi-Fi OTA, log download)
 
 Once Witness is soldered to the backplane its USB port is unreachable, so
 firmware update and log download use the ESP32-S3's own 2.4 GHz Wi-Fi (u.FL
-antenna). `wifi_ota.{h,cpp}` (pure helpers in `wifi_ota_logic.{h,cpp}`, host
-test `tests/wifi_ota_logic_test.cpp`); host tool `Horizon/witness_ota.py`.
-Bluetooth stays off; no web UI, TLS or mDNS.
+antenna). Linking Wi-Fi/lwIP/HTTP/TinyUSB costs about 27 KB of internal RAM
+permanently, so since 2026-11-13 there are **two images built from this one
+source tree** and the flight image links none of that code:
 
-**Partitions** (`partitions.csv`, 8 MB flash): `nvs` 0x9000/0x6000 and
-`phy_init` 0xF000/0x1000 are unchanged from the 2 MB layout, so IMU
-calibration in NVS survives the migration; `otadata` 0x10000/0x2000; `ota_0`
-0x20000 and `ota_1` 0x320000, 3 MB each (app is about 1.1 MB). **One-time
-migration over USB:** `flash_verified.ps1` (now driven by `build/flash_args`:
-bootloader, partition table, ota_data_initial, app at ota_0) on a board with the
-old layout; `-CheckOnly` reads the app descriptor at ota_0, ota_1, then the old
-0x10000. Afterwards every update can go over Wi-Fi.
+| | FLIGHT image | MAINTENANCE image |
+|---|---|---|
+| `main/CMakeLists.txt` set | sensors, attitude/Kalman, FSM, GPS, CAN, flash logger (write path), `usb_serial_echo`, `flight_selftest` | `maint_main`, `maint_radio`, `maint_usb`, `wifi_ota`, `usb_mass_storage`, flash logger (read-only `start_export_only`), `ra01`, `w25n01kv` |
+| Wi-Fi/lwIP/HTTP/TinyUSB | **not linked** (checked: no `libnet80211/libpp/libwpa/lwip/esp_http_server/tinyusb` archive member in the map) | linked |
+| Sensors/IMU/Kalman/GPS | yes | **none** |
+| Runs | always (default boot) | only on request; every reset leaves it |
 
-**Rollback:** `CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE`. A freshly uploaded image
-boots pending-verify; `WifiOta` marks it valid only when, within 30 s of boot,
-low-g and gyro are ready, no flash init/log failure flag is set and the radio
-initialized. Otherwise (or on any reset/crash first) the bootloader returns to
-the previous slot. A manual `/reboot` while pending also rolls back.
+`CONFIG_WITNESS_IMAGE_FLIGHT` / `_MAINTENANCE` (Kconfig choice in
+`Kconfig.projbuild`, set by the `sdkconfig.flight` / `sdkconfig.maint` overlays)
+select compile-time code (`#if CONFIG_WITNESS_IMAGE_MAINTENANCE` in
+`flash_logger.cpp`, `boot_manager.cpp`); the source list and component
+requirements are chosen by the **`WITNESS_IMAGE` environment variable**
+(`maintenance`; unset = flight) because IDF evaluates component requirements
+before sdkconfig exists. `main/CMakeLists.txt` stops the build if the two
+disagree. Both images list `esp_tinyusb` in `idf_component.yml` (so the
+component manager keeps it downloaded); the flight image builds but never
+links it.
 
-**Turning it on:** `IRIS_COMMAND_WIFI` 0x5746 (`build_wifi_packet(on, tx_dbm,
-minutes)`), USB or radio, Pad Idle or Landed only (else `IRIS_ACK_REFUSED`).
-d1 = Wi-Fi max TX dBm (0 = default +8, allowed 2..20), d2 = auto-off minutes
-(0 = 15). Wi-Fi never starts at boot, except for the confirmation window below.
-It turns off on the auto-off timeout without HTTP activity, on any flight state
-change out of Pad Idle/Landed, and when USB mass storage starts. While it is on
-all LoRa transmission (telemetry and acks) is stopped via
-`Sensors::set_radio_transmission_enabled(false)` (the same switch mass storage
-uses; `UsbSerialEcho::start_mass_storage` tells `WifiOta` so Wi-Fi never
-re-enables the radio behind it); LoRa receive keeps running so an off command
-over radio works. A radio on-command is acked first, then the radio is cut
-after 600 ms; a radio off-command is acked after Wi-Fi is down and TX is back.
-The first boot after an OTA (once valid) opens Wi-Fi for
-`CONFIG_WITNESS_WIFI_CONFIRM_MINUTES` (5) so the host can read `/info`; set 0 to
-disable.
+**Partitions** (`partitions.csv`, 8 MB): `nvs` 0x9000/0x6000 and `phy_init`
+0xF000/0x1000 are unchanged from the 2 MB layout (IMU calibration survives);
+`otadata` 0x10000/0x2000; then, all 64 KB aligned:
 
-**Access point:** WPA2, SSID `witness-XXXX` (last two MAC bytes) or
-`CONFIG_WITNESS_WIFI_SSID_OVERRIDE`, password `CONFIG_WITNESS_WIFI_PASSWORD`
-(default `witness-ota-2026`; **change it**), channel 6, 2 stations, 192.168.4.1
-with DHCP. The Pi's wlan0 joins it. Wi-Fi, lwIP and the HTTP server run on core
-0 (`wifi_ota` task, httpd priority 2); the sensor task on core 1 is untouched,
-but flash writes during an OTA stall both cores' flash cache for tens of ms,
-which is why OTA is Pad Idle/Landed only. The Wi-Fi stack is initialised on
-enable and torn down on disable, so it costs no heap while off.
+| Name | Subtype | Offset | Size | Holds |
+|---|---|---|---|---|
+| `flight_a` | ota_0 | 0x20000 | 2 MB | flight image (old `ota_0` offset) |
+| `flight_b` | ota_1 | 0x220000 | 2 MB | flight image |
+| `maint_a` | ota_2 | 0x420000 | 1.5 MB | maintenance image |
+| `maint_b` | ota_3 | 0x5A0000 | 1.5 MB | maintenance image |
 
-**HTTP** (`esp_http_server`, 4 KB transfer buffer): `GET /info` (project,
-version, idf, running/next slot, app_state valid/pending, uptime, flight state,
-Wi-Fi TX, free heap, logging_frozen, log_files); `POST /ota` (raw .bin with
-Content-Length; image header, ESP32-S3 chip id and project name "softwarev1"
-checked from the first 288 bytes before any flash write; streamed into the
-other slot; reboot 1 s later, Pad Idle/Landed only); `GET /logs` and
-`GET /logs/<name>` (the FlashLogger export table, chunked); `POST /reboot`;
-`POST /wifi/off`.
+0x720000..0x800000 is free. Sizes: flight 437 KB, maintenance 849 KB.
+DIRAM static: flight 205 054 B (was ~236 KB with Wi-Fi linked; 136 706 B free
+for heap/stack), maintenance 172 086 B.
 
-**Logs freeze logging.** `FlashLogger::read_export_file` needs the logger
-frozen (`prepare_mass_storage`, irreversible until reset), exactly as USB mass
-storage. The first `/logs` call therefore freezes flash logging; Wi-Fi off after
-that reboots Witness (about 2 s, Pad Idle/Landed only) to restore it. Because
-that thaw reboot never happens in flight, a launch after a download on the pad
-would fly unlogged, so `/logs` and `/logs/<name>` are refused (409) unless the
-flight state is **Landed**. On the bench, set Landed first (`05 73 04`) or use
-USB mass storage. `/info` shows `logging_frozen`.
+**Building:** `.\build_images.ps1` builds `build/` (flight) and `build_maint/`
+(maintenance, `WITNESS_IMAGE=maintenance`, `SDKCONFIG_DEFAULTS=
+sdkconfig.defaults;sdkconfig.maint`, own generated sdkconfig) and collects
+`images/flight.bin`, `maint.bin`, `bootloader.bin`, `partition-table.bin`,
+`ota_data_initial.bin` plus a combined `images/flash_args`. A plain
+`idf.py build` still builds the flight image. **One-time USB migration:**
+`flash_verified.ps1` writes `images/flash_args` (bootloader, table, otadata,
+flight at 0x20000, maintenance at 0x420000); its identity check accepts either
+image kind in any slot (0x20000, 0x220000, 0x420000, 0x5A0000, old 0x320000 and
+0x10000) and reports the kind. Afterwards both images update over Wi-Fi.
 
-**Host:** `python3 witness_ota.py [--base URL] info | upload <bin> | logs | get
-<name|all> [-o dir] | reboot | wifi-off`. `upload` checks the image locally,
-streams it, waits for the reboot and confirms the new version with app_state
-valid.
+**Image-info record** (`main/image_info.h`, pure, host test
+`tests/image_info_test.cpp`): a 48-byte `Info` in `.rodata_custom_desc`, which
+the linker places directly behind `esp_app_desc_t`, i.e. at **file offset 288**
+of every app image: magic "WIMG", struct version, kind (1 flight, 2
+maintenance), storage format version and minimum readable version
+(`IRIS_MAINT_STORE_FORMAT_VERSION` 4 / `_MIN_VERSION` 3, must match
+`FlashLogger::kStoreVersion`), command-set version, the LoRa settings
+(frequency, bandwidth, SF, CR, preamble, sync word, settings version) and a
+build id (build time, orders images). Constants live in `comms.h` (four
+byte-identical copies).
 
-**Not bench verified** (written without hardware): everything above on a real
-board, in particular heap headroom with Wi-Fi up, throughput, rollback, and the
-interaction with LoRa/mass storage. Check `cpu` log lines (`wifi on/off`,
-heap) and the `wifi_ota` tag.
+**Switching flight -> maintenance.** `IRIS_COMMAND_WIFI` 0x5746 "on" (USB or
+radio) and 0x6868 (USB only) keep the `command_policy` rules (Pad Idle or
+Landed; radio never for 0x6868). If allowed, `boot_manager::prepare_switch`:
+1. selects the maintenance slot (`select_maintenance_slot`: newest slot that is
+   not newer than the last **confirmed** build; if none, the newest valid one),
+2. reads its image-info and runs `check_maintenance` against the flight image's
+   own record: slot present and kind right; info layout version equal; flight
+   store version within the maintenance image's MIN..current; LoRa settings and
+   settings version identical; command-set version equal,
+3. arms the request in NVS namespace `wboot` key `req` (kind, Wi-Fi TX dBm,
+   auto-off minutes, flight slot to return to, LoRa TX power/front end so the
+   range the operator set survives),
+4. `esp_ota_set_boot_partition(maint)` (validates the SHA-256),
+5. the command is acked and `maintenance_mode::restart_after_ms` restarts
+   (400 ms; +600 ms for radio so the ack is on the air first).
+A refusal is `IRIS_ACK_REFUSED` with the reason in the ack detail:
+`0x0001` no valid maintenance image, `0x0002` image-info missing/corrupt/wrong
+kind, `0x0003` store format, `0x0004` LoRa settings, `0x0005` command set,
+`0x0006` info layout, `0x0007` boot-slot selection failed, `0x0008` switch
+already pending; detail 0 = refused by flight state / source. Nothing is armed
+and the boot slot is unchanged on refusal. The request lives in NVS rather than
+RTC memory because the two images do not share an RTC layout.
+
+**Returning maintenance -> flight (every reset).** `maint_main.cpp`
+`app_main` first reads and erases the request (`maintenance_mode::consume`,
+honoured only if the reset reason is `ESP_RST_SW`). With a request:
+`boot_manager::return_to_flight` marks the maintenance image valid, sets the
+boot partition to the flight slot (`select_flight_slot`: the requesting slot,
+else NVS `fslot` last-good, else newest valid) and marks that flight entry valid
+(so the flight image does not boot pending-verify). From then on **any** reset,
+crash, watchdog or power loss boots flight. Without a request (crash/power loss
+in the milliseconds before the above, or a bootloader rollback landing in a
+maintenance slot) it restores the flight slot and restarts at once. If no flight
+image exists it stays up in **recovery** (Wi-Fi on, no auto-off, beacon flag) so
+one can be uploaded. Leaving normally = `maint::leave()` -> restart: radio/USB
+0x5746 off, HTTP `/wifi/off` or `/reboot`, Wi-Fi auto-off (default 15 min without
+HTTP activity), USB export limit (120 min), or any reset. Flight state resume
+(C3) is unaffected: a switch is only allowed in Pad Idle/Landed, and
+`flight_state_store` ignores Landed.
+
+**Maintenance behaviour.** Radio task (`maint_radio.cpp`): RA-01 on SPI3 (the
+IMU/baro chip selects are held high), polls DIO1, handles canonical 10-byte
+commands: 0x5746 on (already up: extends the Wi-Fi window, acks with the status
+word), off (ack, then leave), status d0=2 (detail bit 8 AP up, bit 9 start
+failed, low byte start step), 0x5250 radio power; everything else is acked
+`IRIS_ACK_UNKNOWN`. LoRa TX is **not** silenced while Wi-Fi is up (the old
+design stopped it; the beacon and acks are short). Beacon: `0x08` every 5 s on
+LoRa and USB (see `GROUND_STATION_PROTOCOL.md`). Wi-Fi mode also accepts the same
+frames over USB serial (`maint_usb.cpp`). USB export mode never starts the
+serial driver: it waits for the read-only log store to mount (~25 s), sets the
+console non-blocking and starts `UsbMassStorage`; LoRa keeps running. Battery
+millivolts come from a small ADC read per beacon (0 if unavailable).
+
+**OTA (HTTP `POST /ota`, maintenance image).** The first 336 bytes give the
+header/chip/project checks and the image-info kind. Flight image -> the flight
+slot that is not the return slot; maintenance image -> the maintenance slot that
+is not running. A flight upload is checked against the *running maintenance
+image* (so the new flight can always switch back), a maintenance upload against
+the flight image that will be returned to; incompatibility is HTTP 409 unless
+`X-Witness-Force: 1` (`witness_ota.py upload --force`; for coordinated updates —
+**update maintenance first**). `esp_ota_begin` requires the running image to be
+valid, which `return_to_flight` guarantees (an unconfirmed maintenance image
+refuses OTA with 409).
+- *Flight:* `esp_ota_set_boot_partition(new)` and restart. The new flight boots
+  pending-verify; `flight_selftest.cpp` (IMU low-g and gyro ready, no flash
+  init/log failure, radio up, within 30 s) marks it valid and records the slot in
+  NVS `fslot`; otherwise (or on any reset first) the bootloader rolls back to the
+  previous otadata entry, which is the maintenance image (valid), which sees no
+  request and returns to the old flight slot. There is no Wi-Fi in flight, so
+  confirm over radio/USB (state packets), not HTTP.
+- *Maintenance:* the running maintenance image arms a request with `verify`,
+  sets the other maintenance slot as boot and restarts. The new image boots
+  pending-verify and does **not** point the boot slot at flight until its
+  self-test passes (radio up, log store mounted, Wi-Fi AP up; 30 s). On a pass it
+  calls `return_to_flight`, writes NVS `mconf` = its build id (**confirmed**,
+  so the flight image may now select it), clears the beacon "unconfirmed" flag
+  and serves Wi-Fi for `CONFIG_WITNESS_WIFI_CONFIRM_MINUTES` (5) so the host can
+  read `/info`. On a fail or reset it is rolled back by the bootloader to the old
+  maintenance image, which returns to flight. Until confirmed, a new maintenance
+  image is not selected by a pad-side switch while an older confirmed one exists.
+
+**Access point and HTTP** are unchanged: WPA2 `witness-XXXX`, password
+`CONFIG_WITNESS_WIFI_PASSWORD` (default `witness-ota-2026`; change it), channel
+6, 192.168.4.1. `GET /info` now returns `kind`, `mode`, `running`, `app_state`,
+`store_mounted`, `log_files`, `recovery`, `unconfirmed`, `flight_return`,
+`flight: [slot, slot]`, `maintenance: [slot, slot]` (each with version, build
+id, store and command-set versions) and `confirmed_build`. `GET /logs`,
+`/logs/<name>`, `POST /reboot`, `POST /wifi/off` as before; logs no longer need
+Landed or freeze anything (the maintenance image only reads, and leaving it
+restores flight logging). Host: `Horizon/witness_ota.py info | upload [--force]
+| logs | get | reboot | wifi-off`; `upload` reads the image kind, and for a flight
+image does not wait (no Wi-Fi after the restart).
+
+**Removed from the flight image:** `wifi_ota`, `usb_mass_storage`, TinyUSB,
+`Sensors::set_radio_beacon_only`, the in-image maintenance boot paths and the
+Wi-Fi start watchdog. The status MAINTENANCE bit is never set by flight; the 0x08
+beacon replaces it (Horizon shows the banner on a beacon and clears it on the
+next flight packet).
+
+**Tests:** `tests/image_info_test.cpp` (compat decision, slot selection, upload
+kind, version id, beacon encode/decode), Horizon `test_maintenance_beacon.py` /
+`test_maintenance_banner.py`, HITL `tests/test_protocol.py`.
+
+**Not bench verified** (written without hardware): the whole switch, return,
+rollback and OTA flows, USB export from the maintenance image, LoRa command
+handling and beacon in the maintenance image, Wi-Fi heap/throughput. See the
+coordinator's bench checklist: switch via USB and via LoRa; reset / power loss
+in maintenance returns to flight; flight OTA good and failing self-test;
+maintenance OTA good and failing; incompatible-image refusals (detail codes);
+USB export; erase of `wboot` NVS keys behaves (falls back to newest slots).
 
 ## Heartbeat indicators
 
@@ -1265,6 +1363,14 @@ pattern. PWM uses LEDC low-speed timer 0/channel 0, 10-bit resolution, duty 512.
 repurpose LEDC timer/channel 0 without coordinating this module.
 
 ## Build and verification
+
+Two images: `.\build_images.ps1` builds both (flight in `build/`, maintenance in
+`build_maint/` with `WITNESS_IMAGE=maintenance` and the `sdkconfig.maint`
+overlay) and writes `images/`. Image-info/beacon host test:
+`g++ -std=c++17 -Wall -Wextra -Werror -I main tests/image_info_test.cpp -o build/image_info_test.exe`.
+Check that the flight image links no Wi-Fi code: `idf.py size-components` shows
+no `libnet80211/libpp/libwpa/liblwip/esp_http_server`, and the map file has no
+such archive member. See "Two-image boot" for the architecture.
 
 The dependency lock targets ESP-IDF **6.1.0**, ESP32-S3,
 `espressif/esp_tinyusb` 2.3.0 and `espressif/tinyusb` 0.21.0~2.
@@ -1437,3 +1543,13 @@ Host test:
 g++ -std=c++17 -Wall -Wextra -Werror -I tests/stubs -I main tests/flight_state_machine_test.cpp main/flight_state_machine.cpp -o build/flight_state_machine_test.exe
 & .\build\flight_state_machine_test.exe
 ```
+
+## Flight-mode RAM and the USB-export boot (2026-11-12; superseded 2026-11-13)
+
+This was the single-image workaround (maintenance as a reboot of the same
+image, flight heap 11.8 KB). It is replaced by the two-image boot above: the
+flight image links no Wi-Fi/TinyUSB code, and USB export (0x6868, USB only, Pad
+Idle/Landed) now hands over to the maintenance image the same way as Wi-Fi.
+What still holds: a maintenance request is honoured only if the boot's reset
+reason is `ESP_RST_SW`, the USB disk appears about 25 s after the command
+(read-only scan), and host tools set Landed first and wait up to 90 s.

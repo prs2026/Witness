@@ -196,12 +196,7 @@ public:
     bool radio_front_end_enabled() const { return radio_.front_end_enabled(); }
     esp_err_t handle_command(std::uint16_t command);
     void set_radio_transmission_enabled(bool enabled);
-    // While transmission is disabled (Wi-Fi up), still send the latest 0x02
-    // state packet every kRadioBeaconPeriodMs so the ground station sees the
-    // MAINTENANCE status bit. ~120 ms on air per beacon (about 2 % duty).
-    void set_radio_beacon_only(bool on) { radio_beacon_only_.store(on); }
-    static constexpr std::uint32_t kRadioBeaconPeriodMs = 5000;
-    // True once the RA-01 radio initialized (OTA self-test, wifi_ota.cpp).
+    // True once the RA-01 radio initialized (flight self-test, flight_selftest.cpp).
     bool radio_ready() const { return radio_ready_; }
 
     // HITL mode (see hitl_input.h). Thread-safe; called from the USB command
@@ -436,8 +431,6 @@ private:
     std::array<TickType_t, kRadioPacketTypeCount> radio_last_sent_{};
     std::size_t next_radio_packet_index_ = 0;
     std::atomic_bool radio_transmission_enabled_{true};
-    std::atomic_bool radio_beacon_only_{false};
-    TickType_t radio_last_beacon_ = 0;
     std::atomic_bool debug_packet_output_enabled_{false};
     Sample working_sample_{};
     Sample latest_sample_{};

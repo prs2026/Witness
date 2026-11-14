@@ -7,8 +7,11 @@
 
 #include "comms.h"
 #include "esp_timer.h"
+#include "sdkconfig.h"
 #include "flight_state_machine.h"
+#if !CONFIG_WITNESS_IMAGE_MAINTENANCE
 #include "sensors.h"
+#endif
 #include "witness_status.h"
 
 namespace {
@@ -43,9 +46,16 @@ FlashLogger *FlashLogger::log_sink_ = nullptr;
 FlashLogger::FlashLogger(Sensors &s,
                          WitnessStatus &w,
                          FlightStateMachine &state_machine)
-    : sensors_(s),
+    : sensors_(&s),
       witness_status_(w),
-      flight_state_machine_(state_machine)
+      flight_state_machine_(&state_machine)
+{
+}
+
+FlashLogger::FlashLogger(WitnessStatus &w)
+    : sensors_(nullptr),
+      witness_status_(w),
+      flight_state_machine_(nullptr)
 {
 }
 
@@ -547,17 +557,23 @@ esp_err_t FlashLogger::append_bytes(Writer &writer, const std::uint8_t *data, st
 //   14 int16 LSM6 temperature raw, 16 int32 pressure Pa (centi-mbar),
 //   20 int32 MS5607 temperature centi-degC.
 void FlashLogger::serialize_record(std::uint8_t *d) {
+#if CONFIG_WITNESS_IMAGE_MAINTENANCE
+    const bool available = false;   // read-only export image: no sensors
+#else
     Sensors::Sample sample{};
-    const bool available = sensors_.latest_sample(sample, 0) == ESP_OK;
+    const bool available = sensors_ != nullptr && sensors_->latest_sample(sample, 0) == ESP_OK;
+#endif
     std::memset(d, 0, kRecordSize); write_u16_be(d, kRecordMagic);
     d[2] = kRecordVersion;
     witness_status_.write(d + 3);
     write_u32_be(d + 6, sequence_++);
     write_u32_be(d + 10, static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL));
     if (!available) return;
+#if !CONFIG_WITNESS_IMAGE_MAINTENANCE
     write_u16_be(d + 14, static_cast<std::uint16_t>(sample.temperature_raw));
     write_u32_be(d + 16, static_cast<std::uint32_t>(sample.pressure_centi_mbar));
     write_u32_be(d + 20, static_cast<std::uint32_t>(sample.ms5607_temperature_centi_celsius));
+#endif
 }
 
 esp_err_t FlashLogger::append_record(const BinaryRecord &record) {
@@ -877,7 +893,7 @@ void FlashLogger::run_capture()
 
         BinaryRecord record{};
         serialize_record(record.data);
-        const FlightStateMachine::State state = flight_state_machine_.state();
+        const FlightStateMachine::State state = flight_state_machine_->state();
 
         if (state == FlightStateMachine::State::PadIdle) {
             prelaunch_records_[prelaunch_write_index_] = record;
@@ -889,7 +905,7 @@ void FlashLogger::run_capture()
             continue;
         }
 
-        if (!flight_state_machine_.binary_logging_enabled()) {
+        if (!flight_state_machine_->binary_logging_enabled()) {
             continue;
         }
 

@@ -1,3 +1,26 @@
+menu "Witness image"
+
+    choice WITNESS_IMAGE
+        prompt "Which Witness image this build produces"
+        default WITNESS_IMAGE_FLIGHT
+        help
+            Witness has two firmware images built from this one source tree:
+            the FLIGHT image (all flight logic, no Wi-Fi/HTTP/USB-disk code, so
+            its heap stays free) and the MAINTENANCE image (Wi-Fi OTA, log
+            download, USB log export, LoRa command/beacon, no sensors or flight
+            logic). build_images.ps1 builds both; the maintenance one with
+            the sdkconfig.maint overlay.
+
+        config WITNESS_IMAGE_FLIGHT
+            bool "Flight image"
+
+        config WITNESS_IMAGE_MAINTENANCE
+            bool "Maintenance image"
+
+    endchoice
+
+endmenu
+
 menu "Witness Wi-Fi OTA and log download"
 
     config WITNESS_WIFI_SSID_OVERRIDE

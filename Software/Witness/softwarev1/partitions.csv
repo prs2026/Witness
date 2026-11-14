@@ -1,9 +1,19 @@
-# Witness: ESP32-S3FN8 with 8 MB in-package flash, two OTA app slots.
-# nvs (IMU calibration) and phy_init keep the offsets of the old 2 MB single-app
-# layout so a one-time USB migration flash does not disturb the calibration.
-# Name,   Type, SubType, Offset,   Size,     Flags
-nvs,      data, nvs,     0x9000,   0x6000,
-phy_init, data, phy,     0xf000,   0x1000,
-otadata,  data, ota,     0x10000,  0x2000,
-ota_0,    app,  ota_0,   0x20000,  0x300000,
-ota_1,    app,  ota_1,   0x320000, 0x300000,
+# Witness: ESP32-S3FN8 with 8 MB in-package flash, TWO IMAGES x TWO SLOTS.
+#   FLIGHT image      (no Wi-Fi/HTTP/USB-disk code; all flight logic) : ota_0 / ota_1
+#   MAINTENANCE image (Wi-Fi OTA, log download, USB log export, LoRa) : ota_2 / ota_3
+# ESP-IDF numbers OTA slots by subtype, so: ota_0 = flight_a, ota_1 = flight_b,
+# ota_2 = maint_a, ota_3 = maint_b. Within a kind an update alternates slots
+# (rollback); the maintenance image restores the flight boot slot first thing
+# at every boot, so any reset returns to flight (see FIRMWARE_HANDOFF.md).
+# nvs (IMU calibration, boot bookkeeping) and phy_init keep the offsets of the
+# old 2 MB single-app layout so the one-time USB migration flash does not
+# disturb the calibration. flight_a sits at the old ota_0 offset (0x20000).
+# App partitions are 64 KB aligned. Free space: 0x720000..0x800000.
+# Name,     Type, SubType, Offset,   Size,     Flags
+nvs,        data, nvs,     0x9000,   0x6000,
+phy_init,   data, phy,     0xf000,   0x1000,
+otadata,    data, ota,     0x10000,  0x2000,
+flight_a,   app,  ota_0,   0x20000,  0x200000,
+flight_b,   app,  ota_1,   0x220000, 0x200000,
+maint_a,    app,  ota_2,   0x420000, 0x180000,
+maint_b,    app,  ota_3,   0x5A0000, 0x180000,

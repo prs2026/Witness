@@ -46,6 +46,19 @@ class MaintenanceBannerTests(unittest.TestCase):
         self.feed(0x0100)      # back in flight mode
         self.assertFalse(banner.isVisibleTo(self.monitor))
 
+    def test_banner_follows_maintenance_beacon(self):
+        banner = self.monitor.maintenance_banner
+        beacon = {"packet": "maintenance_status", "mode": 0, "mode_name": "Wi-Fi", "flags": 0x25,
+                  "ap_up": True, "usb_disk": False, "store_mounted": True, "recovery": False,
+                  "unconfirmed": False, "radio_ok": True, "store_version": 4, "command_set": 1,
+                  "radio_settings": 1, "maint_image_id": 1, "flight_image_id": 2,
+                  "battery_voltage": 7.4, "uptime": 5000, "log_files": 3}
+        self.monitor.events.put(("packet", ("COM_TEST", beacon, time.time())))
+        self.monitor.process_events()
+        self.assertTrue(banner.isVisibleTo(self.monitor))
+        self.feed(0x0100)      # flight packets again: the flight image is back
+        self.assertFalse(banner.isVisibleTo(self.monitor))
+
 
 if __name__ == "__main__":
     unittest.main()

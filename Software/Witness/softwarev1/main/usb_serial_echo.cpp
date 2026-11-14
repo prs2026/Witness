@@ -1,4 +1,5 @@
 #include "usb_serial_echo.h"
+#include "maintenance_mode.h"
 #include "task_cores.h"
 
 #include <cstddef>
@@ -17,7 +18,7 @@
 #include "sensors.h"
 #include "spi_data_forwarder.h"
 #include "uart_driver.h"
-#include "wifi_ota.h"
+#include "boot_manager.h"
 #include "wifi_ota_logic.h"
 
 namespace {
@@ -95,16 +96,13 @@ UsbSerialEcho::UsbSerialEcho(
     SpiDataForwarder &spi_interface,
     FlashLogger &flash_logger,
     FlightStateMachine &flight_state_machine,
-    CommandBridge &command_bridge,
-    WifiOta &wifi_ota)
+    CommandBridge &command_bridge)
     : heartbeat_(heartbeat),
       sensors_(sensors),
       spi_interface_(spi_interface),
       flash_logger_(flash_logger),
       flight_state_machine_(flight_state_machine),
-      command_bridge_(command_bridge),
-      wifi_ota_(wifi_ota),
-      mass_storage_(flash_logger)
+      command_bridge_(command_bridge)
 {
 }
 
@@ -157,9 +155,6 @@ void UsbSerialEcho::task_entry(void *context)
 
 void UsbSerialEcho::echo_bytes(const std::uint8_t *data, const std::size_t length)
 {
-    if (usb_driver_removed_) {
-        return;
-    }
     std::size_t bytes_echoed = 0;
 
     while (bytes_echoed < length) {
@@ -194,9 +189,6 @@ void UsbSerialEcho::consume_input(
             // The boundary depends on the bytes before this one.
             echo_and_consume_commands(data + run_start, index - run_start);
             run_start = index;
-            if (usb_driver_removed_) {
-                return;
-            }
             if (binary_command_active_) {
                 continue;
             }
@@ -223,7 +215,7 @@ void UsbSerialEcho::echo_and_consume_commands(
     const std::uint8_t *data,
     const std::size_t length)
 {
-    if (length == 0U || usb_driver_removed_) {
+    if (length == 0U) {
         return;
     }
     echo_bytes(data, length);
@@ -458,12 +450,12 @@ void UsbSerialEcho::process_canonical_binary_command(
         return;
     }
     if (command_policy::is_log_maintenance_command(command)) {
-        // Ack first: mass storage stops the USB serial port.
-        const bool allowed = command_policy::allow_log_maintenance(
-            command_policy::Source::Usb,
-            static_cast<std::uint8_t>(flight_state_machine_.state()));
-        send_ack(false, command, args, allowed ? IRIS_ACK_OK : IRIS_ACK_REFUSED);
-        (void)run_log_maintenance(command, false);
+        // The switch to the maintenance image (0x6868) is decided first so a
+        // refusal can carry its reason; the restart it schedules runs after
+        // this ack.
+        std::uint16_t detail = 0;
+        const std::uint8_t result = run_log_maintenance(command, false, detail);
+        send_ack(false, command, args, result, detail);
         return;
     }
     if ((command >> 8U) == IRIS_COMMAND_SET_FLIGHT_STATE) {
@@ -485,7 +477,8 @@ void UsbSerialEcho::process_compact_binary_command(
     const std::uint16_t opcode = static_cast<std::uint16_t>(
         (static_cast<std::uint16_t>(command) << 8U) | argument);
     if (command_policy::is_log_maintenance_command(opcode)) {
-        (void)run_log_maintenance(opcode, false);
+        std::uint16_t detail = 0;
+        (void)run_log_maintenance(opcode, false, detail);
     } else if (command == IRIS_COMMAND_SET_FLIGHT_STATE) {
         (void)set_flight_state(argument, false);
     } else if (command == IRIS_COMMAND_IMU_CALIBRATION) {
@@ -585,7 +578,7 @@ void UsbSerialEcho::process_radio_command(
         case IRIS_COMMAND_ERASE_LOG_SESSIONS:
         case IRIS_COMMAND_CLEAR_LOG_SESSIONS:
             // Bench operations: never over LoRa (they freeze logging, silence
-            // the radio or wipe the flight logs). Use USB or Wi-Fi maintenance.
+            // the radio or wipe the flight logs). Use USB.
             ESP_LOGW(kLogTag, "radio command 0x%04X refused: log maintenance is USB-only", command);
             ack(IRIS_ACK_REFUSED);
             break;
@@ -654,12 +647,15 @@ void UsbSerialEcho::process_command()
     if (std::strncmp(command_buffer_, "TX ", 3) == 0) {
         process_tx_command();
     } else if (std::strcmp(command_buffer_, "05 68 68") == 0) {
-        (void)run_log_maintenance(IRIS_COMMAND_MASS_STORAGE_START, false);
+        std::uint16_t detail = 0;
+        (void)run_log_maintenance(IRIS_COMMAND_MASS_STORAGE_START, false, detail);
     } else if (std::strcmp(command_buffer_, "05 68 69") == 0) {
-        (void)run_log_maintenance(IRIS_COMMAND_ERASE_LOG_SESSIONS, false);
+        std::uint16_t detail = 0;
+        (void)run_log_maintenance(IRIS_COMMAND_ERASE_LOG_SESSIONS, false, detail);
     } else if (std::strcmp(command_buffer_, "05 68 6A") == 0 ||
                std::strcmp(command_buffer_, "05 68 6a") == 0) {
-        (void)run_log_maintenance(IRIS_COMMAND_CLEAR_LOG_SESSIONS, false);
+        std::uint16_t detail = 0;
+        (void)run_log_maintenance(IRIS_COMMAND_CLEAR_LOG_SESSIONS, false, detail);
     } else if (std::strlen(command_buffer_) == 8U &&
                std::strncmp(command_buffer_, "05 73 0", 7) == 0 &&
                hex_nibble(command_buffer_[7]) >= 0) {
@@ -756,32 +752,6 @@ bool UsbSerialEcho::forward_text_command_if_present()
         process_canonical_binary_command(bytes, byte_count);
     }
     return true;
-}
-
-void UsbSerialEcho::start_mass_storage()
-{
-    // Stop scheduled and immediate RA-01 transmissions before changing the
-    // USB peripheral into mass-storage mode.
-    wifi_ota_.note_mass_storage_active();   // stops Wi-Fi; it must not re-enable the radio
-    sensors_.set_radio_transmission_enabled(false);
-    ESP_LOGI(kLogTag, "freezing logs for read-only USB export");
-    const esp_err_t freeze_result = flash_logger_.prepare_mass_storage();
-    if (freeze_result != ESP_OK) {
-        sensors_.set_radio_transmission_enabled(true);
-        ESP_LOGE(kLogTag, "cannot start mass storage: %s", esp_err_to_name(freeze_result));
-        command_length_ = 0;
-        return;
-    }
-    spi_interface_.set_output_enabled(false);
-    vTaskDelay(pdMS_TO_TICKS(50));
-    flash_logger_.disable_console_output();
-    usb_driver_removed_ = true;
-#if CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
-    usb_serial_jtag_vfs_use_nonblocking();
-#endif
-    usb_serial_jtag_driver_uninstall();
-    vTaskDelay(pdMS_TO_TICKS(250));
-    mass_storage_started_ = mass_storage_.start() == ESP_OK;
 }
 
 void UsbSerialEcho::erase_log_sessions()
@@ -978,12 +948,13 @@ void UsbSerialEcho::handle_radio_power(const std::uint8_t *data, const char *sou
 void UsbSerialEcho::handle_wifi(const std::uint8_t *data, const char *source, const bool radio)
 {
     if (data[0] == 2U) {
-        // Status query: answered here, never through the Wi-Fi task.
-        send_ack(radio, IRIS_COMMAND_WIFI, data, IRIS_ACK_OK, wifi_ota_.status_word());
+        // Status query: the flight image has no Wi-Fi (the maintenance image
+        // answers this command when it is running); AP down = status word 0.
+        send_ack(radio, IRIS_COMMAND_WIFI, data, IRIS_ACK_OK, 0);
         return;
     }
     const wifi_ota_logic::WifiCommand command = wifi_ota_logic::parse_wifi_command(
-        data, WifiOta::kDefaultTxPowerDbm, WifiOta::kDefaultAutoOffMinutes);
+        data, CONFIG_WITNESS_WIFI_TX_POWER_DBM, CONFIG_WITNESS_WIFI_AUTO_OFF_MINUTES);
     if (!command.valid) {
         send_ack(radio, IRIS_COMMAND_WIFI, data, IRIS_ACK_BAD_ARGUMENT);
         ESP_LOGW(kLogTag, "Wi-Fi command over %s: bad argument (on/off 0-1, %d..%d dBm, <= %u min)",
@@ -991,24 +962,58 @@ void UsbSerialEcho::handle_wifi(const std::uint8_t *data, const char *source, co
                  static_cast<unsigned>(wifi_ota_logic::kMaxAutoOffMinutes));
         return;
     }
-    if (command.on) {
-        // Radio: acknowledge first; the enable is delayed so the ack is
-        // transmitted before LoRa transmission stops.
-        const std::uint8_t result =
-            wifi_ota_.request_enable(command.tx_power_dbm, command.auto_off_minutes, radio);
-        send_ack(radio, IRIS_COMMAND_WIFI, data, result);
-        ESP_LOGW(kLogTag, "Wi-Fi on over %s: %s", source, result == IRIS_ACK_OK ? "accepted" : "refused");
+    if (!command.on) {
+        // Already off: this image has no Wi-Fi.
+        send_ack(radio, IRIS_COMMAND_WIFI, data, IRIS_ACK_OK);
         return;
     }
-    // Off: wait until Wi-Fi is down and LoRa transmission is back, so a radio
-    // ack can go out.
-    const bool off = wifi_ota_.request_disable_and_wait(pdMS_TO_TICKS(kWifiOffWaitMs));
-    send_ack(radio, IRIS_COMMAND_WIFI, data, off ? IRIS_ACK_OK : IRIS_ACK_BUSY);
-    ESP_LOGW(kLogTag, "Wi-Fi off over %s: %s", source, off ? "done" : "still stopping");
+    if (!wifi_ota_logic::state_allows_wifi(static_cast<std::uint8_t>(flight_state_machine_.state()))) {
+        ESP_LOGW(kLogTag, "Wi-Fi on over %s refused: not in Pad Idle/Landed", source);
+        send_ack(radio, IRIS_COMMAND_WIFI, data, IRIS_ACK_REFUSED);
+        return;
+    }
+    // Hand over to the maintenance image (it restarts after this ack).
+    std::uint16_t detail = 0;
+    const std::uint8_t result = switch_to_maintenance(
+        static_cast<int>(maintenance_mode::Kind::Wifi), command.tx_power_dbm, command.auto_off_minutes, radio,
+        detail);
+    send_ack(radio, IRIS_COMMAND_WIFI, data, result, detail);
+    ESP_LOGW(kLogTag, "Wi-Fi on over %s: %s (detail 0x%04X)", source,
+             result == IRIS_ACK_OK ? "switching to the maintenance image" : "refused",
+             static_cast<unsigned>(detail));
 }
 
-std::uint8_t UsbSerialEcho::run_log_maintenance(const std::uint16_t command, const bool radio)
+std::uint8_t UsbSerialEcho::switch_to_maintenance(const int kind, const int tx_dbm, const std::uint32_t minutes,
+                                                  const bool radio, std::uint16_t &detail)
 {
+    detail = IRIS_MAINT_REFUSE_NONE;
+    // Verifies the maintenance image (present, readable, compatible), selects
+    // its slot as the next boot and arms the request. Flash writes stall both
+    // cores for a few ms: only allowed on the pad / after landing (the callers
+    // check the flight state first).
+    const boot_manager::SwitchResult result = boot_manager::prepare_switch(
+        static_cast<maintenance_mode::Kind>(kind), tx_dbm, minutes,
+        static_cast<std::uint8_t>(flight_state_machine_.state()), sensors_.radio_tx_power_dbm(),
+        sensors_.radio_front_end_enabled());
+    if (!result.ok) {
+        detail = result.refuse_detail;
+        return IRIS_ACK_REFUSED;
+    }
+    if (!maintenance_mode::restart_after_ms(radio ? kRadioAckGuardMs + kSwitchRestartDelayMs
+                                                  : kSwitchRestartDelayMs)) {
+        maintenance_mode::cancel();
+        detail = IRIS_MAINT_REFUSE_BUSY;
+        return IRIS_ACK_BUSY;
+    }
+    ESP_LOGW(kLogTag, "restarting into the maintenance image (%s); any reset returns to flight",
+             result.target != nullptr ? result.target->label : "?");
+    return IRIS_ACK_OK;
+}
+
+std::uint8_t UsbSerialEcho::run_log_maintenance(const std::uint16_t command, const bool radio,
+                                                std::uint16_t &detail)
+{
+    detail = IRIS_MAINT_REFUSE_NONE;
     const std::uint8_t current = static_cast<std::uint8_t>(flight_state_machine_.state());
     if (!command_policy::allow_log_maintenance(
             radio ? command_policy::Source::Radio : command_policy::Source::Usb, current)) {
@@ -1017,7 +1022,14 @@ std::uint8_t UsbSerialEcho::run_log_maintenance(const std::uint16_t command, con
         return IRIS_ACK_REFUSED;
     }
     if (command == IRIS_COMMAND_MASS_STORAGE_START) {
-        start_mass_storage();
+        // USB export runs in the maintenance image (the flight image links no
+        // USB-disk code): hand over to it. Any later reset returns to flight.
+        const std::uint8_t result = switch_to_maintenance(
+            static_cast<int>(maintenance_mode::Kind::UsbExport), 0, 0, radio, detail);
+        if (result == IRIS_ACK_OK) {
+            ESP_LOGW(kLogTag, "USB export requested: restarting into the maintenance image (USB disk)");
+        }
+        return result;
     } else if (command == IRIS_COMMAND_ERASE_LOG_SESSIONS) {
         erase_log_sessions();
     } else if (command == IRIS_COMMAND_CLEAR_LOG_SESSIONS) {
@@ -1144,11 +1156,5 @@ void UsbSerialEcho::run()
         }
 
         process_queued_radio_commands();
-
-        if (mass_storage_started_) {
-            task_handle_ = nullptr;
-            vTaskDelete(nullptr);
-            return;
-        }
     }
 }

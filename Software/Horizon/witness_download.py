@@ -244,7 +244,7 @@ def main() -> int:
     parser.add_argument("--user", default=os.environ.get("WITNESS_PI_USER"))
     parser.add_argument("--key", default=os.environ.get("WITNESS_PI_KEY"))
     parser.add_argument("--port", type=int, default=7100, help="Witness raw TCP data port")
-    parser.add_argument("--wait", type=float, default=30, help="seconds to wait for the disk")
+    parser.add_argument("--wait", type=float, default=90, help="seconds to wait for the disk (Witness reboots into USB-export mode and scans its flash first, ~25 s)")
     parser.add_argument("--no-export", action="store_true",
                         help="do not send 05 68 68; the disk must already be up")
     sub = parser.add_subparsers(dest="command", required=True)

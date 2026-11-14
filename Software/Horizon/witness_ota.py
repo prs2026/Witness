@@ -6,6 +6,15 @@ Pi. Join the "witness-XXXX" access point (WPA2, 192.168.4.1) first; Wi-Fi is
 turned on with the 0x5746 command (witness_protocol.build_wifi_packet) in Pad
 Idle or Landed and turns itself off after 15 minutes without HTTP activity.
 
+Witness has two images: the FLIGHT image (no Wi-Fi) and the MAINTENANCE image
+(this HTTP server runs in it; Wi-Fi on = Witness restarts into it, Wi-Fi off or
+any reset = back into flight). upload detects which kind a .bin is from its
+image-info record and the maintenance image writes it to the matching inactive
+slot. A flight upload reboots straight into the new flight image (no Wi-Fi, so
+confirm it from the radio/USB state packets); a maintenance upload runs one
+verification boot with Wi-Fi up, which this waits for. Use --force only for a
+coordinated update of both images whose interfaces differ (maintenance first).
+
     python3 witness_ota.py info
     python3 witness_ota.py upload softwarev1.bin
     python3 witness_ota.py logs
@@ -38,6 +47,11 @@ CHUNK = 4096
 APP_DESC_OFFSET = 32
 APP_DESC_MAGIC = 0xABCD5432
 HEAD_LENGTH = APP_DESC_OFFSET + 256
+# Image-info record (main/image_info.h) right behind the descriptor: magic
+# "WIMG", struct version, kind (1 flight, 2 maintenance).
+INFO_MAGIC = 0x474D4957
+INFO_LENGTH = 48
+KINDS = {1: "flight", 2: "maintenance"}
 
 
 class OtaError(Exception):
@@ -61,7 +75,11 @@ def check_image(head: bytes, project: str = PROJECT_NAME) -> dict:
     name = desc[48:80].split(b"\0", 1)[0].decode("ascii", "replace")
     if name != project:
         raise OtaError("image is project %r, expected %r" % (name, project))
-    return {"project": name, "version": version}
+    kind = None
+    info = head[HEAD_LENGTH:HEAD_LENGTH + INFO_LENGTH]
+    if len(info) == INFO_LENGTH and int.from_bytes(info[0:4], "little") == INFO_MAGIC:
+        kind = KINDS.get(info[5])
+    return {"project": name, "version": version, "kind": kind}
 
 
 class Witness:
@@ -110,7 +128,7 @@ class Witness:
     def wifi_off(self) -> dict:
         return self.request_json("POST", "/wifi/off")
 
-    def upload(self, image: bytes, progress=None) -> dict:
+    def upload(self, image: bytes, progress=None, force: bool = False) -> dict:
         """POST the image to /ota with a Content-Length, streamed in chunks."""
         conn = self._connect(60.0)
         try:
@@ -118,6 +136,8 @@ class Witness:
                 conn.putrequest("POST", "/ota")
                 conn.putheader("Content-Type", "application/octet-stream")
                 conn.putheader("Content-Length", str(len(image)))
+                if force:
+                    conn.putheader("X-Witness-Force", "1")
                 conn.endheaders()
                 sent = 0
                 try:
@@ -216,7 +236,8 @@ def wait_for_reboot(witness: Witness, expect_version: str | None, timeout: float
             rebooted = True
         last_uptime = uptime
         right_image = expect_version is None or last.get("version") == expect_version
-        if rebooted and right_image and last.get("app_state") == "valid":
+        if (rebooted and right_image and last.get("app_state") == "valid"
+                and not last.get("unconfirmed")):
             return last
         sleep(1.0)
     if last is not None and not rebooted:
@@ -225,24 +246,47 @@ def wait_for_reboot(witness: Witness, expect_version: str | None, timeout: float
                    "if Wi-Fi is off, turn it on again with the 0x5746 command and run 'info'")
 
 
+def _slot_text(entry) -> str:
+    if not entry:
+        return "-"
+    return "%s %s" % (entry.get("slot", "?"), entry.get("version") or "(empty)")
+
+
 def cmd_info(args, witness: Witness) -> int:
-    print(json.dumps(witness.info(), indent=2))
+    info = witness.info()
+    print(json.dumps(info, indent=2))
+    # Human summary on stderr so stdout stays JSON.
+    kind = info.get("kind", "flight")
+    sys.stderr.write("running: %s image in %s (%s), mode %s\n" % (
+        kind, info.get("running"), info.get("version"), info.get("mode", "?")))
+    if "flight" in info:
+        sys.stderr.write("flight slots:      %s | %s   (boot returns to %s)\n" % (
+            _slot_text(info["flight"][0]), _slot_text(info["flight"][1]), info.get("flight_return") or "?"))
+        sys.stderr.write("maintenance slots: %s | %s   (confirmed build %s)\n" % (
+            _slot_text(info["maintenance"][0]), _slot_text(info["maintenance"][1]), info.get("confirmed_build")))
     return 0
 
 
 def cmd_upload(args, witness: Witness) -> int:
     with open(args.image, "rb") as handle:
         image = handle.read()
-    desc = check_image(image[:HEAD_LENGTH])
-    print("image %s version %s, %d bytes" % (desc["project"], desc["version"], len(image)))
+    desc = check_image(image[:HEAD_LENGTH + INFO_LENGTH])
+    kind = desc.get("kind")
+    print("image %s version %s, %d bytes, kind %s" % (desc["project"], desc["version"], len(image),
+                                                      kind or "unknown (no image-info record)"))
     before = witness.info()
-    print("Witness runs %s (%s), updating %s" % (before.get("version"), before.get("running"),
-                                                 before.get("next")))
-    result = witness.upload(image, _progress_printer("uploading"))
+    print("Witness runs %s (%s) %s image" % (before.get("version"), before.get("running"),
+                                             before.get("kind", "flight")))
+    result = witness.upload(image, _progress_printer("uploading"), force=args.force)
     print()
     print("uploaded %s bytes into %s; Witness reboots in %s ms" % (
         result.get("bytes"), result.get("slot"), result.get("reboot_ms")))
     if args.no_wait:
+        return 0
+    if result.get("kind") == "flight":
+        print("Witness restarts into the new FLIGHT image (no Wi-Fi there): it self-tests and "
+              "confirms itself within 30 s; check the flight state packets or USB log, and "
+              "'info' next time Wi-Fi is on. A failed self-test rolls back to the old image.")
         return 0
     print("waiting for the reboot and the new image's self-test (the first boot after an "
           "update opens Wi-Fi for a few minutes so this can confirm it)")
@@ -291,6 +335,8 @@ def build_parser() -> argparse.ArgumentParser:
     up = sub.add_parser("upload", help="flash a softwarev1.bin into the other OTA slot")
     up.add_argument("image")
     up.add_argument("--no-wait", action="store_true", help="do not wait for the reboot")
+    up.add_argument("--force", action="store_true",
+                    help="install even if the other image's interface is incompatible (update maintenance first)")
     up.add_argument("--wait", type=float, default=90.0, help="seconds to wait for the new image")
     up.set_defaults(func=cmd_upload)
     sub.add_parser("logs", help="list flight logs (freezes logging until reboot)").set_defaults(func=cmd_logs)

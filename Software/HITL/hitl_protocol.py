@@ -45,6 +45,7 @@ FRAME_LENGTHS = {
     ID_HEARTBEAT: 8,
     0x06: 13,   # command acknowledgement (comms.h IRIS_PACKET_ID_COMMAND_ACK)
     0x07: 76,   # GPS assist transfer status (IRIS_PACKET_ID_TRANSFER_STATUS)
+    0x08: 19,   # maintenance status beacon (IRIS_PACKET_ID_MAINTENANCE_STATUS)
 }
 
 PACKET_NAMES = {
@@ -59,6 +60,7 @@ PACKET_NAMES = {
     ID_HEARTBEAT: "heartbeat",
     0x06: "command_ack",
     0x07: "transfer_status",
+    0x08: "maintenance_status",
 }
 
 # Packets whose bytes 1-2 are the Witness status field.
@@ -342,6 +344,14 @@ def decode_frame(frame: bytes) -> dict | None:
         # data as hex text: decoded packets are written to the run log as JSON.
         pkt.update(command=(frame[1] << 8) | frame[2], data=bytes(frame[3:9]).hex(" "), result=frame[9],
                    detail=(frame[10] << 8) | frame[11])
+        return pkt
+    if pid == 0x08:
+        if frame[1] != 1:
+            return None
+        pkt.update(mode=frame[2], flags=frame[3], store_version=frame[4], command_set=frame[5],
+                   radio_settings=frame[6], maint_image_id=(frame[7] << 8) | frame[8],
+                   flight_image_id=(frame[9] << 8) | frame[10], battery_mv=(frame[11] << 8) | frame[12],
+                   uptime_ms=u32(frame, 13), log_files=frame[17])
         return pkt
     if pid == 0x07:
         pkt.update(transfer_id=frame[1], state=frame[2], chunks_expected=(frame[5] << 8) | frame[6],

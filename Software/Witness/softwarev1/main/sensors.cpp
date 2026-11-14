@@ -1431,20 +1431,7 @@ void Sensors::poll_radio_commands()
 void Sensors::service_radio_transmit(const TickType_t now)
 {
     if (!radio_ready_) return;
-    if (!radio_transmission_enabled_.load()) {
-        if (!radio_beacon_only_.load() || radio_.transmit_in_progress() ||
-            (now - radio_last_beacon_) < pdMS_TO_TICKS(kRadioBeaconPeriodMs)) {
-            return;
-        }
-        SpiDataForwarder::RadioPacket beacon{};
-        std::uint32_t generation = 0;
-        if (data_forwarder_.latest_radio_packet(IRIS_PACKET_ID_STATE, beacon, generation)) {
-            radio_last_beacon_ = now;
-            ++radio_tx_started_;
-            if (radio_.start_transmit(beacon.data, beacon.length) != ESP_OK) ++radio_tx_failed_;
-        }
-        return;
-    }
+    if (!radio_transmission_enabled_.load()) return;
 
     if (radio_.transmit_in_progress()) {
         return;  // One packet on the air at a time.

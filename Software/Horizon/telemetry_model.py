@@ -35,6 +35,9 @@ WITNESS_FIELDS = {
     "command_ack": ("command_value", "command_data", "result", "result_name", "detail"),
     "transfer_status": ("transfer_id", "state", "length", "chunks_expected", "chunks_received",
                         "window_start", "bitmap"),
+    "maintenance_status": ("beacon_version", "mode", "mode_name", "flags", "ap_up", "usb_disk", "store_mounted", "recovery",
+                           "unconfirmed", "radio_ok", "store_version", "command_set", "radio_settings",
+                           "maint_image_id", "flight_image_id", "battery_voltage", "uptime", "log_files"),
     "iris_debug": ("status", "uptime", "mcu_temperature", "iris_battery_voltage",
                    "current_sense[0]", "current_sense[1]", "current_sense[2]"),
 }

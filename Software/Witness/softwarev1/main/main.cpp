@@ -14,23 +14,15 @@
 #include "spi_data_forwarder.h"
 #include "esp_log.h"
 #include "usb_serial_echo.h"
-#include "wifi_ota.h"
+#include "flight_selftest.h"
 #include "witness_status.h"
 
 extern "C" void app_main(void)
 {
     // Decide first whether this boot resumes an in-flight state after an MCU
-    // reset (see flight_state_store.h). A resumed flight must never enter a
-    // maintenance boot, so any armed maintenance request is dropped before it
-    // is consumed.
+    // reset (see flight_state_store.h).
     flight_state_store::Snapshot resume_snapshot{};
     const bool resumed = flight_state_store::take_boot_snapshot(resume_snapshot);
-    if (resumed) {
-        maintenance_mode::cancel();
-    }
-    // Consume the one-shot maintenance request (see maintenance_mode.h).
-    maintenance_mode::consume_boot_request();
-    const bool maintenance = maintenance_mode::active();
     static SpiDataForwarder spi_data_forwarder;
     static WitnessStatus witness_status;
     static FlightStateMachine flight_state_machine(witness_status);
@@ -56,21 +48,14 @@ extern "C" void app_main(void)
         flight_state_machine, gps_uart);
     static FlashLogger flash_logger(
         sensors, witness_status, flight_state_machine);
-    static WifiOta wifi_ota(
-        sensors, flash_logger, flight_state_machine, witness_status);
     static UsbSerialEcho usb_serial_echo(
         heartbeat,
         sensors,
         spi_data_forwarder,
         flash_logger,
         flight_state_machine,
-        command_bridge,
-        wifi_ota);
+        command_bridge);
 
-    if (maintenance) {
-        witness_status.set_state_flag(IRIS_WITNESS_STATUS_MAINTENANCE_MASK, true);
-        ESP_LOGW("main", "MAINTENANCE BOOT: Wi-Fi OTA/log download; flight logging OFF; NOT FLIGHT READY");
-    }
     ESP_ERROR_CHECK(spi_data_forwarder.start());
     const esp_err_t can_result = iris_can.start();
     if (can_result != ESP_OK)
@@ -80,9 +65,7 @@ extern "C" void app_main(void)
     ESP_ERROR_CHECK(usb_serial_echo.start());
     // Install the diagnostic log sink before the remaining subsystems start so
     // their initialization output is included in this boot's TXT file.
-    // Maintenance: read-only export mount; the write path (and its RAM) is
-    // never created, which leaves room for Wi-Fi.
-    ESP_ERROR_CHECK(maintenance ? flash_logger.start_export_only() : flash_logger.start());
+    ESP_ERROR_CHECK(flash_logger.start());
     iris_can.set_log_sink(&flash_logger);
     gps_uart.set_log_sink(flash_logger);
     const esp_err_t gps_result = gps_uart.start();
@@ -97,14 +80,16 @@ extern "C" void app_main(void)
             ESP_LOGE("main", "NVS init failed: %s; IMU calibration unavailable",
                      esp_err_to_name(nvs_result));
         }
+        // A flight image never runs a maintenance request (the maintenance
+        // image consumes it): drop a stale one.
+        maintenance_mode::cancel();
     }
     ESP_ERROR_CHECK(sensors.start());
     ESP_ERROR_CHECK(heartbeat.start());
-    // Wi-Fi stays off until commanded; this starts the control task and the
-    // pending-verify self-test of a freshly updated image.
-    const esp_err_t wifi_result = wifi_ota.start();
-    if (wifi_result != ESP_OK)
-        ESP_LOGW("main", "Wi-Fi OTA task start failed: %s", esp_err_to_name(wifi_result));
+    // Boot confirmation (rollback) and last-good flight slot bookkeeping.
+    const esp_err_t selftest_result = flight_selftest::start(witness_status, sensors);
+    if (selftest_result != ESP_OK)
+        ESP_LOGW("main", "flight self-test task start failed: %s", esp_err_to_name(selftest_result));
     static CpuLoadMonitor cpu_load;
     const esp_err_t cpu_result = cpu_load.start();
     if (cpu_result != ESP_OK)

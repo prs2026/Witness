@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstdarg>
 
+#include "comms.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -115,6 +116,9 @@ public:
     FlashLogger(Sensors &sensors,
                 WitnessStatus &witness_status,
                 FlightStateMachine &flight_state_machine);
+    // Maintenance image: read-only export (start_export_only) with no sensor or
+    // flight-state source; the write path must not be started on this object.
+    explicit FlashLogger(WitnessStatus &witness_status);
     FlashLogger(const FlashLogger &) = delete;
     FlashLogger &operator=(const FlashLogger &) = delete;
 
@@ -194,6 +198,9 @@ private:
     static constexpr std::uint32_t kFlightMagic = 0x574C4654U;  // WLFT
     static constexpr std::uint32_t kPageMagic = 0x574C5047U;    // WLPG
     static constexpr std::uint8_t kStoreVersion = 4;
+    static_assert(kStoreVersion == IRIS_MAINT_STORE_FORMAT_VERSION,
+                  "comms.h IRIS_MAINT_STORE_FORMAT_VERSION must follow kStoreVersion "
+                  "(the image-info record advertises it to the other image)");
     static constexpr std::uint8_t kBinaryType = 1;
     static constexpr std::uint8_t kTextType = 2;
     static constexpr std::uint8_t kUart1Type = 3;
@@ -329,9 +336,9 @@ private:
     void run_capture();
     void run();
 
-    Sensors &sensors_;
+    Sensors *sensors_;
     WitnessStatus &witness_status_;
-    FlightStateMachine &flight_state_machine_;
+    FlightStateMachine *flight_state_machine_;
     W25n01kv flash_{};
     TaskHandle_t task_handle_ = nullptr;
     TaskHandle_t capture_task_handle_ = nullptr;

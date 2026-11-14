@@ -81,7 +81,7 @@ FLIGHT_STATE_LABELS = (
 FLIGHT_STATE_MASK = 0x07
 GPS_LOCKED_MASK = 0x08   # bit 3: fresh GPS fix
 HITL_ACTIVE_MASK = 0x10  # bit 4: HITL active, sensor values are simulated
-MAINTENANCE_MASK = 0x20  # bit 5: maintenance boot (Wi-Fi), NOT logging, NOT flight ready
+MAINTENANCE_MASK = 0x20  # bit 5: reserved; the flight image never sets it (maintenance is a separate image: 0x08 beacon)
 RESUMED_MASK = 0x40      # bit 6: resumed an in-flight state after an MCU reset
 STATUS_BYTE1_FLAG_LABELS = (
     (GPS_LOCKED_MASK, "GPS lock"),
@@ -94,6 +94,26 @@ STATUS_BYTE1_FLAG_LABELS = (
 def status_maintenance(status) -> bool:
     """Witness is in its maintenance (Wi-Fi) boot: not logging, not flight ready."""
     return isinstance(status, int) and bool(status & MAINTENANCE_MASK)
+
+
+MAINT_MODES = {0: "Wi-Fi", 1: "USB export"}
+MAINT_FLAGS = ((0x01, "ap_up"), (0x02, "usb_disk"), (0x04, "store_mounted"), (0x08, "recovery"),
+               (0x10, "unconfirmed"), (0x20, "radio_ok"))
+MAINT_BEACON_PAYLOAD_LENGTH = 17
+
+
+def decode_maintenance_status(payload) -> dict | None:
+    """0x08 maintenance status beacon (comms.h IRIS_PACKET_ID_MAINTENANCE_STATUS), 17-byte payload."""
+    if len(payload) != MAINT_BEACON_PAYLOAD_LENGTH:
+        return None
+    flags = payload[2]
+    return {"packet": "maintenance_status", "beacon_version": payload[0], "mode": payload[1],
+            "mode_name": MAINT_MODES.get(payload[1], f"0x{payload[1]:02X}"), "flags": flags,
+            **{name: bool(flags & mask) for mask, name in MAINT_FLAGS},
+            "store_version": payload[3], "command_set": payload[4], "radio_settings": payload[5],
+            "maint_image_id": (payload[6] << 8) | payload[7], "flight_image_id": (payload[8] << 8) | payload[9],
+            "battery_voltage": round(((payload[10] << 8) | payload[11]) / 1000.0, 3),
+            "uptime": int.from_bytes(bytes(payload[12:16]), "big"), "log_files": payload[16]}
 
 
 def status_gps_locked(status: int) -> int:
@@ -150,6 +170,13 @@ LSM6_HIGH_ACCEL_G_PER_COUNT = 0.010417
 ACK_RESULTS = {0: "ok", 1: "refused", 2: "bad argument", 3: "unknown command", 4: "busy",
                5: "incomplete", 6: "bad CRC", 7: "bad format"}
 # 0x07 transfer status states.
+# Ack detail of a refused 0x5746 "on" / 0x6868 (switch to the maintenance image).
+MAINT_REFUSE_REASONS = {
+    0x0001: "no valid maintenance image installed", 0x0002: "maintenance image-info missing/corrupt",
+    0x0003: "maintenance image cannot read the log storage format", 0x0004: "LoRa settings differ",
+    0x0005: "command set differs", 0x0006: "image-info layout differs",
+    0x0007: "could not select the maintenance boot slot", 0x0008: "switch already pending",
+}
 TRANSFER_STATES = {0: "idle", 1: "receiving", 2: "complete", 3: "failed"}
 
 
@@ -227,7 +254,10 @@ def parse_packet(packet_id: int, payload: bytes):
         return {"packet": "command_ack", "command_value": number(payload[0:2]),
                 "command_data": bytes(payload[2:8]).hex(" "), "result": payload[8],
                 "result_name": ACK_RESULTS.get(payload[8], f"0x{payload[8]:02X}"),
-                "detail": number(payload[9:11])}
+                "detail": number(payload[9:11]),
+                **({"detail_name": MAINT_REFUSE_REASONS[number(payload[9:11])]}
+                   if payload[8] == 1 and number(payload[0:2]) in (0x5746, 0x6868)
+                   and number(payload[9:11]) in MAINT_REFUSE_REASONS else {})}
     if packet_id == 0x07 and len(payload) == 74:
         # GPS assist transfer status (comms.h IRIS_PACKET_ID_TRANSFER_STATUS).
         start = number(payload[8:10])
@@ -236,6 +266,8 @@ def parse_packet(packet_id: int, payload: bytes):
                 "state": TRANSFER_STATES.get(payload[1], payload[1]), "length": number(payload[2:4]),
                 "chunks_expected": number(payload[4:6]), "chunks_received": number(payload[6:8]),
                 "window_start": start, "bitmap": bytes(bitmap).hex()}
+    if packet_id == 0x08:
+        return decode_maintenance_status(payload)
     if packet_id == 0xE1 and len(payload) == 12:
         return {
             "packet": "iris_debug", "status": number(payload[0:2]),
@@ -255,7 +287,7 @@ class PacketDecoder:
     # 62 bytes is the legacy 64-byte frame from older firmware/logs.
     payload_lengths = {0x01: (23, 21), 0x02: (63, 62), 0x03: (17,), 0xFF: (6,),
                        0xF0: (27, 11), 0x05: (8,), 0xE0: (101,), 0xE1: (12,),
-                       0x06: (11,), 0x07: (74,)}
+                       0x06: (11,), 0x07: (74,), 0x08: (17,)}
     # Host -> Witness packets that Witness may echo on USB. They are deframed
     # (fixed length + EOF) and skipped, never decoded or shown as telemetry.
     # 0x0C = HITL sensor input, 47-byte frame.
@@ -544,6 +576,14 @@ SECTION_SPECS = {
         ("kalman_altitude", "Kalman altitude above pad [m]"),
         ("latitude", "Latitude [deg]"), ("longitude", "Longitude [deg]"),
         ("gps_time", "GPS time [Unix s]"), ("gps_altitude", "GPS altitude [m MSL]"),
+    ],
+    "maintenance_status": [
+        ("mode_name", "Maintenance mode"), ("uptime", "Uptime"), ("ap_up", "Wi-Fi AP up"),
+        ("usb_disk", "USB disk"), ("store_mounted", "Log store mounted"), ("recovery", "Recovery (no flight image)"),
+        ("unconfirmed", "Image unconfirmed"), ("radio_ok", "Radio ok"), ("log_files", "Log files"),
+        ("battery_voltage", "Battery [V]"), ("store_version", "Store version"),
+        ("command_set", "Command set"), ("radio_settings", "Radio settings"),
+        ("maint_image_id", "Maintenance image id"), ("flight_image_id", "Flight image id"),
     ],
     "iris_debug": [
         ("status", "Status"), ("uptime", "Uptime"),

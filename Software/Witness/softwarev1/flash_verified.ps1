@@ -9,12 +9,15 @@
 #   .\flash_verified.ps1 -Port rfc2217://prs2026hitl:7002
 #   .\flash_verified.ps1 -Force   # blank or unreadable app (first flash)
 #
-# The flash layout comes from build/flash_args (bootloader, partition table,
-# ota_data_initial, app at ota_0), so it follows partitions.csv and the flash
-# size in sdkconfig. The identity check reads the installed app descriptor
-# from ota_0, then ota_1 (after a Wi-Fi OTA the newest image may be in either),
-# then 0x10000 (the old 2 MB single-app layout, before the one-time USB
-# migration flash).
+# TWO-IMAGE LAYOUT (partitions.csv): flight_a 0x20000, flight_b 0x220000,
+# maint_a 0x420000, maint_b 0x5A0000. The flash step writes images/flash_args
+# (made by build_images.ps1): bootloader, partition table, otadata, the FLIGHT
+# image at flight_a and the MAINTENANCE image at maint_a. This is the one-time
+# USB migration flash; afterwards both images update over Wi-Fi OTA. Falls back
+# to build/flash_args (flight only) if images\ does not exist.
+# The identity check reads the installed app descriptor from any app slot
+# (flight_a, flight_b, maint_a, maint_b, or the old layouts' 0x320000 and
+# 0x10000) and accepts either image kind (both are project "softwarev1").
 param(
     [string]$Port = 'rfc2217://prs2026hitl:7000',
     [string]$Project = 'softwarev1',
@@ -28,24 +31,30 @@ param(
 $ErrorActionPreference = 'Continue'
 Set-Location $PSScriptRoot
 # The application descriptor (esp_app_desc_t) is 0x20 bytes into the app.
-# Candidate app offsets: ota_0, ota_1 (partitions.csv), old single-app layout.
-$candidates = @(0x20000, 0x320000, 0x10000)
+# Candidate app offsets: the four slots above, then the old layouts.
+$candidates = @(0x20000, 0x220000, 0x420000, 0x5A0000, 0x320000, 0x10000)
 $chipFound = ''
 $mac = ''
 $installedApp = ''
 $installedAt = ''
+$installedKind = ''
 function Read-AppDescriptor([int]$offset) {
     $desc = Join-Path $env:TEMP 'witness_app_desc.bin'
     Remove-Item $desc -ErrorAction SilentlyContinue
-    $out = & $Python $Esptool -p $Port --before usb-reset --after no-reset read-flash $offset 0x100 $desc 2>&1 | Out-String
+    $out = & $Python $Esptool -p $Port --before usb-reset --after no-reset read-flash $offset 0x140 $desc 2>&1 | Out-String
     $name = ''
+    $kind = ''
     if (Test-Path $desc) {
         $bytes = [IO.File]::ReadAllBytes($desc)
         if ($bytes.Length -ge 0x20 + 48 + 32 -and [BitConverter]::ToUInt32($bytes, 0x20) -eq [uint32]'0xABCD5432') {
             $name = [Text.Encoding]::ASCII.GetString($bytes, 0x20 + 48, 32).Split([char]0)[0]
+            # Image-info record at 0x120: magic "WIMG", kind byte at +5.
+            if ($bytes.Length -ge 0x126 -and [BitConverter]::ToUInt32($bytes, 0x120) -eq [uint32]'0x474D4957') {
+                $kind = @{ 1 = 'flight'; 2 = 'maintenance' }[[int]$bytes[0x125]]
+            }
         }
     }
-    return @{ Output = $out; Name = $name }
+    return @{ Output = $out; Name = $name; Kind = $kind }
 }
 function Reset-Board {
     & $Python $Esptool -p $Port --before no-reset --after hard-reset chip-id 2>&1 | Out-Null
@@ -59,24 +68,27 @@ foreach ($offset in $candidates) {
             Write-Error "refusing to flash: $Port is a '$chipFound' (MAC $mac), expected $Chip`n$($r.Output)"; Reset-Board; exit 3
         }
     }
-    if ($r.Name) { $installedApp = $r.Name; $installedAt = ('0x{0:X}' -f $offset); break }
+    if ($r.Name) { $installedApp = $r.Name; $installedKind = $r.Kind; $installedAt = ('0x{0:X}' -f $offset); break }
 }
 # PowerShell names are case-insensitive: $installedApp must not be called
 # $project, or it would overwrite the -Project parameter.
 if ($installedApp -ne $Project -and -not $Force) {
     Write-Error "refusing to flash: $Port runs '$installedApp' (MAC $mac), expected '$Project'. Use -Force only for a blank Witness."; Reset-Board; exit 4
 }
-if ($CheckOnly) { Reset-Board; Write-Host "$Port is a $chipFound running '$installedApp' at $installedAt (MAC $mac): OK to flash"; exit 0 }
-Write-Host "$Port is a $chipFound running '$installedApp' at $installedAt (MAC $mac); flashing Witness"
-# build/flash_args: the first line holds the esptool options (flash mode,
-# frequency, size); each further line is "<offset> <file relative to build/>".
-$flashArgs = Get-Content (Join-Path $PSScriptRoot 'build/flash_args')
+if ($CheckOnly) { Reset-Board; Write-Host "$Port is a $chipFound running '$installedApp' ($installedKind image) at $installedAt (MAC $mac): OK to flash"; exit 0 }
+Write-Host "$Port is a $chipFound running '$installedApp' ($installedKind image) at $installedAt (MAC $mac); flashing Witness"
+# images/flash_args (build_images.ps1) or build/flash_args: the first line holds
+# the esptool options (flash mode, frequency, size); each further line is
+# "<offset> <file relative to that directory>".
+$argsDir = if (Test-Path (Join-Path $PSScriptRoot 'images/flash_args')) { 'images' } else { 'build' }
+$flashArgs = Get-Content (Join-Path $PSScriptRoot "$argsDir/flash_args")
 $options = @($flashArgs[0] -split '\s+' | Where-Object { $_ })
 $files = @()
 foreach ($line in ($flashArgs | Select-Object -Skip 1)) {
     $parts = @($line.Trim() -split '\s+' | Where-Object { $_ })
-    if ($parts.Count -eq 2) { $files += $parts[0]; $files += ('build/' + $parts[1]) }
+    if ($parts.Count -eq 2) { $files += $parts[0]; $files += ("$argsDir/" + $parts[1]) }
 }
-if ($files.Count -lt 8) { Write-Error "build/flash_args looks incomplete; run idf.py build first"; Reset-Board; exit 5 }
+if ($files.Count -lt 8) { Write-Error "$argsDir/flash_args looks incomplete; run build_images.ps1 first"; Reset-Board; exit 5 }
+if ($argsDir -eq 'build') { Write-Warning 'images/flash_args not found: flashing the FLIGHT image only (no maintenance image); run build_images.ps1' }
 & $Python $Esptool -p $Port -b 460800 --before usb-reset --after hard-reset --chip esp32s3 write_flash @options @files
 if ($LASTEXITCODE -ne 0) { Write-Error "esptool failed ($LASTEXITCODE)"; exit $LASTEXITCODE }

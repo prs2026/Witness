@@ -9,7 +9,6 @@
 #include "esp_log.h"
 #include "esp_system.h"
 #include "freertos/idf_additions.h"
-#include "wifi_ota.h"
 
 // Repeated every report (not only at boot): after a reset the USB console
 // reconnects late, so a one-off boot line is usually lost. BROWNOUT here
@@ -113,12 +112,12 @@ void CpuLoadMonitor::report()
         return a.percent > b.percent;
     });
     ESP_LOGI(kLogTag,
-             "core0 %.1f%% busy, core1 %.1f%% busy; heap free %u (min %u), internal free %u; last reset %s; wifi %s",
+             "core0 %.1f%% busy, core1 %.1f%% busy; heap free %u (min %u), internal free %u; last reset %s",
              100.0 - idle_percent[0], 100.0 - idle_percent[1],
              static_cast<unsigned>(heap_caps_get_free_size(MALLOC_CAP_DEFAULT)),
              static_cast<unsigned>(heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT)),
              static_cast<unsigned>(heap_caps_get_free_size(MALLOC_CAP_INTERNAL)),
-             reset_reason_name(esp_reset_reason()), wifi_ota_state_text());
+             reset_reason_name(esp_reset_reason()));
     // One short line per task: the USB stream interleaves GPS bytes, so a
     // long single line is easily split.
     std::size_t listed = 0;

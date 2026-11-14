@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <atomic>
 #include <cstdint>
 
 #include "comms.h"
@@ -9,7 +10,6 @@
 #include "freertos/task.h"
 #include "gps_assist.h"
 #include "hitl_input.h"
-#include "usb_mass_storage.h"
 
 class Heartbeat;
 class Sensors;
@@ -17,7 +17,6 @@ class SpiDataForwarder;
 class FlashLogger;
 class FlightStateMachine;
 class CommandBridge;
-class WifiOta;
 
 class UsbSerialEcho final {
 public:
@@ -27,8 +26,7 @@ public:
         SpiDataForwarder &spi_interface,
         FlashLogger &flash_logger,
         FlightStateMachine &flight_state_machine,
-        CommandBridge &command_bridge,
-        WifiOta &wifi_ota);
+        CommandBridge &command_bridge);
 
     UsbSerialEcho(const UsbSerialEcho &) = delete;
     UsbSerialEcho &operator=(const UsbSerialEcho &) = delete;
@@ -45,7 +43,10 @@ private:
     static constexpr std::uint32_t kTaskStackSize = 3072;
     static constexpr std::uint32_t kBinaryCommandIdleMs = 20;
     static constexpr std::uint32_t kHitlErrorReportIntervalMs = 1000;
-    static constexpr std::uint32_t kWifiOffWaitMs = 15000;
+    // Delay between acknowledging a radio switch command and restarting, so
+    // the ack is on the air first (USB acks go out at once).
+    static constexpr std::uint32_t kRadioAckGuardMs = 600;
+    static constexpr std::uint32_t kSwitchRestartDelayMs = 400;
     static constexpr std::uint32_t kHitlIgnoredReportIntervalMs = 5000;
 
     static void task_entry(void *context);
@@ -78,7 +79,6 @@ private:
     bool forward_text_command_if_present();
     void process_protocol_command(std::uint16_t command);
     void process_tx_command();
-    void start_mass_storage();
     void erase_log_sessions();
     void clear_log_sessions();
     // GPS assistance chunks (gps_assist.h); data = the six data bytes.
@@ -87,13 +87,20 @@ private:
                            bool radio);
     void handle_pad_heading(const std::uint8_t *data, const char *source, bool radio);
     void handle_radio_power(const std::uint8_t *data, const char *source, bool radio);
-    // IRIS_COMMAND_WIFI (comms.h): d0 on/off, d1 TX dBm, d2 auto-off minutes.
+    // IRIS_COMMAND_WIFI (comms.h): d0 on/off/status, d1 TX dBm, d2 auto-off
+    // minutes. Flight has no Wi-Fi: "on" hands over to the maintenance image.
     void handle_wifi(const std::uint8_t *data, const char *source, bool radio);
     // Applies command_policy for the source; returns ESP_ERR_NOT_ALLOWED when refused.
     esp_err_t set_flight_state(std::uint8_t state, bool radio);
     // Mass storage / erase / clear (0x6868/9/A) gated by command_policy.
-    // Runs the command when allowed; returns the ack result (OK or REFUSED).
-    std::uint8_t run_log_maintenance(std::uint16_t command, bool radio);
+    // Runs the command when allowed; returns the ack result (OK or REFUSED)
+    // and, for a refused switch to the maintenance image, the reason in
+    // `detail` (IRIS_MAINT_REFUSE_*).
+    std::uint8_t run_log_maintenance(std::uint16_t command, bool radio, std::uint16_t &detail);
+    // Hands over to the maintenance image (boot_manager::prepare_switch) and
+    // schedules the restart; the caller has already or will acknowledge.
+    std::uint8_t switch_to_maintenance(int kind, int tx_dbm, std::uint32_t minutes, bool radio,
+                                       std::uint16_t &detail);
     // 0x06 command acknowledgement / 0x07 transfer status (comms.h), sent on
     // the link the command arrived on. data6 = the command's six data bytes.
     void send_ack(bool radio, std::uint16_t command, const std::uint8_t *data6, std::uint8_t result,
@@ -110,8 +117,6 @@ private:
     FlashLogger &flash_logger_;
     FlightStateMachine &flight_state_machine_;
     CommandBridge &command_bridge_;
-    WifiOta &wifi_ota_;
-    UsbMassStorage mass_storage_;
     TaskHandle_t task_handle_ = nullptr;
     char command_buffer_[kCommandBufferSize]{};
     std::size_t command_length_ = 0;
@@ -119,9 +124,6 @@ private:
     bool binary_command_active_ = false;
     TickType_t binary_command_last_byte_time_ = 0;
     bool camera_enabled_[2]{};
-    bool mass_storage_started_ = false;
-    // Set just before the Serial/JTAG driver is uninstalled for export.
-    bool usb_driver_removed_ = false;
     hitl::FrameAssembler hitl_frames_{};
     // One assistance transfer at a time, from USB or radio (same task).
     gps_assist::Assembler gps_assist_{};

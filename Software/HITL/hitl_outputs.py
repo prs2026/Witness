@@ -223,7 +223,7 @@ def fetch_fc_logs(session, run, config: dict, log, activity=None) -> dict:
         session._send(bytes((hp.ID_COMMAND,)) + hp.CMD_MASS_STORAGE.to_bytes(2, "big"))
         time.sleep(0.5)
         session.disconnect(send_exit=False)
-        deadline = time.monotonic() + float(config.get("wait_s", 40))
+        deadline = time.monotonic() + float(config.get("wait_s", 90))  # export reboot + read-only scan ~25 s
         step("FC logs: waiting for the log disk on the Pi")
         while True:
             code, out, err = pi.agent_text("find")

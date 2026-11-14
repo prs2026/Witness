@@ -1,0 +1,4 @@
+# Overlay for the FLIGHT image (the default; kept so both images are built the
+# same way: SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.flight").
+CONFIG_WITNESS_IMAGE_FLIGHT=y
+# CONFIG_WITNESS_IMAGE_MAINTENANCE is not set

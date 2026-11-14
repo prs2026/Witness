@@ -41,6 +41,9 @@ from witness_protocol import (  # explicit for linters / readers
 
 OFF_BG, OFF_FG, ON_FG = "#f7f7f7", "#777777", "#111111"
 MAINTENANCE_STATUS_KEYS = ("packet.state.status", "packet.sensors.status")
+# The maintenance image sends no state/sensors packets, only the 0x08 beacon:
+# its arrival shows the banner, and the next flight packet clears it.
+MAINTENANCE_BEACON_KEY = "packet.maintenance_status.uptime"
 MAINTENANCE_TITLE_PREFIX = "MAINTENANCE - NOT FLIGHT READY | "
 MAINTENANCE_BANNER_TEXT = ("WITNESS IN MAINTENANCE MODE (Wi-Fi OTA / log download)\n"
                            "FLIGHT LOGGING OFF - NOT READY FOR FLIGHT - turn Wi-Fi off to reboot into flight mode")
@@ -214,11 +217,14 @@ class MonitorPanel(QtWidgets.QWidget):
         self.age_labels = {}
         self.status_indicators = {}
         self._maintenance_on = False
+        self._maintenance_beacon = False
         self._build()
         self.core.window_title.subscribe(self._title_changed)
         for key in MAINTENANCE_STATUS_KEYS:
             if key in self.core.values:
                 self.core.values[key].subscribe(lambda _text, key=key: self._update_maintenance(key))
+        if MAINTENANCE_BEACON_KEY in self.core.values:
+            self.core.values[MAINTENANCE_BEACON_KEY].subscribe(lambda _text: self._update_maintenance_beacon())
         self._graph_throttle = Throttle(self.draw_graphs, GRAPH_MS, self)
         self._events_timer = self._timer(EVENT_MS, self.process_events)
         self._auto_timer = self._timer(AUTO_MS, self.core.auto_poll)
@@ -232,14 +238,24 @@ class MonitorPanel(QtWidgets.QWidget):
         value = self.core.raw_values.get(key)
         if not isinstance(value, int):
             return
+        # A flight packet means the flight image is running again.
+        self._maintenance_beacon = False
         on = status_maintenance(value)
+        self._set_maintenance(on)
+
+    def _update_maintenance_beacon(self):
+        """0x08 beacon: Witness is in the maintenance image (not flying, not logging)."""
+        self._maintenance_beacon = True
+        self._set_maintenance(True)
+
+    def _set_maintenance(self, on):
         if on != self._maintenance_on:
             self._maintenance_on = on
             self.maintenance_banner.setVisible(on)
             self.core.maintenance_active = on
             self._title_changed(self.core.window_title.get())
             if on:
-                self.core.console_write("WITNESS MAINTENANCE MODE: Wi-Fi up, flight logging OFF, NOT FLIGHT READY")
+                self.core.console_write("WITNESS MAINTENANCE MODE (separate image): flight logging OFF, NOT FLIGHT READY")
             else:
                 self.core.console_write("Witness left maintenance mode: back in flight mode")
 

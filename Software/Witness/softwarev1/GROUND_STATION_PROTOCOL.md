@@ -238,7 +238,8 @@ Command values currently defined:
 | `0x00E0` | Enable Witness debug packets at 10 Hz |
 | `0x4849` | Enter HITL mode (USB only, Pad Idle only; see section 4a) |
 | `0x4858` | Exit HITL mode (USB or LoRa) |
-| `0x6868` | Enter read-only USB mass-storage mode |
+| `0x5746` | Wi-Fi OTA / log download: d0 0 off / 1 on / 2 status, d1 Wi-Fi TX dBm (int8, 0 = default +8, 2..20), d2 auto-off minutes (0 = 15, max 240). USB or LoRa, Pad Idle or Landed only. "On" restarts Witness into the **maintenance image** (see `0x08` below); "off" (sent to the maintenance image) restarts it back into flight. |
+| `0x6868` | Enter read-only USB mass-storage mode (USB only, Pad Idle or Landed; restarts into the maintenance image, which exports the logs; any reset returns to flight) |
 | `0x6869` | Erase all stored log sessions (every block; slow) |
 | `0x686A` | Clear all stored log sessions (fast: only the two session headers are erased; the session number keeps counting) |
 | `0x4741` / `0x4744` / `0x4745` / `0x4751` | GPS assistance upload BEGIN / DATA / COMMIT / STATUS (ephemeris for the receiver; chunked, Witness-local, never forwarded; see section 4b) |
@@ -249,6 +250,55 @@ The last three commands also have legacy compact USB forms described in
 section 7. Canonical commands received from USB or LoRa are retransmitted
 byte-for-byte through the Iris CAN link. The firmware does not rewrite their status or uptime.
 Radio commands are additionally interpreted locally.
+
+### Two-image boot: `0x5746`/`0x6868` refusals and the `0x08` maintenance beacon
+
+Witness has a flight image (no Wi-Fi) and a maintenance image (Wi-Fi OTA, log
+download, USB log export). `0x5746` on and `0x6868` make the flight image check
+the maintenance image, acknowledge (`0x06`), and restart into it. The ack result
+is `0x00` OK, or `0x01` refused. A refused ack carries the reason in its
+big-endian detail field:
+
+| Detail | Meaning |
+|---:|---|
+| `0x0000` | refused by flight state (not Pad Idle/Landed) or source (`0x6868` over LoRa) |
+| `0x0001` | no valid maintenance image installed |
+| `0x0002` | maintenance image-info missing, corrupt or wrong kind |
+| `0x0003` | maintenance image cannot read this log storage format |
+| `0x0004` | LoRa settings (frequency/SF/BW/CR/preamble/sync word/version) differ |
+| `0x0005` | command-set version differs |
+| `0x0006` | image-info layout version differs |
+| `0x0007` | selecting/validating the maintenance boot slot failed |
+| `0x0008` | a switch is already pending |
+
+While the maintenance image runs it sends **no** sensor/state telemetry; its
+presence is the `0x08` beacon, every 5 s on LoRa and on USB when connected. The
+status-byte MAINTENANCE bit (byte 1 bit 5) is no longer set by anything. It
+accepts the same 10-byte `0x05` frames: `0x5746` (on = extend the Wi-Fi window,
+off = restart into flight, d0=2 status: ack detail bit 8 AP up, bit 9 start
+failed, low byte start step) and `0x5250` radio power; other commands are acked
+`0x03` (unknown). Any reset of Witness returns to the flight image.
+
+### `0x08` Maintenance status beacon, 19 bytes
+
+Frame: ID `0x08`, 17 data bytes, EOF `0x0A`. Multi-byte fields are big-endian.
+
+| Data offset | Size | Field |
+|---:|---:|---|
+| 0 | 1 | beacon version (currently 1) |
+| 1 | 1 | mode: 0 Wi-Fi, 1 USB export |
+| 2 | 1 | flags: bit0 Wi-Fi AP up, bit1 USB disk active, bit2 log store mounted, bit3 recovery (no flight image), bit4 this image unconfirmed (first boot after a maintenance OTA), bit5 radio ok |
+| 3 | 1 | storage format version the image reads |
+| 4 | 1 | command-set version |
+| 5 | 1 | radio-settings version |
+| 6 | 2 | maintenance image id (hash of its version string) |
+| 8 | 2 | flight image id (hash of the flight image version string, 0 = none) |
+| 10 | 2 | battery millivolts (0 = not measured) |
+| 12 | 4 | uptime ms |
+| 16 | 1 | log files found (0..255) |
+
+Horizon decodes it as packet `maintenance_status` and shows the maintenance
+banner while beacons arrive (cleared by the next flight state/sensor packet).
 
 ### 4b. GPS assistance upload (ground -> Witness -> GPS)
 

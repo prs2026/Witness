@@ -82,13 +82,17 @@
 #define IRIS_RADIO_FRONT_END_ON 0x01U
 #define IRIS_RADIO_FRONT_END_OFF 0x02U
 // Wi-Fi OTA / log download (Witness only; USB or radio; Pad Idle or Landed
-// only, otherwise IRIS_ACK_REFUSED). d0 = 0 off / 1 on, d1 = Wi-Fi maximum TX
-// power in dBm as int8 (0 keeps the default, +8; allowed 2..20), d2 =
-// auto-off minutes (0 = default 15; 1..240). Never starts at boot. While Wi-Fi
-// is on, Witness stops all LoRa transmission (telemetry and acks) but keeps
-// receiving, so an off command over radio still works; its ack is sent after
-// Wi-Fi is off. Wi-Fi also turns off by itself after the auto-off time without
-// HTTP activity and on any flight state change out of Pad Idle/Landed.
+// only, otherwise IRIS_ACK_REFUSED). d0 = 0 off / 1 on / 2 status, d1 = Wi-Fi
+// maximum TX power in dBm as int8 (0 keeps the default, +8; allowed 2..20),
+// d2 = auto-off minutes (0 = default 15; 1..240). Never starts at boot.
+// Witness runs two firmware images (see "Two-image boot" below): the FLIGHT
+// image has no Wi-Fi. "On" (and IRIS_COMMAND_MASS_STORAGE_START, USB export)
+// makes the flight image check the MAINTENANCE image's interface version, then
+// acknowledge and restart into it; the ack is IRIS_ACK_REFUSED with the reason
+// in the detail field (IRIS_MAINT_REFUSE_*) if the maintenance image is
+// missing or incompatible. In the maintenance image "off" (or the auto-off
+// timeout, HTTP /reboot, or any reset) restarts back into flight. The
+// maintenance image answers on the same radio link with the 0x08 beacon.
 // Out-of-range arguments -> IRIS_ACK_BAD_ARGUMENT; busy/rebooting -> IRIS_ACK_BUSY.
 #define IRIS_COMMAND_WIFI 0x5746U
 // Three-byte state command: 0x05, 0x73, then one of these state values.
@@ -160,9 +164,9 @@
 // Status byte 1, bit 4: HITL mode is active; sensor values are simulated.
 #define IRIS_WITNESS_STATUS_HITL_ACTIVE_BYTE_OFFSET 1U
 #define IRIS_WITNESS_STATUS_HITL_ACTIVE_MASK (1U << 4)
-// Status byte 1, bit 5: MAINTENANCE boot (Wi-Fi OTA / log download). Flight
-// logging is NOT running: Witness is NOT ready for flight. Cleared by the
-// reboot back to normal mode (Wi-Fi off, auto-off, or power cycle).
+// Status byte 1, bit 5: MAINTENANCE (reserved). The flight image never sets it
+// (maintenance runs as a separate image that sends the 0x08 beacon instead and
+// no flight telemetry); the bit stays defined so old logs and tools decode.
 #define IRIS_WITNESS_STATUS_MAINTENANCE_BYTE_OFFSET 1U
 #define IRIS_WITNESS_STATUS_MAINTENANCE_MASK (1U << 5)
 // Status byte 1, bit 6: Witness RESUMED an in-flight flight state (Boost,
@@ -693,6 +697,75 @@
 #define IRIS_PACKET_TRANSFER_STATUS_DATA_LENGTH 74U
 #define IRIS_PACKET_TRANSFER_STATUS_BITMAP_BYTES 64U
 #define IRIS_PACKET_TRANSFER_STATUS_FRAME_LENGTH     (IRIS_PACKET_ID_LENGTH + IRIS_PACKET_TRANSFER_STATUS_DATA_LENGTH + IRIS_PACKET_EOF_LENGTH)
+
+// ---------------------------------------------------------------------------
+// Two-image boot: maintenance image interface and 0x08 beacon
+// ---------------------------------------------------------------------------
+// Witness has a FLIGHT image (no Wi-Fi) and a MAINTENANCE image (Wi-Fi OTA, log
+// download, USB log export, LoRa listening). They are separate app slots of one
+// flash; any reset of the maintenance image returns to flight. Both embed an
+// image-info record (image_info.h) holding these interface versions. Before
+// switching, the flight image refuses unless the maintenance image's record is
+// compatible with its own: bump a version whenever the matching format changes
+// in a way the other image would not understand.
+//   storage format  : FlashLogger on-flash format (kStoreVersion). The
+//                     maintenance image reads versions MIN..current.
+//   radio settings  : LoRa frequency/SF/BW/CR/preamble/sync word. Identical
+//                     numbers AND version required, so the ground link keeps
+//                     working after the switch.
+//   command set     : the commands both images accept over radio/USB (0x5746
+//                     Wi-Fi, 0x6868 export, ack and refusal semantics).
+#define IRIS_MAINT_INFO_STRUCT_VERSION 1U
+#define IRIS_MAINT_STORE_FORMAT_VERSION 4U
+#define IRIS_MAINT_STORE_FORMAT_MIN_VERSION 3U
+#define IRIS_MAINT_RADIO_SETTINGS_VERSION 1U
+#define IRIS_MAINT_RADIO_SYNC_WORD 0x1424U   // SX1262 private LoRa sync word
+#define IRIS_MAINT_COMMAND_SET_VERSION 1U
+#define IRIS_IMAGE_KIND_FLIGHT 1U
+#define IRIS_IMAGE_KIND_MAINTENANCE 2U
+// Ack detail (u16, big-endian) when 0x5746 "on" or 0x6868 is refused because
+// the switch to the maintenance image is not possible. 0 = refused by flight
+// state (not Pad Idle/Landed, or USB-only command over radio).
+#define IRIS_MAINT_REFUSE_NONE 0x0000U
+#define IRIS_MAINT_REFUSE_NO_IMAGE 0x0001U        // no valid maintenance image installed
+#define IRIS_MAINT_REFUSE_BAD_INFO 0x0002U        // image-info record missing/corrupt/wrong kind
+#define IRIS_MAINT_REFUSE_STORE_VERSION 0x0003U   // cannot read this storage format
+#define IRIS_MAINT_REFUSE_RADIO_SETTINGS 0x0004U  // LoRa settings differ
+#define IRIS_MAINT_REFUSE_COMMAND_SET 0x0005U     // command set differs
+#define IRIS_MAINT_REFUSE_INFO_VERSION 0x0006U    // image-info layout version differs
+#define IRIS_MAINT_REFUSE_SWITCH_FAILED 0x0007U   // selecting/validating the boot slot failed
+#define IRIS_MAINT_REFUSE_BUSY 0x0008U            // a switch is already pending
+
+// 0x08 Maintenance status beacon (maintenance image -> host, LoRa every 5 s and
+// on USB when connected). Sent only by the maintenance image; its arrival
+// means Witness is NOT flying (logging off, no sensors). Payload (17 bytes):
+//   [0]     beacon version (IRIS_MAINT_BEACON_VERSION)
+//   [1]     mode: 0 Wi-Fi, 1 USB export
+//   [2]     flags: bit0 Wi-Fi AP up, bit1 USB disk active, bit2 log store mounted,
+//           bit3 recovery (no valid flight image), bit4 this image unconfirmed
+//           (first boot after a maintenance OTA), bit5 radio ok
+//   [3]     storage format version this image reads
+//   [4]     command set version
+//   [5]     radio settings version
+//   [6..7]  maintenance image id (u16 BE, hash of its version string)
+//   [8..9]  flight image id (u16 BE, hash of the flight image's version
+//           string; 0 = none)
+//   [10..11] battery millivolts (u16 BE; 0 = not measured)
+//   [12..15] uptime ms (u32 BE)
+//   [16]    log files found in the store (0..255)
+#define IRIS_PACKET_ID_MAINTENANCE_STATUS 0x08U
+#define IRIS_MAINT_BEACON_VERSION 1U
+#define IRIS_PACKET_MAINTENANCE_STATUS_DATA_LENGTH 17U
+#define IRIS_PACKET_MAINTENANCE_STATUS_FRAME_LENGTH     (IRIS_PACKET_ID_LENGTH + IRIS_PACKET_MAINTENANCE_STATUS_DATA_LENGTH + IRIS_PACKET_EOF_LENGTH)
+#define IRIS_MAINT_MODE_WIFI 0U
+#define IRIS_MAINT_MODE_USB_EXPORT 1U
+#define IRIS_MAINT_FLAG_AP_UP (1U << 0)
+#define IRIS_MAINT_FLAG_USB_DISK (1U << 1)
+#define IRIS_MAINT_FLAG_STORE_MOUNTED (1U << 2)
+#define IRIS_MAINT_FLAG_RECOVERY (1U << 3)
+#define IRIS_MAINT_FLAG_UNCONFIRMED (1U << 4)
+#define IRIS_MAINT_FLAG_RADIO_OK (1U << 5)
+#define IRIS_MAINT_BEACON_PERIOD_MS 5000U
 
 // ---------------------------------------------------------------------------
 

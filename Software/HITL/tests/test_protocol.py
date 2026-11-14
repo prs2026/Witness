@@ -209,3 +209,16 @@ class AckFrameTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MaintenanceBeaconFrameTests(unittest.TestCase):
+    def test_decode_maintenance_status(self):
+        import hitl_protocol as hp
+        frame = bytes([0x08, 1, 1, 0x26, 4, 1, 1, 0xBE, 0xEF, 0x12, 0x34, 0x1D, 0x14,
+                       0x00, 0x00, 0x13, 0x88, 7, 0x0A])
+        self.assertEqual(hp.FRAME_LENGTHS[0x08], len(frame))
+        pkt = hp.decode_frame(frame)
+        self.assertEqual(pkt["name"], "maintenance_status")
+        self.assertEqual((pkt["mode"], pkt["flags"], pkt["store_version"]), (1, 0x26, 4))
+        self.assertEqual((pkt["maint_image_id"], pkt["flight_image_id"]), (0xBEEF, 0x1234))
+        self.assertEqual((pkt["battery_mv"], pkt["uptime_ms"], pkt["log_files"]), (7444, 5000, 7))

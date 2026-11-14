@@ -6,37 +6,30 @@
 #include <cstring>
 #include <strings.h>
 
+#include "boot_manager.h"
 #include "comms.h"
 #include "esp_app_desc.h"
 #include "esp_event.h"
+#include "esp_heap_caps.h"
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_ota_ops.h"
 #include "esp_system.h"
 #include "esp_timer.h"
 #include "esp_wifi.h"
-#include "esp_heap_caps.h"
 #include "flash_logger.h"
-#include "maintenance_mode.h"
-#include "flight_state_machine.h"
-#include "sensors.h"
+#include "image_info.h"
+#include "maint_app.h"
 #include "task_cores.h"
 #include "wifi_ota_logic.h"
-#include "witness_status.h"
 
 namespace {
 constexpr char kLogTag[] = "wifi_ota";
 constexpr char kProjectName[] = "softwarev1";
-constexpr std::uint64_t kStartWatchdogUs = 15000000ULL;
-// Time between a Wi-Fi stop that froze logging and the reboot that thaws it;
-// long enough for a radio ack of the off command to go out first.
-constexpr std::uint32_t kThawRestartDelayMs = 2000;
-constexpr TickType_t kLogFreezeTimeout = pdMS_TO_TICKS(15000);
+constexpr TickType_t kLogWaitTimeout = pdMS_TO_TICKS(30000);
 
 static_assert(sizeof(CONFIG_WITNESS_WIFI_PASSWORD) >= 9 && sizeof(CONFIG_WITNESS_WIFI_PASSWORD) <= 64,
               "CONFIG_WITNESS_WIFI_PASSWORD must be 8..63 characters (WPA2)");
-
-std::atomic_bool g_wifi_on{false};
 
 void wifi_event_handler(void *, esp_event_base_t base, std::int32_t id, void *data)
 {
@@ -51,31 +44,47 @@ void wifi_event_handler(void *, esp_event_base_t base, std::int32_t id, void *da
                  event->mac[2], event->mac[3], event->mac[4], event->mac[5]);
     }
 }
+
+const char *state_text(const esp_partition_t *partition)
+{
+    esp_ota_img_states_t state;
+    if (partition == nullptr || esp_ota_get_state_partition(partition, &state) != ESP_OK) return "unknown";
+    switch (state) {
+    case ESP_OTA_IMG_NEW: return "new";
+    case ESP_OTA_IMG_PENDING_VERIFY: return "pending";
+    case ESP_OTA_IMG_VALID: return "valid";
+    case ESP_OTA_IMG_INVALID: return "invalid";
+    case ESP_OTA_IMG_ABORTED: return "aborted";
+    default: return "undefined";
+    }
+}
+
+// {"slot":"flight_a","version":"...","build":N} or {"slot":"flight_a","version":null}
+std::size_t slot_json(char *out, const std::size_t cap, const boot_manager::Kind kind, const int index)
+{
+    const esp_partition_t *partition = boot_manager::slot_partition(kind, index);
+    image_info::Info info{};
+    esp_app_desc_t desc;
+    if (partition == nullptr) return static_cast<std::size_t>(std::snprintf(out, cap, "null"));
+    if (!boot_manager::read_info(partition, kind, info) ||
+        esp_ota_get_partition_description(partition, &desc) != ESP_OK) {
+        return static_cast<std::size_t>(
+            std::snprintf(out, cap, "{\"slot\":\"%s\",\"version\":null}", partition->label));
+    }
+    char version[40];
+    wifi_ota_logic::json_escape(version, sizeof(version), desc.version);
+    return static_cast<std::size_t>(std::snprintf(
+        out, cap, "{\"slot\":\"%s\",\"version\":\"%s\",\"build\":%u,\"store\":%u,\"command_set\":%u}",
+        partition->label, version, static_cast<unsigned>(info.build_id), static_cast<unsigned>(info.store_version),
+        static_cast<unsigned>(info.command_set_version)));
+}
 }  // namespace
 
-const char *wifi_ota_state_text()
-{
-    return g_wifi_on.load() ? "on" : "off";
-}
-
-WifiOta::WifiOta(Sensors &sensors, FlashLogger &flash_logger,
-                 FlightStateMachine &flight_state_machine, WitnessStatus &witness_status)
-    : sensors_(sensors),
-      flash_logger_(flash_logger),
-      flight_state_machine_(flight_state_machine),
-      witness_status_(witness_status)
-{
-}
+WifiOta::WifiOta(FlashLogger &flash_logger) : flash_logger_(flash_logger) {}
 
 std::uint32_t WifiOta::now_ms() const
 {
     return static_cast<std::uint32_t>(esp_timer_get_time() / 1000);
-}
-
-bool WifiOta::state_allows() const
-{
-    return wifi_ota_logic::state_allows_wifi(
-        static_cast<std::uint8_t>(flight_state_machine_.state()));
 }
 
 void WifiOta::touch()
@@ -83,41 +92,24 @@ void WifiOta::touch()
     last_activity_ms_.store(now_ms());
 }
 
-esp_err_t WifiOta::start()
+void WifiOta::keep_alive(const std::uint32_t minutes)
+{
+    auto_off_ms_.store(minutes * 60000U);
+    touch();
+}
+
+esp_err_t WifiOta::start(const int tx_dbm, const std::uint32_t auto_off_minutes)
 {
     if (task_ != nullptr) return ESP_ERR_INVALID_STATE;
-    queue_ = xQueueCreate(4, sizeof(Request));
-    done_ = xSemaphoreCreateBinary();
     log_mutex_ = xSemaphoreCreateMutex();
-    if (queue_ == nullptr || done_ == nullptr || log_mutex_ == nullptr) return ESP_ERR_NO_MEM;
-
-    const esp_partition_t *running = esp_ota_get_running_partition();
-    esp_ota_img_states_t image_state = ESP_OTA_IMG_UNDEFINED;
-    if (running != nullptr && esp_ota_get_state_partition(running, &image_state) == ESP_OK &&
-        image_state == ESP_OTA_IMG_PENDING_VERIFY) {
-        self_test_pending_ = true;
-        ESP_LOGW(kLogTag, "new image is pending verification: self-test within %u s or roll back",
-                 static_cast<unsigned>(kSelfTestWindowMs / 1000));
-    }
-    ESP_LOGI(kLogTag, "running %s (%s), app state %s; %s",
-             running != nullptr ? running->label : "?", esp_app_get_description()->version,
-             app_state_text(),
-             maintenance_mode::active() ? "MAINTENANCE boot: Wi-Fi coming up, NOT logging, NOT flight ready"
-                                        : "Wi-Fi off until commanded (a maintenance reboot)");
-
-    if (xTaskCreatePinnedToCore(task_entry, "wifi_ota", kTaskStackSize, this, kTaskPriority,
-                                &task_, task_cores::kSystem) != pdPASS) {
-        return ESP_ERR_NO_MEM;
-    }
-    if (maintenance_mode::active()) {
-        const int tx = maintenance_mode::requested_tx_dbm();
-        const std::uint32_t minutes = maintenance_mode::requested_minutes();
-        const Request enable{RequestKind::Enable,
-                             static_cast<std::int8_t>(tx != 0 ? tx : kDefaultTxPowerDbm),
-                             static_cast<std::uint16_t>(minutes != 0 ? minutes : kDefaultAutoOffMinutes), 0, false};
-        (void)xQueueSend(queue_, &enable, 0);
-    }
-    return ESP_OK;
+    if (log_mutex_ == nullptr) return ESP_ERR_NO_MEM;
+    tx_power_dbm_ = tx_dbm != 0 ? tx_dbm : kDefaultTxPowerDbm;
+    auto_off_ms_.store(auto_off_minutes * 60000U);
+    touch();
+    return xTaskCreatePinnedToCore(task_entry, "wifi_ota", kTaskStackSize, this, kTaskPriority, &task_,
+                                   task_cores::kSystem) == pdPASS
+               ? ESP_OK
+               : ESP_ERR_NO_MEM;
 }
 
 void WifiOta::task_entry(void *context)
@@ -127,173 +119,34 @@ void WifiOta::task_entry(void *context)
 
 void WifiOta::run()
 {
+    const esp_err_t result = start_wifi();
+    if (result != ESP_OK) {
+        // Nothing to serve: the beacon (status word, "AP down") still tells the
+        // ground station, and the operator can send Wi-Fi off over LoRa.
+        ESP_LOGE(kLogTag, "Wi-Fi start failed: %s", esp_err_to_name(result));
+        failed_.store(true);
+    }
     for (;;) {
-        Request request{};
-        if (xQueueReceive(queue_, &request, pdMS_TO_TICKS(kPollIntervalMs)) == pdTRUE) {
-            handle_request(request);
+        vTaskDelay(pdMS_TO_TICKS(kPollIntervalMs));
+        maint::shared().wifi_status.store(status_word());
+        const std::uint32_t window = auto_off_ms_.load();
+        if (enabled_.load() && window != 0 && now_ms() - last_activity_ms_.load() >= window) {
+            maint::leave(200, "Wi-Fi auto-off, no HTTP activity");
+            auto_off_ms_.store(0);   // once
         }
-        self_test_step();
-        monitor();
     }
 }
 
-std::uint8_t WifiOta::request_enable(const int tx_dbm, const std::uint32_t minutes, const bool radio)
+esp_err_t WifiOta::start_wifi()
 {
-    if (!state_allows()) return IRIS_ACK_REFUSED;
-    if (mass_storage_active_.load()) return IRIS_ACK_REFUSED;
-    if (restart_scheduled_.load() || task_ == nullptr) return IRIS_ACK_BUSY;
-    if (!maintenance_mode::active()) {
-        // Normal mode has no RAM for Wi-Fi: reboot into a maintenance boot,
-        // after the caller's ack has gone out (radio: ack guard time).
-        maintenance_mode::request(tx_dbm, minutes);
-        const Request restart{RequestKind::Restart, 0, 0,
-                              static_cast<std::uint16_t>(radio ? kRadioAckGuardMs + 400 : 400), false};
-        ESP_LOGW(kLogTag, "Wi-Fi requested: rebooting into MAINTENANCE mode (not flight ready)");
-        return xQueueSend(queue_, &restart, 0) == pdTRUE ? IRIS_ACK_OK : IRIS_ACK_BUSY;
-    }
-    const Request request{RequestKind::Enable, static_cast<std::int8_t>(tx_dbm),
-                          static_cast<std::uint16_t>(minutes),
-                          static_cast<std::uint16_t>(radio ? kRadioAckGuardMs : 0), false};
-    return xQueueSend(queue_, &request, 0) == pdTRUE ? IRIS_ACK_OK : IRIS_ACK_BUSY;
-}
-
-bool WifiOta::request_disable_and_wait(const TickType_t timeout)
-{
-    if (task_ == nullptr) return true;
-    if (!enabled_.load() && uxQueueMessagesWaiting(queue_) == 0) return true;
-    (void)xSemaphoreTake(done_, 0);
-    const Request request{RequestKind::Disable, 0, 0, 0, true};
-    if (xQueueSend(queue_, &request, pdMS_TO_TICKS(100)) != pdTRUE) return false;
-    return xSemaphoreTake(done_, timeout) == pdTRUE;
-}
-
-void WifiOta::note_mass_storage_active()
-{
-    mass_storage_active_.store(true);
-}
-
-void WifiOta::handle_request(const Request &request)
-{
-    switch (request.kind) {
-    case RequestKind::Enable:
-        if (request.delay_ms > 0) vTaskDelay(pdMS_TO_TICKS(request.delay_ms));
-        if (mass_storage_active_.load() || !state_allows()) {
-            ESP_LOGW(kLogTag, "enable dropped: state or mass storage changed");
-        } else if (enabled_.load()) {
-            auto_off_ms_ = static_cast<std::uint32_t>(request.minutes) * 60000U;
-            touch();
-            ESP_LOGI(kLogTag, "already on; auto-off now %u min", static_cast<unsigned>(request.minutes));
-        } else {
-            const esp_err_t result = start_wifi(request.tx_dbm, request.minutes);
-            if (result != ESP_OK) {
-                ESP_LOGE(kLogTag, "Wi-Fi start failed: %s", esp_err_to_name(result));
-            }
-        }
-        break;
-    case RequestKind::Disable:
-        if (request.delay_ms > 0) vTaskDelay(pdMS_TO_TICKS(request.delay_ms));
-        if (enabled_.load()) stop_wifi("commanded off");
-        break;
-    case RequestKind::Restart:
-        restart_at_ms_.store(now_ms() + request.delay_ms);
-        restart_scheduled_.store(true);
-        ESP_LOGW(kLogTag, "reboot in %u ms", static_cast<unsigned>(request.delay_ms));
-        break;
-    }
-    if (request.wake_waiter) (void)xSemaphoreGive(done_);
-}
-
-void WifiOta::monitor()
-{
-    if (restart_scheduled_.load() && static_cast<std::int32_t>(now_ms() - restart_at_ms_.load()) >= 0) {
-        // Leaving maintenance (back to flight-ready) is always allowed; any
-        // other reboot only on the pad or landed.
-        if (state_allows() || (maintenance_mode::active() && !enabled_.load())) {
-            ESP_LOGW(kLogTag, "rebooting");
-            vTaskDelay(pdMS_TO_TICKS(100));
-            esp_restart();
-        }
-        restart_scheduled_.store(false);
-        ESP_LOGW(kLogTag, "reboot cancelled: flight state is not Pad Idle/Landed");
-    }
-    if (!enabled_.load()) return;
-    if (mass_storage_active_.load()) {
-        stop_wifi("USB mass storage started");
-    } else if (!state_allows()) {
-        stop_wifi("flight state change");
-    } else if (now_ms() - last_activity_ms_.load() >= auto_off_ms_) {
-        stop_wifi("auto-off, no HTTP activity");
-    }
-}
-
-bool WifiOta::self_test_passed() const
-{
-    const std::uint8_t flags = witness_status_.flags();
-    constexpr std::uint8_t kImuReady =
-        IRIS_WITNESS_STATUS_LOW_G_ACCEL_READY_MASK | IRIS_WITNESS_STATUS_GYRO_READY_MASK;
-    constexpr std::uint8_t kFlashFailed =
-        IRIS_WITNESS_STATUS_FLASH_INIT_FAILED_MASK | IRIS_WITNESS_STATUS_FLASH_LOG_FAILED_MASK;
-    return (flags & kImuReady) == kImuReady && (flags & kFlashFailed) == 0 && sensors_.radio_ready();
-}
-
-void WifiOta::self_test_step()
-{
-    if (!self_test_pending_) return;
-    if (self_test_passed()) {
-        const esp_err_t result = esp_ota_mark_app_valid_cancel_rollback();
-        ESP_LOGI(kLogTag, "self-test passed at %u ms: image marked valid (%s)",
-                 static_cast<unsigned>(now_ms()), esp_err_to_name(result));
-        self_test_pending_ = false;
-        // The post-OTA boot is a maintenance boot (handle_ota requests it), so
-        // Wi-Fi is already up for the host to confirm; nothing to open here.
-        if (false) {
-            ESP_LOGW(kLogTag, "first boot after OTA: Wi-Fi opens for %d min so the host can confirm",
-                     CONFIG_WITNESS_WIFI_CONFIRM_MINUTES);
-            const Request enable{RequestKind::Enable, static_cast<std::int8_t>(kDefaultTxPowerDbm),
-                                 static_cast<std::uint16_t>(CONFIG_WITNESS_WIFI_CONFIRM_MINUTES), 0, false};
-            (void)xQueueSend(queue_, &enable, 0);
-        }
-    } else if (now_ms() >= kSelfTestWindowMs) {
-        ESP_LOGE(kLogTag, "self-test failed (status 0x%02X, radio %s): rolling back",
-                 witness_status_.flags(), sensors_.radio_ready() ? "ok" : "not ready");
-        vTaskDelay(pdMS_TO_TICKS(200));
-        esp_ota_mark_app_invalid_rollback_and_reboot();
-        self_test_pending_ = false;   // only reached if there is no previous image
-    }
-}
-
-esp_err_t WifiOta::start_wifi(const int tx_dbm, const std::uint32_t minutes)
-{
-    tx_power_dbm_ = tx_dbm;
-    auto_off_ms_ = minutes * 60000U;
-    touch();
-    ESP_LOGW(kLogTag, "starting Wi-Fi AP: LoRa transmission off, max TX %d dBm, auto-off %u min", tx_dbm,
-             static_cast<unsigned>(minutes));
-    // Watchdog: if the AP is not up in kStartWatchdogUs (a call below hangs),
-    // LoRa transmission comes back on from the esp_timer task, so a stuck
-    // Wi-Fi start can never leave Witness silent.
-    watchdog_fired_.store(false);
-    if (start_watchdog_ == nullptr) {
-        esp_timer_create_args_t args{};
-        args.callback = &WifiOta::start_watchdog_expired;
-        args.arg = this;
-        args.name = "wifi_start_wd";
-        esp_timer_handle_t timer = nullptr;
-        if (esp_timer_create(&args, &timer) == ESP_OK) start_watchdog_ = timer;
-    }
-    if (start_watchdog_ != nullptr) {
-        auto *timer = static_cast<esp_timer_handle_t>(start_watchdog_);
-        (void)esp_timer_stop(timer);
-        (void)esp_timer_start_once(timer, kStartWatchdogUs);
-    }
+    ESP_LOGW(kLogTag, "starting Wi-Fi AP: max TX %d dBm, auto-off %u min", tx_power_dbm_,
+             static_cast<unsigned>(auto_off_ms_.load() / 60000U));
     const auto step = [this](const std::uint8_t n, const char *what) {
         start_step_.store(n);
         ESP_LOGW(kLogTag, "start step %u: %s (free heap %u, internal %u)", n, what,
                  static_cast<unsigned>(esp_get_free_heap_size()),
                  static_cast<unsigned>(heap_caps_get_free_size(MALLOC_CAP_INTERNAL)));
     };
-    sensors_.set_radio_transmission_enabled(false);
-    sensors_.set_radio_beacon_only(true);
 
     esp_err_t result = ESP_OK;
     bool wifi_inited = false;
@@ -353,12 +206,12 @@ esp_err_t WifiOta::start_wifi(const int tx_dbm, const std::uint32_t minutes)
         wifi_started = true;
         step(9, "esp_wifi_set_max_tx_power");
         result = esp_wifi_set_max_tx_power(
-            static_cast<std::int8_t>(wifi_ota_logic::tx_power_to_wifi_units(tx_dbm)));
+            static_cast<std::int8_t>(wifi_ota_logic::tx_power_to_wifi_units(tx_power_dbm_)));
         if (result != ESP_OK) break;
 
         httpd_config_t http = HTTPD_DEFAULT_CONFIG();
         http.core_id = task_cores::kSystem;
-        http.task_priority = 2;     // below the NAND logger and USB tasks
+        http.task_priority = 2;
         http.stack_size = 6144;
         http.max_open_sockets = 3;
         http.max_uri_handlers = 8;
@@ -397,9 +250,8 @@ esp_err_t WifiOta::start_wifi(const int tx_dbm, const std::uint32_t minutes)
         if (result != ESP_OK) break;
 
         step(12, "AP up");
-        if (start_watchdog_ != nullptr) (void)esp_timer_stop(static_cast<esp_timer_handle_t>(start_watchdog_));
         enabled_.store(true);
-        g_wifi_on.store(true);
+        maint::set_flag(IRIS_MAINT_FLAG_AP_UP, true);
         ESP_LOGI(kLogTag, "Wi-Fi AP \"%s\" up on channel %d at 192.168.4.1 (stack free %u B)",
                  reinterpret_cast<const char *>(config.ap.ssid), CONFIG_WITNESS_WIFI_CHANNEL,
                  static_cast<unsigned>(uxTaskGetStackHighWaterMark(nullptr)));
@@ -409,7 +261,6 @@ esp_err_t WifiOta::start_wifi(const int tx_dbm, const std::uint32_t minutes)
     // Failure: unwind whatever was brought up.
     ESP_LOGE(kLogTag, "Wi-Fi start failed at step %u: %s", start_step_.load(), esp_err_to_name(result));
     start_step_.store(0xEE);
-    if (start_watchdog_ != nullptr) (void)esp_timer_stop(static_cast<esp_timer_handle_t>(start_watchdog_));
     if (server_ != nullptr) {
         httpd_stop(server_);
         server_ = nullptr;
@@ -421,71 +272,7 @@ esp_err_t WifiOta::start_wifi(const int tx_dbm, const std::uint32_t minutes)
         esp_netif_destroy_default_wifi(ap_netif_);
         ap_netif_ = nullptr;
     }
-    if (!mass_storage_active_.load()) sensors_.set_radio_transmission_enabled(true);
     return result;
-}
-
-void WifiOta::stop_wifi(const char *reason)
-{
-    ESP_LOGW(kLogTag, "stopping Wi-Fi: %s", reason);
-    if (server_ != nullptr) {
-        httpd_stop(server_);
-        server_ = nullptr;
-    }
-    (void)esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler);
-    esp_wifi_stop();
-    esp_wifi_deinit();
-    if (ap_netif_ != nullptr) {
-        esp_netif_destroy_default_wifi(ap_netif_);
-        ap_netif_ = nullptr;
-    }
-    enabled_.store(false);
-    g_wifi_on.store(false);
-    if (!mass_storage_active_.load()) {
-        sensors_.set_radio_transmission_enabled(true);
-    }
-    sensors_.set_radio_beacon_only(false);
-    if (maintenance_mode::active() && !restart_scheduled_.load()) {
-        maintenance_mode::cancel();
-        restart_at_ms_.store(now_ms() + kThawRestartDelayMs);
-        restart_scheduled_.store(true);
-        ESP_LOGW(kLogTag, "leaving maintenance: rebooting into flight mode in %u ms",
-                 static_cast<unsigned>(kThawRestartDelayMs));
-        return;
-    }
-    // A log download froze the flash logger until reset; reboot (only when the
-    // rocket is on the pad or landed) so logging resumes.
-    if (logs_were_frozen_ && !restart_scheduled_.load() && state_allows()) {
-        restart_at_ms_.store(now_ms() + kThawRestartDelayMs);
-        restart_scheduled_.store(true);
-        ESP_LOGW(kLogTag, "logging was frozen for log download: rebooting in %u ms",
-                 static_cast<unsigned>(kThawRestartDelayMs));
-    }
-}
-
-void WifiOta::start_watchdog_expired(void *context)
-{
-    auto *self = static_cast<WifiOta *>(context);
-    if (self->enabled_.load()) return;
-    self->watchdog_fired_.store(true);
-    if (!self->mass_storage_active_.load()) self->sensors_.set_radio_transmission_enabled(true);
-    ESP_LOGE(kLogTag, "Wi-Fi start stuck at step %u for %u s: LoRa transmission restored",
-             self->start_step_.load(), static_cast<unsigned>(kStartWatchdogUs / 1000000U));
-}
-
-const char *WifiOta::app_state_text()
-{
-    const esp_partition_t *running = esp_ota_get_running_partition();
-    esp_ota_img_states_t state;
-    if (running == nullptr || esp_ota_get_state_partition(running, &state) != ESP_OK) return "unknown";
-    switch (state) {
-    case ESP_OTA_IMG_NEW: return "new";
-    case ESP_OTA_IMG_PENDING_VERIFY: return "pending";
-    case ESP_OTA_IMG_VALID: return "valid";
-    case ESP_OTA_IMG_INVALID: return "invalid";
-    case ESP_OTA_IMG_ABORTED: return "aborted";
-    default: return "undefined";
-    }
 }
 
 esp_err_t WifiOta::send_json(httpd_req_t *req, const char *status, const char *json)
@@ -498,8 +285,8 @@ esp_err_t WifiOta::send_json(httpd_req_t *req, const char *status, const char *j
 // Error replies close the connection: a request body may be unread.
 esp_err_t WifiOta::send_error(httpd_req_t *req, const char *status, const char *message)
 {
-    char escaped[96];
-    char body[160];
+    char escaped[128];
+    char body[192];
     wifi_ota_logic::json_escape(escaped, sizeof(escaped), message);
     std::snprintf(body, sizeof(body), "{\"ok\":false,\"error\":\"%s\"}", escaped);
     httpd_resp_set_hdr(req, "Connection", "close");
@@ -507,29 +294,12 @@ esp_err_t WifiOta::send_error(httpd_req_t *req, const char *status, const char *
     return ESP_FAIL;
 }
 
-esp_err_t WifiOta::freeze_logs()
+esp_err_t WifiOta::wait_logs()
 {
-    // Freezing stops flash logging until a reboot, and the thaw reboot is
-    // never done in flight. On the pad a launch could follow before that
-    // reboot and the flight would go unlogged, so downloads (which freeze)
-    // are allowed only in Landed. On the bench: set the flight state to
-    // Landed first (0x05 0x73 0x04), or use USB mass storage.
-    if (!flash_logger_.frozen() && !maintenance_mode::active() &&
-        flight_state_machine_.state() != FlightStateMachine::State::Landed) {
-        ESP_LOGW(kLogTag, "log download refused: only in Landed (it freezes flash logging)");
-        return ESP_ERR_INVALID_STATE;
-    }
     xSemaphoreTake(log_mutex_, portMAX_DELAY);
-    esp_err_t result = ESP_OK;
-    if (!flash_logger_.frozen()) {
-        ESP_LOGW(kLogTag, "freezing flash logging for log download (reboot restores it)");
-        result = flash_logger_.prepare_mass_storage(kLogFreezeTimeout);
-        if (result == ESP_OK) {
-            logs_were_frozen_ = true;
-        } else {
-            ESP_LOGE(kLogTag, "cannot freeze logging: %s", esp_err_to_name(result));
-        }
-    }
+    // The maintenance image mounts the store read-only at boot; this just
+    // waits for the one-time scan to finish.
+    const esp_err_t result = flash_logger_.prepare_mass_storage(kLogWaitTimeout);
     xSemaphoreGive(log_mutex_);
     return result;
 }
@@ -540,24 +310,37 @@ esp_err_t WifiOta::handle_info(httpd_req_t *req)
     self->touch();
     const esp_app_desc_t *desc = esp_app_get_description();
     const esp_partition_t *running = esp_ota_get_running_partition();
-    const esp_partition_t *next = esp_ota_get_next_update_partition(nullptr);
-    const bool frozen = self->flash_logger_.frozen();
     char version[40];
     wifi_ota_logic::json_escape(version, sizeof(version), desc->version);
     char idf[40];
     wifi_ota_logic::json_escape(idf, sizeof(idf), desc->idf_ver);
-    char body[512];
+    char flight[2][160];
+    char maint_slots[2][160];
+    for (int i = 0; i < 2; ++i) {
+        slot_json(flight[i], sizeof(flight[i]), boot_manager::Kind::Flight, i);
+        slot_json(maint_slots[i], sizeof(maint_slots[i]), boot_manager::Kind::Maintenance, i);
+    }
+    const maint::Shared &shared = maint::shared();
+    const esp_partition_t *return_slot =
+        self->return_slot_ >= 0 ? boot_manager::slot_partition(boot_manager::Kind::Flight, self->return_slot_)
+                                : nullptr;
+    char body[1100];
     std::snprintf(body, sizeof(body),
-                  "{\"project\":\"%s\",\"version\":\"%s\",\"idf\":\"%s\",\"running\":\"%s\","
-                  "\"next\":\"%s\",\"app_state\":\"%s\",\"uptime_ms\":%llu,\"flight_state\":\"%s\","
-                  "\"wifi_tx_dbm\":%d,\"free_heap\":%u,\"logging_frozen\":%s,\"log_files\":%d}",
-                  desc->project_name, version, idf, running != nullptr ? running->label : "",
-                  next != nullptr ? next->label : "", app_state_text(),
+                  "{\"project\":\"%s\",\"kind\":\"maintenance\",\"version\":\"%s\",\"idf\":\"%s\","
+                  "\"running\":\"%s\",\"app_state\":\"%s\",\"uptime_ms\":%llu,\"mode\":\"%s\","
+                  "\"wifi_tx_dbm\":%d,\"free_heap\":%u,\"store_mounted\":%s,\"log_files\":%u,"
+                  "\"recovery\":%s,\"unconfirmed\":%s,\"flight_return\":\"%s\","
+                  "\"flight\":[%s,%s],\"maintenance\":[%s,%s],\"confirmed_build\":%u}",
+                  desc->project_name, version, idf, running != nullptr ? running->label : "", state_text(running),
                   static_cast<unsigned long long>(esp_timer_get_time() / 1000),
-                  FlightStateMachine::state_name(self->flight_state_machine_.state()),
-                  self->tx_power_dbm_, static_cast<unsigned>(esp_get_free_heap_size()),
-                  frozen ? "true" : "false",
-                  frozen ? static_cast<int>(self->flash_logger_.export_file_count()) : -1);
+                  shared.mode.load() == IRIS_MAINT_MODE_USB_EXPORT ? "usb_export" : "wifi", self->tx_power_dbm_,
+                  static_cast<unsigned>(esp_get_free_heap_size()),
+                  (shared.flags.load() & IRIS_MAINT_FLAG_STORE_MOUNTED) != 0 ? "true" : "false",
+                  static_cast<unsigned>(shared.log_files.load()),
+                  (shared.flags.load() & IRIS_MAINT_FLAG_RECOVERY) != 0 ? "true" : "false",
+                  (shared.flags.load() & IRIS_MAINT_FLAG_UNCONFIRMED) != 0 ? "true" : "false",
+                  return_slot != nullptr ? return_slot->label : "", flight[0], flight[1], maint_slots[0],
+                  maint_slots[1], static_cast<unsigned>(boot_manager::confirmed_maintenance_build()));
     return self->send_json(req, "200 OK", body);
 }
 
@@ -565,7 +348,6 @@ esp_err_t WifiOta::handle_ota(httpd_req_t *req)
 {
     auto *self = static_cast<WifiOta *>(req->user_ctx);
     self->touch();
-    if (!self->state_allows()) return self->send_error(req, "409 Conflict", "not in Pad Idle or Landed");
     bool expected = false;
     if (!self->ota_busy_.compare_exchange_strong(expected, true)) {
         return self->send_error(req, "409 Conflict", "another update is in progress");
@@ -575,14 +357,14 @@ esp_err_t WifiOta::handle_ota(httpd_req_t *req)
         ~Release() { flag.store(false); }
     } release{self->ota_busy_};
 
+    if ((maint::shared().flags.load() & IRIS_MAINT_FLAG_UNCONFIRMED) != 0) {
+        return self->send_error(req, "409 Conflict", "this maintenance image is still unconfirmed");
+    }
     const std::size_t total = req->content_len;
     if (total == 0) return self->send_error(req, "411 Length Required", "Content-Length required");
-    const esp_partition_t *slot = esp_ota_get_next_update_partition(nullptr);
-    if (slot == nullptr) return self->send_error(req, "500 Internal Server Error", "no OTA slot");
-    if (total > slot->size) return self->send_error(req, "413 Payload Too Large", "image larger than the slot");
-    if (total < wifi_ota_logic::kImageHeadLength) {
-        return self->send_error(req, "400 Bad Request", "image too short");
-    }
+    constexpr std::size_t kHead = image_info::kHeadLength;
+    static_assert(kHead >= wifi_ota_logic::kImageHeadLength, "image-info head covers the app descriptor");
+    if (total < kHead) return self->send_error(req, "400 Bad Request", "image too short");
 
     auto *buffer = static_cast<std::uint8_t *>(std::malloc(kTransferChunk));
     if (buffer == nullptr) return self->send_error(req, "503 Service Unavailable", "out of memory");
@@ -591,11 +373,12 @@ esp_err_t WifiOta::handle_ota(httpd_req_t *req)
         ~Free() { std::free(p); }
     } free_buffer{buffer};
 
-    // Read until the image header and application descriptor are in hand.
+    // Read until the image header, application descriptor and image-info
+    // record are in hand.
     std::size_t have = 0;
     std::size_t received = 0;
     int stalls = 0;
-    while (have < wifi_ota_logic::kImageHeadLength) {
+    while (have < kHead) {
         const int n = httpd_req_recv(req, reinterpret_cast<char *>(buffer) + have,
                                      std::min(kTransferChunk - have, total - received));
         if (n == HTTPD_SOCK_ERR_TIMEOUT && ++stalls < 3) continue;
@@ -603,21 +386,69 @@ esp_err_t WifiOta::handle_ota(httpd_req_t *req)
         have += static_cast<std::size_t>(n);
         received += static_cast<std::size_t>(n);
     }
-    const wifi_ota_logic::ImageCheck check =
-        wifi_ota_logic::check_image_head(buffer, have, kProjectName);
+    const wifi_ota_logic::ImageCheck check = wifi_ota_logic::check_image_head(buffer, have, kProjectName);
     if (check != wifi_ota_logic::ImageCheck::Ok) {
         ESP_LOGW(kLogTag, "OTA rejected: %s", wifi_ota_logic::image_check_message(check));
         return self->send_error(req, "422 Unprocessable Entity", wifi_ota_logic::image_check_message(check));
     }
+    image_info::Info up_info{};
+    if (!image_info::parse(buffer, have, up_info) ||
+        (up_info.kind != IRIS_IMAGE_KIND_FLIGHT && up_info.kind != IRIS_IMAGE_KIND_MAINTENANCE)) {
+        return self->send_error(req, "422 Unprocessable Entity",
+                                "no Witness image-info record (flight/maintenance kind unknown)");
+    }
+    const bool is_flight = up_info.kind == IRIS_IMAGE_KIND_FLIGHT;
     esp_app_desc_t new_desc;
     std::memcpy(&new_desc, buffer + wifi_ota_logic::kAppDescOffset, sizeof(new_desc));
+
+    // The slot of the matching kind that is not in use.
+    const int running_slot = boot_manager::running_slot();
+    int target_index = 0;
+    if (is_flight) {
+        target_index = self->return_slot_ >= 0 ? image_info::inactive_slot(self->return_slot_) : 0;
+    } else {
+        target_index = image_info::inactive_slot(running_slot);
+    }
+    const esp_partition_t *slot = boot_manager::slot_partition(
+        is_flight ? boot_manager::Kind::Flight : boot_manager::Kind::Maintenance, target_index);
+    if (slot == nullptr) return self->send_error(req, "500 Internal Server Error", "no OTA slot");
+    if (total > slot->size) return self->send_error(req, "413 Payload Too Large", "image larger than the slot");
+
+    // Compatibility with the OTHER image kind: the flight image refuses to
+    // switch to an incompatible maintenance image, so never install a pair
+    // that would strand the operator. X-Witness-Force: 1 overrides (coordinated
+    // updates of both images; update maintenance first).
+    char force_header[8]{};
+    const bool force = httpd_req_get_hdr_value_str(req, "X-Witness-Force", force_header, sizeof(force_header)) ==
+                           ESP_OK &&
+                       force_header[0] == '1';
+    image_info::Compat compat = image_info::Compat::Ok;
+    if (is_flight) {
+        compat = image_info::check_maintenance(&boot_manager::own_info(), up_info);
+    } else if (self->return_slot_ >= 0) {
+        image_info::Info flight_info{};
+        if (boot_manager::read_info(boot_manager::slot_partition(boot_manager::Kind::Flight, self->return_slot_),
+                                    boot_manager::Kind::Flight, flight_info)) {
+            compat = image_info::check_maintenance(&up_info, flight_info);
+        }
+    }
+    if (compat != image_info::Compat::Ok && !force) {
+        char message[192];
+        std::snprintf(message, sizeof(message),
+                      "incompatible with the %s image (refusal code 0x%04X); update the other image first or "
+                      "send X-Witness-Force: 1",
+                      is_flight ? "installed maintenance" : "installed flight",
+                      static_cast<unsigned>(image_info::refuse_code(compat)));
+        ESP_LOGW(kLogTag, "OTA rejected: %s", message);
+        return self->send_error(req, "409 Conflict", message);
+    }
 
     esp_ota_handle_t handle = 0;
     esp_err_t result = esp_ota_begin(slot, OTA_WITH_SEQUENTIAL_WRITES, &handle);
     if (result != ESP_OK) {
         return self->send_error(req, "500 Internal Server Error", esp_err_to_name(result));
     }
-    ESP_LOGW(kLogTag, "OTA to %s: %u bytes, new version %.31s (flash writes stall both cores briefly)",
+    ESP_LOGW(kLogTag, "OTA (%s image) to %s: %u bytes, new version %.31s", is_flight ? "flight" : "maintenance",
              slot->label, static_cast<unsigned>(total), new_desc.version);
     const std::uint32_t started_ms = self->now_ms();
     std::size_t written = 0;
@@ -633,12 +464,11 @@ esp_err_t WifiOta::handle_ota(httpd_req_t *req)
             have = 0;
         }
         if (written >= total) break;
-        if (!self->state_allows() || !self->enabled_.load()) {
-            failure = "aborted: flight state changed or Wi-Fi stopping";
+        if (!self->enabled_.load()) {
+            failure = "aborted: Wi-Fi stopping";
             break;
         }
-        const int n = httpd_req_recv(req, reinterpret_cast<char *>(buffer),
-                                     std::min(kTransferChunk, total - written));
+        const int n = httpd_req_recv(req, reinterpret_cast<char *>(buffer), std::min(kTransferChunk, total - written));
         if (n == HTTPD_SOCK_ERR_TIMEOUT && ++stalls < 6) continue;
         if (n <= 0) {
             failure = "upload stalled";
@@ -658,25 +488,35 @@ esp_err_t WifiOta::handle_ota(httpd_req_t *req)
         ESP_LOGE(kLogTag, "OTA image invalid: %s", esp_err_to_name(result));
         return self->send_error(req, "422 Unprocessable Entity", "image failed validation");
     }
-    result = esp_ota_set_boot_partition(slot);
+    // Flight: boot it now; its self-test confirms it or the bootloader rolls
+    // back (to the maintenance image, which returns to the old flight slot).
+    // Maintenance: boot it once as a verification boot (see boot_manager.h).
+    if (is_flight) {
+        result = boot_manager::boot_new_flight(slot);
+    } else {
+        result = boot_manager::boot_other_maintenance_for_verify(
+            slot, self->return_slot_, self->tx_power_dbm_,
+            static_cast<std::uint32_t>(CONFIG_WITNESS_WIFI_CONFIRM_MINUTES > 0 ? CONFIG_WITNESS_WIFI_CONFIRM_MINUTES
+                                                                                : 1));
+    }
     if (result != ESP_OK) {
         return self->send_error(req, "500 Internal Server Error", esp_err_to_name(result));
     }
-    ESP_LOGW(kLogTag, "OTA complete in %u ms; boot partition %s", static_cast<unsigned>(self->now_ms() - started_ms),
+    ESP_LOGW(kLogTag, "OTA complete in %u ms; next boot %s", static_cast<unsigned>(self->now_ms() - started_ms),
              slot->label);
     char version[40];
     wifi_ota_logic::json_escape(version, sizeof(version), new_desc.version);
-    char body[160];
+    char body[320];
     std::snprintf(body, sizeof(body),
-                  "{\"ok\":true,\"bytes\":%u,\"slot\":\"%s\",\"version\":\"%s\",\"reboot_ms\":%u}",
-                  static_cast<unsigned>(written), slot->label, version,
-                  static_cast<unsigned>(kRestartDelayMs));
+                  "{\"ok\":true,\"kind\":\"%s\",\"bytes\":%u,\"slot\":\"%s\",\"version\":\"%s\",\"reboot_ms\":%u,"
+                  "\"next\":\"%s\"}",
+                  is_flight ? "flight" : "maintenance", static_cast<unsigned>(written), slot->label, version,
+                  static_cast<unsigned>(kRestartDelayMs),
+                  is_flight ? "flight self-test" : "maintenance verification boot");
     const esp_err_t sent = self->send_json(req, "200 OK", body);
-    // The new image boots into maintenance (Wi-Fi up) so the host can see it
-    // pass its self-test; Wi-Fi off from there reboots it into flight mode.
-    maintenance_mode::request(self->tx_power_dbm_, 0);
-    const Request restart{RequestKind::Restart, 0, 0, static_cast<std::uint16_t>(kRestartDelayMs), false};
-    (void)xQueueSend(self->queue_, &restart, 0);
+    // maint::leave only schedules the restart; the boot partition is already
+    // the new image (above), so this restart goes there, not to the old flight.
+    maint::leave(kRestartDelayMs, "OTA complete");
     return sent;
 }
 
@@ -684,11 +524,10 @@ esp_err_t WifiOta::handle_logs(httpd_req_t *req)
 {
     auto *self = static_cast<WifiOta *>(req->user_ctx);
     self->touch();
-    if (self->freeze_logs() != ESP_OK) {
-        return self->send_error(req, self->flight_state_machine_.state() == FlightStateMachine::State::Landed ? "503 Service Unavailable" : "409 Conflict", self->flight_state_machine_.state() == FlightStateMachine::State::Landed ? "cannot freeze flash logging" : "log download only in Landed (it freezes flash logging until reboot)");
+    if (self->wait_logs() != ESP_OK) {
+        return self->send_error(req, "503 Service Unavailable", "log store not mounted");
     }
-    const std::size_t count = std::min(self->flash_logger_.export_file_count(),
-                                       FlashLogger::kMaximumExportFiles);
+    const std::size_t count = std::min(self->flash_logger_.export_file_count(), FlashLogger::kMaximumExportFiles);
     httpd_resp_set_type(req, "application/json");
     char piece[128];
     std::snprintf(piece, sizeof(piece), "{\"logging_frozen\":true,\"count\":%u,\"files\":[",
@@ -698,10 +537,9 @@ esp_err_t WifiOta::handle_logs(httpd_req_t *req)
         const FlashLogger::ExportFile &file = self->flash_logger_.export_file(i);
         char name[32];
         wifi_ota_logic::json_escape(name, sizeof(name), file.name);
-        std::snprintf(piece, sizeof(piece),
-                      "%s{\"name\":\"%s\",\"size\":%u,\"session\":%u,\"slot\":%u}", i == 0 ? "" : ",",
-                      name, static_cast<unsigned>(file.size), static_cast<unsigned>(file.generation),
-                      static_cast<unsigned>(file.slot));
+        std::snprintf(piece, sizeof(piece), "%s{\"name\":\"%s\",\"size\":%u,\"session\":%u,\"slot\":%u}",
+                      i == 0 ? "" : ",", name, static_cast<unsigned>(file.size),
+                      static_cast<unsigned>(file.generation), static_cast<unsigned>(file.slot));
         result = httpd_resp_send_chunk(req, piece, HTTPD_RESP_USE_STRLEN);
         self->touch();
     }
@@ -725,11 +563,10 @@ esp_err_t WifiOta::handle_log_file(httpd_req_t *req)
     if (length == 0 || length >= sizeof(name)) return self->send_error(req, "404 Not Found", "no such log");
     std::memcpy(name, uri, length);
     if (!wifi_ota_logic::valid_log_name(name)) return self->send_error(req, "400 Bad Request", "bad file name");
-    if (self->freeze_logs() != ESP_OK) {
-        return self->send_error(req, self->flight_state_machine_.state() == FlightStateMachine::State::Landed ? "503 Service Unavailable" : "409 Conflict", self->flight_state_machine_.state() == FlightStateMachine::State::Landed ? "cannot freeze flash logging" : "log download only in Landed (it freezes flash logging until reboot)");
+    if (self->wait_logs() != ESP_OK) {
+        return self->send_error(req, "503 Service Unavailable", "log store not mounted");
     }
-    const std::size_t count = std::min(self->flash_logger_.export_file_count(),
-                                       FlashLogger::kMaximumExportFiles);
+    const std::size_t count = std::min(self->flash_logger_.export_file_count(), FlashLogger::kMaximumExportFiles);
     std::size_t index = count;
     for (std::size_t i = 0; i < count; ++i) {
         if (strcasecmp(self->flash_logger_.export_file(i).name, name) == 0) {
@@ -754,7 +591,7 @@ esp_err_t WifiOta::handle_log_file(httpd_req_t *req)
     ESP_LOGI(kLogTag, "sending %s (%u bytes)", name, static_cast<unsigned>(size));
     std::uint32_t offset = 0;
     while (offset < size) {
-        if (!self->enabled_.load() || !self->state_allows()) return ESP_FAIL;
+        if (!self->enabled_.load()) return ESP_FAIL;
         const std::size_t amount = std::min<std::size_t>(kTransferChunk, size - offset);
         xSemaphoreTake(self->log_mutex_, portMAX_DELAY);
         const esp_err_t read = self->flash_logger_.read_export_file(index, offset, buffer, amount);
@@ -777,19 +614,17 @@ esp_err_t WifiOta::handle_reboot(httpd_req_t *req)
 {
     auto *self = static_cast<WifiOta *>(req->user_ctx);
     self->touch();
-    if (!self->state_allows()) return self->send_error(req, "409 Conflict", "not in Pad Idle or Landed");
     const esp_err_t sent = self->send_json(req, "200 OK", "{\"ok\":true,\"reboot_ms\":1000}");
-    const Request restart{RequestKind::Restart, 0, 0, static_cast<std::uint16_t>(kRestartDelayMs), false};
-    (void)xQueueSend(self->queue_, &restart, 0);
+    maint::leave(kRestartDelayMs, "HTTP /reboot");
     return sent;
 }
 
 esp_err_t WifiOta::handle_wifi_off(httpd_req_t *req)
 {
     auto *self = static_cast<WifiOta *>(req->user_ctx);
-    const esp_err_t sent = self->send_json(req, "200 OK", "{\"ok\":true,\"wifi\":\"off\"}");
-    // Delayed so the reply is out before the access point goes away.
-    const Request off{RequestKind::Disable, 0, 0, 300, false};
-    (void)xQueueSend(self->queue_, &off, 0);
+    // Leaving Wi-Fi mode = leaving maintenance: restart into flight, after the
+    // reply is out.
+    const esp_err_t sent = self->send_json(req, "200 OK", "{\"ok\":true,\"wifi\":\"off\",\"reboot_ms\":1000}");
+    maint::leave(kRestartDelayMs, "HTTP /wifi/off");
     return sent;
 }
