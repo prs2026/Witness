@@ -307,9 +307,12 @@ a linear Kalman filter with a constant-acceleration kinematic model:
   - **Barometer:** U, relative to a pad reference that is tracked while still
     on the pad.
 - **Barometer trust:**
-  - It is zero (no update) from Mach 0.8, and comes back below Mach 0.75.
-    Mach is the filter's speed over the ISA speed of sound at the estimated
-    altitude.
+  - It is zero (no update) from Mach 0.8, and comes back below Mach 0.75,
+    but (since 2026-11-14) not before Descent: once gated in Boost or Coast it
+    stays gated for the rest of the ascent, because the vehicle passes back
+    through Mach 1 in Coast. Mach is the filter's speed over the ISA speed of
+    sound at the estimated altitude. Cost (host test, no GPS): apogee altitude
+    error about 33 m instead of under 15 m; with GPS a few metres.
   - Otherwise its sigma follows the altitude accuracy:
     sigma_h = sqrt(0.5^2 + (10 Pa / (rho g))^2), with rho = p / (R T_ISA).
     That is 0.97 m at sea level, 2.5 m at 10 km and 11.6 m at 20 km.
@@ -691,25 +694,39 @@ terminal stall means sensor acquisition or GPS reception stopped.
 
 Byte 1 bits 0..2 contain the state enum: Pad Idle 0, Boost 1, Coast 2, Descent 3,
 Landed 4. Bit 3 is GPS locked (a fresh GGA fix with quality >= 1 from UART or
-HITL), set each sensor-loop pass. Bit 4 is HITL active. Bits 5..7 are reserved
-zero. `WitnessStatus::set_state_flag()` owns bits 3/4; `flight_state()` returns
-only the state. There is no radio-ready bit. Readiness flags should not be
-mistaken for a universal freshness guarantee.
+HITL), set each sensor-loop pass. Bit 4 is HITL active. Bit 5 (MAINTENANCE) is
+never set by the flight image. Bit 6 is RESUMED (an in-flight state resumed after
+an MCU reset, see "Flight state across resets"). Bit 7 is **LOG SLOTS FULL**
+(since 2026-11-14): both NAND slots hold a flight, so nothing is logged until an
+erase/clear (see "Flash storage"). `WitnessStatus::set_state_flag()` owns bits
+3..7; `flight_state()` returns only the state. There is no radio-ready bit.
+Readiness flags should not be mistaken for a universal freshness guarantee.
 
-The automatic transitions in `flight_state_machine.cpp` are:
+The automatic transitions in `flight_state_machine.cpp` (since 2026-11-14) all
+use the **position filter's (Kalman) height above the pad (AGL)** and its
+vertical velocity, never the raw barometer or MSL altitude. The filter pins AGL
+to 0 while the vehicle stands still on the pad. It gates the barometer at Mach
+0.8, and once gated in Boost or Coast it keeps it out until Descent (see
+"Position Kalman filter"). Host test: `tests/flight_state_machine_test.cpp`.
+HITL reference copy: `HITL/sim_model.py` `ReferenceStateMachine`.
 
 | Transition | Consecutive qualifying condition |
 |---|---|
-| Pad Idle to Boost | Positive X acceleration >10 g for 300 ms; high-g X preferred, low-g fallback |
+| Pad Idle to Boost | Kalman AGL > 30 m (`kLaunchAglMeters`) for 300 ms. 30 m is reached about 1.4 s after liftoff at 3 g, so the 2 s pre-launch RAM buffer still holds the liftoff |
 | Boost to Coast | Low-g X acceleration <1 g for 500 ms |
-| Coast to Descent | Barometric altitude below peak minus 5% of the absolute peak for 500 ms |
-| Boost, Coast or Descent to Landed | Acceleration vector magnitude 0.8..1.2 g, gyro vector magnitude <10 dps, and barometric altitude span <=10 m for 30 s |
+| Coast to Descent (AGL path) | Kalman AGL below the maximum AGL minus max(5 % of it, 10 m), with downward Kalman vertical velocity, for 500 ms |
+| Coast to Descent (velocity path) | Kalman vertical velocity < -30 m/s for 2 s, at least 3 s after Coast entry, after a climb faster than 20 m/s was seen |
+| Boost, Coast or Descent to Landed | Acceleration vector magnitude 0.8..1.2 g, gyro vector magnitude <10 dps, and Kalman AGL span <=10 m for 30 s |
 
-Landing is not restricted to Descent. Its altitude rule is a flat 10 m span, not
-the earlier percentage rule or an absolute altitude below 10 m. The descent rule
-uses pressure altitude rather than height above launch. Peak tracking resets on
-entry to Boost; the sign-aware drop expression also handles negative pressure
-altitudes. Condition timing uses microsecond timestamps rather than loop counts.
+Landing is not restricted to Descent. The maximum AGL is tracked in Boost and
+Coast from launch and persisted with the state (`flight_state_store`).
+Condition timing uses microsecond timestamps rather than loop counts. Removed on
+2026-11-14: the 10 g launch trigger, the barometer median window and its climb
+rate limit, and the MSL-percentage descent threshold.
+
+On the bench (2026-11-15, HITL "Nominal 10 g" on Witness) every transition came
+within 0.03 s of the reference. The Kalman AGL error was at most 2.8 m in every
+phase.
 
 A commanded Pad Idle to Boost invokes `trigger_launch()`, just like automatic
 launch, and opens the logging gate. Automatic transitions remain enabled after
@@ -728,10 +745,11 @@ the bench; append CR/LF. Hex shown here is text unless sent as actual binary.
 | `CAM 1 ON/OFF`, `CAM 2 ON/OFF` | Updates in-memory camera flags and logs; no camera hardware driver |
 | `E0` or raw byte `E0` | Enables Witness debug output; no corresponding stop command |
 | `05 73 00` through `05 73 04` | Sets flight state; `01` from Pad Idle is a launch trigger (USB only). Policy in `main/command_policy.h` (host test `tests/command_policy_test.cpp`): over LoRa only Landed -> Pad Idle is accepted; over USB from Boost/Coast/Descent only Landed is accepted; refusals ack `IRIS_ACK_REFUSED` |
-| `05 68 68` | USB only, Pad Idle/Landed only (refused over LoRa and in flight, as are `05 68 69` / `05 68 6A`). Freezes logs and switches USB to read-only mass storage until reset |
-| `05 68 69` | Destructively erases all stored sessions (all 1,004 blocks) and creates fresh session 1 |
-| `05 68 6A` | Fast clear: erases only the two slot header blocks, so no session is listed, and creates the next session number (never resets) |
-| `05 .. .. 47 41/44/45/51 0A` (canonical) | GPS assistance upload (ephemeris for the PX1120S), see "GPS assistance" |
+| `05 68 68` | USB only, Pad Idle/Landed only (refused over LoRa and in flight). Restarts into the maintenance image's USB disk |
+| `05 68 69` | Pad Idle/Landed, **USB or LoRa** (since 2026-11-14). Destructively erases all stored sessions (all 1,004 blocks) and creates fresh session 1 |
+| `05 68 6A` | Pad Idle/Landed, **USB or LoRa**. Fast clear: erases only the two slot header blocks, so no session is listed, and creates the next session number (never resets) |
+| `05 .. .. 47 41/44/45/51 0A` (canonical) | GPS assistance upload (ephemeris for the PX1120S), see "GPS assistance". BEGIN/DATA/COMMIT refused in Boost (any source); STATUS always |
+| `05 .. 52 50 0A` (canonical) | Radio power; refused in Boost (any source) |
 | `05 43 47` / `05 43 41` / `05 43 58` / `05 43 53` | IMU calibration: gyro, face, clear, status (USB, Pad Idle; see "IMU calibration") |
 | `05 00 00 00 00 00 00 48 49 0A` (canonical only) | Enter HITL mode; USB and Pad Idle only |
 | `05 00 00 00 00 00 00 48 58 0A` (canonical only) | Exit HITL mode |
@@ -739,13 +757,17 @@ the bench; append CR/LF. Hex shown here is text unless sent as actual binary.
 | `TX ID payload...` with another ID | Queues the future SPI command path; no hardware SPI transmission yet |
 
 The protected erase is a magic opcode, **not authentication or a confirmation
-dialog**. Radio can invoke destructive commands too. Do not transmit erase or
-export commands merely to inspect or test the system.
+dialog**. Since 2026-11-14 radio can erase/clear the logs (Pad Idle/Landed),
+because Witness never erases a flight on its own. Do not transmit erase or
+export commands merely to inspect or test the system. Full command table:
+`Software/COMMANDS_AND_PACKETS.md`.
 
 `CommandBridge` validates canonical commands and normalizes legacy three-byte commands to complete 10-byte frames before forwarding to Iris CAN. UART1 is exclusively the GPS receiver. USB commands can additionally enter the immediate radio queue; radio commands are queued for local interpretation independently of CAN availability. Invalid EOF/length commands are rejected before forwarding.
 
-Radio local handlers support debug enable, export, erase, state setting and
-HITL exit; HITL enter from radio is rejected and logged.
+Radio local handlers support debug enable, erase/clear (Pad Idle/Landed),
+state setting (Landed to Pad Idle only), ping, radio power, pad heading, Wi-Fi,
+GPS assist/cold start and HITL exit. USB export and HITL enter from radio are
+refused and logged.
 Load opcodes `30..35` and regulator opcodes `50..51` are external-device commands,
 not implemented local output controls. For radio debug enable, use command value
 `00 E0` in the compact or canonical representation; do not infer arbitrary
@@ -778,10 +800,33 @@ USB, and submits `05` packets to `CommandBridge`. Transmission is non-blocking
 retries or stop sensing/logging.
 
 Per-type downlink rates are independently configured in `sensors.h`, currently
-1 Hz for every supported type. Scheduling sends the latest cached local frame,
+1 Hz for every supported type (3 s in Pad Idle, and only the 0x09 landed position packet in Landed: see "Pad Idle radio rate and Landed low-power mode"). Scheduling sends the latest cached local frame,
 not every intermediate sample. Immediate external forwarding is enabled by
 `SpiDataForwarder::kForwardExternalPacketsImmediately`; immediate packets take
 precedence over scheduled traffic. Only one transmit is serviced per loop.
+
+GPS time slots and uplink hold-off (`main/tx_slot.h`, host test
+`tests/tx_slot_test.cpp`, 2026-11-14). The same header is in Aperture.
+- **Hold-off:** when Witness hears a `0x05` command frame it holds scheduled
+  telemetry for 1 s (`kUplinkHoldOffMs`), so command streams such as a GPS
+  assist upload get a quiet channel. The immediate queue (acks, replies) is
+  never held.
+- **Witness slot:** with UTC from a GGA fix no older than 3 s, Witness starts a
+  telemetry packet only if it ends by 700 ms into the UTC second. The UTC clock
+  is `utc_clock_`, advanced by a fixed 20 ms GGA latency; Witness has no PPS
+  line, so the guards assume ±50 ms of error.
+- **Aperture slot:** with a fix and a PPS edge no older than 3 s, Aperture
+  starts a command only between 800 and 950 ms. For 800 ms after one went out
+  it sends follow-ups at once ("burst"), while Witness is holding off.
+- **Without GPS time** a side sends whenever it can, as before.
+- **Logging:** the 10 s `radio slots:` log line shows whether slots are on and
+  how many passes deferred telemetry. The counts are sensor-loop passes, not
+  packets.
+
+Bench, 2026-11-15: 10 pings 0.5 s apart over Aperture were all acked, and
+Witness's LoRa telemetry paused from the first ping until 1 s after the last.
+The slots themselves have not run on the bench: Witness has no fix indoors and
+Aperture's GPS gets no simulated signal.
 Raw GPS NMEA is not automatically downlinked as canonical GPS telemetry; state
 and debug packets carry the parsed coordinates instead.
 
@@ -989,11 +1034,19 @@ Store version 3 had no packet stream and 341 GPS blocks (161-501). Its
 sessions still export through that layout (`FlashLogger::file_layout` by
 version), so a v3 flight survives the upgrade until a v4 flight replaces it.
 
-Slot choice at boot: the slot holding the newest *flight* (marker written) is
-kept and the other slot is reused; with no flight on the chip, the empty or
-older slot is reused. The flight marker is written when the first logged state
-(Boost) begins, so pad-only power cycles never overwrite the last flight, and
-the next flight overwrites the flight before it. Every page starts with a
+Slot choice at boot (since 2026-11-14): **a slot holding a flight (marker
+written) is never erased automatically.**
+- **One flight on the chip:** the other slot is reused.
+- **No flight:** the empty or older slot is reused.
+- **Both slots hold flights** (two flights, or a flight plus a mid-flight
+  reset): no session is created and nothing is written to NAND. Status byte 1
+  bit 7 (LOG SLOTS FULL) is set and a warning is logged. This lasts until
+  `0x6869` erase or `0x686A` clear (USB or LoRa, Pad Idle/Landed) frees the
+  store, then logging resumes at once.
+
+So download the flights after every launch. The flight marker is written when
+the first logged state (Boost) begins, so pad-only power cycles never overwrite
+a flight. Every page starts with a
 12-byte header (magic, type, store version, payload length, u32 page sequence).
 Store versions before 3 are not exported.
 
@@ -1485,34 +1538,25 @@ workspace. Do not copy stale absolute tool paths into project source files.
 
 
 
-## Flight state across resets and robust altitude (FSM)
+## Flight state across resets and Kalman AGL (FSM)
 
 Files: `main/flight_state_machine.{h,cpp}`, `main/flight_state_store.{h,cpp}`,
 `main/main.cpp`, `main/sensors.cpp`, host test `tests/flight_state_machine_test.cpp`.
 
-Robust altitude (audit NEW-1, sensing finding 2, NEW-4). The FSM no longer
-uses the raw barometer altitude. It keeps the last 5 FRESH barometer samples
-(`Observation::barometric_altitude_new`, set from `ms5607_updated`) and uses
-their median (needs at least 3). One outlier, or a burst of two, cannot move
-it. The tracked maximum may also rise at most 2000 m/s (+50 m) since it was
-last confirmed. While the position filter has the barometer gated
-(`barometer_gated`, Mach >= 0.8) the window is flushed and neither the maximum
-nor the Coast -> Descent test runs. Descent also requires the filter vertical
-velocity (`vertical_velocity_mps`) to be negative for the whole 500 ms dwell
-(waived only if the filter is not initialised). Worst-case added latency is
-the median lag, 3 baro samples (about 60-120 ms), on top of the 500 ms dwell
-(host test: 560 ms at 50 Hz). HITL entry/exit calls `rebaseline()` (from the
-sensor-source change in `Sensors`), which drops the maximum, window and timers,
-so bench pressure after HITL cannot trigger Descent.
+Kalman AGL (2026-11-14; replaces the barometer median window of audit NEW-1).
+`Sensors` fills `Observation::agl_meters` from the position filter's up state
+(`position_filter_.up().p`, metres above the pad) and `vertical_velocity_mps`
+from its velocity. The state machine uses only those for altitude (the transition
+table is under "Status and flight state"). The filter gates the barometer itself:
+innovation gate, Mach 0.8, and held through Coast. So the FSM needs no median and
+no climb-rate limit. HITL entry/exit calls `rebaseline()` (from the sensor-source
+change in `Sensors`), which drops the maximum and timers.
 
-Velocity-only Descent path. The barometer path above is primary, but it cannot run
-while the baro is gated (Mach >= 0.8, which returns on the way down on the eayf
-trajectory from about t=115 s, only ~7 s after the 5 % drop) or when no robust
-altitude exists. In Coast, if the baro is gated/unusable, Descent also fires when
-the filtered vertical velocity is below -30 m/s continuously for 2 s, at least 3 s
-after Coast entry, and only after the vehicle was seen climbing faster than +20
-m/s in Boost/Coast (an apogee happened; a restored state counts as seen). The
-log line says which path fired ("barometer path" or "velocity path").
+Velocity-only Descent path. Independent of the AGL fraction: in Coast, Descent
+also fires when the Kalman vertical velocity is below -30 m/s continuously for
+2 s, at least 3 s after Coast entry, and only after the vehicle was seen
+climbing faster than +20 m/s in Boost/Coast (a restored state counts as seen).
+The log line says which path fired ("Kalman AGL" or "Kalman velocity").
 
 Reset resume (audit NEW-2 / comms N1). `flight_state_store` keeps
 {magic, state, max altitude, checksum} in `RTC_NOINIT`, rewritten on every
@@ -1532,7 +1576,9 @@ flag stays until power-on. Maintenance interaction: a resumed boot calls
 `maintenance_mode::cancel()` before `consume_boot_request()`, so it can never
 be a maintenance boot; the deliberate OTA reboot happens only from Pad Idle or
 Landed (not resumed), so it still boots to maintenance. The flash logger starts
-a normal new session; in a resumed state binary logging is on immediately.
+a normal new session in the slot that does not hold the flight; in a resumed
+state binary logging is on immediately. A second mid-flight reset finds both
+slots holding the flight and logs nothing more (it never erases the first part).
 Caveats: the position filter, attitude and IMU calibration restart from scratch
 after a resume; a bench state commanded to Boost/Coast/Descent followed by a
 panic/SW reset also resumes (command Pad Idle or power-cycle to clear).
@@ -1553,3 +1599,220 @@ Idle/Landed) now hands over to the maintenance image the same way as Wi-Fi.
 What still holds: a maintenance request is honoured only if the boot's reset
 reason is `ESP_RST_SW`, the USB disk appears about 25 s after the command
 (read-only scan), and host tools set Landed first and wait up to 90 s.
+
+
+## Pad Idle radio rate and Landed low-power mode (2026-11-14, not bench verified)
+
+> **2026-11-15: the Landed low-power mode is switched OFF** (`landed::kLowPowerModeEnabled
+> = false` in `main/landed_logic.h`, owner's decision). Landed now runs the normal
+> sensor loop: full telemetry at the normal rates, no MCU light sleep, no GPS
+> sleep, CAN not paused, no `0x09` schedule, and ping (`0x0022`) acked UNKNOWN
+> as before. The code below is kept and comes back by setting the switch to
+> true.
+>
+> Bench findings while it was on:
+> - The 0x09 packet went out once a minute on USB and LoRa.
+> - The ping reply and BUSY ack, and CAN up for an Iris command, worked.
+> - GPS doze after the refresh timeout worked.
+> - **A light sleep with USB attached killed the USB link for good.** A single
+>   false `usb_serial_jtag_is_connected()` reading released the lock. That is
+>   fixed by a 5 s debounce plus `CONFIG_USJ_NO_AUTO_LS_ON_CONNECTION`, but the
+>   fix is not bench verified.
+> - The 10-minute GPS wake was never observed.
+>
+> The Pad Idle 3 s radio rate (below) stays on.
+
+Written without hardware: built (flight and maintenance images) and host-tested
+only. Do not trust any sleep, wake or current number below until it has been
+measured on the bench (checklist at the end).
+
+Files: `main/landed_logic.h` (all timings and the pure scheduling logic),
+`main/landed_packet.h` (0x09 encoder), `main/landed_power.h` (low-power flag for
+the housekeeping tasks), `main/sensors_landed.cpp` (the Landed loop),
+`tests/landed_logic_test.cpp`; changes in `sensors.{h,cpp}`, `uart_driver.*`,
+`gps_receiver.*`, `nmea_gps.*`, `can_link.*`, `twai_driver.*`, `flash_logger.cpp`,
+`heartbeat.cpp`, `usb_serial_echo.cpp`, `main.cpp`, `comms.h` (four copies),
+`sdkconfig.flight` (`CONFIG_PM_ENABLE`, `CONFIG_FREERTOS_USE_TICKLESS_IDLE`; also
+added by hand to the generated `sdkconfig` and `build/sdkconfig`, because IDF
+keeps an existing sdkconfig over the defaults), Horizon `witness_protocol.py`
+(+ `tests/test_landed_position.py`, ping button) and HITL `hitl_protocol.py`
+(+ `tests/test_protocol.py`). Flight image 467,008 bytes (was 436,912; power
+management and tickless idle), DIRAM static 209.6 KB (was 205.1), no Wi-Fi code
+linked; maintenance image 849,200 bytes, unchanged in size.
+
+Host tests added or extended: `g++ -std=c++17 -Wall -Wextra -Werror -I main tests/landed_logic_test.cpp`
+(header only), `tests/nmea_gps_test.cpp` (UTC time), `tests/gps_receiver_test.cpp`
+(sleep/wake); Python `Horizon/tests/test_landed_position.py` and
+`HITL/tests/test_protocol.py`.
+
+### Timings (all in `landed_logic.h`)
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `kPadIdleRadioPeriodMs` | 3000 | Pad Idle: one sensors, one state packet per 3 s |
+| `kPadIdleThrottlesCanRelayed` | false | the CAN-relayed camera packet (0x03, from Iris) keeps 1 Hz in Pad Idle. **Interpretation call:** the request listed camera among the default packets but also said CAN packets pass at their normal rate; camera is the only CAN-sourced packet in the rotation. Set true to send it every 3 s too |
+| `kLandedTxPeriodMs` / `kLandedTxMinGapMs` | 60000 / 30000 | landed position packet per minute, never closer than 30 s |
+| `kGpsWakeIntervalMs` | 600000 | GPS refresh every 10 min |
+| `kGpsFixTimeoutMs` | 90000 | give up one refresh after 90 s (receiver restart and reconfiguration are about 3 s of it); a fix needs `kGpsMinSatellites` = 4 |
+| `kPingMinIntervalMs` | 5000 | ping replies |
+| `kRadioLingerMs` | 2000 | stay awake this long after any radio RX/TX (command executes, ack goes out, state change noticed) |
+| `kGpsWakeHotWaitMs` | 4000 | a hot restart gets this long before the cold-start fallback |
+| `kCanGraceMs` | 3000 | CAN is brought back this long for a command to Iris |
+| `kLowPowerTaskPeriodMs` | 10000 | housekeeping tasks' wake period in Landed |
+
+### 1. Pad Idle: reduced rate
+
+`Sensors::service_radio_transmit` takes each type's period from
+`landed::radio_period_ms(state, normal, can_relayed)`, evaluated on every
+pass: 3 s in Pad Idle for sensors and state, the normal 1 s otherwise. A type
+last sent 1-3 s ago is therefore due the instant the state leaves Pad Idle
+(no 3 s wait). Immediate-queue frames (command acks, replies, USB relays) are
+untouched, and flash logging is unchanged. After a Landed to Pad Idle command
+the 3 s rate applies again.
+
+### 2. Landed low-power mode
+
+Entry: after two normal sensor passes in Landed (the first logs "attitude after
+flight"), and not in HITL, the sensor task calls `Sensors::run_landed()`; it
+returns when the state changes (only commands change it: automatic
+transitions never leave Landed). Everything runs on the sensor task, which owns
+SPI3.
+
+- **Packet:** `0x09` landed position packet (28 bytes; `comms.h`,
+  GROUND_STATION_PROTOCOL.md): lat/lon int32 at 1e-7 deg, GPS altitude, fix age
+  in seconds, satellites, battery, flags (valid, stale, ping reply, UTC
+  aligned), status bytes (flight state). The state packet (0x02) was not used:
+  its latitude/longitude are 1e-4 deg (11 m) with no staleness or fix age, and 40
+  of its 63 payload bytes are attitude/velocity that are meaningless after
+  landing. It is the only packet sent on Witness's own schedule. Command acks
+  (immediate queue) still go out, and with a USB host attached the immediate
+  queue's USB relays do too.
+- **Schedule:** first packet at entry, then at the top of each GPS minute
+  (UTC seconds 0) once GPS time is known. UTC comes from GGA field 1
+  (`NmeaGps::Fix::utc_ms_of_day`, only with a fix) and is carried forward by
+  `landed::UtcClock`, which also learns the local clock's rate from successive
+  fixes (the RC slow clock that keeps time in light sleep is about 1 % off,
+  6 s over 10 min). Without UTC: free-running 60 s timer from the last fix (or
+  from landing). A failed transmit never changes the schedule (the next try is a
+  minute later); a failed sleep or GPS wake costs power or position age only.
+- **Landed location** = the last good fix: the current fix at entry, else the
+  last valid fix seen in flight (`note_gps_fix`). Each GPS refresh that gets a
+  fix with at least 4 satellites replaces it and clears *stale*; a refresh that
+  times out keeps the old one and sets *stale* (bit 1) in the packet.
+- **GPS:** `GpsReceiver::sleep()` / `wake()`, run by the GPS task
+  (`UartDriver::request_gps_sleep/wake`; asleep the task blocks instead of
+  polling the UART every 2 ms). 115200 baud is never changed, nothing is
+  factory reset, no receiver flash write.
+
+| Receiver | Sleep | Wake |
+|---|---|---|
+| SkyTraq PX1120S | `A0 A1 00 02 64 1C 78 0D 0A`, "Configure GNSS Doze Mode" (ID 0x64 SID 0x1C), SkyTraq AN0037 v1.4.69 (message added in v1.4.51): no NMEA output while in doze | System Restart `0x01` mode 1 (hot start: ephemeris, almanac, position and time kept). The document says "issuing a cold start" leaves doze, so if the receiver is silent 4 s after the hot restart the existing cold start (`0x01` mode 3) is sent as the fallback. Then the usual reconfiguration (airborne mode, rate, NMEA set; RAM only) |
+| u-blox M8 | UBX-RXM-PMREQ, 8-byte form `B5 62 02 41 08 00 00 00 00 00 02 00 00 00 CK`: duration 0, flags backup; UBX-13003221 R15 s32.19.3 and s12.4 | any activity on RXD1 (four `0xFF` bytes), then the same reconfiguration |
+
+  Not verified: how much the PX1120S draws in doze, whether a hot restart
+  leaves doze (the manual only promises a cold start does), and, for the
+  u-blox, whether the RAM-only CFG-PRT/NMEA settings and the 115200 baud
+  survive backup (they are reapplied at 115200; a u-blox that came back at 9600
+  would not answer and that refresh would time out as stale) and whether
+  V_BCKP keeps the ephemerides.
+- **MCU:** ESP-IDF automatic light sleep (`esp_pm_configure`, 80 MHz while awake,
+  `light_sleep_enable`), configured on entry and reverted (240 MHz, no sleep)
+  on exit. With tickless idle the idle task sleeps the MCU whenever every task
+  is blocked and no PM lock is held; the sleep length follows the next
+  FreeRTOS timeout (the Landed loop waits on a task notification until the next
+  event, at most 20 s per chunk). Deep sleep is not used: it would reset the MCU
+  and lose the radio RX and the RAM state. **Wake sources:** the SX1262 DIO1
+  pin (GPIO7, level high, `gpio_wakeup_enable`) and the timer. A level
+  interrupt on the same pin masks itself and notifies the task. The radio stays
+  in continuous RX the whole time, so commands and pings are never missed.
+- **GPIO:** IDF isolates every pad in light sleep
+  (`CONFIG_ESP_SLEEP_GPIO_RESET_WORKAROUND`, default for this chip), so
+  `sensors_landed.cpp` calls `gpio_sleep_sel_dis` on the pads that must hold
+  (radio CS/RESET/RF_EN/DIO/BUSY, SPI2/SPI3, NAND hold/WP, IMU/baro CS, LEDs,
+  buzzer, CAN TX, GPS UART TX), and re-enables them on exit.
+- **USB:** `usb_serial_jtag_is_connected()` is polled each loop. With a host the
+  MCU never sleeps (a `NO_LIGHT_SLEEP` lock), housekeeping tasks run normally
+  and the state packet goes to USB at 1 Hz, so the USB export / maintenance
+  switch (`0x6868`, `0x5746`) from Landed is unchanged. Sleep resumes when USB
+  goes away. The Landed loop itself (reduced radio, GPS cycle, no IMU) runs
+  with or without USB.
+- **Exit** (Landed to Pad Idle or any allowed transition): DIO1 interrupt and
+  wake removed, PM reverted, CAN resumed, housekeeping tasks notified, GPS woken
+  if asleep, IMU re-initialised (`initialize_lsm6dsv320x`, about 70 ms; it is
+  powered down while Landed) and the position filter's predict clock reset.
+  The flight state machine, attitude, Kalman filter and sensor packets do not
+  run in Landed; the first normal pass after exit resumes them. No command
+  policy change (`command_policy.h` untouched): over radio only Landed to Pad
+  Idle is still accepted, `0x6868`/erase stay USB-only, `0x5746` and `0x5250`
+  radio power work as before.
+- **Task watchdog / INT WDT:** not reconfigured. The TWDT only watches the two
+  idle tasks (5 s, no panic), and idle tasks run (and feed it) every time the
+  MCU is about to sleep. Check the bench log for "Task watchdog" lines after
+  a soak.
+
+What runs in Landed, and why:
+
+| Item | Landed behaviour |
+|---|---|
+| Radio | continuous RX; DIO1 wake. TX only: position packet, command acks/replies |
+| IMU / barometer / battery ADC | LSM6 powered down (restored on exit); barometer not polled; battery ADC read once per position packet |
+| Flash logging | sensor/IMU/state logging already stops in Landed (`FLIGHT_LOG_BIN_LANDED 0`); capture and writer tasks block up to 10 s on a notification. The text log and the GPS raw ring still flush (GPS bytes arrive only during the 90 s refresh windows, which is useful evidence) |
+| Heartbeat | no heartbeat packet, LED pulse or beeps while no USB host (the Landed beep pattern is silenced; the buzzer is disabled in the bench build anyway). To keep a locator beep, remove the low-power branch in `Heartbeat::run` |
+| CAN | `CanLink::set_paused(true)`: the TWAI node is disabled (no RX interrupt, no queue to overflow, no bus-error counting, and the driver's own `NO_LIGHT_SLEEP` lock is released). **TWAI cannot wake the MCU, and the driver blocks light sleep while its node is enabled**, so a filter or a GPIO wake on the CAN RX pin was not an option. Witness no longer relays Iris packets over the radio (nothing but 0x09 is sent) and sends no heartbeats. Iris sees no ACK from Witness while Landed |
+| Radio commands for Iris | still forwarded: a radio command queues in `CanLink`; the paused CAN task re-enables the node, sends it, stays up `kCanGraceMs` (3 s, MCU awake) and pauses again. No extra wake is needed: the command arrives by radio, which already woke the MCU |
+| GPS | refresh every 10 min, asleep otherwise |
+| Watchdogs, console | unchanged |
+
+### 3. Ping reply
+
+`IRIS_COMMAND_PING` (`0x0022`, existing code; standard 10-byte command, forwarded
+to Iris as before, which answers PONG over CAN) is now also handled by Witness
+over radio: in Landed `Sensors::request_landed_ping()` transmits the 0x09
+packet at once (flag bit 2 set) in addition to the minute packets, limited to one
+reply per 5 s; the ack is `IRIS_ACK_OK`, or `IRIS_ACK_BUSY` when rate limited.
+Outside Landed the ack stays `IRIS_ACK_UNKNOWN`. A stuck ground station is
+still acked (BUSY) every time, like any command spam, but costs no position
+transmissions. Horizon: `build_ping_packet()` and a "Ping Witness (Landed)"
+button; HITL decoder for `0x09`. **Receive availability in Landed: the radio is
+in continuous RX at all times (SX1262 SetRx); the MCU wakes on DIO1. It is not
+duty-cycled, so a ping is never missed** (the cost is SX1262 RX plus Ra-01SH-P
+LNA current, the floor of the budget below).
+
+### Current estimate (not measured)
+
+Before (Landed with the normal loop): MCU at 240 MHz on two cores roughly
+50-70 mA, GPS tracking at 25 Hz about 25-30 mA, radio RX plus 1 Hz TX a few
+mA, IMU 1-3 mA, divider 0.35 mA: on the order of 100 mA. After (estimate):
+MCU light sleep about 1 mA plus wake-ups, SX1262 RX about 5-8 mA with the
+front end, GPS about 15 % duty at 25 mA = 4 mA (microamps asleep for the u-blox;
+PX1120S doze unknown), divider 0.35 mA, IMU about 0, TX duty about 0.1 %:
+**roughly 12-18 mA, about 85 % less.** The floor is the continuous-RX radio
+(chosen so pings and commands are never missed); duty-cycling it would save
+most of the rest. A hardware floor outside this change: the battery divider
+(20 kohm across the battery).
+
+### Bench checklist for the Landed low-power mode
+
+1. Command Landed over USB (`05 73 04`) with a host attached: `landed:` log
+   lines, 0x09 once a minute on USB and LoRa, no sleep (USB), Horizon decodes it.
+2. Unplug USB (battery): current drops; wake on a ground command (Landed to Pad
+   Idle `05 73 00`, radio power, ping) works every time, also while a GPS
+   refresh window is open and just after a TX. Measure RX latency and any lost
+   commands over an hour.
+3. Top of minute: the 0x09 arrives within about 1 s of UTC :00 once a fix was
+   obtained; check drift over 10 min between refreshes, and the free-running
+   fallback with the GPS antenna covered.
+4. GPS: PX1120S doze current; that a hot restart leaves doze (else the cold
+   fallback shows in the log: "GPS silent after the hot restart"); that the
+   115200 baud and 25 Hz come back (`airborne 4 g mode ... confirmed` line);
+   the u-blox backup/wake and whether baud and V_BCKP survive.
+5. Pads: with the MCU asleep the radio still receives (RF_EN and RESET held),
+   the NAND is not corrupted (export after a soak), no stray GPS wakes (UART
+   TX held), LEDs/buzzer stay off.
+6. CAN: Iris behaviour while Witness does not ACK for hours; a ground command
+   for Iris in Landed reaches it (3 s window); CAN resumes fully on exit.
+7. Exit: Landed to Pad Idle restores IMU data (`imu fifo` line), GPS lock,
+   heartbeat, the 3 s radio rate; launch detection works afterwards; `0x6868`
+   USB export from Landed still reboots into the maintenance image.
+8. Watch for "Task watchdog", brownout or heap warnings over a long soak, and
+   confirm the DIO1 wake does not chatter.

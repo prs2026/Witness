@@ -304,12 +304,23 @@ def generate(params: SimParams) -> list:
 # ---------------------------------------------------------------------------
 
 class ReferenceStateMachine:
-    LAUNCH_G = 10.0
+    """Python copy of flight_state_machine.cpp (2026-11-14: Kalman AGL).
+
+    The firmware works on the position filter's height above the pad (AGL)
+    and vertical velocity. The filter tracks the truth to within metres, so
+    the prediction is fed the simulated true AGL and vertical velocity.
+    """
+    LAUNCH_AGL_M = 30.0
     LAUNCH_MS = 300
     BURNOUT_G = 1.0
     BURNOUT_MS = 500
     DESCENT_FRACTION = 0.95
+    DESCENT_MIN_DROP_M = 10.0
     DESCENT_MS = 500
+    DESCENT_VEL_MPS = -30.0
+    DESCENT_VEL_MS = 2000
+    DESCENT_MIN_COAST_MS = 3000
+    APOGEE_SEEN_MPS = 20.0
     LAND_GYRO_DPS = 10.0
     LAND_MIN_G = 0.8
     LAND_MAX_G = 1.2
@@ -327,6 +338,10 @@ class ReferenceStateMachine:
         self._land_max = 0.0
         self._max_valid = False
         self._max_alt = 0.0
+        self._climb_seen = False
+        self._coast_start = 0
+        self._vel_active = False
+        self._vel_start = 0
         self.transitions = []  # (timestamp_us, from, to)
 
     def _set(self, state, ts):
@@ -366,48 +381,76 @@ class ReferenceStateMachine:
             return False
         return ts - self._land_start >= self.LAND_MS * 1000
 
-    def update(self, ts_us, axial_g, low_g_x, accel_g, gyro_dps, baro_alt_m):
-        """One observation. accel_g/gyro_dps are low-g and gyro xyz vectors."""
+    def update(self, ts_us, low_g_x, accel_g, gyro_dps, agl_m, vz_mps):
+        """One observation: low-g axial (g), low-g and gyro xyz vectors, AGL
+        (m above the pad) and vertical velocity (m/s, up positive)."""
         if ts_us == 0:
             return self.state
         cur = self.state
         if cur != self._observed_state:
             self._observed_state = cur
             self._cond_active = False
+            self._vel_active = False
+            if cur == hp.COAST:
+                self._coast_start = ts_us
             if cur in (hp.PAD_IDLE, hp.BOOST):
+                self._climb_seen = False
                 self._max_valid = True
-                self._max_alt = baro_alt_m
+                self._max_alt = agl_m
             if cur in (hp.PAD_IDLE, hp.LANDED):
                 self._land_active = False
-        if not self._max_valid or baro_alt_m > self._max_alt:
-            self._max_alt = baro_alt_m
+        if cur in (hp.BOOST, hp.COAST) and vz_mps > self.APOGEE_SEEN_MPS:
+            self._climb_seen = True
+        if cur in (hp.BOOST, hp.COAST) and (not self._max_valid or agl_m > self._max_alt):
+            self._max_alt = agl_m
             self._max_valid = True
             if cur == hp.COAST:
                 self._cond_active = False
         if cur in (hp.BOOST, hp.COAST, hp.DESCENT) and self._landing(
-                accel_g, gyro_dps, baro_alt_m, ts_us):
+                accel_g, gyro_dps, agl_m, ts_us):
             self._set(hp.LANDED, ts_us)
             return self.state
         if cur == hp.PAD_IDLE:
-            if self._held(axial_g > self.LAUNCH_G, ts_us, self.LAUNCH_MS):
+            if self._held(agl_m > self.LAUNCH_AGL_M, ts_us, self.LAUNCH_MS):
                 self._set(hp.BOOST, ts_us)
         elif cur == hp.BOOST:
             if self._held(low_g_x < self.BURNOUT_G, ts_us, self.BURNOUT_MS):
                 self._set(hp.COAST, ts_us)
         elif cur == hp.COAST:
-            thr = self._max_alt - abs(self._max_alt) * (
-                1.0 - self.DESCENT_FRACTION)
-            if self._held(self._max_valid and baro_alt_m < thr, ts_us,
-                          self.DESCENT_MS):
+            drop = max(self._max_alt * (1.0 - self.DESCENT_FRACTION), self.DESCENT_MIN_DROP_M)
+            below = (self._max_valid and self._max_alt > 0.0 and vz_mps < 0.0
+                     and agl_m < self._max_alt - drop)
+            if self._held(below, ts_us, self.DESCENT_MS):
+                self._set(hp.DESCENT, ts_us)
+                return self.state
+            vel_desc = (self._climb_seen and vz_mps < self.DESCENT_VEL_MPS and
+                        ts_us - self._coast_start >= self.DESCENT_MIN_COAST_MS * 1000)
+            if not vel_desc:
+                self._vel_active = False
+            elif not self._vel_active:
+                self._vel_active = True
+                self._vel_start = ts_us
+            elif ts_us - self._vel_start >= self.DESCENT_VEL_MS * 1000:
                 self._set(hp.DESCENT, ts_us)
         return self.state
 
-    def update_from_hitl(self, ts_us: int, decoded: dict):
-        """Feed a decoded 0x0C frame (as Witness would interpret it)."""
-        return self.update(
-            ts_us, decoded["high_g"][0], decoded["low_g"][0],
-            decoded["low_g"], decoded["gyro_dps"],
-            hp.pressure_altitude_m(decoded["pressure_pa"]))
+    def update_from_sample(self, ts_us: int, decoded: dict, agl_m: float, vz_mps: float):
+        """Feed a decoded 0x0C frame (IMU as Witness sees it) and the truth
+        AGL / vertical velocity standing in for the position filter."""
+        return self.update(ts_us, decoded["low_g"][0], decoded["low_g"],
+                           decoded["gyro_dps"], agl_m, vz_mps)
+
+
+def _feed(samples):
+    fsm = ReferenceStateMachine()
+    site = samples[0].alt_msl_m if samples else 0.0
+    track = []
+    for s in samples:
+        frame = hp.encode_hitl(s.hitl)
+        # Firmware ignores timestamp 0; offset by one tick like a real clock.
+        track.append(fsm.update_from_sample((s.t_ms + TICK_MS) * 1000, hp.decode_hitl(frame),
+                                            s.alt_msl_m - site, s.vel_mps))
+    return fsm, track
 
 
 def predict_transitions(samples) -> dict:
@@ -415,24 +458,14 @@ def predict_transitions(samples) -> dict:
 
     Returns {state: seconds}; states never reached are absent.
     """
-    fsm = ReferenceStateMachine()
-    for s in samples:
-        frame = hp.encode_hitl(s.hitl)
-        # Firmware ignores timestamp 0; offset by one tick like a real clock.
-        fsm.update_from_hitl((s.t_ms + TICK_MS) * 1000, hp.decode_hitl(frame))
+    fsm, _ = _feed(samples)
     return {to: (ts / 1e6) - TICK_MS / 1000.0
             for ts, _frm, to in fsm.transitions}
 
 
 def predict_state_track(samples) -> list:
     """Expected Witness flight state after each sample (same feed as above)."""
-    fsm = ReferenceStateMachine()
-    out = []
-    for s in samples:
-        frame = hp.encode_hitl(s.hitl)
-        out.append(fsm.update_from_hitl((s.t_ms + TICK_MS) * 1000,
-                                        hp.decode_hitl(frame)))
-    return out
+    return _feed(samples)[1]
 
 
 def summarize(samples) -> dict:

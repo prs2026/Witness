@@ -13,6 +13,7 @@
 #include "hardware.h"
 #include "lc86_gps.h"
 #include "ra01.h"
+#include "tx_slot.h"
 
 namespace {
 
@@ -72,6 +73,16 @@ extern "C" void app_main(void)
     std::array<std::uint8_t,
                IRIS_PACKET_GROUND_STATION_STATUS_FRAME_LENGTH> status_packet{};
     TickType_t next_status = xTaskGetTickCount();
+    // Commands from USB waiting for the uplink window (tx_slot.h).
+    std::array<std::array<std::uint8_t, IRIS_PACKET_COMMAND_FRAME_LENGTH>, 32> uplink{};
+    std::size_t uplink_head = 0U;
+    std::size_t uplink_count = 0U;
+    bool uplink_sent_before = false;
+    std::uint64_t last_uplink_ms = 0U;
+    bool slots_active = false;
+    const std::uint32_t kCommandAirtimeMs = tx_slot::lora_airtime_ms(
+        IRIS_PACKET_COMMAND_FRAME_LENGTH, IRIS_RADIO_SPREADING_FACTOR, IRIS_RADIO_BANDWIDTH_HZ,
+        IRIS_RADIO_CODING_RATE, IRIS_RADIO_PREAMBLE_LENGTH);
 
     for (;;) {
         if (xTaskGetTickCount() >= next_status) {
@@ -131,16 +142,52 @@ extern "C" void app_main(void)
                     continue;
                 }
                 if (command.back() == IRIS_PACKET_EOF_VALUE) {
-                    ESP_LOGI(kLogTag, "Sending command to Witness");
-                    const esp_err_t result = radio.transmit(
-                        command.data(), command.size());
-                    if (result != ESP_OK) {
-                        ESP_LOGE(kLogTag, "Command send failed: %s (0x%x)",
-                                 esp_err_to_name(result),
-                                 static_cast<unsigned>(result));
+                    // Queued; sent in Witness's listening window (tx_slot.h).
+                    if (uplink_count == uplink.size()) {
+                        ESP_LOGW(kLogTag, "uplink queue full: command dropped");
+                    } else {
+                        uplink[(uplink_head + uplink_count) % uplink.size()] = command;
+                        ++uplink_count;
                     }
                 }
                 command_length = 0U;
+            }
+        }
+
+        // GPS time slots (tx_slot.h): with a GPS fix and a recent PPS edge,
+        // commands start only in 800..950 ms of the UTC second, when Witness
+        // listens; right after one, the next follows at once (burst: Witness
+        // holds its telemetry after hearing a command). No GPS: at once.
+        if (uplink_count > 0U) {
+            const std::int64_t now_us = esp_timer_get_time();
+            const std::uint64_t now_ms = static_cast<std::uint64_t>(now_us / 1000LL);
+            const std::int64_t pps_us = gps.last_pps_us();
+            const Lc86Nmea::State gps_state = gps.state();
+            const bool pps_known =
+                pps_us > 0 && now_us - pps_us < static_cast<std::int64_t>(tx_slot::kTimeMaxAgeMs) * 1000LL &&
+                Lc86Nmea::gga_fresh(gps_state, static_cast<std::uint32_t>(now_ms)) &&
+                gps_state.fix_quality > 0U;
+            if (pps_known != slots_active) {
+                slots_active = pps_known;
+                ESP_LOGI(kLogTag, "uplink time slots %s", pps_known ? "ON (PPS)" : "off (no GPS fix/PPS)");
+            }
+            const std::uint64_t since_pps_ms =
+                pps_us > 0 ? static_cast<std::uint64_t>((now_us - pps_us) / 1000LL) : 0U;
+            if (tx_slot::aperture_may_send(now_ms, uplink_sent_before, last_uplink_ms, pps_known,
+                                           since_pps_ms, kCommandAirtimeMs)) {
+                const auto &frame = uplink[uplink_head];
+                ESP_LOGI(kLogTag, "Sending command 0x%02X%02X to Witness%s", frame[7], frame[8],
+                         pps_known ? " (slot)" : "");
+                const esp_err_t result = radio.transmit(frame.data(), frame.size());
+                if (result != ESP_OK) {
+                    ESP_LOGE(kLogTag, "Command send failed: %s (0x%x)",
+                             esp_err_to_name(result),
+                             static_cast<unsigned>(result));
+                }
+                uplink_head = (uplink_head + 1U) % uplink.size();
+                --uplink_count;
+                uplink_sent_before = true;
+                last_uplink_ms = static_cast<std::uint64_t>(esp_timer_get_time() / 1000LL);
             }
         }
 

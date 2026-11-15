@@ -347,6 +347,9 @@ private:
     QueueHandle_t imu_record_queue_ = nullptr;
     QueueHandle_t packet_queue_ = nullptr;
     std::atomic<bool> capture_packets_{false};
+    // Both slots hold a flight: no session, nothing logged (never erased
+    // automatically) until an erase/clear request.
+    bool slots_full_ = false;
     std::atomic<std::uint32_t> packets_dropped_{0};
     std::uint8_t packet_buffer_[2 * kPagePayloadSize]{};
     std::size_t packet_buffer_used_ = 0;

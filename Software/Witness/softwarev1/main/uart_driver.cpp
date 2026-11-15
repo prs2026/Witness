@@ -12,6 +12,7 @@
 #include "hal/uart_ll.h"
 #include "esp_timer.h"
 #include "hardware_pins.h"
+#include "landed_logic.h"
 #include "flash_logger.h"
 #include "spi_data_forwarder.h"
 
@@ -332,6 +333,9 @@ void UartDriver::run()
         ESP_LOGI(kTag, "GPS startup: identifying PX1120S or u-blox M8 at %lu baud",
                  static_cast<unsigned long>(kBaudRate));
     GpsReceiver::AssistProgress last_assist{};
+    std::uint32_t wake_deadline_ms = 0;   // 0 = no wake in progress
+    std::uint32_t wake_rx_mark = 0;
+    constexpr std::uint32_t kAsleepWaitMs = 30'000;
     for (;;) {
         {
             // Pick up an assistance upload handed over by the USB/radio task.
@@ -363,6 +367,43 @@ void UartDriver::run()
             } else {
                 ESP_LOGW(kTag, "GPS cold start refused: no receiver identified at %lu baud",
                          static_cast<unsigned long>(GpsReceiver::kOperationalBaud));
+            }
+        }
+        // Landed low-power mode: GPS sleep / wake requests.
+        {
+            const std::uint8_t request = gps_power_request_.exchange(kPowerNone);
+            const auto power_now = static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
+            if (request == kPowerSleep && !gps_asleep_.load()) {
+                if (gps_.sleep(power_now)) {
+                    gps_asleep_.store(true);
+                    ESP_LOGI(kTag, "GPS (%s) put to sleep for Landed low-power mode", gps_.model_name());
+                } else {
+                    ESP_LOGW(kTag, "GPS sleep not possible (%s, status %d); receiver stays on",
+                             gps_.model_name(), static_cast<int>(gps_.status()));
+                }
+            } else if (request == kPowerWake && gps_asleep_.load()) {
+                if (gps_.wake(power_now, GpsReceiver::WakeKind::Hot)) {
+                    gps_asleep_.store(false);
+                    wake_deadline_ms = power_now + landed::kGpsWakeHotWaitMs;
+                    wake_rx_mark = total_rx_bytes;
+                    ESP_LOGI(kTag, "GPS wake: hot restart sent to the %s", gps_.model_name());
+                } else {
+                    ESP_LOGW(kTag, "GPS wake command could not be sent; will retry on the next cycle");
+                }
+            }
+            // The receiver gave no bytes after the hot restart: cold start (fallback).
+            if (wake_deadline_ms != 0 && static_cast<std::int32_t>(power_now - wake_deadline_ms) >= 0) {
+                wake_deadline_ms = 0;
+                if (total_rx_bytes == wake_rx_mark) {
+                    ESP_LOGW(kTag, "GPS silent after the hot restart; cold start as fallback");
+                    (void)gps_.cold_start(power_now);
+                }
+            }
+            if (wake_deadline_ms != 0 && total_rx_bytes != wake_rx_mark) wake_deadline_ms = 0;
+            if (gps_asleep_.load()) {
+                // No bytes can arrive: block until a request (or 30 s).
+                (void)ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(kAsleepWaitMs));
+                continue;
             }
         }
         gps_.service(static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL));
@@ -529,6 +570,22 @@ void UartDriver::run()
                 ESP_LOGW(kTag, "%s startup failed: %s; raw logging continues at %lu baud",
                          gps_.model_name(), gps_.failure_reason(),
                          static_cast<unsigned long>(gps_.baud()));
+                identify_failed_ms_ = static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
+            }
+        }
+        // An unidentified receiver (often still booting during the startup
+        // probe when both boards power up together) is probed and identified
+        // again every kIdentifyRetryMs. Listen-only probe; no rate change is
+        // sent to the receiver.
+        if (gps_.can_retry_identification() && !gps_asleep_.load()) {
+            const auto now = static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
+            if (now - identify_failed_ms_ >= kIdentifyRetryMs && gps_.retry_identification(now)) {
+                const std::uint32_t n = gps_.identification_retries();
+                if (n <= 3U || n % 10U == 0U)
+                    ESP_LOGW(kTag, "GPS not identified: probing and identifying again (retry %lu)",
+                             static_cast<unsigned long>(n));
+                select_gps_pins();     // re-probe both pins; sets the measured-rate hint
+                last_gps_status = gps_.status();
             }
         }
 
@@ -538,13 +595,23 @@ void UartDriver::run()
             std::uint32_t baud = 0;
             (void)uart_get_baudrate(port_, &baud);
             const auto gga = nmea.latest_fix();
-            ESP_LOGI(kTag, "GPS RX: baud=%lu bytes=%lu GGA=%lu fix=%s sats=%u idle_ms=%lu",
+            const GpsReceiver::Status st = gps_.status();
+            ESP_LOGI(kTag, "GPS RX: baud=%lu bytes=%lu GGA=%lu fix=%s sats=%u idle_ms=%lu; receiver %s %s%s, "
+                           "pins %s, retries %lu%s%s",
                      static_cast<unsigned long>(baud),
                      static_cast<unsigned long>(total_rx_bytes),
                      static_cast<unsigned long>(nmea.gga_sentence_count()),
                      NmeaGps::fresh(gga, now_ms) ? "valid" : "none",
                      NmeaGps::gga_fresh(gga, now_ms) ? static_cast<unsigned>(gga.satellites) : 0U,
-                     static_cast<unsigned long>(now_ms - last_rx_ms));
+                     static_cast<unsigned long>(now_ms - last_rx_ms), gps_.model_name(),
+                     st == GpsReceiver::Status::Ready         ? "ready"
+                     : st == GpsReceiver::Status::Configuring ? "configuring"
+                     : st == GpsReceiver::Status::Failed      ? "FAILED"
+                                                               : "disabled",
+                     gps_.model_assumed() ? " (assumed)" : "", pins_swapped_ ? "swapped" : "as wired",
+                     static_cast<unsigned long>(gps_.identification_retries()),
+                     st == GpsReceiver::Status::Failed ? ": " : "",
+                     st == GpsReceiver::Status::Failed ? gps_.failure_reason() : "");
             if (now_ms - last_rx_ms >= kGpsDiagnosticIntervalMs) {
                 ESP_LOGW(kTag, "GPS UART input silent; reception and raw logging remain enabled");
             }
@@ -560,6 +627,12 @@ void UartDriver::run()
                 kLoopbackReplyTimeoutMs);
         }
     }
+}
+
+void UartDriver::request_gps_power(const std::uint8_t request)
+{
+    gps_power_request_.store(request);
+    if (task_handle_ != nullptr) xTaskNotifyGive(task_handle_);
 }
 
 esp_err_t UartDriver::submit_gps_assist(const std::uint8_t *blob, const std::size_t length)

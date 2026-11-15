@@ -191,7 +191,12 @@ void test_flights()
     // as with no transonic error at all.
     const FlightResult clean = fly(0, 0.0F, 0.05F, 1);
     CHECK(std::fabs(r.max_up_error - clean.max_up_error) < 2.0F);
-    CHECK(r.up_error_at_apogee < 15.0F);
+    // Since 2026-11-14 the barometer stays gated for all of Coast once it was
+    // gated in Boost (Mach errors continue after burnout), so without GPS the
+    // apogee altitude is IMU-only from Mach 0.8 up: ~33 m here (was < 15 m
+    // when the barometer resumed below Mach 0.75 in Coast). With GPS it stays
+    // a few metres (checks below).
+    CHECK(r.up_error_at_apogee < 40.0F);
     CHECK(r.speed_error_at_boost < 3.0F);    // ~32 m/s before Boost was integrated, not lost
 
     // With a 10 Hz and a 25 Hz GPS.

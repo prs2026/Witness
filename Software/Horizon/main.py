@@ -522,6 +522,14 @@ class MonitorPanel(QtWidgets.QWidget):
         power.clicked.connect(lambda _c=False: self.set_radio_power())
         grid.addWidget(power, index // columns, index % columns)
         self.quick_command_buttons.append(power)
+        index += 1
+        ping = QtWidgets.QPushButton("Ping Witness (Landed)")
+        ping.setToolTip("Ask a landed Witness for its position now (0x09 landed position packet, "
+                        "rate limited to one per 5 s). Radio only; Witness must be in the Landed state.")
+        ping.clicked.connect(lambda _c=False: self.ping_witness())
+        grid.addWidget(ping, index // columns, index % columns)
+        self.quick_command_buttons.append(ping)
+        index += 1
         for widget in (self.command_entry, self.send_command_button, *self.quick_command_buttons):
             bind_enabled(core.commands_enabled, widget)
         layout.addLayout(hbox(QtWidgets.QLabel("Commands:"), grid_widget))
@@ -604,6 +612,12 @@ class MonitorPanel(QtWidgets.QWidget):
         label = (f"{'Witness' if target == 'witness' else 'ground'} radio drive {drive_dbm:+d} dBm "
                  f"(~{drive_dbm + RADIO_FRONT_END_GAIN_DB:+d} dBm out)")
         return self.core.transmit_command(self.core.command_target.get(), frame, label)
+
+    def ping_witness(self):
+        """Send IRIS_COMMAND_PING; a landed Witness answers with its position packet."""
+        from witness_protocol import build_ping_packet
+        return self.core.transmit_command(self.core.command_target.get(), build_ping_packet(),
+                                          "ping (landed position request)")
 
     def upload_gps_ephemeris(self, path=None):
         """Pick a RINEX nav file and upload the ephemerides valid now to

@@ -14,6 +14,8 @@
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "hardware_pins.h"
+#include "landed_logic.h"
+#include "landed_power.h"
 #include "spi_data_forwarder.h"
 #include "witness_status.h"
 
@@ -295,8 +297,16 @@ void Heartbeat::queue_heartbeat_packet()
 void Heartbeat::run()
 {
     TickType_t next_wake_time = xTaskGetTickCount();
+    landed_power::register_current_task();
 
     for (;;) {
+        if (landed_power::low_power()) {
+            // Landed low-power mode: no heartbeat packet, LED pulse or beeps;
+            // sleep until the flag clears (notified) or the housekeeping timeout.
+            (void)ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(landed::kLowPowerTaskPeriodMs));
+            next_wake_time = xTaskGetTickCount();
+            continue;
+        }
         vTaskDelayUntil(&next_wake_time, kPeriod);
         queue_heartbeat_packet();
         blink_gpio();

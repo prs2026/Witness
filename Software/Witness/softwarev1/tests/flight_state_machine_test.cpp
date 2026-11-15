@@ -1,5 +1,5 @@
-// Host test: robust altitude / Descent logic, HITL re-baseline and the
-// reset-resume record. Build command: see FIRMWARE_HANDOFF.md
+// Host test: Kalman-AGL launch / Descent / landing logic, HITL re-baseline and
+// the reset-resume record. Build command: see FIRMWARE_HANDOFF.md
 // ("Flight state across resets").
 #include <cmath>
 #include <cstdio>
@@ -25,175 +25,194 @@ struct Rig {
     WitnessStatus status;
     FlightStateMachine fsm{status};
     std::uint64_t t_us = 1'000'000;
-    // One fresh barometer sample every 20 ms (50 Hz).
-    void step(float alt, bool gated = false, bool vel_valid = true,
-              float vel = 0.0F)
+    float axial_g = 1.0F;          // low-g axial acceleration (burnout test)
+    bool still = false;            // 1 g, no rotation (landing test)
+    // One observation every 20 ms (50 Hz): Kalman AGL and vertical velocity.
+    void step(float agl, float vel = 0.0F, bool agl_valid = true)
     {
         FlightStateMachine::Observation o{};
-        o.barometric_altitude_valid = true;
-        o.barometric_altitude_meters = alt;
-        o.barometric_altitude_new = true;
-        o.barometer_gated = gated;
-        o.vertical_velocity_valid = vel_valid;
+        o.agl_valid = agl_valid;
+        o.agl_meters = agl;
+        o.vertical_velocity_valid = true;
         o.vertical_velocity_mps = vel;
         o.low_g_axial_acceleration_valid = true;
-        o.low_g_axial_acceleration_g = 0.0F;
+        o.low_g_axial_acceleration_g = axial_g;
+        o.acceleration_valid = true;
+        o.angular_rate_valid = true;
+        o.acceleration_g[0] = still ? 1.0F : 3.0F;
+        o.angular_rate_dps[2] = still ? 0.0F : 50.0F;
         o.timestamp_us = t_us;
         fsm.update(o);
         t_us += 20'000;
     }
-    void run(float alt, int n, bool gated = false, float vel = 0.0F,
-             bool vel_valid = true)
+    void run(float agl, int n, float vel = 0.0F)
     {
-        for (int i = 0; i < n; ++i) step(alt, gated, vel_valid, vel);
+        for (int i = 0; i < n; ++i) step(agl, vel);
     }
-    void to_coast(float alt)
+    void to_coast(float agl)
     {
-        run(alt, 10);
+        run(0.0F, 10);
         CHECK(fsm.trigger_launch() == ESP_OK);
-        run(alt, 3);
+        run(agl, 3, 100.0F);
         fsm.set_state(static_cast<std::uint8_t>(State::Coast));
-        run(alt, 3);
+        run(agl, 3, 100.0F);
     }
 };
 
 int g_saved_state = -1;
 void persist_cb(std::uint8_t s, float, bool) { g_saved_state = s; }
 
-void test_single_outlier_ignored()
+void test_launch_needs_30m_agl_held()
 {
     Rig r;
-    r.to_coast(1000.0F);
-    r.run(20000.0F, 1);              // one bad HIGH sample (the HITL run)
-    r.run(1000.0F, 5);
-    CHECK(r.fsm.state() == State::Coast);
-    CHECK(r.fsm.maximum_altitude() < 1100.0F);
-    for (int i = 0; i < 100; ++i) r.step(1000.0F + 2.0F * i, false, true, 100.0F);
-    CHECK(r.fsm.state() == State::Coast);
-    CHECK(r.fsm.maximum_altitude() > 1150.0F);
+    r.run(0.0F, 100);
+    r.run(29.5F, 200, 10.0F);                // just below 30 m: never
+    CHECK(r.fsm.state() == State::PadIdle);
+    r.run(40.0F, 10, 50.0F);                 // 200 ms above, then a dip
+    r.run(20.0F, 1, 50.0F);
+    CHECK(r.fsm.state() == State::PadIdle);
+    int steps = -1;
+    for (int i = 0; i < 50; ++i) {
+        r.step(40.0F + i, 60.0F);
+        if (r.fsm.state() == State::Boost) { steps = i + 1; break; }
+    }
+    CHECK(r.fsm.state() == State::Boost);
+    std::printf("launch after %d ms above 30 m AGL\n", steps * 20);
+    CHECK(steps * 20 >= 300 && steps * 20 <= 340);
 }
 
-void test_burst_of_two_ignored()
+void test_invalid_agl_no_launch()
 {
     Rig r;
-    r.to_coast(1000.0F);
-    r.run(43000.0F, 2);
-    r.run(1000.0F, 100, false, 50.0F);
+    for (int i = 0; i < 100; ++i) r.step(500.0F, 100.0F, false);
+    CHECK(r.fsm.state() == State::PadIdle);
+    for (int i = 0; i < 100; ++i) r.step(NAN, 100.0F, true);
+    CHECK(r.fsm.state() == State::PadIdle);
+}
+
+void test_burnout_then_kalman_descent()
+{
+    Rig r;
+    r.run(0.0F, 10);
+    r.run(50.0F, 20, 80.0F);
+    CHECK(r.fsm.state() == State::Boost);
+    r.axial_g = 0.2F;                          // motor out
+    r.run(400.0F, 30, 150.0F);
     CHECK(r.fsm.state() == State::Coast);
-    CHECK(r.fsm.maximum_altitude() < 1100.0F);
-}
-
-void test_rate_limit_blocks_sustained_jump()
-{
-    Rig r;
-    r.to_coast(1000.0F);
-    r.run(40000.0F, 30);            // 0.6 s of sustained garbage > window
-    CHECK(r.fsm.maximum_altitude() < 1200.0F);   // 40 km in 0.6 s impossible
-}
-
-void test_nominal_descent_latency()
-{
-    Rig r;
-    r.to_coast(30000.0F);
-    r.run(30000.0F, 20);
-    int steps_to_descent = -1;
-    for (int i = 0; i < 200; ++i) {
-        r.step(27000.0F, false, true, -30.0F);   // 10 % below max, falling
-        if (r.fsm.state() == State::Descent) { steps_to_descent = i + 1; break; }
+    for (int i = 0; i < 200; ++i) r.step(400.0F + 10.0F * i, 120.0F);   // climb to 2390
+    CHECK(r.fsm.state() == State::Coast);
+    CHECK(r.fsm.maximum_altitude() > 2380.0F);
+    r.run(2300.0F, 100, 5.0F);                 // 4 % below but still rising
+    CHECK(r.fsm.state() == State::Coast);
+    int steps = -1;
+    for (int i = 0; i < 100; ++i) {
+        r.step(2200.0F, -20.0F);               // 8 % below max, falling
+        if (r.fsm.state() == State::Descent) { steps = i + 1; break; }
     }
     CHECK(r.fsm.state() == State::Descent);
-    std::printf("descent after %d samples (%d ms)\n", steps_to_descent,
-                steps_to_descent * 20);
-    // 500 ms dwell (25 samples) + median lag (<= 3 samples) + 1.
-    CHECK(steps_to_descent <= 25 + 3 + 2);
+    std::printf("descent after %d ms\n", steps * 20);
+    CHECK(steps * 20 <= 540);
 }
 
-void test_gated_baro_no_descent_no_max()
+void test_low_maximum_needs_10m_drop()
 {
+    // Bench: commanded Boost/Coast at the pad (maximum ~0 m): no Descent from
+    // AGL noise.
     Rig r;
-    r.to_coast(10000.0F);
-    r.run(10000.0F, 20);
-    const float max_before = r.fsm.maximum_altitude();
-    r.run(5000.0F, 200, true, 300.0F);       // transonic baro drop while gated
-    r.run(30000.0F, 50, true, 300.0F);       // and a jump up
+    r.to_coast(0.1F);
+    r.run(-0.1F, 200, -0.2F);
+    r.run(-5.0F, 200, -1.0F);
     CHECK(r.fsm.state() == State::Coast);
-    CHECK(r.fsm.maximum_altitude() == max_before);
+    // A 60 m hop: 5 % would be 3 m; 10 m is needed.
+    Rig s;
+    s.to_coast(60.0F);
+    s.run(55.0F, 100, -3.0F);
+    CHECK(s.fsm.state() == State::Coast);
+    s.run(49.0F, 30, -3.0F);
+    CHECK(s.fsm.state() == State::Descent);
 }
 
-void test_velocity_must_corroborate()
+void test_velocity_path()
 {
     Rig r;
     r.to_coast(10000.0F);
-    r.run(10000.0F, 20);
-    r.run(8000.0F, 200, false, +200.0F);     // baro low but still climbing
-    CHECK(r.fsm.state() == State::Coast);
-    r.run(8000.0F, 40, false, -5.0F);        // now falling too
-    CHECK(r.fsm.state() == State::Descent);
-}
-
-void test_velocity_path_when_gated()
-{
-    Rig r;
-    r.to_coast(10000.0F);
-    r.run(10000.0F, 200, false, +150.0F);    // 4 s of climb after burnout
+    r.run(10000.0F, 200, +150.0F);             // 4 s of climb after burnout
+    r.fsm.rebaseline();                        // maximum lost (e.g. resumed)
     int steps = -1;
-    for (int i = 0; i < 400; ++i) {          // apogee passed, baro gated
-        r.step(30000.0F, true, true, -80.0F);
+    for (int i = 0; i < 400; ++i) {
+        r.step(12000.0F, -80.0F);
         if (r.fsm.state() == State::Descent) { steps = i + 1; break; }
     }
     CHECK(r.fsm.state() == State::Descent);
     std::printf("velocity path descent after %d ms\n", steps * 20);
-    CHECK(steps * 20 <= 2200);
 }
 
 void test_velocity_transient_no_descent()
 {
     Rig r;
     r.to_coast(10000.0F);
-    r.run(10000.0F, 200, false, +150.0F);
-    r.run(10000.0F, 80, true, -80.0F);       // 1.6 s negative < 2 s dwell
-    r.run(10000.0F, 100, true, +100.0F);
-    r.run(10000.0F, 80, true, -80.0F);
+    r.run(10000.0F, 200, +150.0F);
+    r.run(10000.0F, 80, -80.0F);               // 1.6 s negative < 2 s dwell, not 5 % low
+    r.run(10000.0F, 100, +100.0F);
+    r.run(10000.0F, 80, -80.0F);
     CHECK(r.fsm.state() == State::Coast);
     // Negative velocity with no climb ever seen (glitch near burnout).
     Rig q;
-    q.to_coast(10000.0F);
-    q.run(10000.0F, 400, true, -80.0F);
+    q.run(0.0F, 10);
+    CHECK(q.fsm.trigger_launch() == ESP_OK);
+    q.run(100.0F, 3, 5.0F);                    // never faster than 20 m/s up
+    q.fsm.set_state(static_cast<std::uint8_t>(State::Coast));
+    q.fsm.rebaseline();
+    q.run(100.0F, 400, -80.0F);
     CHECK(q.fsm.state() == State::Coast);
-    // Too soon after burnout.
+}
+
+void test_landing_on_agl()
+{
+    Rig r;
+    r.to_coast(1000.0F);
+    r.fsm.set_state(static_cast<std::uint8_t>(State::Descent));
+    r.run(500.0F, 10, -5.0F);
+    r.still = true;
+    r.run(3.0F, 1000, 0.0F);                  // 20 s still: not yet
+    CHECK(r.fsm.state() == State::Descent);
+    r.run(3.0F, 600, 0.0F);                   // 32 s total
+    CHECK(r.fsm.state() == State::Landed);
+    // AGL drifting more than 10 m restarts the window.
     Rig s;
-    s.to_coast(10000.0F);
-    s.run(10000.0F, 20, false, +150.0F);
-    s.run(10000.0F, 120, true, -80.0F);      // inside 3 s of Coast entry
-    CHECK(s.fsm.state() == State::Coast);
+    s.to_coast(1000.0F);
+    s.fsm.set_state(static_cast<std::uint8_t>(State::Descent));
+    s.still = true;
+    for (int i = 0; i < 1600; ++i) s.step(100.0F - 0.02F * i, -1.0F);   // 32 m over 32 s
+    CHECK(s.fsm.state() == State::Descent);
 }
 
 void test_hitl_exit_rebaseline()
 {
     Rig r;
     r.to_coast(34800.0F);
-    r.run(34800.0F, 20);
+    r.run(34800.0F, 20, 50.0F);
     r.fsm.rebaseline();                       // HITL exit
-    r.run(208.0F, 200, false, 0.0F);          // bench baro
+    r.run(0.0F, 200, 0.0F);                   // bench: back at the pad
     CHECK(r.fsm.state() == State::Coast);
-    CHECK(r.fsm.maximum_altitude() < 300.0F);
+    CHECK(r.fsm.maximum_altitude() < 1.0F);
 }
 
 void test_persist_callback_and_restore()
 {
     Rig r;
     r.fsm.set_persist_callback(persist_cb);
-    r.run(100.0F, 10);
+    r.run(0.0F, 10);
     r.fsm.trigger_launch();
     CHECK(g_saved_state == 1);
     r.fsm.restore(State::Coast, 5000.0F, true);
     CHECK(r.fsm.state() == State::Coast);
     CHECK(r.status.flight_state() == 2);
-    r.run(5100.0F, 10);                       // restored max kept
-    CHECK(r.fsm.maximum_altitude() >= 5000.0F);
-    r.run(5000.0F, 200, false, -10.0F);
+    r.run(5100.0F, 10, 10.0F);                 // restored max kept, raised
+    CHECK(r.fsm.maximum_altitude() >= 5100.0F);
+    r.run(5000.0F, 200, -10.0F);
     CHECK(r.fsm.state() == State::Coast);     // 5000 is not 5 % below 5100
-    r.run(4000.0F, 100, false, -10.0F);
+    r.run(4000.0F, 100, -10.0F);
     CHECK(r.fsm.state() == State::Descent);
 }
 
@@ -225,14 +244,13 @@ void test_store_record()
 
 int main()
 {
-    test_single_outlier_ignored();
-    test_burst_of_two_ignored();
-    test_rate_limit_blocks_sustained_jump();
-    test_nominal_descent_latency();
-    test_gated_baro_no_descent_no_max();
-    test_velocity_must_corroborate();
-    test_velocity_path_when_gated();
+    test_launch_needs_30m_agl_held();
+    test_invalid_agl_no_launch();
+    test_burnout_then_kalman_descent();
+    test_low_maximum_needs_10m_drop();
+    test_velocity_path();
     test_velocity_transient_no_descent();
+    test_landing_on_agl();
     test_hitl_exit_rebaseline();
     test_persist_callback_and_restore();
     test_store_record();

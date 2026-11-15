@@ -84,6 +84,7 @@ extern "C" void app_main(void)
         // image consumes it): drop a stale one.
         maintenance_mode::cancel();
     }
+    sensors.set_can_link(&iris_can);
     ESP_ERROR_CHECK(sensors.start());
     ESP_ERROR_CHECK(heartbeat.start());
     // Boot confirmation (rollback) and last-good flight slot bookkeeping.

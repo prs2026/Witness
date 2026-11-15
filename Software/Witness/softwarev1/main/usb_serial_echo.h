@@ -40,7 +40,10 @@ private:
     // "TX " plus a packet ID and the largest payload as space-separated hex.
     static constexpr std::size_t kCommandBufferSize =
         4 + 3 * (IRIS_PACKET_ID_LENGTH + IRIS_PACKET_MAX_DATA_LENGTH);
-    static constexpr std::uint32_t kTaskStackSize = 3072;
+    // 6144: the maintenance switch (boot_manager::prepare_switch: two image-info
+    // slot reads, NVS, esp_ota_set_boot_partition) overflowed 3072 on the bench
+    // (2026-11-14, "stack overflow in task usb_serial_echo"; 736 B free at idle).
+    static constexpr std::uint32_t kTaskStackSize = 6144;
     static constexpr std::uint32_t kBinaryCommandIdleMs = 20;
     static constexpr std::uint32_t kHitlErrorReportIntervalMs = 1000;
     // Delay between acknowledging a radio switch command and restarting, so

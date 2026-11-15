@@ -36,6 +36,12 @@ def integrate_sent_gyro(samples):
     return q, worst
 
 
+def launch_expected_s(samples):
+    """Firmware launch rule: 0.3 s after true AGL first exceeds 30 m."""
+    site = samples[0].alt_msl_m
+    return next(s.t_ms / 1000 for s in samples if s.alt_msl_m - site > 30.0) + 0.3
+
+
 class SyntheticBase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -179,7 +185,7 @@ class ConversionTests(SyntheticBase):
         exp = hs.expected_from_track(b.samples, track)
         self.assertEqual(sorted(exp, key=exp.get),
                          [hp.BOOST, hp.COAST, hp.DESCENT, hp.LANDED])
-        self.assertAlmostEqual(exp[hp.BOOST], 5.3, delta=0.15)
+        self.assertAlmostEqual(exp[hp.BOOST], launch_expected_s(b.samples), delta=0.05)
         ref = sm.predict_transitions(b.samples)
         self.assertEqual(set(exp), set(ref))
         for k in exp:
@@ -216,7 +222,7 @@ class BundledConversionTests(unittest.TestCase):
         exp = hs.expected_from_track(self.b.samples, track)
         self.assertEqual(sorted(exp, key=exp.get),
                          [hp.BOOST, hp.COAST, hp.DESCENT, hp.LANDED])
-        self.assertAlmostEqual(exp[hp.BOOST], 20.3, delta=0.1)
+        self.assertAlmostEqual(exp[hp.BOOST], launch_expected_s(self.b.samples), delta=0.05)
         self.assertLess(exp[hp.COAST], 25.0)          # first burnout
         changes = sum(1 for a, b in zip(track, track[1:]) if a != b)
         self.assertEqual(changes, 4)                  # no re-entry to Boost

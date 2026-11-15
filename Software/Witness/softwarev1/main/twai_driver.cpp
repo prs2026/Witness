@@ -71,9 +71,35 @@ esp_err_t TwaiDriver::shutdown()
     return delete_result;
 }
 
+esp_err_t TwaiDriver::suspend()
+{
+    if (node_ == nullptr) return ESP_ERR_INVALID_STATE;
+    if (suspended_) return ESP_OK;
+    const esp_err_t result = twai_node_disable(node_);
+    if (result != ESP_OK && result != ESP_ERR_INVALID_STATE) return result;
+    portENTER_CRITICAL(&lock_);
+    receive_read_index_ = 0;
+    receive_write_index_ = 0;
+    for (TransmitSlot &slot : transmit_slots_) slot.in_use = false;
+    bus_off_ = false;
+    recovery_started_ = false;
+    portEXIT_CRITICAL(&lock_);
+    suspended_ = true;
+    return ESP_OK;
+}
+
+esp_err_t TwaiDriver::resume()
+{
+    if (node_ == nullptr) return ESP_ERR_INVALID_STATE;
+    if (!suspended_) return ESP_OK;
+    const esp_err_t result = twai_node_enable(node_);
+    if (result == ESP_OK) suspended_ = false;
+    return result;
+}
+
 esp_err_t TwaiDriver::transmit(const Frame &frame)
 {
-    if (node_ == nullptr) {
+    if (node_ == nullptr || suspended_) {
         return ESP_ERR_INVALID_STATE;
     }
     if (frame.length > kMaxDataLength ||

@@ -1,4 +1,4 @@
-"""Witness serial protocol (comms.h): packet decoding and command frames.
+﻿"""Witness serial protocol (comms.h): packet decoding and command frames.
 
 Pure Python, no GUI: used by the monitor core (monitor_core.py), the Qt
 monitor (main.py re-exports everything here), tests and HITL tooling.
@@ -83,11 +83,13 @@ GPS_LOCKED_MASK = 0x08   # bit 3: fresh GPS fix
 HITL_ACTIVE_MASK = 0x10  # bit 4: HITL active, sensor values are simulated
 MAINTENANCE_MASK = 0x20  # bit 5: reserved; the flight image never sets it (maintenance is a separate image: 0x08 beacon)
 RESUMED_MASK = 0x40      # bit 6: resumed an in-flight state after an MCU reset
+LOG_SLOTS_FULL_MASK = 0x80  # bit 7: both NAND log slots hold a flight: NOT LOGGING until erase/clear (0x6869/0x686A)
 STATUS_BYTE1_FLAG_LABELS = (
     (GPS_LOCKED_MASK, "GPS lock"),
     (HITL_ACTIVE_MASK, "HITL (SIM)"),
     (MAINTENANCE_MASK, "MAINTENANCE"),
     (RESUMED_MASK, "RESUMED AFTER RESET"),
+    (LOG_SLOTS_FULL_MASK, "LOG FULL: NOT LOGGING"),
 )
 
 
@@ -114,6 +116,28 @@ def decode_maintenance_status(payload) -> dict | None:
             "maint_image_id": (payload[6] << 8) | payload[7], "flight_image_id": (payload[8] << 8) | payload[9],
             "battery_voltage": round(((payload[10] << 8) | payload[11]) / 1000.0, 3),
             "uptime": int.from_bytes(bytes(payload[12:16]), "big"), "log_files": payload[16]}
+
+
+LANDED_FLAGS = ((0x01, "position_valid"), (0x02, "stale"), (0x04, "ping_reply"), (0x08, "utc_aligned"))
+LANDED_PAYLOAD_LENGTH = 26
+LANDED_FIX_AGE_NONE = 0xFFFFFFFF
+
+
+def decode_landed_position(payload) -> dict | None:
+    """0x09 landed position packet (comms.h IRIS_PACKET_ID_LANDED_POSITION), 26-byte payload."""
+    if len(payload) != LANDED_PAYLOAD_LENGTH:
+        return None
+    flags = payload[22]
+    age = number(payload[18:22])
+    valid = bool(flags & 0x01)
+    return {"packet": "landed_position", "status": number(payload[0:2]), "flight_state": payload[1] & 0x07,
+            "uptime": number(payload[2:6]),
+            "latitude": round(signed_number(payload[6:10]) * 1e-7, 7) if valid else None,
+            "longitude": round(signed_number(payload[10:14]) * 1e-7, 7) if valid else None,
+            "gps_altitude": round(float32(payload[14:18]), 3) if valid else None,
+            "fix_age": None if age == LANDED_FIX_AGE_NONE else age,
+            "flags": flags, **{name: bool(flags & mask) for mask, name in LANDED_FLAGS},
+            "satellites": payload[23], "battery_voltage": round(number(payload[24:26]) / 1000.0, 3)}
 
 
 def status_gps_locked(status: int) -> int:
@@ -268,6 +292,8 @@ def parse_packet(packet_id: int, payload: bytes):
                 "window_start": start, "bitmap": bytes(bitmap).hex()}
     if packet_id == 0x08:
         return decode_maintenance_status(payload)
+    if packet_id == 0x09:
+        return decode_landed_position(payload)
     if packet_id == 0xE1 and len(payload) == 12:
         return {
             "packet": "iris_debug", "status": number(payload[0:2]),
@@ -287,7 +313,7 @@ class PacketDecoder:
     # 62 bytes is the legacy 64-byte frame from older firmware/logs.
     payload_lengths = {0x01: (23, 21), 0x02: (63, 62), 0x03: (17,), 0xFF: (6,),
                        0xF0: (27, 11), 0x05: (8,), 0xE0: (101,), 0xE1: (12,),
-                       0x06: (11,), 0x07: (74,), 0x08: (17,)}
+                       0x06: (11,), 0x07: (74,), 0x08: (17,), 0x09: (26,)}
     # Host -> Witness packets that Witness may echo on USB. They are deframed
     # (fixed length + EOF) and skipped, never decoded or shown as telemetry.
     # 0x0C = HITL sensor input, 47-byte frame.
@@ -456,6 +482,18 @@ def build_radio_power_packet(target: str, drive_dbm: int, front_end: bool | None
             + bytes((COMMAND_PACKET_EOF,)))
 
 
+# comms.h IRIS_COMMAND_PING (0x0022): Iris answers PONG over CAN; Witness in
+# Landed (radio only) also replies with a 0x09 landed position packet, at most
+# once per 5 s (anything else gets IRIS_ACK_UNKNOWN as before).
+PING_COMMAND = 0x0022
+
+
+def build_ping_packet() -> bytes:
+    """Standard 10-byte command frame for IRIS_COMMAND_PING (no arguments)."""
+    return (bytes((COMMAND_PACKET_ID,)) + bytes(6) + PING_COMMAND.to_bytes(2, "big")
+            + bytes((COMMAND_PACKET_EOF,)))
+
+
 # comms.h IRIS_COMMAND_WIFI: Wi-Fi access point for OTA firmware update and log
 # download. Pad Idle or Landed only; LoRa transmission stops while it is on.
 WIFI_COMMAND = 0x5746
@@ -585,6 +623,12 @@ SECTION_SPECS = {
         ("command_set", "Command set"), ("radio_settings", "Radio settings"),
         ("maint_image_id", "Maintenance image id"), ("flight_image_id", "Flight image id"),
     ],
+    "landed_position": [
+        ("uptime", "Uptime"), ("latitude", "Latitude [deg]"), ("longitude", "Longitude [deg]"),
+        ("gps_altitude", "GPS altitude [m MSL]"), ("fix_age", "Fix age [s]"), ("stale", "Stale"),
+        ("ping_reply", "Ping reply"), ("utc_aligned", "UTC aligned"), ("satellites", "Satellites"),
+        ("battery_voltage", "Battery [V]"),
+    ],
     "iris_debug": [
         ("status", "Status"), ("uptime", "Uptime"),
         ("mcu_temperature", "MCU temperature [C]"),
@@ -615,6 +659,6 @@ def decode_status(value: int, camera: bool = False) -> dict:
     state = value & FLIGHT_STATE_MASK
     result["state"] = state
     result["state_valid"] = state in dict(FLIGHT_STATE_LABELS)
-    result["byte1"] = [(mask, text, bool(value & mask), mask in (HITL_ACTIVE_MASK, MAINTENANCE_MASK, RESUMED_MASK))
+    result["byte1"] = [(mask, text, bool(value & mask), mask in (HITL_ACTIVE_MASK, MAINTENANCE_MASK, RESUMED_MASK, LOG_SLOTS_FULL_MASK))
                        for mask, text in STATUS_BYTE1_FLAG_LABELS]
     return result

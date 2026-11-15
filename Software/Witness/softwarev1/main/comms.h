@@ -21,6 +21,9 @@
 
 #define IRIS_COMMAND_STATUS_FLAG_SET 0x20U
 #define IRIS_COMMAND_STATUS_FLAG_CLEAR 0x21U
+// Ping: Iris answers PONG over CAN. Witness (over radio, in Landed only) also
+// replies with the 0x09 landed position packet, at most once per 5 s; in other
+// flight states Witness acks it IRIS_ACK_UNKNOWN as before.
 #define IRIS_COMMAND_PING 0x22U
 #define IRIS_COMMAND_PONG 0x23U
 
@@ -174,8 +177,12 @@
 // restart) instead of starting in Pad Idle. Stays set until power-on.
 #define IRIS_WITNESS_STATUS_RESUMED_BYTE_OFFSET 1U
 #define IRIS_WITNESS_STATUS_RESUMED_MASK (1U << 6)
-// Status byte 1, bit 7: reserved and transmitted as zero.
-#define IRIS_WITNESS_STATUS_RESERVED_MASK 0x80U
+// Status byte 1, bit 7: both NAND log slots hold a flight. Witness never erases
+// a slot that holds a flight automatically, so it logs NOTHING to NAND until
+// the operator erases or clears the store (0x6869 / 0x686A, USB or radio, Pad
+// Idle or Landed). Download the flights first.
+#define IRIS_WITNESS_STATUS_LOG_SLOTS_FULL_BYTE_OFFSET 1U
+#define IRIS_WITNESS_STATUS_LOG_SLOTS_FULL_MASK (1U << 7)
 
 // Witness uptime: big-endian uint32, milliseconds since boot. The counter
 // wraps after approximately 49.7 days.
@@ -766,6 +773,46 @@
 #define IRIS_MAINT_FLAG_UNCONFIRMED (1U << 4)
 #define IRIS_MAINT_FLAG_RADIO_OK (1U << 5)
 #define IRIS_MAINT_BEACON_PERIOD_MS 5000U
+
+// 0x09 Landed position packet (flight image -> radio, USB). In the Landed
+// state (low-power mode) it is the ONLY packet Witness transmits on its own:
+// once per minute at the top of the GPS minute (UTC seconds 0; a free-running
+// 60 s timer from the last fix while GPS time is unknown) and, for the ground
+// "ping" (IRIS_COMMAND_PING 0x0022 over radio), straight away, rate limited to
+// one reply per 5 s. The position is the saved "landed location": the last
+// good fix, refreshed by a GPS wake every 10 min. Payload (26 bytes):
+//   [0..1]   Witness status bytes (flight state in byte 1 bits 0-2; byte 1
+//            bit 3 = a fix was obtained in the latest GPS cycle)
+//   [2..5]   uptime ms (u32 BE)
+//   [6..9]   latitude, signed int32 BE, 1e-7 degree per count
+//   [10..13] longitude, signed int32 BE, 1e-7 degree per count
+//   [14..17] GPS altitude MSL, float32 BE metres
+//   [18..21] fix age, u32 BE seconds since the saved fix (0xFFFFFFFF = none)
+//   [22]     flags: IRIS_LANDED_FLAG_*
+//   [23]     satellites used by the saved fix
+//   [24..25] battery millivolts (u16 BE; Witness battery encoding)
+#define IRIS_PACKET_ID_LANDED_POSITION 0x09U
+#define IRIS_PACKET_LANDED_STATUS_OFFSET 0U
+#define IRIS_PACKET_LANDED_UPTIME_OFFSET 2U
+#define IRIS_PACKET_LANDED_LATITUDE_OFFSET 6U
+#define IRIS_PACKET_LANDED_LONGITUDE_OFFSET 10U
+#define IRIS_PACKET_LANDED_ALTITUDE_OFFSET 14U
+#define IRIS_PACKET_LANDED_FIX_AGE_OFFSET 18U
+#define IRIS_PACKET_LANDED_FLAGS_OFFSET 22U
+#define IRIS_PACKET_LANDED_SATELLITES_OFFSET 23U
+#define IRIS_PACKET_LANDED_BATTERY_OFFSET 24U
+#define IRIS_PACKET_LANDED_POSITION_DATA_LENGTH 26U
+#define IRIS_PACKET_LANDED_POSITION_FRAME_LENGTH     (IRIS_PACKET_ID_LENGTH + IRIS_PACKET_LANDED_POSITION_DATA_LENGTH + IRIS_PACKET_EOF_LENGTH)
+#define IRIS_FIELD_LANDED_COORDINATE_SCALE 10000000L  // counts per degree
+#define IRIS_LANDED_FIX_AGE_NONE 0xFFFFFFFFUL
+// bit0 position valid (a fix exists; clear = lat/lon/alt are zero)
+// bit1 stale (the latest GPS cycle got no new fix; the position is older)
+// bit2 ping reply (sent because of IRIS_COMMAND_PING, not the schedule)
+// bit3 UTC aligned (sent at the top of a GPS minute)
+#define IRIS_LANDED_FLAG_POSITION_VALID (1U << 0)
+#define IRIS_LANDED_FLAG_STALE (1U << 1)
+#define IRIS_LANDED_FLAG_PING_REPLY (1U << 2)
+#define IRIS_LANDED_FLAG_UTC_ALIGNED (1U << 3)
 
 // ---------------------------------------------------------------------------
 

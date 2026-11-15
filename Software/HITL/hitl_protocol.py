@@ -1,4 +1,4 @@
-"""Witness wire protocol for the HITL tool (stdlib only).
+﻿"""Witness wire protocol for the HITL tool (stdlib only).
 
 Frames are ``packet ID | fixed-length payload | 0x0A``, big-endian. 0x0A is not
 escaped, so frames are located by fixed length per ID with the EOF byte checked
@@ -46,6 +46,7 @@ FRAME_LENGTHS = {
     0x06: 13,   # command acknowledgement (comms.h IRIS_PACKET_ID_COMMAND_ACK)
     0x07: 76,   # GPS assist transfer status (IRIS_PACKET_ID_TRANSFER_STATUS)
     0x08: 19,   # maintenance status beacon (IRIS_PACKET_ID_MAINTENANCE_STATUS)
+    0x09: 28,   # landed position (IRIS_PACKET_ID_LANDED_POSITION)
 }
 
 PACKET_NAMES = {
@@ -61,6 +62,7 @@ PACKET_NAMES = {
     0x06: "command_ack",
     0x07: "transfer_status",
     0x08: "maintenance_status",
+    0x09: "landed_position",
 }
 
 # Packets whose bytes 1-2 are the Witness status field.
@@ -104,7 +106,7 @@ STATUS1_GPS_LOCKED = 0x08
 STATUS1_HITL_ACTIVE = 0x10
 STATUS1_MAINTENANCE = 0x20   # maintenance (Wi-Fi) boot: not logging, not flight ready
 STATUS1_RESUMED = 0x40      # resumed an in-flight state after an MCU reset
-STATUS1_RESERVED = 0x80
+STATUS1_LOG_SLOTS_FULL = 0x80  # both NAND log slots hold a flight: not logging until erase/clear
 
 # Scale factors.
 FILTERED_ACCEL_G_PER_COUNT = 0.000040
@@ -305,12 +307,17 @@ def decode_status(b0: int, b1: int) -> dict:
     status["hitl_active"] = bool(b1 & STATUS1_HITL_ACTIVE)
     status["maintenance"] = bool(b1 & STATUS1_MAINTENANCE)
     status["resumed_after_reset"] = bool(b1 & STATUS1_RESUMED)
+    status["log_slots_full"] = bool(b1 & STATUS1_LOG_SLOTS_FULL)
     status["raw"] = (b0 << 8) | b1
     return status
 
 
 def _status_plausible(b1: int) -> bool:
-    return (b1 & STATUS1_RESERVED) == 0 and (b1 & 0x07) <= LANDED
+    # Bit 5 (MAINTENANCE) is never set by the flight image (the maintenance
+    # image sends 0x08 beacons instead), so a frame with it set is noise.
+    # Bit 5 (MAINTENANCE) is never set by the flight image (the maintenance
+    # image sends 0x08 beacons instead), so a frame with it set is noise.
+    return (b1 & STATUS1_MAINTENANCE) == 0 and (b1 & 0x07) <= LANDED
 
 
 def decode_hitl(frame: bytes) -> dict:
@@ -352,6 +359,17 @@ def decode_frame(frame: bytes) -> dict | None:
                    radio_settings=frame[6], maint_image_id=(frame[7] << 8) | frame[8],
                    flight_image_id=(frame[9] << 8) | frame[10], battery_mv=(frame[11] << 8) | frame[12],
                    uptime_ms=u32(frame, 13), log_files=frame[17])
+        return pkt
+    if pid == 0x09:
+        flags = frame[23]
+        pkt["status"] = decode_status(frame[1], frame[2])
+        age = u32(frame, 19)
+        pkt.update(uptime_ms=u32(frame, 3), flags=flags, position_valid=bool(flags & 0x01),
+                   stale=bool(flags & 0x02), ping_reply=bool(flags & 0x04), utc_aligned=bool(flags & 0x08),
+                   lat_deg=struct.unpack_from(">i", frame, 7)[0] * 1e-7,
+                   lon_deg=struct.unpack_from(">i", frame, 11)[0] * 1e-7,
+                   gps_alt_m=f32(frame, 15), fix_age_s=None if age == 0xFFFFFFFF else age,
+                   satellites=frame[24], battery_mv=u16(frame, 25))
         return pkt
     if pid == 0x07:
         pkt.update(transfer_id=frame[1], state=frame[2], chunks_expected=(frame[5] << 8) | frame[6],

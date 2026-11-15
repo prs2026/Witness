@@ -164,3 +164,17 @@ Droop at 1S: at 600 mA the LR1108 should hold 3.3 V while Vbat >= about 3.5 V (3
 - Micro One ME6217 V02 (C81592), ME6231 V03 (C2765183), ME6216 (C126467), ME6214 (C427600) via LCSC.
 - TI TLV757P: https://www.ti.com/lit/ds/symlink/tlv757p.pdf ; TPS63001: https://www.ti.com/lit/ds/symlink/tps63001.pdf ; TPS63020/21: https://www.ti.com/lit/ds/symlink/tps63020.pdf ; onsemi NCP186: https://www.onsemi.com/pdf/datasheet/ncp186-d.pdf
 - DigiKey search pages for AP7365-33YG-13, AP7361C-33Y5-13 and LR1108 (no results), 2026-11-13. Mouser and LCSC parametric/price pages were not reachable.
+
+## 8. Wider search, 2026-11-13 (3 agents: SOT-89 drop-in, small part over the pads, lower current)
+
+Load estimate (3V3 rail, datasheet figures, partly unverified): flight with Wi-Fi off about 100 mA peak at LoRa -17 dBm, about 220 mA at +22 dBm; Wi-Fi on 400-450 mA peak (Espressif asks for >= 500 mA supply). 500 mA is the practical minimum, 300 mA only for Wi-Fi off and low TX power. Check whether the Ra-01SH-P PA is on this rail: it can draw 750 mA at full power.
+
+| Rank | Part | Package / mount | I max | Dropout | Notes |
+|---|---|---|---|---|---|
+| 1 | Diodes AP2112K-3.3TRG1 (LCSC C51118) | SOT-23-5 (1 VIN, 2 GND, 3 EN, 4 NC, 5 VOUT; DS39724 p.2). Wire pin 1 -> pad 3, pin 2 -> pad 1, pin 5 -> pad 2, EN to VIN | 600 mA | 250 typ / 400 max mV @ 600 mA | Meets the 1S spec on max dropout. Loses the tab heatsink: 0.54 W at 4.2 V / 600 mA is too hot continuous, fine at flight load. |
+| 2 | 3PEAK TPL740F33-89TR | SOT-89-3, 1 GND / 2 OUT (tab) / 3 IN (TPL740 datasheet Rev A.4 p.6) - **exact drop-in** | 500 mA | 400 mV @ 500 mA | Vin 2.4-5.5 V, ceramic stable. DigiKey stock ~2-3k, not on LCSC. Holds 3.3 V only to ~3.7 V battery at 500 mA. |
+| 3 | TI TLV75733PDBVR (LCSC C485517) | SOT-23-5, same wiring as AP2112K | 1 A | 300 typ / 425 max mV @ 1 A (lower at 600 mA) | Best current margin of the small parts. |
+| 4 | TI TLV75533PDBVR (LCSC C404027) | SOT-23-5, same wiring | 500 mA | 150 typ / 238 max mV @ 500 mA | Lowest dropout, 500 mA ceiling. |
+| 5 | Richtek RT9080-33GJ5 (LCSC C841192) | TSOT-23-5 | 600 mA | 310 typ / 530 max mV @ 600 mA | Iq 2 uA; fails the 400 mV limit at max. |
+
+Traps confirmed in this pass (GND/VIN-tab/VOUT or other wrong order): ME6231A33PG, AP1115AY33G-13, RT9161A-33GX, XC6206 SOT-89 copies; TPL720F33-89TR reported GND/IN/OUT (unconfirmed). WL9005P3-33 pin order unreadable, treat as reject. Stock and prices are snapshots, recheck before ordering. Agent tables: scratchpad reg_search_sot89.md / reg_search_small.md / reg_search_lowcurrent.md.

@@ -26,11 +26,41 @@ constexpr bool is_log_maintenance_command(const std::uint16_t command)
            command == kClearLogSessions;
 }
 
-// Mass storage freezes logging and silences LoRa; erase/clear wipes the
-// flight logs. Never over radio; over USB only on the pad or after landing.
-constexpr bool allow_log_maintenance(const Source source, const std::uint8_t flight_state)
+// Only on the pad or after landing. Mass storage (USB export: restart into the
+// maintenance image's USB disk) is USB only. Erase/clear wipe the flight logs
+// and are also accepted over radio (since 2026-11-14), because Witness never
+// erases a flight on its own: with both log slots holding flights it logs
+// nothing until the operator frees the store, and on the backplane the USB port
+// is unreachable.
+constexpr bool allow_log_maintenance(const Source source, const std::uint8_t flight_state,
+                                     const std::uint16_t command = kMassStorageStart)
 {
-    return source == Source::Usb && (flight_state == kPadIdle || flight_state == kLanded);
+    if (flight_state != kPadIdle && flight_state != kLanded) return false;
+    if (command == kMassStorageStart) return source == Source::Usb;
+    return command == kEraseLogSessions || command == kClearLogSessions;
+}
+
+constexpr std::uint16_t kRadioPower = 0x5250U;
+constexpr std::uint16_t kGpsAssistBegin = 0x4741U;
+constexpr std::uint16_t kGpsAssistData = 0x4744U;
+constexpr std::uint16_t kGpsAssistCommit = 0x4745U;
+constexpr std::uint16_t kGpsAssistStatus = 0x4751U;
+
+// Radio drive / front-end (0x5250): refused in Boost from any source (turning
+// the front end off or down there would lose the link at the worst moment and
+// it cannot be undone over that link).
+constexpr bool allow_radio_power(const std::uint8_t flight_state)
+{
+    return flight_state != kBoost;
+}
+
+// GPS assist uploads (BEGIN/DATA/COMMIT; they end in records written to the
+// receiver) are refused in Boost from any source; STATUS (read only) always
+// works.
+constexpr bool allow_gps_assist(const std::uint16_t command, const std::uint8_t flight_state)
+{
+    if (command == kGpsAssistStatus) return true;
+    return flight_state != kBoost;
 }
 
 // Manual flight-state override.

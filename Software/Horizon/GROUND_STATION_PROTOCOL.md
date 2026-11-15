@@ -97,20 +97,26 @@ Status byte 0 contains active-high flags:
 | 6 | `0x40` | Valid MS5607 sample available |
 | 7 | `0x80` | Flash initialized but logging later failed |
 
-Status byte 1 bits 0 through 2 contain the flight state. Bits 3, 4 and 5 are
-flags; bits 6 and 7 are reserved and transmitted as zero.
+Status byte 1 bits 0 through 2 contain the flight state. Bits 3 to 7 are
+flags.
 
 | Bit | Mask | Meaning |
 |---:|---:|---|
 | 3 | `0x08` | GPS locked: a fresh GGA fix (quality >= 1, within 3 s) exists |
 | 4 | `0x10` | HITL mode active: sensor, GPS and battery values are simulated |
-| 5 | `0x20` | MAINTENANCE boot (Wi-Fi OTA / log download mode): flight logging is OFF and Witness is NOT flight ready (`IRIS_WITNESS_STATUS_MAINTENANCE_MASK`) |
+| 5 | `0x20` | MAINTENANCE: never set by the flight image since the two-image boot (2026-11-13); the maintenance image sends `0x08` beacons instead, and Horizon shows its banner on those |
+| 6 | `0x40` | RESUMED: an in-flight state (Boost/Coast/Descent) was resumed after an MCU reset |
+| 7 | `0x80` | LOG SLOTS FULL: both NAND log slots hold a flight. Witness never erases a flight on its own, so nothing is logged until `0x6869`/`0x686A` (USB or LoRa, Pad Idle/Landed) |
 
-In maintenance mode Witness's LoRa sends only one `0x02` state packet every 5 s
-(a beacon), so over the radio only state packets arrive, about every 5 s; over
-USB everything still arrives. Horizon shows a red banner and a
-`MAINTENANCE - NOT FLIGHT READY` window-title prefix while the bit is set, and
-clears them when a packet with the bit clear arrives (not on age alone).
+Automatic transitions use the position filter's (Kalman) height above the pad
+(AGL) and vertical velocity:
+- Boost at AGL > 30 m for 300 ms.
+- Coast after low-g axial acceleration < 1 g for 500 ms.
+- Descent at AGL below max(5 %, 10 m) under the maximum while falling for
+  500 ms, or vertical velocity < -30 m/s for 2 s.
+- Landed after 30 s still with an AGL span of 10 m or less.
+
+See `FIRMWARE_HANDOFF.md`, "Status and flight state".
 
 Decode the flight state as `byte1 & 0x07`, not as the whole byte.
 
@@ -248,8 +254,8 @@ Command values currently defined:
 | `0x4849` | Enter HITL mode (USB only, Pad Idle only; see section 4a) |
 | `0x4858` | Exit HITL mode (USB or LoRa) |
 | `0x6868` | Enter read-only USB mass-storage mode. USB only, and only in Pad Idle or Landed; over LoRa it is always refused (`IRIS_ACK_REFUSED`) |
-| `0x6869` | Erase all stored log sessions (every block; slow). USB only, Pad Idle or Landed only; refused over LoRa |
-| `0x686A` | Clear all stored log sessions (fast: only the two session headers are erased; the session number keeps counting). USB only, Pad Idle or Landed only; refused over LoRa |
+| `0x6869` | Erase all stored log sessions (every block; slow). USB or LoRa (since 2026-11-14), Pad Idle or Landed only |
+| `0x686A` | Clear all stored log sessions (fast: only the two session headers are erased; the session number keeps counting). USB or LoRa, Pad Idle or Landed only |
 | `0x4741` / `0x4744` / `0x4745` / `0x4751` | GPS assistance upload BEGIN / DATA / COMMIT / STATUS (ephemeris for the receiver; chunked, Witness-local, never forwarded; see section 4b) |
 | `0x4752` | GPS cold start: the receiver forgets ephemerides, almanac, position and time; Witness then reconfigures it (Pad Idle only; Witness-local, never forwarded) |
 | `0x4844` | Pad heading: body axis and azimuth (Pad Idle only; Witness-local; see section 4c) |
@@ -315,6 +321,31 @@ chunk. Chunks are 4 bytes each (section 4b).
 | 9 | 2 | First chunk of the bitmap window, uint16 BE |
 | 11 | 64 | Bitmap: bit `i` of byte `i // 8` (LSB first) is chunk `window + i`; set = received. Chunks past the end of the blob read as set |
 | 75 | 1 | EOF `0x0A` |
+
+### `0x09` Landed position packet, 28 bytes
+
+Frame: ID `0x09`, 26 data bytes, EOF `0x0A`. Multi-byte fields are big-endian.
+**Not sent since 2026-11-15:** the Landed low-power mode is switched off
+(`landed::kLowPowerModeEnabled`), and Landed sends the normal packets. With it on:
+In the Landed state Witness enters a low-power mode (see FIRMWARE_HANDOFF.md) in
+which this is the only packet it sends on its own (command acks and replies
+still go out): once per minute at the top of the GPS minute (UTC seconds 0;
+free-running 60 s timer from the last fix while GPS time is unknown), and
+immediately, at most once per 5 s, when it receives `IRIS_COMMAND_PING`
+(`05 00 00 00 00 00 00 00 22 0A`) over LoRa. Its receiver stays in continuous
+RX, so a ping or any other command is heard at any time.
+
+| Frame offset | Bytes | Field |
+|---:|---:|---|
+| 1 | 2 | Witness status bytes (flight state in byte 2 bits 0-2; bit 3 = the latest GPS cycle got a fix) |
+| 3 | 4 | uptime ms |
+| 7 | 4 | latitude, signed int32, 1e-7 degree/count |
+| 11 | 4 | longitude, signed int32, 1e-7 degree/count |
+| 15 | 4 | GPS altitude MSL, float32 metres |
+| 19 | 4 | fix age, seconds since the saved fix (`0xFFFFFFFF` = no fix) |
+| 23 | 1 | flags: bit0 position valid, bit1 stale (latest GPS cycle failed; older fix kept), bit2 ping reply, bit3 UTC aligned (top of minute) |
+| 24 | 1 | satellites used by the saved fix |
+| 25 | 2 | battery millivolts |
 
 ### 4b. GPS assistance upload (ground -> Witness -> GPS)
 
@@ -561,8 +592,9 @@ LoRa, CAN and logging continue.
   rejected and logged. Reboot always starts with HITL off.
 - **Exit**: canonical command `0x4858` from USB or LoRa, or automatically when
   no valid `0x0C` packet arrives for 1000 ms (from entry or from the last
-  packet). Exit does not change the flight state; send `0x7300` to return to
-  Pad Idle if the simulation launched.
+  packet). Exit does not change the flight state. If the simulation launched,
+  send `0x7304` then `0x7300` (from Boost/Coast/Descent USB accepts only
+  Landed), or let the 30 s landing test fire on the still bench.
 - **Detect**: status byte 1 bit 4 (`0x10`) is set while HITL is active.
 - **Between enter and the first `0x0C` packet** all readiness flags (byte 0
   bits 1, 2, 3, 5, 6) are clear, battery and barometer fields are zero, the
@@ -651,8 +683,16 @@ should be updated to configure an explicit value before deployment.
 
 Every locally generated canonical packet updates a latest-frame cache keyed by
 packet ID. The radio scheduler sends the newest cached frame at the independent
-per-type rates declared as `kRadio*PacketRateHz` in `main/sensors.h`. All seven
-rates default to 1 Hz. Changing a radio rate does not change the packet's normal
+per-type rates declared as `kRadio*PacketRateHz` in `main/sensors.h`. The three
+radio types (`0x01`, `0x02`, `0x03`) default to 1 Hz; in Pad Idle `0x01` and
+`0x02` go every 3 s; in Landed only `0x09` once a minute.
+- **GPS time slots** (`main/tx_slot.h`): with a GPS fix, Witness's scheduled
+  packets must end by 700 ms into the UTC second. Aperture, with a fix and PPS,
+  sends commands only in 800-950 ms.
+- **Hold-off:** after Witness hears a command frame its scheduled telemetry
+  pauses for 1 s. Acks and replies are never held.
+
+Changing a radio rate does not change the packet's normal
 producer or USB rate. A packet type that has not yet been produced is skipped.
 Rates must be non-zero integer divisors of 1000 Hz.
 
@@ -824,8 +864,9 @@ two slots of 502 blocks. Each holds:
 
 The diagnostic, packet and GPS sections are circular on the pad, so a long pad
 wait loses only the oldest pad data. From launch on they keep everything
-written since launch. The slot holding the newest flight is kept until the
-next flight; pad-only power cycles reuse the other slot. Version 3 sessions
+written since launch. A slot holding a flight is never erased automatically;
+pad-only power cycles reuse the other slot, and with both slots holding
+flights nothing is logged (status byte 1 bit 7) until an erase/clear. Version 3 sessions
 (no packet stream) still export; older versions do not. No format or erase is required to upgrade. Buffer overflow or
 flash write failure sets the existing flash-log-failed status bit. When the IMU,
 sensor or diagnostic allocation fills, that stream stops with a diagnostic and

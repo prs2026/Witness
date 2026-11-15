@@ -306,3 +306,134 @@ procedure point.
 6. What battery voltage thresholds (green/amber/red) for Witness and Iris, and which chemistry/cell count?
 7. Should the handheld ever transmit at higher power, and if so do you accept adding a bulk cap/own supply for the radio?
 8. Should the handheld keep the plain Feather bridge build alive (build-time switch) for the pad box?
+
+## 7. Recovery mode (added 2026-11-14)
+
+Goal: after landing, the bare Feather (TFT + BOOT button, battery powered, no laptop) shows where Witness is,
+how stale that is, and can ask Witness to speak up. This refines page P3 from 2.2. Hardware path note: the
+Aperture schematic is `Hardware/witnessv0.2/aperture/` (there is no `witnessv0` folder).
+
+### 7.1 What comms.h defines today, and what Aperture needs
+
+Checked the working tree (the Witness, Aperture and Horizon copies of comms.h agree on these points):
+- **Ping exists as an opcode only.** `IRIS_COMMAND_PING 0x22` / `IRIS_COMMAND_PONG 0x23` are listed, but I found
+  **no handler in Witness `main/*.cpp`**, and comms.h has no landed-position packet ID or ping-reply
+  semantics yet. The Landed work is in progress elsewhere, so this section states the contract Aperture
+  *expects*; the Witness owner should confirm or change it:
+  1. **Ping** = standard 10-byte command frame (`05 | d0..d5 = 0 | 00 22 | 0A`), built like
+     `build_quick_command_packet(0x22)`, accepted over radio in Landed.
+  2. **Reply** = immediate transmission of the landed position packet. Preferred: the existing 0x02 state frame
+     (lat/lon at 1e-4 deg, GPS alt, battery, sats, flight state and GPS-locked bit in the status bytes), so no
+     new decoder. If a new compact packet is made instead, it should carry: flight state, GPS-valid flag,
+     lat/lon, GPS alt, **fix age in seconds (u16)** at transmit time, Witness battery mV, sats, uptime. A 0x06 ack
+     of the ping is a bonus (tells Aperture the ping arrived even before a fix is valid).
+  3. **Resolution:** 1e-4 deg is ~11 m; fine for getting within sight. A new packet could use e7 int32 like the
+     0xF0 frame (+2 bytes) - preferred.
+  4. **Fix age / stale flag from Witness.** Aperture can time packet arrival but not fix time, and in Landed
+     Witness refreshes its fix only every 10 minutes, so a packet can carry an old fix. Minimum: GPS-locked bit;
+     better: `fix_age_s`.
+  5. **Schedule:** one position packet per minute at the top of the GPS minute (Aperture shows a countdown), and
+     Witness must be listening in between. Please state the Landed **receive duty cycle**; if Witness wakes only
+     briefly, a single ping can be missed and Aperture repeats it (7.4).
+- If the real layout differs, the change is confined to one table-driven function in `witness_packets.cpp`.
+
+### 7.2 Screen layout (240x135, landscape)
+
+The Feather TFT has no touch and one usable button (BOOT, GPIO0; RESET is not readable). TFT pins do not touch
+the radio/GPS wiring (see 1.1). If two external buttons are added on D5/D6, they become PAGE/PING and BOOT
+becomes MENU.
+
+```
++----------------------------------------------------------+
+| LANDED   LAST PKT 0:42   -97dBm  +6dB   [FRESH]          |  status strip, 14 px
+|----------------------------------------------------------|
+|  34.05220 N                         (dial, N-up)          |
+| 118.24370 W                          target dot/arrow     |  coords ~28 px font
+|  alt 1231 m                                               |
+|                                        412 m              |  distance 40 px
+|  fix 3 min old  [STALE]                brg 247 deg        |
+|----------------------------------------------------------|
+| next pkt 0:18    you: 3D 9 sat    hist 1/4    hold: PING  |  footer, 14 px
++----------------------------------------------------------+
+```
+- Left ~150 px: lat/lon (decimal degrees; long press toggles degrees-decimal-minutes), GPS altitude, fix age with
+  a STALE chip (amber > 2 min, red > 12 min: one 10-minute refresh plus margin; constants in one table).
+- Right ~90 px: distance (m / km), bearing, compass dial with target dot; a relative arrow only when course
+  over ground is valid (needs RMC course/speed added to `Lc86Nmea`, see 2.2).
+- Status strip: flight state, **time since last packet from Witness** (green < 70 s, amber to 150 s, red beyond,
+  because Landed traffic is 1/min), RSSI and SNR (SNR must be stored; today only RSSI is), fresh/stale chip.
+- Footer: countdown to the next expected top-of-minute packet (Aperture UTC from RMC), Aperture's own fix, history
+  index, ping hint.
+- No own GPS fix: "no own fix" replaces distance/bearing; coordinates still show so they can be typed into a phone.
+- Nothing received and nothing stored: "NO DATA - waiting". With a stored record: the stored fix with a
+  "FROM MEMORY, saved hh:mm UTC" tag.
+- History view (BOOT short press inside Recovery): newest 4 positions with age and distance between them, so you
+  can see whether Witness is stationary.
+
+### 7.3 Entering and leaving
+- **Auto-enter:** flight state = Landed in any decoded status (status byte 1 bits 0-2 = 4), or a Landed position
+  packet arrives, or a stored record says Landed at boot, or the last state was Descent and telemetry has been
+  silent for N minutes (rocket out of range after landing).
+- **Manual:** long press cycles to Recovery from any page; Settings has a "pin recovery page" latch (kept in RAM
+  and NVS so a reset returns to it).
+- **Leave:** short press moves to other pages while recovery stays the "home" page. Auto-exit only when telemetry
+  resumes in a non-Landed, non-Descent state, and then by prompt; coordinates are never silently dropped.
+- Allowed TX in recovery: PING and Wi-Fi on/off (7.6), each behind a long press.
+
+### 7.4 Ping and rate limiting
+- BOOT hold 0.7 s (progress bar in the footer) sends PING. With a single button, short = page/history, hold = ping,
+  double = menu.
+- The UI queues the frame to the bridge loop, which owns the radio (4.3). ~40 ms airtime.
+- **Limits (constants):** at least 10 s between pings; keeping the button held sends a burst of 3, 5 s apart; at most
+  12 pings per 10 minutes; ping locked out 3 s after a reply. This keeps duty cycle ~0.4 % worst case.
+- Footer feedback: "PING sent 0:07", then "REPLY +1.2 s" or "no reply" after 8 s. A 0x06 ack counts as "heard".
+- **TX power:** a recovery walk at -17 dBm uplink is weak. Use a stored recovery drive (default about -2 dBm,
+  configurable up to 0 after the supply check in 1.5), applied around the ping only. Do not use the high-power PA on
+  an uncapacitated 3V3 LDO.
+- Disabled while a USB host is active (the host owns the link).
+
+### 7.5 What Aperture stores, and persistence
+RAM: ring of 8 accepted positions (~24 B each: reception time, Aperture UTC if available, flight state, lat/lon e7,
+alt, fix_age_s if sent, battery mV, sats, RSSI/SNR). A new entry is added only if it moves > ~15 m or 5 min passed.
+
+NVS: one ~32 B blob `rec_last` (version, newest valid position and metadata, Aperture UTC at reception, ring
+head) plus the latched flag. Write only for Descent/Landed packets with a valid GPS, at most one per 60 s and only
+on meaningful change (plus one forced write on the first Landed packet). Worst case 1,440 writes/day, well within
+NVS wear leveling. Clear by long press in Settings, or on a Pad Idle packet with a different uptime (new flight).
+It survives reset, power loss and battery swaps. The default 24 KB NVS partition is enough. It is not a substitute
+for the Witness log. Optionally store the Witness SSID suffix (2.4) alongside.
+
+### 7.6 Wi-Fi from recovery
+The footer menu has "WI-FI ON" (long press, confirm; only if the last state was Landed, per 2.4), leading to the P4
+page (SSID, QR, countdown). Witness stops transmitting while Wi-Fi is on, so the screen then reads "silent (Wi-Fi
+mode)" instead of stale-red.
+
+### 7.7 Cost on Aperture (estimates, not measured)
+
+| Item | Cost |
+|---|---|
+| Flash | ~15-25 KB recovery logic (decode deltas, geodesy, ring, NVS, page) plus ~10-20 KB for 40 px numeral fonts if not already in the shared font set |
+| RAM | ~0.3 KB state + ring; the 65 KB canvas (or ~8 KB strip buffer) is shared with the other pages; no heap growth after init |
+| CPU | Haversine/bearing at 1 Hz, microseconds; redraw only on change or at most 2 Hz; under 1 % of a core, outside the bridge loop |
+| SPI | one ~2 ms strip push at most twice a second on the shared bus; no RX loss at 1 packet/min |
+| Power | backlight dims to ~30 % after 15 s and wakes on button or new packet; optional 80 MHz and 1 Hz GPS in this mode |
+| NVS | one 32 B record, at most 1 write/min |
+
+### 7.8 Implementation plan (builds on phases 1-3 of section 5)
+
+| Step | Work | Effort |
+|---|---|---|
+| R0 | Get final packet/command definitions from the Witness owner; reply decode + ping builder + host test vectors | 0.5 d |
+| R1 | Position ring, stale/age logic, NVS persistence, tests | 1 d |
+| R2 | Distance/bearing, RMC course/speed in `Lc86Nmea`, tests | 0.5-1 d |
+| R3 | Recovery page, status strip, auto-enter and latch | 1-1.5 d |
+| R4 | Ping flow, rate limiter, TX queue, reply feedback, recovery TX power | 1 d |
+| R5 | Bench with scripted fake Landed packets through the bridge, then a range walk | 1 d plus field test |
+About **5-6 days** on top of the shared screen/button groundwork (~1 week), or **~2 days of UI work** for only the
+coordinate page plus ping (R0, minimal R1, R3, R4).
+
+Risks: protocol not final; ping missed if Witness's Landed receiver is duty-cycled; fix age not in today's 0x02
+frame; 11 m coordinate quantization; no compass; ping TX current on the shared 3V3 (1.5).
+Open questions: confirm the packet ID/layout and whether the reply is the existing 0x02; Witness Landed receive duty
+cycle; a `fix_age_s` field; higher coordinate resolution; recovery TX power; whether a second external button (one-press
+ping) is acceptable.

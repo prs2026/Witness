@@ -30,6 +30,8 @@ int main() {
     assert(std::lround(fix.latitude_degrees * IRIS_FIELD_GPS_COORDINATE_SCALE) == 481173);
     assert(NmeaGps::fresh(fix, 3099) && !NmeaGps::fresh(fix, 3100));
     assert(fix.gga && fix.satellites == 8 && fix.fix_quality == 1);
+    // UTC time of day (GGA field 1) is kept with a fix: 12:35:19.
+    assert(fix.utc_valid && fix.utc_ms_of_day == (12u * 3600u + 35u * 60u + 19u) * 1000u);
     assert(NmeaGps::gga_fresh(fix, 3099) && !NmeaGps::gga_fresh(fix, 3100));
     feed(parser, "$GPGGA,123519,4807.038,N,01131.000,E,0,08,0.9,545.4,M,46.9,M,,*47\r\n", 200);
     assert(parser.latest_fix().received_ms == 100); // Bad checksum ignored.
@@ -121,6 +123,20 @@ int main() {
         assert(std::abs(f.vdop - 1.6F) < 1e-6F && std::abs(f.hdop - 1.3F) < 1e-6F);
         feed(p, sentence("GNGGA,123525,,,,,0,00,99.99,,,,,,"), 25040);
         assert(std::isnan(p.latest_fix().hdop));
+    }
+    // UTC with fractional seconds; only with a fix; malformed times rejected.
+    {
+        NmeaGps t;
+        feed(t, sentence("GPGGA,000001.25,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,"), 10);
+        assert(t.latest_fix().utc_valid && t.latest_fix().utc_ms_of_day == 1250);
+        feed(t, sentence("GPGGA,235959.00,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,"), 20);
+        assert(t.latest_fix().utc_ms_of_day == 86399000u);
+        feed(t, sentence("GPGGA,123519,4807.038,N,01131.000,E,0,08,0.9,545.4,M,46.9,M,,"), 30);
+        assert(!t.latest_fix().utc_valid);            // no fix: time not trusted
+        feed(t, sentence("GPGGA,126019,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,"), 40);
+        assert(t.latest_fix().valid && !t.latest_fix().utc_valid);   // minute 60
+        feed(t, sentence("GPGGA,,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,"), 50);
+        assert(t.latest_fix().valid && !t.latest_fix().utc_valid);   // empty time
     }
     std::puts("NMEA GPS tests passed");
 }

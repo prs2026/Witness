@@ -29,6 +29,10 @@ public:
         float hdop = std::numeric_limits<float>::quiet_NaN();
         float vdop = std::numeric_limits<float>::quiet_NaN();
         float pdop = std::numeric_limits<float>::quiet_NaN();
+        // UTC time of day from GGA field 1 (hhmmss.ss) of a sentence with a fix
+        // (quality 1..8); utc_valid is false otherwise. No date (GGA has none).
+        std::uint32_t utc_ms_of_day = 0;
+        bool utc_valid = false;
         bool gga = false;              // A GGA has been received.
         bool valid = false;            // Position fields hold a fix.
     };

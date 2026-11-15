@@ -15,8 +15,11 @@ class SimModelTests(unittest.TestCase):
         exp = sm.predict_transitions(samples)
         self.assertEqual(sorted(exp, key=exp.get),
                          [hp.BOOST, hp.COAST, hp.DESCENT, hp.LANDED])
-        # Launch qualifies ~0.3 s after ignition, burnout ~0.5 s after burn.
-        self.assertAlmostEqual(exp[hp.BOOST], p.pad_time_s + 0.35, delta=0.15)
+        # Launch qualifies 0.3 s after the vehicle passes 30 m AGL, burnout
+        # ~0.5 s after burn.
+        site = samples[0].alt_msl_m
+        above = next(s.t_ms / 1000 for s in samples if s.alt_msl_m - site > 30.0)
+        self.assertAlmostEqual(exp[hp.BOOST], above + 0.3, delta=0.05)
         self.assertAlmostEqual(exp[hp.COAST],
                                p.pad_time_s + p.burn_time_s + 0.5, delta=0.15)
         summ = sm.summarize(samples)
@@ -77,12 +80,15 @@ class SimModelTests(unittest.TestCase):
         after = samples[int(p.gps_dropout_end_s * 100) + 5]
         self.assertEqual(after.hitl.fix_quality, 1)
 
-    def test_reference_fsm_launch_needs_300ms(self):
+    def test_reference_fsm_launch_needs_300ms_above_30m(self):
         fsm = sm.ReferenceStateMachine()
-        for i in range(1, 31):  # 290 ms of >10 g
-            fsm.update(i * 10_000, 11.0, 11.0, [11, 0, 0], [0, 0, 0], 100.0)
+        for i in range(1, 100):  # 29 m AGL: never
+            fsm.update(i * 10_000, 11.0, [11, 0, 0], [0, 0, 0], 29.0, 50.0)
         self.assertEqual(fsm.state, hp.PAD_IDLE)
-        fsm.update(31 * 10_000, 11.0, 11.0, [11, 0, 0], [0, 0, 0], 100.0)
+        for i in range(100, 130):  # 290 ms above 30 m
+            fsm.update(i * 10_000, 11.0, [11, 0, 0], [0, 0, 0], 31.0, 50.0)
+        self.assertEqual(fsm.state, hp.PAD_IDLE)
+        fsm.update(130 * 10_000, 11.0, [11, 0, 0], [0, 0, 0], 31.0, 50.0)
         self.assertEqual(fsm.state, hp.BOOST)
 
 

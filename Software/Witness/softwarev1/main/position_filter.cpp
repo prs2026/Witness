@@ -250,7 +250,12 @@ bool Filter::update_baro(const float altitude_m, const float pressure_pa, const 
 
     const float current_mach = mach();
     if (baro_gated_) {
-        if (current_mach < kBaroMachResume) baro_gated_ = false;
+        // Once gated, the barometer stays out for the rest of Boost and
+        // Coast: the transonic static-pressure error does not end at burnout
+        // (the vehicle decelerates back through Mach 1 in Coast). It returns
+        // below kBaroMachResume in Descent (or any later phase).
+        const bool ascent = phase == Phase::Boost || phase == Phase::Coast;
+        if (current_mach < kBaroMachResume && !ascent) baro_gated_ = false;
     } else if (current_mach >= kBaroMachCutoff) {
         baro_gated_ = true;
     }

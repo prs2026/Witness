@@ -331,9 +331,20 @@ class FakeWitness:
             self._attitude(d, st)
         fsm = st["fsm"]
         before = fsm.state
-        fsm.update((d["sim_time_ms"] + 10) * 1000, d["high_g"][0],
-                   d["low_g"][0], d["low_g"], d["gyro_dps"],
-                   sim_model.hp.pressure_altitude_m(d["pressure_pa"]))
+        # Stand-in for Witness's position filter: height above the first frame
+        # (GPS altitude with a fix, as the filter fuses it, else barometric)
+        # and a smoothed vertical velocity.
+        alt = (d["gps_alt"] if d.get("fix", 0) >= 1 and "gps_alt" in d
+               else sim_model.hp.pressure_altitude_m(d["pressure_pa"]))
+        t_s = d["sim_time_ms"] / 1000.0
+        if "site_alt" not in st:
+            st["site_alt"], st["prev_alt"], st["prev_t"], st["vz"] = alt, alt, t_s, 0.0
+        dt = t_s - st["prev_t"]
+        if dt > 0:
+            st["vz"] += 0.05 * ((alt - st["prev_alt"]) / dt - st["vz"])
+            st["prev_alt"], st["prev_t"] = alt, t_s
+        fsm.update((d["sim_time_ms"] + 10) * 1000, d["low_g"][0], d["low_g"],
+                   d["gyro_dps"], alt - st["site_alt"], st["vz"])
         if fsm.state != before:
             st["state"] = fsm.state
             self.transitions.append((d["sim_time_ms"] / 1000, before,

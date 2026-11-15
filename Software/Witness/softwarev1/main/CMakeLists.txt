@@ -26,14 +26,14 @@ else()
                      "gps_assist.cpp" "flight_state_machine.cpp" "attitude_estimator.cpp"
                      "accel_filter.cpp" "position_filter.cpp" "heading_align.cpp"
                      "imu_calibration.cpp" "imu_calibration_store.cpp" "ms5607.cpp"
-                     "sensors.cpp" "spi_data_forwarder.cpp" "heartbeat.cpp" "main.cpp"
+                     "sensors.cpp" "sensors_landed.cpp" "spi_data_forwarder.cpp" "heartbeat.cpp" "main.cpp"
                      "usb_serial_echo.cpp" "flight_state_store.cpp" "flight_selftest.cpp")
     # (main/idf_component.yml also lists esp_tinyusb, which the component
     # manager therefore builds for this image too, but nothing here references
     # it, so none of it is linked: verified in the map and size-components.)
     set(witness_requires esp_adc esp_driver_gpio esp_driver_ledc esp_driver_spi
                          esp_driver_twai esp_driver_uart esp_driver_usb_serial_jtag
-                         esp_timer nvs_flash vfs app_update esp_hw_support esp_system)
+                         esp_timer nvs_flash vfs app_update esp_hw_support esp_system esp_pm)
 endif()
 
 idf_component_register(SRCS ${witness_srcs}

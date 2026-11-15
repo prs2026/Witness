@@ -59,6 +59,8 @@ constexpr std::uint8_t kUbxIdCfgMsg = 0x01;
 constexpr std::uint8_t kUbxIdCfgPrt = 0x00;
 constexpr std::uint8_t kUbxIdCfgRate = 0x08;
 constexpr std::uint8_t kUbxIdCfgNav5 = 0x24;
+constexpr std::uint8_t kUbxClassRxm = 0x02;
+constexpr std::uint8_t kUbxIdRxmPmreq = 0x41;
 constexpr std::uint8_t kUbxClassMon = 0x0A;
 constexpr std::uint8_t kUbxIdMonVer = 0x04;
 constexpr std::size_t kUbxNav5Length = 36;
@@ -128,6 +130,7 @@ std::uint32_t GpsReceiver::nearest_scan_baud(const std::uint32_t measured_baud)
 
 void GpsReceiver::set_baud_hint(const std::uint32_t measured_baud)
 {
+    measured_baud_ = measured_baud;   // kept with kFixedBaud too (listen-only fallback)
     if (kFixedBaud) return;
     std::uint32_t hint = nearest_scan_baud(measured_baud);
     if (hint == 0 && measured_baud >= 2400 && measured_baud <= 1000000) hint = measured_baud;
@@ -224,6 +227,8 @@ void GpsReceiver::identified(const Model model, const std::uint32_t now_ms)
 {
     model_ = model;
     found_baud_ = baud_;
+    // Fixed baud, but found at the rate measured on the line: run there.
+    if (kFixedBaud && baud_ != kOperationalBaud) baud_fallback_ = true;
     if (kFixedBaud || baud_ == kOperationalBaud)
         begin_step(Step::Configure, now_ms);
     else
@@ -354,6 +359,52 @@ bool GpsReceiver::cold_start(const std::uint32_t now_ms)
     return true;
 }
 
+bool GpsReceiver::sleep(const std::uint32_t now_ms)
+{
+    (void)now_ms;
+    if (asleep_ || status_ != Status::Ready || assist_.active) return false;
+    if (model_ == Model::Unknown || (baud_ != kOperationalBaud && !baud_fallback_)) return false;
+    bool sent = false;
+    if (model_ == Model::Px1120s) {
+        // AN0037 "Configure GNSS Doze Mode" (ID 0x64, SID 0x1C): A0 A1 00 02 64 1C 78 0D 0A.
+        const std::uint8_t doze[] = {0x64, 0x1C};
+        sent = send_skytraq(doze, sizeof(doze));
+    } else {
+        // UBX-RXM-PMREQ, 8-byte form: duration 0 (until woken), flags = backup.
+        const std::uint8_t request[] = {0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00};
+        sent = send_ubx(kUbxClassRxm, kUbxIdRxmPmreq, request, sizeof(request));
+    }
+    if (!sent) return false;
+    asleep_ = true;
+    ++sleeps_;
+    return true;
+}
+
+bool GpsReceiver::wake(const std::uint32_t now_ms, const WakeKind kind)
+{
+    if (!asleep_ || model_ == Model::Unknown) return false;
+    bool sent = false;
+    if (model_ == Model::Px1120s) {
+        // System Restart: mode 1 hot (keeps everything) or 3 cold (the fallback).
+        // The time/position fields only need valid ranges (as in cold_start()).
+        const std::uint8_t restart[] = {0x01, static_cast<std::uint8_t>(kind == WakeKind::Cold ? 0x03 : 0x01),
+                                        0x07, 0xEA, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        sent = send_skytraq(restart, sizeof(restart));
+    } else {
+        // Any activity on the receiver's RXD1 wakes it from software backup.
+        const std::uint8_t edges[] = {0xFF, 0xFF, 0xFF, 0xFF};
+        sent = transport_.send(transport_.context, edges, sizeof(edges));
+    }
+    if (!sent) return false;
+    asleep_ = false;
+    if (kind == WakeKind::Cold) ++cold_starts_;
+    assist_.active = false;
+    assist_waiting_ = false;
+    status_ = Status::Configuring;
+    begin_step(Step::RestartWait, now_ms);
+    return true;
+}
+
 void GpsReceiver::finish_assist_record(const std::uint32_t now_ms)
 {
     (void)now_ms;
@@ -392,6 +443,28 @@ void GpsReceiver::service_assist(const std::uint32_t now_ms)
     assist_message_id_ = body[0];
     assist_waiting_ = true;
     assist_sent_ms_ = now_ms;
+}
+
+bool GpsReceiver::retry_identification(const std::uint32_t now_ms)
+{
+    if (!can_retry_identification()) return false;
+    status_ = Status::Configuring;
+    model_ = Model::Unknown;          // an assumed model is discarded
+    model_assumed_ = false;
+    baud_fallback_ = false;
+    found_baud_ = kOperationalBaud;
+    failure_reason_ = "";
+    pins_swapped_ = false;
+    measured_tried_ = false;
+    measured_baud_ = 0;
+    scan_index_ = 0;
+    nmea_seen_ = false;
+    if (baud_ != kOperationalBaud && transport_.set_baud &&
+        transport_.set_baud(transport_.context, kOperationalBaud))
+        baud_ = kOperationalBaud;
+    begin_step(Step::Identify, now_ms);
+    ++identification_retries_;
+    return true;
 }
 
 void GpsReceiver::service(const std::uint32_t now_ms)
@@ -488,6 +561,21 @@ void GpsReceiver::service(const std::uint32_t now_ms)
                     baud_ = next;
                     nmea_seen_ = false;
                     begin_step(Step::Identify, now_ms);
+                } else if (kFixedBaud && !pins_swapped_ && !measured_tried_ && transport_.set_baud &&
+                           measured_baud_ >= kMinimumConfigureBaud && measured_baud_ <= 1000000U &&
+                           nearest_scan_baud(measured_baud_) != kOperationalBaud) {
+                    // Fixed baud, but no NMEA at kOperationalBaud and the line
+                    // was measured clearly elsewhere (bench 2026-11-14: ~88.4
+                    // kbaud). Listen there: only the host UART rate changes,
+                    // nothing is sent to the receiver to change its rate.
+                    measured_tried_ = true;
+                    if (!transport_.set_baud(transport_.context, measured_baud_)) {
+                        fail("could not change host UART baud");
+                        return;
+                    }
+                    baud_ = measured_baud_;
+                    nmea_seen_ = false;
+                    begin_step(Step::Identify, now_ms);
                 } else if (!pins_swapped_ && transport_.swap_pins && transport_.set_baud &&
                            transport_.swap_pins(transport_.context)) {
                     // Every rate tried on one RX/TX orientation: flip the
@@ -502,6 +590,11 @@ void GpsReceiver::service(const std::uint32_t now_ms)
                     nmea_seen_ = false;
                     begin_step(Step::Identify, now_ms);
                 } else {
+                    // Back to the orientation the startup probe chose (where
+                    // the receiver's TX was heard), so raw logging continues
+                    // on the pin with traffic instead of the silent one.
+                    if (pins_swapped_ && transport_.swap_pins && transport_.swap_pins(transport_.context))
+                        pins_swapped_ = false;
                     fail("no GPS replied at any scanned baud rate on either RX/TX orientation");
                 }
                 return;

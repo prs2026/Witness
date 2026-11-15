@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+
 #include "../../../Intercomm/can_transport.h"
 #include "iris_load_tracker.h"
 #include "twai_driver.h"
@@ -17,6 +19,14 @@ public:
         : forwarder_(forwarder), status_(status) {}
     esp_err_t start();
     esp_err_t send_command(const std::uint8_t *data, std::size_t length);
+    // Landed low-power mode: while paused the TWAI node is disabled (no RX
+    // interrupts, no queue to overflow, no bus errors counted, and the driver's
+    // no-light-sleep lock is released so the MCU can sleep); Witness neither
+    // forwards nor sends heartbeats. A command for Iris (send_command) brings
+    // the bus back for kCanGraceMs, sends it, then pauses again. set_paused(false)
+    // resumes normal operation. Any task.
+    void set_paused(bool paused);
+    bool paused() const { return paused_.load(); }
     // NAND packet stream: every reassembled CAN packet in and out.
     void set_log_sink(FlashLogger *logger) { logger_ = logger; }
 
@@ -29,6 +39,8 @@ private:
     void receive_packets();
     void queue_resend(const iris_load_tracker::Action &action);
     TwaiDriver driver_;
+    std::atomic<bool> paused_{false};
+    std::int64_t grace_until_us_ = 0;   // CAN task only
     // Backup for an Iris reset that lost its RTC state (CAN task only).
     iris_load_tracker::Tracker load_tracker_;
     std::uint16_t resend_opcodes_[4]{};

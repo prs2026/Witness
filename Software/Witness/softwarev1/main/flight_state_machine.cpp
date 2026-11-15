@@ -1,4 +1,4 @@
-#include "flight_state_machine.h"
+﻿#include "flight_state_machine.h"
 
 #include <algorithm>
 #include <cmath>
@@ -54,32 +54,11 @@ void FlightStateMachine::restore(
     witness_status_.set_flight_state(static_cast<std::uint8_t>(state));
     maximum_altitude_meters_ = maximum_altitude_m;
     maximum_altitude_valid_ = maximum_valid;
-    maximum_updated_us_ = 0;
     coast_entered_us_ = 0;           // set on the first update
     climb_seen_ = true;              // a persisted flight state implies a climb
     velocity_condition_active_ = false;
-    clear_altitude_history();
     reset_condition();
     reset_landing_condition();
-}
-
-void FlightStateMachine::clear_altitude_history()
-{
-    altitude_window_count_ = 0;
-    altitude_window_head_ = 0;
-}
-
-bool FlightStateMachine::robust_altitude(float &meters) const
-{
-    if (altitude_window_count_ < kAltitudeMedianMinimum) {
-        return false;
-    }
-    float sorted[kAltitudeMedianWindow];
-    std::copy(altitude_window_, altitude_window_ + altitude_window_count_,
-              sorted);
-    std::sort(sorted, sorted + altitude_window_count_);
-    meters = sorted[(altitude_window_count_ - 1U) / 2U];
-    return true;
 }
 
 esp_err_t FlightStateMachine::trigger_launch()
@@ -155,36 +134,29 @@ bool FlightStateMachine::landing_detected(const Observation &observation)
         acceleration_magnitude <= kLandingMaximumAccelerationG &&
         gyro_magnitude < kLandingMaximumGyroDps;
 
-    if (!motion_stable || !observation.barometric_altitude_valid) {
+    if (!motion_stable || !observation.agl_valid) {
         reset_landing_condition();
         return false;
     }
 
     if (!landing_condition_active_) {
-        landing_minimum_altitude_meters_ =
-            observation.barometric_altitude_meters;
-        landing_maximum_altitude_meters_ =
-            observation.barometric_altitude_meters;
+        landing_minimum_altitude_meters_ = observation.agl_meters;
+        landing_maximum_altitude_meters_ = observation.agl_meters;
     } else {
-        landing_minimum_altitude_meters_ = std::min(
-            landing_minimum_altitude_meters_,
-            observation.barometric_altitude_meters);
-        landing_maximum_altitude_meters_ = std::max(
-            landing_maximum_altitude_meters_,
-            observation.barometric_altitude_meters);
+        landing_minimum_altitude_meters_ =
+            std::min(landing_minimum_altitude_meters_, observation.agl_meters);
+        landing_maximum_altitude_meters_ =
+            std::max(landing_maximum_altitude_meters_, observation.agl_meters);
     }
 
     const bool altitude_stable =
-        landing_maximum_altitude_meters_ -
-            landing_minimum_altitude_meters_ <=
+        landing_maximum_altitude_meters_ - landing_minimum_altitude_meters_ <=
         kLandingAltitudeStabilityMeters;
 
     if (!altitude_stable) {
         reset_landing_condition();
-        landing_minimum_altitude_meters_ =
-            observation.barometric_altitude_meters;
-        landing_maximum_altitude_meters_ =
-            observation.barometric_altitude_meters;
+        landing_minimum_altitude_meters_ = observation.agl_meters;
+        landing_maximum_altitude_meters_ = observation.agl_meters;
         return false;
     }
 
@@ -198,11 +170,11 @@ bool FlightStateMachine::landing_detected(const Observation &observation)
     ESP_LOGI(
         kLogTag,
         "landing detected: accel %.2f g, gyro %.2f dps, "
-        "altitude range %.2f m",
+        "AGL range %.2f m (AGL %.1f m)",
         acceleration_magnitude,
         gyro_magnitude,
-        landing_maximum_altitude_meters_ -
-            landing_minimum_altitude_meters_);
+        landing_maximum_altitude_meters_ - landing_minimum_altitude_meters_,
+        observation.agl_meters);
     return true;
 }
 
@@ -218,62 +190,32 @@ void FlightStateMachine::reset_for_state(
     }
     if (state == State::PadIdle || state == State::Boost) {
         climb_seen_ = false;
+        // Start flight-relative peak tracking at launch (Kalman AGL).
+        maximum_altitude_valid_ = observation.agl_valid;
+        maximum_altitude_meters_ = observation.agl_meters;
     }
-
-    if (state == State::PadIdle || state == State::Boost) {
-        // Start flight-relative peak tracking at launch. This prevents a
-        // prelaunch pressure spike from making the Coast -> Descent threshold
-        // unreachable after either an automatic or commanded launch.
-        maximum_altitude_valid_ = observation.barometric_altitude_valid;
-        maximum_altitude_meters_ =
-            observation.barometric_altitude_meters;
-    }
-    if (state == State::PadIdle) {
-        reset_landing_condition();
-    }
-    if (state == State::Landed) {
+    if (state == State::PadIdle || state == State::Landed) {
         reset_landing_condition();
     }
 }
 
-void FlightStateMachine::update(const Observation &raw_observation)
+void FlightStateMachine::update(const Observation &observation)
 {
-    if (!kAutomaticTransitionsEnabled || raw_observation.timestamp_us == 0U) {
+    if (!kAutomaticTransitionsEnabled || observation.timestamp_us == 0U) {
         return;
     }
 
     if (rebaseline_requested_.exchange(false)) {
         maximum_altitude_valid_ = false;
         maximum_altitude_meters_ = 0.0F;
-        maximum_updated_us_ = 0;
         velocity_condition_active_ = false;
-        clear_altitude_history();
         reset_condition();
         reset_landing_condition();
         persist();
     }
 
-    // Robust altitude: median of the last few FRESH barometer samples. One
-    // outlier (or two in a window of five) cannot move it. While the
-    // position filter has the barometer gated (transonic/supersonic static
-    // pressure error) the window is flushed and no altitude logic runs.
-    Observation observation = raw_observation;
-    if (raw_observation.barometer_gated ||
-        !raw_observation.barometric_altitude_valid) {
-        clear_altitude_history();
-    } else if (raw_observation.barometric_altitude_new &&
-               std::isfinite(raw_observation.barometric_altitude_meters)) {
-        altitude_window_[altitude_window_head_] =
-            raw_observation.barometric_altitude_meters;
-        altitude_window_head_ =
-            (altitude_window_head_ + 1U) % kAltitudeMedianWindow;
-        altitude_window_count_ =
-            std::min(altitude_window_count_ + 1U, kAltitudeMedianWindow);
-    }
-    float robust = 0.0F;
-    const bool robust_valid = robust_altitude(robust);
-    observation.barometric_altitude_valid = robust_valid;
-    observation.barometric_altitude_meters = robust;
+    const bool agl_valid = observation.agl_valid && std::isfinite(observation.agl_meters);
+    const float agl = agl_valid ? observation.agl_meters : 0.0F;
 
     const State current = state();
     if (current != observed_state_) {
@@ -289,26 +231,15 @@ void FlightStateMachine::update(const Observation &raw_observation)
         coast_entered_us_ = observation.timestamp_us;
     }
 
-    if (robust_valid) {
-        // The maximum may rise at most at a physical climb rate since it was
-        // last confirmed; a median that jumps further is ignored.
-        const float elapsed_s =
-            static_cast<float>(observation.timestamp_us -
-                               maximum_updated_us_) * 1.0e-6F;
-        const bool plausible_rise =
-            !maximum_altitude_valid_ || maximum_updated_us_ == 0U ||
-            robust <= maximum_altitude_meters_ + kMaxClimbMarginMeters +
-                          kMaxClimbRateMps * elapsed_s;
-        if (!maximum_altitude_valid_ ||
-            (robust > maximum_altitude_meters_ && plausible_rise)) {
-            maximum_altitude_meters_ = robust;
+    // Maximum AGL since launch (the filter is gated against barometer
+    // outliers, so no median or rate limit is needed here).
+    if (agl_valid && (current == State::Boost || current == State::Coast)) {
+        if (!maximum_altitude_valid_ || agl > maximum_altitude_meters_) {
+            maximum_altitude_meters_ = agl;
             maximum_altitude_valid_ = true;
-            maximum_updated_us_ = observation.timestamp_us;
             if (current == State::Coast) {
-                reset_condition();
+                reset_condition();   // still climbing: no Descent dwell
             }
-        } else if (robust <= maximum_altitude_meters_) {
-            maximum_updated_us_ = observation.timestamp_us;
         }
     }
 
@@ -322,13 +253,11 @@ void FlightStateMachine::update(const Observation &raw_observation)
     switch (current) {
     case State::PadIdle:
         if (condition_held(
-                observation.axial_acceleration_valid &&
-                    observation.axial_acceleration_g >
-                        kLaunchAccelerationG,
+                agl_valid && agl > kLaunchAglMeters,
                 observation.timestamp_us,
                 kLaunchQualificationMs)) {
-            ESP_LOGI(kLogTag, "launch detected: axial acceleration %.2f g",
-                     observation.axial_acceleration_g);
+            ESP_LOGI(kLogTag, "launch detected: Kalman AGL %.1f m, vertical velocity %.1f m/s",
+                     agl, observation.vertical_velocity_mps);
             (void)trigger_launch();
         }
         break;
@@ -347,47 +276,31 @@ void FlightStateMachine::update(const Observation &raw_observation)
         break;
 
     case State::Coast: {
-        // For positive altitude this is exactly 95% of the recorded maximum.
-        // Using the absolute maximum in the drop term also behaves correctly
-        // at launch sites whose pressure altitude is below zero.
-        const float descent_altitude_threshold =
-            maximum_altitude_meters_ -
-            std::fabs(maximum_altitude_meters_) *
-                (1.0F - kDescentAltitudeFraction);
-        // Corroboration: the filtered vertical velocity must also be
-        // downward (when the filter provides one).
-        const bool velocity_agrees =
-            !observation.vertical_velocity_valid ||
+        // AGL path: below 95 % of the maximum AGL (and at least 10 m below
+        // it) and falling.
+        const float drop = std::max(maximum_altitude_meters_ * (1.0F - kDescentAltitudeFraction),
+                                    kDescentMinimumDropMeters);
+        const float descent_threshold = maximum_altitude_meters_ - drop;
+        const bool falling =
+            observation.vertical_velocity_valid &&
             observation.vertical_velocity_mps < 0.0F;
         const bool below_descent_threshold =
-            observation.barometric_altitude_valid &&
-            !observation.barometer_gated &&
-            maximum_altitude_valid_ &&
-            velocity_agrees &&
-            observation.barometric_altitude_meters <
-                descent_altitude_threshold;
+            agl_valid && maximum_altitude_valid_ && maximum_altitude_meters_ > 0.0F &&
+            falling && agl < descent_threshold;
         if (condition_held(
                 below_descent_threshold,
                 observation.timestamp_us,
                 kDescentQualificationMs)) {
-            ESP_LOGI(
-                kLogTag,
-                "descent detected (barometer path): altitude %.2f m, "
-                "maximum %.2f m",
-                observation.barometric_altitude_meters,
-                maximum_altitude_meters_);
+            ESP_LOGI(kLogTag, "descent detected (Kalman AGL): AGL %.1f m, maximum %.1f m",
+                     agl, maximum_altitude_meters_);
             (void)set_state(static_cast<std::uint8_t>(State::Descent));
             break;
         }
 
-        // Independent velocity path for when the barometer cannot be used
-        // (gated at Mach >= 0.8, or no robust altitude). The barometer path
-        // above stays primary whenever the barometer is usable.
-        const bool baro_unusable =
-            observation.barometer_gated ||
-            !observation.barometric_altitude_valid;
+        // Velocity path: Kalman vertical velocity clearly downward after an
+        // observed climb (covers a maximum that is not valid or not positive).
         const bool velocity_descending =
-            baro_unusable && climb_seen_ &&
+            climb_seen_ &&
             observation.vertical_velocity_valid &&
             observation.vertical_velocity_mps < kDescentVelocityMps &&
             observation.timestamp_us - coast_entered_us_ >=
@@ -400,11 +313,8 @@ void FlightStateMachine::update(const Observation &raw_observation)
         } else if (observation.timestamp_us - velocity_condition_started_us_ >=
                    milliseconds_to_microseconds(
                        kDescentVelocityQualificationMs)) {
-            ESP_LOGI(
-                kLogTag,
-                "descent detected (velocity path, barometer unusable): "
-                "vertical velocity %.1f m/s",
-                observation.vertical_velocity_mps);
+            ESP_LOGI(kLogTag, "descent detected (Kalman velocity): vertical velocity %.1f m/s, AGL %.1f m",
+                     observation.vertical_velocity_mps, agl);
             (void)set_state(static_cast<std::uint8_t>(State::Descent));
         }
         break;

@@ -1,6 +1,7 @@
 #include "command_policy.h"
 
 #include <cassert>
+#include <initializer_list>
 
 using namespace command_policy;
 
@@ -10,10 +11,22 @@ int main()
            is_log_maintenance_command(0x686A) && !is_log_maintenance_command(0x6867));
 
     for (std::uint8_t s = 0; s <= 5; ++s) {
-        // Never over radio, in any state.
+        const bool ground = s == kPadIdle || s == kLanded;
+        // USB export: USB only, Pad Idle and Landed only.
         assert(!allow_log_maintenance(Source::Radio, s));
-        // USB: Pad Idle and Landed only.
-        assert(allow_log_maintenance(Source::Usb, s) == (s == kPadIdle || s == kLanded));
+        assert(!allow_log_maintenance(Source::Radio, s, kMassStorageStart));
+        assert(allow_log_maintenance(Source::Usb, s) == ground);
+        // Erase / clear: USB or radio, Pad Idle and Landed only.
+        for (const Source src : {Source::Usb, Source::Radio}) {
+            assert(allow_log_maintenance(src, s, kEraseLogSessions) == ground);
+            assert(allow_log_maintenance(src, s, kClearLogSessions) == ground);
+        }
+        // Radio power and GPS assist uploads: refused in Boost only; assist
+        // status always allowed.
+        assert(allow_radio_power(s) == (s != kBoost));
+        for (const std::uint16_t c : {kGpsAssistBegin, kGpsAssistData, kGpsAssistCommit})
+            assert(allow_gps_assist(c, s) == (s != kBoost));
+        assert(allow_gps_assist(kGpsAssistStatus, s));
     }
 
     for (std::uint8_t cur = 0; cur <= 4; ++cur) {

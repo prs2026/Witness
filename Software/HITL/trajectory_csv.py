@@ -36,6 +36,9 @@ import hitl_protocol as hp
 import sim_model as sm
 
 G0 = sm.G0
+# Axial specific force marking motor onset in the conversion report (was the
+# firmware's launch trigger until 2026-11-14; launch is now Kalman AGL > 30 m).
+MOTOR_ONSET_G = 10.0
 DT_S = sm.DT_S
 TICK_MS = sm.TICK_MS
 
@@ -501,8 +504,7 @@ def _raw_edges(tr: Trajectory, rail, t_hold):
         d = att.unit3(v) if att.norm3(v) > 1.0 else rail
         pts.append(((t[i] + t[j]) / 2, att.dot3(a, d) / G0))
         i = j
-    onset = next((tm for tm, f in pts if f > sm.ReferenceStateMachine.
-                  LAUNCH_G), None)
+    onset = next((tm for tm, f in pts if f > MOTOR_ONSET_G), None)
     burnouts = []
     ignitions = []
     above = True
@@ -743,7 +745,7 @@ def _report(p, tr, samples, rail, t_apo, t_hold, pad, tau_end, max_f,
     hx = [s.hitl.high_g[0] for s in samples]
     lx = [s.hitl.low_g[0] for s in samples]
     onset = next((s.t_ms / 1000 for s, v in zip(samples, hx)
-                  if v > sm.ReferenceStateMachine.LAUNCH_G), None)
+                  if v > MOTOR_ONSET_G), None)
     burn, ign = [], []
     above = True
     for s, v in zip(samples, lx):

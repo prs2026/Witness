@@ -90,6 +90,19 @@ public:
     explicit GpsReceiver(Transport transport) : transport_(transport) {}
 
     void service(std::uint32_t now_ms);
+    // Identification failed and no receiver was ever identified (e.g. the
+    // receiver was still booting during the startup probe, bench 2026-11-15):
+    // start identification again from the operational rate. The caller
+    // re-probes the line and passes the rate with set_baud_hint() afterwards.
+    // False (nothing changed) unless can_retry_identification().
+    bool retry_identification(std::uint32_t now_ms);
+    // Any failed startup (identification or configuration). Bench 2026-11-15:
+    // after a power-up the PX1120S answers at 115200 and is identified there,
+    // then changes to ~88.4 kbaud during configuration (Witness sends it no
+    // baud command), and the readback times out. A retry re-probes the line,
+    // finds 88.4 kbaud and configures it there. Nothing is ever written to
+    // the receiver's flash, so retrying is harmless.
+    bool can_retry_identification() const { return status_ == Status::Failed; }
     // Observes a copy of the received stream; never removes bytes from logging.
     void consume(const std::uint8_t *data, std::size_t length,
                  std::uint32_t now_ms);
@@ -134,6 +147,26 @@ public:
     // RAM settings may be lost). False if no receiver is identified.
     bool cold_start(std::uint32_t now_ms);
     static constexpr std::uint32_t kRestartDelayMs = 2000;
+
+    // Landed-mode power saving (the receiver keeps its UART at kOperationalBaud;
+    // nothing here changes the baud rate, clears configuration or resets it).
+    //   sleep(): PX1120S "Configure GNSS Doze Mode" (0x64 0x1C, AN0037 v1.4.69:
+    //            no NMEA output, receiver in doze); u-blox M8 UBX-RXM-PMREQ
+    //            (0x02 0x41, 8-byte form, duration 0, flags backup = software
+    //            backup mode, wakes on RXD1 activity; UBX-13003221 R15 s32.19.3
+    //            and s12.4).
+    //   wake():  PX1120S System Restart (0x01) hot start (ephemeris, almanac,
+    //            position and time kept); the datasheet says a cold start leaves
+    //            doze, so WakeKind::Cold is the fallback if hot gets no answer.
+    //            u-blox: a burst of 0xFF bytes (edges on RXD1); Cold repeats it.
+    //            Either way the receiver is then reconfigured as after a boot
+    //            (airborne mode, rate, NMEA set; RAM only), through RestartWait.
+    // Both need an identified receiver in Status::Ready; false otherwise.
+    enum class WakeKind : std::uint8_t { Hot, Cold };
+    bool sleep(std::uint32_t now_ms);
+    bool wake(std::uint32_t now_ms, WakeKind kind);
+    bool asleep() const { return asleep_; }
+    std::uint32_t sleeps() const { return sleeps_; }
     std::uint32_t cold_starts() const { return cold_starts_; }
     // Host-sent 0x01 System Restart records (assist path) the receiver
     // acknowledged; each is followed by RestartWait and reconfiguration.
@@ -191,6 +224,12 @@ private:
         115200, 9600, 230400, 460800, 921600, 57600, 38400, 19200, 4800};
     std::size_t scan_count_ = sizeof(kScanBauds) / sizeof(kScanBauds[0]);
     bool pins_swapped_ = false;   // the second pin orientation is being scanned
+    std::uint32_t measured_baud_ = 0;   // startup line measurement (set_baud_hint), 0 = none
+    bool measured_tried_ = false;       // kFixedBaud: the measured rate was tried once
+    std::uint32_t identification_retries_ = 0;
+public:
+    std::uint32_t identification_retries() const { return identification_retries_; }
+private:
     std::uint32_t found_baud_ = kOperationalBaud;  // where the receiver answered
     bool started_ = false;
     bool waiting_ = false;
@@ -227,6 +266,8 @@ private:
     std::uint32_t cold_starts_ = 0;
     std::uint32_t restarts_ = 0;
     bool baud_fallback_ = false;   // configured at found_baud_, not kOperationalBaud
+    bool asleep_ = false;
+    std::uint32_t sleeps_ = 0;
     unsigned optional_rejects_ = 0;
     const char *last_optional_reject_ = "";
     const char *assist_refusal_ = "";

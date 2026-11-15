@@ -6,6 +6,7 @@
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "flash_logger.h"
+#include "landed_logic.h"
 #include "spi_data_forwarder.h"
 #include "witness_status.h"
 
@@ -46,7 +47,16 @@ esp_err_t CanLink::send_command(const std::uint8_t *data, const std::size_t leng
     if (commands_ == nullptr) return ESP_ERR_INVALID_STATE;
     Command command{};
     std::memcpy(command.data, data, length);
-    return xQueueSend(commands_, &command, 0) == pdTRUE ? ESP_OK : ESP_ERR_NO_MEM;
+    const esp_err_t result = xQueueSend(commands_, &command, 0) == pdTRUE ? ESP_OK : ESP_ERR_NO_MEM;
+    // Paused (Landed): wake the CAN task so it brings the bus back for this command.
+    if (result == ESP_OK && paused_.load() && task_ != nullptr) xTaskNotifyGive(task_);
+    return result;
+}
+
+void CanLink::set_paused(const bool paused)
+{
+    paused_.store(paused);
+    if (task_ != nullptr) xTaskNotifyGive(task_);
 }
 
 void CanLink::task_entry(void *context) { static_cast<CanLink *>(context)->run(); }
@@ -147,6 +157,33 @@ void CanLink::run()
     std::int64_t next_heartbeat = 0;
     std::int64_t next_diagnostic = 0;
     while (true) {
+        // Landed low-power mode (see set_paused()).
+        const bool want_pause = paused_.load();
+        if (!want_pause && driver_.suspended()) {
+            if (driver_.resume() == ESP_OK) {
+                ESP_LOGI(kTag, "CAN resumed");
+                next_heartbeat = 0;
+            }
+        }
+        if (want_pause) {
+            const bool commands_waiting = uxQueueMessagesWaiting(commands_) != 0;
+            if (driver_.suspended()) {
+                if (commands_waiting && driver_.resume() == ESP_OK) {
+                    grace_until_us_ = esp_timer_get_time() + static_cast<std::int64_t>(landed::kCanGraceMs) * 1000;
+                    ESP_LOGI(kTag, "CAN back up for a command to Iris (Landed)");
+                } else {
+                    (void)ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(30000));
+                    continue;
+                }
+            } else if (pending_length_ == 0 && !commands_waiting &&
+                       esp_timer_get_time() >= grace_until_us_) {
+                if (driver_.suspend() == ESP_OK) {
+                    pending_length_ = 0;
+                    ESP_LOGI(kTag, "CAN paused for Landed low-power mode");
+                    continue;
+                }
+            }
+        }
         (void)driver_.poll();
         receive_packets();
         pump_transmit();
@@ -170,7 +207,7 @@ void CanLink::run()
             send_packet(command.data, sizeof(command.data));
         }
         const std::int64_t now = esp_timer_get_time();
-        if (pending_length_ == 0 && now >= next_heartbeat) {
+        if (!want_pause && pending_length_ == 0 && now >= next_heartbeat) {
             std::uint8_t heartbeat[IRIS_PACKET_HEARTBEAT_FRAME_LENGTH]{};
             heartbeat[0] = IRIS_PACKET_ID_HEARTBEAT;
             status_.write(heartbeat + 1);

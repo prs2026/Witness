@@ -23,6 +23,7 @@
 #include "flight_state_machine.h"
 #include "hardware_pins.h"
 #include "spi_data_forwarder.h"
+#include "tx_slot.h"
 #include "witness_status.h"
 
 namespace {
@@ -1416,6 +1417,10 @@ void Sensors::poll_radio_commands()
     }
 
     if (packet[0] == IRIS_PACKET_ID_COMMAND) {
+        // Uplink hold-off (tx_slot.h): keep telemetry quiet for a while so
+        // the next frames of a command stream are heard.
+        uplink_heard_ = true;
+        last_uplink_ms_ = monotonic_ms();
         const esp_err_t command_result =
             command_bridge_.submit_radio_command(
                 packet.data(), packet_length);
@@ -1454,7 +1459,12 @@ void Sensors::service_radio_transmit(const TickType_t now)
         const std::size_t index =
             (next_radio_packet_index_ + checked) % kRadioPacketTypeCount;
         const std::uint32_t rate_hz = kRadioPacketRatesHz[index];
-        const TickType_t period = pdMS_TO_TICKS(1000U / rate_hz);
+        // Pad Idle sends locally generated packets once per 3 s (landed_logic.h);
+        // the state is read on every pass, so leaving Pad Idle restores the
+        // normal period at once. The CAN-relayed camera packet keeps its rate.
+        const TickType_t period = pdMS_TO_TICKS(landed::radio_period_ms(
+            static_cast<std::uint8_t>(flight_state_machine_.state()), 1000U / rate_hz,
+            kRadioPacketIds[index] == IRIS_PACKET_ID_CAMERA));
         if ((now - radio_last_sent_[index]) < period) {
             continue;
         }
@@ -1463,6 +1473,29 @@ void Sensors::service_radio_transmit(const TickType_t now)
         if (!data_forwarder_.latest_radio_packet(
                 kRadioPacketIds[index], packet, generation)) {
             continue;
+        }
+
+        // GPS time slots and the uplink hold-off (tx_slot.h). Telemetry only:
+        // the immediate queue above (acks, replies) is never held.
+        const std::uint64_t now_ms = monotonic_ms();
+        const bool utc_known = utc_clock_.valid() && have_utc_fix_ &&
+                               now_ms - last_utc_local_ms_ < tx_slot::kTimeMaxAgeMs;
+        const tx_slot::Decision decision = tx_slot::witness_telemetry(
+            now_ms, uplink_heard_, last_uplink_ms_, utc_known,
+            utc_known ? utc_clock_.utc_ms_at(now_ms) : 0.0,
+            tx_slot::lora_airtime_ms(packet.length, IRIS_RADIO_SPREADING_FACTOR,
+                                     IRIS_RADIO_BANDWIDTH_HZ, IRIS_RADIO_CODING_RATE,
+                                     IRIS_RADIO_PREAMBLE_LENGTH));
+        if (utc_known != slots_active_) {
+            slots_active_ = utc_known;
+            ESP_LOGI(kLogTag, "radio time slots %s", utc_known
+                     ? "ON: telemetry in the first 700 ms of each GPS second"
+                     : "off (no GPS time): telemetry whenever free");
+        }
+        if (decision != tx_slot::Decision::Send) {
+            if (decision == tx_slot::Decision::HoldOff) ++radio_holdoff_skips_;
+            else ++radio_slot_waits_;
+            return;   // nothing marked as sent: retried on a later pass
         }
 
         radio_last_sent_[index] = now;
@@ -2171,6 +2204,10 @@ void Sensors::report_attitude_rate(const std::uint64_t now_us)
              static_cast<double>(attitude_.tilt_from_vertical_deg()),
              static_cast<double>(q.x), static_cast<double>(q.y),
              static_cast<double>(q.z), static_cast<double>(q.w));
+    defer_log("radio slots: %s; deferred %lu to the downlink window, %lu by the uplink hold-off",
+              slots_active_ ? "on (GPS time)" : "off (no GPS time)",
+              static_cast<unsigned long>(radio_slot_waits_),
+              static_cast<unsigned long>(radio_holdoff_skips_));
     defer_log(
              "imu fifo: %.1f Hz, overruns %lu, partial slots %lu, "
              "unknown words %lu, max backlog %lu words; filtered accel "
@@ -2213,6 +2250,7 @@ void Sensors::run()
     std::uint32_t consecutive_ms5607_errors = 0;
     std::uint32_t battery_sample_counter = 0;
     std::uint32_t consecutive_battery_errors = 0;
+    std::uint32_t landed_normal_passes = 0;
 
     for (;;) {
         // IMU sampling and the attitude update come first in each 10 ms pass
@@ -2347,8 +2385,11 @@ void Sensors::run()
                                 consecutive_ms5607_errors == 0U;
         }
 
-        witness_status_.set_state_flag(
-            IRIS_WITNESS_STATUS_GPS_LOCKED_MASK, current_gps_fix().valid);
+        {
+            const NmeaGps::Fix gps_fix = current_gps_fix();
+            witness_status_.set_state_flag(IRIS_WITNESS_STATUS_GPS_LOCKED_MASK, gps_fix.valid);
+            if (!hitl) note_gps_fix(gps_fix);
+        }
 
         if (lsm_result == ESP_OK || ms5607_updated || battery_updated) {
             working_sample_.timestamp_us =
@@ -2376,18 +2417,17 @@ void Sensors::run()
                 observation.angular_rate_dps[axis] =
                     working_sample_.gyro_mdps[axis] / 1000.0F;
             }
-            observation.barometric_altitude_valid = barometer_healthy;
-            observation.barometric_altitude_new =
-                ms5607_updated && barometer_healthy;
-            observation.barometer_gated = position_filter_.baro_gated();
+            // Altitudes for the state machine: Kalman height above the pad
+            // (AGL) and vertical velocity, never the raw barometer (Mach
+            // errors; the filter gates it).
             if (position_filter_.initialized()) {
                 float velocity[3];
                 position_filter_.velocity(velocity);
                 observation.vertical_velocity_valid = true;
                 observation.vertical_velocity_mps = velocity[2];
+                observation.agl_valid = std::isfinite(position_filter_.up().p);
+                observation.agl_meters = position_filter_.up().p;
             }
-            observation.barometric_altitude_meters =
-                working_sample_.barometric_altitude_meters;
             observation.timestamp_us = working_sample_.timestamp_us;
             flight_state_machine_.update(observation);
 
@@ -2459,6 +2499,21 @@ void Sensors::run()
         }
         report_attitude_rate(pass_end_us);
         report_position(pass_end_us);
+
+        // Landed: after two normal passes in the state (the first logs the
+        // attitude after flight) the task switches to the low-power loop,
+        // which returns when the state changes.
+        if (landed::kLowPowerModeEnabled && !hitl &&
+            flight_state_machine_.state() == FlightStateMachine::State::Landed) {
+            if (++landed_normal_passes >= 2U) {
+                run_landed();
+                landed_normal_passes = 0;
+                next_wake_time = xTaskGetTickCount();
+                continue;
+            }
+        } else {
+            landed_normal_passes = 0;
+        }
 
         // Deadline scheduling: wake every kTaskPeriod (1/kTaskRateHz)
         // measured from the previous deadline, not from the end of this pass.

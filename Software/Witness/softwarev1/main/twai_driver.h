@@ -30,6 +30,14 @@ public:
     esp_err_t initialize();
     esp_err_t shutdown();
 
+    // Landed low-power mode. suspend() disables the node (this also releases
+    // the driver's no-light-sleep power-management lock, so the MCU can sleep),
+    // drops any received/pending frames and leaves the pins released. resume()
+    // enables it again from a clean state. Both are idempotent.
+    esp_err_t suspend();
+    esp_err_t resume();
+    bool suspended() const { return suspended_; }
+
     // Queues a copied frame without blocking. ESP_ERR_TIMEOUT means all local
     // transmit slots or the hardware transmit queue are currently full.
     esp_err_t transmit(const Frame &frame);
@@ -86,6 +94,7 @@ private:
     std::size_t receive_write_index_ = 0;
     std::uint32_t dropped_receive_frames_ = 0;
     std::uint32_t failed_transmit_frames_ = 0;
+    bool suspended_ = false;
     bool bus_off_ = false;
     bool recovery_started_ = false;
     mutable portMUX_TYPE lock_ = portMUX_INITIALIZER_UNLOCKED;

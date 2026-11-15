@@ -575,13 +575,19 @@ void UsbSerialEcho::process_radio_command(
             ack(IRIS_ACK_OK);
             break;
         case IRIS_COMMAND_MASS_STORAGE_START:
-        case IRIS_COMMAND_ERASE_LOG_SESSIONS:
-        case IRIS_COMMAND_CLEAR_LOG_SESSIONS:
-            // Bench operations: never over LoRa (they freeze logging, silence
-            // the radio or wipe the flight logs). Use USB.
-            ESP_LOGW(kLogTag, "radio command 0x%04X refused: log maintenance is USB-only", command);
+            // USB export is USB only (it needs the USB disk).
+            ESP_LOGW(kLogTag, "radio command 0x%04X refused: USB export is USB-only", command);
             ack(IRIS_ACK_REFUSED);
             break;
+        case IRIS_COMMAND_ERASE_LOG_SESSIONS:
+        case IRIS_COMMAND_CLEAR_LOG_SESSIONS: {
+            // Over radio too (Pad Idle/Landed): the only way to free a store
+            // whose two slots hold flights once Witness is on the backplane.
+            std::uint16_t detail = 0;
+            const std::uint8_t result = run_log_maintenance(command, true, detail);
+            ack(result);
+            break;
+        }
         case IRIS_COMMAND_HITL_ENTER:
             // Rejected and logged: HITL can only be entered over USB.
             (void)sensors_.enter_hitl(hitl::Source::Radio);
@@ -611,6 +617,17 @@ void UsbSerialEcho::process_radio_command(
             // These commands are implemented by the external device.
             // They were already retransmitted by CommandBridge.
             ack(IRIS_ACK_OK);
+            break;
+        case IRIS_COMMAND_PING:
+            // Ground ping (already forwarded to Iris, which answers PONG over CAN).
+            // In Landed Witness also replies with the landed position packet at
+            // once (rate limited); in any other state it is unknown, as before.
+            if (landed::kLowPowerModeEnabled &&
+                flight_state_machine_.state() == FlightStateMachine::State::Landed) {
+                ack(sensors_.request_landed_ping() ? IRIS_ACK_OK : IRIS_ACK_BUSY);
+            } else {
+                ack(IRIS_ACK_UNKNOWN);
+            }
             break;
         default:
             ESP_LOGW(kLogTag, "radio command 0x%04X has no local handler",
@@ -780,6 +797,14 @@ void UsbSerialEcho::handle_gps_assist(const std::uint16_t command, const std::ui
                                       const char *source, const bool radio)
 {
     using gps_assist::Assembler;
+    if (!command_policy::allow_gps_assist(command,
+                                          static_cast<std::uint8_t>(flight_state_machine_.state()))) {
+        if (++gps_assist_rejects_ % 50U == 1U) {
+            ESP_LOGW(kLogTag, "GPS assist 0x%04X over %s refused in Boost", command, source);
+        }
+        if (command != gps_assist::kCommandData) send_ack(radio, command, data, IRIS_ACK_REFUSED);
+        return;
+    }
     const Assembler::Result result = gps_assist_.handle(command, data);
     const bool data_chunk = command == gps_assist::kCommandData;
     switch (result) {
@@ -925,7 +950,9 @@ void UsbSerialEcho::handle_radio_power(const std::uint8_t *data, const char *sou
     const int requested = static_cast<std::int8_t>(data[1]);
     const std::uint8_t front_end = data[2];
     std::uint8_t result = IRIS_ACK_OK;
-    if (data[0] != IRIS_RADIO_POWER_TARGET_WITNESS || front_end > IRIS_RADIO_FRONT_END_OFF) {
+    if (!command_policy::allow_radio_power(static_cast<std::uint8_t>(flight_state_machine_.state()))) {
+        result = IRIS_ACK_REFUSED;        // never in Boost (any source)
+    } else if (data[0] != IRIS_RADIO_POWER_TARGET_WITNESS || front_end > IRIS_RADIO_FRONT_END_OFF) {
         result = IRIS_ACK_BAD_ARGUMENT;   // GROUND is Aperture's; it never forwards it
     } else if (!sensors_.set_radio_tx_power_dbm(requested)) {
         result = IRIS_ACK_BAD_ARGUMENT;
@@ -940,8 +967,9 @@ void UsbSerialEcho::handle_radio_power(const std::uint8_t *data, const char *sou
         ESP_LOGI(kLogTag, "radio TX drive %d dBm over %s, front end %s (%s)", now, source,
                  fem ? "on" : "OFF", fem ? "~+26 dB" : "PA unpowered, bench only");
     } else {
-        ESP_LOGW(kLogTag, "radio TX power over %s refused: target %u, %d dBm (allowed -9..%d); still %d dBm",
-                 source, data[0], requested, IRIS_RADIO_TX_POWER_MAX_DBM, now);
+        ESP_LOGW(kLogTag, "radio TX power over %s refused%s: target %u, %d dBm (allowed -17..%d); still %d dBm",
+                 source, result == IRIS_ACK_REFUSED ? " in Boost" : "", data[0], requested,
+                 IRIS_RADIO_TX_POWER_MAX_DBM, now);
     }
 }
 
@@ -1016,8 +1044,9 @@ std::uint8_t UsbSerialEcho::run_log_maintenance(const std::uint16_t command, con
     detail = IRIS_MAINT_REFUSE_NONE;
     const std::uint8_t current = static_cast<std::uint8_t>(flight_state_machine_.state());
     if (!command_policy::allow_log_maintenance(
-            radio ? command_policy::Source::Radio : command_policy::Source::Usb, current)) {
-        ESP_LOGW(kLogTag, "command 0x%04X over %s refused in flight state 0x%02X (USB, Pad Idle/Landed only)",
+            radio ? command_policy::Source::Radio : command_policy::Source::Usb, current, command)) {
+        ESP_LOGW(kLogTag, "command 0x%04X over %s refused in flight state 0x%02X "
+                          "(Pad Idle/Landed only; USB export USB only)",
                  command, radio ? "radio" : "USB", current);
         return IRIS_ACK_REFUSED;
     }

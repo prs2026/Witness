@@ -1,4 +1,4 @@
-import os
+﻿import os
 import struct
 import sys
 import unittest
@@ -173,7 +173,7 @@ class DecoderTests(unittest.TestCase):
         self.assertEqual(pkts[0]["uptime_ms"], 1234)
 
     def test_reserved_status_bits_rejected(self):
-        frame = bytes.fromhex("FF 00 E0 00 00 00 01 0A")
+        frame = bytes.fromhex("FF 00 20 00 00 00 01 0A")
         self.assertEqual(
             [k for k, _ in hp.StreamDecoder().feed(frame)], [])
 
@@ -222,3 +222,21 @@ class MaintenanceBeaconFrameTests(unittest.TestCase):
         self.assertEqual((pkt["mode"], pkt["flags"], pkt["store_version"]), (1, 0x26, 4))
         self.assertEqual((pkt["maint_image_id"], pkt["flight_image_id"]), (0xBEEF, 0x1234))
         self.assertEqual((pkt["battery_mv"], pkt["uptime_ms"], pkt["log_files"]), (7444, 5000, 7))
+
+
+class LandedPositionFrameTests(unittest.TestCase):
+    def test_decode_landed_position(self):
+        import hitl_protocol as hp
+        frame = bytes([0x09, 0x80, 0x1C, 0x01, 0x02, 0x03, 0x04]) +             struct.pack(">i", -338688197) + struct.pack(">i", 1512092955) + struct.pack(">f", 123.5) +             struct.pack(">I", 300) + bytes([0x0B, 9]) + struct.pack(">H", 7444) + bytes([0x0A])
+        self.assertEqual(hp.FRAME_LENGTHS[0x09], len(frame))
+        pkt = hp.decode_frame(frame)
+        self.assertEqual(pkt["name"], "landed_position")
+        self.assertAlmostEqual(pkt["lat_deg"], -33.8688197, places=7)
+        self.assertAlmostEqual(pkt["lon_deg"], 151.2092955, places=7)
+        self.assertEqual((pkt["fix_age_s"], pkt["satellites"], pkt["battery_mv"]), (300, 9, 7444))
+        self.assertTrue(pkt["position_valid"] and pkt["stale"] and not pkt["ping_reply"])
+        self.assertEqual(pkt["status"]["flight_state_name"], "Landed")
+        none = frame[:19] + struct.pack(">I", 0xFFFFFFFF) + bytes([0, 0, 0, 0, 0x0A])
+        self.assertIsNone(hp.decode_frame(none)["fix_age_s"])
+        bad = frame[:-1] + bytes([0x0B])
+        self.assertIsNone(hp.decode_frame(bad))

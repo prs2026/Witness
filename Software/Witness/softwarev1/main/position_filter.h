@@ -17,6 +17,8 @@
 // Barometer trust:
 //  - zero (update skipped) at or above kBaroMachCutoff, until the speed falls
 //    below kBaroMachResume (transonic shock waves corrupt static pressure);
+//    once gated in Boost or Coast it stays gated until Descent (the vehicle
+//    passes back through Mach 1 in Coast, the error does not end at burnout);
 //  - otherwise its altitude sigma follows the sensor's altitude accuracy,
 //    sigma_h = sqrt(min^2 + (sigma_p / (rho g))^2), rho = p / (R T): the same
 //    pressure error means more altitude error as the air thins (about 0.9 m

@@ -33,6 +33,18 @@ float dop(const char *s) {
         return std::numeric_limits<float>::quiet_NaN();
     return static_cast<float>(value);
 }
+// GGA field 1: hhmmss or hhmmss.sss -> milliseconds of the UTC day.
+bool utc_time(const char *s, std::uint32_t &ms_of_day) {
+    double value;
+    if (!number(s, value) || value < 0 || value >= 240000.0) return false;
+    const double hours = std::floor(value / 10000.0);
+    const double minutes = std::floor((value - hours * 10000.0) / 100.0);
+    const double seconds = value - hours * 10000.0 - minutes * 100.0;
+    if (minutes >= 60 || seconds >= 60.0) return false;
+    ms_of_day = static_cast<std::uint32_t>(
+        std::lround((hours * 3600.0 + minutes * 60.0 + seconds) * 1000.0));
+    return ms_of_day < 86400000U;
+}
 bool coordinate(const char *s, const char *hemisphere, bool latitude, double &value) {
     double raw;
     if (!number(s, raw) || raw < 0 || std::strlen(hemisphere) != 1) return false;
@@ -97,6 +109,8 @@ void NmeaGps::parse(std::uint32_t now_ms) {
         satellites == std::floor(satellites))
         fix_.satellites = static_cast<std::uint8_t>(satellites);
     fix_.hdop = dop(fields[8]);
+    if (fix_.fix_quality >= 1 && fix_.fix_quality <= 8)
+        fix_.utc_valid = utc_time(fields[1], fix_.utc_ms_of_day);
     if (fix_.fix_quality >= 1 && fix_.fix_quality <= 8) attach_dop(fix_, now_ms);
     if (fix_.fix_quality < 1 || fix_.fix_quality > 8 ||
         std::strcmp(fields[10], "M") != 0) return;

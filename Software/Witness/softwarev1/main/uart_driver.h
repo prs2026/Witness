@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 
@@ -50,6 +51,16 @@ public:
     // Cold-starts the receiver on the GPS task's next pass (logged there).
     void request_gps_cold_start() { cold_start_requested_ = true; }
 
+    // Landed low-power mode (see landed_logic.h): the GPS task puts the
+    // receiver to sleep (GpsReceiver::sleep) and later wakes it with a hot
+    // restart, falling back to a cold start if it stays silent. Requests are
+    // executed on the GPS task's next pass (any task may call). While asleep
+    // the task blocks instead of polling the UART every 2 ms.
+    void request_gps_sleep() { request_gps_power(kPowerSleep); }
+    void request_gps_wake() { request_gps_power(kPowerWake); }
+    // True from a successful sleep command until the wake command is sent.
+    bool gps_asleep() const { return gps_asleep_.load(); }
+
     // Writes the exact bytes supplied to this UART.
     esp_err_t transmit(
         const std::uint8_t *data,
@@ -67,6 +78,9 @@ public:
         std::uint32_t baud_estimate = 0;   // sclk / shortest pulse; 0 if idle
     };
     static constexpr std::uint32_t kProbeWindowMs = 400;
+    // An unidentified GPS is probed and identified again this often.
+    static constexpr std::uint32_t kIdentifyRetryMs = 10'000;
+    std::uint32_t identify_failed_ms_ = 0;
     static constexpr std::uint32_t kProbeMinimumEdges = 40;
 
 private:
@@ -104,6 +118,12 @@ private:
     std::size_t assist_pending_length_ = 0;  // nonzero: waiting for the GPS task
     volatile bool assist_status_requested_ = false;
     volatile bool cold_start_requested_ = false;
+    static constexpr std::uint8_t kPowerNone = 0;
+    static constexpr std::uint8_t kPowerSleep = 1;
+    static constexpr std::uint8_t kPowerWake = 2;
+    void request_gps_power(std::uint8_t request);
+    std::atomic<std::uint8_t> gps_power_request_{kPowerNone};
+    std::atomic<bool> gps_asleep_{false};
     TaskHandle_t task_handle_ = nullptr;
     bool initialized_ = false;
 };

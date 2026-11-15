@@ -21,6 +21,7 @@
 #include "hitl_input.h"
 #include "ms5607.h"
 #include "nmea_gps.h"
+#include "landed_logic.h"
 #include "ra01.h"
 
 class SpiDataForwarder;
@@ -29,6 +30,7 @@ class WitnessStatus;
 class CommandBridge;
 class FlightStateMachine;
 class UartDriver;
+class CanLink;
 
 class Sensors final {
 public:
@@ -213,6 +215,15 @@ public:
     bool hitl_active() const;
     // The GPS UART (receiver configuration, assistance uploads).
     UartDriver &gps_uart() { return gps_uart_; }
+
+    // Landed low-power mode (sensors_landed.cpp, landed_logic.h). The CAN link is
+    // paused while Landed; set before start().
+    void set_can_link(CanLink *link) { can_link_ = link; }
+    // Ground "ping" (IRIS_COMMAND_PING over radio): in Landed, transmits the
+    // landed position packet at once, rate limited (landed::kPingMinIntervalMs).
+    // Returns false when not Landed or rate limited. Any task.
+    bool request_landed_ping();
+    bool landed_mode_active() const { return landed_mode_active_.load(); }
 
     // IMU calibration command from USB (argument: IRIS_IMU_CALIBRATION_*).
     // Thread-safe; the capture runs in the sensor task and logs its result.
@@ -409,6 +420,15 @@ private:
     void run();
     void release_resources();
 
+    // ---- Landed low-power mode (sensors_landed.cpp) ----
+    // Takes over the sensor task while Landed; returns when the state changes.
+    void run_landed();
+    void landed_power_down_sensors();
+    void landed_restore_sensors();
+    void landed_send_usb_state();
+    void note_gps_fix(const NmeaGps::Fix &fix);
+    static std::uint64_t monotonic_ms();
+
     SpiDataForwarder &data_forwarder_;
     WitnessStatus &witness_status_;
     CommandBridge &command_bridge_;
@@ -434,6 +454,27 @@ private:
     std::atomic_bool debug_packet_output_enabled_{false};
     Sample working_sample_{};
     Sample latest_sample_{};
+
+    // Landed low-power mode state.
+    CanLink *can_link_ = nullptr;
+    std::atomic_bool landed_mode_active_{false};
+    std::atomic_bool landed_ping_requested_{false};
+    portMUX_TYPE landed_ping_lock_ = portMUX_INITIALIZER_UNLOCKED;
+    landed::PingLimiter landed_ping_limiter_{};     // under landed_ping_lock_
+    // Last good (valid) GPS fix seen by the normal loop, and the UTC clock model.
+    NmeaGps::Fix last_good_fix_{};
+    std::uint64_t last_good_fix_local_ms_ = 0;
+    bool have_good_fix_ = false;
+    std::uint32_t last_seen_fix_sequence_ = 0;
+    landed::UtcClock utc_clock_{};
+    // Radio time slots and uplink hold-off (tx_slot.h); sensor task only.
+    std::uint64_t last_utc_local_ms_ = 0;    // local time of the newest fix with UTC
+    bool have_utc_fix_ = false;
+    bool uplink_heard_ = false;
+    std::uint64_t last_uplink_ms_ = 0;       // local time of the last command frame heard
+    bool slots_active_ = false;
+    std::uint32_t radio_slot_waits_ = 0;     // telemetry deferred to the next downlink window
+    std::uint32_t radio_holdoff_skips_ = 0;  // telemetry deferred by the uplink hold-off
 
     // hitl_controller_ is shared with the USB task under hitl_lock_. The
     // remaining HITL members belong to the sensor task.

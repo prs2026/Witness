@@ -1,4 +1,6 @@
 #include "flash_logger.h"
+#include "landed_logic.h"
+#include "landed_power.h"
 #include "task_cores.h"
 
 #include <algorithm>
@@ -336,8 +338,11 @@ esp_err_t FlashLogger::scan_sessions(bool build_exports) {
         if (r != ESP_OK) return r;
     }
 
-    // Choose the slot for this boot's session: never the one holding the
-    // newest flight; otherwise the empty or older slot.
+    // Choose the slot for this boot's session: never a slot that holds a
+    // flight (flight data is never erased automatically); otherwise the empty
+    // or older slot. Both slots holding flights: no session at all
+    // (slots_full_), until the operator erases or clears the store.
+    slots_full_ = info[0].valid && info[0].flight && info[1].valid && info[1].flight;
     int newest_flight = -1;
     int newest = -1;
     for (int slot = 0; slot < static_cast<int>(kSlotCount); ++slot) {
@@ -874,7 +879,15 @@ void FlashLogger::run_capture()
     std::uint32_t observed_reset_generation =
         prelaunch_reset_generation_.load();
 
+    landed_power::register_current_task();
     for (;;) {
+        if (landed_power::low_power()) {
+            // Landed low-power mode: nothing is captured in Landed (see
+            // FLIGHT_LOG_BIN_LANDED); wait for the flag to clear.
+            (void)ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(landed::kLowPowerTaskPeriodMs));
+            next = xTaskGetTickCount();
+            continue;
+        }
         vTaskDelayUntil(&next, kLogPeriod);
 
         const std::uint32_t reset_generation =
@@ -944,7 +957,28 @@ void FlashLogger::run() {
     esp_err_t r = flash_.initialize();
     if (r == ESP_OK) r = run_startup_self_test();
     if (r == ESP_OK) r = scan_sessions(false);
-    if (r == ESP_OK) r = create_session();
+    if (r == ESP_OK && slots_full_) {
+        // Both slots hold flights: never erase either. Nothing is written to
+        // NAND (all capture stays off) until an erase/clear command (USB or
+        // radio, Pad Idle/Landed) frees the store.
+        set_uart_capture_enabled(false);
+        capture_binary_records_.store(false);
+        capture_imu_records_.store(false);
+        capture_packets_.store(false);
+        capture_logs_.store(false);
+        witness_status_.set_state_flag(IRIS_WITNESS_STATUS_LOG_SLOTS_FULL_MASK, true);
+        witness_status_.set(IRIS_WITNESS_STATUS_FLASH_INIT_FAILED_MASK, false);
+        ESP_LOGW(kLogTag, "both log slots hold a flight: NOT LOGGING (nothing is erased). "
+                          "Download the flights, then erase/clear (0x6869/0x686A) to log again");
+        landed_power::register_current_task();
+        while (!erase_requested_.load()) {
+            (void)ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(landed_power::low_power()
+                                                             ? landed::kLowPowerTaskPeriodMs : 200));
+        }
+        // The normal loop below runs the erase; the writers exist after it.
+    } else if (r == ESP_OK) {
+        r = create_session();
+    }
     if (r != ESP_OK) {
         set_uart_capture_enabled(false);
         capture_binary_records_.store(false);
@@ -957,7 +991,7 @@ void FlashLogger::run() {
     capture_packets_.store(true);
     witness_status_.set(IRIS_WITNESS_STATUS_FLASH_INIT_FAILED_MASK, false);
     witness_status_.set(IRIS_WITNESS_STATUS_FLASH_LOG_FAILED_MASK, false);
-    ESP_LOGI(kLogTag,
+    if (!slots_full_) ESP_LOGI(kLogTag,
              "session %lu in slot %c (store v%u); blocks: IMU %lu, sensors %lu, text %lu, "
              "packets %lu, GPS ring %lu; flush interval %lu ms",
              static_cast<unsigned long>(current_generation_), 'A' + current_slot_,
@@ -967,6 +1001,7 @@ void FlashLogger::run() {
              static_cast<unsigned long>(kUartBlocks), static_cast<unsigned long>(kFlushIntervalMs));
     TickType_t next = xTaskGetTickCount();
     TickType_t last_flush = next;
+    landed_power::register_current_task();
     std::uint32_t reported_drops = 0;
     std::uint32_t reported_packet_drops = 0;
     for (;;) {
@@ -991,6 +1026,12 @@ void FlashLogger::run() {
             if (erase_result_ != ESP_OK) {
                 r = erase_result_;
             } else {
+                if (slots_full_) {
+                    slots_full_ = false;
+                    capture_packets_.store(true);
+                    witness_status_.set_state_flag(IRIS_WITNESS_STATUS_LOG_SLOTS_FULL_MASK, false);
+                    ESP_LOGI(kLogTag, "log store freed: logging resumed");
+                }
                 if (quick) {
                     ESP_LOGI(kLogTag, "all stored sessions cleared (headers only, %lu ms); new session %lu",
                              static_cast<unsigned long>(erase_ms),
@@ -1065,6 +1106,13 @@ void FlashLogger::run() {
             witness_status_.set(IRIS_WITNESS_STATUS_FLASH_LOG_FAILED_MASK, true);
             ESP_LOGE(kLogTag, "flash logging stopped: %s", esp_err_to_name(r));
             capture_logs_.store(false); task_handle_ = nullptr; vTaskDelete(nullptr); return;
+        }
+        if (landed_power::low_power()) {
+            // Landed low-power mode: the queues stay empty, so wake only for the
+            // housekeeping period (text and GPS window bytes flush on it).
+            (void)ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(landed::kLowPowerTaskPeriodMs));
+            next = xTaskGetTickCount();
+            continue;
         }
         vTaskDelayUntil(&next, kLogPeriod);
     }
