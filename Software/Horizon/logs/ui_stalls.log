@@ -1,0 +1,1031 @@
+
+=== 2026-11-10T12:57:30 GUI thread blocked for 6.0 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 198, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 190, in main
+    window = HorizonGroundStation(flight_layout=args.flight_layout, auto_connect=not args.no_auto_connect,
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 98, in __init__
+    self.flight = FlightView(layout_path=flight_layout, pad=self.pad)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\flight_view.py", line 423, in __init__
+    scroll.setWidget(widget)
+=== stall ended after 8.6 s ===
+
+=== 2026-11-10T13:12:19 GUI thread blocked for 1.0 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 198, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 190, in main
+    window = HorizonGroundStation(flight_layout=args.flight_layout, auto_connect=not args.no_auto_connect,
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 99, in __init__
+    self.attitude = AttitudeTab(use_gl=use_gl)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\attitude_view.py", line 450, in __init__
+    self._build(use_gl)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\attitude_view.py", line 534, in _build
+    self.q_curves.append(self.q_plot.plot(pen=pg.mkPen(color, width=1.5), name=f"q{label}",
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\graphicsItems\PlotItem\PlotItem.py", line 779, in plot
+    self.addItem(item, params=params)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\graphicsItems\PlotItem\PlotItem.py", line 656, in addItem
+    self.legend.addItem(item, name=name)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\graphicsItems\LegendItem.py", line 225, in addItem
+    sample.sigClicked.connect(self.sigSampleClicked)
+=== stall ended after 1.6 s ===
+
+=== 2026-11-10T13:13:04 GUI thread blocked for 1.0 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 198, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 194, in main
+    return app.exec()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLViewWidget.py", line 217, in paintGL
+    self.paint(region=region, viewport=region)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLViewWidget.py", line 229, in paint
+    self.drawItemTree(useItemNames=useItemNames)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLViewWidget.py", line 261, in drawItemTree
+    self.drawItemTree(i, useItemNames=useItemNames)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLViewWidget.py", line 253, in drawItemTree
+    i.paint()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\items\GLTextItem.py", line 72, in paint
+    painter = QtGui.QPainter(self.view())
+
+--- aim-mqtt ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\aim_mqtt.py", line 195, in _network_loop
+    self.client.loop_forever(timeout=0.2, retry_first_connection=False)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\paho\mqtt\client.py", line 2297, in loop_forever
+    rc = self._loop(timeout)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\paho\mqtt\client.py", line 1663, in _loop
+    socklist = select.select(rlist, wlist, [], timeout)
+
+--- horizon_witness ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\ground_receivers.py", line 109, in _run_guarded
+    self.run()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\ground_receivers.py", line 149, in run
+    data = connection.recv(16384)
+
+--- Horizon MQTT broker ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\mqtt_broker.py", line 75, in _run
+    asyncio.run(self._serve(logger))
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 706, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 677, in run_forever
+    self._run_once()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 2058, in _run_once
+    handle = None  # Needed to break cycles when an exception occurs.
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\windows_events.py", line 453, in select
+    tmp = None
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\windows_events.py", line 817, in _poll
+    self._unregistered.clear()
+=== stall ended after 1.4 s ===
+
+=== 2026-11-10T13:16:10 GUI thread blocked for 1.0 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 84, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 80, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 131, in run
+    return app.exec()
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 155, in _run
+    readable, writable, _ = select.select(
+
+--- 6992 ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\qt_common.py", line 311, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_hitl_tab.py", line 585, in <lambda>
+    self._run_in_worker("Predicting", lambda: hg.compute_prediction(params),
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\HITL\hitl_gui.py", line 126, in compute_prediction
+    samples = sm.generate(params)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\HITL\sim_model.py", line 291, in generate
+    out.append(sim.step())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\HITL\sim_model.py", line 284, in step
+    return sample
+=== stall ended after 1.3 s ===
+
+=== 2026-11-10T13:16:14 GUI thread blocked for 1.0 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 198, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 190, in main
+    window = HorizonGroundStation(flight_layout=args.flight_layout, auto_connect=not args.no_auto_connect,
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 99, in __init__
+    self.attitude = AttitudeTab(use_gl=use_gl)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\attitude_view.py", line 450, in __init__
+    self._build(use_gl)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\attitude_view.py", line 502, in _build
+    self.scene = RocketScene(use_gl=use_gl)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\attitude_view.py", line 115, in __init__
+    self.use_gl = gl_available() if use_gl is None else bool(use_gl)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\attitude_view.py", line 60, in gl_available
+    if not context.create():
+=== stall ended after 1.8 s ===
+
+=== 2026-11-10T13:16:17 GUI thread blocked for 1.1 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 198, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 194, in main
+    return app.exec()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLViewWidget.py", line 217, in paintGL
+    self.paint(region=region, viewport=region)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLViewWidget.py", line 229, in paint
+    self.drawItemTree(useItemNames=useItemNames)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLViewWidget.py", line 261, in drawItemTree
+    self.drawItemTree(i, useItemNames=useItemNames)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLViewWidget.py", line 253, in drawItemTree
+    i.paint()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\items\GLTextItem.py", line 70, in paint
+    text_pos = self.align_text(project.map(vec3).toPointF())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\items\GLTextItem.py", line 91, in align_text
+    rect = font_metrics.tightBoundingRect(self.text)
+
+--- aim-mqtt ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\aim_mqtt.py", line 191, in _network_loop
+    self.client.reconnect()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\paho\mqtt\client.py", line 1598, in reconnect
+    self._sock = self._create_socket()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\paho\mqtt\client.py", line 4609, in _create_socket
+    sock = self._create_socket_connection()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\paho\mqtt\client.py", line 4640, in _create_socket_connection
+    return socket.create_connection(addr, timeout=self._connect_timeout, source_address=source)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\socket.py", line 855, in create_connection
+    sock.connect(sa)
+
+--- horizon_witness ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\ground_receivers.py", line 109, in _run_guarded
+    self.run()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\ground_receivers.py", line 149, in run
+    data = connection.recv(16384)
+
+--- Horizon MQTT broker ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\mqtt_broker.py", line 75, in _run
+    asyncio.run(self._serve(logger))
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 706, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 677, in run_forever
+    self._run_once()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 2058, in _run_once
+    handle = None  # Needed to break cycles when an exception occurs.
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\windows_events.py", line 453, in select
+    tmp = None
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\windows_events.py", line 817, in _poll
+    self._unregistered.clear()
+=== stall ended after 1.3 s ===
+
+=== 2026-11-10T13:24:15 GUI thread blocked for 1.1 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 84, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 80, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 130, in run
+    window.show()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\.venv\Lib\site-packages\pyqtgraph\widgets\GraphicsView.py", line 205, in resizeEvent
+    GraphicsView.setRange(self, self.range, padding=0, disableAutoPixel=False)  ## we do this because some subclasses like to redefine setRange in an incompatible way.
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 155, in _run
+    readable, writable, _ = select.select(
+
+--- 48920 ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\qt_common.py", line 311, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_hitl_tab.py", line 585, in <lambda>
+    self._run_in_worker("Predicting", lambda: hg.compute_prediction(params),
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\HITL\hitl_gui.py", line 126, in compute_prediction
+    samples = sm.generate(params)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\HITL\sim_model.py", line 291, in generate
+    out.append(sim.step())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\HITL\sim_model.py", line 284, in step
+    return sample
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\HITL\sim_model.py", line 174, in _noise
+    return self.rng.gauss(0.0, sigma) if sigma > 0 else 0.0
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\random.py", line 593, in gauss
+    return mu + z * sigma
+=== stall ended after 1.3 s ===
+
+=== 2026-11-10T13:36:44 GUI thread blocked for 1.1 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 198, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 190, in main
+    window = HorizonGroundStation(flight_layout=args.flight_layout, auto_connect=not args.no_auto_connect,
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 99, in __init__
+    self.attitude = AttitudeTab(use_gl=use_gl)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\attitude_view.py", line 450, in __init__
+    self._build(use_gl)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\attitude_view.py", line 502, in _build
+    self.scene = RocketScene(use_gl=use_gl)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\attitude_view.py", line 115, in __init__
+    self.use_gl = gl_available() if use_gl is None else bool(use_gl)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\attitude_view.py", line 60, in gl_available
+    if not context.create():
+=== stall ended after 1.9 s ===
+
+=== 2026-11-10T13:37:07 GUI thread blocked for 1.2 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 198, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 194, in main
+    return app.exec()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLViewWidget.py", line 217, in paintGL
+    self.paint(region=region, viewport=region)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLViewWidget.py", line 229, in paint
+    self.drawItemTree(useItemNames=useItemNames)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLViewWidget.py", line 261, in drawItemTree
+    self.drawItemTree(i, useItemNames=useItemNames)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLViewWidget.py", line 253, in drawItemTree
+    i.paint()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\items\GLTextItem.py", line 66, in paint
+    self.setupGLState()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLGraphicsItem.py", line 264, in setupGLState
+    func(*v)
+
+--- aim-mqtt ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\aim_mqtt.py", line 195, in _network_loop
+    self.client.loop_forever(timeout=0.2, retry_first_connection=False)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\paho\mqtt\client.py", line 2297, in loop_forever
+    rc = self._loop(timeout)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\paho\mqtt\client.py", line 1663, in _loop
+    socklist = select.select(rlist, wlist, [], timeout)
+
+--- horizon_witness ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\ground_receivers.py", line 109, in _run_guarded
+    self.run()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\ground_receivers.py", line 149, in run
+    data = connection.recv(16384)
+
+--- Horizon MQTT broker ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\mqtt_broker.py", line 75, in _run
+    asyncio.run(self._serve(logger))
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 706, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 677, in run_forever
+    self._run_once()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 2019, in _run_once
+    event_list = self._selector.select(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\windows_events.py", line 446, in select
+    self._poll(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\windows_events.py", line 775, in _poll
+    status = _overlapped.GetQueuedCompletionStatus(self._iocp, ms)
+=== stall ended after 1.3 s ===
+
+=== 2026-11-10T13:37:57 GUI thread blocked for 1.1 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 91, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 87, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 132, in run
+    window.show()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\.venv\Lib\site-packages\pyqtgraph\widgets\GraphicsView.py", line 205, in resizeEvent
+    GraphicsView.setRange(self, self.range, padding=0, disableAutoPixel=False)  ## we do this because some subclasses like to redefine setRange in an incompatible way.
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+
+--- 49820 ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\qt_common.py", line 311, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_hitl_tab.py", line 585, in <lambda>
+    self._run_in_worker("Predicting", lambda: hg.compute_prediction(params),
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\HITL\hitl_gui.py", line 126, in compute_prediction
+    samples = sm.generate(params)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\HITL\sim_model.py", line 291, in generate
+    out.append(sim.step())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\HITL\sim_model.py", line 284, in step
+    return sample
+=== stall ended after 1.3 s ===
+
+=== 2026-11-10T13:38:26 GUI thread blocked for 1.0 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 204, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 196, in main
+    window = HorizonGroundStation(flight_layout=args.flight_layout, auto_connect=not args.no_auto_connect,
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 101, in __init__
+    self.attitude = AttitudeTab(use_gl=use_gl)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\attitude_view.py", line 450, in __init__
+    self._build(use_gl)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\attitude_view.py", line 502, in _build
+    self.scene = RocketScene(use_gl=use_gl)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\attitude_view.py", line 115, in __init__
+    self.use_gl = gl_available() if use_gl is None else bool(use_gl)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\attitude_view.py", line 60, in gl_available
+    if not context.create():
+=== stall ended after 1.8 s ===
+
+=== 2026-11-10T13:38:32 GUI thread blocked for 1.0 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 204, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 200, in main
+    return app.exec()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLViewWidget.py", line 217, in paintGL
+    self.paint(region=region, viewport=region)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLViewWidget.py", line 229, in paint
+    self.drawItemTree(useItemNames=useItemNames)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLViewWidget.py", line 261, in drawItemTree
+    self.drawItemTree(i, useItemNames=useItemNames)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\GLViewWidget.py", line 253, in drawItemTree
+    i.paint()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\items\GLTextItem.py", line 70, in paint
+    text_pos = self.align_text(project.map(vec3).toPointF())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\opengl\items\GLTextItem.py", line 91, in align_text
+    rect = font_metrics.tightBoundingRect(self.text)
+
+--- aim-mqtt ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\aim_mqtt.py", line 195, in _network_loop
+    self.client.loop_forever(timeout=0.2, retry_first_connection=False)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\paho\mqtt\client.py", line 2297, in loop_forever
+    rc = self._loop(timeout)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\paho\mqtt\client.py", line 1707, in _loop
+    return self.loop_misc()
+
+--- horizon_witness ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\ground_receivers.py", line 120, in _run_guarded
+    self.run()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\ground_receivers.py", line 196, in run
+    data = connection.recv(16384)
+
+--- Horizon MQTT broker ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\mqtt_broker.py", line 75, in _run
+    asyncio.run(self._serve(logger))
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 706, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 677, in run_forever
+    self._run_once()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 2019, in _run_once
+    event_list = self._selector.select(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\windows_events.py", line 446, in select
+    self._poll(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\windows_events.py", line 775, in _poll
+    status = _overlapped.GetQueuedCompletionStatus(self._iocp, ms)
+=== stall ended after 1.2 s ===
+
+=== 2026-11-10T13:43:51 GUI thread blocked for 1.1 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 204, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 200, in main
+    return app.exec()
+
+--- osm-tiles ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\map_tiles.py", line 193, in _run
+    key = self._next()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\map_tiles.py", line 187, in _next
+    self._lock.wait(timeout=max(0.05, wait) if wait > 0 else 0.5)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 373, in wait
+    gotit = waiter.acquire(True, timeout)
+
+--- aim-mqtt ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\aim_mqtt.py", line 195, in _network_loop
+    self.client.loop_forever(timeout=0.2, retry_first_connection=False)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\paho\mqtt\client.py", line 2297, in loop_forever
+    rc = self._loop(timeout)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\paho\mqtt\client.py", line 1663, in _loop
+    socklist = select.select(rlist, wlist, [], timeout)
+
+--- horizon_witness ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\ground_receivers.py", line 120, in _run_guarded
+    self.run()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\ground_receivers.py", line 196, in run
+    data = connection.recv(16384)
+
+--- Horizon MQTT broker ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\mqtt_broker.py", line 75, in _run
+    asyncio.run(self._serve(logger))
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 706, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 677, in run_forever
+    self._run_once()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 2019, in _run_once
+    event_list = self._selector.select(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\windows_events.py", line 446, in select
+    self._poll(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\windows_events.py", line 775, in _poll
+    status = _overlapped.GetQueuedCompletionStatus(self._iocp, ms)
+=== stall ended after 2.0 s ===
+
+=== 2026-11-10T18:23:07 GUI thread blocked for 1.0 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 91, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 87, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 133, in run
+    return app.exec()
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+=== stall ended after 1.2 s ===
+
+=== 2026-11-10T18:36:10 GUI thread blocked for 782.5 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 91, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 87, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 133, in run
+    return app.exec()
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+=== stall ended after 783.2 s ===
+
+=== 2026-11-10T19:00:23 GUI thread blocked for 301.4 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 91, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 87, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 133, in run
+    return app.exec()
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+=== stall ended after 302.0 s ===
+
+=== 2026-11-10T20:24:41 GUI thread blocked for 5053.0 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 91, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 87, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 133, in run
+    return app.exec()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\monitor_core.py", line 288, in auto_poll
+    self.discovery.refresh()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\serial_discovery.py", line 99, in refresh
+    self._thread.start()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1011, in start
+    self._started.wait()  # Will set ident and native_id
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 670, in wait
+    signaled = self._cond.wait(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 369, in wait
+    waiter.acquire()
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+=== stall ended after 5053.5 s ===
+
+=== 2026-11-10T20:24:49 GUI thread blocked for 5.3 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 91, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 87, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 133, in run
+    return app.exec()
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+=== stall ended after 2399.6 s ===
+
+=== 2026-11-10T21:04:46 GUI thread blocked for 1.1 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 91, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 87, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 133, in run
+    return app.exec()
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+=== stall ended after 1.3 s ===
+
+=== 2026-11-10T23:08:28 GUI thread blocked for 1.1 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 204, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 199, in main
+    window.show()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\pyqtgraph\widgets\GraphicsView.py", line 200, in resizeEvent
+    def resizeEvent(self, ev):
+
+--- Horizon MQTT broker ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\mqtt_broker.py", line 75, in _run
+    asyncio.run(self._serve(logger))
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 706, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 677, in run_forever
+    self._run_once()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 2057, in _run_once
+    handle._run()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\mqtt_broker.py", line 92, in _serve
+    from amqtt.broker import Broker
+  File "<frozen importlib._bootstrap>", line 1371, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1342, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 938, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 759, in exec_module
+  File "<frozen importlib._bootstrap>", line 491, in _call_with_frames_removed
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\amqtt\broker.py", line 13, in <module>
+    import websockets.asyncio.server
+  File "<frozen importlib._bootstrap>", line 1371, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1314, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 491, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1371, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1314, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 491, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1371, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1342, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 938, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 759, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 888, in get_code
+  File "<frozen importlib._bootstrap_external>", line 950, in get_data
+=== stall ended after 1.5 s ===
+
+=== 2026-11-11T02:45:13 GUI thread blocked for 3636.1 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 91, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 87, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 133, in run
+    return app.exec()
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+=== stall ended after 3636.9 s ===
+
+=== 2026-11-11T02:45:13 GUI thread blocked for 3636.7 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 204, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 200, in main
+    return app.exec()
+
+--- osm-tiles ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\map_tiles.py", line 193, in _run
+    key = self._next()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\map_tiles.py", line 187, in _next
+    self._lock.wait(timeout=max(0.05, wait) if wait > 0 else 0.5)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 373, in wait
+    gotit = waiter.acquire(True, timeout)
+
+--- aim-mqtt ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\aim_mqtt.py", line 195, in _network_loop
+    self.client.loop_forever(timeout=0.2, retry_first_connection=False)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\paho\mqtt\client.py", line 2297, in loop_forever
+    rc = self._loop(timeout)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\paho\mqtt\client.py", line 1707, in _loop
+    return self.loop_misc()
+
+--- horizon_witness ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\ground_receivers.py", line 120, in _run_guarded
+    self.run()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\ground_receivers.py", line 196, in run
+    data = connection.recv(16384)
+
+--- Horizon MQTT broker ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\mqtt_broker.py", line 75, in _run
+    asyncio.run(self._serve(logger))
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 706, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 677, in run_forever
+    self._run_once()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 2058, in _run_once
+    handle = None  # Needed to break cycles when an exception occurs.
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\windows_events.py", line 453, in select
+    tmp = None
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\windows_events.py", line 817, in _poll
+    self._unregistered.clear()
+=== stall ended after 3638.2 s ===
+
+=== 2026-11-11T02:46:22 GUI thread blocked for 1.1 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 91, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 87, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 133, in run
+    return app.exec()
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+
+=== 2026-11-11T02:46:22 GUI thread blocked for 1.2 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 204, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\horizon.py", line 200, in main
+    return app.exec()
+
+--- osm-tiles ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\map_tiles.py", line 193, in _run
+    key = self._next()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\map_tiles.py", line 187, in _next
+    self._lock.wait(timeout=max(0.05, wait) if wait > 0 else 0.5)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 373, in wait
+    gotit = waiter.acquire(True, timeout)
+
+--- aim-mqtt ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\aim_mqtt.py", line 195, in _network_loop
+    self.client.loop_forever(timeout=0.2, retry_first_connection=False)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\paho\mqtt\client.py", line 2297, in loop_forever
+    rc = self._loop(timeout)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\.venv\Lib\site-packages\paho\mqtt\client.py", line 1663, in _loop
+    socklist = select.select(rlist, wlist, [], timeout)
+
+--- horizon_witness ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\ground_receivers.py", line 120, in _run_guarded
+    self.run()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\ground_receivers.py", line 196, in run
+    data = connection.recv(16384)
+
+--- Horizon MQTT broker ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\mqtt_broker.py", line 75, in _run
+    asyncio.run(self._serve(logger))
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 706, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 677, in run_forever
+    self._run_once()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\base_events.py", line 2019, in _run_once
+    event_list = self._selector.select(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\windows_events.py", line 446, in select
+    self._poll(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\windows_events.py", line 775, in _poll
+    status = _overlapped.GetQueuedCompletionStatus(self._iocp, ms)
+=== stall ended after 1.2 s ===
+=== stall ended after 1.6 s ===
+
+=== 2026-11-12T23:17:54 GUI thread blocked for 5.1 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 91, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 87, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 133, in run
+    return app.exec()
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 246, in _run
+    readable, writable, _ = select.select(
+=== stall ended after 5.4 s ===

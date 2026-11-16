@@ -1,0 +1,4 @@
+{"event": "status", "received_at": "2026-11-10T20:57:33.306+00:00", "message": "Connecting to localhost:1883..."}
+{"event": "status", "received_at": "2026-11-10T20:57:35.357+00:00", "message": "Subscribing to entacore/aim/1234/#..."}
+{"event": "status", "received_at": "2026-11-10T20:57:35.360+00:00", "message": "Subscribed to entacore/aim/1234/#; waiting for telemetry"}
+{"event": "status", "received_at": "2026-11-10T20:59:48.257+00:00", "message": "Disconnected"}

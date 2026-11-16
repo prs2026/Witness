@@ -1,0 +1,2 @@
+2026-11-10 23:08:29,451 INFO Listening on 127.0.0.1:1883 (local-only, MQTT 3.1.1)
+2026-11-10 23:15:27,601 INFO Broker stopped; sessions and retained messages cleared
