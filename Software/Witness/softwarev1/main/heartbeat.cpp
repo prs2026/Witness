@@ -8,6 +8,7 @@
 
 #include <cstdint>
 
+#include "bit_policy.h"
 #include "comms.h"
 #include "driver/gpio.h"
 #include "driver/ledc.h"
@@ -203,6 +204,15 @@ void Heartbeat::play_buzzer_pattern()
     return;
 #else
     ++buzzer_cycle_;
+    if (bit::led_nogo() &&
+        (witness_status_.flight_state() & IRIS_WITNESS_STATUS_FLIGHT_STATE_MASK) == IRIS_FLIGHT_STATE_PAD_IDLE) {
+        // BIT NO-GO: the same 4-pulse pattern as the LED.
+        for (unsigned tone = 0; tone < bit::policy::kNoGoPulses; ++tone) {
+            beep(100);
+            vTaskDelay(pdMS_TO_TICKS(100));
+        }
+        return;
+    }
     const std::uint8_t flight_state = static_cast<std::uint8_t>(
         witness_status_.flight_state() &
         IRIS_WITNESS_STATUS_FLIGHT_STATE_MASK);
@@ -329,7 +339,14 @@ void Heartbeat::run()
             log_stack_margins();
         }
         queue_heartbeat_packet();
-        blink_gpio();
+        // BIT NO-GO (Pad Idle only): 4 pulses instead of 1 (owner decision Q6); the buzzer follows below.
+        const bool bit_nogo = bit::led_nogo() &&
+                              (witness_status_.flight_state() & IRIS_WITNESS_STATUS_FLIGHT_STATE_MASK) == IRIS_FLIGHT_STATE_PAD_IDLE;
+        const unsigned pulses = bit::policy::pulses(1U, bit_nogo);
+        for (unsigned pulse = 0; pulse < pulses; ++pulse) {
+            if (pulse != 0U) vTaskDelay(kPulseDuration);
+            blink_gpio();
+        }
         play_buzzer_pattern();
     }
 }

@@ -18,6 +18,7 @@ class SpiDataForwarder;
 class FlashLogger;
 class FlightStateMachine;
 class CommandBridge;
+class BitMonitor;
 
 class UsbSerialEcho final {
 public:
@@ -34,6 +35,8 @@ public:
 
     // Installs the built-in USB Serial/JTAG driver and starts the echo task.
     esp_err_t start();
+    // Built-in self test (bit_monitor.h): receives the BIT opcodes and sends their acks through send_ack.
+    void set_bit_monitor(BitMonitor *monitor);
 
 private:
     static constexpr UBaseType_t kTaskPriority = 3;
@@ -130,6 +133,8 @@ private:
     void send_ack(bool radio, std::uint16_t command, const std::uint8_t *data6, std::uint8_t result,
                   std::uint16_t detail = 0);
     void send_transfer_status(bool radio, const std::uint8_t *data6);
+    static void bit_ack_sink(void *context, bool radio, std::uint16_t command, const std::uint8_t *data6,
+                             std::uint8_t result, std::uint16_t detail);
     void send_reply(bool radio, std::uint8_t packet_id, const std::uint8_t *payload,
                     std::size_t length);
     void set_camera_state(std::size_t camera_index, bool enabled);
@@ -141,6 +146,7 @@ private:
     FlashLogger &flash_logger_;
     FlightStateMachine &flight_state_machine_;
     CommandBridge &command_bridge_;
+    BitMonitor *bit_monitor_ = nullptr;
     TaskHandle_t task_handle_ = nullptr;
     // Maintenance switch / Landed reset restart waiting for its timer.
     command_policy::PendingRestart pending_restart_ = command_policy::PendingRestart::None;

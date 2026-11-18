@@ -121,6 +121,47 @@
 #define IRIS_COMMAND_BENCH_RESTART 0x4252U
 #define IRIS_BENCH_RESTART_SOFTWARE 0x00U
 #define IRIS_BENCH_RESTART_PANIC 0x01U
+// Built-in self test (BIT), see Software/BIT_PLAN_2026-11-18.md. Local to
+// Witness: never forwarded to Iris.
+//  BIT_RUN (USB and radio): runs a commanded BIT. Pad Idle and Landed only,
+//   refused (IRIS_ACK_REFUSED) in Boost, Coast and Descent, after a warm reset
+//   in flight, and while a run is in progress (IRIS_ACK_BUSY). d0 = 0 full run,
+//   1 passive snapshot only; d1 = option bits IRIS_BIT_OPTION_*; d2..d5 = nonce
+//   echoed in the ack. Reserved option bits -> IRIS_ACK_BAD_ARGUMENT. The ack
+//   detail is the verdict in the high byte and the number of groups with a
+//   blocking failure in the low byte (the radio operator gets go/no-go from the
+//   ack alone). The summary (0x0B) and detail (0x10) packets follow.
+//  BIT_REPORT (USB and radio, any state except Boost): d0 = page, 0xFF = the
+//   summary only; answers with 0x0B, or 0x10 page d0. Never runs a test.
+//  BIT_CONFIG: reserved for the future camera option; answered IRIS_ACK_UNKNOWN.
+//  BIT_FAULT (bench, flight image): HITL active, canonical USB frame only,
+//   never from radio, never forwarded. d0 = fault id IRIS_BIT_FAULT_*, d1 = 1
+//   on / 0 off, d2..d3 = duration ms (0 = 60 s, the maximum; faults always
+//   expire). A fault changes only what the BIT sees, never a flight function.
+#define IRIS_COMMAND_BIT_RUN 0x5442U
+#define IRIS_COMMAND_BIT_REPORT 0x5452U
+#define IRIS_COMMAND_BIT_CONFIG 0x5443U
+#define IRIS_COMMAND_BIT_FAULT 0x4246U
+#define IRIS_BIT_RUN_FULL 0x00U
+#define IRIS_BIT_RUN_PASSIVE 0x01U
+#define IRIS_BIT_OPTION_IMU_SELF_TEST (1U << 0)
+#define IRIS_BIT_OPTION_IMAGE_HEAP (1U << 1)
+#define IRIS_BIT_OPTION_NOT_VERTICAL (1U << 2)
+#define IRIS_BIT_OPTION_INDOOR (1U << 3)
+#define IRIS_BIT_OPTION_BENCH (1U << 4)
+#define IRIS_BIT_OPTION_CAMERA (1U << 7)   /* reserved: refused */
+#define IRIS_BIT_OPTION_RESERVED_MASK 0x60U
+#define IRIS_BIT_REPORT_SUMMARY 0xFFU
+#define IRIS_BIT_FAULT_NAND_WRITE 1U
+#define IRIS_BIT_FAULT_NAND_ECC 2U
+#define IRIS_BIT_FAULT_IMU_SILENT 3U
+#define IRIS_BIT_FAULT_BARO_FROZEN 4U
+#define IRIS_BIT_FAULT_RADIO 5U
+#define IRIS_BIT_FAULT_GRAVITY 6U
+#define IRIS_BIT_FAULT_HEAP_PRESSURE 8U
+#define IRIS_BIT_FAULT_LOGGER_STALL 9U
+#define IRIS_BIT_FAULT_WDT_UNSUBSCRIBED 10U
+#define IRIS_BIT_FAULT_CLEAR_ALL 0xFFU
 // IMU calibration (USB only, Pad Idle, real sensors): 0x05, 0x43, then one of
 // these arguments. GYRO captures 2 s still and stores the gyro bias; FACE
 // captures 2 s on one face (+/-X, +/-Y, +/-Z, any order) and, after all six,
@@ -824,6 +865,62 @@
 #define IRIS_LANDED_FLAG_STALE (1U << 1)
 #define IRIS_LANDED_FLAG_PING_REPLY (1U << 2)
 #define IRIS_LANDED_FLAG_UTC_ALIGNED (1U << 3)
+
+// ---------------------------------------------------------------------------
+// BIT summary (0x0B) and BIT detail (0x10), Witness -> ground. See
+// Software/BIT_PLAN_2026-11-18.md. 0x0A is the end-of-frame byte and 0x0D is CR,
+// so neither is used as a packet ID.
+//
+// 0x0B summary, 12 data bytes:
+//   [0]     bits 7..4 version (1); bits 2..0 verdict IRIS_BIT_VERDICT_*;
+//           bit 3 bench flag (every blocking failure is a bench condition)
+//   [1]     bits 1..0 run kind (0 startup, 1 commanded, 2 passive); bits 4..2
+//           flight state; bit 5 core done; bit 6 settled; bit 7 active tests ran
+//   [2..3]  groups with a blocking failure (u16 BE, bit = group)
+//   [4..5]  groups with a degraded failure
+//   [6..7]  groups not evaluated yet
+//   [8]     first failing check ID (group << 4 | check; blocking first; 0 none)
+//   [9]     run sequence (wraps)
+//   [10..11] seconds since the last evaluation (saturating)
+// Groups 9, 10, 13 (ground) and 15 are reserved: the masks carry 0 for them.
+#define IRIS_PACKET_ID_BIT_SUMMARY 0x0BU
+#define IRIS_PACKET_BIT_SUMMARY_VERSION 1U
+#define IRIS_PACKET_BIT_SUMMARY_DATA_LENGTH 12U
+#define IRIS_PACKET_BIT_SUMMARY_FRAME_LENGTH \
+    (IRIS_PACKET_ID_LENGTH + IRIS_PACKET_BIT_SUMMARY_DATA_LENGTH + IRIS_PACKET_EOF_LENGTH)
+#define IRIS_BIT_VERDICT_NOT_RUN 0U
+#define IRIS_BIT_VERDICT_RUNNING 1U
+#define IRIS_BIT_VERDICT_GO 2U
+#define IRIS_BIT_VERDICT_GO_WITH_WARNINGS 3U
+#define IRIS_BIT_VERDICT_NO_GO 4U
+#define IRIS_BIT_SUMMARY_BENCH_FLAG 0x08U
+#define IRIS_BIT_SUMMARY_CORE_DONE_FLAG 0x20U
+#define IRIS_BIT_SUMMARY_SETTLED_FLAG 0x40U
+#define IRIS_BIT_SUMMARY_ACTIVE_FLAG 0x80U
+//
+// 0x10 detail, 99 data bytes (fixed length): [0] page, [1] page count, [2] run
+// sequence, then 24 records of 4 bytes: check ID (0xFF = unused record), flags
+// (bits 2..0 result, bits 4..3 class, bit 5 bench), measured value (u16 BE).
+// Page p holds the checks 24p .. 24p+23 of the firmware's check table
+// (bit_types.h); Horizon (bit_model.py) carries the same table.
+#define IRIS_PACKET_ID_BIT_DETAIL 0x10U
+#define IRIS_PACKET_BIT_DETAIL_RECORDS 24U
+#define IRIS_PACKET_BIT_DETAIL_RECORD_LENGTH 4U
+#define IRIS_PACKET_BIT_DETAIL_HEADER_LENGTH 3U
+#define IRIS_PACKET_BIT_DETAIL_DATA_LENGTH 99U
+#define IRIS_PACKET_BIT_DETAIL_FRAME_LENGTH \
+    (IRIS_PACKET_ID_LENGTH + IRIS_PACKET_BIT_DETAIL_DATA_LENGTH + IRIS_PACKET_EOF_LENGTH)
+#define IRIS_BIT_RESULT_PASS 0U
+#define IRIS_BIT_RESULT_FAIL 1U
+#define IRIS_BIT_RESULT_SKIPPED 2U
+#define IRIS_BIT_RESULT_NOT_APPLICABLE 3U
+#define IRIS_BIT_RESULT_NOT_YET 4U
+#define IRIS_BIT_RESULT_ERROR 5U
+#define IRIS_BIT_CLASS_INFO 0U
+#define IRIS_BIT_CLASS_DEGRADED 1U
+#define IRIS_BIT_CLASS_BLOCKING 2U
+#define IRIS_BIT_DETAIL_BENCH_FLAG 0x20U
+#define IRIS_BIT_DETAIL_UNUSED_ID 0xFFU
 
 // ---------------------------------------------------------------------------
 

@@ -27,7 +27,8 @@ else()
                      "accel_filter.cpp" "position_filter.cpp" "heading_align.cpp"
                      "imu_calibration.cpp" "imu_calibration_store.cpp" "radio_power_store.cpp" "ms5607.cpp"
                      "sensors.cpp" "sensors_landed.cpp" "spi_data_forwarder.cpp" "heartbeat.cpp" "main.cpp"
-                     "usb_serial_echo.cpp" "flight_state_store.cpp" "flight_selftest.cpp")
+                     "usb_serial_echo.cpp" "flight_state_store.cpp" "flight_selftest.cpp"
+                     "bit_monitor.cpp" "flash_logger_bit.cpp")
     # (main/idf_component.yml also lists esp_tinyusb, which the component
     # manager therefore builds for this image too, but nothing here references
     # it, so none of it is linked: verified in the map and size-components.)
