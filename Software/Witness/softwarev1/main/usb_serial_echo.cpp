@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstring>
 
+#include "bit_monitor.h"
 #include "command_bridge.h"
 #include "command_policy.h"
 #include "driver/usb_serial_jtag.h"
@@ -473,7 +474,8 @@ void UsbSerialEcho::finish_binary_command()
         packet_length == IRIS_PACKET_COMMAND_FRAME_LENGTH &&
         (gps_assist::is_assist_command(frame_opcode) ||
          frame_opcode == IRIS_COMMAND_GPS_COLD_START ||
-         frame_opcode == IRIS_COMMAND_BENCH_RESTART);
+         frame_opcode == IRIS_COMMAND_BENCH_RESTART ||
+         bit::policy::is_bit_command(frame_opcode));   // BIT is local to Witness: never forwarded
     if (packet_length > 1U) {
         if (!assist_frame) {
             forward_usb_command(
@@ -548,6 +550,11 @@ void UsbSerialEcho::process_canonical_binary_command(
         vTaskDelay(pdMS_TO_TICKS(100));   // let the ack leave over USB
         if (mode == IRIS_BENCH_RESTART_PANIC) abort();
         esp_restart();
+    }
+    if (bit::policy::is_bit_command(command)) {
+        if (bit_monitor_ != nullptr) bit_monitor_->handle_command(command, args, false);
+        else send_ack(false, command, args, IRIS_ACK_UNKNOWN);
+        return;
     }
     if (command == IRIS_COMMAND_WITNESS_DEBUG_START) {
         // Canonical 05 .. 00 E0 0A, as the HITL tool sends it. The compact
@@ -687,6 +694,11 @@ void UsbSerialEcho::process_radio_command(
     if (gps_assist::is_assist_command(command)) {
         // Chunked upload: logged per transfer, not per frame.
         if (canonical) handle_gps_assist(command, args, "radio", true);
+        return;
+    }
+    if (bit::policy::is_bit_command(command)) {
+        if (canonical && bit_monitor_ != nullptr) bit_monitor_->handle_command(command, args, true);
+        else ack(IRIS_ACK_UNKNOWN);
         return;
     }
     if (command == IRIS_COMMAND_PAD_HEADING) {
@@ -1064,6 +1076,18 @@ void UsbSerialEcho::send_ack(const bool radio, const std::uint16_t command, cons
     payload[9] = static_cast<std::uint8_t>(detail >> 8U);
     payload[10] = static_cast<std::uint8_t>(detail);
     send_reply(radio, IRIS_PACKET_ID_COMMAND_ACK, payload, sizeof(payload));
+}
+
+void UsbSerialEcho::set_bit_monitor(BitMonitor *monitor)
+{
+    bit_monitor_ = monitor;
+    if (monitor != nullptr) monitor->set_ack_sink(&UsbSerialEcho::bit_ack_sink, this);
+}
+
+void UsbSerialEcho::bit_ack_sink(void *context, const bool radio, const std::uint16_t command,
+                                 const std::uint8_t *data6, const std::uint8_t result, const std::uint16_t detail)
+{
+    static_cast<UsbSerialEcho *>(context)->send_ack(radio, command, data6, result, detail);
 }
 
 void UsbSerialEcho::send_transfer_status(const bool radio, const std::uint8_t *data6)

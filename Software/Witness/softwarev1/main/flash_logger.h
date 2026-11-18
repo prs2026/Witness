@@ -77,6 +77,7 @@ public:
     // frame = [u8 kind=1 (resumed)] [u8 flight state] [u32 BE session generation].
     // Timestamps (u32 us), IMU sequence and WL sequence restart after it.
     static constexpr std::uint8_t kPacketSourceLogMarker = 6;
+    static constexpr std::uint8_t kPacketSourceBit = 7;     // BIT 0x0B / 0x10 frames and the 6.3 marker
     static constexpr std::size_t kPacketRecordHeader = 6;   // u32 us, source, length
     static constexpr std::size_t kMaxPacketFrame = 103;     // intercomm limit
     // Any task may call this; never blocks (a full queue drops and counts).
@@ -173,6 +174,7 @@ public:
     std::uint32_t unreadable_page_count() const { return unreadable_pages_; }
 
 private:
+    friend class BitProbe;   // read-only BIT probes and the BIT request/result words (bit_monitor.cpp)
     static constexpr TickType_t kLogPeriod =
         pdMS_TO_TICKS(1000U / kLogRateHz);
     static constexpr std::size_t kRecordSize = 24;
@@ -362,6 +364,22 @@ private:
     void install_log_capture();
     void run_capture();
     void run();
+    // BIT active-test slices (flash_logger_bit.cpp, flight image): requested by the BIT
+    // task through bit_request_, run here between the normal drain and flush steps.
+    static constexpr std::uint8_t kBitRequestNone = 0, kBitRequestEndToEnd = 1,
+                                  kBitRequestNandWrite = 2, kBitRequestCancel = 0xFF;
+    static constexpr std::uint8_t kBitStateIdle = 0, kBitStatePending = 1, kBitStatePass = 2,
+                                  kBitStateFail = 3, kBitStateError = 4;
+    void bit_slice(bool flushed);
+    void bit_finish(std::uint8_t state, std::uint16_t value);
+    std::atomic<std::uint8_t> bit_request_{0};
+    std::atomic<std::uint8_t> bit_state_{0};
+    std::atomic<std::uint16_t> bit_value_{0};
+    std::atomic<std::uint32_t> bit_passes_{0};      // loop passes: the logger heartbeat (check 6.5)
+    std::uint8_t bit_nonce_[4]{};
+    std::uint8_t bit_phase_ = 0;                    // logger task only
+    std::uint32_t bit_started_ms_ = 0;
+    std::uint32_t bit_pages_before_ = 0;
 
     Sensors *sensors_;
     WitnessStatus &witness_status_;

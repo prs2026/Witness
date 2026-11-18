@@ -23,6 +23,11 @@ public:
             base_counter_ = counter; base_ms_ = now_ms; have_base_ = true;
             return valid_;
         }
+        if (counter < base_counter_) {
+            // The owner reset its counter (the sensor task clears them with its 10 s report): start a new window.
+            base_counter_ = counter; base_ms_ = now_ms;
+            return valid_;
+        }
         const std::uint32_t dt = now_ms - base_ms_;
         if (dt >= window_ms_) {
             rate_hz_ = static_cast<float>(static_cast<std::uint32_t>(counter - base_counter_)) * 1000.0F /
@@ -50,7 +55,8 @@ public:
     bool update(const std::uint32_t counter, const std::uint32_t now_ms)
     {
         if (!have_) { last_ = counter; have_ = true; }
-        if (counter != last_) { last_ = counter; grew_ms_ = now_ms; grew_ = true; }
+        if (counter > last_) { grew_ms_ = now_ms; grew_ = true; }
+        last_ = counter;   // a smaller value means the owner reset the counter: not growth
         return grew_ && static_cast<std::uint32_t>(now_ms - grew_ms_) < hold_ms_;
     }
     void reset() { have_ = false; grew_ = false; }

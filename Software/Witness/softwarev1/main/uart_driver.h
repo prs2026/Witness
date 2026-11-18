@@ -87,6 +87,7 @@ public:
     static constexpr std::uint32_t kProbeMinimumEdges = 40;
 
 private:
+    friend class BitProbe;   // read-only BIT probes (bit_monitor.cpp)
     static constexpr std::size_t kDriverBufferSize = 8192;
     RxProbe probe_rx(std::uint32_t window_ms);
     void select_gps_pins();

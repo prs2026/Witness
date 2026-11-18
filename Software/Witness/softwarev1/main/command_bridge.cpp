@@ -2,6 +2,7 @@
 
 #include <cstring>
 
+#include "bit_policy.h"
 #include "command_policy.h"
 #include "comms.h"
 #include "freertos/FreeRTOS.h"
@@ -92,7 +93,8 @@ esp_err_t CommandBridge::submit_radio_command(
                             opcode == IRIS_COMMAND_GPS_ASSIST_DATA ||
                             opcode == IRIS_COMMAND_GPS_ASSIST_COMMIT ||
                             opcode == IRIS_COMMAND_GPS_ASSIST_STATUS ||
-                            opcode == IRIS_COMMAND_GPS_COLD_START;
+                            opcode == IRIS_COMMAND_GPS_COLD_START ||
+                            bit::policy::is_bit_command(opcode);   // BIT is local to Witness
     const esp_err_t policy_result = local_only ? ESP_OK : check_policy(canonical);
     const esp_err_t transport_result =
         local_only ? ESP_OK

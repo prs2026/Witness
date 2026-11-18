@@ -1,3 +1,4 @@
+#include "bit_monitor.h"
 #include "command_bridge.h"
 #include "cpu_load.h"
 #include "can_link.h"
@@ -117,6 +118,11 @@ extern "C" void app_main(void)
     const esp_err_t selftest_result = flight_selftest::start(witness_status, sensors, flight_state_machine);
     if (selftest_result != ESP_OK)
         ESP_LOGW("main", "flight self-test task start failed: %s", esp_err_to_name(selftest_result));
+    // Built-in self test: a low-priority core-0 task that only reports (BIT_PLAN_2026-11-18.md).
+    static BitMonitor bit_monitor(sensors, flash_logger, flight_state_machine, gps_uart, witness_status,
+                                  spi_data_forwarder, resumed);
+    usb_serial_echo.set_bit_monitor(&bit_monitor);
+    note_start("BIT", bit_monitor.start());
     static CpuLoadMonitor cpu_load;
     const esp_err_t cpu_result = cpu_load.start();
     if (cpu_result != ESP_OK)

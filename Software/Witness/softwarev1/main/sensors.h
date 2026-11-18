@@ -232,6 +232,7 @@ public:
     esp_err_t request_calibration(std::uint8_t argument);
 
 private:
+    friend class BitProbe;   // read-only BIT probes (bit_monitor.cpp)
     static_assert(kTaskRateHz > 0 && (1000U % kTaskRateHz) == 0,
                   "Sensors task rate must divide evenly into 1000 ms");
     // The IMU/attitude loop is a whole number of scheduler ticks

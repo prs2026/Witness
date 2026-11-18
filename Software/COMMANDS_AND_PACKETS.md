@@ -203,3 +203,15 @@ match, a new command, or an Iris reboot). It never gives up.
 
 The maintenance image accepts `0x5746` (on extends the window, off returns to
 flight, d0 = 2 status) and `0x5250`. Everything else is acked UNKNOWN.
+
+
+## Built-in self test (BIT), see BIT_PLAN_2026-11-18.md
+
+| Opcode | Meaning | Data | Radio | State rule |
+|---|---|---|---|---|
+| `0x5442` | BIT run | d0 0 full / 1 passive, d1 options (bit0 IMU self-test, bit1 image+heap, bit2 not vertical, bit3 indoor, bit4 bench; bits 5-7 refused), d2-d5 nonce | yes | Pad Idle and Landed only; refused after a warm reset in flight; BUSY while running. Ack comes at the end of the run, detail = verdict (high byte) + number of blocking-failed groups. Gate refusal: detail 0x8000 + reason |
+| `0x5452` | BIT report | d0 page (0xFF summary) | yes | any state except Boost |
+| `0x5443` | reserved (camera option) | | | answered UNKNOWN |
+| `0x4246` | BIT fault injection (bench, flight image) | d0 fault id, d1 on/off, d2-d3 ms (max 60 s), d4 heap level | never | HITL active, canonical USB only, never forwarded |
+
+None of them is forwarded to Iris. Packets: `0x0B` summary (12 data bytes, 1 Hz on USB, on change and every 10 s while not GO on radio) and `0x10` detail (99 data bytes, 24 records), both logged as NAND packet source 7. Layouts are in `comms.h`.

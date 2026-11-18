@@ -1280,6 +1280,12 @@ void FlashLogger::run() {
             r = flash_.initialize();
             chip_ready = r == ESP_OK;
         }
+        // After a warm reset in flight the NAND start-up test is skipped (owner decision, BIT plan Q13):
+        // it erases and programs a block before logging resumes, and in flight every data point counts.
+        if (r == ESP_OK && !self_test_done && resumed_in_flight_) {
+            self_test_done = true;
+            ESP_LOGW(kLogTag, "resumed in flight: NAND start-up test skipped");
+        }
         if (r == ESP_OK && !self_test_done) {
             r = run_startup_self_test();
             if (r != ESP_OK && init_failures >= 2) {
@@ -1503,6 +1509,10 @@ void FlashLogger::run() {
                 reported_drops = drops;
             }
         }
+#if !CONFIG_WITNESS_IMAGE_MAINTENANCE
+        // BIT active-test slice (commanded runs only; a no-op otherwise).
+        if (r == ESP_OK) bit_slice(last_flush == now);
+#endif
         if (r != ESP_OK) {
             // Never end the task on an error (previously: capture off, task
             // deleted, logging lost until power cycle). Buffers keep their data

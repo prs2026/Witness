@@ -670,10 +670,13 @@ public:
         kind_ = kind;
         run_start_ms_ = now_ms;
         immediate_ = kind == RunKind::Commanded;
+        started_ = true;
         if (kind != RunKind::Passive) {
+            // A startup or commanded run starts from scratch; a passive monitor
+            // keeps the slots (and their debounce state) it has.
             for (auto &s : slots_) s = Slot{};
-            started_ = true;
             ++sequence_;
+            active_ran_ = false;
         }
     }
 

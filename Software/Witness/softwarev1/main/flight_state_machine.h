@@ -175,6 +175,7 @@ public:
     static const char *state_name(State state);
 
 private:
+    friend class BitProbe;   // read-only BIT probes (bit_monitor.cpp)
     static_assert(FLIGHT_LOG_BIN_PAD_IDLE == 0 || FLIGHT_LOG_BIN_PAD_IDLE == 1);
     static_assert(FLIGHT_LOG_BIN_BOOST == 0 || FLIGHT_LOG_BIN_BOOST == 1);
     static_assert(FLIGHT_LOG_BIN_COAST == 0 || FLIGHT_LOG_BIN_COAST == 1);

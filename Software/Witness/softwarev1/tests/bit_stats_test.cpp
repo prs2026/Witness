@@ -17,10 +17,13 @@ int main()
         CHECK(!m.update(960, 1000));            // window not complete
         CHECK(m.update(1920, 2000));
         CHECK(near(m.rate_hz(), 960.0F, 0.5F));
-        // counter wrap
+        // The owner resets its counter (sensor task, every 10 s): the meter rebases and keeps its rate.
         RateMeter w;
-        w.update(0xFFFFFF00U, 0);
-        w.update(0xFFFFFF00U + 1920U, 2000);
+        w.update(0, 0);
+        w.update(1920, 2000);
+        CHECK(near(w.rate_hz(), 960.0F, 0.5F));
+        w.update(100, 2500);                       // reset
+        w.update(100 + 1920, 4500);
         CHECK(near(w.rate_hz(), 960.0F, 0.5F));
     }
     // GrowthFlag holds for 10 s after the last growth.
@@ -32,6 +35,8 @@ int main()
         CHECK(g.update(6, 11'999));
         CHECK(!g.update(6, 12'000));
         CHECK(g.update(7, 13'000));
+        CHECK(!g.update(0, 30'000));                // counter reset by the owner: not growth
+        CHECK(g.update(1, 31'000));
     }
     // StillWindow: gravity on +X, quiet.
     {
