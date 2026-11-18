@@ -25,7 +25,9 @@ public:
 
 private:
     static constexpr UBaseType_t kTaskPriority = 2;
-    static constexpr std::uint32_t kTaskStackSize = 2048;
+    // 3072 (was 2048): the once-a-minute stack report below formats a log line
+    // on this stack. Costs 1 KB of heap.
+    static constexpr std::uint32_t kTaskStackSize = 3072;
     static constexpr TickType_t kPeriod = pdMS_TO_TICKS(1000);
     static constexpr std::uint32_t kBuzzerDuty = 512;
 

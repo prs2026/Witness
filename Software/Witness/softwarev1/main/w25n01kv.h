@@ -38,12 +38,22 @@ public:
         std::size_t length);
     esp_err_t erase_block(std::uint32_t block);
     esp_err_t is_bad_block(std::uint32_t block, bool &bad);
+    // Waits for the chip to finish an operation that timed out (a program or
+    // erase still running after a pre-emption); true error codes pass through.
+    esp_err_t wait_idle(std::uint32_t timeout_ms);
+    // Re-initialises the chip after a persistent error without touching the
+    // SPI bus setup: software reset, unprotect all blocks, ECC + buffer mode.
+    esp_err_t recover();
 
 private:
     static constexpr spi_host_device_t kSpiHost = SPI2_HOST;
     static constexpr int kSpiClockHz = 10'000'000;
     static constexpr std::uint8_t kSpiMode = 0;
-    static constexpr std::uint32_t kReadyTimeoutMs = 20;
+    // Datasheet worst cases: page read 60 us, page program 700 us, block erase
+    // 10 ms. 100 ms leaves a large margin for the poll task being pre-empted
+    // (the status is read before the deadline is checked, so a finished
+    // operation is never reported as a timeout, but a slow one is not cut off).
+    static constexpr std::uint32_t kReadyTimeoutMs = 100;
     static constexpr std::uint32_t kResetTimeoutMs = 500;
 
     static constexpr std::uint8_t kCommandReset = 0xFF;
@@ -82,7 +92,8 @@ private:
     esp_err_t set_feature(std::uint8_t address, std::uint8_t value);
     esp_err_t wait_until_ready(
         std::uint32_t timeout_ms,
-        std::uint8_t *final_status = nullptr);
+        std::uint8_t *final_status = nullptr,
+        std::uint32_t spin_polls = 0);
     esp_err_t load_page_to_cache(std::uint32_t page);
     esp_err_t read_cache(
         std::uint16_t column,

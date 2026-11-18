@@ -24,6 +24,13 @@ public:
     // Re-pushes the cached OLAT and IODIR to the chip (heals an expander-only
     // reset or a failed earlier write). No-op until configured.
     esp_err_t resync();
+    // Reads IODIR/OLAT back; if they differ from the cache (expander reset or
+    // glitch) re-pushes the cache immediately. `healed` is set when it did.
+    // I2C errors leave the cache untouched and are returned.
+    esp_err_t verify_and_heal(bool &healed);
+    // Clears a stuck I2C bus (controller reset + 9 SCL pulses). Does not write
+    // any load state: callers re-apply the cache afterwards with resync().
+    esp_err_t recover_bus();
     esp_err_t configure_output(std::uint8_t pin, bool initial_level);
     esp_err_t write_pin(std::uint8_t pin, bool level);
     i2c_master_bus_handle_t bus_handle() const { return bus_handle_; }
@@ -36,6 +43,7 @@ private:
     static constexpr std::uint8_t kPinCount = 8;
 
     esp_err_t write_register(std::uint8_t address, std::uint8_t value);
+    esp_err_t read_register(std::uint8_t address, std::uint8_t &value);
 
     i2c_master_bus_handle_t bus_handle_ = nullptr;
     i2c_master_dev_handle_t device_handle_ = nullptr;

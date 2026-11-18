@@ -43,12 +43,23 @@ std::uint32_t sanitize_median_length(std::uint32_t length)
     return length;
 }
 
-// Median of an odd number (<= 5) of values; sorts a small copy.
-float small_median(const float *values, const std::size_t count)
+// Median of an odd number (<= 5) of values; sorts a small copy. An insertion
+// sort: for at most 5 values it gives the same sorted copy as std::sort, costs
+// less per call (it runs three times per gyro sample), and GCC at -O2 cannot
+// report a false array-bounds error from std::sort's unknown-length introsort.
+float small_median(const float *values, std::size_t count)
 {
+    if (count > Estimator::kMaxMedianLength) count = Estimator::kMaxMedianLength;
     float sorted[Estimator::kMaxMedianLength]{};
-    for (std::size_t i = 0; i < count; ++i) sorted[i] = values[i];
-    std::sort(sorted, sorted + count);
+    for (std::size_t i = 0; i < count; ++i) {
+        const float value = values[i];
+        std::size_t j = i;
+        while (j > 0 && sorted[j - 1] > value) {
+            sorted[j] = sorted[j - 1];
+            --j;
+        }
+        sorted[j] = value;
+    }
     return sorted[count / 2U];
 }
 
@@ -157,6 +168,18 @@ StepResult Estimator::update(const Step &step)
     if (lost_) {
         return result;  // Attitude given up after gyro saturation.
     }
+    // A non-finite gyro or accelerometer sample must not enter the quaternion,
+    // the median history or the stationary window (NaN would stay there):
+    // drop the sample like a gap and count it.
+    if (!std::isfinite(step.gyro_rad_s.x) || !std::isfinite(step.gyro_rad_s.y) ||
+        !std::isfinite(step.gyro_rad_s.z) || !std::isfinite(step.specific_force_g.x) ||
+        !std::isfinite(step.specific_force_g.y) || !std::isfinite(step.specific_force_g.z)) {
+        ++nonfinite_events_;
+        ++gaps_;
+        result.gap = true;
+        reset_window();
+        return result;
+    }
     // Gyro saturation in flight: the true rate is unknown, so stop.
     const float limit = config_.gyro_saturation_rad_s;
     const bool saturated = std::fabs(step.gyro_rad_s.x) >= limit ||
@@ -215,7 +238,23 @@ StepResult Estimator::update(const Step &step)
             const float dt_s = static_cast<float>(centre_dt_us) * 1e-6F;
             const Vector3 rate{filtered.x - bias_.x, filtered.y - bias_.y,
                                filtered.z - bias_.z};
-            q_ = normalized(multiply(q_, exp_rotation(scale(rate, dt_s))));
+            // normalized() maps a NaN to the identity, which would be a silent
+            // wrong attitude: test the product before normalising.
+            const Quaternion next = multiply(q_, exp_rotation(scale(rate, dt_s)));
+            if (!std::isfinite(next.w) || !std::isfinite(next.x) || !std::isfinite(next.y) ||
+                !std::isfinite(next.z)) {
+                // Diverged (bad bias, bad dt): give the attitude up. The
+                // position filter then runs from the barometer and GPS
+                // (Filter::predict_magnitude_only); on the pad a new
+                // stationary window re-initialises it.
+                ++nonfinite_events_;
+                valid_ = false;
+                q_ = Quaternion{1.0F, 0.0F, 0.0F, 0.0F};
+                clear_filter();
+                reset_window();
+                return result;
+            }
+            q_ = normalized(next);
             ++steps_;
             if (is_flight(phase_)) {
                 ++flight_steps_;

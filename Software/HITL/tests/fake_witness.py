@@ -217,6 +217,10 @@ class FakeWitness:
         self.quat = (0.0, 0.0, 0.0, 0.0)
         st["fsm"].state = self.start_state
         st["fsm"]._observed_state = self.start_state
+        # The test harness may deliver sparse 0x0C frames (time-scaled runs);
+        # the firmware sees an observation every few ms, so its 50 ms credit
+        # cap per observation does not apply to this stand-in.
+        st["fsm"].ACCEL_MAX_STEP_US = 10_000_000
 
         def uptime():
             return (self._uptime0 + int((time.monotonic() - t_start) * 1000)) \

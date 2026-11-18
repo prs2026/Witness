@@ -37,9 +37,18 @@ def integrate_sent_gyro(samples):
 
 
 def launch_expected_s(samples):
-    """Firmware launch rule: 0.3 s after true AGL first exceeds 30 m."""
+    """Firmware launch rules, the earlier wins: (a) 0.3 s after true AGL first
+    exceeds 30 m with a vertical velocity of at least 30 m/s (both held);
+    (b) 0.3 s after the axial acceleration first reaches 2.5 g (no attitude or
+    filter needed; a clean profile never dips, so the leaky budget is plain
+    time)."""
     site = samples[0].alt_msl_m
-    return next(s.t_ms / 1000 for s in samples if s.alt_msl_m - site > 30.0) + 0.3
+    kalman = next(s.t_ms / 1000 for s in samples
+                  if s.alt_msl_m - site > 30.0 and s.vel_mps >= 30.0) + 0.3
+    accel = next((s.t_ms / 1000 for s in samples
+                  if hp.decode_hitl(hp.encode_hitl(s.hitl))["low_g"][0] >= sm.ReferenceStateMachine.LAUNCH_ACCEL_G),
+                 float("inf")) + 0.3
+    return min(kalman, accel)
 
 
 class SyntheticBase(unittest.TestCase):

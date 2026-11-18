@@ -4,3 +4,12 @@
 CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
 CONFIG_ESP_CONSOLE_SECONDARY_NONE=y
 # CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG is not set
+
+# Flight config (2026-11-15 audit): the console shares the binary USB stream,
+# so only warnings/errors are logged by default (the app raises its own tag).
+CONFIG_LOG_DEFAULT_LEVEL_WARN=y
+# The main loop feeds the task watchdog: a hung receiver reboots itself.
+CONFIG_ESP_TASK_WDT_PANIC=y
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=5
+# Main task stack: 3584 B was thin (uplink queue, radio buffers, logging).
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=6144

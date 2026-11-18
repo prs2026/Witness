@@ -212,8 +212,10 @@ esp_err_t W25n01kv::write_enable()
 
 esp_err_t W25n01kv::wait_until_ready(
     const std::uint32_t timeout_ms,
-    std::uint8_t *final_status)
+    std::uint8_t *final_status,
+    const std::uint32_t spin_polls)
 {
+    std::uint32_t spins = spin_polls;
     const TickType_t start = xTaskGetTickCount();
     const TickType_t timeout = pdMS_TO_TICKS(timeout_ms);
     std::uint8_t status = 0;
@@ -230,6 +232,12 @@ esp_err_t W25n01kv::wait_until_ready(
         }
         if ((xTaskGetTickCount() - start) >= timeout) {
             return ESP_ERR_TIMEOUT;
+        }
+        // A page read finishes in about 60 us: poll a few times back to back
+        // instead of sleeping a whole tick per page (makes scans ~10x faster).
+        if (spins > 0) {
+            --spins;
+            continue;
         }
         vTaskDelay(pdMS_TO_TICKS(1));
     }
@@ -249,7 +257,7 @@ esp_err_t W25n01kv::load_page_to_cache(const std::uint32_t page)
     esp_err_t result = transmit(device_, tx, nullptr, sizeof(tx));
     std::uint8_t status = 0;
     if (result == ESP_OK) {
-        result = wait_until_ready(kReadyTimeoutMs, &status);
+        result = wait_until_ready(kReadyTimeoutMs, &status, 30);
     }
     if (result == ESP_OK &&
         (status & kStatusEccMask) == kStatusEccUncorrectable) {
@@ -375,15 +383,14 @@ esp_err_t W25n01kv::is_bad_block(
         return ESP_ERR_INVALID_ARG;
     }
     const esp_err_t load_result = load_page_to_cache(block * kPagesPerBlock);
-    if (load_result == ESP_ERR_INVALID_CRC) {
-        // A factory-bad block can report uncorrectable ECC while its marker
-        // page is loaded. Treat it as unusable rather than aborting startup.
-        bad = true;
-        return ESP_OK;
-    }
-    if (load_result != ESP_OK) {
+    if (load_result != ESP_OK && load_result != ESP_ERR_INVALID_CRC) {
         return load_result;
     }
+    // ECC=uncorrectable still leaves the page in the cache. A factory-bad block
+    // can report it for its marker page, but so does a good block whose page 0
+    // was torn by a power loss (it is erasable and must not be abandoned), so
+    // the spare marker decides in both cases; if it cannot be read the block is
+    // treated as bad.
 
     // The factory writes markers to both main byte 0 and spare byte 0. Only
     // inspect the spare marker here: application records legitimately change
@@ -393,6 +400,56 @@ esp_err_t W25n01kv::is_bad_block(
         static_cast<std::uint16_t>(kPageDataSize), &spare_marker, 1);
     if (result == ESP_OK) {
         bad = spare_marker != 0xFF;
+    } else if (load_result == ESP_ERR_INVALID_CRC) {
+        bad = true;
+        return ESP_OK;
+    }
+    return result;
+}
+
+esp_err_t W25n01kv::wait_idle(const std::uint32_t timeout_ms)
+{
+    return wait_until_ready(timeout_ms);
+}
+
+esp_err_t W25n01kv::recover()
+{
+    if (device_ == nullptr) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    esp_err_t result = command(kCommandReset);
+    if (result != ESP_OK) {
+        return result;
+    }
+    // tRST is at most 500 us (1 ms during an erase); the poll covers it.
+    vTaskDelay(pdMS_TO_TICKS(2));
+    result = wait_until_ready(kResetTimeoutMs);
+    if (result != ESP_OK) {
+        return result;
+    }
+    std::uint8_t protection = 0;
+    result = get_feature(kProtectionRegister, protection);
+    if (result == ESP_OK) {
+        result = set_feature(
+            kProtectionRegister,
+            static_cast<std::uint8_t>(protection & ~kBlockProtectionMask));
+    }
+    std::uint8_t configuration = 0;
+    if (result == ESP_OK) {
+        result = get_feature(kConfigurationRegister, configuration);
+    }
+    if (result == ESP_OK) {
+        configuration |= kConfigurationBufferRead | kConfigurationEccEnable;
+        result = set_feature(kConfigurationRegister, configuration);
+    }
+    std::uint8_t verified = 0;
+    if (result == ESP_OK) {
+        result = get_feature(kConfigurationRegister, verified);
+    }
+    if (result == ESP_OK &&
+        (verified & (kConfigurationBufferRead | kConfigurationEccEnable)) !=
+            (kConfigurationBufferRead | kConfigurationEccEnable)) {
+        result = ESP_ERR_INVALID_STATE;
     }
     return result;
 }

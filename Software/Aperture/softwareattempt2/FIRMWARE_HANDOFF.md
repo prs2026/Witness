@@ -1,5 +1,7 @@
 # Aperture Ground-Station Firmware Handoff
 
+> **Changed 2026-11-16.** Sections changed: Source files (new pure headers `frame_ring.h`, `command_parser.h`, `uplink_pacing.h` and the logic test); LoRa receive path (IRQ clear order, overrun rule); USB-only status (RSSI -128 meaning); Reliability changes (DTR/RTS note, Horizon notes, the reset of the receiver radio). Sources: `Software/AUDIT/2026-11-15/fixes/08_aperture_fixes.md`; `main/uplink_pacing.h`, `main/ra01.h`, `main/comms.h` checked. The fix report says the boot TX power is -17 dBm (the older -9 dBm text is wrong). Not bench verified.
+
 ## Role
 
 This is the ground-station-side ESP32-S3 firmware. It is not the Witness
@@ -31,6 +33,10 @@ It does not generate Witness telemetry or periodic LoRa heartbeats.
 - `main/ground_station_status.cpp` / `.h`: pure C++ `0xF0` frame builder
   (host-tested).
 - `tests/gps_status_test.cpp`: host test for the two pure modules.
+- `main/frame_ring.h`: drop-oldest ring of whole USB frames (3 KiB) drained by the `usb_tx` task.
+- `main/command_parser.h`: canonical 10-byte command assembler with resync on 0x05.
+- `main/uplink_pacing.h`: uplink burst pacing (3 commands, then 1.5 s quiet) and the duplicate-dropping queue.
+- `tests/aperture_logic_test.cpp`: host test for the three pure headers above (`g++ -std=c++17 -Wall -Wextra -Werror -I main tests/aperture_logic_test.cpp`).
 - `main/hardware.h`: authoritative pin map and radio configuration.
 - `main/comms.h`: canonical packet IDs, field offsets, and frame lengths.
 - `main/GROUND_STATION_PROTOCOL.md`: protocol description for host software.
@@ -60,13 +66,13 @@ Current LoRa settings:
 
 - Frequency: 926 MHz (`IRIS_RADIO_FREQUENCY_HZ`)
 - Spreading factor: SF7
-- Bandwidth: 125 kHz
+- Bandwidth: 500 kHz (SF7/500, code `IRIS_RADIO_BANDWIDTH_HZ`)
 - Coding rate: 4/5
 - Preamble: 8 symbols
 - Explicit header
 - CRC enabled
 - Normal IQ
-- SX1262 TX power setting: -2 dBm
+- SX1262 TX power at boot: -17 dBm (low-power PA, bench-safe; NOT -9 dBm as older docs say). Raise with command 0x5250 (range -17..+3 dBm); not persistent across reboot.
 - Maximum received packet buffer: 128 bytes
 
 DIO2 RF-switch control is enabled through `SetDIO2AsRfSwitchCtrl`. The
@@ -87,7 +93,13 @@ for LoRa, and enters continuous receive mode.
 - Reads RSSI with `GetPacketStatus()` and stores it as the last valid packet
   RSSI.
 - Reads payload bytes from the FIFO.
-- Clears the RX IRQ.
+- Clears only RxDone, right after the buffer status is read, reads the payload,
+  then reads the IRQ again. If RxDone or CrcErr is set again, a second packet
+  finished during the read: the payload may be mixed, so it is dropped (counted as
+  `rx_overrun`) and the new packet is left for the next call. The clear-after-read
+  race of the old code is gone (2026-11-16).
+- A DIO1 interrupt wakes the main loop when a packet or TX completes (10 ms poll as
+  the fallback).
 
 The ESP32-S3 SPI host is used without DMA. FIFO reads are split into 60-byte
 payload chunks so command overhead remains below the host transfer limit.
@@ -142,7 +154,10 @@ over LoRa. All multi-byte fields are big-endian:
 | 26 | 2 | Fix age, uint16 ms (`0xFFFF` = none or >= 65.535 s) |
 | 28 | 1 | EOF `0x0A` |
 
-Before the first valid LoRa packet, RSSI is reported as `-127 dBm`. Quality,
+Before the first valid LoRa packet, RSSI is reported as `-127 dBm`. RSSI is
+`-128 dBm` while the receiver radio is down (init failed, the radio faulted, or the
+RX front end is off by `0x5250`; 2026-11-16). The normal range is -127 to 0 dBm, so
+-128 is not a signal level. Quality,
 satellites and HDOP come from the latest GGA and read 0 / 0 / `0xFFFF` once it
 is 3 s old. Position holds the last valid fix with its age; it is zero until a
 fix has been seen. GPS time is the last status-`A` RMC's UTC advanced by the
@@ -265,9 +280,33 @@ enumerate under a different COM number.
 
 The four comms.h copies now share Iris status flags, flight-state definitions,
 all command values, and the 20 mA/count current scale. Aperture continues to
-forward canonical packets unchanged. Witness�Iris CAN fragmentation is internal
+forward canonical packets unchanged. Witness-Iris CAN fragmentation is internal
 to those boards and never appears on LoRa or USB. See
 [shared CAN contract](../../Intercomm/README.md).
 
 Remote bench: `prs2026hitl`, programming RFC2217 port 7000, raw USB data TCP
 port 7100. Run `flashit.ps1` from this folder to flash the Aperture image.
+
+## Reliability changes (2026-11-15 audit fixes)
+
+- Radio init failure is retried forever (1, 2, 4, then every 10 s; restart after 60 failures). While the radio is down the 0xF0 RSSI byte is -128. Init includes an SPI packet-RAM round-trip probe.
+- Health check every 1 s without a packet (chip mode must be RX, packet type LoRa, device errors cleared); SetRx is re-issued, and after repeated failure or a reset chip the radio is fully re-initialized through RESET. transmit() always ends in RX.
+- BUSY wait spins 300 us then sleeps; BUSY timeout 100 ms (5 ms once stuck). DIO1 interrupt wakes the main loop (poll every 10 ms as fallback).
+- RX clears only RxDone right after reading buffer status, then re-checks the IRQ after the payload read; a packet that arrived meanwhile is delivered next time and the overlapped one is dropped and counted (rx_overrun).
+- USB output goes through a drop-oldest frame ring (3 KiB) drained by the usb_tx task; the radio loop never blocks on USB. Drops are counted and logged (WARN, at most once per second when changed); the 0xF0 frame has no spare field.
+- Console log level is WARN in the flight config (log text shares the binary stream); the app tag logs one INFO line per minute (stack high-water, counters).
+- Uplink: at most 3 commands per burst, then >= 1.5 s with no uplink; exact duplicates already queued are dropped; queue 64 frames. Without GPS the same pacing applies.
+- PC command parser resyncs on 0x05 after a damaged frame. RX front end OFF (0x5250) reverts to ON after 30 s and shows as RSSI -128 in 0xF0.
+- Main task stack 6144 B; task watchdog (5 s) reboots a hung main loop.
+- **DTR/RTS (report only, 2026-11-16):** the ESP32-S3 USB Serial/JTAG peripheral does
+  the esptool reset (DTR/RTS sequence to EN and BOOT) in hardware. Firmware cannot
+  turn that off; only an eFuse does, and that also removes USB flashing, so it is not
+  done. The hardware reacts to particular DTR/RTS sequences, so the host should open
+  the port with DTR and RTS de-asserted (`dtr=False, rts=False` before open in
+  pyserial, or ser2net without control-line passthrough on the data ports). Horizon
+  does this for its serial inputs (`link_health.open_serial_quiet`). Bench test still
+  needed: which clients reset the board when they open or reconnect.
+- **Horizon notes (2026-11-16):** -128 RSSI is shown as "RECEIVER RADIO FAILED"
+  where Horizon's display formatter is used. Uplink commands arrive at most 3 per burst
+  with 1.5 s quiet; upload tools take several times longer than before (GPS-assist
+  STATUS waits about 30 s). The console is WARN level, so boot logs are not shown.

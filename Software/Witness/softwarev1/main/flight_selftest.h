@@ -2,6 +2,7 @@
 
 #include "esp_err.h"
 
+class FlightStateMachine;
 class Sensors;
 class WitnessStatus;
 
@@ -16,6 +17,9 @@ namespace flight_selftest {
 
 constexpr unsigned kWindowMs = 30000;
 
-esp_err_t start(const WitnessStatus &witness_status, const Sensors &sensors);
+// A failed self-test rolls the image back (reboot) ONLY while the flight state
+// is Pad Idle; in any other state the image stays pending-verify and flying.
+esp_err_t start(const WitnessStatus &witness_status, const Sensors &sensors,
+                const FlightStateMachine &flight_state_machine);
 
 }  // namespace flight_selftest

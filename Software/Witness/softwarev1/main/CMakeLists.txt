@@ -25,7 +25,7 @@ else()
                      "uart_driver.cpp" "nmea_gps.cpp" "hitl_input.cpp" "gps_receiver.cpp"
                      "gps_assist.cpp" "flight_state_machine.cpp" "attitude_estimator.cpp"
                      "accel_filter.cpp" "position_filter.cpp" "heading_align.cpp"
-                     "imu_calibration.cpp" "imu_calibration_store.cpp" "ms5607.cpp"
+                     "imu_calibration.cpp" "imu_calibration_store.cpp" "radio_power_store.cpp" "ms5607.cpp"
                      "sensors.cpp" "sensors_landed.cpp" "spi_data_forwarder.cpp" "heartbeat.cpp" "main.cpp"
                      "usb_serial_echo.cpp" "flight_state_store.cpp" "flight_selftest.cpp")
     # (main/idf_component.yml also lists esp_tinyusb, which the component

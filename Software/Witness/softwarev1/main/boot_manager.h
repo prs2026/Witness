@@ -61,6 +61,12 @@ SwitchResult prepare_switch(maintenance_mode::Kind kind, int tx_dbm, std::uint32
 // The compatibility verdict alone (no side effects), for logging/tests.
 image_info::Compat check_target(int *slot_out);
 
+// Flight image: puts the boot partition back to the running (flight) image and
+// drops any maintenance request. Used when a switch is abandoned after
+// prepare_switch (restart timer failure, or the flight state changed during
+// the restart delay), so no later reset can boot the maintenance image.
+esp_err_t revert_switch();
+
 // --- maintenance image ---
 // Confirms this (running) image, then makes `flight_slot` (or the best flight
 // slot when -1) the next boot and marks it valid, so any later reset returns

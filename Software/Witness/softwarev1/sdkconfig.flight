@@ -3,12 +3,15 @@
 CONFIG_WITNESS_IMAGE_FLIGHT=y
 # CONFIG_WITNESS_IMAGE_MAINTENANCE is not set
 
+# FLIGHT: PM and tickless idle are OFF (audit F8) while landed::kLowPowerModeEnabled=false;
+# esp_pm_* then return ESP_ERR_NOT_SUPPORTED and sensors_landed.cpp still compiles. To
+# re-enable the Landed low-power mode set both back to y (and re-verify USB, see below).
 # Landed low-power mode (landed_logic.h, sensors_landed.cpp): automatic light
 # sleep is enabled at run time only while Landed (esp_pm_configure); until then
 # power management does nothing (no frequency scaling, no sleep). Tickless idle
 # is what lets the idle task sleep the MCU between events.
-CONFIG_PM_ENABLE=y
-CONFIG_FREERTOS_USE_TICKLESS_IDLE=y
+# CONFIG_PM_ENABLE is not set
+# CONFIG_FREERTOS_USE_TICKLESS_IDLE is not set
 # IDF isolates every GPIO pad in light sleep (CONFIG_ESP_SLEEP_GPIO_RESET_WORKAROUND,
 # on by default for this chip); sensors_landed.cpp keeps the pads it needs with
 # gpio_sleep_sel_dis(). PM_SLP_DISABLE_GPIO is the same mechanism through PM; keep it off.
@@ -18,3 +21,26 @@ CONFIG_FREERTOS_USE_TICKLESS_IDLE=y
 # driver's SOF monitor holds a NO_LIGHT_SLEEP lock). Without it a sleep with USB
 # attached killed the USB link for good (bench 2026-11-15).
 CONFIG_USJ_NO_AUTO_LS_ON_CONNECTION=y
+
+# Task watchdog: subscribed tasks (sensors; task_cores.h task_supervision) that miss
+# a feed for 8 s reboot the MCU (Warm reset class: the flight state resumes).
+# Idle-task checks are off so a busy core can never cause a reboot by itself.
+CONFIG_ESP_TASK_WDT_PANIC=y
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=8
+# CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0 is not set
+# CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU1 is not set
+
+# Core-1 performance (bench 2026-11-17c, BENCH_REPORT_2026-11-17c.md). Core 1 was 96-100 %
+# busy with ~480 loop overruns/s: the 16 KB instruction cache (shared by both cores, code
+# fetched from DIO flash) thrashed. -Os (smaller code), a 32 KB icache and 240 MHz bring it
+# to ~23 %. The 32 KB icache takes 16 KB from the heap; the 16 KB data cache (only flash
+# rodata uses it, there is no PSRAM) gives 16 KB back. Assertions stay enabled. Do not use
+# 64 KB dcache (it costs 32 KB of heap). QIO flash does not boot on this module.
+# CONFIG_COMPILER_OPTIMIZATION_DEBUG is not set
+CONFIG_COMPILER_OPTIMIZATION_SIZE=y
+# CONFIG_ESP32S3_INSTRUCTION_CACHE_16KB is not set
+CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB=y
+# CONFIG_ESP32S3_DATA_CACHE_32KB is not set
+CONFIG_ESP32S3_DATA_CACHE_16KB=y
+# CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_160 is not set
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y

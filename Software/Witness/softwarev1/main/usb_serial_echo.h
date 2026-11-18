@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cstdint>
 
+#include "command_policy.h"
 #include "comms.h"
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"
@@ -43,7 +44,16 @@ private:
     // 6144: the maintenance switch (boot_manager::prepare_switch: two image-info
     // slot reads, NVS, esp_ota_set_boot_partition) overflowed 3072 on the bench
     // (2026-11-14, "stack overflow in task usb_serial_echo"; 736 B free at idle).
-    static constexpr std::uint32_t kTaskStackSize = 6144;
+    // Raised to 7168 (2026-11-15 audit 07 #19): the deferred-restart revert
+    // (esp_ota_set_boot_partition + NVS) and the HITL candidate replay add
+    // depth; the task logs its stack high-water mark once a minute.
+    static constexpr std::uint32_t kTaskStackSize = 7168;
+    static constexpr std::uint32_t kStackLogIntervalMs = 60000;
+    // Echo to the USB host: never wait on it for long (audit 07 #5).
+    static constexpr std::uint32_t kEchoBudgetMs = 20;
+    static constexpr std::uint32_t kEchoMuteMs = 1000;
+    // Bounded waits for the logger task's erase / quick clear.
+    static constexpr std::uint32_t kEraseWaitMs = 30000;
     static constexpr std::uint32_t kBinaryCommandIdleMs = 20;
     static constexpr std::uint32_t kHitlErrorReportIntervalMs = 1000;
     // Delay between acknowledging a radio switch command and restarting, so
@@ -72,7 +82,18 @@ private:
     void process_queued_radio_commands();
     void process_radio_command(
         const std::uint8_t *data,
-        std::size_t length);
+        std::size_t length,
+        esp_err_t forward_result);
+    // HITL frame candidate while HITL is off: held until complete, dropped if
+    // it is a valid frame, otherwise replayed as ordinary input.
+    void finish_hitl_hold();
+    void replay_hitl_hold();
+    // Deferred restarts and the radio front-end-off, re-checked against the
+    // flight state when they fall due (run loop).
+    bool schedule_restart(command_policy::PendingRestart kind, bool radio);
+    void service_pending_restart();
+    void service_deferred_front_end_off();
+    void log_stack_if_due();
     void process_command();
     void forward_usb_command(
         const std::uint8_t *data,
@@ -82,8 +103,8 @@ private:
     bool forward_text_command_if_present();
     void process_protocol_command(std::uint16_t command);
     void process_tx_command();
-    void erase_log_sessions();
-    void clear_log_sessions();
+    esp_err_t erase_log_sessions();
+    esp_err_t clear_log_sessions();
     // GPS assistance chunks (gps_assist.h); data = the six data bytes.
     // radio: the command came over LoRa (replies go back by radio), else USB.
     void handle_gps_assist(std::uint16_t command, const std::uint8_t *data, const char *source,
@@ -121,6 +142,18 @@ private:
     FlightStateMachine &flight_state_machine_;
     CommandBridge &command_bridge_;
     TaskHandle_t task_handle_ = nullptr;
+    // Maintenance switch / Landed reset restart waiting for its timer.
+    command_policy::PendingRestart pending_restart_ = command_policy::PendingRestart::None;
+    command_policy::EraseConfirm erase_confirm_{};   // radio erase/clear: send twice
+    esp_err_t last_forward_result_ = ESP_OK;         // of the latest USB command forward
+    TickType_t echo_mute_until_ = 0;
+    bool echo_muted_ = false;
+    bool front_end_off_pending_ = false;
+    TickType_t front_end_off_due_ = 0;
+    TickType_t last_stack_log_ = 0;
+    std::uint8_t hitl_hold_[hitl::kMaxFrameLength]{};
+    std::size_t hitl_hold_length_ = 0;
+    std::size_t hitl_hold_expected_ = 0;
     char command_buffer_[kCommandBufferSize]{};
     std::size_t command_length_ = 0;
     bool command_overflow_ = false;

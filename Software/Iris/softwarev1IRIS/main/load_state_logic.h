@@ -55,23 +55,38 @@ inline bool record_valid(const Record &record)
 }
 
 enum class ResetClass : std::uint8_t {
-    cold,  // power-on, external pin, USB/JTAG reset, deep sleep, unknown
-    warm,  // panic, watchdogs, software, brownout, CPU lockup
+    cold,  // power-on, EN/EXT pin, USB/JTAG reset, deep sleep, unknown: all loads OFF
+    warm,  // software restart, panic, interrupt/task/other watchdog, brownout
 };
 
 struct BootDecision {
-    bool restore;       // re-apply `mask` without pulsing the expander reset
-    std::uint8_t mask;  // mask to apply (0 on cold boot)
+    bool restore;          // re-apply `mask` without pulsing the expander reset
+    std::uint8_t mask;     // mask to apply (0 when nothing is restored)
 };
 
-// Cold boot always yields the safe default (everything off). A warm reset with
-// a valid record restores the last commanded mask.
-inline BootDecision decide_boot(ResetClass reset, const Record &record)
+// Owner decision 2026-11-16: no output is energised at a true power-up;
+// the commanded state is kept only across warm resets (the board never lost
+// power, RTC memory is intact). Restore needs BOTH a warm reset reason AND a
+// valid RTC record (magic + mask range + CRC32). A record that survives a
+// real power-off with a valid CRC is not credible: RTC RAM is lost and reads
+// back random, so a valid record needs magic (32 bit), CRC (32 bit) and 28
+// zero mask bits to match: about 2^-92 per boot. A cold reset class never
+// restores whatever the record says (EXT/USB resets keep RTC RAM but not the
+// GPIO9 hold, so they are treated as power-up). Nothing is read from flash.
+inline BootDecision decide_boot(ResetClass reset_class, const Record &rtc)
 {
-    if (reset == ResetClass::warm && record_valid(record)) {
-        return BootDecision{true, static_cast<std::uint8_t>(record.mask & kMaskBits)};
+    if (reset_class == ResetClass::warm && record_valid(rtc)) {
+        return BootDecision{true, static_cast<std::uint8_t>(rtc.mask & kMaskBits)};
     }
     return BootDecision{false, 0};
+}
+
+// The record kept in RTC memory for a commanded mask: all loads off means no
+// record at all (cleared), so nothing stale can ever be restored.
+inline Record record_for_commanded(std::uint8_t mask)
+{
+    const std::uint8_t masked = mask & kMaskBits;
+    return masked == 0 ? Record{0, 0, 0} : make_record(masked);
 }
 
 }  // namespace load_state

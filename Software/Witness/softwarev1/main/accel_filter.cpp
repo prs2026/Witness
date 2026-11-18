@@ -189,8 +189,27 @@ float HighGCalibration::offset_mg(const int axis) const
 void HighGCalibration::apply(float high_g_mg[3]) const
 {
     if (!valid()) return;
-    for (int axis = 0; axis < 3; ++axis)
-        high_g_mg[axis] = (high_g_mg[axis] - offset_mg(axis)) / scale(axis);
+    // Runs on every IMU sample (936 Hz) and the doubles below are software
+    // arithmetic on this chip (about 100 cycles an operation), so fit each
+    // axis once: scale() and offset_mg() each ran the whole fit, three times
+    // per axis. The expressions are the same, so the result is bit-identical.
+    for (int axis = 0; axis < 3; ++axis) {
+        const Sums &s = sums_[axis];
+        float k = 1.0F;
+        float offset = 0.0F;
+        if (s.n > 0.0) {
+            const double mx = s.x / s.n;
+            const double my = s.y / s.n;
+            const double var = s.xx / s.n - mx * mx;
+            if (var > static_cast<double>(kMinSpreadMg) * kMinSpreadMg) {
+                const double cov = s.xy / s.n - mx * my;
+                const double fit = cov / var;
+                if (fit >= kMinScale && fit <= kMaxScale) k = static_cast<float>(fit);
+            }
+            offset = static_cast<float>(my - k * mx);
+        }
+        high_g_mg[axis] = (high_g_mg[axis] - offset) / k;
+    }
 }
 
 }  // namespace accel_filter

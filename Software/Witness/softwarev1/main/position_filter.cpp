@@ -1,5 +1,6 @@
 #include "position_filter.h"
 
+#include <algorithm>
 #include <cmath>
 
 namespace position {
@@ -15,6 +16,24 @@ constexpr float kPadVelocitySigmaMps = 0.02F;
 constexpr float kLandedVelocitySigmaMps = 0.1F;
 // Pad reference tracking (per update, at 10-25 Hz: a few seconds).
 constexpr float kReferenceAlpha = 0.02F;
+// Gravity measured on the pad (mean |specific force| of the still samples).
+constexpr float kGravityTauS = 5.0F;           // averaging time constant
+constexpr float kGravityMinStillS = 1.0F;      // kGravity until this much was averaged
+constexpr float kGravityClampFraction = 0.05F; // accepted: kGravity +- 5 %
+constexpr float kGravityLeavePadS = 0.5F;      // continuous motion that ends the averaging
+// A predict gap longer than kMaxPredictDtS is bridged (position advanced with
+// the current velocity, covariance grown), up to kMaxGapBridgeS of it.
+constexpr float kMaxPredictDtS = 0.1F;
+constexpr float kMaxGapBridgeS = 10.0F;
+// Health check bounds: beyond these the state is garbage, not a flight.
+constexpr float kMaxPlausiblePositionM = 1.0e7F;
+constexpr float kMaxPlausibleVelocityMps = 1.0e5F;
+constexpr float kMaxPlausibleCovariance = 1.0e15F;
+// Covariance after a divergence reset or a restore after a reset in flight:
+// the position is only known to ~500 m and the velocity to ~100 m/s, so the
+// barometer and GPS (gate_sigma x that) pull the state in at once.
+constexpr float kRecoveredPositionVariance = 250000.0F;
+constexpr float kRecoveredVelocityVariance = 10000.0F;
 
 }  // namespace
 
@@ -50,19 +69,39 @@ float Filter::baro_sigma_m(const float pressure_pa, const float altitude_msl_m) 
 void Filter::predict(const float acceleration_world_mps2[3], const float dt_s,
                      const Phase phase)
 {
-    initialized_ = true;
-    imu_ignored_ = false;
-    if (!(dt_s > 0.0F) || dt_s > 0.1F) {
-        return;  // gap: skip rather than integrate a bad interval
-    }
     const float ax = acceleration_world_mps2[0];
     const float ay = acceleration_world_mps2[1];
     const float az = acceleration_world_mps2[2];
+    // A non-finite acceleration or dt must never reach the state (NaN would
+    // stick in the covariance for good): drop the sample and count it.
+    if (!std::isfinite(ax) || !std::isfinite(ay) || !std::isfinite(az) ||
+        !std::isfinite(dt_s)) {
+        ++rejected_inputs_;
+        return;
+    }
+    initialized_ = true;
+    imu_ignored_ = false;
+    if (!(dt_s > 0.0F)) {
+        return;
+    }
+    if (dt_s > kMaxPredictDtS) {
+        // Gap (stall, overrun): do not integrate the IMU over an unknown
+        // interval, but do not freeze either. Advance the position with the
+        // current velocity and grow the covariance as without the IMU, so the
+        // next baro/GPS update is judged against an honest uncertainty
+        // (Kalman audit #5).
+        ++predict_gaps_;
+        propagate_without_acceleration(std::fmin(dt_s, kMaxGapBridgeS),
+                                       config_.no_imu_accel_noise_mps2);
+        check_health();
+        return;
+    }
     const float specific_force = std::sqrt(ax * ax + ay * ay + az * az);
     still_ = phase == Phase::PadIdle &&
              std::fabs(specific_force - kGravity) < config_.still_band_g * kGravity;
 
-    const float a[3] = {ax, ay, az - kGravity};
+    track_pad_gravity(specific_force, dt_s, phase);
+    const float a[3] = {ax, ay, az - gravity_mps2_};
     const float net = std::sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
     // Peak-hold with exponential decay (first order, cheap at 960 Hz).
     gps_stress_ -= gps_stress_ * std::fmin(dt_s / config_.gps_stress_tau_s, 1.0F);
@@ -87,6 +126,39 @@ void Filter::predict(const float acceleration_world_mps2[3], const float dt_s,
         s.P02 += dt_s * s.P12;
     }
     grow_baro_scale(dt_s);
+    check_health();
+}
+
+void Filter::track_pad_gravity(const float specific_force, const float dt_s, const Phase phase)
+{
+    if (gravity_frozen_ || !config_.measure_pad_gravity) return;
+    if (phase != Phase::PadIdle) {
+        gravity_frozen_ = true;
+        return;
+    }
+    if (!still_) {
+        // A jolt on the pad is not a departure: freeze after kGravityLeavePadS
+        // of continuous motion.
+        gravity_moving_s_ += dt_s;
+        if (gravity_moving_s_ >= kGravityLeavePadS) gravity_frozen_ = true;
+        return;
+    }
+    gravity_moving_s_ = 0.0F;
+    // Exponential average (time constant kGravityTauS, dt based). Until that
+    // much time has been seen it is the plain mean, so it is not biased by
+    // its start value.
+    gravity_still_s_ += dt_s;
+    const float alpha = std::fmin(dt_s / std::fmin(gravity_still_s_, kGravityTauS), 1.0F);
+    gravity_mean_mps2_ += alpha * (specific_force - gravity_mean_mps2_);
+    if (gravity_still_s_ < kGravityMinStillS) return;   // fallback: kGravity
+    if (std::fabs(gravity_mean_mps2_ - kGravity) <= kGravityClampFraction * kGravity) {
+        gravity_mps2_ = gravity_mean_mps2_;
+        gravity_out_of_range_ = false;
+    } else {
+        gravity_mps2_ = kGravity;
+        if (!gravity_out_of_range_) ++gravity_clamped_count_;
+        gravity_out_of_range_ = true;
+    }
 }
 
 void Filter::grow_baro_scale(const float dt_s)
@@ -110,17 +182,10 @@ void Filter::grow_baro_scale(const float dt_s)
     up.P22 += config_.baro_scale_rate * config_.baro_scale_rate * km;
 }
 
-void Filter::predict_without_imu(const float dt_s, const Phase phase)
+void Filter::propagate_without_acceleration(float dt_s, const float accel_noise_mps2)
 {
-    initialized_ = true;
-    imu_ignored_ = true;
-    still_ = false;
-    (void)phase;
-    if (!(dt_s > 0.0F) || dt_s > 0.1F) {
-        return;
-    }
     gps_stress_ -= gps_stress_ * std::fmin(dt_s / config_.gps_stress_tau_s, 1.0F);
-    const float q = config_.no_imu_accel_noise_mps2 * config_.no_imu_accel_noise_mps2;
+    const float q = accel_noise_mps2 * accel_noise_mps2;
     const float dt2 = dt_s * dt_s;
     for (Axis &s : axes_) {
         s.p += s.v * dt_s;
@@ -133,6 +198,196 @@ void Filter::predict_without_imu(const float dt_s, const Phase phase)
         s.P02 += dt_s * s.P12;
     }
     grow_baro_scale(dt_s);
+}
+
+void Filter::predict_without_imu(const float dt_s, const Phase phase)
+{
+    (void)phase;
+    if (!std::isfinite(dt_s)) {
+        ++rejected_inputs_;
+        return;
+    }
+    initialized_ = true;
+    imu_ignored_ = true;
+    still_ = false;
+    gravity_frozen_ = true;
+    if (!(dt_s > 0.0F)) {
+        return;
+    }
+    if (dt_s > kMaxPredictDtS) ++predict_gaps_;   // bridged, see predict()
+    propagate_without_acceleration(std::fmin(dt_s, kMaxGapBridgeS),
+                                   config_.no_imu_accel_noise_mps2);
+    check_health();
+}
+
+void Filter::predict_magnitude_only(const float specific_force_mps2, const float dt_s,
+                                    const Phase phase)
+{
+    if (!std::isfinite(specific_force_mps2) || !std::isfinite(dt_s)) {
+        ++rejected_inputs_;
+        return;
+    }
+    initialized_ = true;
+    imu_ignored_ = true;   // the IMU does not drive the position (log flag)
+    if (!(dt_s > 0.0F)) {
+        return;
+    }
+    const bool gap = dt_s > kMaxPredictDtS;
+    if (gap) ++predict_gaps_;
+    const float dt = std::fmin(dt_s, kMaxGapBridgeS);
+    // Stillness and pad gravity need only |specific force|, so the pad hold
+    // works without an attitude. Away from the pad (or not still) the
+    // vertical acceleration is unknown: zero with the no-IMU process noise.
+    still_ = phase == Phase::PadIdle &&
+             std::fabs(specific_force_mps2 - kGravity) < config_.still_band_g * kGravity;
+    if (!gap) track_pad_gravity(specific_force_mps2, dt, phase);
+    propagate_without_acceleration(
+        dt, still_ ? config_.accel_noise_mps2 : config_.no_imu_accel_noise_mps2);
+    check_health();
+}
+
+void Filter::check_health()
+{
+    bool bad = false;
+    for (const Axis &s : axes_) {
+        const float values[9] = {s.p, s.v, s.b, s.P00, s.P01, s.P11, s.P02, s.P12, s.P22};
+        for (const float x : values) {
+            if (!std::isfinite(x)) bad = true;
+        }
+        if (std::fabs(s.p) > kMaxPlausiblePositionM || std::fabs(s.v) > kMaxPlausibleVelocityMps ||
+            s.P00 > kMaxPlausibleCovariance || s.P11 > kMaxPlausibleCovariance) {
+            bad = true;
+        }
+    }
+    if (!std::isfinite(gps_stress_) || !std::isfinite(gravity_mps2_)) bad = true;
+    if (bad) recover_from_divergence();
+}
+
+void Filter::recover_from_divergence()
+{
+    ++divergence_resets_;
+    // Keep what the pad taught us (baro reference, GPS origin, gravity) and
+    // the lifetime counters; forget the state. The large covariance lets the
+    // next baro/GPS update (or, on the pad, the ungated pad hold) pull it in.
+    for (Axis &s : axes_) {
+        s = Axis{};
+        s.P00 = kRecoveredPositionVariance;
+        s.P11 = kRecoveredVelocityVariance;
+    }
+    gps_stress_ = 0.0F;
+    if (!std::isfinite(gravity_mps2_) || !std::isfinite(gravity_mean_mps2_)) {
+        gravity_mps2_ = kGravity;
+        gravity_mean_mps2_ = kGravity;
+    }
+    baro_scale_started_ = false;
+    baro_consecutive_rejects_ = 0;
+    for (std::uint32_t &r : gps_consecutive_rejects_) r = 0;
+}
+
+void Filter::restore_after_reset(const PadReferences &refs)
+{
+    recover_from_divergence();
+    --divergence_resets_;   // not a divergence: undo the helper's count
+    initialized_ = true;
+    imu_ignored_ = true;
+    still_ = false;
+    if (refs.baro_valid && std::isfinite(refs.baro_reference_m)) {
+        baro_reference_m_ = refs.baro_reference_m;
+        baro_reference_set_ = true;
+    }
+    if (refs.gps_valid && std::isfinite(refs.gps_origin_lat_deg) &&
+        std::isfinite(refs.gps_origin_lon_deg) && std::isfinite(refs.gps_origin_alt_m) &&
+        std::fabs(refs.gps_origin_lat_deg) <= 90.0 && std::fabs(refs.gps_origin_lon_deg) <= 180.0) {
+        const double phi = refs.gps_origin_lat_deg * kPi / 180.0;
+        meters_per_deg_lat_ = 111132.92 - 559.82 * std::cos(2 * phi) + 1.175 * std::cos(4 * phi);
+        meters_per_deg_lon_ = 111412.84 * std::cos(phi) - 93.5 * std::cos(3 * phi);
+        gps_origin_lat_ = refs.gps_origin_lat_deg;
+        gps_origin_lon_ = refs.gps_origin_lon_deg;
+        gps_origin_alt_ = refs.gps_origin_alt_m;
+        gps_origin_set_ = true;
+    }
+    // Pad gravity; frozen, the vehicle left the pad.
+    gravity_frozen_ = true;
+    if (refs.gravity_valid && std::isfinite(refs.gravity_mps2) &&
+        std::fabs(refs.gravity_mps2 - kGravity) <= kGravityClampFraction * kGravity) {
+        gravity_mps2_ = refs.gravity_mps2;
+        gravity_mean_mps2_ = refs.gravity_mps2;
+        gravity_still_s_ = kGravityMinStillS;
+    }
+    if (refs.motion_valid && std::isfinite(refs.agl_m) &&
+        std::isfinite(refs.vertical_velocity_mps)) {
+        axes_[2].p = refs.agl_m;
+        axes_[2].v = refs.vertical_velocity_mps;
+    }
+}
+
+void Filter::export_pad_references(PadReferences &out) const
+{
+    out = PadReferences{};
+    out.baro_valid = baro_reference_set_ && std::isfinite(baro_reference_m_);
+    out.baro_reference_m = baro_reference_m_;
+    out.gps_valid = gps_origin_set_;
+    out.gps_origin_lat_deg = gps_origin_lat_;
+    out.gps_origin_lon_deg = gps_origin_lon_;
+    out.gps_origin_alt_m = gps_origin_alt_;
+    out.gravity_valid = gravity_measured() && std::isfinite(gravity_mps2_);
+    out.gravity_mps2 = gravity_mps2_;
+    out.motion_valid = initialized_ && std::isfinite(axes_[2].p) && std::isfinite(axes_[2].v);
+    out.agl_m = axes_[2].p;
+    out.vertical_velocity_mps = axes_[2].v;
+}
+
+// ---- BaroRate ----
+
+void BaroRate::push(const float mean)
+{
+    for (int i = 0; i + 1 < kBins; ++i) bins_[i] = bins_[i + 1];
+    bins_[kBins - 1] = mean;
+    if (filled_ < kBins) ++filled_;
+    rate_valid_ = false;
+    if (filled_ == kBins) {
+        const float old3 = bins_[0] + bins_[1] + bins_[2];
+        const float new3 = bins_[kBins - 3] + bins_[kBins - 2] + bins_[kBins - 1];
+        if (std::isfinite(old3) && std::isfinite(new3)) {
+            rate_ = (new3 - old3) / 3.0F / (0.1F * static_cast<float>(kBins - 3));
+            rate_valid_ = true;
+        }
+    }
+}
+
+void BaroRate::finish_bin()
+{
+    push(bin_count_ > 0 ? bin_sum_ / static_cast<float>(bin_count_)
+                        : std::numeric_limits<float>::quiet_NaN());
+}
+
+void BaroRate::add(const std::uint64_t t_us, const float altitude_m)
+{
+    if (!std::isfinite(altitude_m)) return;
+    const std::uint64_t index = t_us / kBinUs;
+    if (!bin_open_) {
+        bin_open_ = true;
+        bin_index_ = index;
+    }
+    if (index < bin_index_) return;   // time went backwards: ignore the sample
+    if (index > bin_index_) {
+        finish_bin();
+        const std::uint64_t missing = index - bin_index_ - 1;
+        for (std::uint64_t m = 0; m < std::min<std::uint64_t>(missing, kBins); ++m) {
+            push(std::numeric_limits<float>::quiet_NaN());
+        }
+        bin_index_ = index;
+        bin_sum_ = 0.0F;
+        bin_count_ = 0;
+    }
+    bin_sum_ += altitude_m;
+    ++bin_count_;
+    last_add_us_ = t_us;
+}
+
+bool BaroRate::valid(const std::uint64_t now_us) const
+{
+    return rate_valid_ && now_us >= last_add_us_ && now_us - last_add_us_ <= kStaleUs;
 }
 
 void Filter::symmetrize(Axis &axis)
@@ -184,6 +439,13 @@ bool Filter::update_axis(Axis &axis, const float hp, const float hv, const float
         record->variance = s;
         record->accepted = false;
     }
+    if (!std::isfinite(innovation) || !std::isfinite(s) || !(s > 0.0F)) {
+        // A NaN innovation would pass the gate comparison (false) and poison
+        // the axis for good: refuse it. A NaN already in the state is caught
+        // by check_health() after the cycle.
+        ++rejected_inputs_;
+        return false;
+    }
     if (consecutive_rejects != nullptr) {
         if (innovation * innovation > config_.gate_sigma * config_.gate_sigma * s &&
             (!allow_resync || *consecutive_rejects < config_.max_consecutive_rejects)) {
@@ -221,8 +483,11 @@ void Filter::update_constraints(const Phase phase)
         up.b = 0.0F;
         up.P02 = up.P12 = up.P22 = 0.0F;
         for (Axis &axis : axes_) {
-            std::uint32_t unused = 0;
-            update_position(axis, 0.0F, kPadPositionSigmaM * kPadPositionSigmaM, unused);
+            // Ungated, like the velocity hold: on the pad the true position is
+            // the origin, so a gate here could only keep a stale offset (a
+            // position left over from a flight) from ever being pulled back.
+            update_axis(axis, 1.0F, 0.0F, 0.0F, 0.0F, kPadPositionSigmaM * kPadPositionSigmaM,
+                        nullptr, nullptr);
             update_velocity(axis, 0.0F, kPadVelocitySigmaMps * kPadVelocitySigmaMps);
         }
     } else if (phase == Phase::Landed) {
@@ -230,11 +495,14 @@ void Filter::update_constraints(const Phase phase)
             update_velocity(axis, 0.0F, kLandedVelocitySigmaMps * kLandedVelocitySigmaMps);
         }
     }
+    check_health();
 }
 
 bool Filter::update_baro(const float altitude_m, const float pressure_pa, const Phase phase)
 {
-    if (!std::isfinite(altitude_m) || !(pressure_pa >= kBaroMinPressurePa)) {
+    if (!std::isfinite(altitude_m) || !std::isfinite(pressure_pa) ||
+        !(pressure_pa >= kBaroMinPressurePa)) {
+        if (!std::isfinite(altitude_m) || !std::isfinite(pressure_pa)) ++rejected_inputs_;
         return false;  // out of the sensor's range or invalid
     }
     if (!baro_reference_set_) {
@@ -289,6 +557,7 @@ bool Filter::update_baro(const float altitude_m, const float pressure_pa, const 
     }
     ++baro_updates_;
     cycles_since_baro_ = 0;
+    check_health();
     return true;
 }
 
@@ -321,7 +590,9 @@ bool Filter::update_gps(const double latitude_deg, const double longitude_deg,
                         const Phase phase, const float hdop, const float vdop)
 {
     if (!std::isfinite(latitude_deg) || !std::isfinite(longitude_deg) ||
-        !std::isfinite(altitude_m)) {
+        !std::isfinite(altitude_m) || std::fabs(latitude_deg) > 90.0 ||
+        std::fabs(longitude_deg) > 180.0) {
+        ++rejected_inputs_;
         return false;
     }
     const bool hold = phase == Phase::PadIdle && still_;
@@ -371,6 +642,7 @@ bool Filter::update_gps(const double latitude_deg, const double longitude_deg,
     }
     if (used) ++gps_updates_;
     if (gps_innovation_[2].accepted) cycles_since_gps_up_ = 0;
+    check_health();
     return used;
 }
 

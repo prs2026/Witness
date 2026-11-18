@@ -6,6 +6,8 @@
 
 #include "driver/spi_master.h"
 #include "esp_err.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "hardware.h"
 
 class Ra01 final {
@@ -16,11 +18,41 @@ public:
     Ra01(const Ra01 &) = delete;
     Ra01 &operator=(const Ra01 &) = delete;
 
+    // (Re)initializes the radio: hardware reset, SPI round-trip probe, full
+    // configuration, continuous RX. Safe to call again after a failure or
+    // for a full recovery; the SPI bus is set up only once.
     esp_err_t initialize();
+    bool ready() const { return initialized_; }
     esp_err_t transmit(const std::uint8_t *data, std::size_t length);
     esp_err_t receive(std::uint8_t *data, std::size_t capacity,
                       std::size_t &length);
     std::int8_t last_packet_rssi_dbm() const { return last_packet_rssi_dbm_; }
+
+    // Periodic health check (call every ~1 s, and at once when rx_fault()):
+    // chip mode must be RX, packet type LoRa (a reset chip comes back as GFSK
+    // in standby), device errors are counted and cleared. Re-issues SetRx when
+    // the mode is wrong; after repeated failures or a reset chip it does a
+    // full initialize() (RESET pin). Failed = the radio is not usable now.
+    enum class Health : std::uint8_t { Ok, Rearmed, Reinitialized, Failed };
+    Health health_check();
+    // True when transmit() could not put the radio back in RX.
+    bool rx_fault() const { return rx_fault_; }
+
+    struct Stats {
+        std::uint32_t crc_errors;
+        std::uint32_t rx_overruns;     // packet dropped: another arrived while reading
+        std::uint32_t rearms;          // SetRx re-issued by the health check
+        std::uint32_t reinits;         // full re-initializations by the health check
+        std::uint32_t busy_timeouts;
+        std::uint32_t device_errors;
+    };
+    Stats stats() const { return stats_; }
+
+    // Blocks up to `ticks` for the radio's DIO1 interrupt line (RxDone /
+    // TxDone / CrcErr), so a packet is read within ~1 ms instead of waiting
+    // for the next 10 ms poll. Returns on timeout too (poll fallback).
+    // Call from the task that runs receive().
+    void wait_for_event(TickType_t ticks);
 
     // Runtime transmit drive (SX1262 dBm into the Ra-01SH-P front end).
     // Applied from the next transmission. Below -9 dBm the SX1262's low-power
@@ -37,10 +69,19 @@ public:
 
 private:
     static constexpr std::uint32_t kSpiClockHz = 8000000U;
-    static constexpr std::uint32_t kBusyTimeoutMs = 500U;
+    // BUSY normally clears within microseconds. 100 ms is far above any
+    // documented command time and keeps one stuck command short enough for the
+    // task watchdog; once a timeout happened later waits give up after 5 ms
+    // until a command succeeds again (busy_stuck_).
+    static constexpr std::uint32_t kBusyTimeoutMs = 100U;
+    static constexpr std::uint32_t kBusyStuckTimeoutUs = 5000U;
+    static constexpr std::int64_t kBusySpinUs = 300;
     static constexpr std::uint32_t kTransmitTimeoutMs = 1000U;
 
     esp_err_t wait_until_ready();
+    esp_err_t transmit_sequence(const std::uint8_t *data, std::size_t length);
+    esp_err_t read_status_byte(std::uint8_t &status);
+    esp_err_t enter_rx();
     // SetPaConfig for the PA the current drive needs (high-power PA for
     // >= -9 dBm, low-power PA below). No-op when already configured.
     esp_err_t configure_pa_for(std::int8_t dbm);
@@ -56,6 +97,11 @@ private:
 
     spi_device_handle_t spi_device_ = nullptr;
     bool initialized_ = false;
+    bool rx_fault_ = false;
+    bool busy_stuck_ = false;
+    bool dio1_isr_installed_ = false;
+    std::uint8_t health_failures_ = 0;
+    Stats stats_{};
     std::int8_t last_packet_rssi_dbm_ = -127;
     std::atomic<std::int8_t> tx_power_dbm_{static_cast<std::int8_t>(IRIS_RADIO_TX_POWER_DBM)};
     std::atomic<bool> front_end_enabled_{true};

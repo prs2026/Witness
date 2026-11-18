@@ -122,6 +122,10 @@ def kalman_rows(run_dir: Path) -> list:
     rows = []
     for row in converter.iter_packet_log(files[-1].read_bytes()):
         if row.get("packet_type") == "kalman_log":
+            # Rows after a reset in flight (log "resumed" marker) are on the
+            # restarted device clock; the uptime->sim fit is for the first one.
+            if row.get("segment"):
+                continue
             rows.append(row)
     return rows
 

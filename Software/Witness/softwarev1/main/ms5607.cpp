@@ -49,6 +49,24 @@ esp_err_t Ms5607::initialize(const spi_host_device_t host)
                    (kResetDelayMs * configTICK_RATE_HZ + 999U) / 1000U) + 1U);
 
     result = read_prom();
+    // The first PROM read after power-up or a reset has failed its CRC at
+    // every boot on the bench (2026-11-17), then passed ~1 s later on the
+    // caller's retry, leaving ~1 s without a barometer (after a reset in
+    // flight too). Reset and read again here before giving up.
+    for (int attempt = 1; attempt <= kPromRetries &&
+                          (result == ESP_ERR_INVALID_CRC || result == ESP_ERR_NOT_FOUND);
+         ++attempt) {
+        if (attempt == 1) {
+            ESP_LOGW(kLogTag, "PROM words %04X %04X %04X %04X %04X %04X %04X %04X; resetting and reading again",
+                     prom_[0], prom_[1], prom_[2], prom_[3], prom_[4], prom_[5], prom_[6], prom_[7]);
+        }
+        if (send_command(kResetCommand) != ESP_OK) break;
+        vTaskDelay(pdMS_TO_TICKS(kPromRetryDelayMs) + 1U);
+        result = read_prom();
+        if (result == ESP_OK) {
+            ESP_LOGI(kLogTag, "PROM read OK on retry %d", attempt);
+        }
+    }
     if (result != ESP_OK) {
         release();
         return result;

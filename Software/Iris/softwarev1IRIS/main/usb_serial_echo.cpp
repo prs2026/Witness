@@ -201,9 +201,9 @@ void UsbSerialEcho::poll()
         return;
     }
 
-    std::uint8_t buffer[kBufferSize];
+    std::uint8_t *const buffer = usb_rx_buffer_;
     const int bytes_read = usb_ready_
-        ? usb_serial_jtag_read_bytes(buffer, sizeof(buffer), 0)
+        ? usb_serial_jtag_read_bytes(buffer, sizeof(usb_rx_buffer_), 0)
         : 0;
     if (bytes_read > 0) {
         const std::size_t byte_count = static_cast<std::size_t>(bytes_read);
@@ -231,11 +231,39 @@ void UsbSerialEcho::set_restored_load_mask(const std::uint8_t mask)
     if (mask & 0x08U) iris_status_flags_ |= IRIS_STATUS_5V_ENABLED_FLAG;
 }
 
+void UsbSerialEcho::recover_i2c(const std::int64_t now_us, const char *const why)
+{
+    (void)now_us;
+    // Stuck bus (SDA held by a slave, or a wedged controller): reset the
+    // controller and clock the bus free, then re-apply the cached load state
+    // at once instead of waiting for the next periodic resync. Recovery never
+    // writes a default: resync() pushes the cache (the last commanded state).
+    const esp_err_t bus = gpio_expander_.recover_bus();
+    const esp_err_t push = gpio_expander_.resync();
+    ESP_LOGW(kLogTag, "I2C recovery (%s): bus %s, resync %s", why,
+             esp_err_to_name(bus), esp_err_to_name(push));
+}
+
 void UsbSerialEcho::poll_expander_resync(const std::int64_t now_us)
 {
-    // Once a second re-push OLAT and IODIR from the cache. This heals an
-    // expander-only reset (LS_EN glitch, 3V3 dip) and any write that failed
-    // after the chip latched it.
+    // Every 100 ms read IODIR/OLAT back; a mismatch (expander-only reset: 3V3
+    // dip, LS_EN glitch) is healed immediately, so a load off caused by it
+    // lasts ~100 ms instead of up to 1 s.
+    if (now_us >= next_expander_check_us_) {
+        next_expander_check_us_ = now_us + 100000;
+        bool healed = false;
+        const esp_err_t result = gpio_expander_.verify_and_heal(healed);
+        if (result != ESP_ERR_INVALID_STATE) {
+            if (healed) {
+                ESP_LOGW(kLogTag, "expander state lost (reset?): re-applied");
+            }
+            if (expander_failures_.note(result == ESP_OK, now_us)) {
+                recover_i2c(now_us, "expander");
+            }
+        }
+    }
+    // Once a second also blindly re-push OLAT and IODIR from the cache. This
+    // heals any write that failed after the chip latched it.
     if (now_us < next_expander_resync_us_) {
         return;
     }
@@ -243,7 +271,21 @@ void UsbSerialEcho::poll_expander_resync(const std::int64_t now_us)
     const esp_err_t result = gpio_expander_.resync();
     if (result != ESP_OK && result != ESP_ERR_INVALID_STATE) {
         ESP_LOGE(kLogTag, "expander resync failed: %s", esp_err_to_name(result));
+        if (expander_failures_.note(false, now_us)) {
+            recover_i2c(now_us, "resync");
+        }
     }
+}
+
+bool UsbSerialEcho::usb_write_allowed(const std::int64_t now_us)
+{
+    // No host (cable absent / port not open): drop at once. A host that is
+    // present but not draining: one timed-out write suspends USB output for
+    // 1 s instead of blocking the main loop 10 ms on every packet.
+    if (!usb_ready_ || now_us < usb_stall_until_us_) {
+        return false;
+    }
+    return usb_serial_jtag_is_connected();
 }
 
 void UsbSerialEcho::update_battery_voltage(
@@ -260,7 +302,7 @@ void UsbSerialEcho::echo_bytes(
     const std::uint8_t *data,
     const std::size_t length)
 {
-    if (!usb_ready_) {
+    if (!usb_write_allowed(esp_timer_get_time())) {
         return;
     }
     std::size_t bytes_echoed = 0;
@@ -270,6 +312,7 @@ void UsbSerialEcho::echo_bytes(
             length - bytes_echoed,
             pdMS_TO_TICKS(10));
         if (bytes_written <= 0) {
+            usb_stall_until_us_ = esp_timer_get_time() + 1000000;
             ESP_LOGW(kLogTag, "USB transmit buffer full; echo truncated");
             return;
         }
@@ -411,9 +454,12 @@ void UsbSerialEcho::set_expander_output(
     if (result != ESP_OK) {
         ESP_LOGE(kLogTag, "%s set failed: %s (will be re-pushed by resync)",
                  name, esp_err_to_name(result));
-        if (result == ESP_ERR_INVALID_STATE || result == ESP_ERR_INVALID_ARG) {
+        if (result == ESP_ERR_INVALID_ARG) {
             return;
         }
+        // INVALID_STATE = expander not configured yet (boot bring-up failed).
+        // The commanded state is still adopted and stored below so the main
+        // loop's retry applies it, instead of being lost (audit #10).
     }
 
     if (pin == IRIS_MCP23008_PIN_LED_BLUE) {
@@ -444,7 +490,8 @@ void UsbSerialEcho::set_expander_output(
     }
 
     if (status_flag != 0) {
-        // Remember the commanded load mask across warm resets (RTC_NOINIT).
+        // Remember the commanded load mask across WARM resets only
+        // (RTC_NOINIT, cleared when all off); never stored in flash.
         load_state::store(static_cast<std::uint8_t>(
             (iris_status_flags_ >> 3U) & 0x0FU));
     }
@@ -516,9 +563,14 @@ void UsbSerialEcho::poll_current_monitor(const std::int64_t now_us)
                     peak_current_microamps_[channel], currents[channel]);
             }
             ++valid_current_samples_;
+            (void)pac_failures_.note(true, now_us);
         } else {
             current_sample_error_ = true;
             latest_current_valid_ = false;
+            // Shared I2C bus: repeated PAC failures also trigger a bus clear.
+            if (pac_failures_.note(false, now_us)) {
+                recover_i2c(now_us, "pac1931");
+            }
         }
 
         do {
@@ -551,16 +603,16 @@ void UsbSerialEcho::poll_debug_report(const std::int64_t now_us)
 
 void UsbSerialEcho::poll_uart1()
 {
-    std::uint8_t buffer[kBufferSize];
+    std::uint8_t *const buffer = uart_rx_buffer_;
     int bytes_read = 0;
     do {
         bytes_read = uart_read_bytes(
-            IRIS_UART1_PORT, buffer, sizeof(buffer), 0);
+            IRIS_UART1_PORT, buffer, sizeof(uart_rx_buffer_), 0);
         if (bytes_read > 0) {
             consume_uart1_bytes(
                 buffer, static_cast<std::size_t>(bytes_read));
         }
-    } while (bytes_read == static_cast<int>(sizeof(buffer)));
+    } while (bytes_read == static_cast<int>(sizeof(uart_rx_buffer_)));
 }
 
 void UsbSerialEcho::poll_can()
@@ -840,7 +892,7 @@ void UsbSerialEcho::write_usb_packet(
     const std::uint8_t *data,
     const std::size_t length)
 {
-    if (!usb_ready_) {
+    if (!usb_write_allowed(esp_timer_get_time())) {
         return;
     }
     std::size_t bytes_written_total = 0;
@@ -850,6 +902,7 @@ void UsbSerialEcho::write_usb_packet(
             length - bytes_written_total,
             pdMS_TO_TICKS(10));
         if (bytes_written <= 0) {
+            usb_stall_until_us_ = esp_timer_get_time() + 1000000;
             return;
         }
         bytes_written_total += static_cast<std::size_t>(bytes_written);

@@ -19,7 +19,11 @@ class SimModelTests(unittest.TestCase):
         # ~0.5 s after burn.
         site = samples[0].alt_msl_m
         above = next(s.t_ms / 1000 for s in samples if s.alt_msl_m - site > 30.0)
-        self.assertAlmostEqual(exp[hp.BOOST], above + 0.3, delta=0.05)
+        # ... or, earlier, 0.3 s after the axial acceleration first reaches
+        # 2.5 g (the acceleration rule needs no filter).
+        accel = next(s.t_ms / 1000 for s in samples
+                     if hp.decode_hitl(hp.encode_hitl(s.hitl))["low_g"][0] >= 2.5)
+        self.assertAlmostEqual(exp[hp.BOOST], min(above, accel) + 0.3, delta=0.05)
         self.assertAlmostEqual(exp[hp.COAST],
                                p.pad_time_s + p.burn_time_s + 0.5, delta=0.15)
         summ = sm.summarize(samples)
@@ -81,15 +85,91 @@ class SimModelTests(unittest.TestCase):
         self.assertEqual(after.hitl.fix_quality, 1)
 
     def test_reference_fsm_launch_needs_300ms_above_30m(self):
+        # axial_g=1.0 isolates the Kalman rule from the acceleration rule.
         fsm = sm.ReferenceStateMachine()
         for i in range(1, 100):  # 29 m AGL: never
-            fsm.update(i * 10_000, 11.0, [11, 0, 0], [0, 0, 0], 29.0, 50.0)
+            fsm.update(i * 10_000, 11.0, [11, 0, 0], [0, 0, 0], 29.0, 50.0, axial_g=1.0)
         self.assertEqual(fsm.state, hp.PAD_IDLE)
         for i in range(100, 130):  # 290 ms above 30 m
-            fsm.update(i * 10_000, 11.0, [11, 0, 0], [0, 0, 0], 31.0, 50.0)
+            fsm.update(i * 10_000, 11.0, [11, 0, 0], [0, 0, 0], 31.0, 50.0, axial_g=1.0)
         self.assertEqual(fsm.state, hp.PAD_IDLE)
-        fsm.update(130 * 10_000, 11.0, [11, 0, 0], [0, 0, 0], 31.0, 50.0)
+        fsm.update(130 * 10_000, 11.0, [11, 0, 0], [0, 0, 0], 31.0, 50.0, axial_g=1.0)
         self.assertEqual(fsm.state, hp.BOOST)
+
+    def test_reference_fsm_launch_needs_30mps(self):
+        # A slow climb (10 m/s) to 150 m never launches; 30 m/s qualifies.
+        fsm = sm.ReferenceStateMachine()
+        for i in range(1, 1600):
+            fsm.update(i * 10_000, 1.0, [1, 0, 0], [0, 0, 0], 0.1 * i, 10.0)
+        self.assertEqual(fsm.state, hp.PAD_IDLE)
+        for i in range(1600, 1700):   # 150 m+ at 29.9 m/s: still no
+            fsm.update(i * 10_000, 1.0, [1, 0, 0], [0, 0, 0], 160.0, 29.9)
+        self.assertEqual(fsm.state, hp.PAD_IDLE)
+        fsm2 = sm.ReferenceStateMachine()
+        for i in range(1, 40):
+            fsm2.update(i * 10_000, 1.0, [1, 0, 0], [0, 0, 0], 31.0, 30.0)
+        self.assertEqual(fsm2.state, hp.BOOST)
+
+    def test_reference_fsm_acceleration_launch(self):
+        # Mirrors flight_state_machine.cpp: 2.5 g leaky budget, 300 ms.
+        def run(levels, n=1000):
+            fsm = sm.ReferenceStateMachine()
+            for i in range(1, n):
+                g = levels(i)
+                fsm.update(i * 2_000, g, [g, 0, 0], [0, 0, 0], 0.0, 0.0)
+            return fsm
+        fsm = sm.ReferenceStateMachine()
+        t_boost = None
+        for i in range(1, 1000):
+            g = 3.0 if i > 100 else 1.0
+            fsm.update(i * 2_000, g, [g, 0, 0], [0, 0, 0], 0.0, 0.0)
+            if fsm.state == hp.BOOST:
+                t_boost = (i - 100) * 2
+                break
+        self.assertIn(t_boost, (300, 302))
+        self.assertEqual(run(lambda i: 2.45).state, hp.PAD_IDLE)       # below threshold
+        self.assertEqual(run(lambda i: 30.0 if i % 50 < 5 else 1.0, 30000).state, hp.PAD_IDLE)  # shocks
+        self.assertEqual(run(lambda i: 3.0 if i % 10 < 4 else 0.2, 30000).state, hp.PAD_IDLE)   # shaking
+        self.assertEqual(run(lambda i: 4.0 if i % 25 != 24 else 1.5).state, hp.BOOST)           # chuff
+        self.assertEqual(run(lambda i: 4.0 if 100 < i < 225 else 1.0).state, hp.PAD_IDLE)       # 250 ms
+
+    def test_reference_fsm_airborne_at_boot(self):
+        def run(rate, n=800, **kw):
+            fsm = sm.ReferenceStateMachine()
+            for i in range(1, n):
+                fsm.update(i * 2_000, 0.3, [0.3, 0, 0], [0, 0, 0], 0.0, 0.0, baro_rate_mps=rate, **kw)
+            return fsm
+        up = run(60.0)
+        self.assertEqual(up.transitions[0][1:], (hp.PAD_IDLE, hp.BOOST))   # then burnout (0.3 g)
+        self.assertAlmostEqual(up.transitions[0][0] / 1e6, 1.0, delta=0.01)
+        self.assertEqual(run(-25.0).state, hp.DESCENT)
+        self.assertEqual(run(-19.0, 5000).state, hp.PAD_IDLE)
+        self.assertEqual(run(None, 5000).state, hp.PAD_IDLE)
+
+    def test_reference_fsm_false_flight_evidence(self):
+        def fly(agl, peak_g):
+            fsm = sm.ReferenceStateMachine()
+            fsm.update(10_000, 1.0, [1, 0, 0], [0, 0, 0], 0.0, 0.0)
+            fsm.state = hp.BOOST   # commanded launch
+            for i in range(2, 1700):
+                g = peak_g if i == 5 else 1.0
+                fsm.update(i * 20_000, 1.0, [1, 0, 0], [0, 0, 0], agl, 0.0, axial_g=g)
+            return fsm
+        f = fly(0.0, 1.2)
+        self.assertEqual(f.state, hp.LANDED)
+        self.assertTrue(f.false_flight)
+        self.assertFalse(fly(60.0, 1.2).false_flight)
+        self.assertFalse(fly(0.0, 3.5).false_flight)
+
+    def test_reference_fsm_never_steps_back(self):
+        fsm = sm.ReferenceStateMachine()
+        for i in range(1, 60):
+            fsm.update(i * 10_000, 11.0, [11, 0, 0], [0, 0, 0], 100.0, 80.0)
+        self.assertEqual(fsm.state, hp.BOOST)
+        for i in range(60, 600):
+            fsm.update(i * 10_000, 11.0, [11, 0, 0], [0, 0, 0], 0.0, 0.0)
+        self.assertGreaterEqual(fsm.state, hp.BOOST)
+        self.assertTrue(all(to > frm for _ts, frm, to in fsm.transitions))
 
 
 if __name__ == "__main__":

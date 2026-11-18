@@ -5,7 +5,9 @@
 //  - Iris uptime went backwards (Iris rebooted), or
 //  - Iris-reported OUT1..3/5V flags disagree with the commanded state for
 //    more than kMismatchMs (and no command was sent in the last kGraceMs).
-// Re-sends are rate limited.
+// Re-sends are rate limited with backoff. The tracker is RAM only and starts
+// empty (known_ == 0): after a Witness reset it sends nothing and never
+// overrides the load state Iris restored from its own NVS record.
 
 #include <cstdint>
 
@@ -17,6 +19,11 @@ constexpr std::uint8_t kStatusOutShift = 3;  // status bits 3..6 = OUT1,OUT2,OUT
 constexpr std::int64_t kMismatchMs = 900;
 constexpr std::int64_t kGraceMs = 1500;
 constexpr std::int64_t kMismatchResendIntervalMs = 2000;
+// Backoff: each further mismatch re-send in the same episode doubles the
+// interval (2, 4, 8, 16 s) up to this cap, so a stuck mismatch (Iris dead, or
+// its output genuinely failed) does not hammer the CAN bus at full rate
+// forever. It never gives up: a camera left off must still be retried.
+constexpr std::int64_t kMismatchResendMaxIntervalMs = 30000;
 constexpr std::int64_t kRebootResendIntervalMs = 500;
 
 struct Action {
@@ -53,6 +60,7 @@ public:
         last_command_ms_ = now_ms;
         have_command_ = true;
         mismatch_since_ms_ = -1;
+        mismatch_resends_ = 0;
     }
 
     // Call for every Iris 0x03 camera packet.
@@ -69,15 +77,21 @@ public:
         bool resend = false;
         if (rebooted) {
             mismatch_since_ms_ = -1;
+            mismatch_resends_ = 0;
             resend = !have_resend_ || now_ms - last_resend_ms_ >= kRebootResendIntervalMs;
         } else if (!mismatch) {
             mismatch_since_ms_ = -1;
+            mismatch_resends_ = 0;
         } else if (have_command_ && now_ms - last_command_ms_ < kGraceMs) {
             mismatch_since_ms_ = -1;
         } else {
             if (mismatch_since_ms_ < 0) mismatch_since_ms_ = now_ms;
-            if (now_ms - mismatch_since_ms_ >= kMismatchMs)
-                resend = !have_resend_ || now_ms - last_resend_ms_ >= kMismatchResendIntervalMs;
+            if (now_ms - mismatch_since_ms_ >= kMismatchMs) {
+                std::int64_t interval = kMismatchResendIntervalMs << (mismatch_resends_ < 4 ? mismatch_resends_ : 4);
+                if (interval > kMismatchResendMaxIntervalMs) interval = kMismatchResendMaxIntervalMs;
+                resend = !have_resend_ || now_ms - last_resend_ms_ >= interval;
+                if (resend && mismatch_resends_ < 255) ++mismatch_resends_;
+            }
         }
         if (!resend) return action;
 
@@ -104,6 +118,7 @@ private:
     std::int64_t last_command_ms_ = 0;
     std::int64_t last_resend_ms_ = 0;
     std::int64_t mismatch_since_ms_ = -1;
+    std::uint8_t mismatch_resends_ = 0;
 };
 
 }  // namespace iris_load_tracker

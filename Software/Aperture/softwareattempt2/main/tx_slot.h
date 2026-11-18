@@ -25,6 +25,13 @@
 // immediate queue) are never held. Aperture, having sent a command, may send
 // the next one at once ("burst") for kUplinkBurstMs, which is shorter than the
 // hold-off its previous frame started on Witness.
+//
+// 2026-11-15 audit F4: the hold-off is armed only by a frame that passed the
+// command validation (Sensors uses the CommandBridge result), is never armed
+// in Boost, and is capped: UplinkHoldOff below lets a hold run for at most
+// kHoldOffMaxMs, then forces one telemetry cycle (every packet type once)
+// before another hold can start, so a steady command stream can never silence
+// the downlink for more than about kHoldOffMaxMs at a time.
 
 #include <cmath>
 #include <cstddef>
@@ -37,6 +44,8 @@ inline constexpr std::uint32_t kDownlinkEndMs = 700;     // Witness TX must end 
 inline constexpr std::uint32_t kUplinkStartMs = 800;     // Aperture TX may start at this phase
 inline constexpr std::uint32_t kUplinkEndMs = 950;       // ... and must end by this phase
 inline constexpr std::uint32_t kUplinkHoldOffMs = 1000;  // Witness quiet after hearing a command
+inline constexpr std::uint32_t kHoldOffMaxMs = 3000;      // longest continuous hold-off
+inline constexpr std::uint32_t kForcedCycleMaxMs = 2000;  // forced telemetry cycle gives up after this
 inline constexpr std::uint32_t kUplinkBurstMs = 800;     // Aperture: next command at once if within this
 // A GGA arrives this long after its epoch (25 Hz output at 88-115 kbaud): the
 // UTC read from it is advanced by this much on Witness.
@@ -82,6 +91,74 @@ inline Decision witness_telemetry(const std::uint64_t now_ms, const bool uplink_
     const double phase = phase_ms(utc_ms_now + kGgaLatencyMs);
     return phase + airtime_ms <= kDownlinkEndMs ? Decision::Send : Decision::Wait;
 }
+
+// Hold-off governor: wraps the "heard a command" state with the cap above.
+//   note_command(now, allow): a validated command frame was received.
+//     allow=false (Boost) ignores it: commands are mostly refused there and
+//     the downlink must keep flowing.
+//   active(now): true while telemetry must stay quiet; pass it as the
+//     uplink_heard argument of witness_telemetry().
+//   note_telemetry_sent(index): one scheduled packet type went out; index
+//     0..type_count-1. When the cap forces a cycle, the cycle ends once every
+//     type has been sent (or kForcedCycleMaxMs passed, e.g. a type with no
+//     data), and only then can a new hold start.
+// Pure logic; sensor task only (not thread safe).
+class UplinkHoldOff {
+public:
+    explicit UplinkHoldOff(const unsigned type_count = 3)
+        : all_types_mask_(type_count >= 8U ? 0xFFU : static_cast<std::uint8_t>((1U << type_count) - 1U)) {}
+
+    void note_command(const std::uint64_t now_ms, const bool allow)
+    {
+        if (!allow || forcing_) return;     // forced cycle: heard but not held
+        if (!armed_ || now_ms - last_heard_ms_ >= kUplinkHoldOffMs) hold_start_ms_ = now_ms;
+        armed_ = true;
+        last_heard_ms_ = now_ms;
+    }
+
+    bool active(const std::uint64_t now_ms)
+    {
+        if (forcing_) {
+            if (pending_ == 0U || now_ms - force_start_ms_ >= kForcedCycleMaxMs) {
+                forcing_ = false;
+                armed_ = false;
+            } else {
+                return false;
+            }
+        }
+        if (!armed_) return false;
+        if (now_ms - last_heard_ms_ >= kUplinkHoldOffMs) {
+            armed_ = false;
+            return false;
+        }
+        if (now_ms - hold_start_ms_ >= kHoldOffMaxMs) {
+            forcing_ = true;
+            force_start_ms_ = now_ms;
+            pending_ = all_types_mask_;
+            ++forced_cycles_;
+            return false;
+        }
+        return true;
+    }
+
+    void note_telemetry_sent(const unsigned type_index)
+    {
+        if (type_index < 8U) pending_ = static_cast<std::uint8_t>(pending_ & ~(1U << type_index));
+    }
+
+    bool forcing() const { return forcing_; }
+    std::uint32_t forced_cycles() const { return forced_cycles_; }
+
+private:
+    std::uint8_t all_types_mask_;
+    bool armed_ = false;
+    bool forcing_ = false;
+    std::uint64_t last_heard_ms_ = 0;
+    std::uint64_t hold_start_ms_ = 0;
+    std::uint64_t force_start_ms_ = 0;
+    std::uint8_t pending_ = 0;
+    std::uint32_t forced_cycles_ = 0;
+};
 
 // Aperture command. pps_known: a PPS edge no older than kTimeMaxAgeMs with a
 // GPS fix; since_pps_ms: time since that edge (UTC second boundary).

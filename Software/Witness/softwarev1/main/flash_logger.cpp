@@ -81,6 +81,10 @@ FlashLogger::ImuRecord FlashLogger::make_imu_record(
 
 esp_err_t FlashLogger::start() {
     if (task_handle_) return ESP_ERR_INVALID_STATE;
+    // main() restored the flight state before this call: a reset in flight is
+    // known here, before any sensor task can change the state.
+    resumed_in_flight_ = flight_state_machine_ != nullptr &&
+                         logged_state(static_cast<std::uint8_t>(flight_state_machine_->state()));
     text_queue_ = xQueueCreate(32, sizeof(LogLine));
     binary_record_queue_ =
         xQueueCreate(kRecordQueueDepth, sizeof(BinaryRecord));
@@ -307,29 +311,104 @@ esp_err_t FlashLogger::run_startup_self_test() {
                ? ESP_OK : ESP_ERR_INVALID_RESPONSE;
 }
 
+esp_err_t FlashLogger::read_page_retry(const std::uint32_t page, const std::uint16_t column,
+                                       std::uint8_t *data, const std::size_t length)
+{
+    esp_err_t r = ESP_FAIL;
+    for (int attempt = 0; attempt < 3; ++attempt) {
+        r = flash_.read(page, column, data, length);
+        // Uncorrectable ECC is a property of the page, not transient.
+        if (r == ESP_OK || r == ESP_ERR_INVALID_CRC) break;
+        if (attempt == 1) (void)flash_.recover();
+    }
+    return r;
+}
+
+// A header or marker page that is uncorrectable (torn by a power loss during its
+// erase/program) must not fail the mount: the slot is decided from the rest of
+// the evidence, and a torn header block is simply erased before it is reused.
+//  - header torn, marker intact: the slot IS a flight (the marker holds the
+//    generation); its header is rebuilt in RAM, the data stays readable.
+//  - header torn, no marker: not a session (dirty): erased on reuse.
+//  - marker torn, header intact: treated as a flight (the marker is only ever
+//    programmed at launch), so the data is kept.
+// Only a persistent non-ECC bus error is returned (the caller retries).
 esp_err_t FlashLogger::read_slot_info(const std::uint8_t slot, SlotInfo &info)
 {
     info = {};
     const std::uint32_t first_page = slot_base(slot) * W25n01kv::kPagesPerBlock;
     std::uint8_t header[9]{};
-    esp_err_t r = flash_.read(first_page, 0, header, sizeof(header));
+    std::uint8_t marker[8]{};
+    esp_err_t r = read_page_retry(first_page, 0, header, sizeof(header));
+    if (r == ESP_ERR_INVALID_CRC) {
+        ++unreadable_pages_;
+        info.dirty = true;
+        r = read_page_retry(first_page + kFlightMarkerPage, 0, marker, sizeof(marker));
+        if (r == ESP_OK && read_u32_be(marker) == kFlightMagic) {
+            info.valid = true;
+            info.flight = true;
+            info.generation = read_u32_be(marker + 4);
+            info.version = kStoreVersion;
+            std::uint8_t page_header[kPageHeaderSize]{};
+            const FileLayout imu = file_layout(slot, kImuType, kStoreVersion);
+            if (read_page_retry(imu.first_block * W25n01kv::kPagesPerBlock, 0, page_header,
+                                sizeof(page_header)) == ESP_OK &&
+                read_u32_be(page_header) == kPageMagic && page_header[5] == kLegacyStoreVersion)
+                info.version = kLegacyStoreVersion;
+            ESP_LOGW(kLogTag, "slot %c header unreadable; rebuilt from the flight marker (generation %lu)",
+                     'A' + slot, static_cast<unsigned long>(info.generation));
+            return ESP_OK;
+        }
+        if (r == ESP_OK || r == ESP_ERR_INVALID_CRC) {
+            ESP_LOGW(kLogTag, "slot %c header unreadable and no flight marker: slot treated as empty", 'A' + slot);
+            return ESP_OK;
+        }
+        return r;
+    }
     if (r != ESP_OK) return r;
     if (read_u32_be(header) != kSessionMagic ||
         (header[8] != kStoreVersion && header[8] != kLegacyStoreVersion)) return ESP_OK;
     info.valid = true;
     info.version = header[8];
     info.generation = read_u32_be(header + 4);
-    std::uint8_t marker[8]{};
-    r = flash_.read(first_page + kFlightMarkerPage, 0, marker, sizeof(marker));
+    r = read_page_retry(first_page + kFlightMarkerPage, 0, marker, sizeof(marker));
+    if (r == ESP_ERR_INVALID_CRC) {
+        ++unreadable_pages_;
+        info.dirty = true;
+        info.flight = true;
+        ESP_LOGW(kLogTag, "slot %c flight marker unreadable: slot kept as a flight", 'A' + slot);
+        return ESP_OK;
+    }
     if (r != ESP_OK) return r;
     info.flight = read_u32_be(marker) == kFlightMagic &&
                   read_u32_be(marker + 4) == info.generation;
     return ESP_OK;
 }
 
+// Applies log_slot::choose() to the scanned slots.
+void FlashLogger::choose_slot(const bool allow_append)
+{
+    log_slot::SlotState states[kSlotCount]{};
+    for (std::uint8_t s = 0; s < kSlotCount; ++s) {
+        states[s].valid = slot_info_[s].valid;
+        states[s].flight = slot_info_[s].flight;
+        states[s].appendable = slot_info_[s].version == kStoreVersion;
+        states[s].generation = slot_info_[s].generation;
+        states[s].unusable = slot_unusable_[s];
+    }
+    const log_slot::Choice c = log_slot::choose(states, allow_append && resumed_in_flight_);
+    choice_action_ = c.action;
+    slots_full_ = c.action == log_slot::Action::SlotsFull;
+    current_slot_ = c.slot;
+    current_generation_ = c.action == log_slot::Action::Append
+        ? slot_info_[c.slot].generation
+        : next_usable_generation(c.have_newest ? c.newest_generation + 1 : 1);
+}
+
 esp_err_t FlashLogger::scan_sessions(bool build_exports) {
     if (build_exports) {
         export_file_count_ = 0;
+        unreadable_pages_ = 0;
         invalidate_export_read_cache();
     }
     SlotInfo info[kSlotCount]{};
@@ -337,35 +416,16 @@ esp_err_t FlashLogger::scan_sessions(bool build_exports) {
         const esp_err_t r = read_slot_info(slot, info[slot]);
         if (r != ESP_OK) return r;
     }
+    for (std::uint8_t slot = 0; slot < kSlotCount; ++slot) slot_info_[slot] = info[slot];
 
-    // Choose the slot for this boot's session: never a slot that holds a
-    // flight (flight data is never erased automatically); otherwise the empty
-    // or older slot. Both slots holding flights: no session at all
-    // (slots_full_), until the operator erases or clears the store.
-    slots_full_ = info[0].valid && info[0].flight && info[1].valid && info[1].flight;
-    int newest_flight = -1;
-    int newest = -1;
-    for (int slot = 0; slot < static_cast<int>(kSlotCount); ++slot) {
-        if (!info[slot].valid) continue;
-        if (newest < 0 || static_cast<std::int32_t>(info[slot].generation - info[newest].generation) > 0)
-            newest = slot;
-        if (info[slot].flight &&
-            (newest_flight < 0 ||
-             static_cast<std::int32_t>(info[slot].generation - info[newest_flight].generation) > 0))
-            newest_flight = slot;
+    // Slot choice (pure logic, tested): a pad boot never uses a slot holding a
+    // flight and logs nothing when both do; a boot that resumes a flight in
+    // progress appends to its slot (resume_session). The export scan after
+    // logging stopped must not change the choice.
+    if (!build_exports) {
+        choose_slot(true);
+        return ESP_OK;
     }
-    if (newest_flight >= 0) {
-        current_slot_ = static_cast<std::uint8_t>(1 - newest_flight);
-    } else if (!info[0].valid) {
-        current_slot_ = 0;
-    } else if (!info[1].valid) {
-        current_slot_ = 1;
-    } else {
-        current_slot_ = static_cast<std::uint8_t>(1 - newest);
-    }
-    current_generation_ = next_usable_generation(newest >= 0 ? info[newest].generation + 1 : 1);
-
-    if (!build_exports) return ESP_OK;
     for (std::uint8_t slot = 0; slot < kSlotCount; ++slot) {
         if (!info[slot].valid) continue;
         for (std::uint8_t type : {kImuType, kBinaryType, kTextType, kPacketType, kUart1Type}) {
@@ -388,26 +448,194 @@ esp_err_t FlashLogger::scan_sessions(bool build_exports) {
             ++export_file_count_;
         }
     }
+    if (unreadable_pages_ != 0)
+        ESP_LOGW(kLogTag, "export scan skipped %lu unreadable page(s)",
+                 static_cast<unsigned long>(unreadable_pages_));
+    return ESP_OK;
+}
+
+bool FlashLogger::block_session_bad(const std::uint32_t block) const
+{
+    for (std::size_t i = 0; i < session_bad_count_; ++i)
+        if (session_bad_[i] == block) return true;
+    return false;
+}
+
+void FlashLogger::mark_session_bad(const std::uint32_t block)
+{
+    if (!block_session_bad(block) && session_bad_count_ < sizeof(session_bad_) / sizeof(session_bad_[0]))
+        session_bad_[session_bad_count_++] = block;
+}
+
+// Erases `block` for use, skipping factory-bad blocks and blocks that already
+// failed this boot; transient errors are retried (with a chip reset in the
+// middle). False: the block cannot be used, the caller moves on.
+bool FlashLogger::prepare_block(const std::uint32_t block)
+{
+    if (block_session_bad(block)) return false;
+    bool bad = false;
+    if (flash_.is_bad_block(block, bad) == ESP_OK && bad) {
+        mark_session_bad(block);
+        ESP_LOGW(kLogTag, "block %lu is a factory bad block: skipped", static_cast<unsigned long>(block));
+        return false;
+    }
+    esp_err_t r = ESP_FAIL;
+    for (unsigned attempt = 0; attempt < log_slot::kEraseAttempts; ++attempt) {
+        r = flash_.erase_block(block);
+        if (r == ESP_OK) return true;
+        if (r == ESP_ERR_TIMEOUT) (void)flash_.wait_idle(200);
+        if (attempt == 1) (void)flash_.recover();
+    }
+    mark_session_bad(block);
+    ESP_LOGW(kLogTag, "block %lu: erase failed (%s): skipped this boot",
+             static_cast<unsigned long>(block), esp_err_to_name(r));
+    return false;
+}
+
+// Programs one page; transient errors are retried. A program failure (P_FAIL)
+// is final for the page. After a timeout the chip is waited for and the page
+// header read back, so a program that finished late is not repeated.
+esp_err_t FlashLogger::program_page_robust(const std::uint32_t page, const std::uint8_t *data,
+                                           const std::size_t length)
+{
+    esp_err_t r = ESP_FAIL;
+    for (unsigned attempt = 0; attempt < log_slot::kProgramAttempts; ++attempt) {
+        r = flash_.program(page, 0, data, length);
+        if (r == ESP_OK || r == ESP_FAIL) return r;
+        if (r == ESP_ERR_TIMEOUT) {
+            (void)flash_.wait_idle(200);
+            std::uint8_t readback[16]{};
+            const std::size_t n = std::min<std::size_t>(length, sizeof(readback));
+            if (read_page_retry(page, 0, readback, n) == ESP_OK &&
+                std::memcmp(readback, data, n) == 0) return ESP_OK;
+        }
+        if (attempt == 1) (void)flash_.recover();
+    }
+    return r;
+}
+
+bool FlashLogger::any_stream_full() const
+{
+    return imu_writer_.full || binary_writer_.full || text_writer_.full ||
+           uart_writer_.full || packet_writer_.full;
+}
+
+// FLASH_LOG_FAILED follows the NAND write health: set while blocks are failing,
+// cleared once writes succeed again (unless a stream is full, which keeps it).
+void FlashLogger::update_nand_status()
+{
+    const bool failing = write_health_.failing();
+    if (failing && !nand_status_set_) {
+        nand_status_set_ = true;
+        witness_status_.set(IRIS_WITNESS_STATUS_FLASH_LOG_FAILED_MASK, true);
+    } else if (!failing && nand_status_set_) {
+        nand_status_set_ = false;
+        if (!any_stream_full())
+            witness_status_.set(IRIS_WITNESS_STATUS_FLASH_LOG_FAILED_MASK, false);
+        ESP_LOGW(kLogTag, "NAND writes recovered (%lu block(s) skipped so far)",
+                 static_cast<unsigned long>(write_health_.total_failed_blocks()));
+    }
+}
+
+// Erase and clear only run on the ground (Pad Idle / Landed).
+bool FlashLogger::ground_state() const
+{
+    if (flight_state_machine_ == nullptr) return true;
+    const FlightStateMachine::State s = flight_state_machine_->state();
+    return s == FlightStateMachine::State::PadIdle || s == FlightStateMachine::State::Landed;
+}
+
+// A reset in flight: continue the flight's own session instead of starting
+// another. Per stream the last written page is found (log_slot::stream_end),
+// the writer continues after it (never erasing or overwriting flight pages;
+// a torn page is skipped), and the ring streams are launch-protected. Fails
+// (caller falls back to the normal slot rule) on a read error or when no
+// stream has any room left.
+esp_err_t FlashLogger::resume_session()
+{
+    constexpr std::uint32_t kNoBlock = 0xFFFFFFFFU;
+    const std::uint32_t tag = sequence_tag(current_generation_);
+    bool probe_failed = false;
+    bool any_room = false;
+    struct Stream { std::uint8_t type; Writer *writer; };
+    const Stream streams[] = {{kImuType, &imu_writer_}, {kBinaryType, &binary_writer_},
+                              {kTextType, &text_writer_}, {kPacketType, &packet_writer_},
+                              {kUart1Type, &uart_writer_}};
+    Writer built[5]{};
+    int index = 0;
+    for (const Stream &s : streams) {
+        const FileLayout layout = file_layout(current_slot_, s.type);
+        const std::uint32_t capacity = layout.block_count * W25n01kv::kPagesPerBlock;
+        const std::uint32_t base_page = layout.first_block * W25n01kv::kPagesPerBlock;
+        const std::uint8_t type = s.type;
+        auto probe = [&](const std::uint32_t i) {
+            log_slot::PageProbe p{};
+            std::uint8_t h[kPageHeaderSize]{};
+            const esp_err_t r = read_page_retry(base_page + i, 0, h, sizeof(h));
+            if (r == ESP_ERR_INVALID_CRC) { p.kind = log_slot::PageKind::Unreadable; return p; }
+            if (r != ESP_OK) { probe_failed = true; p.kind = log_slot::PageKind::Foreign; return p; }
+            bool erased = true;
+            for (const std::uint8_t b : h) if (b != 0xFF) erased = false;
+            if (erased) { p.kind = log_slot::PageKind::Erased; return p; }
+            const std::uint32_t sequence = read_u32_be(h + 8);
+            if (read_u32_be(h) == kPageMagic && h[4] == type && h[5] == kStoreVersion &&
+                read_u16_be(h + 6) <= kPagePayloadSize &&
+                (sequence >> kSequenceTagShift) == tag) {
+                p.kind = log_slot::PageKind::Valid;
+                p.sequence = sequence & log_slot::kSequenceMask;
+            } else {
+                p.kind = log_slot::PageKind::Foreign;
+            }
+            return p;
+        };
+        const bool ring = is_ring_type(type);
+        const log_slot::StreamEnd end = log_slot::stream_end(capacity, ring, probe);
+        const std::uint32_t next = log_slot::first_free_page(end.page_index, capacity, probe);
+        if (probe_failed) return ESP_FAIL;
+        Writer w{};
+        w.type = type; w.first_block = layout.first_block; w.block_count = layout.block_count;
+        w.page_index = next; w.ring = ring; w.wrapped = end.wrapped;
+        // The blocks up to the write position were erased when entered; the
+        // block after a boundary (or an empty stream) is erased on entry.
+        if (next % W25n01kv::kPagesPerBlock == 0)
+            w.last_erased_block = next == 0 ? kNoBlock
+                                            : layout.first_block + (next - 1) / W25n01kv::kPagesPerBlock;
+        else
+            w.last_erased_block = layout.first_block + next / W25n01kv::kPagesPerBlock;
+        w.launch_protected = ring && slot_info_[current_slot_].flight;
+        w.sequence = sequence_base(current_generation_) | end.next_sequence;
+        if (!ring && next >= capacity) w.full = true; else any_room = true;
+        ESP_LOGI(kLogTag, "resume: stream %u continues at page %lu of %lu%s", type,
+                 static_cast<unsigned long>(next), static_cast<unsigned long>(capacity),
+                 w.full ? " (full)" : "");
+        built[index++] = w;
+    }
+    if (!any_room) return ESP_ERR_NO_MEM;
+    for (int i = 0; i < 5; ++i) *streams[i].writer = built[i];
+    packet_buffer_used_ = 0;
+    flight_marker_written_ = slot_info_[current_slot_].flight;
+    flight_marker_pending_.store(false);
+    appended_ = true;
     return ESP_OK;
 }
 
 esp_err_t FlashLogger::create_session() {
+    constexpr std::uint32_t kNoBlock = 0xFFFFFFFFU;
+    appended_ = false;
     const std::uint32_t base = slot_base(current_slot_);
-    esp_err_t r = flash_.erase_block(base);  // header and flight marker
-    for (std::uint8_t type : {kImuType, kBinaryType, kTextType, kPacketType, kUart1Type}) {
-        if (r == ESP_OK) r = flash_.erase_block(file_layout(current_slot_, type).first_block);
+    // The header block cannot be skipped: if it will not erase, this slot is
+    // unusable and the next attempt (run init loop) takes the other one.
+    if (!prepare_block(base)) {
+        slot_unusable_[current_slot_] = true;
+        return ESP_FAIL;
     }
-    if (r != ESP_OK) return r;
-    std::uint8_t header[9]{};
-    write_u32_be(header, kSessionMagic); write_u32_be(header + 4, current_generation_);
-    header[8] = kStoreVersion;
-    r = flash_.program(base * W25n01kv::kPagesPerBlock, 0, header, sizeof(header));
-    if (r != ESP_OK) return r;
     auto writer = [this](std::uint8_t type, bool ring) {
         const auto layout = file_layout(current_slot_, type);
         Writer w{};
         w.type = type; w.first_block = layout.first_block; w.block_count = layout.block_count;
-        w.page_index = 0; w.last_erased_block = layout.first_block; w.ring = ring;
+        w.page_index = 0; w.ring = ring;
+        // A first block that will not erase is skipped by append_bytes.
+        w.last_erased_block = prepare_block(layout.first_block) ? layout.first_block : kNoBlock;
         w.sequence = sequence_base(current_generation_);
         return w;
     };
@@ -416,6 +644,14 @@ esp_err_t FlashLogger::create_session() {
     text_writer_ = writer(kTextType, is_ring_type(kTextType));
     uart_writer_ = writer(kUart1Type, is_ring_type(kUart1Type));
     packet_writer_ = writer(kPacketType, is_ring_type(kPacketType));
+    std::uint8_t header[9]{};
+    write_u32_be(header, kSessionMagic); write_u32_be(header + 4, current_generation_);
+    header[8] = kStoreVersion;
+    const esp_err_t r = program_page_robust(base * W25n01kv::kPagesPerBlock, header, sizeof(header));
+    if (r != ESP_OK) {
+        slot_unusable_[current_slot_] = true;
+        return r;
+    }
     packet_buffer_used_ = 0;
     flight_marker_written_ = false;
     flight_marker_pending_.store(false);
@@ -428,7 +664,7 @@ esp_err_t FlashLogger::write_flight_marker()
     write_u32_be(marker, kFlightMagic);
     write_u32_be(marker + 4, current_generation_);
     const std::uint32_t page = slot_base(current_slot_) * W25n01kv::kPagesPerBlock + kFlightMarkerPage;
-    const esp_err_t r = flash_.program(page, 0, marker, sizeof(marker));
+    const esp_err_t r = program_page_robust(page, marker, sizeof(marker));
     if (r == ESP_OK) {
         flight_marker_written_ = true;
         protect_rings_from_launch();
@@ -442,8 +678,13 @@ esp_err_t FlashLogger::erase_session_blocks()
 {
     esp_err_t first_error = ESP_OK;
     constexpr std::uint32_t kLogBlockCount = kSlotCount * kBlocksPerSlot;
+    bool aborted = false;
 
     for (std::uint32_t block = 0; block < kLogBlockCount; ++block) {
+        // The erase takes seconds; a launch in that window stops it (the state
+        // was only checked when the command was accepted).
+        task_supervision::feed();
+        if ((block & 15U) == 0 && !ground_state()) { aborted = true; break; }
         bool bad = false;
         esp_err_t result = flash_.is_bad_block(block, bad);
         if (result == ESP_OK && !bad) {
@@ -453,14 +694,22 @@ esp_err_t FlashLogger::erase_session_blocks()
             first_error = result;
         }
     }
-    if (first_error != ESP_OK) {
-        return first_error;
+    if (aborted) {
+        first_error = ESP_ERR_INVALID_STATE;
+        current_generation_ = next_usable_generation(current_generation_ + 1);
+        ESP_LOGW(kLogTag, "erase stopped: the flight state is no longer Pad Idle/Landed");
+    } else {
+        current_generation_ = 1;
     }
-
+    // Logging resumes even if some blocks would not erase (they are skipped by
+    // the writer); the caller still gets the first error.
     current_slot_ = 0;
-    current_generation_ = 1;
+    session_bad_count_ = 0;
+    slot_unusable_[0] = slot_unusable_[1] = false;
     reset_session_buffers();
-    return create_session();
+    const esp_err_t created = create_session();
+    session_ready_ = created == ESP_OK;
+    return first_error != ESP_OK ? first_error : created;
 }
 
 esp_err_t FlashLogger::clear_session_headers()
@@ -474,12 +723,15 @@ esp_err_t FlashLogger::clear_session_headers()
         if (result == ESP_OK && !bad) result = flash_.erase_block(slot_base(slot));
         if (result != ESP_OK && first_error == ESP_OK) first_error = result;
     }
-    if (first_error != ESP_OK) return first_error;
     // Keep counting: stale pages carry older tags and never match this one.
     current_slot_ = 0;
     current_generation_ = next_usable_generation(current_generation_ + 1);
+    session_bad_count_ = 0;
+    slot_unusable_[0] = slot_unusable_[1] = false;
     reset_session_buffers();
-    return create_session();
+    const esp_err_t created = create_session();
+    session_ready_ = created == ESP_OK;
+    return first_error != ESP_OK ? first_error : created;
 }
 
 void FlashLogger::reset_session_buffers()
@@ -499,12 +751,18 @@ void FlashLogger::reset_session_buffers()
     ++prelaunch_reset_generation_;
 }
 
+// Appends one chunk as pages. A NAND error never ends logging: transient
+// errors are retried; a block that cannot be erased or programmed is skipped
+// for this boot (the reader tolerates the gap: it accepts this session's pages
+// wherever they are) and the chunk is rewritten in the next block. Only after
+// kBackoffAfterBlocks consecutive failed blocks do writes pause and retry every
+// few seconds (ESP_ERR_NOT_FINISHED: callers keep their buffers).
 esp_err_t FlashLogger::append_bytes(Writer &writer, const std::uint8_t *data, std::size_t length) {
     if (writer.full) return ESP_OK;
+    const auto now_ms = [] { return static_cast<std::uint32_t>(esp_timer_get_time() / 1000); };
+    if (write_health_.backing_off(now_ms())) return ESP_ERR_NOT_FINISHED;
     const std::uint32_t capacity = writer.block_count * W25n01kv::kPagesPerBlock;
-    const std::uint32_t pages_needed =
-        static_cast<std::uint32_t>((length + kPagePayloadSize - 1) / kPagePayloadSize);
-    if (!writer.ring && pages_needed > capacity - writer.page_index) {
+    const auto mark_full = [this, &writer] {
         // Exhausting one allocation must not stop the other streams, e.g.
         // a full sensor file must not terminate an ongoing GPS recording.
         writer.full = true;
@@ -513,9 +771,16 @@ esp_err_t FlashLogger::append_bytes(Writer &writer, const std::uint8_t *data, st
         if (writer.type == kImuType) capture_imu_records_.store(false);
         if (writer.type == kTextType) capture_logs_.store(false);
         ESP_LOGE(kLogTag, "session log type %u is full; other streams continue", writer.type);
+    };
+    const std::uint32_t pages_needed =
+        static_cast<std::uint32_t>((length + kPagePayloadSize - 1) / kPagePayloadSize);
+    if (!writer.ring && pages_needed > capacity - writer.page_index) {
+        mark_full();
         return ESP_OK;
     }
+    unsigned skips = 0;
     while (length) {
+        task_supervision::feed();
         if (writer.ring && writer.launch_protected &&
             writer.pages_since_launch >= capacity) {
             // Everything since launch fills the ring; keep it all.
@@ -525,7 +790,7 @@ esp_err_t FlashLogger::append_bytes(Writer &writer, const std::uint8_t *data, st
             return ESP_OK;
         }
         if (writer.page_index >= capacity) {
-            if (!writer.ring) return ESP_ERR_NO_MEM;
+            if (!writer.ring) { mark_full(); return ESP_OK; }  // skipped blocks used the room
             // Circular stream: overwrite from the start, oldest block first.
             writer.page_index = 0;
             if (!writer.wrapped) {
@@ -535,8 +800,22 @@ esp_err_t FlashLogger::append_bytes(Writer &writer, const std::uint8_t *data, st
             }
         }
         const std::uint32_t block = writer.first_block + writer.page_index / W25n01kv::kPagesPerBlock;
+        const std::uint32_t next_block_page =
+            (writer.page_index / W25n01kv::kPagesPerBlock + 1U) * W25n01kv::kPagesPerBlock;
         if (block != writer.last_erased_block) {
-            esp_err_t r = flash_.erase_block(block); if (r != ESP_OK) return r;
+            if (!prepare_block(block)) {
+                write_health_.on_block_failed(now_ms());
+                update_nand_status();
+                writer.page_index = next_block_page;
+                if (++skips > log_slot::kMaxBlockSkipsPerChunk) {
+                    ++chunks_dropped_;
+                    ESP_LOGE(kLogTag, "log type %u: %u blocks unusable in a row, chunk dropped",
+                             writer.type, skips);
+                    return ESP_OK;
+                }
+                if (write_health_.backing_off(now_ms())) return ESP_ERR_NOT_FINISHED;
+                continue;
+            }
             writer.last_erased_block = block;
         }
         const std::size_t chunk = std::min(length, kPagePayloadSize);
@@ -546,11 +825,28 @@ esp_err_t FlashLogger::append_bytes(Writer &writer, const std::uint8_t *data, st
         write_u32_be(page + 8, writer.sequence++);
         std::memcpy(page + kPageHeaderSize, data, chunk);
         const std::uint32_t absolute_page = writer.first_block * W25n01kv::kPagesPerBlock + writer.page_index;
-        esp_err_t r = flash_.program(absolute_page, 0, page, sizeof(page));
-        if (r != ESP_OK) return r;
+        const esp_err_t r = program_page_robust(absolute_page, page, sizeof(page));
+        if (r != ESP_OK) {
+            // The page (and so the block) is abandoned for this boot; the chunk
+            // is rewritten in the next block with a fresh sequence number.
+            mark_session_bad(block);
+            write_health_.on_block_failed(now_ms());
+            update_nand_status();
+            writer.page_index = next_block_page;
+            if (++skips > log_slot::kMaxBlockSkipsPerChunk) {
+                ++chunks_dropped_;
+                ESP_LOGE(kLogTag, "log type %u: program failed in %u blocks, chunk dropped",
+                         writer.type, skips);
+                return ESP_OK;
+            }
+            if (write_health_.backing_off(now_ms())) return ESP_ERR_NOT_FINISHED;
+            continue;
+        }
+        write_health_.on_success();
         ++writer.page_index; data += chunk; length -= chunk;
         if (writer.launch_protected) ++writer.pages_since_launch;
     }
+    update_nand_status();
     return ESP_OK;
 }
 
@@ -727,15 +1023,22 @@ esp_err_t FlashLogger::scan_file(const std::uint8_t slot, const std::uint8_t typ
         bool found = false;
         std::uint32_t oldest_sequence = 0;
         for (std::uint32_t index = 0; index < capacity; ++index) {
-            esp_err_t r = flash_.read(layout.first_block * W25n01kv::kPagesPerBlock + index, 0, h, sizeof(h));
-            if (r != ESP_OK) return r;
+            if ((index & 255U) == 0) task_supervision::feed();
+            // An unreadable page (uncorrectable ECC, e.g. torn by a power loss)
+            // is counted and skipped, never fatal to the mount.
+            const esp_err_t r = read_page_retry(layout.first_block * W25n01kv::kPagesPerBlock + index, 0, h, sizeof(h));
+            if (r != ESP_OK) { ++unreadable_pages_; continue; }
             const std::uint16_t n = read_u16_be(h + 6);
             const std::uint32_t sequence = read_u32_be(h + 8);
             const bool valid = read_u32_be(h) == kPageMagic && h[4] == type &&
                                h[5] == version && n <= kPagePayloadSize &&
                                (sequence >> kSequenceTagShift) == (tagged ? tag : 0U);
             if (!valid) {
-                if (!ring) break;  // linear files end at the first page not theirs
+                // Untagged (pre-tag) linear files end at the first page not
+                // theirs. A tagged file may have gaps (blocks the writer skipped
+                // after a NAND error) and is read to the end of its allocation:
+                // only this session's pages carry its tag.
+                if (!ring && !tagged) break;
                 continue;
             }
             size += n;
@@ -772,10 +1075,10 @@ esp_err_t FlashLogger::load_export_page(
     // pages around the write position.
     for (; step < capacity; ++step) {
         const std::uint32_t index = ring ? (file.start_page + step) % capacity : step;
-        const esp_err_t result = flash_.read(
+        const esp_err_t result = read_page_retry(
             layout.first_block * W25n01kv::kPagesPerBlock + index, 0,
             export_read_page_, sizeof(export_read_page_));
-        if (result != ESP_OK) return result;
+        if (result != ESP_OK) { ++unreadable_pages_; continue; }  // same rule as scan_file
         const std::uint16_t payload_length = read_u16_be(export_read_page_ + 6);
         const bool valid = read_u32_be(export_read_page_) == kPageMagic &&
                            export_read_page_[4] == file.type &&
@@ -784,7 +1087,7 @@ esp_err_t FlashLogger::load_export_page(
                            (read_u32_be(export_read_page_ + 8) >> kSequenceTagShift) ==
                                (file.tagged ? sequence_tag(file.generation) : 0U);
         if (!valid) {
-            if (!ring) return ESP_ERR_INVALID_RESPONSE;
+            if (!ring && !file.tagged) return ESP_ERR_INVALID_RESPONSE;
             continue;
         }
         export_read_file_index_ = file_index;
@@ -844,25 +1147,33 @@ esp_err_t FlashLogger::prepare_mass_storage(TickType_t timeout) {
     return xSemaphoreTake(frozen_semaphore_, timeout) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
-esp_err_t FlashLogger::erase_all_sessions(const TickType_t timeout)
+// Posts an erase (1) or fast clear (2) and waits for the logger task, at most
+// kEraseWaitMs when the caller passes portMAX_DELAY (full erase worst case is
+// ~12 s). A request the task has not started is cancelled on timeout.
+esp_err_t FlashLogger::request_erase(const std::uint8_t mode, const TickType_t timeout)
 {
     if (frozen_.load() || !task_handle_) return ESP_ERR_INVALID_STATE;
-    bool expected = false;
-    if (!erase_requested_.compare_exchange_strong(expected, true)) {
-        return ESP_ERR_INVALID_STATE;
-    }
-    if (xSemaphoreTake(erase_semaphore_, timeout) != pdTRUE) {
+    const TickType_t wait = timeout == portMAX_DELAY ? pdMS_TO_TICKS(kEraseWaitMs) : timeout;
+    // Drop a completion left by an earlier call that timed out.
+    if (erase_request_.load() == 0 && !erase_busy_.load()) (void)xSemaphoreTake(erase_semaphore_, 0);
+    std::uint8_t expected = 0;
+    if (!erase_request_.compare_exchange_strong(expected, mode)) return ESP_ERR_INVALID_STATE;
+    if (xSemaphoreTake(erase_semaphore_, wait) != pdTRUE) {
+        std::uint8_t pending = mode;
+        (void)erase_request_.compare_exchange_strong(pending, 0);
         return ESP_ERR_TIMEOUT;
     }
     return erase_result_;
 }
 
+esp_err_t FlashLogger::erase_all_sessions(const TickType_t timeout)
+{
+    return request_erase(1, timeout);
+}
+
 esp_err_t FlashLogger::clear_all_sessions(const TickType_t timeout)
 {
-    if (frozen_.load() || !task_handle_) return ESP_ERR_INVALID_STATE;
-    if (erase_requested_.load()) return ESP_ERR_INVALID_STATE;
-    erase_quick_.store(true);
-    return erase_all_sessions(timeout);
+    return request_erase(2, timeout);
 }
 
 std::size_t FlashLogger::export_file_count() const { return export_file_count_; }
@@ -954,10 +1265,55 @@ void FlashLogger::run_capture()
 }
 
 void FlashLogger::run() {
-    esp_err_t r = flash_.initialize();
-    if (r == ESP_OK) r = run_startup_self_test();
-    if (r == ESP_OK) r = scan_sessions(false);
-    if (r == ESP_OK && slots_full_) {
+    esp_err_t r = ESP_FAIL;
+    bool chip_ready = false;
+    bool self_test_done = false;
+    unsigned init_failures = 0;
+    const auto now_ms = [] { return static_cast<std::uint32_t>(esp_timer_get_time() / 1000); };
+
+    // Startup never gives up: a NAND error (even a torn header page) is
+    // retried every 2 s, with a chip reset every third time, and logging starts
+    // as soon as the chip answers. Telemetry does not depend on this task.
+    for (;;) {
+        r = ESP_OK;
+        if (!chip_ready) {
+            r = flash_.initialize();
+            chip_ready = r == ESP_OK;
+        }
+        if (r == ESP_OK && !self_test_done) {
+            r = run_startup_self_test();
+            if (r != ESP_OK && init_failures >= 2) {
+                // The chip answers but the reserved test block does not
+                // verify: log anyway, the writer reports real failures.
+                ESP_LOGW(kLogTag, "startup self test failed (%s): continuing", esp_err_to_name(r));
+                r = ESP_OK;
+            }
+            self_test_done = r == ESP_OK;
+        }
+        if (r == ESP_OK) r = scan_sessions(false);
+        if (r == ESP_OK && choice_action_ == log_slot::Action::Append) {
+            if (resume_session() != ESP_OK) {
+                ESP_LOGW(kLogTag, "cannot append to the flight slot: normal slot rule");
+                choose_slot(false);
+            }
+        }
+        if (r == ESP_OK && choice_action_ != log_slot::Action::Append && !slots_full_) {
+            r = create_session();
+            if (r != ESP_OK) choose_slot(false);  // slot_unusable_ steers the next try
+        }
+        if (r == ESP_OK) break;
+        ++init_failures;
+        set_uart_capture_enabled(false);
+        capture_binary_records_.store(false);
+        capture_imu_records_.store(false);
+        witness_status_.set(IRIS_WITNESS_STATUS_FLASH_INIT_FAILED_MASK, true);
+        ESP_LOGE(kLogTag, "flash initialization failed: %s (retrying)", esp_err_to_name(r));
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        if (chip_ready && (init_failures % 3) == 0) (void)flash_.recover();
+    }
+    set_uart_capture_enabled(true);
+    capture_binary_records_.store(true);
+    if (slots_full_) {
         // Both slots hold flights: never erase either. Nothing is written to
         // NAND (all capture stays off) until an erase/clear command (USB or
         // radio, Pad Idle/Landed) frees the store.
@@ -971,27 +1327,35 @@ void FlashLogger::run() {
         ESP_LOGW(kLogTag, "both log slots hold a flight: NOT LOGGING (nothing is erased). "
                           "Download the flights, then erase/clear (0x6869/0x686A) to log again");
         landed_power::register_current_task();
-        while (!erase_requested_.load()) {
+        // Long idle wait (not subscribed to the task watchdog here).
+        while (erase_request_.load() == 0) {
             (void)ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(landed_power::low_power()
                                                              ? landed::kLowPowerTaskPeriodMs : 200));
         }
         // The normal loop below runs the erase; the writers exist after it.
-    } else if (r == ESP_OK) {
-        r = create_session();
-    }
-    if (r != ESP_OK) {
-        set_uart_capture_enabled(false);
-        capture_binary_records_.store(false);
-        capture_imu_records_.store(false);
-        witness_status_.set(IRIS_WITNESS_STATUS_FLASH_INIT_FAILED_MASK, true);
-        ESP_LOGE(kLogTag, "flash initialization failed: %s", esp_err_to_name(r));
-        capture_logs_.store(false); task_handle_ = nullptr; vTaskDelete(nullptr); return;
     }
     capture_imu_records_.store(true);
     capture_packets_.store(true);
     witness_status_.set(IRIS_WITNESS_STATUS_FLASH_INIT_FAILED_MASK, false);
     witness_status_.set(IRIS_WITNESS_STATUS_FLASH_LOG_FAILED_MASK, false);
-    if (!slots_full_) ESP_LOGI(kLogTag,
+    if (appended_) {
+        // Streams with no room left keep their capture off (as at runtime).
+        if (imu_writer_.full) capture_imu_records_.store(false);
+        if (binary_writer_.full) capture_binary_records_.store(false);
+        if (text_writer_.full) capture_logs_.store(false);
+        if (any_stream_full()) witness_status_.set(IRIS_WITNESS_STATUS_FLASH_LOG_FAILED_MASK, true);
+        // Marker record in the packet stream: kind 1 = resumed after an
+        // in-flight reset, flight state, session generation (u32 BE).
+        std::uint8_t marker[6]{};
+        marker[0] = 1;
+        marker[1] = flight_state_machine_ != nullptr
+                        ? static_cast<std::uint8_t>(flight_state_machine_->state()) : 0;
+        write_u32_be(marker + 2, current_generation_);
+        (void)log_packet(kPacketSourceLogMarker, marker, sizeof(marker));
+        ESP_LOGW(kLogTag, "RESUMED after an in-flight reset: appending to flight session %lu in slot %c",
+                 static_cast<unsigned long>(current_generation_), 'A' + current_slot_);
+    } else if (!slots_full_) {
+        ESP_LOGI(kLogTag,
              "session %lu in slot %c (store v%u); blocks: IMU %lu, sensors %lu, text %lu, "
              "packets %lu, GPS ring %lu; flush interval %lu ms",
              static_cast<unsigned long>(current_generation_), 'A' + current_slot_,
@@ -999,13 +1363,29 @@ void FlashLogger::run() {
              static_cast<unsigned long>(kBinaryBlocks), static_cast<unsigned long>(kTextBlocks),
              static_cast<unsigned long>(kPacketBlocks),
              static_cast<unsigned long>(kUartBlocks), static_cast<unsigned long>(kFlushIntervalMs));
+    }
     TickType_t next = xTaskGetTickCount();
     TickType_t last_flush = next;
     landed_power::register_current_task();
     std::uint32_t reported_drops = 0;
     std::uint32_t reported_packet_drops = 0;
+    // Task watchdog: subscribed only while the loop runs (init and the slots-full
+    // wait above can take longer than the timeout); fed every pass and inside
+    // the long erase/scan/append loops; unsubscribed before the frozen wait.
+    task_supervision::subscribe();
     for (;;) {
-        if (erase_requested_.exchange(false)) {
+        task_supervision::feed();
+        r = ESP_OK;
+        const std::uint8_t erase_req = erase_request_.exchange(0);
+        if (erase_req != 0) erase_busy_.store(true);
+        if (erase_req != 0 && !ground_state()) {
+            // Accepted on the ground, but the rocket has launched since: the
+            // flight data must not be erased.
+            erase_result_ = ESP_ERR_INVALID_STATE;
+            xSemaphoreGive(erase_semaphore_);
+            erase_busy_.store(false);
+            ESP_LOGW(kLogTag, "erase/clear refused: flight state is no longer Pad Idle/Landed");
+        } else if (erase_req != 0) {
             set_uart_capture_enabled(false);
             capture_binary_records_.store(false);
             capture_imu_records_.store(false);
@@ -1014,18 +1394,20 @@ void FlashLogger::run() {
             vTaskDelay(kLogPeriod);
             xQueueReset(binary_record_queue_);
             capture_logs_.store(false);
-            const bool quick = erase_quick_.exchange(false);
-            const std::uint32_t erase_start_ms = static_cast<std::uint32_t>(esp_timer_get_time() / 1000);
+            const bool quick = erase_req == 2;
+            const std::uint32_t erase_start_ms = now_ms();
             erase_result_ = quick ? clear_session_headers() : erase_session_blocks();
-            const std::uint32_t erase_ms = static_cast<std::uint32_t>(esp_timer_get_time() / 1000) - erase_start_ms;
-            capture_logs_.store(erase_result_ == ESP_OK);
-            capture_binary_records_.store(erase_result_ == ESP_OK);
-            capture_imu_records_.store(erase_result_ == ESP_OK);
-            set_uart_capture_enabled(erase_result_ == ESP_OK);
+            const std::uint32_t erase_ms = now_ms() - erase_start_ms;
+            capture_logs_.store(session_ready_);
+            capture_binary_records_.store(session_ready_);
+            capture_imu_records_.store(session_ready_);
+            set_uart_capture_enabled(session_ready_);
             xSemaphoreGive(erase_semaphore_);
+            erase_busy_.store(false);
             if (erase_result_ != ESP_OK) {
-                r = erase_result_;
-            } else {
+                ESP_LOGE(kLogTag, "erase/clear finished with error: %s", esp_err_to_name(erase_result_));
+            }
+            if (session_ready_) {
                 if (slots_full_) {
                     slots_full_ = false;
                     capture_packets_.store(true);
@@ -1037,8 +1419,9 @@ void FlashLogger::run() {
                              static_cast<unsigned long>(erase_ms),
                              static_cast<unsigned long>(current_generation_));
                 } else {
-                    ESP_LOGI(kLogTag, "all stored sessions erased (%lu ms); new session 1 created",
-                             static_cast<unsigned long>(erase_ms));
+                    ESP_LOGI(kLogTag, "all stored sessions erased (%lu ms); new session %lu created",
+                             static_cast<unsigned long>(erase_ms),
+                             static_cast<unsigned long>(current_generation_));
                 }
                 last_flush = xTaskGetTickCount();
             }
@@ -1051,25 +1434,47 @@ void FlashLogger::run() {
             // Drain once to release any producer waiting for queue space, wait
             // for the capture task to observe the stop flag, then drain again
             // so the exported file includes every record captured beforehand.
-            r = drain_binary_records();
-            if (r == ESP_OK) r = drain_imu_records();
+            // Every step runs even if an earlier one failed: the export must
+            // freeze with as much data on NAND as possible.
+            esp_err_t fr = ESP_OK;
+            const auto keep = [&fr](const esp_err_t e) {
+                if (fr == ESP_OK && e != ESP_OK) fr = e;
+            };
+            keep(drain_binary_records());
+            keep(drain_imu_records());
             vTaskDelay(kLogPeriod);
-            if (r == ESP_OK) r = drain_binary_records();
-            if (r == ESP_OK) r = drain_imu_records();
+            keep(drain_binary_records());
+            keep(drain_imu_records());
             capture_logs_.store(false);
-            if (r == ESP_OK && flight_marker_pending_.load() && !flight_marker_written_)
-                r = write_flight_marker();
-            if (r == ESP_OK) r = flush_binary();
-            if (r == ESP_OK) r = flush_imu();
-            if (r == ESP_OK) r = drain_packet_records();
-            if (r == ESP_OK) r = flush_packets();
-            if (r == ESP_OK) r = flush_text();
-            if (r == ESP_OK) r = drain_uart_records(true);
-            if (r == ESP_OK) r = scan_sessions(true);
+            if (flight_marker_pending_.load() && !flight_marker_written_)
+                keep(write_flight_marker());
+            keep(flush_binary());
+            keep(flush_imu());
+            keep(drain_packet_records());
+            keep(flush_packets());
+            keep(flush_text());
+            keep(drain_uart_records(true));
+            if (fr != ESP_OK)
+                ESP_LOGE(kLogTag, "export: some buffered data could not be written: %s",
+                         esp_err_to_name(fr));
+            r = scan_sessions(true);
             if (r == ESP_OK) {
                 frozen_.store(true); xSemaphoreGive(frozen_semaphore_);
+                task_supervision::unsubscribe();
                 for (;;) vTaskDelay(portMAX_DELAY);
             }
+        }
+        if (r == ESP_OK && write_health_.backing_off(now_ms())) {
+            // Too many consecutive failed blocks: pause the NAND writes and
+            // retry every kBackoffMs forever (queues overflow and count drops).
+            backoff_active_ = true;
+            vTaskDelay(kLogPeriod);
+            continue;
+        }
+        if (backoff_active_) {
+            backoff_active_ = false;
+            ESP_LOGW(kLogTag, "retrying NAND writes after back-off");
+            (void)flash_.recover();
         }
         if (r == ESP_OK) r = drain_binary_records();
         if (r == ESP_OK) r = drain_imu_records();
@@ -1099,13 +1504,17 @@ void FlashLogger::run() {
             }
         }
         if (r != ESP_OK) {
-            set_uart_capture_enabled(false);
-            capture_binary_records_.store(false);
-            capture_imu_records_.store(false);
-            capture_packets_.store(false);
-            witness_status_.set(IRIS_WITNESS_STATUS_FLASH_LOG_FAILED_MASK, true);
-            ESP_LOGE(kLogTag, "flash logging stopped: %s", esp_err_to_name(r));
-            capture_logs_.store(false); task_handle_ = nullptr; vTaskDelete(nullptr); return;
+            // Never end the task on an error (previously: capture off, task
+            // deleted, logging lost until power cycle). Buffers keep their data
+            // and are retried on the next pass; ESP_ERR_NOT_FINISHED is the
+            // back-off pause and is not a new failure.
+            if (r != ESP_ERR_NOT_FINISHED) {
+                write_health_.on_block_failed(now_ms());
+                update_nand_status();
+                if ((write_health_.total_failed_blocks() & 15U) == 1U)
+                    ESP_LOGE(kLogTag, "flash write error: %s (retrying)", esp_err_to_name(r));
+            }
+            r = ESP_OK;
         }
         if (landed_power::low_power()) {
             // Landed low-power mode: the queues stay empty, so wake only for the

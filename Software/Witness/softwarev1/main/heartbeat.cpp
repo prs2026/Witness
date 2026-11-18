@@ -294,10 +294,26 @@ void Heartbeat::queue_heartbeat_packet()
         IRIS_PACKET_ID_HEARTBEAT, payload, sizeof(payload));
 }
 
+namespace {
+// Once per minute: free stack (high-water mark) of the tasks this module's
+// owner supervises, so a bench soak can measure the margins (audit F10/B13).
+void log_stack_margins()
+{
+    static const char *const kNames[] = {"sensors", "sensor_log", "heartbeat", "selftest"};
+    for (const char *name : kNames) {
+        const TaskHandle_t handle = xTaskGetHandle(name);
+        if (handle == nullptr) continue;  // e.g. selftest has finished
+        ESP_LOGI(kLogTag, "stack free: %s %u B", name,
+                 static_cast<unsigned>(uxTaskGetStackHighWaterMark(handle)));
+    }
+}
+}  // namespace
+
 void Heartbeat::run()
 {
     TickType_t next_wake_time = xTaskGetTickCount();
     landed_power::register_current_task();
+    std::uint32_t stack_log_counter = 0;
 
     for (;;) {
         if (landed_power::low_power()) {
@@ -308,6 +324,10 @@ void Heartbeat::run()
             continue;
         }
         vTaskDelayUntil(&next_wake_time, kPeriod);
+        if (++stack_log_counter >= 60U) {
+            stack_log_counter = 0;
+            log_stack_margins();
+        }
         queue_heartbeat_packet();
         blink_gpio();
         play_buzzer_pattern();

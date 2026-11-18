@@ -1,5 +1,7 @@
 #include "maintenance_mode.h"
 
+#include <atomic>
+
 #include "esp_attr.h"
 #include "nvs.h"
 #include "esp_system.h"
@@ -40,11 +42,19 @@ void restart_now(void *)
     esp_restart();
 }
 
+// Deferred restart (flight image): the timer only raises a flag.
+esp_timer_handle_t s_deferred_timer = nullptr;
+std::atomic<bool> s_deferred_due{false};
+void deferred_fired(void *)
+{
+    s_deferred_due.store(true);
+}
+
 }  // namespace
 
 namespace maintenance_mode {
 
-void arm(const Request &request)
+bool arm(const Request &request)
 {
     Blob blob{};
     blob.magic = kMagic;
@@ -58,9 +68,11 @@ void arm(const Request &request)
     blob.radio_front_end = request.radio_front_end ? 1U : 0U;
     blob.check = check_of(blob);
     nvs_handle_t handle;
-    if (nvs_open(kNamespace, NVS_READWRITE, &handle) != ESP_OK) return;
-    if (nvs_set_blob(handle, kKey, &blob, sizeof(blob)) == ESP_OK) (void)nvs_commit(handle);
+    if (nvs_open(kNamespace, NVS_READWRITE, &handle) != ESP_OK) return false;
+    esp_err_t result = nvs_set_blob(handle, kKey, &blob, sizeof(blob));
+    if (result == ESP_OK) result = nvs_commit(handle);
     nvs_close(handle);
+    return result == ESP_OK;   // audit B9: a failed arm must not be acknowledged
 }
 
 bool consume(Request &out)
@@ -111,6 +123,35 @@ bool restart_after_ms(const std::uint32_t delay_ms)
     }
     (void)esp_timer_stop(s_restart_timer);
     return esp_timer_start_once(s_restart_timer, static_cast<std::uint64_t>(delay_ms) * 1000U) == ESP_OK;
+}
+
+bool restart_deferred_after_ms(const std::uint32_t delay_ms)
+{
+    if (s_deferred_timer == nullptr) {
+        esp_timer_create_args_t args{};
+        args.callback = &deferred_fired;
+        args.name = "deferred_restart";
+        if (esp_timer_create(&args, &s_deferred_timer) != ESP_OK) return false;
+    }
+    (void)esp_timer_stop(s_deferred_timer);
+    s_deferred_due.store(false);
+    return esp_timer_start_once(s_deferred_timer, static_cast<std::uint64_t>(delay_ms) * 1000U) == ESP_OK;
+}
+
+bool deferred_restart_due()
+{
+    return s_deferred_due.load();
+}
+
+void deferred_restart_clear()
+{
+    if (s_deferred_timer != nullptr) (void)esp_timer_stop(s_deferred_timer);
+    s_deferred_due.store(false);
+}
+
+void restart()
+{
+    esp_restart();
 }
 
 }  // namespace maintenance_mode

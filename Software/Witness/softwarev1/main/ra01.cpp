@@ -71,14 +71,12 @@ void Ra01::release()
     }
     initialized_ = false;
     transmit_in_progress_ = false;
+    recovering_ = false;
+    reinit_step_ = -1;
 }
 
-esp_err_t Ra01::initialize(const spi_host_device_t spi_host)
+esp_err_t Ra01::configure_gpio()
 {
-    if (initialized_) return ESP_ERR_INVALID_STATE;
-
-    spi_host_ = spi_host;
-
     gpio_config_t outputs{};
     outputs.pin_bit_mask = (1ULL << HW_PIN_RAD_RESET) |
                            (1ULL << HW_PIN_RAD_RF_ENABLE);
@@ -95,7 +93,30 @@ esp_err_t Ra01::initialize(const spi_host_device_t spi_host)
 #endif
     inputs.mode = GPIO_MODE_INPUT;
     inputs.intr_type = GPIO_INTR_DISABLE;
-    result = gpio_config(&inputs);
+    return gpio_config(&inputs);
+}
+
+esp_err_t Ra01::initialize(const spi_host_device_t spi_host)
+{
+    if (initialized_) return ESP_ERR_INVALID_STATE;
+
+    spi_host_ = spi_host;
+    // Start-up init may block (long BUSY waits, reset delays): run it with the
+    // real-time rules off and clear any earlier fault.
+    const bool saved_realtime = realtime_;
+    realtime_ = false;
+    recovering_ = false;
+    reinit_step_ = -1;
+    faulted_.store(false);
+    spi_failures_ = 0;
+    tx_failures_ = 0;
+    struct Restore {
+        bool &flag;
+        bool value;
+        ~Restore() { flag = value; }
+    } restore{realtime_, saved_realtime};
+
+    esp_err_t result = configure_gpio();
     if (result != ESP_OK) return result;
 
     ESP_LOGI(kLogTag, "Pins: RESET=%d BUSY=%d RF_EN=%d CS=%d",
@@ -116,97 +137,274 @@ esp_err_t Ra01::initialize(const spi_host_device_t spi_host)
              gpio_get_level(HW_PIN_RAD_RF_ENABLE),
              gpio_get_level(HW_PIN_RAD_BUSY));
 
-    spi_device_interface_config_t device{};
-    device.clock_speed_hz = kSpiClockHz;
-    device.mode = 0;
-    device.spics_io_num = HW_PIN_RAD_CS;
-    device.queue_size = 1;
-    result = spi_bus_add_device(spi_host_, &device, &spi_device_);
-    if (result != ESP_OK) return result;
+    if (spi_device_ == nullptr) {
+        spi_device_interface_config_t device{};
+        device.clock_speed_hz = kSpiClockHz;
+        device.mode = 0;
+        device.spics_io_num = HW_PIN_RAD_CS;
+        device.queue_size = 1;
+        result = spi_bus_add_device(spi_host_, &device, &spi_device_);
+        if (result != ESP_OK) return result;
+    }
 
-    const std::uint8_t standby[] = {0x00U};
-    const std::uint8_t packet_type[] = {0x01U};
-    result = write_command(kSetStandby, standby, sizeof(standby));
-    if (result != ESP_OK) return result;
-    result = write_command(kSetPacketType, packet_type, sizeof(packet_type));
-    if (result != ESP_OK) return result;
+    for (unsigned step = 0; step < kConfigSteps; ++step) {
+        result = configure_step(step);
+        if (result != ESP_OK) return result;
+    }
+    return ESP_OK;
+}
 
-    // SPI writes alone also succeed with an absent radio. Verify an actual
-    // round trip through its packet RAM before scheduling any RX/TX work.
-    const std::array<std::uint8_t, 4> probe{{0xA5, 0x3C, 0x69, 0x96}};
-    std::array<std::uint8_t, 4> reply{};
-    result = write_buffer(probe.data(), probe.size());
-    if (result == ESP_OK) result = read_buffer(0, reply.data(), reply.size());
-    if (result != ESP_OK) return result;
-    if (reply != probe) return ESP_ERR_NOT_FOUND;
+// The SX1262 configuration sequence, one group per step so the re-init
+// stepper can spread it over sensor-task passes. initialize() runs the same
+// steps back to back. Step 11 (SetRx) marks the driver initialized.
+esp_err_t Ra01::configure_step(const unsigned step)
+{
+    esp_err_t result = ESP_OK;
+    switch (step) {
+    case 0: {
+        const std::uint8_t standby[] = {0x00U};
+        return write_command(kSetStandby, standby, sizeof(standby));
+    }
+    case 1: {
+        const std::uint8_t packet_type[] = {0x01U};
+        return write_command(kSetPacketType, packet_type, sizeof(packet_type));
+    }
+    case 2: {
+        // SPI writes alone also succeed with an absent radio. Verify an actual
+        // round trip through its packet RAM before scheduling any RX/TX work.
+        const std::array<std::uint8_t, 4> probe{{0xA5, 0x3C, 0x69, 0x96}};
+        std::array<std::uint8_t, 4> reply{};
+        result = write_buffer(probe.data(), probe.size());
+        if (result == ESP_OK) result = read_buffer(0, reply.data(), reply.size());
+        if (result != ESP_OK) return result;
+        return reply == probe ? ESP_OK : ESP_ERR_NOT_FOUND;
+    }
+    case 3: {
+        const std::uint32_t frequency_word = static_cast<std::uint32_t>(
+            (static_cast<std::uint64_t>(IRIS_RADIO_FREQUENCY_HZ) << 25U) /
+            32000000ULL);
+        std::array<std::uint8_t, 4> frequency{};
+        store_u32_be(frequency.data(), frequency_word);
+        return write_command(kSetRfFrequency, frequency.data(), frequency.size());
+    }
+    case 4:
+        // SX1262 high-power PA configuration. The RA-01SH-P front end is driven
+        // with the requested 2 dBm from SetTxParams below; this configuration is
+        // still required to select the SX1262 PA path. The PA cache is cleared
+        // so a re-init after a radio reset really rewrites the register.
+        pa_low_configured_ = -1;
+        return configure_pa_for(tx_power_dbm_.load());
+    case 5: {
+        // Let the SX1262 drive DIO2 automatically during RX/TX for an external
+        // RF switch. The inversion setting selects the opposite control state;
+        // the SX1262 itself does not provide a separate polarity parameter.
+        constexpr std::uint8_t dio2_switch_enable =
+            static_cast<std::uint8_t>(IRIS_RADIO_DIO2_RF_SWITCH_ENABLE != 0);
+        constexpr std::uint8_t dio2_switch_invert =
+            static_cast<std::uint8_t>(IRIS_RADIO_DIO2_RF_SWITCH_INVERT != 0);
+        const std::uint8_t dio2_switch[] = {
+            static_cast<std::uint8_t>(dio2_switch_enable ^ dio2_switch_invert)};
+        return write_command(kSetDio2AsRfSwitchCtrl, dio2_switch,
+                             sizeof(dio2_switch));
+    }
+    case 6: {
+        const std::uint8_t modulation[] = {
+            static_cast<std::uint8_t>(IRIS_RADIO_SPREADING_FACTOR),
+            radio_bandwidth_code(),
+            static_cast<std::uint8_t>(IRIS_RADIO_CODING_RATE), 0x00U};
+        return write_command(kSetModulationParams, modulation,
+                             sizeof(modulation));
+    }
+    case 7: {
+        const std::uint8_t packet_params[] = {
+            static_cast<std::uint8_t>(IRIS_RADIO_PREAMBLE_LENGTH >> 8U),
+            static_cast<std::uint8_t>(IRIS_RADIO_PREAMBLE_LENGTH), 0x00U, 0xFFU,
+            0x01U, 0x00U};  // explicit header, CRC on, normal IQ
+        return write_command(kSetPacketParams, packet_params,
+                             sizeof(packet_params));
+    }
+    case 8: {
+        const std::uint16_t enabled_irqs = kIrqRxDone | kIrqTxDone | kIrqCrcError;
+        const std::uint8_t irq_params[] = {
+            static_cast<std::uint8_t>(enabled_irqs >> 8U),
+            static_cast<std::uint8_t>(enabled_irqs),
+            static_cast<std::uint8_t>(enabled_irqs >> 8U),
+            static_cast<std::uint8_t>(enabled_irqs),
+            0x00U, 0x00U, 0x00U, 0x00U};
+        return write_command(kSetDioIrqParams, irq_params, sizeof(irq_params));
+    }
+    case 9: {
+        const std::uint8_t buffer_base[] = {0x00U, 0x00U};
+        return write_command(kSetBufferBaseAddress, buffer_base,
+                             sizeof(buffer_base));
+    }
+    case 10: {
+        const std::uint8_t clear_irq[] = {0xFFU, 0xFFU};
+        return write_command(kClearIrqStatus, clear_irq, sizeof(clear_irq));
+    }
+    case 11: {
+        const std::uint8_t continuous_rx[] = {0xFFU, 0xFFU, 0xFFU};
+        result = write_command(kSetRx, continuous_rx, sizeof(continuous_rx));
+        if (result == ESP_OK) initialized_ = true;
+        return result;
+    }
+    default:
+        return ESP_ERR_INVALID_ARG;
+    }
+}
 
-    const std::uint32_t frequency_word = static_cast<std::uint32_t>(
-        (static_cast<std::uint64_t>(IRIS_RADIO_FREQUENCY_HZ) << 25U) /
-        32000000ULL);
-    std::array<std::uint8_t, 4> frequency{};
-    store_u32_be(frequency.data(), frequency_word);
-    result = write_command(kSetRfFrequency, frequency.data(), frequency.size());
-    if (result != ESP_OK) return result;
+void Ra01::latch_fault(const esp_err_t reason)
+{
+    bool expected = false;
+    if (faulted_.compare_exchange_strong(expected, true)) {
+        ++fault_count_;
+        last_fault_ = reason;
+        transmit_in_progress_ = false;
+        ESP_LOGE(kLogTag, "radio FAULT latched (%s), fault #%lu: calls now return at once until re-init",
+                 esp_err_to_name(reason), static_cast<unsigned long>(fault_count_));
+    }
+}
 
-    // SX1262 high-power PA configuration. The RA-01SH-P front end is driven
-    // with the requested 2 dBm from SetTxParams below; this configuration is
-    // still required to select the SX1262 PA path.
-    pa_low_configured_ = -1;
-    result = configure_pa_for(tx_power_dbm_.load());
-    if (result != ESP_OK) return result;
-
-    // Let the SX1262 drive DIO2 automatically during RX/TX for an external
-    // RF switch. The inversion setting selects the opposite control state;
-    // the SX1262 itself does not provide a separate polarity parameter.
-    constexpr std::uint8_t dio2_switch_enable =
-        static_cast<std::uint8_t>(IRIS_RADIO_DIO2_RF_SWITCH_ENABLE != 0);
-    constexpr std::uint8_t dio2_switch_invert =
-        static_cast<std::uint8_t>(IRIS_RADIO_DIO2_RF_SWITCH_INVERT != 0);
-    const std::uint8_t dio2_switch[] = {
-        static_cast<std::uint8_t>(dio2_switch_enable ^ dio2_switch_invert)};
-    result = write_command(kSetDio2AsRfSwitchCtrl, dio2_switch,
-                           sizeof(dio2_switch));
-    if (result != ESP_OK) return result;
-
-    const std::uint8_t modulation[] = {
-        static_cast<std::uint8_t>(IRIS_RADIO_SPREADING_FACTOR),
-        radio_bandwidth_code(),
-        static_cast<std::uint8_t>(IRIS_RADIO_CODING_RATE), 0x00U};
-    result = write_command(kSetModulationParams, modulation,
-                           sizeof(modulation));
-    if (result != ESP_OK) return result;
-
-    const std::uint8_t packet_params[] = {
-        static_cast<std::uint8_t>(IRIS_RADIO_PREAMBLE_LENGTH >> 8U),
-        static_cast<std::uint8_t>(IRIS_RADIO_PREAMBLE_LENGTH), 0x00U, 0xFFU,
-        0x01U, 0x00U};  // explicit header, CRC on, normal IQ
-    result = write_command(kSetPacketParams, packet_params,
-                           sizeof(packet_params));
-    if (result != ESP_OK) return result;
-
-    const std::uint16_t enabled_irqs = kIrqRxDone | kIrqTxDone | kIrqCrcError;
-    const std::uint8_t irq_params[] = {
-        static_cast<std::uint8_t>(enabled_irqs >> 8U),
-        static_cast<std::uint8_t>(enabled_irqs),
-        static_cast<std::uint8_t>(enabled_irqs >> 8U),
-        static_cast<std::uint8_t>(enabled_irqs),
-        0x00U, 0x00U, 0x00U, 0x00U};
-    result = write_command(kSetDioIrqParams, irq_params, sizeof(irq_params));
-    if (result != ESP_OK) return result;
-
-    const std::uint8_t buffer_base[] = {0x00U, 0x00U};
-    result = write_command(kSetBufferBaseAddress, buffer_base,
-                           sizeof(buffer_base));
-    if (result != ESP_OK) return result;
-
-    const std::uint8_t clear_irq[] = {0xFFU, 0xFFU};
-    result = write_command(kClearIrqStatus, clear_irq, sizeof(clear_irq));
-    if (result != ESP_OK) return result;
-
-    const std::uint8_t continuous_rx[] = {0xFFU, 0xFFU, 0xFFU};
-    result = write_command(kSetRx, continuous_rx, sizeof(continuous_rx));
-    if (result == ESP_OK) initialized_ = true;
+esp_err_t Ra01::track(const esp_err_t result)
+{
+    if (!realtime_ || recovering_) return result;
+    if (result == ESP_OK) {
+        spi_failures_ = 0;
+    } else if (++spi_failures_ >= kFaultThreshold) {
+        latch_fault(result);
+    }
     return result;
+}
+
+void Ra01::note_tx_failure(const esp_err_t reason)
+{
+    if (!realtime_ || recovering_) return;
+    if (++tx_failures_ >= kFaultThreshold) latch_fault(reason);
+}
+
+void Ra01::restore_rx()
+{
+    if (faulted_.load()) return;
+    const std::uint8_t continuous_rx[] = {0xFFU, 0xFFU, 0xFFU};
+    (void)write_command(kSetRx, continuous_rx, sizeof(continuous_rx));
+}
+
+void Ra01::begin_reinit()
+{
+    faulted_.store(true);          // stays latched until the stepper finishes
+    recovering_ = true;
+    initialized_ = false;
+    transmit_in_progress_ = false;
+    pa_low_configured_ = -1;
+    spi_failures_ = 0;
+    tx_failures_ = 0;
+    ++reinit_attempts_;
+    reinit_step_ = 0;
+    reinit_deadline_us_ = esp_timer_get_time() +
+                          static_cast<std::int64_t>(kReinitBudgetMs) * 1000;
+}
+
+Ra01::ReinitStatus Ra01::service_reinit(esp_err_t *error)
+{
+    if (error != nullptr) *error = ESP_OK;
+    if (reinit_step_ < 0) return ReinitStatus::Idle;
+    const std::int64_t now = esp_timer_get_time();
+    auto fail = [&](const esp_err_t reason) {
+        recovering_ = false;
+        reinit_step_ = -1;
+        last_fault_ = reason;
+        if (error != nullptr) *error = reason;
+        return ReinitStatus::Failed;
+    };
+    if (now >= reinit_deadline_us_) return fail(ESP_ERR_TIMEOUT);
+
+    switch (reinit_step_) {
+    case 0: {   // hold the radio in reset with the front end off
+        const esp_err_t result = configure_gpio();
+        if (result != ESP_OK) return fail(result);
+        gpio_set_level(HW_PIN_RAD_RF_ENABLE, 0);
+        gpio_set_level(HW_PIN_RAD_RESET, 0);
+        reinit_phase_us_ = now;
+        reinit_step_ = 1;
+        return ReinitStatus::InProgress;
+    }
+    case 1:     // reset held 2 ms
+        if (now - reinit_phase_us_ < 2000) return ReinitStatus::InProgress;
+        gpio_set_level(HW_PIN_RAD_RESET, 1);
+        reinit_phase_us_ = now;
+        reinit_step_ = 2;
+        return ReinitStatus::InProgress;
+    case 2:     // 10 ms for the radio to come up, then the front end
+        if (now - reinit_phase_us_ < 10000) return ReinitStatus::InProgress;
+        gpio_set_level(HW_PIN_RAD_RF_ENABLE, front_end_enabled_.load() ? 1 : 0);
+        reinit_phase_us_ = now;
+        reinit_step_ = 3;
+        return ReinitStatus::InProgress;
+    case 3: {   // 10 ms settle, then make sure the SPI device exists
+        if (now - reinit_phase_us_ < 10000) return ReinitStatus::InProgress;
+        if (spi_device_ == nullptr) {
+            spi_device_interface_config_t device{};
+            device.clock_speed_hz = kSpiClockHz;
+            device.mode = 0;
+            device.spics_io_num = HW_PIN_RAD_CS;
+            device.queue_size = 1;
+            const esp_err_t result = spi_bus_add_device(spi_host_, &device, &spi_device_);
+            if (result != ESP_OK) return fail(result);
+        }
+        reinit_step_ = 4;
+        return ReinitStatus::InProgress;
+    }
+    default: {  // configuration steps, one per call
+        // Never wait on BUSY here: come back on the next pass instead.
+        if (gpio_get_level(HW_PIN_RAD_BUSY) != 0) return ReinitStatus::InProgress;
+        const unsigned step = static_cast<unsigned>(reinit_step_ - 4);
+        const esp_err_t result = configure_step(step);
+        if (result == ESP_ERR_TIMEOUT) return ReinitStatus::InProgress;
+        if (result != ESP_OK) return fail(result);
+        if (step + 1U < kConfigSteps) {
+            ++reinit_step_;
+            return ReinitStatus::InProgress;
+        }
+        recovering_ = false;
+        reinit_step_ = -1;
+        spi_failures_ = 0;
+        tx_failures_ = 0;
+        faulted_.store(false);
+        return ReinitStatus::Done;
+    }
+    }
+}
+
+Ra01::Health Ra01::health_check()
+{
+    if (!initialized_ || faulted_.load()) return Health::Error;
+    if (transmit_in_progress_) return Health::Ok;
+    if (wait_until_ready() != ESP_OK) return Health::Error;
+    // GetPacketType: MOSI 0x11 0x00 0x00, MISO RFU, status, packet type.
+    std::array<std::uint8_t, 3> tx{0x11U, 0x00U, 0x00U};
+    std::array<std::uint8_t, 3> rx{};
+    spi_transaction_t transaction{};
+    transaction.length = tx.size() * 8U;
+    transaction.rxlength = transaction.length;
+    transaction.tx_buffer = tx.data();
+    transaction.rx_buffer = rx.data();
+    if (track(spi_device_polling_transmit(spi_device_, &transaction)) != ESP_OK) {
+        return Health::Error;
+    }
+    const std::uint8_t chip_mode = static_cast<std::uint8_t>((rx[1] >> 4U) & 0x07U);
+    // Configured: LoRa (0x01), never GFSK (0x00, the power-on default), and a
+    // chip mode of STBY_RC(2)..TX(6). A floating MISO reads 0x00 or 0xFF.
+    if (rx[2] != 0x01U || chip_mode < 2U || chip_mode > 6U) {
+        latch_fault(ESP_ERR_INVALID_RESPONSE);
+        return Health::Lost;
+    }
+    if (chip_mode == 2U || chip_mode == 3U) {
+        // Settings intact but idle in standby (for example a failed
+        // transmit set-up): re-enter continuous RX.
+        restore_rx();
+        return Health::Repaired;
+    }
+    return Health::Ok;
 }
 
 esp_err_t Ra01::transmit(const std::uint8_t *data, const std::size_t length)
@@ -233,26 +431,35 @@ esp_err_t Ra01::transmit(const std::uint8_t *data, const std::size_t length)
 
 esp_err_t Ra01::start_transmit(const std::uint8_t *data, const std::size_t length)
 {
+    if (faulted_.load()) return ESP_ERR_INVALID_STATE;
     if (!initialized_ || data == nullptr || length == 0U || length > 255U) {
         return ESP_ERR_INVALID_ARG;
     }
     if (transmit_in_progress_) return ESP_ERR_INVALID_STATE;
 
+    // Any failure while setting up leaves the radio in standby: put it back
+    // into RX at once (audit F10) and count the failure towards the fault latch.
+    auto fail = [this](const esp_err_t reason) {
+        restore_rx();
+        note_tx_failure(reason);
+        return reason;
+    };
+
     const std::uint8_t standby[] = {0x00U};
     esp_err_t result = write_command(kSetStandby, standby, sizeof(standby));
-    if (result != ESP_OK) return result;
+    if (result != ESP_OK) return fail(result);
 
     const std::int8_t power_dbm = tx_power_dbm_.load();
     result = configure_pa_for(power_dbm);
-    if (result != ESP_OK) return result;
+    if (result != ESP_OK) return fail(result);
     result = apply_tx_modulation_erratum();
-    if (result != ESP_OK) return result;
+    if (result != ESP_OK) return fail(result);
     // The SX1262 power byte is a signed dBm value encoded as uint8_t.
     const std::uint8_t tx_params[] = {
         static_cast<std::uint8_t>(power_dbm),
         0x04U};
     result = write_command(kSetTxParams, tx_params, sizeof(tx_params));
-    if (result != ESP_OK) return result;
+    if (result != ESP_OK) return fail(result);
 
     const std::uint8_t packet_params[] = {
         static_cast<std::uint8_t>(IRIS_RADIO_PREAMBLE_LENGTH >> 8U),
@@ -260,24 +467,19 @@ esp_err_t Ra01::start_transmit(const std::uint8_t *data, const std::size_t lengt
         static_cast<std::uint8_t>(length), 0x01U, 0x00U};
     result = write_command(kSetPacketParams, packet_params,
                            sizeof(packet_params));
-    if (result != ESP_OK) return result;
+    if (result != ESP_OK) return fail(result);
 
     result = write_buffer(data, length);
-    if (result != ESP_OK) return result;
+    if (result != ESP_OK) return fail(result);
 
     const std::uint8_t clear_irq[] = {0xFFU, 0xFFU};
     result = write_command(kClearIrqStatus, clear_irq, sizeof(clear_irq));
-    if (result != ESP_OK) return result;
+    if (result != ESP_OK) return fail(result);
 
     // SetTx timeout units are 15.625 us. 0x00FA00 is exactly 1 second.
     const std::uint8_t tx_timeout[] = {0x00U, 0xFAU, 0x00U};
     result = write_command(kSetTx, tx_timeout, sizeof(tx_timeout));
-    if (result != ESP_OK) {
-        // Best effort: do not leave the receiver in standby.
-        const std::uint8_t continuous_rx[] = {0xFFU, 0xFFU, 0xFFU};
-        (void)write_command(kSetRx, continuous_rx, sizeof(continuous_rx));
-        return result;
-    }
+    if (result != ESP_OK) return fail(result);   // best effort back to RX
 
     // The SX1262 SetTx timeout above also ends the transmission; the host
     // deadline adds margin so a missed DIO1 edge cannot stall the radio.
@@ -291,6 +493,13 @@ Ra01::TxStatus Ra01::poll_transmit(esp_err_t *error)
 {
     if (error != nullptr) *error = ESP_OK;
     if (!transmit_in_progress_) return TxStatus::Idle;
+    if (faulted_.load()) {
+        // Faulted while a packet was on the air: nothing more can be done
+        // until the re-init; report it once.
+        transmit_in_progress_ = false;
+        if (error != nullptr) *error = ESP_ERR_INVALID_STATE;
+        return TxStatus::Error;
+    }
 
     // DIO1 is routed to TxDone (and the RX IRQs, which cannot fire while
     // transmitting). Skip SPI entirely until it rises or the deadline passes.
@@ -325,6 +534,11 @@ Ra01::TxStatus Ra01::poll_transmit(esp_err_t *error)
         status = TxStatus::Error;
         result = rx_result;
     }
+    if (status == TxStatus::Done) {
+        tx_failures_ = 0;
+    } else {
+        note_tx_failure(result);   // three in a row latch the fault (audit F10)
+    }
     if (error != nullptr) *error = result;
     return status;
 }
@@ -333,7 +547,7 @@ esp_err_t Ra01::receive(std::uint8_t *data, const std::size_t capacity,
                         std::size_t &length)
 {
     length = 0;
-    if (!initialized_ || data == nullptr) return ESP_ERR_INVALID_STATE;
+    if (!initialized_ || data == nullptr || faulted_.load()) return ESP_ERR_INVALID_STATE;
 
     std::uint8_t irq_data[2]{};
     esp_err_t result = read_command(kGetIrqStatus, irq_data, sizeof(irq_data));
@@ -352,7 +566,11 @@ esp_err_t Ra01::receive(std::uint8_t *data, const std::size_t capacity,
     result = read_command(kGetRxBufferStatus, status, sizeof(status));
     if (result != ESP_OK) return result;
     const std::size_t packet_length = status[0];
-    if (packet_length > capacity) return ESP_ERR_INVALID_SIZE;
+    if (packet_length > capacity) {
+        const std::uint8_t clear_oversize[] = {0x00U, 0xFFU};
+        (void)write_command(kClearIrqStatus, clear_oversize, sizeof(clear_oversize));
+        return ESP_ERR_INVALID_SIZE;
+    }
 
     result = read_buffer(status[1], data, packet_length);
     const std::uint8_t clear[] = {0x00U, 0xFFU};
@@ -363,6 +581,24 @@ esp_err_t Ra01::receive(std::uint8_t *data, const std::size_t capacity,
 
 esp_err_t Ra01::wait_until_ready()
 {
+    if (realtime_ || recovering_) {
+        // Sensor-task rule: never sleep, never wait long. BUSY is high for
+        // microseconds; if it is still high after kRealtimeBusyUs the radio
+        // is hung, so latch the fault and let every later call return at once.
+        if (faulted_.load() && !recovering_) return ESP_ERR_INVALID_STATE;
+        const std::int64_t end = esp_timer_get_time() + kRealtimeBusyUs;
+        while (gpio_get_level(HW_PIN_RAD_BUSY) != 0) {
+            if (esp_timer_get_time() >= end) {
+                if (!recovering_) {
+                    ++busy_timeouts_;
+                    latch_fault(ESP_ERR_TIMEOUT);
+                }
+                return ESP_ERR_TIMEOUT;
+            }
+        }
+        return ESP_OK;
+    }
+
     // BUSY normally clears within microseconds of the previous command;
     // spin briefly rather than sleeping a whole scheduler tick per command.
     const std::int64_t spin_end = esp_timer_get_time() + kBusySpinUs;
@@ -397,7 +633,7 @@ esp_err_t Ra01::write_command(const std::uint8_t command,
     spi_transaction_t transaction{};
     transaction.length = (length + 1U) * 8U;
     transaction.tx_buffer = buffer.data();
-    return spi_device_polling_transmit(spi_device_, &transaction);
+    return track(spi_device_polling_transmit(spi_device_, &transaction));
 }
 
 esp_err_t Ra01::write_buffer(const std::uint8_t *data, const std::size_t length)
@@ -412,7 +648,7 @@ esp_err_t Ra01::write_buffer(const std::uint8_t *data, const std::size_t length)
     spi_transaction_t transaction{};
     transaction.length = (length + 2U) * 8U;
     transaction.tx_buffer = buffer.data();
-    return spi_device_polling_transmit(spi_device_, &transaction);
+    return track(spi_device_polling_transmit(spi_device_, &transaction));
 }
 
 esp_err_t Ra01::read_command(const std::uint8_t command, std::uint8_t *data,
@@ -429,7 +665,7 @@ esp_err_t Ra01::read_command(const std::uint8_t command, std::uint8_t *data,
     transaction.rxlength = transaction.length;
     transaction.tx_buffer = tx.data();
     transaction.rx_buffer = rx.data();
-    result = spi_device_polling_transmit(spi_device_, &transaction);
+    result = track(spi_device_polling_transmit(spi_device_, &transaction));
     if (result == ESP_OK) std::copy(rx.begin() + 2,
                                     rx.begin() + 2 + length, data);
     return result;
@@ -451,7 +687,7 @@ esp_err_t Ra01::read_buffer(const std::uint8_t offset, std::uint8_t *data,
     transaction.rxlength = transaction.length;
     transaction.tx_buffer = tx.data();
     transaction.rx_buffer = rx.data();
-    result = spi_device_polling_transmit(spi_device_, &transaction);
+    result = track(spi_device_polling_transmit(spi_device_, &transaction));
     if (result == ESP_OK) std::copy(rx.begin() + 3,
                                     rx.begin() + 3 + length, data);
     return result;
@@ -499,7 +735,7 @@ esp_err_t Ra01::apply_tx_modulation_erratum()
     transaction.rxlength = transaction.length;
     transaction.tx_buffer = tx.data();
     transaction.rx_buffer = rx.data();
-    result = spi_device_polling_transmit(spi_device_, &transaction);
+    result = track(spi_device_polling_transmit(spi_device_, &transaction));
     if (result != ESP_OK) return result;
     const std::uint8_t value = IRIS_RADIO_BANDWIDTH_HZ == 500000U
         ? static_cast<std::uint8_t>(rx[4] & ~0x04U)

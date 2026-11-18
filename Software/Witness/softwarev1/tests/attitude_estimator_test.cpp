@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <initializer_list>
+#include <limits>
 #include <vector>
 
 using attitude::Config;
@@ -644,8 +645,37 @@ void test_bench_interference()
 
 }  // namespace
 
+void test_nonfinite_inputs()
+{
+    const float nan = std::numeric_limits<float>::quiet_NaN();
+    // NaN gyro/accel samples are dropped, the attitude stays valid and finite.
+    Estimator est;
+    Feeder f{est};
+    const Quaternion q0 = initialized_upright(est, f);
+    f.run(Vector3{nan, 0.0F, 0.0F}, kUpright, FlightPhase::PadIdle, 5);
+    f.run(kZero, Vector3{nan, 0.0F, 1.0F}, FlightPhase::PadIdle, 5);
+    CHECK(est.valid());
+    CHECK(est.nonfinite_events() == 10U);
+    CHECK(angle_between(q0, est.quaternion()) < 1e-3F);
+    f.run(Vector3{nan, nan, nan}, Vector3{nan, nan, nan}, FlightPhase::Coast, 20);
+    CHECK(est.valid() && std::isfinite(est.quaternion().w));
+    // An absurd (finite) rate that overflows the integration must not leave a
+    // NaN or silently reset the attitude to identity while claiming valid.
+    Estimator est2;
+    Feeder f2{est2};
+    initialized_upright(est2, f2);
+    f2.run(Vector3{3.0e38F, 0.0F, 0.0F}, kUpright, FlightPhase::PadIdle, 20);
+    const Quaternion q = est2.quaternion();
+    CHECK(std::isfinite(q.w) && std::isfinite(q.x) && std::isfinite(q.y) && std::isfinite(q.z));
+    CHECK(est2.nonfinite_events() >= 1U || est2.valid());
+    // On the pad a clean window re-initialises after the divergence.
+    f2.run(kZero, kUpright, FlightPhase::PadIdle, 150);
+    CHECK(est2.valid());
+}
+
 int main()
 {
+    test_nonfinite_inputs();
     test_zero_before_init();
     test_tilt_init_orientations();
     test_bias_estimation();

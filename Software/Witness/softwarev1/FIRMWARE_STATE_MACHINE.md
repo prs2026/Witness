@@ -14,6 +14,17 @@ disagreement is listed in "Findings".
 - flight data never erased, with erase/clear allowed over radio;
 - GPS time slots and the uplink hold-off.
 
+**Changed 2026-11-16.** Sections changed: 1 (Boost has three routes: Kalman AGL
+and velocity, axial acceleration 2.5 g, and airborne at boot; the diagram and
+A1 row; the "not present" list); 4 (warm reset keeps AGL, vertical velocity, pad
+gravity and pad references; a cold reset in flight is detected by the airborne
+rule); 6.3 (GPS receiver states Ready, Streaming, Recovering and Failed; Failed is
+no longer terminal while data flows); 8 (a status table with FIXED or STILL OPEN
+for every finding, and the findings table of fix reports). The fix reports are in
+`Software/AUDIT/2026-11-15/fixes/` (04 for the flight state machine and filter, 05
+for GPS, 06 for commands, 03 for boot and supervision). Constants were checked in
+`main/flight_state_machine.h` and `main/command_policy.h`. Not bench verified.
+
 Section 1, the command rows in section 7 and the findings marked "Status
 2026-11-15" reflect the new code. File:line references outside section 1 are
 from the 2026-11-14 tree and may have shifted. The quick reference for every
@@ -62,7 +73,8 @@ stateDiagram-v2
     [*] --> Coast : warm reset while Coast, restore
     [*] --> Descent : warm reset while Descent, restore
 
-    PadIdle --> Boost : Kalman AGL above 30 m for 300 ms (auto), or USB 7301
+    PadIdle --> Boost : Kalman AGL above 30 m AND Kalman vz at least 30 m/s, both for 300 ms (auto), or axial accel at least 2.5 g for 300 ms (auto), or airborne at boot, baro rate at least +20 m/s for 1 s (auto), or USB 7301
+    PadIdle --> Descent : airborne at boot, baro rate at most -20 m/s for 1 s (auto, cold reset in flight only)
     Boost --> Coast : low-g axial accel below 1 g for 500 ms
     Coast --> Descent : AGL path, AGL below max minus max(5 pct, 10 m), Kalman vz negative, for 500 ms
     Coast --> Descent : velocity path, Kalman vz below -30 m/s for 2 s, 3 s after Coast entry, climb above 20 m/s seen
@@ -71,7 +83,7 @@ stateDiagram-v2
     Coast --> Landed : same landing test
     Descent --> Landed : same landing test
 
-    Landed --> PadIdle : radio 7300 or USB 7300 (re-arm)
+    Landed --> [*] : radio 7300 or USB 7300 (ack, then esp_restart, boots PadIdle). States are one-way, no backward transition
     PadIdle --> Landed : USB 7304 only
     Boost --> Landed : USB 7304 only
     Coast --> Landed : USB 7304 only
@@ -87,7 +99,9 @@ stateDiagram-v2
 
 | # | Transition | Trigger and thresholds | Debounce / glitch handling | Source |
 |---|---|---|---|---|
-| A1 | Pad Idle to Boost | `agl_valid` and Kalman AGL (`position_filter_.up().p`, metres above the pad) strictly above **30 m** (`kLaunchAglMeters`) | **300 ms** consecutive (`timestamp_us`); one non-qualifying observation resets it. Calls `trigger_launch()`, the same path as a commanded launch | `flight_state_machine.h` constants; `flight_state_machine.cpp` `update()` PadIdle case; input `sensors.cpp` observation block |
+| A1 | Pad Idle to Boost | `agl_valid` and Kalman AGL (`position_filter_.up().p`, metres above the pad) strictly above **30 m** (`kLaunchAglMeters`) **and** a valid Kalman vertical velocity of at least **30 m/s** (`kLaunchVerticalVelocityMps`, 2026-11-15) | **300 ms** consecutive (`timestamp_us`); one non-qualifying observation resets it. Calls `trigger_launch()`, the same path as a commanded launch | `flight_state_machine.h` constants; `flight_state_machine.cpp` `update()` PadIdle case; input `sensors.cpp` observation block |
+| A1b | Pad Idle to Boost, axial acceleration (2026-11-16) | Filtered axial acceleration (body +X, `axial_acceleration_g`) at or above **2.5 g** (`kLaunchAccelerationG`). Needs no attitude and no position filter | Leaky budget: time above the threshold fills it at real time, below the threshold it drains **2x** as fast (`kLaunchAccelerationDrainFactor`), credit per observation capped at 50 ms. Fires when the budget reaches **300 ms** (`kLaunchAccelerationQualificationMs`). Log: "launch detected: axial acceleration" | `flight_state_machine.h` lines 51-63; `acceleration_launch_detected` |
+| A1c | Pad Idle to Boost or Descent, airborne at boot (2026-11-16) | Raw barometer rate (`position::BaroRate`, independent of the filter): at least **+20 m/s** (`kAirborneRateMps`) gives Boost; at most **-20 m/s** gives Descent | **1 s** (`kAirborneQualificationMs`). Only in Pad Idle. Both mark the flight as real (`flight_inferred_`). Log: "airborne at boot". Above about Mach 0.8 the raw baro is wrong, so a cold reset in supersonic flight may be classed late or by the wrong sign | `flight_state_machine.h` lines 65-72; `position_filter.h` BaroRate; `sensors.cpp` `service_position` |
 | A2 | Boost to Coast | `low_g_axial_acceleration_valid` and **raw, unfiltered** low-g X below **1 g** | **500 ms** consecutive; any one sample at or above 1 g (or low-g invalid) resets the timer | unchanged |
 | A3 | Coast to Descent, AGL path | Kalman AGL below `max - max(0.05 * max, 10 m)` (`kDescentMinimumDropMeters`), maximum valid and positive, Kalman vertical velocity negative | **500 ms** consecutive; the timer resets whenever the maximum rises | `flight_state_machine.cpp` Coast case |
 | A4 | Coast to Descent, velocity path | Kalman vertical velocity below **-30 m/s**, `climb_seen_` (above **+20 m/s** seen in Boost/Coast; true after a restore), at least **3 s** since Coast entry. Now always available, not only when the barometer is gated | **2 s** consecutive | `flight_state_machine.cpp` Coast case |
@@ -118,12 +132,22 @@ window. Coast and Descent entry from a command do not reset the maximum.
 Entry points: USB `process_canonical_binary_command` (`usb_serial_echo.cpp:461-465`),
 USB compact `05 73 0X` (`usb_serial_echo.cpp:482-483`), USB ASCII `05 73 0X`
 (`usb_serial_echo.cpp:669-673`), radio switch (`usb_serial_echo.cpp:595-602`).
-All go through `command_policy::allow_set_flight_state` (`command_policy.h:176-185`):
+All go through `command_policy::allow_set_flight_state`. **Since 2026-11-15 the
+states are one-way**: `FlightStateMachine::set_state` itself refuses a lower
+state (`ESP_ERR_INVALID_STATE`), and the policy refuses it first:
 
-* Radio: only current Landed and requested Pad Idle. Everything else, including
-  Pad Idle to Pad Idle and any launch, is refused (ack `IRIS_ACK_REFUSED`).
+* Radio: only current Landed and requested Pad Idle (the reset below) and Pad
+  Idle to Pad Idle (no-op). Everything else, including any launch, is refused
+  (ack `IRIS_ACK_REFUSED`).
 * USB: requested above 4 is refused. From Boost, Coast or Descent only Landed
-  (or the same state) is accepted. From Pad Idle or Landed any of 0..4.
+  (or the same state) is accepted. From Pad Idle any of 0..4. From Landed only
+  Landed (same) or the reset to Pad Idle.
+* **Reset:** `0x7300` while Landed (USB or radio) is acked OK, then
+  `UsbSerialEcho::set_flight_state` schedules `esp_restart()`
+  (`maintenance_mode::restart_after_ms`, 0.4 s USB, 1 s radio). A persisted Landed
+  is not resumed (`flight_state_store::resumable`), so the boot is Pad Idle with a
+  fresh position filter and log session. Boost, Coast and Descent are still resumed
+  after a reset.
 * USB Pad Idle to Boost uses `trigger_launch()` (`usb_serial_echo.cpp:1060-1068`).
   Any other accepted value uses `set_state()` (no state-specific entry action
   beyond `reset_for_state` on the next `update()`).
@@ -135,11 +159,11 @@ R+U = radio and USB, "same" = no-op accepted, x = refused):
 
 | current \ requested | 7300 Pad Idle | 7301 Boost | 7302 Coast | 7303 Descent | 7304 Landed |
 |---|---|---|---|---|---|
-| Pad Idle | USB same; radio x | U (launch trigger) | U | U | U |
+| Pad Idle | R+U same (no-op) | U (launch trigger) | U | U | U |
 | Boost | x | USB same; radio x | x | x | U |
 | Coast | x | x | USB same; radio x | x | U |
 | Descent | x | x | x | USB same; radio x | U |
-| Landed | R+U | U | U | U | USB same; radio x |
+| Landed | R+U (ack, then restart) | x | x | x | USB same; radio x |
 
 Persistence: every state change calls the persist callback
 (`flight_state_machine.cpp:34-37`, installed `main.cpp:38`). A commanded
@@ -152,7 +176,8 @@ Boost, Coast or Descent is therefore also resumed after a warm reset (section 4)
   (`flight_state_machine.cpp:93-109`). Launch uses the filtered signal; burnout
   uses the raw low-g sample; landing uses raw low-g magnitude and gyro.
 * Not present: Coast to Boost (re-ignition, airstart, staging), Descent to
-  Coast, Pad Idle to Landed (auto), Pad Idle to Coast/Descent (auto), any
+  Coast, Pad Idle to Landed (auto), Pad Idle to Coast (auto), Pad Idle to
+  Descent except through the airborne rule A1c (auto), any
   timeout (Boost, Coast, Descent can last forever), any automatic exit from
   Landed, any Landed re-detection from Pad Idle.
 * Unreachable by automatic means: Landed to anything. Pad Idle after Landed is
@@ -254,9 +279,17 @@ checksum}, rewritten on every state change and on a rebaseline
 (`flight_state_store.cpp:13`, `flight_state_store.h:69-100`,
 `flight_state_machine.cpp:36,253`). It is **not** updated between transitions.
 
+Since 2026-11-16 a second RTC record, the **extension** (`flight_state_store.h`,
+magic "WFXR", 12 words, own checksum), holds the baro pad reference, the GPS
+origin (lat, lon, alt), the pad gravity, and the last AGL and vertical velocity,
+each with a valid flag. It is written inside a critical section, 2 Hz while the
+filter runs, and copied at boot. An older record has no extension and the resume
+then proceeds as before (AGL restarts at 0). The original record format is
+unchanged. Both records are cleared on every boot that is not a resume.
+
 ```mermaid
 stateDiagram-v2
-    [*] --> Reason : app_main first line (main.cpp:25)
+    [*] --> Reason : app_main first line (main.cpp line 25)
     Reason --> Cold : power-on, EN pin, USB reset, deep sleep, unknown
     Reason --> Warm : panic, int or task or other WDT, software restart, brownout
     Cold --> PadIdleFresh : record sealed as Pad Idle
@@ -268,7 +301,8 @@ stateDiagram-v2
     InFlight --> [*]
 ```
 
-Classification `flight_state_store.cpp:15-28`; resumable only 1..3
+Classification `flight_state_store.cpp:15-28` (Warm: panic, interrupt and task
+watchdogs, software reset, brownout; Cold: everything else); resumable only 1..3
 (`flight_state_store.h:116-120`); restore `flight_state_machine.cpp:49-64`;
 RESUMED flag `main.cpp:33` (`comms.h:179`, status byte 1 bit 6, sticky until power-on).
 
@@ -277,12 +311,12 @@ What a reset does in each state:
 | State at reset | Reset kind | Result | Notes |
 |---|---|---|---|
 | Pad Idle | any | Pad Idle | HITL off, calibration reloaded from NVS, GPS restarts, 3 s radio rate again |
-| Boost | warm (WDT, panic, brownout, SW) | Boost resumed, RESUMED flag | Attitude, position filter and IMU calibration restart from scratch (`FIRMWARE_HANDOFF.md:1521-1523`); prelaunch ring is empty; new flash session on the other slot; burnout test still works (needs only low-g) |
-| Boost | cold (power loss, EN) | **Pad Idle in flight** | See finding H3 |
-| Coast | warm | Coast resumed; `climb_seen_` true, `coast_entered_us_` set on the first update | Persisted maximum is the altitude at Coast entry, but the first robust altitude above it replaces it at once (`maximum_updated_us_ = 0` waives the climb-rate check, `flight_state_machine.cpp:57,298-306`). Descent threshold is then 5 % under the altitude at resume, not under the true apogee |
-| Coast | cold | Pad Idle in flight | H3 |
-| Descent | warm | Descent resumed | Persisted maximum is the value at Descent entry (about 95 % of apogee) |
-| Descent | cold | Pad Idle in flight | H3 |
+| Boost | warm (WDT, panic, brownout, SW) | Boost resumed, RESUMED flag. Since 2026-11-16: AGL, vertical velocity, pad gravity and the baro and GPS references are restored from the RTC extension record (fix 04 2a), so the filter continues relative to the pad. The attitude is **not** resumed: it restarts only on a still pad, so it stays invalid for the rest of the flight. | Prelaunch ring is empty; resumed logging appends to the flight session (fix 01); burnout test still works (needs only low-g) |
+| Boost | cold (power loss, EN) | Pad Idle until detected. Since 2026-11-16 the airborne rule (A1c) returns Boost about 1.7 s after a fast climb (20 m/s for 1 s); a burn is caught by the axial rule (A1b) in 0.3 s. | AGL is relative to the restart point. See finding H3 |
+| Coast | warm | Coast resumed; `climb_seen_` true, `coast_entered_us_` set on the first update | Persisted maximum is the altitude at Coast entry, but the first robust altitude above it replaces it at once (`maximum_updated_us_ = 0` waives the climb-rate check, `flight_state_machine.cpp:57,298-306`). Descent threshold is then 5 % under the altitude at resume, not under the true apogee. Filter state as for Boost (above) |
+| Coast | cold | Pad Idle until the airborne rule sees -20 m/s for 1 s (Descent) or the Boost rule; see H3 | H3 |
+| Descent | warm | Descent resumed | Persisted maximum is the value at Descent entry (about 95 % of apogee). Filter state as for Boost (above) |
+| Descent | cold | Pad Idle until the airborne rule sees -20 m/s for 1 s (A1c) | H3 |
 | Landed | warm or cold | **Pad Idle** (Landed is never resumed, `flight_state_store.h:114-115`) | Full power, 3 s radio, cannot re-detect landing (H1) |
 | any | brownout mid NAND write | state resumes; NAND may hold a torn page | The writer and session scan tolerate this (not reviewed in detail) |
 | Maintenance image | any | returns to flight, Pad Idle | Section 5 |
@@ -352,8 +386,8 @@ stateDiagram-v2
     VerifyBoot --> ServeWifi : self-test passes, confirm and return_to_flight
     VerifyBoot --> Bootloader : self-test fails at 30 s, rollback
 
-    ServeWifi --> Bootloader : leave: Wi-Fi off, auto-off, reboot, OTA done, any reset
-    ServeUsb --> Bootloader : leave: radio Wi-Fi off, 120 min limit, any reset
+    ServeWifi --> Bootloader : on leave, Wi-Fi off, auto-off, reboot, OTA done, any reset
+    ServeUsb --> Bootloader : on leave, radio Wi-Fi off, 120 min limit, any reset
     Recovery --> Bootloader : flight image uploaded then restart
 ```
 
@@ -474,19 +508,42 @@ stateDiagram-v2
     Configure --> Failed : u-blox NAK or timeout, PX1120S reject
     Verify --> Ready : read back airborne mode and rate
     Verify --> Failed : mismatch or timeout
+    Verify --> Streaming : mismatch or timeout but GGA flowing (2026-11-16)
+    Streaming --> Ready : background configuration confirmed
+    Ready --> Recovering : no GGA for 3 s (2026-11-16)
+    Recovering --> Streaming : GGA arrives at the listened baud
     Ready --> Ready : assist upload, ACK each record
     Ready --> RestartWait : cold start command, wake, or acked assist System Restart
     RestartWait --> Configure : 2000 ms then reconfigure (fixed baud)
     Ready --> Asleep : sleep() in Landed
     Asleep --> RestartWait : wake() hot, fallback cold after 4 s of silence
-    Failed --> Failed : terminal until reboot
+    Failed --> Streaming : GGA arrives (2026-11-16)
+    Failed --> Failed : no data, identification retried at 5 s and 10 s
 ```
+
+Status values since 2026-11-16 (`gps_receiver.h:87`): Disabled, Configuring,
+Ready, Failed, Streaming, Recovering.
+- **Ready** means configured and verified. **Streaming** means valid GGA is
+  flowing but the configuration is not confirmed (for example a receiver that
+  does not acknowledge the NMEA set); the background configuration is retried
+  with backoff 5 s doubling to 60 s. **Recovering** means no GGA for 3 s: the
+  receiver listens 2 s at 115200 and then 2 s at the fallback rate, on the
+  known-good pins, sending nothing. **Failed** means no data at all; a GGA that
+  arrives turns it into Streaming. The pin probe runs only when Failed with no
+  GGA for at least 5 s (about 0.8 s of blocking at most). A receiver that loses
+  its configuration while streaming is re-configured in the background.
+- Ready is supervised: two consecutive 5 s windows below a quarter of the
+  expected rate (25 Hz expected) start a background reconfiguration.
 
 * Fixed 115200 baud, never changed (`gps_receiver.h:38-44`); scanning is
   disabled except one measured-baud try and one pin swap
   (`gps_receiver.cpp:520-575`).
 * Cold start: only from Pad Idle (USB `usb_serial_echo.cpp:440-451`, radio
-  `:559-570`); `UartDriver` executes it (`uart_driver.cpp:361-371`).
+  `:559-570`); `UartDriver` executes it (`uart_driver.cpp:361-371`) and re-checks
+  Pad Idle at that point (`set_cold_start_allowed`, set by `Sensors::run` on every pass);
+  a request that is no longer allowed is dropped with a warning. After the restart
+  `GpsReceiver::cold_start` enters RestartWait, so the receiver is identified and
+  configured again.
 * Sleep needs `Ready`, no assist active, identified model
   (`gps_receiver.cpp:362-381`). PX1120S doze message `64 1C`; u-blox
   UBX-RXM-PMREQ backup. Wake sends a hot restart (PX1120S `01` mode 1) or
@@ -494,9 +551,13 @@ stateDiagram-v2
   if no bytes arrive within 4 s (`uart_driver.cpp:372-407`). While asleep the
   UART task blocks up to 30 s per wait.
 * Assist: 4741/4744/4745/4751 chunked upload, CRC16, then records are written to
-  the PX1120S one at a time (`gps_receiver.cpp:303-335`); a record that is
-  an acked System Restart reconfigures the receiver (`:739-765`).
-* `fail()` is terminal: no automatic retry (`gps_receiver.cpp:214-224`).
+  the PX1120S one at a time (`gps_receiver.cpp:303-335`). Since 2026-11-16 only
+  SkyTraq message `0x41` (87 bytes) is accepted (`gps_assist::is_allowed_message`);
+  anything else fails at COMMIT and is refused again before each send. Assist is
+  accepted in Pad Idle and Landed only (`command_policy::allow_gps_assist`).
+* `fail()` is no longer terminal (2026-11-16): Failed with a valid GGA becomes
+  Streaming; the identification retry runs only when there is no data for 5 s and
+  again after 10 s (`probe_due`).
 
 ### 6.4 CAN link
 
@@ -546,13 +607,13 @@ by the compact handler confirms reception, not execution.
 
 | Opcode | Meaning | Source | Pad Idle | Boost | Coast | Descent | Landed | Code |
 |---|---|---|---|---|---|---|---|---|
-| 0x7300 | Set Pad Idle | USB | OK (no-op) | REF | REF | REF | OK | `command_policy.h:176-185` |
-| 0x7300 | | Radio | REF | REF | REF | REF | OK (re-arm) | `command_policy.h:180`, `usb_serial_echo.cpp:595-602` |
-| 0x7301 | Set Boost (launch trigger from Pad Idle) | USB | OK | OK (same) | REF | REF | OK | `command_policy.h:181-184`; `usb_serial_echo.cpp:1060-1068` |
+| 0x7300 | Reset to Pad Idle (Landed only) | USB | OK (no-op) | REF | REF | REF | OK (ack, then restart) | `command_policy.h` `is_reset_to_pad`, `usb_serial_echo.cpp` `set_flight_state` |
+| 0x7300 | | Radio | OK (no-op) | REF | REF | REF | OK (ack, then restart) | same |
+| 0x7301 | Set Boost (launch trigger from Pad Idle) | USB | OK | OK (same) | REF | REF | REF (backward) | `command_policy.h`; `usb_serial_echo.cpp` |
 | 0x7301 | | Radio | REF | REF | REF | REF | REF | `command_policy.h:180` |
-| 0x7302 / 0x7303 | Set Coast / Descent | USB | OK | REF unless same | OK only if same | OK only if same | OK | `command_policy.h:181-184` |
+| 0x7302 / 0x7303 | Set Coast / Descent | USB | OK | REF unless same | OK only if same | OK only if same | REF (backward) | `command_policy.h:181-184` |
 | 0x7302 / 0x7303 | | Radio | REF | REF | REF | REF | REF | `command_policy.h:180` |
-| 0x7304 | Set Landed | USB | OK | OK | OK | OK | OK (same) | `command_policy.h:181-184` |
+| 0x7304 | Set Landed | USB | OK | OK | OK | OK | OK (same) | `command_policy.h` |
 | 0x7304 | | Radio | REF | REF | REF | REF | REF | `command_policy.h:180` |
 | 0x7305-0x73FF | invalid state | USB | REF | REF | REF | REF | REF | `command_policy.h:179` |
 | 0x7305-0x73FF | | Radio | UNK | UNK | UNK | UNK | UNK | `usb_serial_echo.cpp:625-629` |
@@ -600,6 +661,45 @@ Edge notes on gating:
 
 Severity reflects consequence in flight or at recovery, multiplied by how
 plausible the trigger is. Nothing here was reproduced.
+
+### Status 2026-11-16 (all findings above)
+
+Each finding below is marked FIXED (code change made, with the fix report named),
+PARTLY, or STILL OPEN. "Host-tested" means a host unit test passed; nothing from
+this list was run on hardware. Owners of other files are named where a change is
+needed outside the flight state machine.
+
+| Finding | Status 2026-11-16 | Fix report and remaining work |
+|---|---|---|
+| H1 Landed is a trap | STILL OPEN | Owner decision kept (Landed is not resumed). No change in fixes. |
+| H2 Radio commands not state-gated | FIXED (state gating and assist whitelist); radio authentication STILL OPEN | 02 (power), 05 (whitelist), 06 (0x5250 rules, assist Pad Idle/Landed, erase confirm). Proposal for authenticated commands is in 06; not implemented. |
+| H3 Cold reset in flight stays in Pad Idle | PARTLY FIXED (host-tested; unverified) | 04 section 2b: airborne-at-boot rule (Boost at +20 m/s, Descent at -20 m/s, 1 s); burn caught by the axial rule. Slow chutes (under 20 m/s) and supersonic cold resets remain open. |
+| M1 HITL exit leaves a simulated state | STILL OPEN | 0x7300 is still refused from Boost, Coast and Descent; the HITL documentation still names it. |
+| M2 Landed low-power estimate optimistic | STILL OPEN (feature off) | PM_ENABLE and tickless idle are now off in the flight build (03 section 4), so the Landed low-power mode cannot sleep until both are turned back on with the flag. |
+| M3 Maintenance reboot after state change | FIXED (ms-wide window remains) | 06 item 1: restart re-checked when it fires; abandoned restarts revert the boot partition (`boot_manager::revert_switch`). |
+| M4 No Boost or Coast timeout; IMU failure in Boost | PARTLY | 03 section 2: IMU supervisor and re-init (fault after 50 ms without samples, constant data, 25 read errors). No Boost or Coast timeout added. |
+| M5 Single launch criterion | FIXED | 04 sections 1b and 2b: axial 2.5 g rule and airborne-at-boot rule. Still no barometer corroboration (by design, 04 1b). |
+| M6 False Landed, no recovery | OFF by owner decision 2026-11-16 | 04 section 6: `kFalseFlightRestartEnabled` is false; `set_false_flight_callback()` is kept but never called, and nothing registers a callback. |
+| M7 Double mid-flight reset erases the earliest flight | FIXED | 01 item C1: a resumed boot appends to the newest flight slot (host-tested choice; not on hardware). |
+| M8 IMU re-initialisation after Landed | PARTLY | 03 section 2: the sensor task re-initialises the IMU every 500 ms after a fault. The Landed re-arm function (`sensors_landed.cpp`) is unchanged. |
+| M9 GPS receiver Failed is terminal | FIXED | 05: Failed plus data becomes Streaming; Recovering state; probe gating. |
+| M10 Documentation disagrees with code | PARTLY FIXED | This update corrects the table rows that were wrong for the flight state machine, GPS receiver and command gating. |
+| L1 Load acks received only | FIXED | 06 item 4 and 07: refused by policy in flight; the CAN forward result sets BUSY or OK. |
+| L2 Descent threshold in MSL | FIXED (2026-11-15) | Kalman AGL based; no change needed. |
+| L3 Persisted maximum stale | STILL OPEN | Saved only at state changes; unchanged. |
+| L4 USB Pad Idle to Coast/Descent | STILL OPEN | `allow_set_flight_state` unchanged. |
+| L5 Rollback target | STILL OPEN | Unverified on the bench; unchanged. |
+| L6 `radio_transmission_enabled_` never cleared | STILL OPEN | Not in the fix reports. |
+| L7 Pad Idle 3 s radio rate | STILL OPEN | Unchanged. Ground tools expecting 1 Hz still need checking. |
+| L8 Landed to maintenance to Pad Idle | STILL OPEN | Unchanged. |
+| L9 `0x4858` acked OK when HITL is off | STILL OPEN | Unchanged. |
+| L10 Status values 5..7 | STILL OPEN (documentation) | `set_state` already rejects values above Landed; no code change needed. |
+
+Other changes from the fix reports that the findings above do not name: radio
+TX power is stored in NVS on the ground (02, 06); the radio has a fault latch,
+re-init and a 3 s hold-off cap (02); the task watchdog covers the sensor task
+(8 s, panic; 03); the NAND logger retries and skips bad blocks (01). See
+`FIRMWARE_HANDOFF.md`.
 
 ### High
 
@@ -661,7 +761,8 @@ re-detects Boost about 30 m later; one already descending stays in Pad Idle.*
 **M1. HITL exit leaves a simulated flight state active, and the documented fix is refused.**
 `GROUND_STATION_PROTOCOL.md:504-507` says to send `0x7300` after a simulated
 launch. USB policy refuses `0x7300` from Boost, Coast and Descent
-(`command_policy.h:181-183`); only `0x7304` then `0x7300` works, or wait for the
+(and, since 2026-11-15, `0x7300` in Landed restarts Witness, as the states are
+one-way); only `0x7304` then `0x7300` works, or wait for the
 30 s landing test on real sensors. The simulated state is also persisted
 (`flight_state_machine.cpp:34-37`), so a later warm reset on the bench resumes a
 fake flight with the RESUMED flag. Also, a Boost/Coast state with real sensors on

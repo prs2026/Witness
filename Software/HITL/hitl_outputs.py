@@ -276,7 +276,7 @@ def fetch_fc_logs(session, run, config: dict, log, activity=None) -> dict:
     if status["ok"]:
         step("Comparing flash log with truth")
         try:
-            flash = write_flash_comparison(run, out_dir)
+            flash = write_flash_comparison(run, out_dir, log)
             if flash:
                 status["flash_comparison"] = flash
         except Exception as exc:
@@ -284,7 +284,7 @@ def fetch_fc_logs(session, run, config: dict, log, activity=None) -> dict:
     return status
 
 
-def write_flash_comparison(run, fc_dir: str) -> dict | None:
+def write_flash_comparison(run, fc_dir: str, log=None) -> dict | None:
     """comparison_flash.csv from the 50 Hz state packets in P*.csv."""
     p_csv = next((os.path.join(fc_dir, n) for n in sorted(os.listdir(fc_dir))
                   if n.upper().startswith("P") and n.lower().endswith(".csv")), None)
@@ -297,9 +297,16 @@ def write_flash_comparison(run, fc_dir: str) -> dict | None:
         return None
     offset = offsets[len(offsets) // 2]
     rows = []
+    resumed_rows = 0
     with open(p_csv, newline="") as f:
         for r in csv.DictReader(f):
             if r.get("log_source") != "witness_state" or not r.get("uptime"):
+                continue
+            if r.get("segment") not in (None, "", "0"):
+                # After a reset in flight (log "resumed" marker) the device
+                # uptime restarted, so the uptime -> sim offset above does not
+                # hold; the real reset duration is unknown. Not compared.
+                resumed_rows += 1
                 continue
             if r.get("hitl_active") not in ("1", "1.0", "True"):
                 continue  # real-sensor packets before/after the HITL run
@@ -322,6 +329,9 @@ def write_flash_comparison(run, fc_dir: str) -> dict | None:
     if not rows:
         return None
     _write_rows(os.path.join(run.run_dir, "comparison_flash.csv"), rows)
+    if resumed_rows and log:
+        log(f"flash comparison: {resumed_rows} state packet(s) after a reset in flight "
+            "not compared (device uptime restarted)")
     return summarize(rows)
 
 

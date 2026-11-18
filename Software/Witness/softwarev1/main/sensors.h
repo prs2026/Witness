@@ -19,10 +19,12 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "hitl_input.h"
+#include "imu_supervisor.h"
 #include "ms5607.h"
 #include "nmea_gps.h"
 #include "landed_logic.h"
 #include "ra01.h"
+#include "tx_slot.h"
 
 class SpiDataForwarder;
 class FlashLogger;
@@ -338,7 +340,14 @@ private:
     static std::uint16_t encode_battery_voltage(std::uint32_t millivolts);
     esp_err_t initialize_spi();
     esp_err_t initialize_battery_adc();
-    esp_err_t initialize_lsm6dsv320x();
+    // recovery = a re-initialisation of a running IMU: no power-up delay, and
+    // the soft reset is issued even when WHO_AM_I is wrong or unreadable.
+    esp_err_t initialize_lsm6dsv320x(bool recovery = false);
+    // Sensor task: fetch_lsm6dsv320x() plus liveness supervision; while the
+    // IMU is down it re-initialises it periodically and returns an error.
+    esp_err_t fetch_imu_supervised();
+    void mark_imu_down(imu_supervisor::Fault fault, std::uint32_t now_ms);
+    bool ensure_fifo_buffers();
     esp_err_t read_registers(
         std::uint8_t first_register,
         std::uint8_t *data,
@@ -403,6 +412,13 @@ private:
     esp_err_t queue_debug_packet();
     esp_err_t read_battery_voltage();
     void poll_radio_commands();
+    // One radio pass per sensor-task cycle: TX/RX, health check, fault
+    // handling and the non-blocking re-init (2026-11-15 audit W8/W9).
+    void service_radio(TickType_t now);
+    void radio_enter_fault(std::uint64_t now_ms);
+    // GPS fix for telemetry: the current fix, or the last good position when
+    // the current fix is not valid (never 0,0,0 after a fix was seen).
+    NmeaGps::Fix telemetry_gps_fix();
     void service_radio_transmit(TickType_t now);
     // Completes a non-blocking radio transmission; true while one is in flight.
     bool service_radio_transmit_completion();
@@ -446,6 +462,16 @@ private:
     bool has_low_g_accel_sample_ = false;
     bool has_high_g_accel_sample_ = false;
     bool has_gyro_sample_ = false;
+    // IMU supervision (sensor task only). imu_ready_ is false until the IMU
+    // initialised and again while it is being recovered.
+    bool imu_ready_ = false;
+    bool imu_ever_ready_ = false;
+    bool deferred_log_task_started_ = false;
+    imu_supervisor::Monitor imu_monitor_{};
+    std::uint32_t imu_fault_events_ = 0;
+    std::uint32_t imu_reinit_ok_ = 0;
+    std::uint32_t imu_reinit_failed_ = 0;
+    std::uint32_t imu_consecutive_failures_ = 0;
     bool ms5607_initialized_ = false;
     bool radio_ready_ = false;
     std::array<TickType_t, kRadioPacketTypeCount> radio_last_sent_{};
@@ -470,8 +496,20 @@ private:
     // Radio time slots and uplink hold-off (tx_slot.h); sensor task only.
     std::uint64_t last_utc_local_ms_ = 0;    // local time of the newest fix with UTC
     bool have_utc_fix_ = false;
-    bool uplink_heard_ = false;
-    std::uint64_t last_uplink_ms_ = 0;       // local time of the last command frame heard
+    tx_slot::UplinkHoldOff uplink_holdoff_{kRadioPacketTypeCount};   // capped hold-off (audit F4)
+    // Radio recovery (sensor task only).
+    std::uint64_t radio_next_retry_ms_ = 0;
+    std::uint64_t radio_next_health_ms_ = 0;
+    std::uint64_t radio_rx_log_next_ms_ = 0;
+    std::uint32_t radio_rx_log_suppressed_ = 0;
+    std::uint32_t radio_fault_events_ = 0;
+    std::uint32_t radio_reinit_ok_ = 0;
+    std::uint32_t radio_health_lost_ = 0;
+    // Last valid GPS position put into telemetry (stale-fix fallback, audit G3).
+    bool telemetry_fix_have_ = false;
+    double telemetry_fix_lat_ = 0.0;
+    double telemetry_fix_lon_ = 0.0;
+    float telemetry_fix_alt_ = 0.0F;
     bool slots_active_ = false;
     std::uint32_t radio_slot_waits_ = 0;     // telemetry deferred to the next downlink window
     std::uint32_t radio_holdoff_skips_ = 0;  // telemetry deferred by the uplink hold-off
@@ -542,6 +580,11 @@ private:
     // Core-1 time per report interval: FIFO read and per-sample processing.
     std::uint64_t imu_fetch_us_ = 0;
     std::uint64_t imu_process_us_ = 0;
+    // Core-1 profile (diagnostic, reported with the imu fifo line): time per
+    // part of the sensor pass. See kProfileNames in sensors.cpp.
+    static constexpr std::size_t kProfileSections = 10;
+    std::uint64_t profile_us_[kProfileSections]{};
+    std::uint32_t profile_passes_ = 0;
     // Sample clock. The sensor ODR differs from nominal by
     // 0.13% x INTERNAL_FREQ_FINE (this part: about -2.5%), so samples are
     // spaced at the measured period and the clock is steered slowly toward
@@ -580,6 +623,18 @@ private:
     std::uint64_t position_report_us_ = 0;
     std::uint32_t position_last_gps_sequence_ = 0;
     std::uint8_t position_gps_satellites_ = 0;
+    // Raw barometer altitude rate for the state machine's "airborne at boot"
+    // rule (independent of the filter and its pad hold).
+    position::BaroRate baro_rate_{};
+    // Reset in flight: pad references from the RTC record, applied once.
+    bool position_resume_applied_ = false;
+    std::uint64_t position_persist_us_ = 0;
+    std::uint32_t position_reported_rejected_inputs_ = 0;
+    std::uint32_t position_reported_divergence_ = 0;
+    std::uint32_t position_reported_gaps_ = 0;
+    std::uint32_t position_reported_attitude_nonfinite_ = 0;
+    void apply_resume_references();
+    void persist_position_references(std::uint64_t now_us);
     bool position_gps_accepted_ = false;
     bool position_baro_pending_ = false;
     std::uint64_t state_log_last_us_ = 0;

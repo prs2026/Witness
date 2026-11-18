@@ -13,6 +13,7 @@
 #include <cstring>
 
 #include "command_bridge.h"
+#include "command_policy.h"
 #include <limits>
 
 #include "comms.h"
@@ -21,7 +22,9 @@
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "flight_state_machine.h"
+#include "flight_state_store.h"
 #include "hardware_pins.h"
+#include "radio_power_store.h"
 #include "spi_data_forwarder.h"
 #include "tx_slot.h"
 #include "witness_status.h"
@@ -197,6 +200,26 @@ esp_err_t Sensors::start()
         return ESP_ERR_NO_MEM;
     }
 
+    // SPI3 is shared by the IMU, the barometer and the RA-01. Each chip select
+    // is only driven once its own device is added to the bus, and the radio is
+    // added last, so GPIO16 floated through the first MS5607 PROM read and the
+    // RA-01 could drive MISO (bench 2026-11-17: the first PROM read failed its
+    // CRC at every boot and passed ~1 s later, after the radio was added). Park
+    // all three high before the first transfer; add_device takes the pins over.
+    {
+        gpio_config_t chip_selects{};
+        chip_selects.pin_bit_mask = (1ULL << HW_PIN_LSM_CS) | (1ULL << HW_PIN_MS56_CS) |
+                                    (1ULL << HW_PIN_RAD_CS);
+        chip_selects.mode = GPIO_MODE_OUTPUT;
+        chip_selects.pull_up_en = GPIO_PULLUP_DISABLE;
+        chip_selects.pull_down_en = GPIO_PULLDOWN_DISABLE;
+        chip_selects.intr_type = GPIO_INTR_DISABLE;
+        gpio_set_level(HW_PIN_LSM_CS, 1);
+        gpio_set_level(HW_PIN_MS56_CS, 1);
+        gpio_set_level(HW_PIN_RAD_CS, 1);
+        (void)gpio_config(&chip_selects);
+    }
+
     esp_err_t result = initialize_spi();
     if (result != ESP_OK) {
         release_resources();
@@ -217,19 +240,31 @@ esp_err_t Sensors::start()
         }
     }
 
-    fifo_tx_ = static_cast<std::uint8_t *>(heap_caps_calloc(
-        1, kMaximumSpiTransfer, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL));
-    fifo_rx_ = static_cast<std::uint8_t *>(heap_caps_calloc(
-        1, kMaximumSpiTransfer, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL));
-    if (fifo_tx_ == nullptr || fifo_rx_ == nullptr) {
-        release_resources();
-        return ESP_ERR_NO_MEM;
+    // An IMU that cannot be initialised now (power-up sag, SPI glitch, FIFO
+    // buffer allocation) must NOT abort the boot: the radio, GPS capture,
+    // logging and the flight state machine still have to come up, and a boot
+    // loop in flight loses everything. Try a few times, then start the task
+    // anyway; the task keeps retrying (fetch_imu_supervised) until the IMU
+    // answers.
+    result = ESP_ERR_NO_MEM;
+    for (int attempt = 0; attempt < 3 && result != ESP_OK; ++attempt) {
+        if (!ensure_fifo_buffers()) {
+            result = ESP_ERR_NO_MEM;
+            break;
+        }
+        result = initialize_lsm6dsv320x(attempt > 0);
     }
-
-    result = initialize_lsm6dsv320x();
-    if (result != ESP_OK) {
-        release_resources();
-        return result;
+    if (result == ESP_OK) {
+        imu_ready_ = true;
+        imu_ever_ready_ = true;
+        imu_monitor_.arm(static_cast<std::uint32_t>(esp_timer_get_time() / 1000));
+    } else {
+        imu_ready_ = false;
+        imu_monitor_.down(static_cast<std::uint32_t>(esp_timer_get_time() / 1000));
+        ESP_LOGE(kLogTag,
+                 "IMU initialization failed (%s); continuing without IMU, the "
+                 "sensor task retries every 0.5 s",
+                 esp_err_to_name(result));
     }
 
     result = ms5607_.initialize(kSpiHost);
@@ -245,11 +280,26 @@ esp_err_t Sensors::start()
     }
 
     if constexpr (HW_RADIO_ENABLED != 0) {
+        // Drive level: the value last commanded (0x5250, stored in NVS by the
+        // command handler) if valid, else the compiled bench-safe default. The
+        // front-end on/off state is never restored: it always boots ON.
+        std::int8_t stored_dbm = 0;
+        if (radio_power_store::load(stored_dbm) && radio_.set_tx_power_dbm(stored_dbm)) {
+            ESP_LOGI(kLogTag, "radio TX power %d dBm (restored from NVS)", stored_dbm);
+        } else {
+            ESP_LOGI(kLogTag, "radio TX power %d dBm (compiled default, nothing stored)",
+                     radio_.tx_power_dbm());
+        }
         result = radio_.initialize(kSpiHost);
         radio_ready_ = result == ESP_OK;
+        // From here the driver runs under the sensor-task rules: short BUSY
+        // waits and a fault latch instead of 500 ms stalls (audit W8).
+        radio_.set_realtime(true);
         if (!radio_ready_) {
             radio_.release();
-            ESP_LOGW(kLogTag, "RA-01 unavailable (%s); radio disabled until reboot",
+            // Retried from the sensor task (service_radio), audit W9/F3.
+            radio_next_retry_ms_ = monotonic_ms() + 5000U;
+            ESP_LOGW(kLogTag, "RA-01 unavailable (%s); will retry every 5 s",
                      esp_err_to_name(result));
         }
     } else {
@@ -259,16 +309,28 @@ esp_err_t Sensors::start()
 
     result = initialize_battery_adc();
     if (result != ESP_OK) {
-        release_resources();
-        return result;
+        // Battery monitoring is informational: never fatal. (A missing ADC
+        // eFuse calibration is already handled inside, with raw conversion.)
+        ESP_LOGW(kLogTag, "battery ADC unavailable (%s); battery voltage not reported",
+                 esp_err_to_name(result));
     }
 
-    deferred_log_queue_ = xQueueCreate(4, sizeof(DeferredLog));
-    if (deferred_log_queue_ == nullptr ||
-        xTaskCreatePinnedToCore(deferred_log_task_entry, "sensor_log", 3072, this, 1,
-                                nullptr, task_cores::kSystem) != pdPASS) {
-        release_resources();
-        return ESP_ERR_NO_MEM;
+    // The deferred log printer is a convenience: without it (queue or task
+    // cannot be created) defer_log() drops its lines and the flight goes on.
+    if (deferred_log_queue_ == nullptr) {
+        deferred_log_queue_ = xQueueCreate(4, sizeof(DeferredLog));
+    }
+    if (deferred_log_queue_ != nullptr && !deferred_log_task_started_) {
+        if (xTaskCreatePinnedToCore(deferred_log_task_entry, "sensor_log", 3072, this, 1,
+                                    nullptr, task_cores::kSystem) == pdPASS) {
+            deferred_log_task_started_ = true;
+        } else {
+            vQueueDelete(deferred_log_queue_);
+            deferred_log_queue_ = nullptr;
+        }
+    }
+    if (!deferred_log_task_started_) {
+        ESP_LOGW(kLogTag, "sensor_log task unavailable; status lines are dropped");
     }
 
     if (xTaskCreatePinnedToCore(
@@ -495,6 +557,7 @@ bool Sensors::service_hitl(const std::uint32_t now_ms, bool &new_sample)
         filtered_accel_.reset();
         hitl_filtered_accel_.reset();
         position_filter_.reset();
+        baro_rate_.reset();
         heading_aligner_.reset();
         position_last_predict_us_ = 0;
         position_baro_pending_ = false;
@@ -696,6 +759,7 @@ esp_err_t Sensors::initialize_battery_adc()
     unit_config.unit_id = kBatteryAdcUnit;
     result = adc_oneshot_new_unit(&unit_config, &battery_adc_handle_);
     if (result != ESP_OK) {
+        battery_adc_handle_ = nullptr;
         return result;
     }
 
@@ -705,6 +769,8 @@ esp_err_t Sensors::initialize_battery_adc()
     result = adc_oneshot_config_channel(
         battery_adc_handle_, kBatteryAdcChannel, &channel_config);
     if (result != ESP_OK) {
+        adc_oneshot_del_unit(battery_adc_handle_);
+        battery_adc_handle_ = nullptr;
         return result;
     }
 
@@ -717,36 +783,56 @@ esp_err_t Sensors::initialize_battery_adc()
     result = adc_cali_create_scheme_curve_fitting(
         &calibration_config, &battery_adc_calibration_);
     if (result != ESP_OK) {
-        ESP_LOGE(kLogTag, "battery ADC calibration failed: %s",
+        // Chips without ADC eFuse calibration data: keep the ADC and convert
+        // with the nominal full scale (read_battery_voltage); the value is
+        // approximate (+-10 %) but the monitor still works.
+        battery_adc_calibration_ = nullptr;
+        ESP_LOGW(kLogTag,
+                 "battery ADC calibration unavailable (%s); using uncalibrated "
+                 "conversion (approximate battery voltage)",
                  esp_err_to_name(result));
-        return result;
     }
 #else
-    return ESP_ERR_NOT_SUPPORTED;
+    ESP_LOGW(kLogTag, "battery ADC calibration not supported; using uncalibrated conversion");
 #endif
 
     return ESP_OK;
 }
 
-esp_err_t Sensors::initialize_lsm6dsv320x()
+esp_err_t Sensors::initialize_lsm6dsv320x(const bool recovery)
 {
-    vTaskDelay(pdMS_TO_TICKS(kBootDelayMs));
+    if (!recovery) {
+        vTaskDelay(pdMS_TO_TICKS(kBootDelayMs));
+    }
 
     std::uint8_t who_am_i = 0;
     esp_err_t result = read_registers(kRegWhoAmI, &who_am_i, 1);
-    if (result != ESP_OK) {
-        return result;
+    if (!recovery) {
+        if (result != ESP_OK) {
+            return result;
+        }
+        if (who_am_i != kExpectedWhoAmI) {
+            ESP_LOGE(kLogTag, "unexpected WHO_AM_I: 0x%02X", who_am_i);
+            return ESP_ERR_NOT_FOUND;
+        }
     }
-    if (who_am_i != kExpectedWhoAmI) {
-        ESP_LOGE(kLogTag, "unexpected WHO_AM_I: 0x%02X", who_am_i);
-        return ESP_ERR_NOT_FOUND;
-    }
+    // Recovery: a chip in an unknown state is reset first and only then
+    // checked, so a wrong WHO_AM_I does not prevent the reset.
 
     result = write_register(kRegFuncCfgAccess, kSoftwarePowerOnReset);
     if (result != ESP_OK) {
         return result;
     }
     vTaskDelay(pdMS_TO_TICKS(kResetDelayMs));
+    if (recovery) {
+        result = read_registers(kRegWhoAmI, &who_am_i, 1);
+        if (result != ESP_OK) {
+            return result;
+        }
+        if (who_am_i != kExpectedWhoAmI) {
+            return ESP_ERR_NOT_FOUND;
+        }
+    }
 
     result = write_register(kRegCtrl3, kCtrl3Configuration);
     if (result != ESP_OK) {
@@ -996,6 +1082,9 @@ void Sensors::apply_imu_sample(const ImuSample &sample, const bool feed_capture,
 esp_err_t Sensors::fetch_lsm6dsv320x()
 {
     imu_batch_count_ = 0;
+    // A read error after some FIFO words were already drained must not throw
+    // those samples away: keep them and report the error at the end.
+    esp_err_t read_error = ESP_OK;
 
     std::uint8_t fifo_status[2]{};
     esp_err_t result = read_registers(kRegFifoStatus1, fifo_status, 2);
@@ -1025,7 +1114,8 @@ esp_err_t Sensors::fetch_lsm6dsv320x()
             words < kFifoWordsPerBurst ? words : kFifoWordsPerBurst;
         result = read_fifo_words(burst);
         if (result != ESP_OK) {
-            return result;
+            read_error = result;
+            break;
         }
         for (std::size_t i = 0; i < burst; ++i) {
             push_fifo_word(&fifo_rx_[1 + i * kFifoWordSize]);
@@ -1084,14 +1174,156 @@ esp_err_t Sensors::fetch_lsm6dsv320x()
         std::uint8_t temperature[2]{};
         result = read_registers(kRegOutputStart, temperature, 2);
         if (result != ESP_OK) {
-            return result;
+            if (read_error == ESP_OK) read_error = result;
+        } else {
+            working_sample_.temperature_raw = decode_i16(temperature);
+            working_sample_.temperature_celsius =
+                static_cast<float>(working_sample_.temperature_raw) / 256.0F + 25.0F;
+            working_sample_.temperature_ready = true;
         }
-        working_sample_.temperature_raw = decode_i16(temperature);
-        working_sample_.temperature_celsius =
-            static_cast<float>(working_sample_.temperature_raw) / 256.0F + 25.0F;
-        working_sample_.temperature_ready = true;
     }
-    return ESP_OK;
+    return read_error;
+}
+
+bool Sensors::ensure_fifo_buffers()
+{
+    if (fifo_tx_ == nullptr) {
+        fifo_tx_ = static_cast<std::uint8_t *>(heap_caps_calloc(
+            1, kMaximumSpiTransfer, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL));
+    }
+    if (fifo_rx_ == nullptr) {
+        fifo_rx_ = static_cast<std::uint8_t *>(heap_caps_calloc(
+            1, kMaximumSpiTransfer, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL));
+    }
+    return fifo_tx_ != nullptr && fifo_rx_ != nullptr;
+}
+
+void Sensors::mark_imu_down(const imu_supervisor::Fault fault, const std::uint32_t now_ms)
+{
+    // Stale data must never look valid: clear the sticky has_* flags that the
+    // flight state machine observation uses, drop the ready bits and any
+    // half-built FIFO slot.
+    imu_ready_ = false;
+    ++imu_fault_events_;
+    has_gyro_sample_ = false;
+    has_low_g_accel_sample_ = false;
+    has_high_g_accel_sample_ = false;
+    working_sample_.gyro_ready = false;
+    working_sample_.low_g_accel_ready = false;
+    working_sample_.high_g_accel_ready = false;
+    working_sample_.temperature_ready = false;
+    fifo_slot_open_ = false;
+    imu_batch_count_ = 0;
+    imu_clock_valid_ = false;
+    imu_monitor_.down(now_ms);
+    ESP_LOGE(kLogTag,
+             "IMU FAULT #%u (%s): data marked invalid, re-initialising (reinit ok %u, failed %u)",
+             static_cast<unsigned>(imu_fault_events_), imu_supervisor::fault_name(fault),
+             static_cast<unsigned>(imu_reinit_ok_), static_cast<unsigned>(imu_reinit_failed_));
+}
+
+// fetch_lsm6dsv320x() plus liveness supervision (imu_supervisor.h for the
+// thresholds). While the IMU is down it returns ESP_ERR_INVALID_STATE with no
+// samples and tries to re-initialise every 0.5 s; one attempt costs about
+// 30-40 ms (soft-reset delay), during which the IMU is not delivering anyway.
+esp_err_t Sensors::fetch_imu_supervised()
+{
+    const std::uint32_t now_ms = static_cast<std::uint32_t>(esp_timer_get_time() / 1000);
+    if (!imu_ready_) {
+        imu_batch_count_ = 0;
+        working_sample_.gyro_ready = false;
+        working_sample_.low_g_accel_ready = false;
+        working_sample_.high_g_accel_ready = false;
+        working_sample_.temperature_ready = false;
+        if (imu_monitor_.retry_due(now_ms)) {
+            const esp_err_t result =
+                ensure_fifo_buffers() ? initialize_lsm6dsv320x(true) : ESP_ERR_NO_MEM;
+            if (result == ESP_OK) {
+                imu_ready_ = true;
+                ++imu_reinit_ok_;
+                imu_consecutive_failures_ = 0;
+                has_gyro_sample_ = false;
+                has_low_g_accel_sample_ = false;
+                has_high_g_accel_sample_ = false;
+                fifo_slot_open_ = false;
+                temperature_counter_ = 0;
+                imu_clock_valid_ = false;
+                imu_monitor_.arm(static_cast<std::uint32_t>(esp_timer_get_time() / 1000));
+                if (!imu_ever_ready_) {
+                    // First successful init happened here (boot init failed):
+                    // set up what run() configured with the default period.
+                    imu_ever_ready_ = true;
+                    filtered_accel_.configure(kFilteredAccelCutoffHz,
+                                              static_cast<float>(1e6 / imu_period_us_));
+                }
+                ESP_LOGW(kLogTag, "IMU (re)initialised (reinit ok %u, failed %u, faults %u)",
+                         static_cast<unsigned>(imu_reinit_ok_),
+                         static_cast<unsigned>(imu_reinit_failed_),
+                         static_cast<unsigned>(imu_fault_events_));
+            } else {
+                ++imu_reinit_failed_;
+                if (++imu_consecutive_failures_ == 1 || (imu_consecutive_failures_ % 20U) == 0) {
+                    ESP_LOGE(kLogTag, "IMU re-initialisation failed (%s), attempt %u",
+                             esp_err_to_name(result),
+                             static_cast<unsigned>(imu_consecutive_failures_));
+                }
+            }
+        }
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    const esp_err_t result = fetch_lsm6dsv320x();
+
+    // Constant-data scan: a slot is constant when every channel present in it
+    // reads 0x0000 (or every one 0xFFFF) and it has a low-g part (gravity is
+    // never exactly zero on all axes).
+    std::size_t constant_tail = 0;
+    bool varying = false;
+    for (std::size_t i = 0; i < imu_batch_count_; ++i) {
+        const ImuSample &s = imu_batch_[i];
+        bool all_zero = s.has_low_g;
+        bool all_ones = s.has_low_g;
+        for (std::size_t axis = 0; axis < 3; ++axis) {
+            if (s.has_gyro) {
+                all_zero = all_zero && s.gyro[axis] == 0;
+                all_ones = all_ones && s.gyro[axis] == -1;
+            }
+            if (s.has_low_g) {
+                all_zero = all_zero && s.low_g[axis] == 0;
+                all_ones = all_ones && s.low_g[axis] == -1;
+            }
+            if (s.has_high_g) {
+                all_zero = all_zero && s.high_g[axis] == 0;
+                all_ones = all_ones && s.high_g[axis] == -1;
+            }
+        }
+        if (all_zero || all_ones) {
+            ++constant_tail;
+        } else {
+            constant_tail = 0;
+            varying = true;
+        }
+    }
+    imu_supervisor::Fault fault = imu_monitor_.on_pass(
+        now_ms, result == ESP_OK, imu_batch_count_, constant_tail, varying);
+
+    if (fault == imu_supervisor::Fault::None && imu_monitor_.who_am_i_due(now_ms)) {
+        // Cheap identity check once a second; a bad answer must repeat.
+        std::uint8_t who_am_i = 0;
+        for (int attempt = 0; attempt < 2; ++attempt) {
+            const esp_err_t who_result = read_registers(kRegWhoAmI, &who_am_i, 1);
+            if (who_result == ESP_OK && who_am_i == kExpectedWhoAmI) {
+                break;
+            }
+            if (attempt == 1) fault = imu_supervisor::Fault::WhoAmI;
+        }
+    }
+
+    if (fault != imu_supervisor::Fault::None) {
+        mark_imu_down(fault, now_ms);
+        return ESP_ERR_INVALID_STATE;
+    }
+    return result;
 }
 
 esp_err_t Sensors::queue_sensor_packet()
@@ -1146,10 +1378,32 @@ void Sensors::log_state_packet()
     (void)imu_log_sink_->log_packet(FlashLogger::kPacketSourceState, frame, sizeof(frame));
 }
 
+// Audit G3: when the fix is not valid (lost, or the GGA is older than 3 s)
+// the telemetry keeps the last good lat/lon/alt instead of 0,0,0. The ground
+// tells the two apart by the GPS_LOCKED status bit in the same packet: bit
+// clear with a non-zero position = last known position, now stale. The
+// satellite count stays the live one (0 when the GGA itself is stale). The
+// age of the held position is not carried (no spare field).
+NmeaGps::Fix Sensors::telemetry_gps_fix()
+{
+    NmeaGps::Fix fix = current_gps_fix();
+    if (fix.valid) {
+        telemetry_fix_have_ = true;
+        telemetry_fix_lat_ = fix.latitude_degrees;
+        telemetry_fix_lon_ = fix.longitude_degrees;
+        telemetry_fix_alt_ = fix.altitude_meters;
+    } else if (telemetry_fix_have_) {
+        fix.latitude_degrees = telemetry_fix_lat_;
+        fix.longitude_degrees = telemetry_fix_lon_;
+        fix.altitude_meters = telemetry_fix_alt_;
+    }
+    return fix;
+}
+
 void Sensors::build_state_payload(std::uint8_t *payload)
 {
     std::memset(payload, 0, IRIS_PACKET_STATE_DATA_LENGTH);
-    const auto gps = current_gps_fix();
+    const auto gps = telemetry_gps_fix();
     write_i24_be(&payload[IRIS_PACKET_STATE_LATITUDE_OFFSET],
         static_cast<std::int32_t>(std::lround(gps.latitude_degrees * IRIS_FIELD_GPS_COORDINATE_SCALE)));
     write_i24_be(&payload[IRIS_PACKET_STATE_LONGITUDE_OFFSET],
@@ -1272,7 +1526,7 @@ esp_err_t Sensors::queue_debug_packet()
         &payload[IRIS_PACKET_WITNESS_DEBUG_KALMAN_ALTITUDE_OFFSET],
         position_filter_.up().p);
 
-    const auto gps = current_gps_fix();
+    const auto gps = telemetry_gps_fix();
     write_i24_be(&payload[IRIS_PACKET_WITNESS_DEBUG_LATITUDE_OFFSET],
         static_cast<std::int32_t>(std::lround(gps.latitude_degrees * IRIS_FIELD_GPS_COORDINATE_SCALE)));
     write_i24_be(&payload[IRIS_PACKET_WITNESS_DEBUG_LONGITUDE_OFFSET],
@@ -1316,8 +1570,7 @@ std::uint16_t Sensors::encode_battery_voltage(const std::uint32_t millivolts)
 
 esp_err_t Sensors::read_battery_voltage()
 {
-    if (battery_adc_handle_ == nullptr ||
-        battery_adc_calibration_ == nullptr) {
+    if (battery_adc_handle_ == nullptr) {
         return ESP_ERR_INVALID_STATE;
     }
 
@@ -1335,10 +1588,17 @@ esp_err_t Sensors::read_battery_voltage()
     const int average_raw =
         static_cast<int>(raw_sum / kBatteryAdcSamples);
     int sense_voltage_mv = 0;
-    const esp_err_t result = adc_cali_raw_to_voltage(
-        battery_adc_calibration_, average_raw, &sense_voltage_mv);
-    if (result != ESP_OK) {
-        return result;
+    if (battery_adc_calibration_ != nullptr) {
+        const esp_err_t result = adc_cali_raw_to_voltage(
+            battery_adc_calibration_, average_raw, &sense_voltage_mv);
+        if (result != ESP_OK) {
+            return result;
+        }
+    } else {
+        // No eFuse calibration: nominal 12 dB full scale (~3100 mV at 4095).
+        constexpr int kUncalibratedFullScaleMv = 3100;
+        constexpr int kMaxRaw = 4095;
+        sense_voltage_mv = (average_raw * kUncalibratedFullScaleMv) / kMaxRaw;
     }
 
     working_sample_.battery_adc_raw = average_raw;
@@ -1379,31 +1639,40 @@ void Sensors::poll_radio_commands()
     if (receive_result == ESP_ERR_NOT_FOUND) {
         return;
     }
+    // Logging from the sensor task is rate limited (audit F13): one line per
+    // 2 s at most, with a count of the lines held back.
+    const std::uint64_t rx_now_ms = monotonic_ms();
+    const bool rx_log_ok = rx_now_ms >= radio_rx_log_next_ms_;
+    if (rx_log_ok) radio_rx_log_next_ms_ = rx_now_ms + 2000U;
+    else if (receive_result != ESP_OK) ++radio_rx_log_suppressed_;
     if (receive_result == ESP_ERR_INVALID_CRC) {
-        ESP_LOGW(kLogTag, "radio packet rejected: CRC error");
+        if (rx_log_ok) ESP_LOGW(kLogTag, "radio packet rejected: CRC error");
         return;
     }
     if (receive_result != ESP_OK) {
-        ESP_LOGW(
-            kLogTag,
-            "radio receive failed: %s",
-            esp_err_to_name(receive_result));
+        if (rx_log_ok) {
+            ESP_LOGW(
+                kLogTag,
+                "radio receive failed: %s",
+                esp_err_to_name(receive_result));
+        }
         return;
     }
     if (packet_length == 0U) {
         return;
     }
 
-    ESP_LOGI(
-        kLogTag,
-        "radio RX: %u bytes, packet ID 0x%02X",
-        static_cast<unsigned>(packet_length),
-        packet[0]);
-    ESP_LOG_BUFFER_HEX_LEVEL(
-        kLogTag,
-        packet.data(),
-        packet_length,
-        ESP_LOG_INFO);
+    if (rx_log_ok) {
+        // One summary line only; the full hex dump of every frame is gone.
+        ESP_LOGI(
+            kLogTag,
+            "radio RX: %u bytes, packet ID 0x%02X (%lu log lines held back)",
+            static_cast<unsigned>(packet_length),
+            packet[0], static_cast<unsigned long>(radio_rx_log_suppressed_));
+        radio_rx_log_suppressed_ = 0;
+    } else {
+        ++radio_rx_log_suppressed_;
+    }
 
     // Mirror complete received packets to USB serial without adding framing.
     const esp_err_t serial_result = data_forwarder_.queue_raw_bytes(
@@ -1417,13 +1686,18 @@ void Sensors::poll_radio_commands()
     }
 
     if (packet[0] == IRIS_PACKET_ID_COMMAND) {
-        // Uplink hold-off (tx_slot.h): keep telemetry quiet for a while so
-        // the next frames of a command stream are heard.
-        uplink_heard_ = true;
-        last_uplink_ms_ = monotonic_ms();
         const esp_err_t command_result =
             command_bridge_.submit_radio_command(
                 packet.data(), packet_length);
+        // Uplink hold-off (tx_slot.h): keep telemetry quiet so the next frames
+        // of a command stream are heard, but only for a frame that passed the
+        // bridge's validation (ESP_ERR_INVALID_ARG = not a command), never in
+        // Boost, and capped (UplinkHoldOff forces a telemetry cycle).
+        if (command_result != ESP_ERR_INVALID_ARG) {
+            uplink_holdoff_.note_command(
+                monotonic_ms(),
+                flight_state_machine_.state() != FlightStateMachine::State::Boost);
+        }
         if (command_result != ESP_OK) {
             ESP_LOGW(
                 kLogTag,
@@ -1481,7 +1755,7 @@ void Sensors::service_radio_transmit(const TickType_t now)
         const bool utc_known = utc_clock_.valid() && have_utc_fix_ &&
                                now_ms - last_utc_local_ms_ < tx_slot::kTimeMaxAgeMs;
         const tx_slot::Decision decision = tx_slot::witness_telemetry(
-            now_ms, uplink_heard_, last_uplink_ms_, utc_known,
+            now_ms, uplink_holdoff_.active(now_ms), now_ms, utc_known,
             utc_known ? utc_clock_.utc_ms_at(now_ms) : 0.0,
             tx_slot::lora_airtime_ms(packet.length, IRIS_RADIO_SPREADING_FACTOR,
                                      IRIS_RADIO_BANDWIDTH_HZ, IRIS_RADIO_CODING_RATE,
@@ -1499,6 +1773,7 @@ void Sensors::service_radio_transmit(const TickType_t now)
         }
 
         radio_last_sent_[index] = now;
+        uplink_holdoff_.note_telemetry_sent(static_cast<unsigned>(index));
         next_radio_packet_index_ =
             (index + 1U) % kRadioPacketTypeCount;
         const esp_err_t result =
@@ -1526,6 +1801,76 @@ bool Sensors::service_radio_transmit_completion()
                  esp_err_to_name(error));
     }
     return radio_.transmit_in_progress();
+}
+
+// Radio fault handling and recovery, one bounded step per sensor pass.
+// Worst-case time in this function per pass: one radio SPI command (about
+// 0.3 ms for the largest frame) plus, only when BUSY is hung, one 2 ms BUSY
+// wait at the moment the fault latches. Afterwards a faulted radio costs
+// nothing and re-init is spread over passes (no BUSY waits, no delays).
+void Sensors::radio_enter_fault(const std::uint64_t now_ms)
+{
+    radio_ready_ = false;
+    data_forwarder_.set_radio_available(false);
+    ++radio_fault_events_;
+    radio_next_retry_ms_ = now_ms + 2000U;   // first retry soon, later ones every 5 s
+    ESP_LOGE(kLogTag, "radio fault #%lu (%s): telemetry paused, re-initialising",
+             static_cast<unsigned long>(radio_fault_events_),
+             esp_err_to_name(radio_.last_fault()));
+}
+
+void Sensors::service_radio(const TickType_t now)
+{
+    if constexpr (HW_RADIO_ENABLED == 0) {
+        (void)now;
+        return;
+    } else {
+        const std::uint64_t now_ms = monotonic_ms();
+        if (radio_ready_) {
+            if (radio_.faulted()) {
+                radio_enter_fault(now_ms);
+                return;
+            }
+            if (!service_radio_transmit_completion()) {
+                poll_radio_commands();
+                service_radio_transmit(now);
+            }
+            if (now_ms >= radio_next_health_ms_ && !radio_.transmit_in_progress() &&
+                !radio_.faulted()) {
+                radio_next_health_ms_ = now_ms + 2000U;
+                if (radio_.health_check() == Ra01::Health::Lost) {
+                    ++radio_health_lost_;
+                    ESP_LOGE(kLogTag, "radio lost its configuration (reset?); re-initialising");
+                }
+            }
+            if (radio_.faulted()) radio_enter_fault(now_ms);
+            return;
+        }
+
+        if (!radio_.reinit_active()) {
+            if (now_ms < radio_next_retry_ms_) return;
+            radio_.begin_reinit();
+            return;
+        }
+        esp_err_t error = ESP_OK;
+        switch (radio_.service_reinit(&error)) {
+        case Ra01::ReinitStatus::Done:
+            radio_ready_ = true;
+            radio_next_health_ms_ = now_ms + 2000U;
+            ++radio_reinit_ok_;
+            data_forwarder_.set_radio_available(radio_transmission_enabled_.load());
+            ESP_LOGI(kLogTag, "radio re-initialised (TX %d dBm, front end %s)",
+                     radio_.tx_power_dbm(), radio_.front_end_enabled() ? "on" : "off");
+            break;
+        case Ra01::ReinitStatus::Failed:
+            radio_next_retry_ms_ = now_ms + 5000U;
+            ESP_LOGW(kLogTag, "radio re-init failed (%s); retry in 5 s",
+                     esp_err_to_name(error));
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 esp_err_t Sensors::request_calibration(const std::uint8_t argument)
@@ -1587,22 +1932,116 @@ void Sensors::output_counts(std::int16_t gyro[3], std::int16_t low_g[3],
     }
 }
 
-void Sensors::predict_position(const std::uint64_t timestamp_us)
+void Sensors::apply_resume_references()
 {
-    if (attitude_.lost()) {
-        // Gyro saturated in flight: no world frame for the accelerometer, so
-        // the filter predicts without the IMU and baro/GPS carry it.
-        const std::uint64_t previous = position_last_predict_us_;
-        position_last_predict_us_ = timestamp_us;
-        if (previous != 0 && timestamp_us > previous) {
-            position_filter_.predict_without_imu(
-                static_cast<float>(timestamp_us - previous) * 1e-6F,
-                static_cast<position::Phase>(flight_state_machine_.state()));
+    if (position_resume_applied_) return;
+    position_resume_applied_ = true;
+    // Only a boot that resumed an in-flight state has references (the store
+    // clears them on every other boot). The attitude is NOT resumed: it can
+    // only initialise on a still pad, so the filter runs from the barometer
+    // and GPS without the IMU (predict_magnitude_only) for the rest of the
+    // flight, starting from the last persisted AGL and vertical velocity.
+    flight_state_store::PadData d;
+    if (!flight_state_store::resume_references(d)) {
+        if (flight_state_machine_.state() != FlightStateMachine::State::PadIdle) {
+            ESP_LOGW(kLogTag, "resumed in flight without stored pad references: AGL restarts at 0 here");
         }
         return;
     }
-    if (!attitude_.valid()) {
-        position_last_predict_us_ = 0;  // no world frame yet
+    position::PadReferences refs;
+    refs.baro_valid = d.baro_valid;
+    refs.baro_reference_m = d.baro_reference_m;
+    refs.gps_valid = d.gps_valid;
+    refs.gps_origin_lat_deg = d.gps_origin_lat_deg;
+    refs.gps_origin_lon_deg = d.gps_origin_lon_deg;
+    refs.gps_origin_alt_m = d.gps_origin_alt_m;
+    refs.gravity_valid = d.gravity_valid;
+    refs.gravity_mps2 = d.gravity_mps2;
+    refs.motion_valid = d.motion_valid;
+    refs.agl_m = d.agl_m;
+    refs.vertical_velocity_mps = d.vertical_velocity_mps;
+    position_filter_.restore_after_reset(refs);
+    ESP_LOGW(kLogTag,
+             "position filter restored after a reset in flight: AGL %.1f m, vz %.1f m/s, baro ref %s, "
+             "GPS origin %s, gravity %s (no attitude: baro/GPS only)",
+             static_cast<double>(d.agl_m), static_cast<double>(d.vertical_velocity_mps),
+             d.baro_valid ? "yes" : "no", d.gps_valid ? "yes" : "no", d.gravity_valid ? "yes" : "no");
+}
+
+void Sensors::persist_position_references(const std::uint64_t now_us)
+{
+    // 2 Hz, RTC RAM only (flight_state_store): what a reset in flight needs to
+    // keep AGL continuous.
+    constexpr std::uint64_t kPersistPeriodUs = 500'000ULL;
+    if (!position_filter_.initialized() || now_us - position_persist_us_ < kPersistPeriodUs) return;
+    position_persist_us_ = now_us;
+    position::PadReferences refs;
+    position_filter_.export_pad_references(refs);
+    flight_state_store::PadData d;
+    d.baro_valid = refs.baro_valid;
+    d.baro_reference_m = refs.baro_reference_m;
+    d.gps_valid = refs.gps_valid;
+    d.gps_origin_lat_deg = refs.gps_origin_lat_deg;
+    d.gps_origin_lon_deg = refs.gps_origin_lon_deg;
+    d.gps_origin_alt_m = refs.gps_origin_alt_m;
+    d.gravity_valid = refs.gravity_valid;
+    d.gravity_mps2 = refs.gravity_mps2;
+    d.motion_valid = refs.motion_valid;
+    d.agl_m = refs.agl_m;
+    d.vertical_velocity_mps = refs.vertical_velocity_mps;
+    flight_state_store::save_references(d);
+    // Count and log anything the filter or the attitude had to repair.
+    const std::uint32_t rejected = position_filter_.rejected_inputs();
+    const std::uint32_t divergence = position_filter_.divergence_resets();
+    const std::uint32_t gaps = position_filter_.predict_gaps();
+    const std::uint32_t nonfinite = attitude_.nonfinite_events();
+    if (rejected != position_reported_rejected_inputs_ || divergence != position_reported_divergence_ ||
+        gaps != position_reported_gaps_ || nonfinite != position_reported_attitude_nonfinite_) {
+        defer_log("position filter repairs: non-finite inputs rejected %lu (+%lu), divergence resets %lu (+%lu), "
+                  "predict gaps bridged %lu (+%lu), attitude non-finite events %lu (+%lu)",
+                  static_cast<unsigned long>(rejected),
+                  static_cast<unsigned long>(rejected - position_reported_rejected_inputs_),
+                  static_cast<unsigned long>(divergence),
+                  static_cast<unsigned long>(divergence - position_reported_divergence_),
+                  static_cast<unsigned long>(gaps),
+                  static_cast<unsigned long>(gaps - position_reported_gaps_),
+                  static_cast<unsigned long>(nonfinite),
+                  static_cast<unsigned long>(nonfinite - position_reported_attitude_nonfinite_));
+        position_reported_rejected_inputs_ = rejected;
+        position_reported_divergence_ = divergence;
+        position_reported_gaps_ = gaps;
+        position_reported_attitude_nonfinite_ = nonfinite;
+    }
+}
+
+void Sensors::predict_position(const std::uint64_t timestamp_us)
+{
+    apply_resume_references();   // once; a no-op unless this boot resumed a flight
+    if (attitude_.lost() || !attitude_.valid()) {
+        // No usable attitude (gyro saturated in flight, never initialised
+        // because the board was not still on the pad, reset in flight, or a
+        // diverged quaternion): there is no world frame for the accelerometer,
+        // so the filter predicts without the IMU and baro/GPS carry it.
+        // Launch detection must not depend on the attitude (audit W4), so the
+        // filter starts regardless. |specific force| needs no rotation: the
+        // pad hold and pad gravity still work. When the attitude becomes
+        // valid later, the IMU predict takes over with the state unchanged.
+        const std::uint64_t previous = position_last_predict_us_;
+        position_last_predict_us_ = timestamp_us;
+        if (previous != 0 && timestamp_us > previous) {
+            const float dt_s = static_cast<float>(timestamp_us - previous) * 1e-6F;
+            const auto phase = static_cast<position::Phase>(flight_state_machine_.state());
+            if (attitude_.lost()) {
+                position_filter_.predict_without_imu(dt_s, phase);
+            } else {
+                constexpr float kMgToMps2 = position::kGravity / 1000.0F;
+                const float fx = working_sample_.filtered_accel_mg[0];
+                const float fy = working_sample_.filtered_accel_mg[1];
+                const float fz = working_sample_.filtered_accel_mg[2];
+                position_filter_.predict_magnitude_only(
+                    std::sqrt(fx * fx + fy * fy + fz * fz) * kMgToMps2, dt_s, phase);
+            }
+        }
         return;
     }
     const std::uint64_t previous = position_last_predict_us_;
@@ -1709,7 +2148,11 @@ void Sensors::service_position(const std::uint64_t now_us)
     // receiver's 25 Hz), not on the next update tick, which could skip one.
     if (position_filter_.initialized()) {
         const NmeaGps::Fix fix = current_gps_fix();
-        if (fix.valid && fix.sequence != position_last_gps_sequence_) {
+        // Navigation only uses measured GNSS fixes (GGA quality 1, 2, 4, 5):
+        // dead-reckoned, manual and simulated fixes (6, 7, 8) are not
+        // measurements (NmeaGps::usable_for_navigation). They still count as
+        // a valid fix for display, telemetry and the GPS-locked flag.
+        if (NmeaGps::usable_for_navigation(fix) && fix.sequence != position_last_gps_sequence_) {
             position_last_gps_sequence_ = fix.sequence;
             position_gps_satellites_ = fix.satellites;
             const auto gps_phase = static_cast<position::Phase>(flight_state_machine_.state());
@@ -1746,9 +2189,14 @@ void Sensors::service_position(const std::uint64_t now_us)
         position_last_update_us_ == 0 || now_us - position_last_update_us_ > 4 * kPeriodUs
             ? now_us
             : position_last_update_us_ + kPeriodUs;
-    if (!position_filter_.initialized()) {
-        return;  // no predict yet (attitude not initialized)
+    // Raw barometer rate for the state machine (works without the filter).
+    if (position_baro_pending_ && std::isfinite(working_sample_.barometric_altitude_meters)) {
+        baro_rate_.add(now_us, working_sample_.barometric_altitude_meters);
     }
+    if (!position_filter_.initialized()) {
+        return;  // no predict yet (no IMU sample processed since boot)
+    }
+    persist_position_references(now_us);
     const auto phase = static_cast<position::Phase>(flight_state_machine_.state());
     const std::uint32_t baro_updates_before = position_filter_.baro_updates();
     if (position_baro_pending_) {
@@ -1834,7 +2282,8 @@ void Sensors::report_position(const std::uint64_t now_us)
     defer_log(
              "position: ENU %.1f %.1f %.1f m, velocity %.1f %.1f %.1f m/s, Mach %.2f, "
              "alt MSL %.0f m; baro %lu used/%lu gated/%lu rejected, sigma %.1f m; "
-             "GPS %lu used/%lu rejected, sigma %.1f/%.1f m (HDOP %.1f VDOP %.1f)%s; %s",
+             "GPS %lu used/%lu rejected, sigma %.1f/%.1f m (HDOP %.1f VDOP %.1f)%s; "
+             "g %.4f m/s2 (%s%s, %lu clamped); %s",
              static_cast<double>(p[0]), static_cast<double>(p[1]), static_cast<double>(p[2]),
              static_cast<double>(v[0]), static_cast<double>(v[1]), static_cast<double>(v[2]),
              static_cast<double>(position_filter_.mach()),
@@ -1849,8 +2298,13 @@ void Sensors::report_position(const std::uint64_t now_us)
              static_cast<double>(position_filter_.last_gps_vertical_sigma_m()),
              static_cast<double>(gps_dop.hdop), static_cast<double>(gps_dop.vdop),
              position_filter_.gps_origin_set() ? "" : " (no GPS origin)",
-             !position_filter_.initialized() ? "waiting for attitude"
-             : position_filter_.imu_ignored() ? "IMU ignored (attitude lost)"
+             static_cast<double>(position_filter_.gravity_mps2()),
+             position_filter_.gravity_measured() ? "pad-measured" : "default",
+             position_filter_.gravity_frozen() ? ", frozen" : "",
+             static_cast<unsigned long>(position_filter_.gravity_clamped_count()),
+             !position_filter_.initialized() ? "waiting for the first IMU sample"
+             : position_filter_.imu_ignored() ? (attitude_.lost() ? "IMU ignored (attitude lost)"
+                                                                  : "no attitude (baro/GPS, |f| only)")
              : position_filter_.still()      ? "pad hold"
                                              : "integrating");
 }
@@ -1885,6 +2339,7 @@ void Sensors::process_imu_batch(const bool hitl)
     const bool low_g_ready = working_sample_.low_g_accel_ready;
     const bool high_g_ready = working_sample_.high_g_accel_ready;
     for (std::size_t i = 0; i < imu_batch_count_; ++i) {
+        std::int64_t t0 = esp_timer_get_time();
         apply_imu_sample(imu_batch_[i], !hitl, !hitl);
         // High-g scale/offset against the low-g while both are in range; the
         // log keeps the uncorrected reading.
@@ -1897,11 +2352,18 @@ void Sensors::process_imu_batch(const bool hitl)
         filtered_accel_.step(working_sample_.low_g_accel_mg, high_g_mg,
                              working_sample_.filtered_accel_mg);
         working_sample_.high_g_accel_active = filtered_accel_.high_g_active();
+        std::int64_t t1 = esp_timer_get_time();
+        profile_us_[0] += static_cast<std::uint64_t>(t1 - t0);
         log_imu_sample(imu_batch_[i].timestamp_us, hitl);
+        t0 = esp_timer_get_time();
+        profile_us_[1] += static_cast<std::uint64_t>(t0 - t1);
         if (imu_batch_[i].has_gyro) {
             update_attitude(imu_batch_[i].timestamp_us);
         }
+        t1 = esp_timer_get_time();
+        profile_us_[2] += static_cast<std::uint64_t>(t1 - t0);
         predict_position(imu_batch_[i].timestamp_us);
+        profile_us_[3] += static_cast<std::uint64_t>(esp_timer_get_time() - t1);
     }
     working_sample_.gyro_ready = gyro_ready;
     working_sample_.low_g_accel_ready = low_g_ready;
@@ -2225,6 +2687,19 @@ void Sensors::report_attitude_rate(const std::uint64_t now_us)
              static_cast<double>(filtered_accel_.peak_mg()) / 1000.0,
              100.0 * static_cast<double>(imu_fetch_us_) / static_cast<double>(elapsed_us),
              100.0 * static_cast<double>(imu_process_us_) / static_cast<double>(elapsed_us));
+    {
+        // Diagnostic core-1 profile: percent of wall time per pass section.
+        const double e = static_cast<double>(elapsed_us) / 100.0;
+        defer_log("core-1 profile %%: prep %.1f, imu log %.1f, attitude %.1f, predict %.1f, baro %.1f, "
+                  "state+publish %.1f, position %.1f, packets %.1f, radio %.1f; passes %.1f%% "
+                  "(%lu, %.0f us avg)",
+                  profile_us_[0] / e, profile_us_[1] / e, profile_us_[2] / e, profile_us_[3] / e,
+                  profile_us_[4] / e, profile_us_[5] / e, profile_us_[6] / e, profile_us_[7] / e,
+                  profile_us_[8] / e, profile_us_[9] / e, static_cast<unsigned long>(profile_passes_),
+                  profile_passes_ ? static_cast<double>(profile_us_[9]) / profile_passes_ : 0.0);
+        for (auto &v : profile_us_) v = 0;
+        profile_passes_ = 0;
+    }
     imu_fetch_us_ = 0;
     imu_process_us_ = 0;
     filtered_accel_.reset_peak();
@@ -2251,8 +2726,18 @@ void Sensors::run()
     std::uint32_t battery_sample_counter = 0;
     std::uint32_t consecutive_battery_errors = 0;
     std::uint32_t landed_normal_passes = 0;
+    // Task watchdog (sdkconfig.flight: panic, 8 s): fed once per pass. A pass
+    // is normally 2-8 ms; the longest legitimate ones are a radio command
+    // chain (each BUSY wait <= 500 ms), an IMU re-initialisation (~40 ms) and
+    // a calibration solve (ms). A wedge longer than the timeout reboots the
+    // MCU and the flight state is resumed (flight_state_store, Warm class).
+    task_supervision::subscribe();
 
     for (;;) {
+        task_supervision::feed();
+        // The GPS task re-checks this when it executes a cold start request.
+        gps_uart_.set_cold_start_allowed(command_policy::allow_gps_cold_start(
+            static_cast<std::uint8_t>(flight_state_machine_.state())));
         // IMU sampling and the attitude update come first in each 10 ms pass
         // so their timestamps stay regular; radio work follows and no longer
         // blocks (transmissions are started here and completed on later
@@ -2290,9 +2775,10 @@ void Sensors::run()
         } else {
             imu_timestamp_us = static_cast<std::uint64_t>(esp_timer_get_time());
             const std::int64_t fetch_start_us = esp_timer_get_time();
-            lsm_result = fetch_lsm6dsv320x();
+            lsm_result = fetch_imu_supervised();
             const std::int64_t process_start_us = esp_timer_get_time();
-            if (lsm_result == ESP_OK && imu_batch_count_ > 0) {
+            // Samples drained before a read error are still processed.
+            if (imu_batch_count_ > 0) {
                 process_imu_batch();
             }
             imu_fetch_us_ += static_cast<std::uint64_t>(process_start_us - fetch_start_us);
@@ -2320,6 +2806,7 @@ void Sensors::run()
                 }
             }
 
+            const std::int64_t baro_start_us = esp_timer_get_time();
             if (!ms5607_initialized_ &&
                 (now - last_ms5607_init_attempt) >= kStatePacketPeriod) {
                 last_ms5607_init_attempt = now;
@@ -2364,6 +2851,7 @@ void Sensors::run()
                     working_sample_.ms5607_ready);
             }
 
+            profile_us_[4] += static_cast<std::uint64_t>(esp_timer_get_time() - baro_start_us);
             ++battery_sample_counter;
             if (battery_sample_counter >= kBatterySampleDivider) {
                 battery_sample_counter = 0;
@@ -2391,6 +2879,7 @@ void Sensors::run()
             if (!hitl) note_gps_fix(gps_fix);
         }
 
+        const std::int64_t fsm_start_us = esp_timer_get_time();
         if (lsm_result == ESP_OK || ms5607_updated || battery_updated) {
             working_sample_.timestamp_us =
                 static_cast<std::uint64_t>(esp_timer_get_time());
@@ -2429,10 +2918,13 @@ void Sensors::run()
                 observation.agl_meters = position_filter_.up().p;
             }
             observation.timestamp_us = working_sample_.timestamp_us;
+            observation.baro_rate_valid = baro_rate_.valid(working_sample_.timestamp_us);
+            observation.baro_rate_mps = baro_rate_.rate_mps();
             flight_state_machine_.update(observation);
 
             publish_sample();
         }
+        profile_us_[5] += static_cast<std::uint64_t>(esp_timer_get_time() - fsm_start_us);
 
         // Step the estimator once per fresh gyro sample. A pass that finds no
         // new sample (loop faster than the gyro ODR) must not re-integrate
@@ -2459,7 +2951,10 @@ void Sensors::run()
         if (ms5607_updated && barometer_healthy) {
             position_baro_pending_ = true;
         }
+        const std::int64_t position_start_us = esp_timer_get_time();
         service_position(pass_start_us);
+        const std::int64_t packets_start_us = esp_timer_get_time();
+        profile_us_[6] += static_cast<std::uint64_t>(packets_start_us - position_start_us);
         if (pass_start_us - state_log_last_us_ >= 1'000'000ULL / kStateLogRateHz) {
             // Advance by whole periods so the long-run rate is exact.
             state_log_last_us_ =
@@ -2486,13 +2981,15 @@ void Sensors::run()
             last_debug_packet_time = now;
         }
 
-        if (radio_ready_ && !service_radio_transmit_completion()) {
-            poll_radio_commands();
-            service_radio_transmit(now);
-        }
+        const std::int64_t radio_start_us = esp_timer_get_time();
+        profile_us_[7] += static_cast<std::uint64_t>(radio_start_us - packets_start_us);
+        service_radio(now);
 
         const std::uint64_t pass_end_us =
             static_cast<std::uint64_t>(esp_timer_get_time());
+        profile_us_[8] += pass_end_us - static_cast<std::uint64_t>(radio_start_us);
+        profile_us_[9] += pass_end_us - pass_start_us;
+        ++profile_passes_;
         const std::uint64_t pass_us = pass_end_us - pass_start_us;
         if (pass_us > max_pass_us_) {
             max_pass_us_ = static_cast<std::uint32_t>(pass_us);
@@ -2506,7 +3003,11 @@ void Sensors::run()
         if (landed::kLowPowerModeEnabled && !hitl &&
             flight_state_machine_.state() == FlightStateMachine::State::Landed) {
             if (++landed_normal_passes >= 2U) {
+                // run_landed() has its own pacing and does not feed the task
+                // watchdog: leave it for the duration (disabled by default).
+                task_supervision::unsubscribe();
                 run_landed();
+                task_supervision::subscribe();
                 landed_normal_passes = 0;
                 next_wake_time = xTaskGetTickCount();
                 continue;

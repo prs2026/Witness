@@ -14,6 +14,10 @@ struct SkytraqCommand {
     // A NACK from an optional command is logged and configuration goes on
     // (firmware variants differ in what they accept); a required one fails.
     bool optional = false;
+    // The Verify step reads this setting back, so a missing ACK is not a
+    // missing configuration (audit G7). Required commands without a readback
+    // (the NMEA message set) must be acknowledged for Status::Ready.
+    bool readback = false;
 };
 
 // Each command is acknowledged by 83 <id> (plus the sub-id for the 0x62/0x63/
@@ -21,7 +25,7 @@ struct SkytraqCommand {
 constexpr SkytraqCommand kSkytraqConfigure[] = {
     // 0x64/0x17 navigation mode: airborne.
     {"airborne navigation mode",
-     {0x64, 0x17, GpsReceiver::kSkytraqAirborneMode, 0x00}, 4},
+     {0x64, 0x17, GpsReceiver::kSkytraqAirborneMode, 0x00}, 4, false, true},
     // 0x08 NMEA intervals: GGA GSA GSV GLL RMC VTG ZDA, attributes. Interval
     // 1 is every fix; larger values are seconds (AN0037), so GSA (DOPs for
     // the Kalman filter) comes every kGsaEveryFixes s, one per constellation.
@@ -41,7 +45,7 @@ constexpr SkytraqCommand kSkytraqConfigure[] = {
      {0x62, 0x01, 0x01, 0x02, 0x08, 0x01, 0x01, 0x07, 0x00}, 9, true},
     // 0x0E position update rate.
     {"position update rate",
-     {0x0E, GpsReceiver::kSkytraqUpdateRateHz, 0x00}, 3},
+     {0x0E, GpsReceiver::kSkytraqUpdateRateHz, 0x00}, 3, false, true},
 };
 
 constexpr SkytraqCommand kSkytraqVerify[] = {
@@ -117,6 +121,12 @@ constexpr std::uint8_t kUbxPrtUart1[20] = {
 template <typename T, std::size_t N>
 constexpr std::size_t count_of(const T (&)[N]) { return N; }
 
+constexpr std::uint32_t doubled(const std::uint32_t backoff_ms)
+{
+    return backoff_ms * 2U > GpsReceiver::kConfigRetryMaxMs ? GpsReceiver::kConfigRetryMaxMs
+                                                            : backoff_ms * 2U;
+}
+
 }  // namespace
 
 std::uint32_t GpsReceiver::nearest_scan_baud(const std::uint32_t measured_baud)
@@ -142,6 +152,26 @@ void GpsReceiver::set_baud_hint(const std::uint32_t measured_baud)
     scan_count_ = n;
 }
 
+void GpsReceiver::set_start_baud(const std::uint32_t verified_baud)
+{
+    if (verified_baud < kMinimumConfigureBaud || verified_baud > 1000000U) return;
+    measured_baud_ = verified_baud;
+    scan_order_[0] = verified_baud;
+    if (!kFixedBaud) {
+        std::size_t n = 1;
+        for (const std::uint32_t rate : kScanBauds)
+            if (rate != verified_baud && n < scan_order_.size()) scan_order_[n++] = rate;
+        scan_count_ = n;
+    }
+    default_tried_ = verified_baud == kOperationalBaud;
+    measured_tried_ = true;   // this is the measured rate, and it is tried first
+    // A re-identification that has not sent anything yet moves there now
+    // (retry_identification already started at the previous rate).
+    if (status_ == Status::Configuring && step_ == Step::Identify && attempts_ == 0 && !waiting_ &&
+        baud_ != verified_baud && transport_.set_baud && transport_.set_baud(transport_.context, verified_baud))
+        baud_ = verified_baud;
+}
+
 const char *GpsReceiver::model_name() const
 {
     switch (model_) {
@@ -160,10 +190,21 @@ std::uint32_t GpsReceiver::update_rate_hz() const
     }
 }
 
+// Defence in depth for the fixed-baud rule (audit G4, bench rule): the
+// receiver baud is never changed and it is never factory-reset, whatever
+// path asks (an assist record, a future code path). 0x05 = Configure Serial
+// Port, 0x04 = Set Factory Defaults. System Restart 0x01 stays allowed
+// (cold start, wake: RAM only, flash untouched).
+bool GpsReceiver::forbidden_skytraq(const std::uint8_t *payload, const std::size_t length) const
+{
+    return kFixedBaud && length != 0 && (payload[0] == 0x05 || payload[0] == 0x04);
+}
+
 bool GpsReceiver::send_skytraq(const std::uint8_t *payload, const std::size_t length)
 {
     std::array<std::uint8_t, kSkytraqTxCapacity> packet{};
     if (length == 0 || length + 7 > packet.size()) return false;
+    if (forbidden_skytraq(payload, length)) return false;
     packet[0] = 0xA0;
     packet[1] = 0xA1;
     packet[2] = 0x00;
@@ -184,6 +225,10 @@ bool GpsReceiver::send_ubx(const std::uint8_t message_class, const std::uint8_t 
 {
     std::array<std::uint8_t, 8 + kUbxNav5Length> packet{};
     if (length > kUbxNav5Length) return false;
+    // Same rule for the u-blox: no CFG-PRT (baud) with a fixed baud, and never
+    // CFG-CFG (clear/save configuration to flash).
+    if (message_class == kUbxClassCfg &&
+        ((kFixedBaud && id == kUbxIdCfgPrt) || id == 0x09)) return false;
     packet[0] = 0xB5;
     packet[1] = 0x62;
     packet[2] = message_class;
@@ -209,17 +254,25 @@ void GpsReceiver::begin_step(const Step step, const std::uint32_t now_ms)
     index_ = 0;
     attempts_ = 0;
     waiting_ = false;
+    if (step == Step::Configure) unacked_required_ = false;   // a fresh pass
 }
 
 void GpsReceiver::fail(const char *reason)
 {
     failure_reason_ = reason;
     status_ = Status::Failed;
-    // An unidentified receiver leaves the host at the operational rate so raw
-    // logging continues where a receiver is most likely to be talking.
-    if (model_ == Model::Unknown && baud_ != kOperationalBaud && transport_.set_baud) {
-        if (transport_.set_baud(transport_.context, kOperationalBaud))
-            baud_ = kOperationalBaud;
+    background_config_ = false;
+    // Full re-probe no sooner than kProbeRetryMs (and only without valid NMEA).
+    next_probe_ms_ = last_service_ms_ + kProbeRetryMs;
+    // An unidentified receiver leaves the host at the rate where valid NMEA
+    // was last heard (else the operational rate) so raw logging continues
+    // where a receiver is most likely to be talking. Never while NMEA is
+    // flowing right now: that receiver is working (audit G2).
+    const std::uint32_t target = have_good_baud_ ? good_baud_ : kOperationalBaud;
+    if (model_ == Model::Unknown && baud_ != target && transport_.set_baud &&
+        !streaming(last_service_ms_)) {
+        if (transport_.set_baud(transport_.context, target))
+            baud_ = target;
     }
 }
 
@@ -253,8 +306,60 @@ void GpsReceiver::advance(const std::uint32_t now_ms)
     if (step_ == Step::Configure && index_ >= configure_count()) {
         begin_step(Step::Verify, now_ms);
     } else if (step_ == Step::Verify && index_ >= verify_count()) {
-        status_ = Status::Ready;
+        ready_or_streaming(now_ms);
     }
+}
+
+// Configuration finished (readback done). Ready only if no required command
+// went unacknowledged without a readback covering it (audit G7); otherwise the
+// receiver streams but is not known to be configured: Streaming, and the
+// configuration is retried in the background with a slow backoff.
+void GpsReceiver::ready_or_streaming(const std::uint32_t now_ms)
+{
+    status_ = unacked_required_ ? Status::Streaming : Status::Ready;
+    if (unacked_required_) failure_reason_ = "a required PX1120S setting was never acknowledged";
+    if (background_config_) {
+        next_config_try_ms_ = now_ms + config_backoff_ms_;
+        if (unacked_required_) config_backoff_ms_ = doubled(config_backoff_ms_);
+    } else {
+        schedule_config_retry(now_ms);
+    }
+    background_config_ = false;
+    grace_start_ms_ = now_ms;
+    reset_rate_window(now_ms);
+    low_rate_windows_ = 0;
+}
+
+void GpsReceiver::schedule_config_retry(const std::uint32_t now_ms)
+{
+    next_config_try_ms_ = now_ms + config_backoff_ms_;
+    config_backoff_ms_ = doubled(config_backoff_ms_);
+}
+
+void GpsReceiver::reset_rate_window(const std::uint32_t now_ms)
+{
+    rate_window_ms_ = now_ms;
+    rate_count_ = 0;
+}
+
+// Re-send the configuration (airborne mode, rate, NMEA set) at the current
+// baud and pins; nothing else is touched (audit G1/G2).
+void GpsReceiver::start_background_config(const std::uint32_t now_ms)
+{
+    // Low-rate trigger from Ready: back off if it keeps happening.
+    if (status_ == Status::Ready) config_backoff_ms_ = doubled(config_backoff_ms_);
+    ++config_retries_;
+    low_rate_windows_ = 0;
+    background_config_ = true;
+    status_ = Status::Configuring;
+    nmea_seen_ = true;
+    grace_start_ms_ = now_ms;
+    assist_.active = false;
+    assist_waiting_ = false;
+    next_config_try_ms_ = now_ms + config_backoff_ms_;
+    // An unidentified-but-streaming receiver is identified at the current
+    // baud (assumed PX1120S after 3 s); a known one is configured directly.
+    begin_step(model_ == Model::Unknown ? Step::Identify : Step::Configure, now_ms);
 }
 
 bool GpsReceiver::send_current(const std::uint32_t now_ms)
@@ -316,7 +421,7 @@ bool GpsReceiver::begin_assist(const std::uint8_t *blob, const std::size_t lengt
     }
     if (blob == nullptr || length > assist_blob_.size() ||
         !gps_assist::Assembler::parse_records(blob, length, records)) {
-        assist_refusal_ = "malformed assistance data";
+        assist_refusal_ = "malformed assistance data or a message ID that is not allowed";
         return false;
     }
     for (std::size_t i = 0; i < length; ++i) assist_blob_[i] = blob[i];
@@ -354,6 +459,7 @@ bool GpsReceiver::cold_start(const std::uint32_t now_ms)
     ++cold_starts_;
     assist_.active = false;           // an upload in progress is moot now
     assist_waiting_ = false;
+    background_config_ = false;
     status_ = Status::Configuring;
     begin_step(Step::RestartWait, now_ms);
     return true;
@@ -400,6 +506,7 @@ bool GpsReceiver::wake(const std::uint32_t now_ms, const WakeKind kind)
     if (kind == WakeKind::Cold) ++cold_starts_;
     assist_.active = false;
     assist_waiting_ = false;
+    background_config_ = false;
     status_ = Status::Configuring;
     begin_step(Step::RestartWait, now_ms);
     return true;
@@ -433,7 +540,8 @@ void GpsReceiver::service_assist(const std::uint32_t now_ms)
     const std::size_t n = (static_cast<std::size_t>(assist_blob_[assist_offset_]) << 8U) |
                           assist_blob_[assist_offset_ + 1];
     const std::uint8_t *body = assist_blob_.data() + assist_offset_ + 2;
-    if (!send_skytraq(body, n)) {
+    // Whitelisted at begin_assist(); checked again right before the wire.
+    if (!gps_assist::is_allowed_message(body, n) || !send_skytraq(body, n)) {
         assist_.active = false;
         assist_refusal_ = "GPS command transmission failed";
         return;
@@ -445,9 +553,128 @@ void GpsReceiver::service_assist(const std::uint32_t now_ms)
     assist_sent_ms_ = now_ms;
 }
 
+// Valid GGA decoded at the current baud and pins.
+void GpsReceiver::observe_gga(const std::uint32_t now_ms, const std::uint32_t count)
+{
+    if (count == 0) return;
+    nmea_seen_ = true;
+    have_gga_ = true;
+    last_gga_ms_ = now_ms;
+    rate_count_ += count;
+    // Remember where the receiver talks (RAM, this session): tried first by a
+    // later identification (audit G5).
+    good_baud_ = baud_;
+    have_good_baud_ = true;
+    if (status_ == Status::Recovering) {
+        // It is back at this rate (probably reset to its defaults): configure
+        // it again here; baud and pins are not touched (audit G1).
+        ++recoveries_;
+        baud_fallback_ = baud_ != kOperationalBaud;
+        start_background_config(now_ms);
+    }
+}
+
+bool GpsReceiver::probe_due(const std::uint32_t now_ms) const
+{
+    if (status_ != Status::Failed) return false;
+    if (have_gga_ && now_ms - last_gga_ms_ < kFullProbeSilenceMs) return false;
+    return static_cast<std::int32_t>(now_ms - next_probe_ms_) >= 0;
+}
+
+const char *GpsReceiver::state_text(const std::uint32_t now_ms) const
+{
+    switch (status_) {
+        case Status::Disabled: return "disabled";
+        case Status::Configuring:
+            if (background_config_)
+                return streaming(now_ms) ? "streaming (reconfiguring)" : "reconfiguring (no data)";
+            return "configuring";
+        case Status::Ready: return "ready (configured)";
+        case Status::Streaming: return "streaming (unconfigured)";
+        case Status::Recovering: return "recovering (listening)";
+        case Status::Failed: return "FAILED (no data)";
+    }
+    return "unknown";
+}
+
+// Ready or Streaming: watch the stream (audit G1, G2, G7).
+void GpsReceiver::supervise(const std::uint32_t now_ms)
+{
+    const std::uint32_t reference =
+        have_gga_ && static_cast<std::int32_t>(last_gga_ms_ - grace_start_ms_) > 0
+            ? last_gga_ms_ : grace_start_ms_;
+    if (now_ms - reference >= kSilenceRecoveryMs) {
+        enter_recovery(now_ms);
+        return;
+    }
+    // GGA per second: a receiver that came back with its default
+    // configuration streams 1 Hz, far below the configured rate.
+    const std::uint32_t elapsed = now_ms - rate_window_ms_;
+    if (elapsed >= 1000U) {
+        rate_hz_ = (rate_count_ * 1000U + elapsed / 2U) / elapsed;
+        rate_count_ = 0;
+        rate_window_ms_ = now_ms;
+        const std::uint32_t expected = update_rate_hz();
+        const bool low = expected >= 8U && rate_hz_ > 0U && rate_hz_ * 4U < expected;
+        if (status_ == Status::Ready) {
+            low_rate_windows_ = low ? low_rate_windows_ + 1U : 0U;
+            if (rate_hz_ * 2U >= expected) config_backoff_ms_ = kConfigRetryMinMs;
+        }
+    }
+    if (static_cast<std::int32_t>(now_ms - next_config_try_ms_) < 0 || !streaming(now_ms)) return;
+    if (status_ == Status::Streaming || low_rate_windows_ >= 2U) start_background_config(now_ms);
+}
+
+// No valid NMEA for kSilenceRecoveryMs: the receiver has probably reset and
+// answers at its power-up rate. Listen at 115200, then the fallback rate, on
+// the pins that last worked; the full probe is the caller's last resort.
+void GpsReceiver::enter_recovery(const std::uint32_t now_ms)
+{
+    status_ = Status::Recovering;
+    background_config_ = false;
+    assist_.active = false;
+    assist_waiting_ = false;
+    skytraq_used_ = skytraq_expected_ = 0;
+    ubx_state_ = 0;
+    recovery_count_ = 0;
+    recovery_bauds_[recovery_count_++] = kOperationalBaud;
+    std::uint32_t fallback = 0;
+    if (have_good_baud_ && good_baud_ != kOperationalBaud) fallback = good_baud_;
+    else if (baud_fallback_ && found_baud_ != kOperationalBaud) fallback = found_baud_;
+    else if (measured_baud_ >= kMinimumConfigureBaud && measured_baud_ <= 1000000U &&
+             nearest_scan_baud(measured_baud_) != kOperationalBaud) fallback = measured_baud_;
+    if (fallback != 0) recovery_bauds_[recovery_count_++] = fallback;
+    recovery_stage_ = 0;
+    recovery_stage_ms_ = now_ms;
+    if (baud_ != recovery_bauds_[0] && transport_.set_baud &&
+        transport_.set_baud(transport_.context, recovery_bauds_[0]))
+        baud_ = recovery_bauds_[0];
+}
+
+void GpsReceiver::service_recovery(const std::uint32_t now_ms)
+{
+    if (now_ms - recovery_stage_ms_ < kRecoveryListenMs) return;
+    if (recovery_stage_ + 1 < recovery_count_) {
+        ++recovery_stage_;
+        recovery_stage_ms_ = now_ms;
+        const std::uint32_t next = recovery_bauds_[recovery_stage_];
+        if (transport_.set_baud && transport_.set_baud(transport_.context, next)) baud_ = next;
+        return;
+    }
+    // Nothing at either rate: Failed, and the caller may now run the full
+    // probe (pins + baud) at once; no data is being lost by it.
+    failure_reason_ = "no valid NMEA after the receiver went silent (listened at 115200 and the fallback rate)";
+    status_ = Status::Failed;
+    next_probe_ms_ = now_ms;
+}
+
 bool GpsReceiver::retry_identification(const std::uint32_t now_ms)
 {
     if (!can_retry_identification()) return false;
+    // Never disturb a receiver that is delivering valid NMEA (audit G2).
+    if (have_gga_ && now_ms - last_gga_ms_ < kFullProbeSilenceMs) return false;
+    next_probe_ms_ = now_ms + kProbeRetryMs;
+    background_config_ = false;
     status_ = Status::Configuring;
     model_ = Model::Unknown;          // an assumed model is discarded
     model_assumed_ = false;
@@ -459,9 +686,12 @@ bool GpsReceiver::retry_identification(const std::uint32_t now_ms)
     measured_baud_ = 0;
     scan_index_ = 0;
     nmea_seen_ = false;
-    if (baud_ != kOperationalBaud && transport_.set_baud &&
-        transport_.set_baud(transport_.context, kOperationalBaud))
-        baud_ = kOperationalBaud;
+    // Start where valid NMEA was last heard (this session), then 115200.
+    const std::uint32_t first = have_good_baud_ ? good_baud_ : kOperationalBaud;
+    default_tried_ = first == kOperationalBaud;
+    if (kFixedBaud) scan_order_[0] = first;   // the pin swap restarts here too
+    if (baud_ != first && transport_.set_baud && transport_.set_baud(transport_.context, first))
+        baud_ = first;
     begin_step(Step::Identify, now_ms);
     ++identification_retries_;
     return true;
@@ -469,6 +699,35 @@ bool GpsReceiver::retry_identification(const std::uint32_t now_ms)
 
 void GpsReceiver::service(const std::uint32_t now_ms)
 {
+    last_service_ms_ = now_ms;
+    // A receiver that fails its configuration but streams valid NMEA works:
+    // usable ("degraded"), never re-probed or re-baudded; only the
+    // configuration is retried later, at this baud and these pins (G2).
+    if (status_ == Status::Failed && streaming(now_ms)) {
+        status_ = Status::Streaming;
+        grace_start_ms_ = now_ms;
+        reset_rate_window(now_ms);
+        next_config_try_ms_ = now_ms + config_backoff_ms_;
+        config_backoff_ms_ = doubled(config_backoff_ms_);
+    }
+    if (status_ == Status::Recovering) {
+        service_recovery(now_ms);
+        return;
+    }
+    if ((status_ == Status::Ready || status_ == Status::Streaming) && !asleep_) {
+        supervise(now_ms);
+        if (status_ == Status::Recovering) return;
+    } else if (status_ == Status::Configuring && background_config_) {
+        // Reconfiguring while the stream died (the receiver moved or reset).
+        const std::uint32_t reference =
+            have_gga_ && static_cast<std::int32_t>(last_gga_ms_ - grace_start_ms_) > 0
+                ? last_gga_ms_ : grace_start_ms_;
+        if (now_ms - reference >= kSilenceRecoveryMs) {
+            enter_recovery(now_ms);
+            return;
+        }
+    }
+    if (status_ == Status::Streaming) return;
     if (status_ == Status::Ready) {
         service_assist(now_ms);
         return;
@@ -561,7 +820,19 @@ void GpsReceiver::service(const std::uint32_t now_ms)
                     baud_ = next;
                     nmea_seen_ = false;
                     begin_step(Step::Identify, now_ms);
-                } else if (kFixedBaud && !pins_swapped_ && !measured_tried_ && transport_.set_baud &&
+                } else if (kFixedBaud && !default_tried_ && baud_ != kOperationalBaud &&
+                           transport_.set_baud) {
+                    // The remembered good rate was silent: the receiver may
+                    // have reset to its 115200 default.
+                    default_tried_ = true;
+                    if (!transport_.set_baud(transport_.context, kOperationalBaud)) {
+                        fail("could not change host UART baud");
+                        return;
+                    }
+                    baud_ = kOperationalBaud;
+                    nmea_seen_ = false;
+                    begin_step(Step::Identify, now_ms);
+                } else if (kFixedBaud && !measured_tried_ && transport_.set_baud &&
                            measured_baud_ >= kMinimumConfigureBaud && measured_baud_ <= 1000000U &&
                            nearest_scan_baud(measured_baud_) != kOperationalBaud) {
                     // Fixed baud, but no NMEA at kOperationalBaud and the line
@@ -582,6 +853,12 @@ void GpsReceiver::service(const std::uint32_t now_ms)
                     // pins and scan again from the first rate.
                     pins_swapped_ = true;
                     scan_index_ = 0;
+                    // The other orientation gets the same rates: 115200 (or
+                    // the verified start rate) and then the measured rate
+                    // (bench 2026-11-17: the measured 88.4 kbaud was never
+                    // tried after the swap, so a power-on never found the GPS).
+                    default_tried_ = scan_order_[0] == kOperationalBaud;
+                    measured_tried_ = scan_order_[0] == measured_baud_;
                     if (!transport_.set_baud(transport_.context, scan_order_[0])) {
                         fail("could not change host UART baud");
                         return;
@@ -626,7 +903,10 @@ void GpsReceiver::service(const std::uint32_t now_ms)
                 return;
             case Step::Configure:
                 if (model_ == Model::Px1120s) {
-                    // Some PX1120S firmware misses an ACK; readback is decisive.
+                    // Some PX1120S firmware misses an ACK; readback is decisive
+                    // where there is one. Without it the setting is unproven.
+                    if (!kSkytraqConfigure[index_].optional && !kSkytraqConfigure[index_].readback)
+                        unacked_required_ = true;
                     advance(now_ms);
                 } else {
                     fail("u-blox did not acknowledge configuration");

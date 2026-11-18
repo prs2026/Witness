@@ -32,17 +32,31 @@ public:
         const std::uint8_t *data,
         std::size_t length);
 
+    // Flight-state source for the load-command gate (command_policy.h:
+    // allow_iris_load_command). Without one the state is taken as Pad Idle.
+    // The reader must be thread safe (it is called from the USB and sensor
+    // tasks).
+    using StateReader = std::uint8_t (*)(void *context);
+    void set_state_reader(StateReader reader, void *context);
+
     // Retrieves a radio command queued for local interpretation. This does not
     // affect the CAN copy, which is queued when the command is submitted.
+    // forward_result (optional) = what the CAN forward of that command
+    // returned: ESP_OK (queued for Iris), ESP_ERR_NOT_ALLOWED (refused by the
+    // command policy: nothing was sent) or another error (queue full / link
+    // not up). The local handler acks loads from it.
     bool receive_radio_command(
         std::uint8_t *data,
         std::size_t capacity,
-        std::size_t &length);
+        std::size_t &length,
+        esp_err_t *forward_result = nullptr);
 
 private:
     esp_err_t forward_command(
         const std::uint8_t *data,
         std::size_t length);
+    // ESP_ERR_NOT_ALLOWED when command_policy refuses this canonical frame now.
+    esp_err_t check_policy(const std::uint8_t *canonical) const;
 
     CanLink &iris_;
     SpiDataForwarder &data_forwarder_;
@@ -51,7 +65,11 @@ private:
     struct QueuedCommand {
         std::uint8_t length;
         std::uint8_t data[IRIS_PACKET_COMMAND_FRAME_LENGTH];
+        std::int32_t forward_result;   // esp_err_t of the CAN forward
     };
+
+    StateReader state_reader_ = nullptr;
+    void *state_context_ = nullptr;
 
     QueueHandle_t radio_command_queue_ = nullptr;
 };

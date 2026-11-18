@@ -35,7 +35,9 @@ struct Request {
 
 // Arms a request for the next esp_restart(); honoured only if that boot's
 // reset reason is ESP_RST_SW. The caller restarts (see restart_after_ms).
-void arm(const Request &request);
+// Returns false when the request could not be stored (NVS error): the caller
+// must then not switch images.
+bool arm(const Request &request);
 // Maintenance image, first thing in app_main: true and fills `out` if a
 // valid request was armed for this software restart. Clears the RTC copy
 // either way (one boot only).
@@ -44,5 +46,14 @@ bool consume(Request &out);
 void cancel();
 // esp_restart() from an esp_timer after delay_ms (lets an ack go out first).
 bool restart_after_ms(std::uint32_t delay_ms);
+
+// Flight image: a restart that the caller re-checks before it happens. The
+// timer only sets a flag (deferred_restart_due); the owner (the USB task)
+// re-checks the flight state when it sees the flag and then calls restart()
+// or abandons it. Nothing restarts by itself.
+bool restart_deferred_after_ms(std::uint32_t delay_ms);
+bool deferred_restart_due();
+void deferred_restart_clear();
+[[noreturn]] void restart();
 
 }  // namespace maintenance_mode

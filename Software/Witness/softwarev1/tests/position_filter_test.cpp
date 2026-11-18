@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <limits>
 #include <random>
 
 using position::Filter;
@@ -326,6 +327,143 @@ void test_innovation_record()
     CHECK(std::isnan(filter.baro_innovation().variance));
 }
 
+// Truth for the re-pad / gravity tests: up position/velocity in double,
+// driven by a piecewise net acceleration.
+struct Truth {
+    double p = 0.0, v = 0.0;
+    void step(const double a, const double dt) { p += v * dt + 0.5 * a * dt * dt; v += a * dt; }
+};
+
+// Runs the filter at 960 Hz with a given net up acceleration (truth), with
+// baro and GPS at 25 Hz when `aiding` (baro reference only on the pad
+// otherwise). bias_up is the accelerometer's offset along up.
+struct Rig {
+    Filter filter;
+    Truth truth;
+    std::mt19937 rng{7};
+    std::normal_distribution<float> unit{0.0F, 1.0F};
+    float accel_noise = 0.05F;
+    float bias_up = 0.0F;
+    long n = 0;
+    explicit Rig(const position::Config &c = position::Config{}) : filter(c) {}
+    void run(const float seconds, const double net_up_accel, const Phase phase, const bool aiding)
+    {
+        const float dt = 1.0F / 960.0F;
+        const int steps = static_cast<int>(seconds * 960.0F);
+        for (int i = 0; i < steps; ++i, ++n) {
+            truth.step(net_up_accel, dt);
+            const float f_up = static_cast<float>(net_up_accel) + kG + bias_up;
+            const float accel[3] = {accel_noise * unit(rng), accel_noise * unit(rng),
+                                    f_up + accel_noise * unit(rng)};
+            filter.predict(accel, dt, phase);
+            if (n % 38 == 0) {
+                const float h_msl = kPadAltMsl + static_cast<float>(truth.p);
+                const float pressure = isa_pressure(h_msl);
+                if (aiding) {
+                    const float sigma = filter.baro_sigma_m(pressure, h_msl);
+                    filter.update_baro(h_msl + 0.5F * sigma * unit(rng), pressure, phase);
+                    filter.update_gps(kPadLat, kPadLon,
+                                      kPadAltMsl + static_cast<float>(truth.p) + 1.0F * unit(rng), 9,
+                                      phase);
+                } else {
+                    filter.update_baro(h_msl, pressure, phase);
+                }
+                filter.update_constraints(phase);
+            }
+        }
+    }
+};
+
+// Finding 1: after a flight that ends 75 m above the pad, a return to Pad
+// Idle must pull the position back to the origin (ungated pad hold), and a
+// freshly reset filter starts at the origin.
+void test_repad_after_flight()
+{
+    Rig r;
+    r.run(5.0F, 0.0, Phase::PadIdle, false);
+    CHECK(std::fabs(r.filter.up().p) < 0.05F);
+    // Up 75 m and stop: +18.75 m/s2 for 2 s, then -18.75 m/s2 for 2 s.
+    r.run(2.0F, 18.75, Phase::Boost, true);
+    r.run(2.0F, -18.75, Phase::Coast, true);
+    r.run(1.0F, 0.0, Phase::Descent, true);
+    r.run(10.0F, 0.0, Phase::Landed, true);
+    std::printf("re-pad: truth up %.1f m, filter up %.2f m after Landed\n", r.truth.p,
+                static_cast<double>(r.filter.up().p));
+    CHECK(std::fabs(r.truth.p - 75.0) < 0.5);
+    CHECK(std::fabs(r.filter.up().p - 75.0F) < 3.0F);
+    // Back to Pad Idle at the landing site without a reset: the pad is where
+    // the board stands, so the position hold must pull the state to 0.
+    r.truth = Truth{};
+    r.run(4.0F, 0.0, Phase::PadIdle, false);
+    std::printf("re-pad: filter up %.3f m, v %.3f after 4 s in Pad Idle (ungated hold)\n",
+                static_cast<double>(r.filter.up().p), static_cast<double>(r.filter.up().v));
+    CHECK(r.filter.still());
+    CHECK(std::fabs(r.filter.up().p) < 0.2F);
+    CHECK(std::fabs(r.filter.east().p) < 0.2F && std::fabs(r.filter.north().p) < 0.2F);
+    // A fresh reset filter (what the reboot gives).
+    r.filter.reset();
+    r.truth = Truth{};
+    r.run(3.0F, 0.0, Phase::PadIdle, false);
+    CHECK(std::fabs(r.filter.up().p) < 0.2F && std::fabs(r.filter.up().v) < 0.1F);
+    CHECK(std::fabs(r.filter.gravity_mps2() - kG) < 0.05F);
+}
+
+// Finding 3: a 1.01 g accelerometer reading on the pad (offset 0.098 m/s2),
+// then a 60 s ballistic coast with no barometer and no GPS.
+float coast_error_with_pad_gravity(const bool measure, float &g_used)
+{
+    position::Config config;
+    config.measure_pad_gravity = measure;
+    Rig r(config);
+    r.bias_up = 0.01F * kG;
+    r.run(20.0F, 0.0, Phase::PadIdle, false);
+    r.run(3.0F, 10.0 * kG, Phase::Boost, false);                    // 11 g specific force
+    r.run(60.0F, -static_cast<double>(kG), Phase::Coast, false);    // ballistic
+    g_used = r.filter.gravity_mps2();
+    CHECK(r.filter.gravity_frozen() == measure);
+    return static_cast<float>(r.filter.up().p - r.truth.p);
+}
+
+void test_pad_measured_gravity()
+{
+    float g_measured = 0.0F, g_fixed = 0.0F;
+    const float err_measured = coast_error_with_pad_gravity(true, g_measured);
+    const float err_fixed = coast_error_with_pad_gravity(false, g_fixed);
+    std::printf("gravity: pad-measured g %.4f m/s2 -> altitude error %.2f m after a 60 s coast; "
+                "fixed %.5f -> %.1f m\n",
+                static_cast<double>(g_measured), static_cast<double>(err_measured),
+                static_cast<double>(g_fixed), static_cast<double>(err_fixed));
+    CHECK(std::fabs(g_measured - (kG + 0.01F * kG)) < 0.02F);
+    CHECK(g_fixed == kG);
+    CHECK(std::fabs(err_measured) < 5.0F);
+    CHECK(std::fabs(err_fixed) > 100.0F);
+    // Fallback: kGravity until about 1 s of still samples was averaged; a
+    // vehicle leaving the pad freezes the value.
+    {
+        Rig r;
+        r.bias_up = 0.01F * kG;
+        r.run(0.5F, 0.0, Phase::PadIdle, false);
+        CHECK(!r.filter.gravity_measured() && r.filter.gravity_mps2() == kG);
+        r.run(1.0F, 0.0, Phase::PadIdle, false);
+        CHECK(r.filter.gravity_measured() && r.filter.gravity_mps2() > kG + 0.05F);
+        const float g_pad = r.filter.gravity_mps2();
+        r.run(1.0F, 5.0 * kG, Phase::Boost, false);
+        r.run(5.0F, 0.0, Phase::PadIdle, false);   // still again: frozen anyway
+        CHECK(r.filter.gravity_frozen() && r.filter.gravity_mps2() == g_pad);
+        CHECK(r.filter.gravity_clamped_count() == 0);
+        r.filter.reset();
+        CHECK(r.filter.gravity_mps2() == kG && !r.filter.gravity_frozen());
+    }
+    // A short jolt on the pad does not end the averaging.
+    {
+        Rig r;
+        r.run(3.0F, 0.0, Phase::PadIdle, false);
+        r.run(0.1F, 2.0 * kG, Phase::PadIdle, false);
+        r.run(3.0F, 0.0, Phase::PadIdle, false);
+        CHECK(!r.filter.gravity_frozen());
+    }
+}
+
 }  // namespace
 
 void test_gps_dop_sigmas()
@@ -398,8 +536,249 @@ void test_gps_dynamics_sigmas()
     CHECK(f.gps_dynamics_stress_mps2() >= position::kGravity * 0.99F);
 }
 
+// ---- 2026-11-15 fixes: no-attitude operation, NaN recovery, gaps, resume ----
+
+// Runs the filter for `seconds` with the magnitude-only predict at 960 Hz, baro
+// at 25 Hz and the 25 Hz constraint step, like Sensors does without attitude.
+struct NoAttRig {
+    Filter f;
+    std::mt19937 rng{7};
+    std::normal_distribution<float> unit{0.0F, 1.0F};
+    double t = 0.0;
+    int tick = 0;
+    float baro_sigma = 0.6F;
+    float true_agl = 0.0F;
+    float true_vz = 0.0F;
+    void step(const float specific_force_mps2, const Phase phase)
+    {
+        f.predict_magnitude_only(specific_force_mps2, 1.0F / 960.0F, phase);
+        t += 1.0 / 960.0;
+        if (++tick % 38 == 0) {   // ~25 Hz
+            const float alt = kPadAltMsl + true_agl + baro_sigma * unit(rng);
+            f.update_baro(alt, isa_pressure(alt), phase);
+            f.update_constraints(phase);
+            f.begin_update_cycle();
+        }
+    }
+};
+
+void test_no_attitude_pad_and_launch()
+{
+    // Pad: 8 s still. The pad hold works from |f| alone: AGL and vz pinned.
+    NoAttRig r;
+    for (int i = 0; i < 960 * 8; ++i) r.step(kG * (1.0F + 0.004F * r.unit(r.rng)), Phase::PadIdle);
+    CHECK(r.f.initialized());
+    CHECK(r.f.still());
+    CHECK(std::fabs(r.f.up().p) < 0.3F && std::fabs(r.f.up().v) < 0.1F);
+    CHECK(r.f.gravity_measured());
+    CHECK(std::fabs(r.f.gravity_mps2() - kG) < 0.05F);
+    CHECK(r.f.imu_ignored());
+
+    // Launch: 4 g specific force (3 g net, straight up) for 3 s. The filter
+    // has no acceleration, only the barometer.
+    float t_launch_rule = -1.0F;
+    float max_agl_error = 0.0F;
+    const float a = 3.0F * kG;
+    for (int i = 0; i < 960 * 4; ++i) {
+        const float t = static_cast<float>(i) / 960.0F;
+        r.true_agl = 0.5F * a * t * t;
+        r.true_vz = a * t;
+        r.step(4.0F * kG, Phase::PadIdle);
+        if (t_launch_rule < 0.0F && r.f.up().p > 30.0F && r.f.up().v >= 30.0F) t_launch_rule = t;
+        if (t > 1.0F) max_agl_error = std::fmax(max_agl_error, std::fabs(r.f.up().p - r.true_agl));
+    }
+    std::printf("no attitude, 3 g net launch: Kalman rule (AGL>30, vz>=30) true at t=%.2f s "
+                "(truth: AGL 30 m at 1.43 s, vz 30 m/s at 1.02 s); max AGL error after 1 s %.1f m\n",
+                static_cast<double>(t_launch_rule), static_cast<double>(max_agl_error));
+    CHECK(t_launch_rule > 0.0F && t_launch_rule < 2.6F);
+}
+
+void test_no_attitude_pad_noise_never_looks_like_launch()
+{
+    // Not still (wind buffeting / handling: |f| 0.7..1.4 g) with a noisy
+    // barometer (2 m): the zero-acceleration model must not fake 30 m/s.
+    NoAttRig r;
+    r.baro_sigma = 2.0F;
+    float max_v = 0.0F, max_p = 0.0F;
+    for (int i = 0; i < 960 * 120; ++i) {
+        const float f = kG * (1.0F + 0.25F * r.unit(r.rng));
+        r.step(f, Phase::PadIdle);
+        max_v = std::fmax(max_v, std::fabs(r.f.up().v));
+        max_p = std::fmax(max_p, std::fabs(r.f.up().p));
+    }
+    std::printf("no attitude, buffeting + 2 m baro noise, 120 s: max |vz| %.1f m/s, max |AGL| %.1f m\n",
+                static_cast<double>(max_v), static_cast<double>(max_p));
+    CHECK(max_v < 25.0F);   // pessimistic noise; the launch rule also needs AGL > 30 m
+    CHECK(max_p < 10.0F);
+}
+
+void test_smooth_switch_to_imu_predict()
+{
+    NoAttRig r;
+    for (int i = 0; i < 960 * 6; ++i) r.step(kG, Phase::PadIdle);
+    const float before = r.f.up().p;
+    const float up[3] = {0.0F, 0.0F, kG};   // attitude valid: 1 g up
+    for (int i = 0; i < 960; ++i) r.f.predict(up, 1.0F / 960.0F, Phase::PadIdle);
+    CHECK(!r.f.imu_ignored());
+    CHECK(std::fabs(r.f.up().p - before) < 0.05F);   // no reset, no jump
+    CHECK(r.f.divergence_resets() == 0);
+}
+
+void test_nan_recovery()
+{
+    NoAttRig r;
+    for (int i = 0; i < 960 * 4; ++i) r.step(kG, Phase::PadIdle);
+    const float nan = std::numeric_limits<float>::quiet_NaN();
+    // Non-finite inputs are rejected before they enter.
+    const float bad[3] = {0.0F, nan, kG};
+    r.f.predict(bad, 1.0F / 960.0F, Phase::PadIdle);
+    r.f.predict(bad, nan, Phase::PadIdle);
+    r.f.predict_magnitude_only(nan, 1.0F / 960.0F, Phase::PadIdle);
+    r.f.predict_without_imu(nan, Phase::PadIdle);
+    CHECK(!r.f.update_baro(nan, 101325.0F, Phase::PadIdle));
+    CHECK(!r.f.update_baro(620.0F, nan, Phase::PadIdle));
+    CHECK(!r.f.update_gps(nan, 1.0, 100.0F, 8, Phase::PadIdle));
+    CHECK(!r.f.update_gps(35.0, -117.0, nan, 8, Phase::PadIdle));
+    CHECK(r.f.rejected_inputs() >= 8);
+    CHECK(std::isfinite(r.f.up().p) && std::isfinite(r.f.up().v) && std::isfinite(r.f.up().P00));
+    CHECK(r.f.divergence_resets() == 0);
+
+    // A finite but absurd acceleration drives the state to garbage: the health
+    // check resets the filter (pad references kept) and the pad hold recovers.
+    Filter g;
+    const float zero[3] = {0.0F, 0.0F, kG};
+    for (int i = 0; i < 960 * 3; ++i) g.predict(zero, 1.0F / 960.0F, Phase::PadIdle);
+    float alt = kPadAltMsl;
+    g.update_baro(alt, isa_pressure(alt), Phase::PadIdle);
+    position::PadReferences before;
+    g.export_pad_references(before);
+    CHECK(before.baro_valid);
+    const float huge[3] = {0.0F, 0.0F, 3.0e38F};
+    g.predict(huge, 1.0F / 960.0F, Phase::PadIdle);
+    CHECK(g.divergence_resets() >= 1);
+    CHECK(std::isfinite(g.up().p) && std::isfinite(g.up().P00) && std::isfinite(g.east().P11));
+    position::PadReferences after;
+    g.export_pad_references(after);
+    CHECK(after.baro_valid && after.baro_reference_m == before.baro_reference_m);
+    for (int i = 0; i < 960 * 6; ++i) {
+        g.predict(zero, 1.0F / 960.0F, Phase::PadIdle);
+        if (i % 38 == 0) {
+            g.update_baro(alt, isa_pressure(alt), Phase::PadIdle);
+            g.update_constraints(Phase::PadIdle);
+        }
+    }
+    CHECK(std::fabs(g.up().p) < 0.5F && std::fabs(g.up().v) < 0.2F);
+}
+
+void test_predict_gap_bridged()
+{
+    Filter f;
+    position::PadReferences refs;
+    refs.motion_valid = true;
+    refs.agl_m = 100.0F;
+    refs.vertical_velocity_mps = 50.0F;
+    f.restore_after_reset(refs);
+    CHECK(f.up().p == 100.0F && f.up().v == 50.0F);
+    CHECK(f.divergence_resets() == 0);
+    const float p00_before = f.up().P00;
+    const float a[3] = {0.0F, 0.0F, kG};
+    f.predict(a, 0.5F, Phase::Boost);   // a 500 ms stall: used to freeze
+    CHECK(std::fabs(f.up().p - 125.0F) < 0.01F);
+    CHECK(f.up().P00 > p00_before);
+    CHECK(f.predict_gaps() == 1);
+    f.predict_without_imu(0.3F, Phase::Boost);
+    CHECK(std::fabs(f.up().p - 140.0F) < 0.01F);
+    CHECK(f.predict_gaps() == 2);
+}
+
+void test_restore_after_reset_keeps_agl_continuous()
+{
+    // Pad, then fly (truth known), persist the references mid-descent, "reset",
+    // restore into a fresh filter and let the barometer correct it.
+    Filter pad;
+    const float up[3] = {0.0F, 0.0F, kG};
+    std::mt19937 rng(3);
+    std::normal_distribution<float> unit(0.0F, 1.0F);
+    for (int i = 0; i < 960 * 6; ++i) {
+        pad.predict(up, 1.0F / 960.0F, Phase::PadIdle);
+        if (i % 38 == 0) {
+            const float alt = kPadAltMsl + 0.5F * unit(rng);
+            pad.update_baro(alt, isa_pressure(alt), Phase::PadIdle);
+            pad.update_gps(kPadLat, kPadLon, kPadAltMsl + 1.0F, 10, Phase::PadIdle);
+            pad.update_constraints(Phase::PadIdle);
+        }
+    }
+    position::PadReferences refs;
+    pad.export_pad_references(refs);
+    CHECK(refs.baro_valid && refs.gps_valid && refs.gravity_valid);
+    // Last persisted motion: 600 m AGL, descending 30 m/s (data ~2 s old by now).
+    refs.motion_valid = true;
+    refs.agl_m = 600.0F;
+    refs.vertical_velocity_mps = -30.0F;
+
+    Filter g;
+    g.restore_after_reset(refs);
+    CHECK(g.initialized() && g.gps_origin_set());
+    CHECK(std::fabs(g.gravity_mps2() - pad.gravity_mps2()) < 1e-4F && g.gravity_frozen());
+    // Truth: 540 m AGL now and 25 m/s down (the descent slowed).
+    float truth = 540.0F;
+    float worst_after_2s = 0.0F;
+    for (int i = 0; i < 25 * 6; ++i) {
+        g.predict_magnitude_only(kG, 1.0F / 25.0F, Phase::Descent);
+        truth -= 25.0F / 25.0F;
+        const float alt = kPadAltMsl + truth + 0.6F * unit(rng);
+        g.update_baro(alt, isa_pressure(alt), Phase::Descent);
+        g.begin_update_cycle();
+        if (i >= 50) worst_after_2s = std::fmax(worst_after_2s, std::fabs(g.up().p - truth));
+    }
+    std::printf("restore after reset (60 m, 5 m/s stale): AGL error after 2 s <= %.2f m, vz %.1f (truth -25)\n",
+                static_cast<double>(worst_after_2s), static_cast<double>(g.up().v));
+    CHECK(worst_after_2s < 3.0F);
+    CHECK(std::fabs(g.up().v + 25.0F) < 5.0F);
+    // GPS in the restored frame lands on the pad (E/N start unknown, then pulled in).
+    for (int i = 0; i < 20; ++i) {
+        g.update_gps(kPadLat, kPadLon, kPadAltMsl + 1.0F + truth, 10, Phase::Descent);
+    }
+    CHECK(std::fabs(g.east().p) < 5.0F && std::fabs(g.north().p) < 5.0F);
+}
+
+void test_baro_rate()
+{
+    position::BaroRate r;
+    std::mt19937 rng(5);
+    std::normal_distribution<float> unit(0.0F, 1.0F);
+    float worst_still = 0.0F;
+    std::uint64_t t = 1'000'000;
+    for (int i = 0; i < 25 * 30; ++i, t += 40'000) {   // 30 s on the pad, 25 Hz
+        r.add(t, 620.0F + 0.8F * unit(rng));
+        if (r.valid(t)) worst_still = std::fmax(worst_still, std::fabs(r.rate_mps()));
+    }
+    std::printf("baro rate on the pad: worst |rate| %.2f m/s\n", static_cast<double>(worst_still));
+    CHECK(worst_still < 2.0F);
+    // Descent at 25 m/s.
+    float alt = 3000.0F;
+    for (int i = 0; i < 25 * 3; ++i, t += 40'000) {
+        alt -= 25.0F * 0.04F;
+        r.add(t, alt + 0.8F * unit(rng));
+    }
+    CHECK(r.valid(t) && std::fabs(r.rate_mps() + 25.0F) < 2.0F);
+    CHECK(!r.valid(t + 600'000));                       // stale
+    r.add(t + 3'000'000, 100.0F);                        // a 3 s gap: not valid
+    CHECK(!r.valid(t + 3'000'000));
+    r.add(t + 3'050'000, std::numeric_limits<float>::quiet_NaN());   // ignored
+}
+
 int main()
 {
+    test_no_attitude_pad_and_launch();
+    test_no_attitude_pad_noise_never_looks_like_launch();
+    test_smooth_switch_to_imu_predict();
+    test_nan_recovery();
+    test_predict_gap_bridged();
+    test_restore_after_reset_keeps_agl_continuous();
+    test_baro_rate();
+    test_repad_after_flight();
+    test_pad_measured_gravity();
     test_gps_dynamics_sigmas();
     test_gps_dop_sigmas();
     test_atmosphere_and_baro_sigma();

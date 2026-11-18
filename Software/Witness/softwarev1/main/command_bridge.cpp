@@ -2,6 +2,7 @@
 
 #include <cstring>
 
+#include "command_policy.h"
 #include "comms.h"
 #include "freertos/FreeRTOS.h"
 #include "spi_data_forwarder.h"
@@ -49,6 +50,19 @@ esp_err_t CommandBridge::start()
     return radio_command_queue_ != nullptr ? ESP_OK : ESP_ERR_NO_MEM;
 }
 
+void CommandBridge::set_state_reader(const StateReader reader, void *const context)
+{
+    state_context_ = context;
+    state_reader_ = reader;
+}
+
+esp_err_t CommandBridge::check_policy(const std::uint8_t *const canonical) const
+{
+    const std::uint16_t opcode = static_cast<std::uint16_t>((canonical[7] << 8U) | canonical[8]);
+    const std::uint8_t state = state_reader_ != nullptr ? state_reader_(state_context_) : command_policy::kPadIdle;
+    return command_policy::allow_iris_load_command(opcode, state) ? ESP_OK : ESP_ERR_NOT_ALLOWED;
+}
+
 esp_err_t CommandBridge::submit_usb_command(
     const std::uint8_t *const data,
     const std::size_t length)
@@ -56,6 +70,9 @@ esp_err_t CommandBridge::submit_usb_command(
     std::uint8_t canonical[IRIS_PACKET_COMMAND_FRAME_LENGTH]{};
     if (length == 0 || !canonical_command(data, length, canonical))
         return ESP_ERR_INVALID_ARG;
+    // A command the policy refuses (load / 5 V OFF in flight) goes nowhere:
+    // not to Iris, not over LoRa (audit 07 #2, #16).
+    if (check_policy(canonical) != ESP_OK) return ESP_ERR_NOT_ALLOWED;
     const esp_err_t transport_result = forward_command(canonical, sizeof(canonical));
     const esp_err_t radio_result =
         data_forwarder_.queue_immediate_radio_packet(canonical, sizeof(canonical));
@@ -76,14 +93,17 @@ esp_err_t CommandBridge::submit_radio_command(
                             opcode == IRIS_COMMAND_GPS_ASSIST_COMMIT ||
                             opcode == IRIS_COMMAND_GPS_ASSIST_STATUS ||
                             opcode == IRIS_COMMAND_GPS_COLD_START;
+    const esp_err_t policy_result = local_only ? ESP_OK : check_policy(canonical);
     const esp_err_t transport_result =
-        local_only ? ESP_OK : forward_command(canonical, sizeof(canonical));
+        local_only ? ESP_OK
+                   : (policy_result != ESP_OK ? policy_result : forward_command(canonical, sizeof(canonical)));
 
     if (radio_command_queue_ == nullptr) {
         return transport_result == ESP_OK ? ESP_ERR_INVALID_STATE : transport_result;
     }
     QueuedCommand command{};
     command.length = sizeof(canonical);
+    command.forward_result = static_cast<std::int32_t>(transport_result);
     std::memcpy(command.data, canonical, sizeof(canonical));
     const esp_err_t queue_result =
         xQueueSend(radio_command_queue_, &command, 0) == pdTRUE
@@ -95,7 +115,8 @@ esp_err_t CommandBridge::submit_radio_command(
 bool CommandBridge::receive_radio_command(
     std::uint8_t *const data,
     const std::size_t capacity,
-    std::size_t &length)
+    std::size_t &length,
+    esp_err_t *const forward_result)
 {
     length = 0;
     if (radio_command_queue_ == nullptr || data == nullptr) {
@@ -109,6 +130,7 @@ bool CommandBridge::receive_radio_command(
     }
 
     length = command.length;
+    if (forward_result != nullptr) *forward_result = static_cast<esp_err_t>(command.forward_result);
     std::memcpy(data, command.data, length);
     return true;
 }

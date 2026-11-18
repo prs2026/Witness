@@ -1,5 +1,7 @@
 # Witness HITL simulator
 
+> **Changed 2026-11-16.** Sections changed: "Safety rules" (launch rule: three Boost routes and the new reference constants; the false-flight restart is not wired, so no automatic reboot), "Tests" (the test count and the one known error). Sources: `Software/AUDIT/2026-11-15/fixes/04_fsm_filter_fixes.md` (HITL mirror: `sim_model.py ReferenceStateMachine`, `test_trajectory_csv.py launch_expected_s`, `test_sim_model.py`, `fake_witness.py`). Checked in `sim_model.py` (`LAUNCH_AGL_M`, `LAUNCH_ACCEL_G`, `AIRBORNE_RATE_MPS`, `EVIDENCE_AGL_M`). Expect Boost about 0.3 s after thrust starts in HITL runs (1-2 s earlier than before).
+
 A hardware-in-the-loop (HITL) tool for the Witness flight computer. It
 simulates a flight on the host and streams the simulated sensor data to a real
 Witness over its USB serial link. Witness runs its actual flight-state detector
@@ -524,7 +526,31 @@ handoff, "Attitude estimator").
   simulated flight, so treat it as test data.
 - After a simulated flight, Witness stays in Landed or whatever state it
   reached, and ENTER is rejected outside Pad Idle. Reboot Witness before the
-  next run. The tool won't send flight-state commands.
+  next run. The tool won't send flight-state commands. Witness's flight states
+  are one-way (since 2026-11-15): nothing steps a state back down. From
+  Landed, `0x7300` (sent by hand, or by Horizon's "Reset to Pad (Landed only)"
+  button) is acknowledged and Witness then restarts into Pad Idle with a fresh
+  filter; it takes a few seconds to come back (wait for its heartbeat before
+  the next ENTER). From Boost, Coast or Descent send `0x7304` (Landed) first.
+  A power cycle of the board also works, and so does the Pi hub power cycle
+  that the end-of-run log fetch does.
+- **Launch rules (2026-11-16):** Witness enters Boost from Pad Idle by any one of
+  three routes, and the reference state machine in `sim_model.py` (`ReferenceStateMachine`)
+  and the expected-transition times (`test_trajectory_csv.py launch_expected_s`, the
+  earlier of the rules) use the same three:
+  1. Kalman height above the pad over 30 m **and** Kalman vertical velocity at least
+     30 m/s, both for 300 ms. A simulated climb slower than 30 m/s does not launch
+     by this route.
+  2. Axial acceleration (body +X) at least 2.5 g for 300 ms, as a leaky budget that
+     drains 2x as fast below the threshold (`LAUNCH_ACCEL_G`, `LAUNCH_ACCEL_MS`,
+     `LAUNCH_ACCEL_DRAIN`).
+  3. Airborne at boot: raw barometer rate of at least +20 m/s (Boost) or -20 m/s
+     (Descent) for 1 s, only in Pad Idle (`AIRBORNE_RATE_MPS`, `AIRBORNE_MS`).
+  A flight with no evidence (under 50 m AGL and under 3 g axial) would be treated as
+  a false trigger when Witness declares Landed. The firmware calls a restart hook for
+  that case, but nothing is wired yet, so no reboot happens (see the Witness handoff).
+  Witness's filter also uses only GPS fixes with GGA quality 1, 2, 4 or 5, which is
+  what the HITL fake GPS and the RF simulator produce.
 - The tool can only encode these frames:
   - HITL ENTER `0x4849`;
   - HITL EXIT `0x4858`;
@@ -672,6 +698,10 @@ From `Software/HITL`:
 ```
 py -3.14 -B -m unittest discover -s tests -v
 ```
+
+Last run (2026-11-16, per the fix report): 94 tests, 93 pass. The one error is
+`test_gps_rf.Report`, which needs the `matplotlib` package that the test machine did
+not have; it is unrelated to the launch changes. The end-to-end headless test passed.
 
 These are the bench, protocol, model and headless tests, plus
 `test_headless_no_qt.py`, which checks that the headless runner never imports

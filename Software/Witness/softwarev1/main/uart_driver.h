@@ -50,6 +50,10 @@ public:
     void request_gps_assist_status() { assist_status_requested_ = true; }
     // Cold-starts the receiver on the GPS task's next pass (logged there).
     void request_gps_cold_start() { cold_start_requested_ = true; }
+    // Whether a cold start may still run when the GPS task consumes the
+    // request (Pad Idle only). Sensors refreshes it from the flight state on
+    // every pass; false until then, so a request is dropped when in doubt.
+    void set_cold_start_allowed(bool allowed) { cold_start_allowed_.store(allowed); }
 
     // Landed low-power mode (see landed_logic.h): the GPS task puts the
     // receiver to sleep (GpsReceiver::sleep) and later wakes it with a hot
@@ -78,15 +82,25 @@ public:
         std::uint32_t baud_estimate = 0;   // sclk / shortest pulse; 0 if idle
     };
     static constexpr std::uint32_t kProbeWindowMs = 400;
-    // An unidentified GPS is probed and identified again this often.
-    static constexpr std::uint32_t kIdentifyRetryMs = 10'000;
-    std::uint32_t identify_failed_ms_ = 0;
+    // The full re-probe (pins + baud) is paced and gated by GpsReceiver::
+    // probe_due(): only after kFullProbeSilenceMs without valid NMEA.
     static constexpr std::uint32_t kProbeMinimumEdges = 40;
 
 private:
     static constexpr std::size_t kDriverBufferSize = 8192;
     RxProbe probe_rx(std::uint32_t window_ms);
     void select_gps_pins();
+    // Listens on one orientation at one host rate for up to window_ms and
+    // returns true at the first checksum-valid NMEA sentence. Used when the
+    // edge probe cannot tell the pins apart (both show traffic after a
+    // power-on, bench 2026-11-17). Bytes read here are not logged.
+    bool nmea_heard(bool swapped, std::uint32_t baud, std::uint32_t window_ms);
+    static constexpr std::uint32_t kNmeaCheckWindowMs = 350;
+    // Orientation that last produced valid NMEA, kept in NVS so a power-on
+    // starts with it (written only on the pad, only when it changes).
+    void load_good_pins();
+    void store_good_pins();
+    int stored_pins_ = -1;   // NVS value: -1 none, 0 as wired, 1 swapped
     static constexpr std::size_t kReadBufferSize = 64;
 
     static void task_entry(void *context);
@@ -104,6 +118,10 @@ private:
     gpio_num_t rx_pin_;
     GpsReceiver gps_{{this, gps_send, gps_set_baud, gps_swap_pins}};
     bool pins_swapped_ = false;   // RX/TX exchanged from the configured pins
+    // Pin orientation that last produced valid NMEA (RAM, this session):
+    // preferred by the probe when no pin shows traffic (audit G5).
+    bool have_good_pins_ = false;
+    bool good_pins_swapped_ = false;
     // The UART TX output is routed to a pin only once the GPS has been heard
     // on the RX pin (first transmit), so a harness wired the other way round
     // never has two outputs driving the receiver's TX line.
@@ -118,6 +136,7 @@ private:
     std::size_t assist_pending_length_ = 0;  // nonzero: waiting for the GPS task
     volatile bool assist_status_requested_ = false;
     volatile bool cold_start_requested_ = false;
+    std::atomic<bool> cold_start_allowed_{false};
     static constexpr std::uint8_t kPowerNone = 0;
     static constexpr std::uint8_t kPowerSleep = 1;
     static constexpr std::uint8_t kPowerWake = 2;

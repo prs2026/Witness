@@ -283,6 +283,7 @@ bridge-only firmware. LoRa frames are forwarded unchanged to USB regardless of t
 | 4 Recovery page | RMC course/speed in parser, distance/bearing, compass UI, persisted last fix | 2 d |
 | 5 Wi-Fi page | Whitelisted command TX, ack handling, countdown, QR, SSID entry; optional Witness `d0=2` status + HTML `/logs` index | 2-3 d on Aperture, +1-2 d Witness |
 | 6 Field polish | Battery/thermal measurements, sunlight theme, case + button, brownout tuning, long soak | 2-3 d |
+
 Total roughly **2-3 weeks part-time** for the full set; Phases 0-3 (a working pad checker) about one week.
 
 Risks: (1) shared SPI regression in the radio path (mitigate with phase 1 test and RX counters); (2) 3V3
@@ -343,17 +344,17 @@ The Feather TFT has no touch and one usable button (BOOT, GPIO0; RESET is not re
 the radio/GPS wiring (see 1.1). If two external buttons are added on D5/D6, they become PAGE/PING and BOOT
 becomes MENU.
 
-```
+```text
 +----------------------------------------------------------+
 | LANDED   LAST PKT 0:42   -97dBm  +6dB   [FRESH]          |  status strip, 14 px
 |----------------------------------------------------------|
-|  34.05220 N                         (dial, N-up)          |
-| 118.24370 W                          target dot/arrow     |  coords ~28 px font
-|  alt 1231 m                                               |
-|                                        412 m              |  distance 40 px
-|  fix 3 min old  [STALE]                brg 247 deg        |
+|  34.05220 N                         (dial, N-up)         |
+| 118.24370 W                          target dot/arrow    |  coords ~28 px font
+|  alt 1231 m                                              |
+|                                        412 m             |  distance 40 px
+|  fix 3 min old  [STALE]                brg 247 deg       |
 |----------------------------------------------------------|
-| next pkt 0:18    you: 3D 9 sat    hist 1/4    hold: PING  |  footer, 14 px
+| next pkt 0:18    you: 3D 9 sat    hist 1/4    hold: PING |  footer, 14 px
 +----------------------------------------------------------+
 ```
 - Left ~150 px: lat/lon (decimal degrees; long press toggles degrees-decimal-minutes), GPS altitude, fix age with
@@ -429,6 +430,7 @@ mode)" instead of stale-red.
 | R3 | Recovery page, status strip, auto-enter and latch | 1-1.5 d |
 | R4 | Ping flow, rate limiter, TX queue, reply feedback, recovery TX power | 1 d |
 | R5 | Bench with scripted fake Landed packets through the bridge, then a range walk | 1 d plus field test |
+
 About **5-6 days** on top of the shared screen/button groundwork (~1 week), or **~2 days of UI work** for only the
 coordinate page plus ping (R0, minimal R1, R3, R4).
 

@@ -25,8 +25,8 @@ Labelling: **[V]** = read from a primary or vendor page in this session. **[S]**
 | **ADI ADV7180** | 8-bit BT.656 (16-bit variants too) [S] | 27 MHz LLC [E] | None | about 240 mW for CVBS, derived from mirror currents: DVDD 77 mA, PLL 12 mA, AVDD 33 mA at 1.8 V; power-down 15 uW [S, my sum] | single 1.8 V possible, I/O 1.8-3.3 V [S] | LFCSP-40/32, LQFP-64 [S] | **Not recommended for new designs** (ADI page via search summary) [S] | I2C (0x40/0x42) [E] |
 | **ADI ADV7280-M / ADV7280A-M** | **MIPI CSI-2, 1 data lane**, 8-bit YCrCb 4:2:2; non-M parts output 8-bit BT.656 [S] | CSI-2 serial; internal 27 MHz [E] | None known; has deinterlace? No (field-interleaved) [E] | mW not retrieved | Separate PVDD/AVDD/DVDD/MVDD(MIPI)/IOVDD rails, 1.8 V core [S] | LFCSP-32 5x5 [S] | ADV7280 points to ADV7280A; ADV7280A also shown NRND in a search summary [S]. LCSC lists ADV7280ABCPZ-M-RL (C662251) [S]. | I2C (0x40) [E] |
 | ADI ADV7281/82/83 (-M) | More inputs (4/6), same decode core, BT.656 or CSI-2; automotive "A/W" grades [S] | 27 MHz | None | - | 1.8 V | LFCSP-40 [E] | Automotive pricing; not needed | I2C |
-| **Renesas TW9910** | 8- or 16-bit 4:2:2 YCbCr, **ITU-R 601 (HS/VS) or 656** [S]; HS, VS, CLKx2 pins [S] | 27 MHz crystal (24.54/29.5 MHz for square pixel) [S] | **Built-in scaler: arbitrary downscale, packed output** [S] | <100 mW [S] | 1.8 V analog/digital, 3.3 V I/O [S] | 48-QFN 7x7 (LQFP-44 listed as obsolete) [S/V] | Renesas page: **Active**, TW9910-NB2-GR **$3.19**, in stock (page snapshot) [V] | I2C (0x88/0x8A) [E] |
-| **Renesas TW9912** | **Progressive** ITU-R 656 via internal deinterlacer, also interlaced 656; component input [V] | 27 MHz crystal [S] | Scaler not mentioned on product page [V] | "low power", no figure [V] | 1.8 V + 3.3 V I/O [V] | 48-QFN 7x7x0.9 [V] | Active, TW9912-NA3-CR **$2.42** [V] | I2C |
+| **Renesas TW9910** | 8- or 16-bit 4:2:2 YCbCr, **ITU-R 601 (HS/VS) or 656** [S]; HS, VS, CLKx2 pins [S] | 27 MHz crystal (24.54/29.5 MHz for square pixel) [S] | **Built-in scaler: arbitrary downscale, packed output** [S] | <100 mW [S] | 1.8 V analog/digital, 3.3 V I/O [S] | 48-QFN 7x7 (LQFP-44 listed as obsolete) [S/V] | Renesas page: **Active**, TW9910-NB2-GR **\$3.19**, in stock (page snapshot) [V] | I2C (0x88/0x8A) [E] |
+| **Renesas TW9912** | **Progressive** ITU-R 656 via internal deinterlacer, also interlaced 656; component input [V] | 27 MHz crystal [S] | Scaler not mentioned on product page [V] | "low power", no figure [V] | 1.8 V + 3.3 V I/O [V] | 48-QFN 7x7x0.9 [V] | Active, TW9912-NA3-CR **\$2.42** [V] | I2C |
 | Renesas TW9990 | BT.656 (S-video and differential CVBS), AEC-Q100 [S] | - | not verified | - | - | 32-WFQFN 5x5 [S] | Full datasheet login-gated; datasheet FN8406 Rev 6.01 (2023) [S] | I2C |
 | GM7150 (TVP5150 pin-clone, from memory) | BT.656 | 27 MHz | None | - | - | QFN | Not checked; common on cheap capture cards. [E] | I2C |
 
@@ -52,7 +52,7 @@ Notes on the table:
 
 | MCU | Primary | Why | Fallback |
 |---|---|---|---|
-| ESP32-S3 | **TVP5150AM1PBSR** (TQFP-32, active, in stock; revised, section 12) | Discrete HS/VS plus programmable AVID as DE [V]; 3.3 V I/O; 115 mW; 14.31818 MHz crystal; software 2:1 decimation | **TW9910-NB2-GR** (QFN-48, $3.19 on Renesas, hard to get): scaler gives 320x240 at a low pixel clock; AVID/DE output unconfirmed |
+| ESP32-S3 | **TVP5150AM1PBSR** (TQFP-32, active, in stock; revised, section 12) | Discrete HS/VS plus programmable AVID as DE [V]; 3.3 V I/O; 115 mW; 14.31818 MHz crystal; software 2:1 decimation | **TW9910-NB2-GR** (QFN-48, \$3.19 on Renesas, hard to get): scaler gives 320x240 at a low pixel clock; AVID/DE output unconfirmed |
 | ESP32-P4 | **ADV7280A-M** (or -M) over CSI-2 | No parallel-sync risk; YUV422 into hardware JPEG; 1 lane | TW9910 on DVP (same risk as the S3) |
 
 ## 3. Compute and memory budget on the S3
@@ -213,10 +213,11 @@ For the study's link rates (150-1500 kbps net), none of these change what the ra
 ## 9. Bill of materials
 
 **Option A: ESP32-S3 "Iris v2" video board (recommended first try).** Prices unverified except the decoder.
+
 | Item | Part | Note |
 |---|---|---|
 | MCU module | ESP32-S3-WROOM-1 N8R8 (octal PSRAM) or N16R8 | octal PSRAM required |
-| Decoder (revised) | TI TVP5150AM1PBSR, 32-TQFP, about $4-9 [V/S, section 12] | AVID as DE; needs 1.8 V + 3.3 V rails and a 14.31818 MHz crystal. Renesas TW9910-NB2-GR (48-QFN, $3.19) is the fallback |
+| Decoder (revised) | TI TVP5150AM1PBSR, 32-TQFP, about \$4-9 [V/S, section 12] | AVID as DE; needs 1.8 V + 3.3 V rails and a 14.31818 MHz crystal. Renesas TW9910-NB2-GR (48-QFN, \$3.19) is the fallback |
 | Decoder fallback | TI TVP5150AM1 (TQFP-32) | AVID as DE, 27 MHz crystal |
 | Crystal | 14.31818 MHz (TVP5150AM1; datasheet requires this, not 27 MHz) [V] | the TW9910 fallback uses 27 MHz |
 | Analog front end | 75 ohm termination, 0.1 uF coupling, TVS | RunCam composite in |
@@ -226,6 +227,7 @@ For the study's link rates (150-1500 kbps net), none of these change what the ra
 | Debug | USB, boot/reset, test pads for DVP bus | scope access to PCLK/VS/HS/DE |
 
 **Option B: ESP32-P4 board.**
+
 | Item | Part | Note |
 |---|---|---|
 | MCU | ESP32-P4 module with 16-32 MB PSRAM and flash | module choice and price unverified |
@@ -259,7 +261,7 @@ For the study's link rates (150-1500 kbps net), none of these change what the ra
 | Radios | Wi-Fi 6 2.4 GHz 1T1R, BLE 5.4, BT Classic, 802.15.4 (Thread/Zigbee) [V]. No sub-GHz/FLRC; the LR2021 stays an external SPI part | Wi-Fi 4, BLE 5 |
 | Other | CAN FD controller (ISO 11898-1:2015), 1000 Mbps Ethernet MAC, USB 2.0 HS OTG, 2 SDIO, 4 UART, 6 SPI, 2 I2C [V] | classic TWAI |
 | Package | QFN80 8x8 mm, 60 GPIO, -40 to 85 C [V] | QFN56 |
-| Status | Announced 2026-03-26 "upcoming" [V]; Espressif FAQ: "officially entered mass production", chips and modules in capacity ramp-up, chips/modules through channels July-August 2026, dev boards already purchasable [V]. LinuxGizmos 2026-07-28 reports mass production, ESP32-S31-WROOM-3 module about $5.84 and bare ESP32-S31NRV16 about $4.51 on AliExpress [S]. A Mouser-hosted ESP32-S31-WROOM-1 datasheet is a confidential pre-release v0.1 [S] | mature |
+| Status | Announced 2026-03-26 "upcoming" [V]; Espressif FAQ: "officially entered mass production", chips and modules in capacity ramp-up, chips/modules through channels July-August 2026, dev boards already purchasable [V]. LinuxGizmos 2026-07-28 reports mass production, ESP32-S31-WROOM-3 module about \$5.84 and bare ESP32-S31NRV16 about \$4.51 on AliExpress [S]. A Mouser-hosted ESP32-S31-WROOM-1 datasheet is a confidential pre-release v0.1 [S] | mature |
 | ESP-IDF | Preview support on master and the v6.1 branch; v6.1-beta1/rc1 pre-releases; **first official supported tag is v6.1.1**; Espressif says to build from latest master, and a status page marks unsupported/unknown features [V/S]. I could not see a per-peripheral table (LCD_CAM, JPEG, PPA support status unknown) | mature (v5.x/v6.0.x) |
 
 Check on arrival: whether v6.1.1 has shipped by your build date, and the per-peripheral support table at https://developer.espressif.com/hardware/esp32s31/ (loaded empty for me).
@@ -320,7 +322,7 @@ Notes:
 | Decoder choices | TW9910, TVP5150, ADV7180, non-M ADV7280A | same as S3 | those plus ADV7280A-M via CSI |
 | PSRAM | octal 80 MHz external, 40-85 MB/s | in-package octal 250 MHz DDR, about 500 MB/s peak | in-package/external, larger |
 | IDF maturity | mature, stable, many examples | preview only (master/v6.1), first official tag v6.1.1 [V/S] | released; camera, JPEG, H.264 drivers exist [S] |
-| Module availability | WROOM-1 N8R8/N16R8, plentiful | chip about $4.5, WROOM-3 about $5.8 on AliExpress [S]; official channels ramping July-Aug 2026; dev boards buyable [V] | modules/boards exist [E, not rechecked] |
+| Module availability | WROOM-1 N8R8/N16R8, plentiful | chip about \$4.5, WROOM-3 about \$5.8 on AliExpress [S]; official channels ramping July-Aug 2026; dev boards buyable [V] | modules/boards exist [E, not rechecked] |
 | CAN | classic TWAI (CAN FD not supported) | CAN FD [V] | 3 TWAI [study] |
 | Fits the link-limited job | yes | yes, with CPU to spare | overkill |
 
@@ -396,7 +398,7 @@ A cleverer variant avoids PSRAM entirely: GDMA drops lines into a ring of two 8-
 | Temp | commercial 0-70 C; industrial (I suffix) -40 to 85 C; automotive Q1 variants listed | not checked |
 | Orderable | TVP5150AM1PBSR (commercial, T&R 1000), TVP5150AM1PBS (tray), TVP5150AM1IPBSR (industrial, -40 to 85 C), IPBSRQ1 (AEC-Q100); datasheet table lists IPBSR "Active, Production" | similar |
 | Lifecycle | TI page: ACTIVE, but "no ongoing design support for new projects" (same wording as the TVP5151 page) | same |
-| Stock/price (snapshots) | DigiKey JP page: **729 in stock**, JPY 1365 (1), 893 (100), 761 (1000 reel), 26-week lead time, Active [V]; Mouser **3505 in stock at $4.16** (aggregator snapshot) [S]; LCSC has C10013 and a variant C2652020 (3 in stock, $6.50) [S]; counterfeit/grey-market risk on cheap marketplace chips [E] | not checked |
+| Stock/price (snapshots) | DigiKey JP page: **729 in stock**, JPY 1365 (1), 893 (100), 761 (1000 reel), 26-week lead time, Active [V]; Mouser **3505 in stock at \$4.16** (aggregator snapshot) [S]; LCSC has C10013 and a variant C2652020 (3 in stock, \$6.50) [S]; counterfeit/grey-market risk on cheap marketplace chips [E] | not checked |
 | Linux | mainline `drivers/media/i2c/tvp5150.c` supports TVP5150A/AM1 and TVP5151 [S] | same driver |
 
 Existing designs and proof points:
@@ -409,7 +411,7 @@ Existing designs and proof points:
 
 **Yes, it works on paper, and it is now the recommended first-board decoder.**
 
-What it fixes: the single biggest S3 risk was "no data-enable". The TVP5150AM1 gives a programmable AVID that goes low in vertical blanking (12h bit 2), so CAM_H_ENABLE sees only active pixels, VSYNC per field, an HSYNC if wanted, a 27 MHz byte clock well under the S3's 40 MHz PCLK limit, 3.3 V I/O, and a horizontal crop in registers. It is in stock at DigiKey (729) and Mouser (about 3500, snapshot) at about $4-9, in a hand-solderable 32-TQFP, with a mainline Linux driver that lets you debug the decoder on a Pi or other Linux board first.
+What it fixes: the single biggest S3 risk was "no data-enable". The TVP5150AM1 gives a programmable AVID that goes low in vertical blanking (12h bit 2), so CAM_H_ENABLE sees only active pixels, VSYNC per field, an HSYNC if wanted, a 27 MHz byte clock well under the S3's 40 MHz PCLK limit, 3.3 V I/O, and a horizontal crop in registers. It is in stock at DigiKey (729) and Mouser (about 3500, snapshot) at about \$4-9, in a hand-solderable 32-TQFP, with a mainline Linux driver that lets you debug the decoder on a Pi or other Linux board first.
 
 Remaining risks, in order:
 1. **Untested on an S3 (High-Medium).** No known S3 + TVP5150 design; DE + VSYNC mode, PCLK polarity and byte-count EOF must be proved on the bench. Mitigation: breadboard a TVP5150 module (cheap USB capture dongles and eval boards use it or the GM7150 clone [E]) to an S3 dev kit before PCB.
@@ -428,12 +430,12 @@ Remaining risks, in order:
 
 | Part | Sync outputs / DE | Stock and price snapshot | Comment |
 |---|---|---|---|
-| TVP5150AM1 | HS, VS, FID, **AVID** [V] | DigiKey 729 (JPY 1365 at 1); Mouser 3505 at $4.16 | recommended |
+| TVP5150AM1 | HS, VS, FID, **AVID** [V] | DigiKey 729 (JPY 1365 at 1); Mouser 3505 at \$4.16 | recommended |
 | TVP5151 | discrete syncs; AVID not stated on TI page [V] | not checked | 27 MHz crystal, 138 mW |
-| ADV7180 (BCPZ, parallel) | HS, VS, FIELD [E]; no AVID known | DigiKey 208 at $18.68 (BCPZ tray) | "not recommended for new designs"; about 4x the price; HS-as-DE workaround only |
-| ADV7280A non-M (ADV7280AWBCPZ, parallel BT.656) | embedded sync, HS/VS available [E] | Mouser 218 at $27.9-31.1; DigiKey 0 in stock, 13-18 week lead | expensive, automotive WB grade; NRND per search summary |
-| TW9912-NA3-CR | progressive BT.656 via deinterlacer; sync pins not checked | Mouser 260 at $5.41 (3.37 at 260 pcs); Renesas page $2.42 | progressive output at 27 MHz means 2x data and no benefit here; HS/VS/DE unknown |
-| TW9910 | HS, VS, CLKx2 [S] | Renesas page $3.19 in stock; user reports hard to get | scaler; DE unconfirmed |
+| ADV7180 (BCPZ, parallel) | HS, VS, FIELD [E]; no AVID known | DigiKey 208 at \$18.68 (BCPZ tray) | "not recommended for new designs"; about 4x the price; HS-as-DE workaround only |
+| ADV7280A non-M (ADV7280AWBCPZ, parallel BT.656) | embedded sync, HS/VS available [E] | Mouser 218 at \$27.9-31.1; DigiKey 0 in stock, 13-18 week lead | expensive, automotive WB grade; NRND per search summary |
+| TW9912-NA3-CR | progressive BT.656 via deinterlacer; sync pins not checked | Mouser 260 at \$5.41 (3.37 at 260 pcs); Renesas page \$2.42 | progressive output at 27 MHz means 2x data and no benefit here; HS/VS/DE unknown |
+| TW9910 | HS, VS, CLKx2 [S] | Renesas page \$3.19 in stock; user reports hard to get | scaler; DE unconfirmed |
 | TW9990 | BT.656; datasheet login-gated | not checked | 5x5 WFQFN, AEC-Q100; no |
 | GM7150 (TVP5150 clone) | like TVP5150 [E] | marketplace only | grey-market; avoid for flight |
 

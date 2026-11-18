@@ -76,7 +76,15 @@ public:
     static constexpr std::uint16_t kUbloxMeasurementPeriodMs = 100;
 
     enum class Model { Unknown, Px1120s, UbloxM8 };
-    enum class Status { Disabled, Configuring, Ready, Failed };
+    // Ready      configured: every required command acknowledged or read back,
+    //            NMEA flowing. Streaming   NMEA flows but the configuration was
+    //            never confirmed (usable position; configuration retried slowly
+    //            in the background at the same baud and pins). Recovering  was
+    //            Ready/Streaming, no valid NMEA for kSilenceRecoveryMs: listening
+    //            at 115200 and the fallback rate on the known-good pins.
+    //            Failed     no data and no usable configuration; a full probe
+    //            (pins + baud) is done by the caller when probe_due().
+    enum class Status { Disabled, Configuring, Ready, Failed, Streaming, Recovering };
 
     struct Transport {
         void *context;
@@ -103,6 +111,32 @@ public:
     // finds 88.4 kbaud and configures it there. Nothing is ever written to
     // the receiver's flash, so retrying is harmless.
     bool can_retry_identification() const { return status_ == Status::Failed; }
+    // ---- Supervision (audit G1, G2, G7). The caller reports every
+    // checksum-valid GGA with observe_gga(); the receiver decides alone.
+    // A receiver that delivers valid NMEA is never re-probed or re-baudded.
+    static constexpr std::uint32_t kNmeaArrivingMs = 1500;     // "NMEA is flowing"
+    static constexpr std::uint32_t kSilenceRecoveryMs = 3000;  // Ready -> Recovering
+    static constexpr std::uint32_t kRecoveryListenMs = 2000;   // per baud in Recovering
+    static constexpr std::uint32_t kFullProbeSilenceMs = 5000; // full probe only after this
+    static constexpr std::uint32_t kProbeRetryMs = 10000;      // between full probes
+    static constexpr std::uint32_t kConfigRetryMinMs = 5000;   // background config backoff
+    static constexpr std::uint32_t kConfigRetryMaxMs = 60000;
+    void observe_gga(std::uint32_t now_ms, std::uint32_t count = 1);
+    // Valid GGA within kNmeaArrivingMs.
+    bool streaming(std::uint32_t now_ms) const {
+        return have_gga_ && now_ms - last_gga_ms_ < kNmeaArrivingMs;
+    }
+    // A full re-probe (pin probe + baud listen, blocks the UART task ~0.8 s)
+    // is allowed: Failed, no valid NMEA for kFullProbeSilenceMs, backoff over.
+    bool probe_due(std::uint32_t now_ms) const;
+    bool configured() const { return status_ == Status::Ready; }
+    // One line for the diagnostic: "ready (configured)", "streaming
+    // (unconfigured)", "streaming (reconfiguring)", "recovering", ...
+    const char *state_text(std::uint32_t now_ms) const;
+    std::uint32_t recoveries() const { return recoveries_; }
+    std::uint32_t config_retries() const { return config_retries_; }
+    std::uint32_t measured_rate_hz() const { return rate_hz_; }   // GGA per second, last window
+    std::uint32_t good_baud() const { return have_good_baud_ ? good_baud_ : 0; }
     // Observes a copy of the received stream; never removes bytes from logging.
     void consume(const std::uint8_t *data, std::size_t length,
                  std::uint32_t now_ms);
@@ -112,6 +146,10 @@ public:
     // nearest kScanBauds entry is tried first, then the rest in order; a
     // rate near no standard one (2400..1M) is tried as measured, first.
     void set_baud_hint(std::uint32_t measured_baud);
+    // The startup probe decoded checksum-valid NMEA at this host rate on the
+    // chosen pins: identification starts there (kFixedBaud too: only the host
+    // UART rate changes), then falls back to 115200 and the measured rate.
+    void set_start_baud(std::uint32_t verified_baud);
     // Nearest scan rate within 8%, or 0.
     static std::uint32_t nearest_scan_baud(std::uint32_t measured_baud);
 
@@ -193,6 +231,14 @@ private:
     static constexpr std::size_t kUbloxMaximumPayload = 1024;
 
     void begin_step(Step step, std::uint32_t now_ms);
+    void supervise(std::uint32_t now_ms);
+    void service_recovery(std::uint32_t now_ms);
+    void enter_recovery(std::uint32_t now_ms);
+    void start_background_config(std::uint32_t now_ms);
+    void schedule_config_retry(std::uint32_t now_ms);
+    void reset_rate_window(std::uint32_t now_ms);
+    void ready_or_streaming(std::uint32_t now_ms);
+    bool forbidden_skytraq(const std::uint8_t *payload, std::size_t length) const;
     void identified(Model model, std::uint32_t now_ms);
     void fail(const char *reason);
     bool send_skytraq(const std::uint8_t *payload, std::size_t length);
@@ -271,4 +317,31 @@ private:
     unsigned optional_rejects_ = 0;
     const char *last_optional_reject_ = "";
     const char *assist_refusal_ = "";
+
+    // Supervision state.
+    std::uint32_t last_service_ms_ = 0;
+    bool have_gga_ = false;
+    std::uint32_t last_gga_ms_ = 0;
+    std::uint32_t grace_start_ms_ = 0;    // silence is measured from max(last GGA, this)
+    bool background_config_ = false;      // Configuring while NMEA flows (no re-probe)
+    bool unacked_required_ = false;       // a required command was never acknowledged
+    std::uint32_t next_config_try_ms_ = 0;
+    std::uint32_t config_backoff_ms_ = kConfigRetryMinMs;
+    std::uint32_t config_retries_ = 0;
+    std::uint32_t next_probe_ms_ = 0;
+    std::uint32_t recoveries_ = 0;
+    // Rate window (GGA per second) to see a receiver back at its 1 Hz default.
+    std::uint32_t rate_window_ms_ = 0;
+    std::uint32_t rate_count_ = 0;
+    std::uint32_t rate_hz_ = 0;
+    unsigned low_rate_windows_ = 0;
+    // Last baud that produced valid NMEA (RAM, this session); tried first.
+    bool have_good_baud_ = false;
+    std::uint32_t good_baud_ = kOperationalBaud;
+    bool default_tried_ = true;           // 115200 listened to in this identification
+    // Recovery ladder: bauds listened to, in order.
+    std::array<std::uint32_t, 3> recovery_bauds_{};
+    std::size_t recovery_count_ = 0;
+    std::size_t recovery_stage_ = 0;
+    std::uint32_t recovery_stage_ms_ = 0;
 };

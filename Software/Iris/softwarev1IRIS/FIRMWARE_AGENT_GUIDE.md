@@ -1,5 +1,7 @@
 # Iris Firmware Agent Guide
 
+> **Changed 2026-11-16.** Sections changed: 2 (source map: `load_state.*`, `load_state_logic.h`, `recovery_logic.h`, the new tests); 3 (reset recovery rewritten; "MCP init failure is fatal" removed); 4 (expander recovery, bus clear); 6 (no change to packet layouts); 9 (main stack 6144 B, `nvs_flash`); 10 (trap 12: outputs always off after a power cycle; load state only in RTC, no NVS). Source: `Software/AUDIT/2026-11-15/fixes/07_iris_fixes.md`, checked against the load-state and expander code paths named there. The GPIO9 hold and the power-cycle behaviour are NOT bench verified. AGENTS.md repeats none of these facts and is unchanged.
+
 This document is a handoff guide for an engineer or coding agent working on
 the Iris firmware. It describes the behavior implemented by the current
 source tree. When this document and the code disagree, the source files named
@@ -33,9 +35,12 @@ voltage, accepts commands and emits binary telemetry.
 | `main/battery_voltage.*` | Calibrated ADC battery-voltage measurement |
 | `main/twai_driver.*` | Active interrupt-driven TWAI driver with bounded queues and bus-off recovery |
 | `main/can_link.*` | Nonblocking packet queue, CAN fragmentation and reassembly |
+| `main/load_state.*`, `main/load_state_logic.h` | Commanded load mask kept in RTC memory only; restored on warm resets, all off at power-up; one-time stale NVS key erase (2026-11-16) |
+| `main/recovery_logic.h` | Expander and I2C recovery spacing and threshold (2026-11-16; host test `tests/recovery_logic_test.cpp`) |
+| `tests/load_state_test.cpp`, `tests/recovery_logic_test.cpp` | Host tests for the two logic headers (`load_state_test` rewritten 2026-11-16) |
 | `../../../Intercomm/can_transport.h` | Shared Witness/Iris CAN transport codec |
 | `main/CMakeLists.txt` | Active application sources and ESP-IDF dependencies |
-| `sdkconfig.defaults` | Scheduler, flash, RF and USB-console defaults |
+| `sdkconfig.defaults` | Scheduler, flash, RF and USB-console defaults (main stack 6144 B since 2026-11-16) |
 
 ## 3. Startup and main loop
 
@@ -49,27 +54,54 @@ voltage, accepts commands and emits binary telemetry.
 6. Enters a permanent loop which reads battery voltage at its configured
    interval, calls `UsbSerialEcho::poll()`, then calls `vTaskDelay(1)`.
 
-### Reset recovery (C4)
+### Reset recovery and load state (2026-11-16, revised after the owner decision)
 
-`app_main` first calls `load_state::begin_boot()`. The commanded load mask
-(OUT1..3, 5V; MCP pin bits 0..3) is kept in `RTC_NOINIT` memory with magic +
-CRC32 (`load_state_logic.h`, host test `tests/load_state_test.cpp`) and updated
-in `set_expander_output`. Warm resets (software, panic, INT/TASK/RTC watchdog,
-brownout, CPU lockup) with a valid record re-apply the mask: GPIO9 is driven
-high without pulsing the expander reset, OLAT then IODIR are written (retried
-on I2C errors). Power-on, external, USB and unknown resets, or an invalid
-record, keep the safe default (all off). Loads still drop during the reset
-itself (R55 10k pulldown on GPIO9/RESET and the EN pulldowns), so expect
-roughly the ROM+bootloader+app-start time (a few hundred ms) before outputs
-return. Witness re-sends commands as a backup (see its handoff). Expander
-bring-up never aborts: it retries, then keeps retrying from the main loop; ADC
-and USB-driver init failures are non-fatal. The expander cache is re-pushed
-(OLAT, IODIR) once per second and `write_pin` always writes, so a failed I2C
-write or an expander-only reset self-heals within 1 s.
+Owner decision: **no Iris output is energised at power-up; power is retained
+through soft resets.** The commanded load mask (OUT1..3, 5 V) lives in ONE place:
+an `RTC_NOINIT` record (magic + mask + CRC32, 12 bytes). Nothing is stored in or
+read from flash/NVS. `load_state::begin_boot()` runs first in `app_main`;
+`decide_boot(reset_class, rtc)` in `load_state_logic.h` restores only when the
+reset is WARM and the RTC record is valid, otherwise all outputs are off.
+
+| Reset | Outputs |
+|---|---|
+| Power-on, EN/EXT pin, USB/JTAG, deep sleep, eFuse, glitch, unknown | OFF until commanded (expander reset pulsed; any RTC record ignored) |
+| Software restart, panic, interrupt/task/other watchdog | Restored from the RTC record; GPIO9 held so the expander is not reset |
+| Brownout | Restored if the RTC record is valid, else OFF (see below) |
+| Warm class but record missing/corrupt | OFF |
+
+- A real power-off loses RTC RAM (random on the next power-up). A false "valid"
+  record needs magic (32 bit), CRC32 and 28 zero mask bits to match by chance,
+  about 2^-92. Cold reset classes ignore the record anyway.
+- Brownout counts as warm: the RTC domain survives a supply dip, so in flight
+  (battery sag at ignition) the cameras stay commanded on; after a real power-off
+  the record is garbage and the outputs stay off.
+- `store()` updates the record at once on every command and CLEARS it (zeros) when
+  all four loads are commanded off.
+- `service()` (main loop, 3 s after boot) erases the stale NVS key `iris/loads`
+  that the 2026-11-15/16 builds wrote, once, so an old stored "on" can never be used.
+- Warm resets: GPIO9 (the expander reset line) is held high through the reset with
+  `gpio_hold_en`, so the expander is normally not reset and the loads should stay on.
+  **Not bench verified.** If the hold does not survive on silicon, the RTC restore
+  at `app_main` start applies the mask.
+- After a cold reset of Iris alone, Witness re-sends its commanded load states over
+  CAN from its own RAM tracker (`iris_load_tracker.h`); that is the recovery path.
+- Expander-only reset or I2C glitch: detected by a 100 ms readback
+  (`verify_and_heal`); off for at most about 100 ms.
+- Stuck I2C bus: `recover_bus()` (controller reset plus SCL clocking) after two
+  failures spaced 500 ms apart; the cache is re-pushed at once.
+- The expander never aborts boot. Bring-up retries, then the main loop retries
+  with the newest commanded mask.
+
+What cannot be fixed in firmware: the R55 pulldown on GPIO9/RESET (power-on, EN
+reset) and the EN pulldowns of the load switches. A hardware change (a pull-up on
+RESET, or a supervisor that keeps the expander alive) would remove the power-on gap.
 
 PAC193x initialization failure is nonfatal: it is logged and the application
-continues. MCP23008, ADC, UART or USB initialization failure is fatal through
-`ESP_ERROR_CHECK`.
+continues. The USB driver, the battery ADC (uncalibrated fallback when the eFuse
+calibration is missing) and CAN are non-fatal (2026-11-16). MCP23008 initialization
+failure is retried and is no longer fatal; the old "MCP init failure is fatal"
+statement is stale.
 
 The scheduler tick is 100 Hz, so `vTaskDelay(1)` nominally yields for 10 ms.
 All application schedules use `esp_timer_get_time()` and catch up their next
@@ -111,6 +143,8 @@ CANRX (GPIO3), while RXD is on CAN_TX (GPIO1).
 - GP7: blue LED.
 - Bus rate: 400 kHz.
 - Internal ESP32 I2C pull-ups are disabled; the board must provide pull-ups.
+- Expander readback (100 ms) and bus recovery were added 2026-11-16; see the reset
+  section above.
 
 The driver writes OLAT before changing IODIR to output, preventing a startup
 glitch. It maintains cached direction and output-latch bytes, so MCP23008
@@ -392,6 +426,14 @@ partition table `0x8000` and application `0x10000`.
    telemetry reports zero with the battery error flag set.
 10. The active application has no custom RTOS tasks. Preserve the nonblocking
     polling model unless a deliberate architecture change is requested.
+12. **Outputs are always off after a power cycle** (owner decision 2026-11-16). The
+    commanded state survives only warm resets (software, panic, watchdog, brownout
+    with a valid RTC record). There is no need to send OFF before pack-down. After a
+    cold reset of Iris alone the cameras stay off until Witness re-sends its commanded
+    states over CAN (or a command arrives on the Iris USB port); if Witness reset too
+    they stay off. Iris has no flight-state knowledge (Witness gates the commands).
+13. The main task stack is 6144 B (was 3584 B). The high-water mark is logged for the
+    first 10 minutes and kept in RTC; read it on a board before reducing it.
 11. Keep the shared CAN codec and both peers compatible; its three-byte
     fragment header is distinct from the canonical application frame.
 

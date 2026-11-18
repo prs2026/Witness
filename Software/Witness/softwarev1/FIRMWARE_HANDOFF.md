@@ -1,5 +1,7 @@
 # Witness firmware agent handoff
 
+> **Changed 2026-11-16.** Sections changed: "Startup and execution model" (boot failure policy, watchdog, stacks), the new section "Changes of 2026-11-16 (audit fixes)" (launch rules, one-way states, filter without attitude, what survives a reset, GPS state machine, logging, radio, boot, earlier findings with FIXED or STILL OPEN), "Position Kalman filter" note on pad gravity, "Status and flight state" (launch table), "Radio behavior" (TX power, hold-off), "GPS operation" (states), "Flight state across resets and Kalman AGL (FSM)" (filter references, second mid-flight reset), "Pad Idle radio rate and Landed low-power mode" (disabled), and the watchdog note. Sources: `Software/AUDIT/FULL_AUDIT_2026-11-15.md`, `Software/AUDIT/2026-11-15/fixes/01`-`06`, and `Software/Witness/softwarev1/KALMAN_AUDIT_2026-11-15.md`. Read the new section first: several older paragraphs below describe the code as it was on 2026-11-15.
+
 ## Purpose and current configuration
 
 Witness is C++ firmware for the ESP32-S3 flight computer. ESP-IDF and FreeRTOS
@@ -15,10 +17,13 @@ with the user before changing them:
 - `HW_RADIO_ENABLED` is **1** in `main/hardware_pins.h`. Radio code is present,
   and initialization/service are enabled for the end-to-end setup.
 - `app_main()` starts **UART1** for the GPS (PX1120S or u-blox M8, auto-detected).
-  `HW_MCU_UART_SWAP_RX_TX` in `main/hardware_pins.h` is currently **1**: ESP32 RX
-  is GPIO5 and TX is GPIO4, which is what the fitted u-blox harness needed on
-  2026-11-08. The normal wiring (0) is RX GPIO4, TX GPIO5; the earlier PX1120S
-  streamed on that. Zero UART bytes from boot onward points at this setting.
+  `HW_MCU_UART_SWAP_RX_TX` in `main/hardware_pins.h` is **0** in the code as of
+  2026-11-16 (the normal wiring: RX GPIO4, TX GPIO5). An older version of this text
+  said 1 (swapped, needed on 2026-11-08 by the fitted u-blox harness). The 2026-11-14
+  bench report says this board's RX and TX are swapped and the boot probe finds the
+  receiver on GPIO5. The fix reports (05, item 3) ask for the swap to be set on this
+  board. Until that is decided, the probe and the remembered-orientation logic are the
+  only thing that finds the pins. Zero UART bytes from boot onward points at this setting.
   Its operational baud is **115200**, 8N1, without flow control.
 - GPS I2C sources remain in `main/`, but are **not compiled or started**.
 - Automatic flight transitions are enabled. Binary sensor logging is enabled
@@ -65,6 +70,237 @@ The workbook is `AMA_comms_standard.xlsx`. For software changes, inspect
 `comms.h` first; do not silently regenerate it from a potentially different
 workbook revision. Spreadsheet edits require their own validation workflow.
 
+## Changes of 2026-11-16 (audit fixes)
+
+These changes come from the fix reports listed in each item. Nothing here was
+flashed or run on hardware. "Host-tested" means a host unit test passed. Constants
+are from the code (`flight_state_machine.h`, `command_policy.h`, `tx_slot.h`,
+`uplink_pacing.h` on Aperture, `gps_receiver.h`, `flight_logger` headers).
+
+### Launch and state machine (fix 04)
+
+- **Boost has three routes** from Pad Idle, any one of which is enough:
+  1. Kalman AGL above 30 m and Kalman vertical velocity at least 30 m/s, both for
+     300 ms (`kLaunchAglMeters`, `kLaunchVerticalVelocityMps`, `kLaunchQualificationMs`).
+  2. Filtered axial acceleration (body +X) at least 2.5 g for 300 ms (leaky budget,
+     drains 2x as fast below the threshold, credit capped at 50 ms per observation;
+     `kLaunchAccelerationG`, `kLaunchAccelerationQualificationMs`). Needs no attitude
+     and no position filter. A 2 g net motor (TWR 3, reads 3 g) fires 0.3 s after
+     ignition; a 1 g net motor (TWR 2) does not use this route.
+  3. Airborne at boot: raw barometer rate (`position::BaroRate`, independent of the
+     filter) of +20 m/s (`kAirborneRateMps`) for 1 s. The same rule gives Descent for
+     -20 m/s. Only in Pad Idle. Intended for a cold reset in flight. A slow chute
+     (under 20 m/s) and a cold reset in supersonic flight are not covered.
+- Detection delay after liftoff for net acceleration `a`: Kalman rule
+  max(sqrt(60/a), 30/a) + 0.3 s (3 g: 1.74 s; 2 g: 2.05 s; 1 g: 3.4 s). The 2 s
+  pre-launch ring covers TWR >= 2.5. For TWR below 2.5 the ring needs about 4 s to
+  hold the liftoff; this is not changed (logging owner to decide).
+- **One-way states.** `FlightStateMachine::set_state` refuses any lower state
+  (`ESP_ERR_INVALID_STATE`). The only way back to Pad Idle is `0x7300` while Landed:
+  Witness acknowledges, then restarts (0.4 s after the ack over USB, 1.0 s over radio).
+  The restart is re-checked when it fires (fix 06). The pad hold is not gated by the
+  state, so a recovered board sitting still stays at 0 m AGL.
+- **The filter runs without an attitude** (fix 04 1a). Stillness and the pad gravity
+  measurement use only the magnitude of the specific force. Off the pad or without an
+  attitude the filter is predicted with baro and GPS (`predict_magnitude_only`, or
+  `predict_without_imu` once the attitude is lost). On the pad the AGL and vertical
+  velocity are valid from the first IMU sample. The Kalman log flag `IMU_IGNORED`
+  (0x02) now also means "no attitude yet". The attitude itself still needs a still
+  window on the pad.
+- **Pad gravity** (audit Kalman finding 3, fix 04 and the Kalman audit): the
+  filter measures the local g while still on the pad (1.01 g offset in the test) and
+  uses it, not 9.80665 m/s^2, for the flight. A 60 s coast without baro or GPS: 1 m
+  error (was 183 m). HITL replay descent error 11.9 % to 2.75 %. Jolts under 0.5 s are
+  ignored by the pad measurement.
+- **GPS quality.** Only GGA fix qualities 1, 2, 4 and 5 feed the filter and heading
+  alignment (fix 04, Kalman finding 2). Qualities 6 (dead reckoning), 7 and 8 do not.
+  They still show in telemetry with the GPS-locked bit. 2D fixes are not detected
+  (no GSA on the 25 Hz configuration).
+- **Filter robustness** (fix 04 3-4): non-finite inputs are rejected and counted;
+  a NaN or divergent state resets the axes to zero position and velocity with the
+  initial variance (baro reference and gravity are kept); a predict gap over 0.1 s
+  propagates with the current velocity (up to 10 s), instead of freezing the position.
+- **Warm reset in flight** (fix 04 2a): AGL, vertical velocity, pad gravity, the baro
+  reference and the GPS origin come back from the RTC extension record (magic "WFXR",
+  2 Hz while the filter runs). The attitude does not come back, so attitude, heading
+  alignment and the quaternion in telemetry stay invalid for the rest of the flight.
+- **Cold reset in flight** (fix 04 2b): the state machine starts in Pad Idle; the
+  airborne rule (above) gives Boost after about 1.7 s from a fast climb, or about
+  0.3 s from a burn (axial rule). Descent from a fast descent is detected the same way.
+  AGL after such a restart is relative to the restart point.
+- **False-flight restart: OFF by the owner's decision of 2026-11-16.**
+  `FlightStateMachine::kFalseFlightRestartEnabled` is false; the code and the callback hook
+  stay, the callback is never called and nothing registers one. If it were on: when the automatic landing test declares Landed on a flight with no evidence
+  (never resumed, no airborne inference, maximum AGL below 50 m, axial below 3 g), the FSM
+  persists Landed and calls the callback set with `set_false_flight_callback()`.
+  Enabling it means setting the switch to true and registering a function that schedules
+  the same reset as the `0x7300`-in-Landed path.
+  The effect once wired: a bench test that commands Boost and waits 31 s reboots once.
+- **Pad Idle landing reset** (Kalman finding 1, "a return to Pad Idle keeps the flight's
+  position"): the one-way states mean Pad Idle is re-entered only by a restart, which
+  creates a new filter. The pad hold is ungated (`update_axis(..., nullptr, ...)`
+  in `position_filter.cpp`, the change from audit Kalman finding 1), so a stale offset
+  is pulled back to the pad while the vehicle is still.
+
+### Reset survival (fixes 01, 03, 04)
+
+| What | Warm reset in flight (panic, WDT, SW, brownout) | Cold reset in flight (power loss, EN) |
+|---|---|---|
+| FSM state (Boost, Coast, Descent) | resumed, RESUMED flag set | Pad Idle; airborne rule and axial rule re-detect |
+| Maximum AGL | restored | 0 (new flight) |
+| AGL, vertical velocity, pad gravity, baro and GPS references | restored from the RTC extension | rebuilt from the restart point |
+| Attitude, heading alignment, quaternion | not restored (invalid until a still pad) | not restored |
+| NAND logging | resumes **appending** to the flight session (a `resumed` record, packet source 6, see COMMANDS_AND_PACKETS.md) | the logger starts a session by the slot rules (never erases a flight) |
+| Radio TX power | restored from NVS (ground-set level), see Radio | restored from NVS |
+| Cameras / Iris loads | Iris restores its own state (see Iris guide) | Iris restores from NVS |
+
+Logger rules since 2026-11-16 (fix 01): a resumed boot appends to the newest valid
+flight slot (for a single flight, or a flight slot that has not yet written its
+marker); the old never-erase rule is the fallback. A header or marker page that
+cannot be read no longer disables logging. Blocks that fail to erase or program
+are skipped (up to 4 per chunk), a failing NAND pauses writes after 8 failed blocks
+and retries every 3 s with a chip recover, and the logger task is never deleted.
+Reads of a torn or unreadable page are skipped by the export. Resumed rings are
+launch-protected from the resume point, so a ring that laps after the resume can
+overwrite flight pages written before the reset. Erase and clear are refused in flight
+and re-check the state during the erase; the wait is 30 s at most.
+
+### Sensors, IMU and boot (fix 03)
+
+- No init failure aborts the boot any more. IMU init is tried 3 times and then the
+  task starts anyway and retries every 500 ms. The MS5607, battery ADC (uncalibrated
+  fallback), logger, command bridge, USB echo and heartbeat are non-fatal. The only
+  restart left is "cannot create the sensor task" after 3 start attempts (10 s
+  delay, or 2 s after a resumed flight). Radio init is always reached.
+- **IMU supervisor** (`imu_supervisor.h`): faults on 50 ms without a sample, 100
+  consecutive constant slots (all 0 or all 0xFFFF on a present channel), 25
+  consecutive read errors, and a WHO_AM_I mismatch that repeats on a second read. On
+  a fault the IMU is marked not ready (status bits drop, sensor packets are not
+  queued) and re-initialised (recovery mode, soft reset before the ID check) every
+  500 ms. Host-tested.
+- **IMU calibration sanitising** (W19): stored sections outside the physical limits
+  (gyro bias beyond +-30000 mdps, accelerometer scale outside 0.8..1.25, offsets
+  outside their limits, NaN or inf) are replaced by identity and logged. Host-tested.
+- NVS: a cold boot may still reformat NVS (calibration and boot bookkeeping lost, now
+  logged). A resumed in-flight boot never erases NVS.
+- **Task watchdog** (`CONFIG_ESP_TASK_WDT_PANIC=y`, `CONFIG_ESP_TASK_WDT_TIMEOUT_S=8`,
+  idle-task checks off, in `sdkconfig.flight`). The sensor task subscribes and feeds
+  the watchdog every pass; `run_landed` unsubscribes. The logger task subscribes
+  before its main loop and feeds per block or per page. A watchdog reset in flight is
+  a warm reset (resumed). Long NAND operations (erase, scans) are not covered by the
+  sensor task's feed; the logger feeds the watchdog per block or per page instead.
+- **Power management off in the flight build**: `CONFIG_PM_ENABLE` and
+  `CONFIG_FREERTOS_USE_TICKLESS_IDLE` are off. The Landed low-power mode cannot sleep
+  until both are turned back on together with `kLowPowerModeEnabled`.
+- **Stacks** (fixes 01 and 03): flash logger 7168, capture 5120 (was
+  3072; a 3 kB stack was tight), heartbeat 3072 (was 2048; logs free stacks once a minute),
+  self-test 4096 (was 3072). The sensor stack is still 8192 and has not been measured
+  since the Kalman filter moved in. Read the once-a-minute `stack free:` lines on a soak.
+- **Self-test in flight** (B7): on failure the rollback reboot happens only in Pad Idle.
+  Elsewhere it logs an error and ends, leaving the image pending.
+
+### Radio (fix 02, 06)
+
+- **TX power is stored.** `radio_power_store` (NVS namespace `radio`, key `tx_dbm`)
+  saves the level after an accepted `0x5250` on the ground (Pad Idle or Landed). The
+  boot default is still -17 dBm when nothing is stored. The front-end state is never
+  stored. In flight the level is RAM only. This is why a reset in flight no longer
+  drops the downlink to -17 dBm after a ground-set level.
+- **Fault latch and recovery.** A BUSY timeout (2 ms spin, once), three SPI errors, or
+  three failed transmissions latch a fault; while latched every radio call returns
+  immediately and the radio is reported unavailable (its acks and replies are
+  dropped). A non-blocking re-init is started 2 s after the fault, then every 5 s after
+  a failed attempt; it gives up after 500 ms of work per attempt and restores the PA
+  cache, power and front end. A health check runs every 2 s while idle: it reads the
+  packet type (must be LoRa) and the chip mode; a wrong value latches a fault. Boot
+  init failure is retried every 5 s.
+- **Radio is never blocking for long.** BUSY waits are a spin of at most 2 ms; the
+  removed 500 ms wait per command was the worst case (1.5 s per failed transmission).
+  Transmission failures restore continuous RX (F10).
+- **Hold-off** (`UplinkHoldOff`, `tx_slot.h`, byte-identical in Aperture): armed only by
+  a frame that passes validation (`submit_radio_command` did not return INVALID_ARG),
+  never in Boost, lasts at most `kHoldOffMaxMs` = 3000 ms; then one full telemetry
+  cycle is sent before another hold can start. Short 3-byte frames still arm it
+  (`command_bridge.cpp`, open).
+- Debug hex dumps of each received packet are gone; one rate-limited summary line per
+  2 s at most.
+
+### GPS receiver (fix 05)
+
+Status values: Disabled, Configuring, Ready, Failed, Streaming, Recovering.
+- **Ready** = configured and verified (readback of airborne mode and rate).
+- **Streaming** = valid GGA flows but the configuration is not confirmed (for example a
+  receiver that never acknowledges the NMEA set). Background configuration is retried
+  with backoff 5 s doubling to 60 s.
+- **Recovering** = no GGA for 3 s: listens 2 s at 115200, then 2 s at the fallback baud
+  (a good non-115200 baud, else the measured rate), on known-good pins, sending nothing.
+- **Failed** = no data. A GGA turns it into Streaming. Identification is retried only
+  when there has been no GGA for 5 s (and again after 10 s). Blocking pin probe: at
+  most 0.8 s, only in that case.
+- The old text "Failed is terminal until reboot" is wrong and is superseded.
+- Assist uploads: only SkyTraq `0x41` (87 bytes) is accepted (whitelist). Other
+  messages fail at COMMIT (BAD_FORMAT) and are refused before each send. Baud and
+  factory-default frames are refused by the transport while the baud is fixed.
+  Assist is accepted only in Pad Idle and Landed.
+- The NMEA timestamps are back-dated by the bytes still in the ring (capped at 1 s).
+
+### Commands and Iris loads (fixes 06, 07)
+
+See `Software/COMMANDS_AND_PACKETS.md` for the full matrix. Key points: load-OFF and
+5 V OFF are refused in Boost, Coast and Descent; the radio power command is refused in
+Boost and, in Coast and Descent, refuses front end OFF and lowering the level; radio
+erase and clear need the same command twice within 10 s (first answer BUSY with
+detail `0xC0F1`); the USB export and Wi-Fi switch restart only if the state is still
+allowed when the timer fires. A load command is answered OK only when the CAN forward
+was accepted.
+
+### Iris cameras (fix 07, Iris guide)
+
+Iris stores its commanded loads in RTC and NVS and restores them on every reset. GPIO9
+is held through warm resets (bench verification pending). I2C recovery and a TWAI
+stuck-slot rebuild were added on Iris. Witness re-sends an unconfirmed load state with
+backoff 2, 4, 8, 16 and then 30 s and never gives up.
+
+### Earlier findings, status 2026-11-16
+
+Full-audit findings (`Software/AUDIT/FULL_AUDIT_2026-11-15.md`, section 2):
+
+| ID | Finding | Status 2026-11-16 | Fix report |
+|---|---|---|---|
+| W1 | Every boot starts at -17 dBm; in-flight reset drops downlink | FIXED (ground-set level stored in NVS; compiled default is still -17 dBm) | 02, 06 |
+| W2 | Reset in flight stops logging for the rest of the flight | FIXED (host-tested slot choice; not on hardware) | 01 C1 |
+| W3 | Reset in flight leaves the filter dead | FIXED (restored AGL and velocity; attitude still not resumed) | 04 2a, 2b |
+| W4 | Launch detection has no fallback | FIXED (axial rule, airborne rule, filter without attitude) | 04 1a, 1b, 2b |
+| W5 | IMU or battery ADC init failure boot-loops | FIXED (no abort; only task-creation failure restarts) | 03 section 1 |
+| W6 | First NAND error deletes the logger for good; torn header bricks init | FIXED (retry, bad-block skip, torn-page tolerance; torn page still host-untested on hardware) | 01 C2, H1, H2 |
+| W7 | No watchdog on sensor, logger or radio tasks | PARTLY (sensor and logger subscribed; radio task has no subscription, but the radio is no longer blocking) | 03 section 3, 01 |
+| W8 | Radio fault stalls the sensor loop | FIXED (BUSY budget 2 ms, fault latch) | 02 |
+| W9 | Radio never re-initialised | FIXED (re-init and health check, both ends for Aperture) | 02, 08 |
+| W10 | 1 s hold-off can silence telemetry | FIXED (validated frames only, no hold in Boost, 3 s cap plus forced cycle; Aperture pacing) | 02, 08 |
+| W11 | Maintenance switch can fire after launch | FIXED (re-check at fire time; the 0.4-1.1 s window can still lose a launch in the last few ms) | 06 item 1 |
+| W12 | False Boost on the pad is permanent | PARTLY (new rules make it less likely; false-flight restart is OFF by decision) | 04 section 6 |
+| W13 | Telemetry sends 0,0,0 after the last GPS fix | FIXED (held last good position, GPS_LOCKED bit clear) | 02 G3 |
+| W14 | 10 s GPS retry disturbs a working receiver | FIXED (Failed plus data is Streaming; retry only without data) | 05 |
+| W15 | Nothing watches the GPS once ready | FIXED (supervision: Recovering state and background reconfiguration) | 05 |
+| W16 | No IMU liveness check | FIXED (IMU supervisor, host-tested; not bench tested) | 03 section 2 |
+| W17 | The only "not logging" warning is one status bit | PARTLY (Horizon banners added; no buzzer or arming check) | Horizon fixes 09, 10 |
+| W18 | Filter has no NaN recovery | FIXED (rejects and reset, host-tested) | 04 section 3 |
+| W19 | Stored IMU calibration not validated | FIXED (sanitised, host-tested) | 03 section 5 |
+| Iris I1-I6 | See the Iris guide | see the Iris guide | 07 |
+| Aperture A1-A7 | See the Aperture handoff | see the Aperture handoff | 08 |
+| Medium list | Flight-data and boot items | see the state machine document, section 8 | 01-04 |
+
+Still open from the audit (2026-11-16): radio command authentication (06 proposal,
+not built); the false-flight restart is off by decision (2026-11-16); the Landed trap (H1, owner
+decision); the Landed low-power mode is off; no Boost or Coast
+timeout; the 0x7300 and HITL interaction; the Kalman gyro median at 960 Hz (Kalman
+finding 6, bench log needed); barometer latency (Kalman finding 7); the scale
+consider step (Kalman finding 8); Coriolis and curvature (Kalman finding 9).
+Bench checks that the audit asked for and nobody has run: stack high-water marks
+on all three boards; power loss during a session-header write; a radio reset without
+an MCU reset; an Iris cold reset with cameras on; DTR/RTS reset of Aperture when ser2net
+reconnects.
+
 ## Startup and execution model
 
 `app_main()` constructs all long-lived objects as function-local statics and
@@ -78,13 +314,13 @@ starts them in this order:
 6. `Sensors`, including the SPI3 devices and battery ADC.
 7. `Heartbeat`.
 
-Most startup calls use `ESP_ERROR_CHECK`, so a returned error can abort startup.
-UART startup failure is explicitly logged without aborting. Flash initialization
-happens inside its writer task: failure sets status bit 4 and stops that writer,
-not the rest of the application. A failed radio initialization is nonfatal and
-disables radio service until reboot. MS5607 initialization failure is nonfatal
-and is retried from the sensor task. IMU or battery ADC startup failure currently
-causes `Sensors::start()` to fail and therefore aborts through `ESP_ERROR_CHECK`.
+Since 2026-11-16 no startup failure aborts the boot (fix 03). The log-and-continue
+calls cover the data forwarder, command bridge, USB echo, flash logger and heartbeat.
+`Sensors::start()` is retried 3 times; the rest of the boot still completes. Flash
+initialization happens inside its writer task and retries on failure (status bit 4
+while it fails). A failed radio initialization is retried (see Radio). MS5607 and IMU
+initialization failures are retried from the sensor task. The only fatal path left is
+"cannot create the sensor task" after 3 attempts, which logs an error and restarts.
 
 Tasks are pinned with `xTaskCreatePinnedToCore` using `main/task_cores.h`:
 the `sensors` task runs alone on **core 1** (`task_cores::kEstimation`, reserved
@@ -123,13 +359,14 @@ instead of zero; the MS5607 PROM-reload wait is rounded up explicitly (at least
 4 ms instead of one 10 ms tick); NAND busy polling (`pdMS_TO_TICKS(1)` = 0, a
 yield) is unchanged. Estimated extra CPU: tick interrupts about 0.3% per core
 plus the extra wake-ups, roughly 1-2% of one core in total. The idle-task
-watchdog (5 s) is unaffected: no new busy loops longer than the 300 us radio
-BUSY spin.
+watchdog is 8 s with panic (2026-11-16, see "Changes of 2026-11-16"); the
+sensor task and the logger are subscribed. The 300 us BUSY spin of the earlier
+text is now at most 2 ms.
 
 | Task | Priority | Stack bytes | Cadence or role |
 |---|---:|---:|---|
 | `sensors` | 4 | 8192 | Core 1. 500 Hz deadline-scheduled (2 ticks); drains the 960 Hz LSM6 FIFO, attitude, sole active SPI3 application service loop |
-| `flash_capture` | 4 | 3072 | 50 Hz sensor snapshots (WL v2) and prelaunch ring |
+| `flash_capture` | 4 | 5120 (was 3072, 2026-11-16) | 50 Hz sensor snapshots (WL v2) and prelaunch ring |
 | `flash_logger` | 3 | 7168 | Queue draining and NAND writes; default 1 s flush interval |
 | `uart1` | 3 | 4096 | Blocking UART reads, parsing and raw byte dispatch |
 | `usb_serial_echo` | 3 | 3072 | USB input and local/radio command handling |
@@ -321,10 +558,26 @@ a linear Kalman filter with a constant-acceleration kinematic model:
   rejects, one is accepted so the filter can re-synchronize.
 - **Pad and landing:** while still on the pad (|specific force| within 5% of
   1 g), zero position/velocity pseudo-measurements hold the state at the
-  origin, and the baro and GPS references track the pad. Once the
+  origin (position hold ungated, like the velocity hold, since 2026-11-15, so
+  a stale offset can never survive a return to Pad Idle), and the baro and GPS
+  references track the pad. Once the
   acceleration departs from 1 g it integrates freely, so the 0.3 s launch
   qualification before Boost is kept. In Landed, a zero-velocity
   pseudo-measurement stops drift.
+- **Gravity measured on the pad (2026-11-15):** the filter subtracts the mean
+  \|specific force\| of the still Pad Idle samples (exponential average, 5 s time
+  constant, dt based) instead of the fixed 9.80665 m/s^2, so the local g and
+  the residual accelerometer offset along up do not integrate in a long
+  barometer-gated coast (0.01 g is about 180 m over 60 s). It is 9.80665 until
+  about 1 s of still samples was averaged, is clamped to 9.80665 +- 5 % (kept
+  and counted otherwise), and freezes when the vehicle leaves the pad (phase
+  not Pad Idle, or 0.5 s of continuous motion). `Filter::gravity_mps2()`; the
+  1 Hz `position:` log line prints it ("g 9.9051 m/s2 (pad-measured, frozen,
+  0 clamped)"). The stillness band stays referenced to 9.80665. No g(h) scaling.
+- **GPS quality:** only GGA fix quality 1, 2, 4 and 5 reach the filter and the
+  heading aligner (`NmeaGps::usable_for_navigation`); 3, 6 (dead reckoning), 7
+  and 8 do not (they still set `Fix::valid`, the telemetry fields and the
+  GPS-locked flag).
 - **HITL:** the filter resets on every real/HITL source change.
 - **After gyro saturation** (attitude lost, see "Attitude estimator"): the
   accelerometer can no longer be rotated into ENU, so the filter predicts with
@@ -418,7 +671,7 @@ in-flight attitude with the radio transmitting.
 |---|---|
 | Pad Idle | Window membership comes from the accelerometer: every sample \|a\| in 0.95..1.05 g (any other sample, or a dt gap, restarts the window). A window completes after 1 s (at least 50 samples) and is **accepted** when: RMS of the per-axis accel standard deviations <= 0.02 g; per axis robust gyro sigma (1.4826 x MAD) <= 10 dps; at most 40% of samples have any axis more than 10 dps from that axis's median; and the per-axis median vector is <= 5 dps. The bias is the per-axis median refined by the mean of the samples within 3 robust sigmas of it, with the refinement clamped to one 70 mdps quantization step (`gyro_quantum_rad_s`). A median of quantized counts snaps to whole counts: with about 1.2 counts of noise it left up to 35 mdps of bias, which drifted a 300 s descent about 10 deg in HITL. The mean resolves below a count, and the clamp stops dense interference from pulling it further than one step. The first accepted window initializes the attitude (shortest arc from the mean accel). Later accepted windows set the bias, **restore the attitude to its value at the window start** (the board did not rotate, so gyro noise integrated over the window is discarded) and apply a tilt correction toward the window's mean accel (fraction window/2 s, about a horizontal axis, so heading is not changed). Every step is gyro propagated (median-filtered, bias-corrected), so non-stationary samples, including the >10 g, 300 ms launch-detection window, are kept and the attitude at the Boost transition already includes the motion since ignition. |
 | Boost, Coast, Descent | Pure median-filtered, bias-corrected gyro integration; no accelerometer use. |
-| Landed | Integration stops and the attitude is held ("attitude after flight"); logged once on entry. Re-entering Pad Idle by command resumes pad behaviour. |
+| Landed | Integration stops and the attitude is held ("attitude after flight"); logged once on entry. Pad Idle is re-entered only by a restart (`0x7300` while Landed), so the attitude then starts fresh. |
 
 Spike rejection: the integration path uses a per-axis running median of 5 gyro
 samples (`Config::gyro_median_length`, 1 = off, 3 or 5), so the attitude lags by
@@ -712,10 +965,11 @@ HITL reference copy: `HITL/sim_model.py` `ReferenceStateMachine`.
 
 | Transition | Consecutive qualifying condition |
 |---|---|
-| Pad Idle to Boost | Kalman AGL > 30 m (`kLaunchAglMeters`) for 300 ms. 30 m is reached about 1.4 s after liftoff at 3 g, so the 2 s pre-launch RAM buffer still holds the liftoff |
+| Pad Idle to Boost | Kalman AGL > 30 m (`kLaunchAglMeters`) **and** Kalman vertical velocity >= 30 m/s (`kLaunchVerticalVelocityMps`), both continuously for 300 ms (since 2026-11-15: a slow climb, such as a vehicle, hoist or aircraft, never launches). 30 m is reached about 1.4 s after liftoff at 3 g, so the 2 s pre-launch RAM buffer still holds the liftoff. **Or** axial acceleration >= 2.5 g for 300 ms (2026-11-16, leaky budget). **Or** airborne at boot: barometer rate >= +20 m/s for 1 s (2026-11-16) |
 | Boost to Coast | Low-g X acceleration <1 g for 500 ms |
 | Coast to Descent (AGL path) | Kalman AGL below the maximum AGL minus max(5 % of it, 10 m), with downward Kalman vertical velocity, for 500 ms |
 | Coast to Descent (velocity path) | Kalman vertical velocity < -30 m/s for 2 s, at least 3 s after Coast entry, after a climb faster than 20 m/s was seen |
+| Pad Idle to Descent (2026-11-16) | Barometer rate <= -20 m/s for 1 s (airborne at boot only; cold reset in flight) |
 | Boost, Coast or Descent to Landed | Acceleration vector magnitude 0.8..1.2 g, gyro vector magnitude <10 dps, and Kalman AGL span <=10 m for 30 s |
 
 Landing is not restricted to Descent. The maximum AGL is tracked in Boost and
@@ -727,6 +981,17 @@ rate limit, and the MSL-percentage descent threshold.
 On the bench (2026-11-15, HITL "Nominal 10 g" on Witness) every transition came
 within 0.03 s of the reference. The Kalman AGL error was at most 2.8 m in every
 phase.
+
+**States are one-way (2026-11-15).** `FlightStateMachine::set_state` refuses a
+transition to a lower state (`ESP_ERR_INVALID_STATE`, logged; the command is
+acked REFUSED); the same state is a no-op. Only `restore()` (boot resume) sets
+a state without that rule. Going back to Pad Idle is a restart: `0x7300`
+received in Landed (USB or radio) is acked OK and `UsbSerialEcho::set_flight_state`
+schedules `esp_restart()` (`maintenance_mode::restart_after_ms`, 0.4 s after a
+USB ack, 1 s after a radio ack so the ack is on the air). A Landed record is
+never resumed, so the next boot is Pad Idle with a fresh position filter and a
+new log session. `0x7300` in Pad Idle: ack OK, nothing else; in Boost, Coast or
+Descent it is refused (command `0x7304` first on the bench).
 
 A commanded Pad Idle to Boost invokes `trigger_launch()`, just like automatic
 launch, and opens the logging gate. Automatic transitions remain enabled after
@@ -744,7 +1009,7 @@ the bench; append CR/LF. Hex shown here is text unless sent as actual binary.
 | `LED 1`, `LED ON`, `LED 0`, `LED OFF` | Sets the red LED baseline; heartbeat still pulses it |
 | `CAM 1 ON/OFF`, `CAM 2 ON/OFF` | Updates in-memory camera flags and logs; no camera hardware driver |
 | `E0` or raw byte `E0` | Enables Witness debug output; no corresponding stop command |
-| `05 73 00` through `05 73 04` | Sets flight state; `01` from Pad Idle is a launch trigger (USB only). Policy in `main/command_policy.h` (host test `tests/command_policy_test.cpp`): over LoRa only Landed -> Pad Idle is accepted; over USB from Boost/Coast/Descent only Landed is accepted; refusals ack `IRIS_ACK_REFUSED` |
+| `05 73 00` through `05 73 04` | Sets flight state; `01` from Pad Idle is a launch trigger (USB only). Policy in `main/command_policy.h` (host test `tests/command_policy_test.cpp`): states are one-way: `05 73 00` in Landed (USB or LoRa) acks OK and then restarts Witness into Pad Idle, in Pad Idle it is a no-op, otherwise refused; over LoRa nothing else is accepted; over USB from Boost/Coast/Descent only Landed is accepted; any backward command is refused (`IRIS_ACK_REFUSED`) |
 | `05 68 68` | USB only, Pad Idle/Landed only (refused over LoRa and in flight). Restarts into the maintenance image's USB disk |
 | `05 68 69` | Pad Idle/Landed, **USB or LoRa** (since 2026-11-14). Destructively erases all stored sessions (all 1,004 blocks) and creates fresh session 1 |
 | `05 68 6A` | Pad Idle/Landed, **USB or LoRa**. Fast clear: erases only the two slot header blocks, so no session is listed, and creates the next session number (never resets) |
@@ -765,7 +1030,7 @@ export commands merely to inspect or test the system. Full command table:
 `CommandBridge` validates canonical commands and normalizes legacy three-byte commands to complete 10-byte frames before forwarding to Iris CAN. UART1 is exclusively the GPS receiver. USB commands can additionally enter the immediate radio queue; radio commands are queued for local interpretation independently of CAN availability. Invalid EOF/length commands are rejected before forwarding.
 
 Radio local handlers support debug enable, erase/clear (Pad Idle/Landed),
-state setting (Landed to Pad Idle only), ping, radio power, pad heading, Wi-Fi,
+state setting (`0x7300` while Landed: ack, then restart into Pad Idle; nothing else), ping, radio power, pad heading, Wi-Fi,
 GPS assist/cold start and HITL exit. USB export and HITL enter from radio are
 refused and logged.
 Load opcodes `30..35` and regulator opcodes `50..51` are external-device commands,
@@ -788,7 +1053,7 @@ Iris's own RTC-memory restore; this is the backup if that memory was lost.
 
 Despite the `Ra01` class name, this driver uses **SX1262 command semantics**, not
 an SX127x register interface. Verify the actual fitted module before substituting
-a driver. Current RF macros specify 926 MHz, -17 dBm (low-power PA; raise with 0x5250), SF7, 500 kHz bandwidth,
+a driver. Current RF macros specify 926 MHz, -17 dBm at the compiled default (low-power PA; raise with 0x5250; a ground-set level is stored in NVS since 2026-11-16 and restored at boot), SF7, 500 kHz bandwidth,
 coding rate 4/5 and preamble length 8. Packet configuration uses explicit headers,
 hardware CRC and normal IQ. Read `ra01.cpp` for the complete setup.
 
@@ -807,10 +1072,10 @@ precedence over scheduled traffic. Only one transmit is serviced per loop.
 
 GPS time slots and uplink hold-off (`main/tx_slot.h`, host test
 `tests/tx_slot_test.cpp`, 2026-11-14). The same header is in Aperture.
-- **Hold-off:** when Witness hears a `0x05` command frame it holds scheduled
-  telemetry for 1 s (`kUplinkHoldOffMs`), so command streams such as a GPS
-  assist upload get a quiet channel. The immediate queue (acks, replies) is
-  never held.
+- **Hold-off** (2026-11-16): when Witness hears a validated `0x05` command frame it
+  holds scheduled telemetry for 1 s (`kUplinkHoldOffMs`); nothing is held in Boost; a
+  hold cannot last more than `kHoldOffMaxMs` = 3000 ms before one full telemetry
+  cycle is sent. The immediate queue (acks, replies) is never held.
 - **Witness slot:** with UTC from a GGA fix no older than 3 s, Witness starts a
   telemetry packet only if it ends by 700 ms into the UTC second. The UTC clock
   is `utc_clock_`, advanced by a fixed 20 ms GGA latency; Witness has no PPS
@@ -914,7 +1179,8 @@ log line. Assistance frames are never forwarded to CAN or the radio.
 
 **Cold start** (`0x4752`, USB or radio, Pad Idle only): `GpsReceiver::cold_start`
 sends SkyTraq 0x01 System Restart mode 3 (u-blox: CFG-RST navBbrMask 0xFFFF,
-GNSS-only reset), so the receiver discards its ephemerides, almanac, last
+GNSS-only reset; Pad Idle is checked again when the GPS task executes the request, a
+request that is no longer allowed is dropped), so the receiver discards its ephemerides, almanac, last
 position and time; after 2 s Witness configures it again (airborne mode,
 25 Hz, NMEA set) and logs the usual `... confirmed` line. Simulated GPS
 scenarios leave such data behind; stale copies kept a receiver from locking
@@ -1579,9 +1845,12 @@ Landed (not resumed), so it still boots to maintenance. The flash logger starts
 a normal new session in the slot that does not hold the flight; in a resumed
 state binary logging is on immediately. A second mid-flight reset finds both
 slots holding the flight and logs nothing more (it never erases the first part).
-Caveats: the position filter, attitude and IMU calibration restart from scratch
-after a resume; a bench state commanded to Boost/Coast/Descent followed by a
-panic/SW reset also resumes (command Pad Idle or power-cycle to clear).
+Caveats (2026-11-16 update): the position filter restarts from the RTC extension
+(AGL, velocity, gravity and references) and the attitude does NOT resume; IMU
+calibration is reloaded from NVS. The second mid-flight reset no longer stops
+logging: the resumed boot appends to the flight session (fix 01). The text below
+about "the logger logs nothing more" is superseded. The earlier caveat text follows; a bench state commanded to Boost/Coast/Descent followed by a
+panic/SW reset also resumes (command `0x7304` then `0x7300`, which restarts into Pad Idle, or power-cycle to clear; states no longer step back down).
 
 Host test:
 
@@ -1601,7 +1870,10 @@ reason is `ESP_RST_SW`, the USB disk appears about 25 s after the command
 (read-only scan), and host tools set Landed first and wait up to 90 s.
 
 
-## Pad Idle radio rate and Landed low-power mode (2026-11-14, not bench verified)
+## Pad Idle radio rate and Landed low-power mode (2026-11-14, not bench verified; disabled 2026-11-16)
+
+Disabled: `kLowPowerModeEnabled` is false, and the flight build has `CONFIG_PM_ENABLE` and
+tickless idle off, so the mode cannot sleep. Re-enable both together.
 
 > **2026-11-15: the Landed low-power mode is switched OFF** (`landed::kLowPowerModeEnabled
 > = false` in `main/landed_logic.h`, owner's decision). Landed now runs the normal
@@ -1745,10 +2017,10 @@ SPI3.
   policy change (`command_policy.h` untouched): over radio only Landed to Pad
   Idle is still accepted, `0x6868`/erase stay USB-only, `0x5746` and `0x5250`
   radio power work as before.
-- **Task watchdog / INT WDT:** not reconfigured. The TWDT only watches the two
-  idle tasks (5 s, no panic), and idle tasks run (and feed it) every time the
-  MCU is about to sleep. Check the bench log for "Task watchdog" lines after
-  a soak.
+- **Task watchdog / INT WDT (superseded 2026-11-16):** the flight build now has
+  the task watchdog at 8 s with panic, subscribed by the sensor task and the logger,
+  idle-task checks off. A watchdog reset in flight is a warm reset and resumes the
+  state. Check the bench log for "Task watchdog" lines after a soak.
 
 What runs in Landed, and why:
 

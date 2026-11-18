@@ -137,6 +137,9 @@ public:
     // Attitude given up after gyro saturation in flight (see header comment).
     bool lost() const { return lost_; }
     std::uint32_t saturation_events() const { return saturation_events_; }
+    // Non-finite input samples dropped, plus quaternion divergences that made
+    // the attitude invalid.
+    std::uint32_t nonfinite_events() const { return nonfinite_events_; }
     // All-zero until valid().
     Quaternion quaternion() const { return valid_ ? q_ : Quaternion{}; }
     Vector3 gyro_bias_rad_s() const { return bias_; }
@@ -185,6 +188,7 @@ private:
     bool lost_ = false;
     std::uint32_t saturation_run_ = 0;
     std::uint32_t saturation_events_ = 0;
+    std::uint32_t nonfinite_events_ = 0;
     bool have_time_ = false;
     std::uint64_t last_timestamp_us_ = 0;
     FlightPhase phase_ = FlightPhase::PadIdle;

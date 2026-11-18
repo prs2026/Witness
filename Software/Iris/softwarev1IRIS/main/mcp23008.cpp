@@ -14,6 +14,9 @@ esp_err_t Mcp23008::initialize(const bool pulse_reset)
         return ESP_ERR_INVALID_STATE;
     }
 
+    // After a CPU/system reset the pad may still be held (see below). Keep the
+    // hold until the level is latched and the driver enabled, then release it,
+    // so the pad never changes level.
     // Latch the pin level before enabling the driver so GPIO9 never glitches
     // low (the board has a 10k pulldown on this net, R55).
     if (!pulse_reset) {
@@ -30,6 +33,10 @@ esp_err_t Mcp23008::initialize(const bool pulse_reset)
     if (result != ESP_OK) {
         return result;
     }
+    // Output enabled and (when not pulsing) level already high: hand the pad
+    // back from the hold left by the previous run (no-op if not held). A
+    // deliberate expander reset needs the pad free to move as well.
+    (void)gpio_hold_dis(IRIS_PIN_MCP23008_RESET);
 
     if (pulse_reset) {
         // The MCP23008 requires RESET low for at least 1 us. Resetting also
@@ -44,6 +51,15 @@ esp_err_t Mcp23008::initialize(const bool pulse_reset)
     if (result != ESP_OK) {
         return result;
     }
+    // I2: hold GPIO9 high through any CPU/system reset (panic, watchdog,
+    // software, EXT/USB). Without this the pad is released at reset and R55
+    // pulls the MCP23008 RESET low, which turns every output into an input
+    // and cuts the cameras until the app has booted again (hundreds of ms).
+    // With the pad held the expander is never reset and keeps its OLAT/IODIR,
+    // so loads stay powered across a warm reset. The hold is in the RTC
+    // domain: it does not survive a power cycle or a brownout that resets the
+    // RTC domain (the expander loses its supply then anyway).
+    (void)gpio_hold_en(IRIS_PIN_MCP23008_RESET);
 
     i2c_master_bus_config_t bus_config{};
     bus_config.i2c_port = I2C_NUM_0;
@@ -191,3 +207,50 @@ esp_err_t Mcp23008::write_register(
         kTransactionTimeoutMs);
 }
 
+esp_err_t Mcp23008::verify_and_heal(bool &healed)
+{
+    healed = false;
+    if (device_handle_ == nullptr || !configured_) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    // Read IODIR and OLAT back (two 1-byte reads, ~100 us at 400 kHz). An
+    // expander-only reset (3V3 dip, GPIO9 glitch) shows up as IODIR = 0xFF
+    // (all inputs, loads off): re-push the cached state at once instead of
+    // waiting for the 1 Hz blind resync.
+    std::uint8_t iodir = 0;
+    std::uint8_t olat = 0;
+    esp_err_t result = read_register(kRegisterIodir, iodir);
+    if (result == ESP_OK) {
+        result = read_register(kRegisterOlat, olat);
+    }
+    if (result != ESP_OK) {
+        return result;  // never touch the cache on an I2C error
+    }
+    const std::uint8_t out_mask = static_cast<std::uint8_t>(~direction_);
+    if (iodir != direction_ ||
+        static_cast<std::uint8_t>(olat & out_mask) !=
+            static_cast<std::uint8_t>(output_latch_ & out_mask)) {
+        result = resync();
+        healed = result == ESP_OK;
+    }
+    return result;
+}
+
+esp_err_t Mcp23008::recover_bus()
+{
+    if (bus_handle_ == nullptr) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    // ESP-IDF resets the I2C controller FSM and clocks SCL (9 pulses plus a
+    // STOP) to release a slave that is holding SDA low.
+    const esp_err_t result = i2c_master_bus_reset(bus_handle_);
+    return result;
+}
+
+esp_err_t Mcp23008::read_register(
+    const std::uint8_t address,
+    std::uint8_t &value)
+{
+    return i2c_master_transmit_receive(
+        device_handle_, &address, 1, &value, 1, kTransactionTimeoutMs);
+}

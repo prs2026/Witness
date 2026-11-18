@@ -11,6 +11,7 @@
 #include "esp_log.h"
 #include "hal/uart_ll.h"
 #include "esp_timer.h"
+#include "nvs.h"
 #include "hardware_pins.h"
 #include "landed_logic.h"
 #include "flash_logger.h"
@@ -205,6 +206,99 @@ UartDriver::RxProbe UartDriver::probe_rx(const std::uint32_t window_ms)
     return probe;
 }
 
+namespace {
+constexpr char kGpsNvsNamespace[] = "gps";
+constexpr char kGpsNvsPinsKey[] = "pins";
+
+int hex_value(const std::uint8_t c)
+{
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    return -1;
+}
+}  // namespace
+
+void UartDriver::load_good_pins()
+{
+    nvs_handle_t handle = 0;
+    if (nvs_open(kGpsNvsNamespace, NVS_READONLY, &handle) != ESP_OK) return;
+    std::uint8_t value = 0;
+    if (nvs_get_u8(handle, kGpsNvsPinsKey, &value) == ESP_OK && value <= 1U) {
+        stored_pins_ = value;
+        have_good_pins_ = true;
+        good_pins_swapped_ = value == 1U;
+        ESP_LOGI(kTag, "GPS pins from the last good session: %s", value ? "swapped" : "as wired");
+    }
+    nvs_close(handle);
+}
+
+void UartDriver::store_good_pins()
+{
+    const int value = good_pins_swapped_ ? 1 : 0;
+    // Pad only (an internal-flash write stalls both cores for a few ms) and
+    // only when it changed, so in practice once per board.
+    if (value == stored_pins_ || !cold_start_allowed_.load()) return;
+    nvs_handle_t handle = 0;
+    if (nvs_open(kGpsNvsNamespace, NVS_READWRITE, &handle) != ESP_OK) return;
+    esp_err_t result = nvs_set_u8(handle, kGpsNvsPinsKey, static_cast<std::uint8_t>(value));
+    if (result == ESP_OK) result = nvs_commit(handle);
+    nvs_close(handle);
+    if (result == ESP_OK) stored_pins_ = value;
+    ESP_LOGI(kTag, "GPS pin orientation (%s) %s", value ? "swapped" : "as wired",
+             result == ESP_OK ? "stored" : "could not be stored");
+}
+
+bool UartDriver::nmea_heard(const bool swapped, const std::uint32_t baud, const std::uint32_t window_ms)
+{
+    listen_on(swapped);
+    if (uart_set_baudrate(port_, baud) != ESP_OK) return false;
+    (void)uart_flush_input(port_);
+    std::uint8_t buffer[kReadBufferSize];
+    // '$' starts a sentence; XOR of the bytes up to '*', then two hex digits.
+    int state = 0;            // 0 hunt '$', 1 body, 2 first hex, 3 second hex
+    std::uint8_t checksum = 0;
+    int high = 0;
+    std::size_t body_length = 0;
+    const std::int64_t deadline_us = esp_timer_get_time() + static_cast<std::int64_t>(window_ms) * 1000;
+    while (esp_timer_get_time() < deadline_us) {
+        const int received = uart_read_bytes(port_, buffer, sizeof(buffer), pdMS_TO_TICKS(20));
+        for (int i = 0; i < received; ++i) {
+            const std::uint8_t c = buffer[i];
+            if (c == '$') {
+                state = 1;
+                checksum = 0;
+                body_length = 0;
+                continue;
+            }
+            switch (state) {
+                case 1:
+                    if (c == '*') {
+                        state = body_length >= 5U ? 2 : 0;
+                    } else if (c < 0x20 || c > 0x7E || ++body_length > 90U) {
+                        state = 0;
+                    } else {
+                        checksum ^= c;
+                    }
+                    break;
+                case 2:
+                    high = hex_value(c);
+                    state = high < 0 ? 0 : 3;
+                    break;
+                case 3: {
+                    const int low = hex_value(c);
+                    if (low >= 0 && static_cast<std::uint8_t>(high * 16 + low) == checksum) return true;
+                    state = 0;
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+    }
+    return false;
+}
+
 void UartDriver::select_gps_pins()
 {
     // Try the configured RX pin, then the swapped one; the receiver's TX is
@@ -222,13 +316,57 @@ void UartDriver::select_gps_pins()
                  static_cast<unsigned long>(p.low_min_cycles), static_cast<unsigned long>(p.high_min_cycles),
                  static_cast<unsigned long>(p.sclk_hz), static_cast<unsigned long>(p.baud_estimate));
     }
-    const bool swap = probes[0].edges < kProbeMinimumEdges && probes[1].edges >= kProbeMinimumEdges;
+    const bool active[2] = {probes[0].edges >= kProbeMinimumEdges, probes[1].edges >= kProbeMinimumEdges};
+    bool swap = !active[0] && active[1];
+    // Neither pin shows traffic (receiver between bursts, resetting): keep the
+    // orientation that last worked instead of the configured default, which
+    // is the wrong one on this board (audit G5).
+    if (!active[0] && !active[1] && have_good_pins_)
+        swap = good_pins_swapped_;
+
+    // Decode, not just count edges: after a power-on both pins can show
+    // traffic at the same rate (bench 2026-11-17, crosstalk onto the idle
+    // pin), and the edge rule then picked the silent pin for the whole flight.
+    // Each active pin is checked at its measured rate and then at 115200,
+    // the pin that last worked first.
+    std::uint32_t host_baud = 0;
+    (void)uart_get_baudrate(port_, &host_baud);
+    std::uint32_t verified_baud = 0;
+    int order[2] = {0, 1};
+    if (have_good_pins_ && good_pins_swapped_) {
+        order[0] = 1;
+        order[1] = 0;
+    }
+    for (const int o : order) {
+        if (!active[o] || verified_baud != 0) continue;
+        std::uint32_t measured = probes[o].baud_estimate;
+        const std::uint32_t nearest = GpsReceiver::nearest_scan_baud(measured);
+        if (nearest != 0) measured = nearest;
+        const std::uint32_t rates[2] = {measured, GpsReceiver::kOperationalBaud};
+        for (int r = 0; r < 2; ++r) {
+            const std::uint32_t rate = rates[r];
+            if (rate < GpsReceiver::kMinimumConfigureBaud || rate > 1000000U) continue;
+            if (r == 1 && rate == rates[0]) continue;   // already tried
+            if (nmea_heard(o == 1, rate, kNmeaCheckWindowMs)) {
+                swap = o == 1;
+                verified_baud = rate;
+                break;
+            }
+        }
+    }
+    if (active[0] && active[1] && verified_baud == 0 && have_good_pins_)
+        swap = good_pins_swapped_;   // nothing decoded: the pins that last worked
+    if (host_baud != 0) (void)uart_set_baudrate(port_, host_baud);
+
     const int use = swap ? 1 : 0;
     listen_on(swap);
-    if (swap) {
+    if (verified_baud != 0) {
+        ESP_LOGI(kTag, "GPS NMEA decoded on GPIO%d at %lu baud (%s)", static_cast<int>(pins[use][1]),
+                 static_cast<unsigned long>(verified_baud), swap ? "pins swapped" : "pins as wired");
+    } else if (swap) {
         ESP_LOGW(kTag, "GPS TX found on GPIO%d: RX/TX swapped from the configured pins",
                  static_cast<int>(pins[use][1]));
-    } else if (probes[0].edges < kProbeMinimumEdges) {
+    } else if (!active[0]) {
         ESP_LOGW(kTag, "GPS RX probe: no signal on either pin; identification scans both orientations");
     }
     const std::uint32_t estimate = probes[use].baud_estimate;
@@ -243,6 +381,7 @@ void UartDriver::select_gps_pins()
                      static_cast<unsigned long>(estimate));
         }
     }
+    if (verified_baud != 0) gps_.set_start_baud(verified_baud);
 }
 
 void UartDriver::task_entry(void *const context)
@@ -286,6 +425,7 @@ bool UartDriver::gps_set_baud(void *context, const std::uint32_t baud)
 void UartDriver::run()
 {
     NmeaGps nmea;
+    load_good_pins();
     select_gps_pins();
     ESP_LOGI(
         kTag,
@@ -360,7 +500,9 @@ void UartDriver::run()
         }
         if (cold_start_requested_) {
             cold_start_requested_ = false;
-            if (gps_.cold_start(static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL))) {
+            if (!cold_start_allowed_.load()) {
+                ESP_LOGW(kTag, "GPS cold start dropped: no longer in Pad Idle");
+            } else if (gps_.cold_start(static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL))) {
                 ESP_LOGW(kTag, "GPS cold start sent to the %s (ephemerides, almanac, position and "
                                "time cleared); reconfiguring in %lu ms",
                          gps_.model_name(), static_cast<unsigned long>(GpsReceiver::kRestartDelayMs));
@@ -457,9 +599,22 @@ void UartDriver::run()
             gps_.consume(receive_buffer.data(), received,
                          static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL));
             const auto previous_gga_count = nmea.gga_sentence_count();
-            nmea.consume(receive_buffer.data(), received, last_rx_ms);
+            // Receive time estimate (audit G9): bytes still waiting in the
+            // driver ring arrived after the ones just read, so the read
+            // block is that much older than "now" (one byte = 10 bits).
+            std::size_t backlog = 0;
+            (void)uart_get_buffered_data_len(port_, &backlog);
+            const std::uint32_t age_ms = static_cast<std::uint32_t>(
+                (static_cast<std::uint64_t>(backlog) * 10000ULL) / std::max<std::uint32_t>(gps_.baud(), 1U));
+            const std::uint32_t stamp_ms = last_rx_ms - std::min<std::uint32_t>(age_ms, 1000U);
+            nmea.consume(receive_buffer.data(), received, stamp_ms);
             if (nmea.gga_sentence_count() != previous_gga_count) {
-                gps_.observe_nmea();
+                // Every checksum-valid GGA: the receiver supervises the
+                // stream (silence, rate, never re-probe a working receiver).
+                gps_.observe_gga(last_rx_ms, nmea.gga_sentence_count() - previous_gga_count);
+                have_good_pins_ = true;
+                good_pins_swapped_ = pins_swapped_;
+                store_good_pins();
             }
             const auto fix = nmea.latest_fix();
             portENTER_CRITICAL(&fix_lock_);
@@ -556,8 +711,17 @@ void UartDriver::run()
         }
         if (gps_.status() != last_gps_status) {
             last_gps_status = gps_.status();
-            if (last_gps_status == GpsReceiver::Status::Ready) {
-                ESP_LOGI(kTag, "%s airborne 4 g mode and %lu Hz GGA+RMC confirmed at %lu baud",
+            if (last_gps_status == GpsReceiver::Status::Streaming) {
+                ESP_LOGW(kTag, "%s streaming but NOT confirmed configured (%s); position is used, "
+                               "configuration retried in the background at %lu baud",
+                         gps_.model_name(), gps_.failure_reason(),
+                         static_cast<unsigned long>(gps_.baud()));
+            } else if (last_gps_status == GpsReceiver::Status::Recovering) {
+                ESP_LOGW(kTag, "GPS silent for %lu ms: recovering (listening at 115200 and the fallback rate "
+                               "on the known-good pins)",
+                         static_cast<unsigned long>(GpsReceiver::kSilenceRecoveryMs));
+            } else if (last_gps_status == GpsReceiver::Status::Ready) {
+                ESP_LOGI(kTag, "%s airborne 4 g mode and %lu Hz GGA+RMC confirmed at %lu baud (ready, configured)",
                          gps_.model_name(),
                          static_cast<unsigned long>(gps_.update_rate_hz()),
                          static_cast<unsigned long>(gps_.baud()));
@@ -570,16 +734,22 @@ void UartDriver::run()
                 ESP_LOGW(kTag, "%s startup failed: %s; raw logging continues at %lu baud",
                          gps_.model_name(), gps_.failure_reason(),
                          static_cast<unsigned long>(gps_.baud()));
-                identify_failed_ms_ = static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
+                // Do not sit on a silent pin: back to the orientation that last
+                // produced valid NMEA (audit G5).
+                if (have_good_pins_ && pins_swapped_ != good_pins_swapped_) listen_on(good_pins_swapped_);
             }
         }
         // An unidentified receiver (often still booting during the startup
         // probe when both boards power up together) is probed and identified
         // again every kIdentifyRetryMs. Listen-only probe; no rate change is
         // sent to the receiver.
-        if (gps_.can_retry_identification() && !gps_asleep_.load()) {
+        // Only when NO valid NMEA arrives (GpsReceiver::probe_due: Failed,
+        // 5 s without a GGA, 10 s backoff). The probe blocks this task for
+        // 2 x kProbeWindowMs and unplugs RX, so a streaming receiver is never
+        // subjected to it (audit G2).
+        if (gps_.status() == GpsReceiver::Status::Failed && !gps_asleep_.load()) {
             const auto now = static_cast<std::uint32_t>(esp_timer_get_time() / 1000ULL);
-            if (now - identify_failed_ms_ >= kIdentifyRetryMs && gps_.retry_identification(now)) {
+            if (gps_.probe_due(now) && gps_.retry_identification(now)) {
                 const std::uint32_t n = gps_.identification_retries();
                 if (n <= 3U || n % 10U == 0U)
                     ESP_LOGW(kTag, "GPS not identified: probing and identifying again (retry %lu)",
@@ -597,21 +767,22 @@ void UartDriver::run()
             const auto gga = nmea.latest_fix();
             const GpsReceiver::Status st = gps_.status();
             ESP_LOGI(kTag, "GPS RX: baud=%lu bytes=%lu GGA=%lu fix=%s sats=%u idle_ms=%lu; receiver %s %s%s, "
-                           "pins %s, retries %lu%s%s",
+                           "pins %s, retries %lu, %lu Hz, recoveries %lu, config retries %lu%s%s",
                      static_cast<unsigned long>(baud),
                      static_cast<unsigned long>(total_rx_bytes),
                      static_cast<unsigned long>(nmea.gga_sentence_count()),
                      NmeaGps::fresh(gga, now_ms) ? "valid" : "none",
                      NmeaGps::gga_fresh(gga, now_ms) ? static_cast<unsigned>(gga.satellites) : 0U,
                      static_cast<unsigned long>(now_ms - last_rx_ms), gps_.model_name(),
-                     st == GpsReceiver::Status::Ready         ? "ready"
-                     : st == GpsReceiver::Status::Configuring ? "configuring"
-                     : st == GpsReceiver::Status::Failed      ? "FAILED"
-                                                               : "disabled",
+                     gps_.state_text(now_ms),
                      gps_.model_assumed() ? " (assumed)" : "", pins_swapped_ ? "swapped" : "as wired",
                      static_cast<unsigned long>(gps_.identification_retries()),
-                     st == GpsReceiver::Status::Failed ? ": " : "",
-                     st == GpsReceiver::Status::Failed ? gps_.failure_reason() : "");
+                     static_cast<unsigned long>(gps_.measured_rate_hz()),
+                     static_cast<unsigned long>(gps_.recoveries()),
+                     static_cast<unsigned long>(gps_.config_retries()),
+                     st == GpsReceiver::Status::Failed || st == GpsReceiver::Status::Streaming ? ": " : "",
+                     st == GpsReceiver::Status::Failed || st == GpsReceiver::Status::Streaming
+                         ? gps_.failure_reason() : "");
             if (now_ms - last_rx_ms >= kGpsDiagnosticIntervalMs) {
                 ESP_LOGW(kTag, "GPS UART input silent; reception and raw logging remain enabled");
             }

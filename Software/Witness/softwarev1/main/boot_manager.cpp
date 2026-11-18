@@ -27,6 +27,12 @@ constexpr std::uint8_t kOwnKind = IRIS_IMAGE_KIND_FLIGHT;
 
 // Directly behind esp_app_desc_t (see image_info.h): the same offset in every
 // image, which is how the other image (and the OTA handler) finds it.
+// It must stay referenced: at -Os/-O2 the compiler folds every read of the
+// record, nothing references it, and the linker's --gc-sections dropped it (the
+// IDF linker script has no KEEP for this section, and this toolchain ignores the
+// `retain` attribute). The other image then found no record and a maintenance
+// boot stayed in recovery (bench 2026-11-17c). own_info() reads it through the
+// volatile pointer below, which keeps the section and the data in the image.
 __attribute__((section(".rodata_custom_desc"), used)) const image_info::Info g_image_info =
     image_info::make_info(kOwnKind, static_cast<std::uint32_t>(WITNESS_BUILD_ID), IRIS_RADIO_FREQUENCY_HZ,
                           IRIS_RADIO_BANDWIDTH_HZ, IRIS_RADIO_SPREADING_FACTOR, IRIS_RADIO_CODING_RATE,
@@ -70,9 +76,11 @@ void load_slots(const boot_manager::Kind kind, image_info::Slot out[2])
 
 namespace boot_manager {
 
+const image_info::Info *volatile g_image_info_ref = &g_image_info;
+
 const image_info::Info &own_info()
 {
-    return g_image_info;
+    return *g_image_info_ref;
 }
 
 bool running_flight()
@@ -180,7 +188,13 @@ SwitchResult prepare_switch(const maintenance_mode::Kind kind, const int tx_dbm,
     request.flight_state = flight_state;
     request.radio_dbm = radio_dbm;
     request.radio_front_end = radio_front_end;
-    maintenance_mode::arm(request);
+    if (!maintenance_mode::arm(request)) {
+        // Audit B9: with NVS unusable the request would never be found and the
+        // maintenance image would just bounce back to flight; say so instead.
+        result.refuse_detail = IRIS_MAINT_REFUSE_SWITCH_FAILED;
+        ESP_LOGE(kLogTag, "cannot store the maintenance request (NVS)");
+        return result;
+    }
     const esp_err_t set = esp_ota_set_boot_partition(target);   // validates the image (SHA-256)
     if (set != ESP_OK) {
         maintenance_mode::cancel();
@@ -193,6 +207,23 @@ SwitchResult prepare_switch(const maintenance_mode::Kind kind, const int tx_dbm,
     ESP_LOGW(kLogTag, "next boot: maintenance slot %s (flight slot %d to return to)", target->label,
              request.flight_slot);
     return result;
+}
+
+esp_err_t revert_switch()
+{
+    maintenance_mode::cancel();
+    const esp_partition_t *running = esp_ota_get_running_partition();
+    if (running == nullptr) return ESP_ERR_NOT_FOUND;
+    const esp_err_t result = esp_ota_set_boot_partition(running);
+    if (result != ESP_OK) {
+        ESP_LOGE(kLogTag, "cannot restore the flight boot slot: %s", esp_err_to_name(result));
+        return result;
+    }
+    // Same as return_to_flight(): the entry just written must not boot as
+    // "pending verify" (a crash early in the next boot would roll back).
+    mark_running_valid();
+    ESP_LOGW(kLogTag, "switch abandoned: boot partition restored to flight slot %d", running_slot());
+    return ESP_OK;
 }
 
 bool running_pending_verify()

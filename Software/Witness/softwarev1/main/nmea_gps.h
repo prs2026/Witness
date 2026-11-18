@@ -36,6 +36,17 @@ public:
         bool gga = false;              // A GGA has been received.
         bool valid = false;            // Position fields hold a fix.
     };
+    // Whether a fix may feed the navigation filter and the heading aligner.
+    // Only measured GNSS positions: GGA quality 1 (GPS), 2 (DGPS), 4 (RTK
+    // fixed) and 5 (RTK float). Quality 3 (PPS), 6 (the receiver's own dead
+    // reckoning, a smooth extrapolation that looks like a real fix), 7
+    // (manual) and 8 (simulation) are not measurements; 0 is no fix.
+    // Fix::valid (display, telemetry, the GPS-locked flag) is unchanged.
+    static constexpr bool usable_for_navigation(const Fix &fix) {
+        return fix.valid &&
+               (fix.fix_quality == 1 || fix.fix_quality == 2 || fix.fix_quality == 4 ||
+                fix.fix_quality == 5);
+    }
     void consume(const std::uint8_t *data, std::size_t length, std::uint32_t now_ms);
     Fix latest_fix() const { return fix_; }
     // Includes no-fix GGA: a navigation fix is not required to prove the link.

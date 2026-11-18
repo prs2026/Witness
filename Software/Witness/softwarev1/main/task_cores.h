@@ -14,3 +14,20 @@ namespace task_cores {
 inline constexpr BaseType_t kEstimation = 1;  // sensors (+ future Kalman filter)
 inline constexpr BaseType_t kSystem = 0;      // everything else
 }  // namespace task_cores
+
+#include "esp_task_wdt.h"
+
+// Task-watchdog supervision (flight image only; sdkconfig.flight sets the
+// timeout and CONFIG_ESP_TASK_WDT_PANIC=y). A subscribed task that does not
+// call feed() within the timeout reboots the MCU; the reset reason
+// (ESP_RST_TASK_WDT) is a Warm class in flight_state_store.cpp, so an in-flight
+// state is resumed. Usage inside a task: subscribe() once at the top, feed()
+// at least once per pass of the main loop, and unsubscribe() before a task
+// ends or before an operation that legitimately takes longer than the timeout
+// (re-subscribe afterwards). All three are cheap and safe to call when the
+// watchdog is not initialised (they just return an error that is ignored).
+namespace task_supervision {
+inline void subscribe() { (void)esp_task_wdt_add(nullptr); }
+inline void feed() { (void)esp_task_wdt_reset(); }
+inline void unsubscribe() { (void)esp_task_wdt_delete(nullptr); }
+}  // namespace task_supervision

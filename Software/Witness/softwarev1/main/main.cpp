@@ -2,6 +2,7 @@
 #include "cpu_load.h"
 #include "can_link.h"
 #include "esp_err.h"
+#include "esp_system.h"
 #include "flash_logger.h"
 #include "flight_state_machine.h"
 #include "flight_state_store.h"
@@ -16,6 +17,19 @@
 #include "usb_serial_echo.h"
 #include "flight_selftest.h"
 #include "witness_status.h"
+
+namespace {
+// Boot-time starts must degrade, never abort: an abort() in app_main is a
+// reboot loop with no sensors, no logging and no telemetry (audit W5). Log the
+// failure and let the rest of the flight computer come up.
+void note_start(const char *what, const esp_err_t result)
+{
+    if (result != ESP_OK) {
+        ESP_LOGE("main", "%s start failed: %s; continuing without it", what,
+                 esp_err_to_name(result));
+    }
+}
+}  // namespace
 
 extern "C" void app_main(void)
 {
@@ -56,26 +70,24 @@ extern "C" void app_main(void)
         flight_state_machine,
         command_bridge);
 
-    ESP_ERROR_CHECK(spi_data_forwarder.start());
+    note_start("data forwarder", spi_data_forwarder.start());
     const esp_err_t can_result = iris_can.start();
     if (can_result != ESP_OK)
         ESP_LOGW("main", "Iris CAN start failed: %s; GPS and sensing continue",
                  esp_err_to_name(can_result));
-    ESP_ERROR_CHECK(command_bridge.start());
-    ESP_ERROR_CHECK(usb_serial_echo.start());
+    note_start("command bridge", command_bridge.start());
+    note_start("USB serial", usb_serial_echo.start());
     // Install the diagnostic log sink before the remaining subsystems start so
     // their initialization output is included in this boot's TXT file.
-    ESP_ERROR_CHECK(flash_logger.start());
+    note_start("flash logger", flash_logger.start());
     iris_can.set_log_sink(&flash_logger);
-    gps_uart.set_log_sink(flash_logger);
-    const esp_err_t gps_result = gps_uart.start();
-    if (gps_result != ESP_OK)
-        ESP_LOGW("main", "GPS UART1 start failed: %s; other logging continues",
-                 esp_err_to_name(gps_result));
-    sensors.set_imu_log_sink(&flash_logger);
+    // NVS first: the GPS task reads its stored pin orientation as soon as it
+    // starts (bench 2026-11-17: it ran before the init and never saw the value).
     {
         // IMU calibration lives in NVS; without it the IMU runs uncorrected.
-        const esp_err_t nvs_result = imu_calibration::init_storage();
+        // In a resumed flight never erase NVS (calibration + boot bookkeeping);
+        // on a cold boot (pad) a full/foreign NVS is reformatted as before.
+        const esp_err_t nvs_result = imu_calibration::init_storage(!resumed);
         if (nvs_result != ESP_OK) {
             ESP_LOGE("main", "NVS init failed: %s; IMU calibration unavailable",
                      esp_err_to_name(nvs_result));
@@ -84,15 +96,39 @@ extern "C" void app_main(void)
         // image consumes it): drop a stale one.
         maintenance_mode::cancel();
     }
+    gps_uart.set_log_sink(flash_logger);
+    const esp_err_t gps_result = gps_uart.start();
+    if (gps_result != ESP_OK)
+        ESP_LOGW("main", "GPS UART1 start failed: %s; other logging continues",
+                 esp_err_to_name(gps_result));
+    sensors.set_imu_log_sink(&flash_logger);
     sensors.set_can_link(&iris_can);
-    ESP_ERROR_CHECK(sensors.start());
-    ESP_ERROR_CHECK(heartbeat.start());
+    // Sensors::start only fails on resource exhaustion (mutex, SPI bus, sensor
+    // task); an IMU, ADC or radio problem is handled inside. Retry a few
+    // times (it cleans up after itself), then bring the rest up and restart.
+    esp_err_t sensors_result = ESP_FAIL;
+    for (int attempt = 0; attempt < 3 && sensors_result != ESP_OK; ++attempt) {
+        if (attempt > 0) vTaskDelay(pdMS_TO_TICKS(500));
+        sensors_result = sensors.start();
+        note_start("sensors", sensors_result);
+    }
+    note_start("heartbeat", heartbeat.start());
     // Boot confirmation (rollback) and last-good flight slot bookkeeping.
-    const esp_err_t selftest_result = flight_selftest::start(witness_status, sensors);
+    const esp_err_t selftest_result = flight_selftest::start(witness_status, sensors, flight_state_machine);
     if (selftest_result != ESP_OK)
         ESP_LOGW("main", "flight self-test task start failed: %s", esp_err_to_name(selftest_result));
     static CpuLoadMonitor cpu_load;
     const esp_err_t cpu_result = cpu_load.start();
     if (cpu_result != ESP_OK)
         ESP_LOGW("main", "CPU load monitor start failed: %s", esp_err_to_name(cpu_result));
+    if (sensors_result != ESP_OK) {
+        // No sensor task means no flight functions at all: the only recovery
+        // is a fresh boot. Wait so the log above is seen/recorded (short when
+        // resuming an in-flight state), then restart; the state resumes.
+        const uint32_t delay_ms = resumed ? 2000U : 10000U;
+        ESP_LOGE("main", "sensor task could not be created (%s): restarting in %u ms",
+                 esp_err_to_name(sensors_result), static_cast<unsigned>(delay_ms));
+        vTaskDelay(pdMS_TO_TICKS(delay_ms));
+        esp_restart();
+    }
 }

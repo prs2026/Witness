@@ -57,6 +57,52 @@ int main()
     static_assert(kDownlinkEndMs + 2 * 50 <= kUplinkStartMs, "guard between windows");
     static_assert(kUplinkEndMs + 50 <= kSecondMs, "guard before the next second");
     static_assert(kUplinkBurstMs < kUplinkHoldOffMs, "burst ends inside Witness hold-off");
+    // UplinkHoldOff: validated-command hold, 3 s cap, forced telemetry cycle.
+    {
+        UplinkHoldOff h(3);
+        assert(!h.active(0));
+        h.note_command(1000, false);                 // Boost: never held
+        assert(!h.active(1000));
+        h.note_command(1000, true);
+        assert(h.active(1001));
+        assert(h.active(1999));
+        assert(!h.active(2000));                     // 1 s after the last frame: released
+        // A steady stream (one frame per 800 ms) holds for 3 s then is cut.
+        UplinkHoldOff g(3);
+        std::uint64_t silent_until = 0;
+        bool forced = false;
+        for (std::uint64_t t = 10000; t < 10000 + 20000; t += 100) {
+            if (t % 800 == 0) g.note_command(t, true);
+            if (g.active(t)) silent_until = t;
+            else if (g.forcing()) forced = true;
+            if (forced) break;
+        }
+        assert(forced);
+        assert(silent_until - 10000 < kHoldOffMaxMs + 800);
+        // While forcing, telemetry is never held and commands do not re-arm.
+        const std::uint64_t t0 = 20000;
+        UplinkHoldOff c(3);
+        c.note_command(t0, true);
+        for (std::uint64_t t = t0; t <= t0 + kHoldOffMaxMs; t += 500) c.note_command(t, true);
+        assert(!c.active(t0 + kHoldOffMaxMs));       // cap reached, forcing
+        assert(c.forcing() && c.forced_cycles() == 1);
+        c.note_command(t0 + 3100, true);
+        assert(!c.active(t0 + 3100));
+        c.note_telemetry_sent(0);
+        c.note_telemetry_sent(1);
+        assert(!c.active(t0 + 3200) && c.forcing()); // one type still pending
+        c.note_telemetry_sent(2);
+        assert(!c.active(t0 + 3300) && !c.forcing()); // cycle complete
+        c.note_command(t0 + 3400, true);             // a new hold may start now
+        assert(c.active(t0 + 3500));
+        // A type that never has data cannot keep the cycle open for ever.
+        UplinkHoldOff d(3);
+        d.note_command(0, true);
+        d.note_command(900, true); d.note_command(1800, true); d.note_command(2700, true);
+        assert(!d.active(3000) && d.forcing());
+        assert(!d.active(3000 + kForcedCycleMaxMs - 1) && d.forcing());
+        assert(!d.active(3000 + kForcedCycleMaxMs) && !d.forcing());
+    }
     std::puts("tx_slot tests passed");
     return 0;
 }

@@ -10,6 +10,8 @@
 class Ms5607 final {
 public:
     // Hardware and measurement configuration.
+    static constexpr int kPromRetries = 3;          // reset + PROM read again on a CRC failure
+    static constexpr std::uint32_t kPromRetryDelayMs = 5;   // > 2.8 ms reload time
     static constexpr int kSpiClockFrequencyHz = 10'000'000;
     static constexpr std::uint8_t kSpiMode = 3;
     static constexpr std::uint8_t kPressureConversionCommand = 0x48;    // OSR 4096

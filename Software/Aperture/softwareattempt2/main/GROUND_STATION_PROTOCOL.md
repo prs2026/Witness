@@ -1,5 +1,9 @@
 # Witness Ground-Station Communications Standard
 
+> **Changed 2026-11-16.** This copy was out of date (no 0x06, 0x07 or 0x08 packets, several commands missing, status bits 5-7 missing, boot power given as -9 dBm; the firmware boots at -17 dBm). It now carries the same text as the Witness and Horizon copies, which were brought in line with the 2026-11-15 fix reports (`Software/AUDIT/2026-11-15/fixes/`).
+
+> **Changed 2026-11-16.** Sections changed: 3 (status byte 1 bit 3 stale-position rule); 4 (`0x0030`-`0x0051` load-off refusals; the `0x4741`-`0x4745` whitelist and flight-state rule; `0x5250` radio power rules; `0x6869`/`0x686A` two-step erase over radio and `0xC0F1`; `0xF0` RSSI `-128`); 4b (assist whitelist); 8 (radio hold-off rules; held last-known GPS position); Aperture host input (uplink pacing). Sources: `Software/AUDIT/2026-11-15/fixes/02_radio_fixes.md`, `05_gps_fixes.md`, `06_command_fixes.md`, `08_aperture_fixes.md`. Full command matrix: `Software/COMMANDS_AND_PACKETS.md`.
+
 This document describes the protocol implemented by the Witness firmware. The
 authoritative machine-readable definitions remain in `main/comms.h`; this file
 explains how a ground station should encode, transmit, find, and decode them.
@@ -33,8 +37,10 @@ Packet lengths include the packet ID and EOF:
 | `0x03` | Camera telemetry | 17 | 19 | Iris CAN, 1 Hz | latest frame at 1 Hz |
 | `0x05` | Command | 8 | 10 | received externally | immediate; latest local frame at 1 Hz |
 | `0x0C` | HITL sensor input | 45 | 47 | host to Witness over USB only, ~100 Hz | never transmitted |
+| `0x0E` | HITL IMU batch (8 samples at 960 Hz) | 148 | 150 | host to Witness over USB only, 120 Hz | never transmitted |
 | `0xE0` | Witness debug | 101 | 103 | 10 Hz after debug enable | latest frame at 1 Hz |
 | `0xE1` | IRIS debug | 12 | 14 | Iris CAN, 10 Hz after debug enable | latest frame at 1 Hz |
+| `0xE2` | Kalman filter log | 101 | 103 | flash `P*.BIN` only, 25 Hz | never transmitted |
 | `0xFF` | Heartbeat | 6 | 8 | 1 Hz | latest frame at 1 Hz |
 | `0xF0` | Ground-station status | 27 | 29 | Aperture USB, 1 Hz | never transmitted |
 
@@ -58,7 +64,7 @@ is byte 0, the first payload byte is byte 1, and EOF is the last byte.
 | LSM6 temperature | `int16` BE | degrees C = 25 + raw / 256 |
 | MS5607 pressure | `uint24` BE | pascals = raw |
 | MS5607 temperature | `int16` BE | degrees C = raw / 100 |
-| MS5607 altitude | float32 BE | meters relative to 1013.25 mbar |
+| MS5607 altitude | float32 BE | geometric meters, ISA (all layers to 47 km) relative to 1013.25 mbar |
 | Latitude/longitude | `int24` BE | degrees = raw / 10,000; north/east positive |
 | GPS time | `uint32` BE | Unix seconds |
 | GPS altitude | float32 BE | meters above mean sea level |
@@ -93,13 +99,27 @@ Status byte 0 contains active-high flags:
 | 6 | `0x40` | Valid MS5607 sample available |
 | 7 | `0x80` | Flash initialized but logging later failed |
 
-Status byte 1 bits 0 through 2 contain the flight state. Bits 3 and 4 are
-flags; bits 5 through 7 are reserved and transmitted as zero.
+Status byte 1 bits 0 through 2 contain the flight state. Bits 3 to 7 are
+flags.
 
 | Bit | Mask | Meaning |
 |---:|---:|---|
-| 3 | `0x08` | GPS locked: a fresh GGA fix (quality >= 1, within 3 s) exists |
+| 3 | `0x08` | GPS locked: a fresh GGA fix (quality >= 1, within 3 s) exists. Clear while the position fields are non-zero: the position is the last known fix (section 8) |
 | 4 | `0x10` | HITL mode active: sensor, GPS and battery values are simulated |
+| 5 | `0x20` | MAINTENANCE: never set by the flight image (the maintenance image sends `0x08` beacons instead) |
+| 6 | `0x40` | RESUMED: an in-flight state (Boost/Coast/Descent) was resumed after an MCU reset |
+| 7 | `0x80` | LOG SLOTS FULL: both NAND log slots hold a flight. Witness never erases a flight on its own, so nothing is logged until `0x6869`/`0x686A` (USB or LoRa, Pad Idle/Landed) |
+
+Automatic transitions use the position filter's (Kalman) height above the pad
+(AGL) and vertical velocity:
+- Boost at AGL > 30 m **and** vertical velocity >= 30 m/s, both for 300 ms
+  (a slow climb never launches; a manual launch `0x7301` is unchanged).
+- Coast after low-g axial acceleration < 1 g for 500 ms.
+- Descent at AGL below max(5 %, 10 m) under the maximum while falling for
+  500 ms, or vertical velocity < -30 m/s for 2 s.
+- Landed after 30 s still with an AGL span of 10 m or less.
+
+See `FIRMWARE_HANDOFF.md`, "Status and flight state".
 
 Decode the flight state as `byte1 & 0x07`, not as the whole byte.
 
@@ -128,9 +148,12 @@ Decode the flight state as `byte1 & 0x07`, not as the whole byte.
 | 20 | 2 | Gyro Z, signed int16 |
 | 22 | 1 | EOF `0x0A` |
 
-No acceleration filter is implemented yet. The firmware currently generates the
-"filtered acceleration" fields from the most recent low-g accelerometer
-samples, converted to the defined 40 micro-g/count format.
+Filtered acceleration is the calibrated low-g accelerometer. From the first
+sample where any axis of either accelerometer reaches 15 g, it is the high-g
+accelerometer instead, back to low-g once all axes stay below 13 g for about
+10 ms. It is low-pass filtered (2nd-order Butterworth, 100 Hz, about 2.5 ms
+delay) on the 960 Hz sample stream and sent in the 40 micro-g/count format
+(range about +/-335 g).
 
 ### `0x02` Estimated-state packet, 65 bytes
 
@@ -152,16 +175,31 @@ samples, converted to the defined 40 micro-g/count format.
 | 47 | 3 | Latitude, signed int24 |
 | 50 | 3 | Longitude, signed int24 |
 | 53 | 4 | GPS altitude, float32 m MSL |
-| 57 | 4 | MS5607 barometric altitude, float32 m |
+| 57 | 4 | Kalman altitude, float32 m above the pad (see below) |
 | 61 | 2 | Witness/FC battery voltage, uint16 mV |
 | 63 | 1 | GPS satellites used, uint8 |
 | 64 | 1 | EOF `0x0A` |
 
-Status, uptime, the orientation quaternion, barometric altitude, battery
-voltage, valid UART1 GPS fixes and the satellite count are populated; position
-and velocity remain zero. Satellites come from the most recent checksum-valid
+Status, uptime, the orientation quaternion, Kalman altitude, battery
+voltage, valid UART1 GPS fixes and the satellite count are populated. Position
+and velocity come from the position Kalman filter: ENU metres and m/s, origin
+at the pad, zero until the attitude is initialized and held at zero while the
+vehicle sits still on the pad. Satellites come from the most recent checksum-valid
 GGA within 3 s and are reported even when that GGA has no fix (position fields
 are then zero); they are 0 when stale.
+
+The position Kalman filter (and the heading aligner) use a GPS fix only when
+its GGA fix quality is 1 (GPS), 2 (DGPS), 4 (RTK fixed) or 5 (RTK float).
+Quality 3, 6 (receiver dead reckoning), 7 (manual) and 8 (simulation) still
+count as a fix for the telemetry fields and the GPS-locked bit, but never
+reach the filter. While still on the pad the filter also measures local gravity
+(mean specific force) and subtracts that instead of 9.80665 m/s^2 in flight.
+
+The altitude at offset 57 is the position Kalman filter's up estimate (equal
+to Position Z), in metres above the pad. Firmware before 2026-11-10 sent the
+raw MS5607 barometric altitude (m, ISA 1013.25 mbar) in this slot. Raw pressure
+is still in `0x01`/`0xE0` and the flash sensor log, from which Horizon
+recomputes the barometric altitude.
 
 Quaternion convention (`0x02` and `0xE0`): Hamilton quaternion sent X, Y, Z,
 W (scalar last), rotating BODY vectors into WORLD (`v_world = q v_body q^-1`).
@@ -214,25 +252,248 @@ Command values currently defined:
 
 | Value | Meaning |
 |---:|---|
-| `0x0030` | Channel 1 load off |
+| `0x0030` | Channel 1 load off (refused in Boost, Coast and Descent; OK in Pad Idle and Landed) |
 | `0x0031` | Channel 1 load on |
-| `0x0032` | Channel 2 load off |
+| `0x0032` | Channel 2 load off (refused in Boost, Coast and Descent) |
 | `0x0033` | Channel 2 load on |
 | `0x0034` | Channel 3 load off |
 | `0x0035` | Channel 3 load on |
-| `0x0050` | 5 V regulator off |
+| `0x0050` | 5 V regulator off (refused in Boost, Coast and Descent) |
 | `0x0051` | 5 V regulator on |
 | `0x00E0` | Enable Witness debug packets at 10 Hz |
 | `0x4849` | Enter HITL mode (USB only, Pad Idle only; see section 4a) |
 | `0x4858` | Exit HITL mode (USB or LoRa) |
-| `0x6868` | Enter read-only USB mass-storage mode |
-| `0x6869` | Erase all stored log sessions |
-| `0x7300` through `0x7304` | Set flight state using the values above |
+| `0x5746` | Wi-Fi OTA / log download, Witness only, USB or radio, Pad Idle or Landed only (otherwise refused): d0 `0` off / `1` on, d1 Wi-Fi max TX power in dBm as int8 (`0` keeps the default +8; 2..20), d2 auto-off minutes (`0` = 15; up to 240). Never starts at boot. `0x5746` now reboots Witness into maintenance mode (status byte 1 bit 5); d0 `2` is a status query whose ack detail is: bit 8 AP up, bit 9 start watchdog fired, low byte last start step (`0xEE` = start failed). While on, Witness stops all LoRa transmission (telemetry and acks) but keeps receiving; the ack of a radio off command is sent after Wi-Fi is off. Turns off by itself without HTTP activity and on any flight state change out of Pad Idle/Landed. Out-of-range arguments are answered with "bad argument". Use `witness_ota.py` on the access point `witness-XXXX` (192.168.4.1). |
+| `0x6868` | Enter read-only USB mass-storage mode. USB only, and only in Pad Idle or Landed; over LoRa it is always refused (`IRIS_ACK_REFUSED`) |
+| `0x6869` | Erase all stored log sessions (every block; slow). USB, or LoRa when sent twice within 10 s (the first LoRa send is answered BUSY with detail `0xC0F1` and does nothing). Pad Idle or Landed only. Waits are bounded to 30 s |
+| `0x686A` | Clear all stored log sessions (fast: only the two session headers are erased; the session number keeps counting). Same rules as `0x6869` |
+| `0x4741` / `0x4744` / `0x4745` | GPS assistance upload BEGIN / DATA / COMMIT (ephemeris for the receiver; chunked, Witness-local, never forwarded). Pad Idle and Landed only, refused in Boost, Coast and Descent |
+| `0x4751` | GPS assistance upload STATUS (read only; any state) |
+| `0x4752` | GPS cold start: the receiver forgets ephemerides, almanac, position and time; Witness then reconfigures it (Pad Idle only; Witness-local, never forwarded) |
+| `0x4844` | Pad heading: body axis and azimuth (Pad Idle only; Witness-local; see section 4c) |
+| `0x5250` | Radio drive level (dBm, -17 to +3) and front end. Refused in Boost from any source. In Coast and Descent the front end may not be switched off and the level may not be lowered. Pad Idle and Landed: any change, stored in NVS (boot default -17 dBm). Detail = front-end bit 8 and drive dBm now |
+| `0x7300` through `0x7304` | Set flight state using the values above. Flight states are one-way (Pad Idle, Boost, Coast, Descent, Landed): a command to a lower state is refused (`IRIS_ACK_REFUSED`), and the same state is an accepted no-op. `0x7300` is the way back: while Landed (USB or LoRa) it is acknowledged and Witness then restarts (about 0.4 s later over USB, 1 s over LoRa) and boots Pad Idle with a fresh filter; in Pad Idle it is acknowledged and does nothing; in Boost, Coast and Descent it is refused. Over LoRa nothing else is accepted, including the `0x7301` launch trigger. Over USB `0x7301`..`0x7304` are accepted from Pad Idle, but from Boost/Coast/Descent only Landed (`0x7304`) is; everything else is refused. Refusals ack `IRIS_ACK_REFUSED` |
 
 The last three commands also have legacy compact USB forms described in
 section 7. Canonical commands received from USB or LoRa are retransmitted
 byte-for-byte through the Iris CAN link. The firmware does not rewrite their status or uptime.
 Radio commands are additionally interpreted locally.
+
+### Two-image boot: `0x5746`/`0x6868` refusals and the `0x08` maintenance beacon
+
+Witness has a flight image (no Wi-Fi) and a maintenance image (Wi-Fi OTA, log
+download, USB log export). `0x5746` on and `0x6868` make the flight image check
+the maintenance image, acknowledge (`0x06`), and restart into it. The ack result
+is `0x00` OK, or `0x01` refused. A refused ack carries the reason in its
+big-endian detail field:
+
+| Detail | Meaning |
+|---:|---|
+| `0x0000` | refused by flight state (not Pad Idle/Landed) or source (`0x6868` over LoRa) |
+| `0x0001` | no valid maintenance image installed |
+| `0x0002` | maintenance image-info missing, corrupt or wrong kind |
+| `0x0003` | maintenance image cannot read this log storage format |
+| `0x0004` | LoRa settings (frequency/SF/BW/CR/preamble/sync word/version) differ |
+| `0x0005` | command-set version differs |
+| `0x0006` | image-info layout version differs |
+| `0x0007` | selecting/validating the maintenance boot slot failed |
+| `0x0008` | a switch is already pending |
+
+While the maintenance image runs it sends **no** sensor/state telemetry; its
+presence is the `0x08` beacon, every 5 s on LoRa and on USB when connected. The
+status-byte MAINTENANCE bit (byte 1 bit 5) is no longer set by anything. It
+accepts the same 10-byte `0x05` frames: `0x5746` (on = extend the Wi-Fi window,
+off = restart into flight, d0=2 status: ack detail bit 8 AP up, bit 9 start
+failed, low byte start step) and `0x5250` radio power; other commands are acked
+`0x03` (unknown). Any reset of Witness returns to the flight image.
+
+### `0x08` Maintenance status beacon, 19 bytes
+
+Frame: ID `0x08`, 17 data bytes, EOF `0x0A`. Multi-byte fields are big-endian.
+
+| Data offset | Size | Field |
+|---:|---:|---|
+| 0 | 1 | beacon version (currently 1) |
+| 1 | 1 | mode: 0 Wi-Fi, 1 USB export |
+| 2 | 1 | flags: bit0 Wi-Fi AP up, bit1 USB disk active, bit2 log store mounted, bit3 recovery (no flight image), bit4 this image unconfirmed (first boot after a maintenance OTA), bit5 radio ok |
+| 3 | 1 | storage format version the image reads |
+| 4 | 1 | command-set version |
+| 5 | 1 | radio-settings version |
+| 6 | 2 | maintenance image id (hash of its version string) |
+| 8 | 2 | flight image id (hash of the flight image version string, 0 = none) |
+| 10 | 2 | battery millivolts (0 = not measured) |
+| 12 | 4 | uptime ms |
+| 16 | 1 | log files found (0..255) |
+
+Horizon decodes it as packet `maintenance_status` and shows the maintenance
+banner while beacons arrive (cleared by the next flight state/sensor packet).
+
+### `0x06` Command acknowledgement packet, 13 bytes
+
+Witness sends one `0x06` for each canonical 10-byte `0x05` command it handles,
+on the link the command arrived on (USB, or radio through Aperture, which
+forwards the frame to USB unchanged). Two commands are not acknowledged this
+way: GPS-assist DATA (`0x4744`) is confirmed in bulk by `0x07`, and GPS-assist
+STATUS (`0x4751`) is answered only by `0x07`. The host matches an
+acknowledgement to a command by opcode and the six data bytes.
+
+| Frame offset | Size | Field |
+|---:|---:|---|
+| 0 | 1 | Packet ID `0x06` |
+| 1 | 2 | Opcode of the command acknowledged, uint16 BE (command bytes 7-8) |
+| 3 | 6 | The command's six data bytes (frame bytes 1-6), echoed |
+| 9 | 1 | Result (table below) |
+| 10 | 2 | Detail, uint16 BE; zero unless stated below |
+| 12 | 1 | EOF `0x0A` |
+
+| Value | Name | Meaning |
+|---:|---|---|
+| `0x00` | ok | Applied or accepted |
+| `0x01` | refused | Not allowed now (flight state or mode) |
+| `0x02` | bad argument | Malformed or out-of-range data, or a GPS-assist BEGIN/COMMIT with no matching transfer |
+| `0x03` | unknown command | Opcode not recognized |
+| `0x04` | busy | Try again later; GPS-assist COMMIT could not be queued to the receiver |
+| `0x05` | incomplete | GPS-assist COMMIT with chunks missing; detail = chunks received; transfer stays open |
+| `0x06` | bad CRC | GPS-assist COMMIT: CRC mismatch; transfer discarded |
+| `0x07` | bad format | GPS-assist COMMIT: records do not parse; transfer discarded |
+
+Example, pad heading command accepted:
+
+```text
+06 48 44 00 69 78 00 00 00 00 00 0A
+```
+
+### `0x07` Transfer status packet, 76 bytes
+
+Witness sends this in reply to GPS-assist STATUS (`0x4751`), on the link the
+STATUS arrived on. The STATUS data bytes d0-d1 give the first chunk of the
+bitmap window; `0xFFFF` (or zero) means the window starts at the first missing
+chunk. Chunks are 4 bytes each (section 4b).
+
+| Frame offset | Size | Field |
+|---:|---:|---|
+| 0 | 1 | Packet ID `0x07` |
+| 1 | 1 | Transfer id |
+| 2 | 1 | State: 0 idle, 1 receiving, 2 complete (last transfer committed and passed to the receiver), 3 failed (CRC or format) |
+| 3 | 2 | Blob length, uint16 BE |
+| 5 | 2 | Chunks expected, uint16 BE |
+| 7 | 2 | Chunks received, uint16 BE |
+| 9 | 2 | First chunk of the bitmap window, uint16 BE |
+| 11 | 64 | Bitmap: bit `i` of byte `i // 8` (LSB first) is chunk `window + i`; set = received. Chunks past the end of the blob read as set |
+| 75 | 1 | EOF `0x0A` |
+
+### `0x09` Landed position packet, 28 bytes
+
+Frame: ID `0x09`, 26 data bytes, EOF `0x0A`. Multi-byte fields are big-endian.
+**Not sent since 2026-11-15:** the Landed low-power mode is switched off
+(`landed::kLowPowerModeEnabled`), and Landed sends the normal packets. With it on:
+In the Landed state Witness enters a low-power mode (see FIRMWARE_HANDOFF.md) in
+which this is the only packet it sends on its own (command acks and replies
+still go out): once per minute at the top of the GPS minute (UTC seconds 0;
+free-running 60 s timer from the last fix while GPS time is unknown), and
+immediately, at most once per 5 s, when it receives `IRIS_COMMAND_PING`
+(`05 00 00 00 00 00 00 00 22 0A`) over LoRa. Its receiver stays in continuous
+RX, so a ping or any other command is heard at any time.
+
+| Frame offset | Bytes | Field |
+|---:|---:|---|
+| 1 | 2 | Witness status bytes (flight state in byte 2 bits 0-2; bit 3 = the latest GPS cycle got a fix) |
+| 3 | 4 | uptime ms |
+| 7 | 4 | latitude, signed int32, 1e-7 degree/count |
+| 11 | 4 | longitude, signed int32, 1e-7 degree/count |
+| 15 | 4 | GPS altitude MSL, float32 metres |
+| 19 | 4 | fix age, seconds since the saved fix (`0xFFFFFFFF` = no fix) |
+| 23 | 1 | flags: bit0 position valid, bit1 stale (latest GPS cycle failed; older fix kept), bit2 ping reply, bit3 UTC aligned (top of minute) |
+| 24 | 1 | satellites used by the saved fix |
+| 25 | 2 | battery millivolts |
+
+### 4b. GPS assistance upload (ground -> Witness -> GPS)
+
+The SkyTraq PX1120S has no almanac-upload message (AN0037), but it accepts
+GPS ephemeris over UART: message 0x41 "Set GPS Ephemeris", 87 bytes (SV id,
+then subframes 1-3 as a reserved byte plus the 24 data bits of words 2-10),
+answered by ACK `83 41` or NACK `84 41`. Ephemeris is more useful than an
+almanac: the receiver needs no subframe decoding before its first fix.
+
+The ground builds a blob of records `[u16 length][SkyTraq body]` (at most
+4096 bytes; 29 ephemerides are 2,581 bytes) and sends it in ordinary
+canonical command frames `05 d0 d1 d2 d3 d4 d5 HH LL 0A`:
+
+| Opcode | Data bytes d0-d5 |
+|---|---|
+| `0x4741` BEGIN | total length (u16 BE), CRC-16/CCITT-FALSE of the blob (u16 BE), format 1 (SkyTraq), transfer id |
+| `0x4744` DATA | byte offset (u16 BE, multiple of 4), 4 data bytes (last chunk zero padded) |
+| `0x4745` COMMIT | transfer id |
+| `0x4751` STATUS | none; Witness logs the transfer and receiver progress |
+
+Chunks may arrive out of order or repeated. COMMIT checks every chunk and the
+CRC; Witness then writes the records to the receiver one at a time (waiting
+up to 1 s for each ACK/NACK, one retry) and logs `GPS assist done: A/N
+acknowledged, R rejected, U unanswered`. A COMMIT with missing chunks logs
+how many arrived, so the ground can resend. The frames work over USB and the
+radio; they are never forwarded to CAN or retransmitted by radio.
+`Horizon/gps_assist.py` builds them from a RINEX broadcast-ephemeris file;
+Horizon's Witness monitor has an "Upload GPS ephemeris…" button and the HITL
+bench sends the RF scenario's ephemerides before a run.
+
+Whitelist (since 2026-11-16): the receiver accepts only SkyTraq message `0x41`
+with a body of exactly 87 bytes. Any other record makes COMMIT answer BAD_FORMAT,
+and the same check runs again before each record is sent. Baud-change and
+factory-default messages are never sent. A host-initiated hot start through a
+single `0x01` record no longer works; the cold start `0x4752` is unchanged.
+
+### 4c. Pad heading command (ground -> Witness)
+
+Canonical command `0x4844` tells Witness which body axis points to which
+azimuth while the rocket is on the pad. Witness has no magnetometer, so without
+it the heading stays arbitrary until GPS shows the course. The data bytes are
+the usual six bytes of frame offsets 1-6:
+
+| Frame offset | Data | Field |
+|---:|---:|---|
+| 1 | d0 | Body axis: `0` +Y, `1` -Y, `2` +Z, `3` -Z; `0xFF` clears the setting |
+| 2-3 | d1-d2 | Azimuth in 0.01 degree clockwise from true north, uint16 BE, 0 to 35999 |
+| 4-6 | d3-d5 | Zero |
+
+Examples (the axis is set so that it points to the azimuth):
+
+```text
+05 00 69 78 00 00 00 48 44 0A    +Y points to 270.00 degrees
+05 FF 00 00 00 00 00 48 44 0A    clear
+```
+
+Witness applies the setting by turning its attitude about the vertical, and
+re-applies it after every attitude re-initialization on the pad. Pad Idle only:
+otherwise the acknowledgement is `refused`. An unknown axis code or an azimuth of
+36000 or more is `bad argument`. Accepted over USB and radio. Horizon's
+"Set pad heading…" button builds the frame with `build_pad_heading_packet`.
+
+### 4d. Ground-station acknowledgement and retry (Horizon)
+
+Horizon (`command_link.py`, `monitor_core.py`) handles acknowledged commands as
+follows:
+
+- Each canonical command except GPS-assist DATA is written and then waited on
+  for a matching `0x06`. It waits 0.5 s per try on USB or 1.5 s via TCP
+  (Aperture/radio), resending the frame before each retry, for up to 5 tries.
+- Console lines: `ACK[target] label: ok`, `NAK[target] label: <result> (detail n)`,
+  or `NO_ACK[target] label: no acknowledgement after 5 tries`.
+
+GPS-assist upload (`upload_gps_assist` / `CommandLink.upload_assist`):
+
+1. BEGIN is sent and acknowledged (3 tries per round). Without an answer Horizon
+   waits 1 s and tries again, for up to 600 s.
+2. All DATA chunks are sent, paced at 3 ms per frame on USB or 60 ms via TCP.
+3. A STATUS (window from the first missing chunk) is sent and the `0x07` bitmap is
+   read. If there is no reply, Horizon waits 1 s, sends BEGIN again (resume, which
+   must be acknowledged) and asks STATUS again, until the 600 s limit.
+4. Only the chunks the bitmap reports missing are resent, followed by STATUS, until
+   every chunk is held.
+5. If the reply shows a different transfer id or a state other than receiving (for
+   example after a Witness reboot), Horizon sends BEGIN again and resends every
+   chunk. A complete transfer with the same id ends the upload as already complete.
+6. COMMIT is sent and acknowledged (5 tries). `ok` ends the upload; any other
+   result is reported as a refusal with its detail.
 
 ### `0xFF` Heartbeat packet, 8 bytes
 
@@ -253,7 +514,7 @@ location is not available.
 | Frame offset | Size | Field |
 |---:|---:|---|
 | 0 | 1 | Packet ID `0xF0` |
-| 1 | 1 | Last valid LoRa RSSI, int8 dBm (`-127` before the first packet) |
+| 1 | 1 | Last valid LoRa RSSI, int8 dBm (`-127` before the first packet; `-128` = receiver radio down: init failed, radio faulted, or RX front end off) |
 | 2 | 4 | Station uptime, uint32 ms |
 | 6 | 1 | GPS fix quality, uint8, NMEA GGA field 6 (0 = no fix) |
 | 7 | 1 | GPS satellites used, uint8 (GGA field 7) |
@@ -299,19 +560,64 @@ are these frame offsets minus one. All multi-byte fields are big-endian.
 | 73, 75, 77 | 2 each | LSM6 gyro X/Y/Z, int16 |
 | 79 | 3 | MS5607 pressure, uint24 Pa |
 | 82 | 2 | MS5607 temperature, int16 centi-C |
-| 84 | 4 | MS5607 altitude, float32 m |
+| 84 | 4 | Kalman altitude, float32 m above the pad (as `0x02`) |
 | 88 | 3 | Latitude, int24 |
 | 91 | 3 | Longitude, int24 |
 | 94 | 4 | GPS Unix time, uint32 s |
 | 98 | 4 | GPS altitude, float32 m MSL |
 | 102 | 1 | EOF `0x0A` |
 
-MCU temperature, position, velocity and GPS Unix time remain zero. The
+Position and velocity are the Kalman filter estimate, as in `0x02`. MCU
+temperature and GPS Unix time remain zero. The
 quaternion is populated exactly as in `0x02` (same convention; all zero until
 the estimator is initialized), so enabling debug output with command `0x00E0`
 gives 10 Hz quaternions on USB (LoRa still sends the newest debug frame at its
 1 Hz radio rate). GPS latitude, longitude and MSL altitude come from UART1 NMEA
 GGA fixes.
+
+### `0xE2` Kalman filter log packet, 103 bytes (flash log only)
+
+Witness writes one per position-filter update cycle (25 Hz) into the flash
+packet stream (`P*.BIN`, record source 5) for post-flight review of the
+filter. It is never sent over LoRa, USB or CAN. Floats are big-endian
+float32; axes are East, North, Up relative to the pad.
+
+| Frame offset | Size | Field |
+|---:|---:|---|
+| 0 | 1 | Packet ID `0xE2` |
+| 1 | 1 | Flight state (0 Pad Idle .. 4 Landed) |
+| 2 | 1 | Flags (below) |
+| 3 | 1 | GPS satellites in the latest fix |
+| 4, 8, 12 | 4 each | Position E/N/U, m |
+| 16, 20, 24 | 4 each | Velocity E/N/U, m/s |
+| 28, 32, 36 | 4 each | Position variance P00 E/N/U, m^2 |
+| 40, 44, 48 | 4 each | Velocity variance P11 E/N/U, (m/s)^2 |
+| 52, 56, 60 | 4 each | Position-velocity covariance P01 E/N/U, m^2/s |
+| 64 | 4 | Barometer innovation (measurement - prediction), m |
+| 68 | 4 | Barometer innovation variance S = P00 + R, m^2 |
+| 72 | 4 | Barometer measurement sigma (sqrt R) of the latest update, m |
+| 76, 80, 84 | 4 each | GPS innovation E/N/U, m |
+| 88 | 4 | Mach (filter speed / ISA speed of sound) |
+| 92 | 2 | Barometer updates used, uint16 running total |
+| 94 | 2 | Barometer updates skipped by the Mach gate, uint16 |
+| 96 | 2 | Barometer updates rejected by the 5-sigma gate, uint16 |
+| 98 | 2 | GPS fixes used, uint16 |
+| 100 | 2 | GPS axis updates rejected, uint16 |
+| 102 | 1 | EOF `0x0A` |
+
+Variances are after the cycle's updates. Innovations are NaN when that
+measurement was not offered in the cycle; they are recorded whether or not the
+gate accepted them. GPS R is (2.5 m horizontal, 5 m vertical, doubled below 6
+satellites)^2. Counters wrap at 65536.
+
+Flags: `0x01` filter initialized (attitude known), `0x02` IMU ignored (attitude
+lost after gyro saturation), `0x04` pad hold, `0x08` barometer Mach gate
+active, `0x10` barometer update accepted this cycle, `0x20` at least one GPS
+axis accepted this cycle, `0x40` GPS origin set, `0x80` HITL active.
+
+Horizon `converter.py` decodes it in `P*.BIN` exports (`packet_type`
+`kalman_log`), adding `kf_*` flag columns and `position_sigma_*` /
+`velocity_sigma_*` (square roots of the variances).
 
 ### `0xE1` IRIS debug packet, 14 bytes
 
@@ -340,8 +646,9 @@ LoRa, CAN and logging continue.
   rejected and logged. Reboot always starts with HITL off.
 - **Exit**: canonical command `0x4858` from USB or LoRa, or automatically when
   no valid `0x0C` packet arrives for 1000 ms (from entry or from the last
-  packet). Exit does not change the flight state; send `0x7300` to return to
-  Pad Idle if the simulation launched.
+  packet). Exit does not change the flight state. If the simulation launched,
+  send `0x7304` (Landed; from Boost/Coast/Descent USB accepts only Landed) and
+  then `0x7300`, which restarts Witness into Pad Idle (states are one-way), or let the 30 s landing test fire on the still bench.
 - **Detect**: status byte 1 bit 4 (`0x10`) is set while HITL is active.
 - **Between enter and the first `0x0C` packet** all readiness flags (byte 0
   bits 1, 2, 3, 5, 6) are clear, battery and barometer fields are zero, the
@@ -365,6 +672,15 @@ LoRa, CAN and logging continue.
   frames at a steady 100 Hz.
 - HITL commands are bridged to Iris like any other `0x05` command (Iris ignores
   them). `0x0C` packets are never forwarded to CAN or LoRa.
+- **`0x0E` HITL IMU batch** (optional, USB only): payload u32 index of the first
+  sample (counting from 0 in each run), then 8 samples of int16 low-g x,y,z,
+  high-g x,y,z, gyro x,y,z in the same counts as `0x0C`, followed by EOF
+  `0x0A`. The samples are consecutive at 960 Hz. While these arrive, Witness
+  runs its estimators and IMU log on them at 960 Hz and ignores the IMU fields
+  of `0x0C`.
+- Witness stops its attitude (all-zero quaternion) for the rest of a flight
+  once any gyro axis saturates (>= 1950 dps for 2 samples) in Boost, Coast or
+  Descent. Its position filter then ignores the IMU.
 
 ### `0x0C` HITL sensor input packet, 47 bytes (host to Witness, USB only)
 
@@ -421,8 +737,19 @@ should be updated to configure an explicit value before deployment.
 
 Every locally generated canonical packet updates a latest-frame cache keyed by
 packet ID. The radio scheduler sends the newest cached frame at the independent
-per-type rates declared as `kRadio*PacketRateHz` in `main/sensors.h`. All seven
-rates default to 1 Hz. Changing a radio rate does not change the packet's normal
+per-type rates declared as `kRadio*PacketRateHz` in `main/sensors.h`. The three
+radio types (`0x01`, `0x02`, `0x03`) default to 1 Hz; in Pad Idle `0x01` and
+`0x02` go every 3 s; in Landed only `0x09` once a minute.
+- **GPS time slots** (`main/tx_slot.h`): with a GPS fix, Witness's scheduled
+  packets must end by 700 ms into the UTC second. Aperture, with a fix and PPS,
+  sends commands only in 800-950 ms.
+- **Hold-off:** after Witness hears a command frame that passes validation, its
+  scheduled telemetry pauses for 1 s. Frames that fail validation do not arm it,
+  nothing is held in Boost, and a continuous hold is capped at 3 s, after which one
+  full telemetry cycle is sent before another hold can start. Acks and replies are
+  never held.
+
+Changing a radio rate does not change the packet's normal
 producer or USB rate. A packet type that has not yet been produced is skipped.
 Rates must be non-zero integer divisors of 1000 Hz.
 
@@ -521,11 +848,12 @@ GPS Unix time remains zero (GGA contains no date).
 
 A no-fix GGA invalidates the current fix immediately, but its satellite count
 is still reported. A GGA (and its fix) expires after
-`NmeaGps::kFixTimeoutMs` (3000 ms). Invalid/missing/stale fixes emit zero in all
-three GPS position fields and clear status byte 1 bit 3 (GPS locked); stale
-GGA data also reports 0 satellites. Zero is not a unique invalid marker: a
-legitimate zero coordinate/altitude has the same representation; use the
-GPS-locked bit. Bad checksums are discarded and cannot refresh the fix age.
+`NmeaGps::kFixTimeoutMs` (3000 ms). Since 2026-11-16 the position is held when the fix is lost: the three GPS
+position fields carry the last valid fix and status byte 1 bit 3 (GPS locked)
+is clear. Use that bit, not a zero position, to decide whether the position is
+live. A non-zero position with GPS locked clear is a last known position. Before
+the first fix ever, the fields are zero. Satellites is the live count (0 once the
+GGA itself is stale). The age of the held fix is not sent. Bad checksums are discarded and cannot refresh the fix age.
 Raw UART bytes are logged unchanged regardless of fix validity.
 
 Settings are in `main/gps_receiver.h`: `kConfigureAtStartup`,
@@ -571,7 +899,7 @@ matching hexadecimal session number:
 | File | Contents |
 |---|---|
 | `U0000001.BIN` | Raw external GPS payload bytes, received over UART1 |
-| `S0000001.BIN` | Existing 48-byte sensor records, using the flight-state logging gate |
+| `S0000001.BIN` | 24-byte WL v2 sensor records at 50 Hz, using the flight-state logging gate |
 | `S0000001.TXT` | ESP-IDF diagnostic output |
 
 GPS capture runs in every flight state, including Pad Idle and Landed. A
@@ -581,14 +909,26 @@ all accepted bytes before publishing the files. GPS data arriving after
 capture stops is not part of the exported snapshot. Sudden power loss can lose
 the bytes still buffered in RAM; use the export command before disconnecting.
 
-New sessions use storage layout version 2: 10 NAND blocks for sensor data,
-40 for external GPS data and 12 for diagnostics, retaining 16 rotating sessions.
-The GPS allocation holds up to 5,222,400 raw bytes per session; recording duration
-depends on the receiver's actual output rate.
-Old version-1 sensor and diagnostic sessions remain readable. No format or
-erase is required to upgrade. Buffer overflow or flash write failure sets the
-existing flash-log-failed status bit. When a file's allocation fills, that
-stream stops with a diagnostic and the other streams continue. These are
+New sessions use storage layout version 4, built for one flight at a time:
+two slots of 502 blocks. Each holds:
+- 96 NAND blocks for the 24-byte IMU stream (`I*.BIN`, 960 Hz until Descent,
+  then 96 Hz);
+- 40 for sensor data (24-byte WL v2 records at 50 Hz: status, uptime, pressure
+  and temperatures; the IMU samples and altitude/battery live in the I*/P* streams);
+- 24 for diagnostics;
+- 120 for the packet stream (`P*.BIN`: Witness state packets at 50 Hz, every
+  packet sent or received over CAN, and radio commands);
+- 221 (about 28.8 MB) for external GPS data.
+
+The diagnostic, packet and GPS sections are circular on the pad, so a long pad
+wait loses only the oldest pad data. From launch on they keep everything
+written since launch. A slot holding a flight is never erased automatically;
+pad-only power cycles reuse the other slot, and with both slots holding
+flights nothing is logged (status byte 1 bit 7) until an erase/clear. Version 3 sessions
+(no packet stream) still export; older versions do not. No format or erase is required to upgrade. Buffer overflow or
+flash write failure sets the existing flash-log-failed status bit. When the IMU,
+sensor or diagnostic allocation fills, that stream stops with a diagnostic and
+the other streams continue. These are
 finite buffers, not an unlimited lossless recorder.
 
 Radio initialization failure disables radio RX/TX for the rest of the boot,
@@ -623,7 +963,17 @@ Legacy compact binary commands are accepted after a 20 ms idle interval:
 05 68 68       enter mass storage
 05 68 69       erase stored sessions
 05 73 00..04   set flight state
+05 43 47       IMU calibration: capture gyro bias (4 s, board still)
+05 43 41       IMU calibration: capture one face (2 s); six faces solve the accels
+05 43 58       IMU calibration: clear
+05 43 53       IMU calibration: log status
 ```
+
+IMU calibration commands are USB-only and accepted only in Pad Idle with real
+sensors. The calibration is stored in Witness NVS. Telemetry IMU values (`0x01`
+gyro and filtered acceleration, `0xE0` low-g, high-g and gyro) are calibrated
+counts; the gyro also has the attitude estimator's live pad bias removed. The
+NAND `I*.BIN` stream keeps raw counts.
 
 HITL enter/exit (`0x4849`/`0x4858`) are accepted only as canonical 10-byte
 frames (binary or ASCII hex), not in compact form.
@@ -703,6 +1053,8 @@ Aperture accepts only full canonical 10-byte binary command frames. ASCII-hex
 and compact forms in section 7 apply to a direct Witness USB connection. Horizon
 shortcuts emit full frames for both routes. Aperture transparently forwards
 received LoRa payloads unchanged to USB. CAN fragment headers are never carried
-over LoRa or exposed to the host.
+over LoRa or exposed to the host. Uplink pacing (since 2026-11-16): Aperture
+sends at most 3 commands in a burst, then waits at least 1.5 s with nothing sent.
+A duplicate of a frame already queued is dropped. The queue holds 64 frames.
 
 Shared CAN transport reference: [Intercomm](../../../Intercomm/README.md).

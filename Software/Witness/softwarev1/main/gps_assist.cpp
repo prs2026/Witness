@@ -25,6 +25,7 @@ bool Assembler::parse_records(const std::uint8_t *blob, const std::size_t length
         if (offset + 2 > length) return false;
         const std::size_t n = (static_cast<std::size_t>(blob[offset]) << 8U) | blob[offset + 1];
         if (n == 0 || n > kMaximumRecord || offset + 2 + n > length) return false;
+        if (!is_allowed_message(blob + offset + 2, n)) return false;   // G4 whitelist
         offset += 2 + n;
         ++records;
     }

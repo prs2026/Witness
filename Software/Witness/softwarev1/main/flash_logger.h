@@ -14,6 +14,7 @@
 #include "freertos/task.h"
 #include "freertos/stream_buffer.h"
 #include "w25n01kv.h"
+#include "log_slot_logic.h"
 
 class Sensors;
 class WitnessStatus;
@@ -57,7 +58,12 @@ public:
     static constexpr std::uint32_t kPrelaunchBufferSeconds = 2;
     static constexpr std::uint32_t kFlushIntervalMs = 1000;
     static constexpr std::uint32_t kTaskStackSize = 7168;
-    static constexpr std::uint32_t kCaptureTaskStackSize = 3072;
+    // 3072 was tight: the Boost-transition ESP_LOGI (formatting + the 256 B
+    // LogLine in log_vprintf + console printf) needs ~2 KB. +2 KB of heap.
+    static constexpr std::uint32_t kCaptureTaskStackSize = 5120;
+    // Erase/clear callers wait at most this long (full erase worst case is
+    // 1004 blocks x ~12 ms = ~12 s) instead of forever.
+    static constexpr std::uint32_t kEraseWaitMs = 30000;
     static constexpr std::size_t kMaximumExportFiles = 48;
     static constexpr std::size_t kUartReceiveBufferSize = 32768;
 
@@ -67,6 +73,10 @@ public:
     static constexpr std::uint8_t kPacketSourceCanTx = 3;   // to Iris over CAN
     static constexpr std::uint8_t kPacketSourceRadioRx = 4; // LoRa command
     static constexpr std::uint8_t kPacketSourceKalman = 5;  // 0xE2 filter log, 25 Hz
+    // Logger marker, written once when a reset in flight resumed in this slot:
+    // frame = [u8 kind=1 (resumed)] [u8 flight state] [u32 BE session generation].
+    // Timestamps (u32 us), IMU sequence and WL sequence restart after it.
+    static constexpr std::uint8_t kPacketSourceLogMarker = 6;
     static constexpr std::size_t kPacketRecordHeader = 6;   // u32 us, source, length
     static constexpr std::size_t kMaxPacketFrame = 103;     // intercomm limit
     // Any task may call this; never blocks (a full queue drops and counts).
@@ -159,6 +169,8 @@ public:
     void disable_console_output();
     // True once prepare_mass_storage() has frozen logging (until reset).
     bool frozen() const { return frozen_.load(); }
+    // Pages skipped as unreadable (uncorrectable ECC) by scans and exports.
+    std::uint32_t unreadable_page_count() const { return unreadable_pages_; }
 
 private:
     static constexpr TickType_t kLogPeriod =
@@ -272,6 +284,7 @@ private:
     struct SlotInfo {
         bool valid = false;
         bool flight = false;
+        bool dirty = false;    // header/marker page was uncorrectable
         std::uint8_t version = 0;
         std::uint32_t generation = 0;
     };
@@ -297,6 +310,20 @@ private:
     static FlashLogger *log_sink_;
 
     esp_err_t read_slot_info(std::uint8_t slot, SlotInfo &info);
+    // Page read with a few retries for transient errors (an uncorrectable ECC
+    // result is deterministic and returned at once).
+    esp_err_t read_page_retry(std::uint32_t page, std::uint16_t column,
+                              std::uint8_t *data, std::size_t length);
+    void choose_slot(bool allow_append);
+    esp_err_t resume_session();
+    bool block_session_bad(std::uint32_t block) const;
+    void mark_session_bad(std::uint32_t block);
+    bool prepare_block(std::uint32_t block);
+    esp_err_t program_page_robust(std::uint32_t page, const std::uint8_t *data, std::size_t length);
+    void update_nand_status();
+    bool any_stream_full() const;
+    bool ground_state() const;
+    esp_err_t request_erase(std::uint8_t mode, TickType_t timeout);
     esp_err_t scan_sessions(bool build_export_table);
     esp_err_t run_startup_self_test();
     esp_err_t erase_session_blocks();
@@ -362,8 +389,23 @@ private:
     std::atomic<bool> capture_logs_{false};
     std::atomic<bool> console_output_enabled_{true};
     std::atomic<bool> export_requested_{false};
-    std::atomic<bool> erase_requested_{false};
-    std::atomic<bool> erase_quick_{false};  // the pending erase is a fast clear
+    // 0 none, 1 full erase, 2 fast clear (one word: no mode/request race).
+    std::atomic<std::uint8_t> erase_request_{0};
+    std::atomic<bool> erase_busy_{false};  // the logger task is executing an erase
+    // Chosen at scan: what this boot does with the slots.
+    SlotInfo slot_info_[kSlotCount]{};
+    log_slot::Action choice_action_ = log_slot::Action::NewSession;
+    bool resumed_in_flight_ = false;       // set in start(): reset during Boost/Coast/Descent
+    bool appended_ = false;                // this session continues a flight already in the slot
+    bool session_ready_ = false;
+    bool slot_unusable_[kSlotCount]{};
+    log_slot::WriteHealth write_health_{};
+    bool nand_status_set_ = false;
+    bool backoff_active_ = false;
+    std::uint32_t session_bad_[32]{};      // blocks given up on this boot
+    std::size_t session_bad_count_ = 0;
+    std::uint32_t chunks_dropped_ = 0;
+    std::uint32_t unreadable_pages_ = 0;
     std::atomic<bool> frozen_{false};
     std::atomic<bool> capture_binary_records_{true};
     std::atomic<bool> capture_imu_records_{false};

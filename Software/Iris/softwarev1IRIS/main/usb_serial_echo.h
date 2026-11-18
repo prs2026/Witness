@@ -9,6 +9,7 @@
 #include "driver/gpio.h"
 #include "esp_err.h"
 #include "hardware.h"
+#include "recovery_logic.h"
 
 class Mcp23008;
 class Pac1931;
@@ -64,6 +65,8 @@ private:
     esp_err_t set_led(bool on);
     void poll_heartbeat(std::int64_t now_us);
     void poll_expander_resync(std::int64_t now_us);
+    void recover_i2c(std::int64_t now_us, const char *why);
+    bool usb_write_allowed(std::int64_t now_us);
     void poll_current_monitor(std::int64_t now_us);
     void poll_debug_report(std::int64_t now_us);
     void send_camera_report(std::int64_t now_us);
@@ -81,6 +84,16 @@ private:
     bool initialized_ = false;
     bool usb_ready_ = false;
     std::int64_t next_expander_resync_us_ = 0;
+    std::int64_t next_expander_check_us_ = 0;
+    iris_recovery::I2cFailureTracker expander_failures_;
+    iris_recovery::I2cFailureTracker pac_failures_;
+    // USB writes are dropped (not blocked on) until this time after one timed
+    // out, i.e. no host is draining the TX buffer.
+    std::int64_t usb_stall_until_us_ = 0;
+    // I3: receive buffers live in the (static) object, not on the 3.5 KB
+    // main-task stack.
+    std::uint8_t usb_rx_buffer_[kBufferSize]{};
+    std::uint8_t uart_rx_buffer_[kBufferSize]{};
     char command_buffer_[kCommandBufferSize]{};
     std::size_t command_length_ = 0;
     bool command_overflow_ = false;

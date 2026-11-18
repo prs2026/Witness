@@ -138,5 +138,23 @@ int main() {
         feed(t, sentence("GPGGA,,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,"), 50);
         assert(t.latest_fix().valid && !t.latest_fix().utc_valid);   // empty time
     }
+    // Navigation use: only qualities 1, 2, 4, 5; valid (display) is unchanged.
+    {
+        for (int q = 0; q <= 8; ++q) {
+            NmeaGps g;
+            const std::string body = std::string("GPGGA,123519,4807.038,N,01131.000,E,") +
+                                     static_cast<char>('0' + q) + ",08,0.9,545.4,M,46.9,M,,";
+            feed(g, sentence(body), 100);
+            const NmeaGps::Fix f = g.latest_fix();
+            assert(f.fix_quality == q);
+            assert(f.valid == (q >= 1));    // display / GPS-locked semantics
+            assert(NmeaGps::usable_for_navigation(f) == (q == 1 || q == 2 || q == 4 || q == 5));
+        }
+        NmeaGps::Fix none{};
+        assert(!NmeaGps::usable_for_navigation(none));
+        NmeaGps::Fix invalid_q1{};
+        invalid_q1.fix_quality = 1;       // quality without a valid position
+        assert(!NmeaGps::usable_for_navigation(invalid_q1));
+    }
     std::puts("NMEA GPS tests passed");
 }

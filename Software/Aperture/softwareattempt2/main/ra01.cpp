@@ -5,7 +5,10 @@
 #include <cstdint>
 
 #include "driver/gpio.h"
+#include "esp_attr.h"
 #include "esp_log.h"
+#include "esp_rom_sys.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "hardware.h"
@@ -32,6 +35,12 @@ constexpr std::uint8_t kClearIrqStatus = 0x02;
 constexpr std::uint8_t kGetRxBufferStatus = 0x13;
 constexpr std::uint8_t kGetPacketStatus = 0x14;
 constexpr std::uint8_t kReadBuffer = 0x1E;
+constexpr std::uint8_t kGetStatus = 0xC0;
+constexpr std::uint8_t kGetPacketType = 0x11;
+constexpr std::uint8_t kGetDeviceErrors = 0x17;
+constexpr std::uint8_t kClearDeviceErrors = 0x07;
+constexpr std::uint8_t kChipModeRx = 0x5;
+constexpr std::uint8_t kPacketTypeLora = 0x01;
 
 constexpr std::uint16_t kIrqRxDone = 0x0002;
 constexpr std::uint16_t kIrqTxDone = 0x0001;
@@ -46,6 +55,17 @@ constexpr std::uint8_t radio_bandwidth_code()
                       IRIS_RADIO_BANDWIDTH_HZ == 500000U,
                   "Add the SX1262 bandwidth code for this configured rate");
     return IRIS_RADIO_BANDWIDTH_HZ == 500000U ? 0x06U : IRIS_RADIO_BANDWIDTH_HZ == 250000U ? 0x05U : 0x04U;
+}
+
+// DIO1 (RxDone/TxDone/CrcErr) wakes the task that runs receive(). Set in
+// initialize(); the ISR service is installed by Lc86Gps::start() (or here).
+TaskHandle_t g_dio1_task = nullptr;
+
+void IRAM_ATTR dio1_isr(void *)
+{
+    BaseType_t woken = pdFALSE;
+    if (g_dio1_task != nullptr) vTaskNotifyGiveFromISR(g_dio1_task, &woken);
+    if (woken != pdFALSE) portYIELD_FROM_ISR();
 }
 
 void store_u32_be(std::uint8_t *data, const std::uint32_t value)
@@ -68,7 +88,12 @@ Ra01::~Ra01()
 
 esp_err_t Ra01::initialize()
 {
-    if (initialized_) return ESP_ERR_INVALID_STATE;
+    // Re-entrant on purpose: a failed first init, or a health-check recovery,
+    // calls this again (RESET pulse + full configuration). Never permanent.
+    initialized_ = false;
+    pa_low_configured_ = -1;
+    busy_stuck_ = false;
+    health_failures_ = 0;
 
     gpio_config_t outputs{};
     outputs.pin_bit_mask = (1ULL << IRIS_PIN_RADIO_RESET) |
@@ -107,24 +132,27 @@ esp_err_t Ra01::initialize()
              gpio_get_level(IRIS_PIN_RADIO_RF_ENABLE),
              gpio_get_level(IRIS_PIN_RADIO_BUSY));
 
-    spi_bus_config_t bus{};
-    bus.mosi_io_num = IRIS_PIN_RADIO_SPI_MOSI;
-    bus.miso_io_num = IRIS_PIN_RADIO_SPI_MISO;
-    bus.sclk_io_num = IRIS_PIN_RADIO_SPI_SCK;
-    bus.quadwp_io_num = -1;
-    bus.quadhd_io_num = -1;
-    result = spi_bus_initialize(SPI2_HOST, &bus, SPI_DMA_DISABLED);
-    if (result != ESP_OK) return result;
+    if (spi_device_ == nullptr) {   // SPI bus is set up once, kept across retries
+        spi_bus_config_t bus{};
+        bus.mosi_io_num = IRIS_PIN_RADIO_SPI_MOSI;
+        bus.miso_io_num = IRIS_PIN_RADIO_SPI_MISO;
+        bus.sclk_io_num = IRIS_PIN_RADIO_SPI_SCK;
+        bus.quadwp_io_num = -1;
+        bus.quadhd_io_num = -1;
+        result = spi_bus_initialize(SPI2_HOST, &bus, SPI_DMA_DISABLED);
+        if (result != ESP_OK) return result;
 
-    spi_device_interface_config_t device{};
-    device.clock_speed_hz = kSpiClockHz;
-    device.mode = 0;
-    device.spics_io_num = IRIS_PIN_RADIO_CS;
-    device.queue_size = 1;
-    result = spi_bus_add_device(SPI2_HOST, &device, &spi_device_);
-    if (result != ESP_OK) {
-        (void)spi_bus_free(SPI2_HOST);
-        return result;
+        spi_device_interface_config_t device{};
+        device.clock_speed_hz = kSpiClockHz;
+        device.mode = 0;
+        device.spics_io_num = IRIS_PIN_RADIO_CS;
+        device.queue_size = 1;
+        result = spi_bus_add_device(SPI2_HOST, &device, &spi_device_);
+        if (result != ESP_OK) {
+            spi_device_ = nullptr;
+            (void)spi_bus_free(SPI2_HOST);
+            return result;
+        }
     }
 
     const std::uint8_t standby[] = {0x00U};
@@ -133,6 +161,17 @@ esp_err_t Ra01::initialize()
     if (result != ESP_OK) return result;
     result = write_command(kSetPacketType, packet_type, sizeof(packet_type));
     if (result != ESP_OK) return result;
+
+    // SPI writes alone also succeed with an absent radio (MISO floats), so
+    // verify a real round trip through the packet RAM before configuring.
+    {
+        const std::array<std::uint8_t, 4> probe{{0xA5, 0x3C, 0x69, 0x96}};
+        std::array<std::uint8_t, 4> reply{};
+        result = write_buffer(probe.data(), probe.size());
+        if (result == ESP_OK) result = read_buffer(0, reply.data(), reply.size());
+        if (result != ESP_OK) return result;
+        if (reply != probe) return ESP_ERR_NOT_FOUND;
+    }
 
     const std::uint32_t frequency_word = static_cast<std::uint32_t>(
         (static_cast<std::uint64_t>(IRIS_RADIO_FREQUENCY_HZ) << 25U) /
@@ -197,10 +236,45 @@ esp_err_t Ra01::initialize()
     result = write_command(kClearIrqStatus, clear_irq, sizeof(clear_irq));
     if (result != ESP_OK) return result;
 
-    const std::uint8_t continuous_rx[] = {0xFFU, 0xFFU, 0xFFU};
-    result = write_command(kSetRx, continuous_rx, sizeof(continuous_rx));
-    if (result == ESP_OK) initialized_ = true;
+    const std::uint8_t clear_errors[] = {0x00U, 0x00U};
+    (void)write_command(kClearDeviceErrors, clear_errors, sizeof(clear_errors));
+
+    // DIO1 interrupt: wakes the receive task as soon as a packet is complete.
+    // Optional: if it cannot be set up the 10 ms poll still works.
+    g_dio1_task = xTaskGetCurrentTaskHandle();
+    if (!dio1_isr_installed_) {
+        esp_err_t isr = gpio_install_isr_service(0);
+        if (isr == ESP_ERR_INVALID_STATE) isr = ESP_OK;   // already installed (GPS)
+        if (isr == ESP_OK) isr = gpio_set_intr_type(IRIS_PIN_RADIO_DIO1, GPIO_INTR_POSEDGE);
+        if (isr == ESP_OK) isr = gpio_isr_handler_add(IRIS_PIN_RADIO_DIO1, dio1_isr, nullptr);
+        if (isr == ESP_OK) {
+            dio1_isr_installed_ = true;
+        } else {
+            ESP_LOGW(kLogTag, "DIO1 interrupt unavailable (%s); polling", esp_err_to_name(isr));
+        }
+    }
+
+    result = enter_rx();
+    if (result == ESP_OK) {
+        initialized_ = true;
+        rx_fault_ = false;
+    }
     return result;
+}
+
+esp_err_t Ra01::enter_rx()
+{
+    const std::uint8_t continuous_rx[] = {0xFFU, 0xFFU, 0xFFU};
+    return write_command(kSetRx, continuous_rx, sizeof(continuous_rx));
+}
+
+void Ra01::wait_for_event(const TickType_t ticks)
+{
+    if (dio1_isr_installed_) {
+        (void)ulTaskNotifyTake(pdTRUE, ticks);
+    } else {
+        vTaskDelay(ticks);
+    }
 }
 
 esp_err_t Ra01::transmit(const std::uint8_t *data, const std::size_t length)
@@ -209,6 +283,25 @@ esp_err_t Ra01::transmit(const std::uint8_t *data, const std::size_t length)
         return ESP_ERR_INVALID_ARG;
     }
 
+    const esp_err_t result = transmit_sequence(data, length);
+
+    // Every path, success or error, ends back in continuous RX. A failed
+    // setup used to return in standby and leave the receiver deaf.
+    const std::uint8_t clear_irq[] = {0xFFU, 0xFFU};
+    (void)write_command(kClearIrqStatus, clear_irq, sizeof(clear_irq));
+    esp_err_t rx_result = enter_rx();
+    if (rx_result != ESP_OK) {
+        const std::uint8_t standby[] = {0x00U};
+        (void)write_command(kSetStandby, standby, sizeof(standby));
+        rx_result = enter_rx();
+    }
+    // The main loop runs health_check() at once when this is set.
+    rx_fault_ = rx_result != ESP_OK;
+    return result == ESP_OK ? rx_result : result;
+}
+
+esp_err_t Ra01::transmit_sequence(const std::uint8_t *data, const std::size_t length)
+{
     const std::uint8_t standby[] = {0x00U};
     esp_err_t result = write_command(kSetStandby, standby, sizeof(standby));
     if (result != ESP_OK) return result;
@@ -245,6 +338,7 @@ esp_err_t Ra01::transmit(const std::uint8_t *data, const std::size_t length)
     result = write_command(kSetTx, tx_timeout, sizeof(tx_timeout));
     if (result != ESP_OK) return result;
 
+    const std::int64_t tx_start_us = esp_timer_get_time();
     const TickType_t deadline = xTaskGetTickCount() +
                                 pdMS_TO_TICKS(kTransmitTimeoutMs);
     for (;;) {
@@ -261,14 +355,15 @@ esp_err_t Ra01::transmit(const std::uint8_t *data, const std::size_t length)
             result = ESP_ERR_TIMEOUT;
             break;
         }
-        vTaskDelay(1);
+        // A command frame is on air for ~10-20 ms: poll every 0.25 ms instead
+        // of sleeping a 10 ms tick, so RX resumes right after TxDone.
+        if (esp_timer_get_time() - tx_start_us < 100000) {
+            esp_rom_delay_us(250);
+        } else {
+            vTaskDelay(1);
+        }
     }
-
-    (void)write_command(kClearIrqStatus, clear_irq, sizeof(clear_irq));
-    const std::uint8_t continuous_rx[] = {0xFFU, 0xFFU, 0xFFU};
-    const esp_err_t rx_result = write_command(kSetRx, continuous_rx,
-                                               sizeof(continuous_rx));
-    return result == ESP_OK ? rx_result : result;
+    return result;
 }
 
 esp_err_t Ra01::receive(std::uint8_t *data, const std::size_t capacity,
@@ -283,9 +378,12 @@ esp_err_t Ra01::receive(std::uint8_t *data, const std::size_t capacity,
     const std::uint16_t irq = static_cast<std::uint16_t>(
         (static_cast<std::uint16_t>(irq_data[0]) << 8U) | irq_data[1]);
 
+    // Clear only the bits handled here. Clearing 0x00FF after the read could
+    // erase the RxDone of a packet that arrived in between (lost packet).
     if ((irq & kIrqCrcError) != 0U) {
-        const std::uint8_t clear[] = {0x00U, 0xFFU};
+        const std::uint8_t clear[] = {0x00U, static_cast<std::uint8_t>(kIrqCrcError | kIrqRxDone)};
         (void)write_command(kClearIrqStatus, clear, sizeof(clear));
+        ++stats_.crc_errors;
         return ESP_ERR_INVALID_CRC;
     }
     if ((irq & kIrqRxDone) == 0U) return ESP_ERR_NOT_FOUND;
@@ -294,11 +392,6 @@ esp_err_t Ra01::receive(std::uint8_t *data, const std::size_t capacity,
     result = read_command(kGetRxBufferStatus, status, sizeof(status));
     if (result != ESP_OK) return result;
     const std::size_t packet_length = status[0];
-    if (packet_length > capacity) {
-        const std::uint8_t clear[] = {0x00U, 0xFFU};
-        (void)write_command(kClearIrqStatus, clear, sizeof(clear));
-        return ESP_ERR_INVALID_SIZE;
-    }
 
     // GetPacketStatus response for LoRa is:
     // RFU, Status, RssiPkt, SnrPkt, SignalRssiPkt.
@@ -306,28 +399,132 @@ esp_err_t Ra01::receive(std::uint8_t *data, const std::size_t capacity,
     result = read_command(kGetPacketStatus, packet_status,
                            sizeof(packet_status));
     if (result != ESP_OK) return result;
-    last_packet_rssi_dbm_ = static_cast<std::int8_t>(
-        -static_cast<std::int8_t>(packet_status[0] / 2U));
+
+    // Clear RxDone now (buffer status and RSSI are captured), so a packet that
+    // completes while the payload is read below raises it again.
+    const std::uint8_t clear_rx[] = {0x00U, static_cast<std::uint8_t>(kIrqRxDone)};
+    (void)write_command(kClearIrqStatus, clear_rx, sizeof(clear_rx));
+    if (packet_length > capacity) return ESP_ERR_INVALID_SIZE;
 
     result = read_buffer(status[1], data, packet_length);
-    const std::uint8_t clear[] = {0x00U, 0xFFU};
-    (void)write_command(kClearIrqStatus, clear, sizeof(clear));
-    if (result == ESP_OK) length = packet_length;
+    if (result != ESP_OK) return result;
+
+    // If a new packet (or CRC error) finished during the read, the single RX
+    // buffer may hold a mix of both: drop this one, count it, and leave the
+    // new RxDone set so the next call delivers the new packet intact.
+    std::uint8_t again[2]{};
+    result = read_command(kGetIrqStatus, again, sizeof(again));
+    if (result == ESP_OK &&
+        (((static_cast<std::uint16_t>(again[0]) << 8U) | again[1]) &
+         (kIrqRxDone | kIrqCrcError)) != 0U) {
+        ++stats_.rx_overruns;
+        return ESP_ERR_NOT_FOUND;
+    }
+    last_packet_rssi_dbm_ = static_cast<std::int8_t>(
+        -static_cast<std::int8_t>(packet_status[0] / 2U));
+    length = packet_length;
+    return ESP_OK;
+}
+
+esp_err_t Ra01::read_status_byte(std::uint8_t &status)
+{
+    esp_err_t result = wait_until_ready();
+    if (result != ESP_OK) return result;
+    std::array<std::uint8_t, 2> tx{{kGetStatus, 0x00U}};
+    std::array<std::uint8_t, 2> rx{};
+    spi_transaction_t transaction{};
+    transaction.length = tx.size() * 8U;
+    transaction.rxlength = transaction.length;
+    transaction.tx_buffer = tx.data();
+    transaction.rx_buffer = rx.data();
+    result = spi_device_transmit(spi_device_, &transaction);
+    if (result == ESP_OK) status = rx[1];
     return result;
+}
+
+Ra01::Health Ra01::health_check()
+{
+    if (!initialized_) return Health::Failed;
+
+    bool reinit = false;
+    bool rearmed = false;
+    std::uint8_t status = 0;
+    std::uint8_t packet_type = 0;
+    esp_err_t result = read_status_byte(status);
+    if (result == ESP_OK) result = read_command(kGetPacketType, &packet_type, 1U);
+    if (result != ESP_OK) {
+        // SPI/BUSY failure: tolerate a couple (glitch), then reset the chip.
+        if (++health_failures_ >= 3U) reinit = true;
+        else return Health::Failed;
+    } else if (packet_type != kPacketTypeLora) {
+        // Chip reset by a supply dip: back in standby with GFSK defaults.
+        ESP_LOGW(kLogTag, "health: packet type %u (chip reset?), re-initializing", packet_type);
+        reinit = true;
+    } else {
+        const std::uint8_t mode = (status >> 4U) & 0x07U;
+        if (mode != kChipModeRx) {
+            ESP_LOGW(kLogTag, "health: chip mode %u not RX, re-issuing SetRx", mode);
+            const std::uint8_t clear_irq[] = {0xFFU, 0xFFU};
+            (void)write_command(kClearIrqStatus, clear_irq, sizeof(clear_irq));
+            result = enter_rx();
+            std::uint8_t after = 0;
+            if (result == ESP_OK) result = read_status_byte(after);
+            if (result != ESP_OK || ((after >> 4U) & 0x07U) != kChipModeRx) {
+                if (++health_failures_ >= 2U) reinit = true; else return Health::Failed;
+            } else {
+                ++stats_.rearms;
+                rearmed = true;
+            }
+        }
+        std::uint8_t errors[2]{};
+        if (!reinit && read_command(kGetDeviceErrors, errors, sizeof(errors)) == ESP_OK &&
+            (errors[0] | errors[1]) != 0U) {
+            ++stats_.device_errors;
+            const std::uint8_t clear[] = {0x00U, 0x00U};
+            (void)write_command(kClearDeviceErrors, clear, sizeof(clear));
+        }
+    }
+
+    if (reinit) {
+        ++stats_.reinits;
+        result = initialize();
+        return result == ESP_OK ? Health::Reinitialized : Health::Failed;
+    }
+    health_failures_ = 0;
+    rx_fault_ = false;
+    return rearmed ? Health::Rearmed : Health::Ok;
 }
 
 esp_err_t Ra01::wait_until_ready()
 {
-    const TickType_t deadline = xTaskGetTickCount() +
-                                pdMS_TO_TICKS(kBusyTimeoutMs);
+    // BUSY normally clears within microseconds of the previous command: spin
+    // briefly instead of sleeping a whole 10 ms scheduler tick per command
+    // (the old vTaskDelay(1) cost ~6 x 10 ms per received packet).
+    const std::int64_t start_us = esp_timer_get_time();
+    while (gpio_get_level(IRIS_PIN_RADIO_BUSY) != 0 &&
+           esp_timer_get_time() - start_us < kBusySpinUs) {
+    }
+    if (gpio_get_level(IRIS_PIN_RADIO_BUSY) == 0) {
+        busy_stuck_ = false;
+        return ESP_OK;
+    }
+
+    const std::int64_t limit_us = busy_stuck_
+        ? static_cast<std::int64_t>(kBusyStuckTimeoutUs)
+        : static_cast<std::int64_t>(kBusyTimeoutMs) * 1000;
     while (gpio_get_level(IRIS_PIN_RADIO_BUSY) != 0) {
-        if (xTaskGetTickCount() >= deadline) {
-            ESP_LOGE(kLogTag, "BUSY timeout: GPIO%d remains high",
-                     IRIS_PIN_RADIO_BUSY);
+        if (esp_timer_get_time() - start_us >= limit_us) {
+            ++stats_.busy_timeouts;
+            if (!busy_stuck_) {
+                ESP_LOGE(kLogTag, "BUSY timeout: GPIO%d remains high",
+                         IRIS_PIN_RADIO_BUSY);
+            }
+            busy_stuck_ = true;
             return ESP_ERR_TIMEOUT;
         }
         vTaskDelay(1);
     }
+    busy_stuck_ = false;
     return ESP_OK;
 }
 

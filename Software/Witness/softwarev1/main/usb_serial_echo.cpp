@@ -3,6 +3,7 @@
 #include "task_cores.h"
 
 #include <cstddef>
+#include <cstdlib>
 #include <cstdint>
 #include <cstring>
 
@@ -11,6 +12,9 @@
 #include "driver/usb_serial_jtag.h"
 #include "driver/usb_serial_jtag_vfs.h"
 #include "esp_log.h"
+#include "esp_system.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "flash_logger.h"
 #include "flight_state_machine.h"
 #include "heartbeat.h"
@@ -21,9 +25,40 @@
 #include "boot_manager.h"
 #include "wifi_ota_logic.h"
 
+// Persistent radio power level (radio agent, 2026-11-15): optional until that
+// header lands; the call below is compiled in as soon as it exists.
+#if __has_include("radio_power_store.h")
+#include "radio_power_store.h"
+#define WITNESS_HAVE_RADIO_POWER_STORE 1
+#endif
+
+static_assert(command_policy::kRadioPowerMinDbm == IRIS_RADIO_TX_POWER_MIN_DBM &&
+                  command_policy::kRadioPowerMaxDbm == IRIS_RADIO_TX_POWER_MAX_DBM,
+              "command_policy radio power range must match hardware_pins.h");
+static_assert(command_policy::kCh1LoadOff == IRIS_COMMAND_CH1_LOAD_OFF &&
+                  command_policy::kCh1LoadOn == IRIS_COMMAND_CH1_LOAD_ON &&
+                  command_policy::kCh2LoadOff == IRIS_COMMAND_CH2_LOAD_OFF &&
+                  command_policy::kCh2LoadOn == IRIS_COMMAND_CH2_LOAD_ON &&
+                  command_policy::kCh3LoadOff == IRIS_COMMAND_CH3_LOAD_OFF &&
+                  command_policy::kCh3LoadOn == IRIS_COMMAND_CH3_LOAD_ON &&
+                  command_policy::kRegulator5vOff == IRIS_COMMAND_5V_REGULATOR_OFF &&
+                  command_policy::kRegulator5vOn == IRIS_COMMAND_5V_REGULATOR_ON,
+              "command_policy load opcodes must match comms.h");
+
 namespace {
 
 constexpr char kLogTag[] = "serial_command";
+
+std::uint32_t now_ms()
+{
+    return static_cast<std::uint32_t>(xTaskGetTickCount()) * portTICK_PERIOD_MS;
+}
+
+// Flight state for the CommandBridge load gate.
+std::uint8_t read_state_for_bridge(void *context)
+{
+    return static_cast<std::uint8_t>(static_cast<FlightStateMachine *>(context)->state());
+}
 
 int hex_nibble(const char character)
 {
@@ -112,6 +147,10 @@ esp_err_t UsbSerialEcho::start()
         return ESP_ERR_INVALID_STATE;
     }
 
+    // The bridge refuses load/5 V OFF commands in flight before they reach
+    // Iris or the radio (command_policy::allow_iris_load_command).
+    command_bridge_.set_state_reader(&read_state_for_bridge, &flight_state_machine_);
+
     usb_serial_jtag_driver_config_t usb_config{};
     usb_config.tx_buffer_size = kBufferSize;
     usb_config.rx_buffer_size = kBufferSize;
@@ -155,19 +194,34 @@ void UsbSerialEcho::task_entry(void *context)
 
 void UsbSerialEcho::echo_bytes(const std::uint8_t *data, const std::size_t length)
 {
-    std::size_t bytes_echoed = 0;
+    // The echo is a convenience for a terminal: it must never hold up command
+    // handling (radio commands run on this task). No host, or a host that is
+    // not draining, means the echo is dropped (audit 07 #5; was an endless
+    // wait plus a yield loop that could starve IDLE).
+    const TickType_t now = xTaskGetTickCount();
+    if (echo_muted_) {
+        if (static_cast<std::int32_t>(now - echo_mute_until_) < 0) return;
+        echo_muted_ = false;
+    }
+    if (!usb_serial_jtag_is_connected()) return;
 
+    const TickType_t deadline = now + pdMS_TO_TICKS(kEchoBudgetMs);
+    std::size_t bytes_echoed = 0;
     while (bytes_echoed < length) {
+        const TickType_t remaining = static_cast<TickType_t>(deadline - xTaskGetTickCount());
+        if (static_cast<std::int32_t>(remaining) <= 0) break;
         const int bytes_written = usb_serial_jtag_write_bytes(
             data + bytes_echoed,
             length - bytes_echoed,
-            portMAX_DELAY);
-
-        if (bytes_written > 0) {
-            bytes_echoed += static_cast<std::size_t>(bytes_written);
-        } else {
-            taskYIELD();
-        }
+            remaining);
+        if (bytes_written <= 0) break;
+        bytes_echoed += static_cast<std::size_t>(bytes_written);
+    }
+    if (bytes_echoed < length) {
+        // Host not reading: stop echoing for a moment instead of waiting
+        // again on every chunk.
+        echo_muted_ = true;
+        echo_mute_until_ = xTaskGetTickCount() + pdMS_TO_TICKS(kEchoMuteMs);
     }
 }
 
@@ -179,9 +233,25 @@ void UsbSerialEcho::consume_input(
     // progress. Text commands are printable, so a 0x0C abandons any partial
     // text line (for example stale echoed log text with no newline yet).
     // Once started, the next 46 bytes belong to the frame whatever their value.
+    //
+    // While HITL is NOT active a 0x0C/0x0E byte only starts a candidate: the
+    // bytes are held, and if they do not form a valid frame (EOF and decode)
+    // they are replayed as ordinary input, so a stray 0x0C can no longer
+    // swallow the next 46 (or 149) bytes, which may be a real command
+    // (audit 07 #15 / 04_sensors). A real frame from a host that is still
+    // streaming after an exit is still dropped quietly.
     std::size_t run_start = 0;
     for (std::size_t index = 0; index < length; ++index) {
         const std::uint8_t byte = data[index];
+        if (hitl_hold_length_ != 0U) {
+            hitl_hold_[hitl_hold_length_++] = byte;
+            hitl_last_byte_time_ = xTaskGetTickCount();
+            run_start = index + 1U;
+            if (hitl_hold_length_ >= hitl_hold_expected_) {
+                finish_hitl_hold();
+            }
+            continue;
+        }
         if (!hitl_frames_.active()) {
             if (byte != IRIS_PACKET_ID_HITL_SENSORS && byte != IRIS_PACKET_ID_HITL_IMU) {
                 continue;
@@ -190,6 +260,15 @@ void UsbSerialEcho::consume_input(
             echo_and_consume_commands(data + run_start, index - run_start);
             run_start = index;
             if (binary_command_active_) {
+                continue;
+            }
+            if (!sensors_.hitl_active()) {
+                run_start = index + 1U;
+                hitl_hold_[0] = byte;
+                hitl_hold_length_ = 1U;
+                hitl_hold_expected_ = byte == IRIS_PACKET_ID_HITL_SENSORS ? hitl::kFrameLength
+                                                                          : hitl::kImuFrameLength;
+                hitl_last_byte_time_ = xTaskGetTickCount();
                 continue;
             }
             discard_partial_text_line();
@@ -209,6 +288,39 @@ void UsbSerialEcho::consume_input(
         }
     }
     echo_and_consume_commands(data + run_start, length - run_start);
+}
+
+void UsbSerialEcho::finish_hitl_hold()
+{
+    const std::size_t length = hitl_hold_length_;
+    bool valid = length > 0U && hitl_hold_[length - 1U] == IRIS_PACKET_EOF_VALUE;
+    if (valid) {
+        if (hitl_hold_[0] == IRIS_PACKET_ID_HITL_IMU) {
+            hitl::ImuBatch batch{};
+            valid = hitl::decode_imu_frame(hitl_hold_, length, batch);
+        } else {
+            hitl::Sample sample{};
+            valid = hitl::decode_frame(hitl_hold_, length, sample);
+        }
+    }
+    if (valid) {
+        hitl_hold_length_ = 0U;
+        handle_hitl_frame(hitl_hold_);   // HITL off: counted and dropped
+        return;
+    }
+    replay_hitl_hold();
+}
+
+void UsbSerialEcho::replay_hitl_hold()
+{
+    // Not a frame: drop the stray ID byte and treat the rest as input.
+    std::uint8_t copy[hitl::kMaxFrameLength];
+    const std::size_t length = hitl_hold_length_ > 0U ? hitl_hold_length_ - 1U : 0U;
+    std::memcpy(copy, hitl_hold_ + 1, length);
+    hitl_hold_length_ = 0U;
+    if (length != 0U) {
+        consume_input(copy, length);
+    }
 }
 
 void UsbSerialEcho::echo_and_consume_commands(
@@ -360,7 +472,8 @@ void UsbSerialEcho::finish_binary_command()
     const bool assist_frame =
         packet_length == IRIS_PACKET_COMMAND_FRAME_LENGTH &&
         (gps_assist::is_assist_command(frame_opcode) ||
-         frame_opcode == IRIS_COMMAND_GPS_COLD_START);
+         frame_opcode == IRIS_COMMAND_GPS_COLD_START ||
+         frame_opcode == IRIS_COMMAND_BENCH_RESTART);
     if (packet_length > 1U) {
         if (!assist_frame) {
             forward_usb_command(
@@ -414,6 +527,28 @@ void UsbSerialEcho::process_canonical_binary_command(
         send_ack(false, command, args, r == ESP_OK ? IRIS_ACK_OK : IRIS_ACK_REFUSED);
         return;
     }
+    if (command == IRIS_COMMAND_BENCH_RESTART) {
+        // Bench-only warm reset in any flight state (tests the RTC resume).
+        // Gated on HITL, which only USB can start and only in Pad Idle, so a
+        // real flight can never reach it.
+        const std::uint8_t mode = args[0];
+        if (!sensors_.hitl_active()) {
+            ESP_LOGW(kLogTag, "bench restart refused: HITL not active");
+            send_ack(false, command, args, IRIS_ACK_REFUSED);
+            return;
+        }
+        if (mode != IRIS_BENCH_RESTART_SOFTWARE && mode != IRIS_BENCH_RESTART_PANIC) {
+            send_ack(false, command, args, IRIS_ACK_BAD_ARGUMENT);
+            return;
+        }
+        ESP_LOGW(kLogTag, "bench restart (%s) in flight state %u",
+                 mode == IRIS_BENCH_RESTART_PANIC ? "panic" : "software",
+                 static_cast<unsigned>(flight_state_machine_.state()));
+        send_ack(false, command, args, IRIS_ACK_OK);
+        vTaskDelay(pdMS_TO_TICKS(100));   // let the ack leave over USB
+        if (mode == IRIS_BENCH_RESTART_PANIC) abort();
+        esp_restart();
+    }
     if (command == IRIS_COMMAND_WITNESS_DEBUG_START) {
         // Canonical 05 .. 00 E0 0A, as the HITL tool sends it. The compact
         // handler has no 0x00E0 form, so without this the request was ignored.
@@ -439,7 +574,7 @@ void UsbSerialEcho::process_canonical_binary_command(
     }
     if (command == IRIS_COMMAND_GPS_COLD_START) {
         // Only on the pad: a cold start loses the fix for 30 s or more.
-        if (flight_state_machine_.state() != FlightStateMachine::State::PadIdle) {
+        if (!command_policy::allow_gps_cold_start(static_cast<std::uint8_t>(flight_state_machine_.state()))) {
             ESP_LOGW(kLogTag, "GPS cold start over USB refused: not in Pad Idle");
             send_ack(false, command, args, IRIS_ACK_REFUSED);
             return;
@@ -461,6 +596,14 @@ void UsbSerialEcho::process_canonical_binary_command(
     if ((command >> 8U) == IRIS_COMMAND_SET_FLIGHT_STATE) {
         const esp_err_t r = set_flight_state(static_cast<std::uint8_t>(command), false);
         send_ack(false, command, args, r == ESP_OK ? IRIS_ACK_OK : IRIS_ACK_REFUSED);
+        return;
+    }
+    if (command_policy::is_iris_load_command(command)) {
+        // Already forwarded (or refused) by the bridge just before this call.
+        const bool allowed = command_policy::allow_iris_load_command(
+            command, static_cast<std::uint8_t>(flight_state_machine_.state()));
+        send_ack(false, command, args,
+                 !allowed ? IRIS_ACK_REFUSED : last_forward_result_ == ESP_OK ? IRIS_ACK_OK : IRIS_ACK_BUSY);
         return;
     }
     // The compact handler acts on (or forwards) the rest; the ack confirms
@@ -494,15 +637,17 @@ void UsbSerialEcho::process_queued_radio_commands()
 {
     std::uint8_t command[IRIS_PACKET_COMMAND_FRAME_LENGTH]{};
     std::size_t command_length = 0;
+    esp_err_t forward_result = ESP_OK;
     while (command_bridge_.receive_radio_command(
-        command, sizeof(command), command_length)) {
-        process_radio_command(command, command_length);
+        command, sizeof(command), command_length, &forward_result)) {
+        process_radio_command(command, command_length, forward_result);
     }
 }
 
 void UsbSerialEcho::process_radio_command(
     const std::uint8_t *const data,
-    const std::size_t length)
+    const std::size_t length,
+    const esp_err_t forward_result)
 {
     if (data == nullptr || data[0] != IRIS_PACKET_ID_COMMAND) {
         return;
@@ -558,7 +703,7 @@ void UsbSerialEcho::process_radio_command(
     }
     if (command == IRIS_COMMAND_GPS_COLD_START) {
         // Only on the pad: a cold start loses the fix for 30 s or more.
-        if (flight_state_machine_.state() != FlightStateMachine::State::PadIdle) {
+        if (!command_policy::allow_gps_cold_start(static_cast<std::uint8_t>(flight_state_machine_.state()))) {
             ESP_LOGW(kLogTag, "GPS cold start over radio refused: not in Pad Idle");
             ack(IRIS_ACK_REFUSED);
             return;
@@ -583,9 +728,11 @@ void UsbSerialEcho::process_radio_command(
         case IRIS_COMMAND_CLEAR_LOG_SESSIONS: {
             // Over radio too (Pad Idle/Landed): the only way to free a store
             // whose two slots hold flights once Witness is on the backplane.
+            // Two sends needed (command_policy::EraseConfirm): the first one is
+            // answered IRIS_ACK_BUSY + IRIS_ACK_DETAIL_CONFIRM_NEEDED and does nothing.
             std::uint16_t detail = 0;
             const std::uint8_t result = run_log_maintenance(command, true, detail);
-            ack(result);
+            ack(result, detail);
             break;
         }
         case IRIS_COMMAND_HITL_ENTER:
@@ -614,9 +761,21 @@ void UsbSerialEcho::process_radio_command(
         case IRIS_COMMAND_CH3_LOAD_ON:
         case IRIS_COMMAND_5V_REGULATOR_OFF:
         case IRIS_COMMAND_5V_REGULATOR_ON:
-            // These commands are implemented by the external device.
-            // They were already retransmitted by CommandBridge.
-            ack(IRIS_ACK_OK);
+            // These commands are implemented by the external device. The
+            // CommandBridge already forwarded them (or refused them: OFF in
+            // Boost/Coast/Descent, command_policy). OK only when the CAN
+            // queue accepted the frame, so the ground can retry otherwise.
+            if (!command_policy::allow_iris_load_command(
+                    command, static_cast<std::uint8_t>(flight_state_machine_.state()))) {
+                ESP_LOGW(kLogTag, "radio load command 0x%04X refused in flight", command);
+                ack(IRIS_ACK_REFUSED);
+            } else if (forward_result != ESP_OK) {
+                ESP_LOGW(kLogTag, "radio load command 0x%04X not forwarded to Iris: %s", command,
+                         esp_err_to_name(forward_result));
+                ack(IRIS_ACK_BUSY);
+            } else {
+                ack(IRIS_ACK_OK);
+            }
             break;
         case IRIS_COMMAND_PING:
             // Ground ping (already forwarded to Iris, which answers PONG over CAN).
@@ -722,7 +881,10 @@ void UsbSerialEcho::forward_usb_command(
     const std::size_t length)
 {
     const esp_err_t result = command_bridge_.submit_usb_command(data, length);
-    if (result != ESP_OK) {
+    last_forward_result_ = result;
+    if (result == ESP_ERR_NOT_ALLOWED) {
+        ESP_LOGW(kLogTag, "USB command refused in this flight state: not forwarded");
+    } else if (result != ESP_OK) {
         ESP_LOGW(
             kLogTag,
             "external command forwarding failed: %s",
@@ -771,26 +933,30 @@ bool UsbSerialEcho::forward_text_command_if_present()
     return true;
 }
 
-void UsbSerialEcho::erase_log_sessions()
+esp_err_t UsbSerialEcho::erase_log_sessions()
 {
     ESP_LOGW(kLogTag, "protected erase command accepted; erasing all log sessions");
-    const esp_err_t result = flash_logger_.erase_all_sessions();
+    // Bounded: this task also serves the radio commands, it must not hang if
+    // the logger task is gone (audit 07 #6).
+    const esp_err_t result = flash_logger_.erase_all_sessions(pdMS_TO_TICKS(kEraseWaitMs));
     if (result == ESP_OK) {
         ESP_LOGI(kLogTag, "all flash log sessions erased");
     } else {
         ESP_LOGE(kLogTag, "log erase failed: %s", esp_err_to_name(result));
     }
+    return result;
 }
 
-void UsbSerialEcho::clear_log_sessions()
+esp_err_t UsbSerialEcho::clear_log_sessions()
 {
     ESP_LOGW(kLogTag, "protected clear command accepted; deleting all log sessions");
-    const esp_err_t result = flash_logger_.clear_all_sessions();
+    const esp_err_t result = flash_logger_.clear_all_sessions(pdMS_TO_TICKS(kEraseWaitMs));
     if (result == ESP_OK) {
         ESP_LOGI(kLogTag, "all flash log sessions cleared");
     } else {
         ESP_LOGE(kLogTag, "log clear failed: %s", esp_err_to_name(result));
     }
+    return result;
 }
 
 void UsbSerialEcho::handle_gps_assist(const std::uint16_t command, const std::uint8_t *data,
@@ -800,7 +966,7 @@ void UsbSerialEcho::handle_gps_assist(const std::uint16_t command, const std::ui
     if (!command_policy::allow_gps_assist(command,
                                           static_cast<std::uint8_t>(flight_state_machine_.state()))) {
         if (++gps_assist_rejects_ % 50U == 1U) {
-            ESP_LOGW(kLogTag, "GPS assist 0x%04X over %s refused in Boost", command, source);
+            ESP_LOGW(kLogTag, "GPS assist 0x%04X over %s refused: Pad Idle/Landed only", command, source);
         }
         if (command != gps_assist::kCommandData) send_ack(radio, command, data, IRIS_ACK_REFUSED);
         return;
@@ -859,6 +1025,9 @@ void UsbSerialEcho::handle_gps_assist(const std::uint16_t command, const std::ui
                          static_cast<unsigned>(gps_assist_.records()));
             } else {
                 ESP_LOGW(kLogTag, "GPS assist could not be queued: %s", esp_err_to_name(r));
+                // Reopen the transfer so a repeated COMMIT submits again instead of
+                // being answered OK for a blob that never reached the GPS (audit G10).
+                gps_assist_.handover_failed();
             }
             send_ack(radio, command, data, r == ESP_OK ? IRIS_ACK_OK : IRIS_ACK_BUSY);
             return;
@@ -949,26 +1118,58 @@ void UsbSerialEcho::handle_radio_power(const std::uint8_t *data, const char *sou
     // reports the level now in use in detail (int16).
     const int requested = static_cast<std::int8_t>(data[1]);
     const std::uint8_t front_end = data[2];
+    const std::uint8_t state = static_cast<std::uint8_t>(flight_state_machine_.state());
+    const bool front_end_off = front_end == IRIS_RADIO_FRONT_END_OFF;
     std::uint8_t result = IRIS_ACK_OK;
-    if (!command_policy::allow_radio_power(static_cast<std::uint8_t>(flight_state_machine_.state()))) {
+    if (!command_policy::allow_radio_power(state)) {
         result = IRIS_ACK_REFUSED;        // never in Boost (any source)
-    } else if (data[0] != IRIS_RADIO_POWER_TARGET_WITNESS || front_end > IRIS_RADIO_FRONT_END_OFF) {
+    } else if (data[0] != IRIS_RADIO_POWER_TARGET_WITNESS || front_end > IRIS_RADIO_FRONT_END_OFF ||
+               !command_policy::radio_power_in_range(requested)) {
         result = IRIS_ACK_BAD_ARGUMENT;   // GROUND is Aperture's; it never forwards it
+    } else if (!command_policy::allow_radio_power_change(state, requested, sensors_.radio_tx_power_dbm(),
+                                                         front_end_off)) {
+        result = IRIS_ACK_REFUSED;        // Coast/Descent: no front end off, no lowering
     } else if (!sensors_.set_radio_tx_power_dbm(requested)) {
         result = IRIS_ACK_BAD_ARGUMENT;
-    } else if (front_end != IRIS_RADIO_FRONT_END_UNCHANGED) {
-        sensors_.set_radio_front_end_enabled(front_end == IRIS_RADIO_FRONT_END_ON);
+    } else if (front_end == IRIS_RADIO_FRONT_END_ON) {
+        sensors_.set_radio_front_end_enabled(true);
+        front_end_off_pending_ = false;   // a later ON overrides a pending OFF
     }
+    // The front end is switched OFF only after the ack is queued (the ack
+    // reports the state it is about to have); over radio it then waits for
+    // the ack to be on the air and the flight state is checked again.
+    const bool switch_off = result == IRIS_ACK_OK && front_end_off;
     const int now = sensors_.radio_tx_power_dbm();
-    const bool fem = sensors_.radio_front_end_enabled();
+    const bool fem = switch_off ? false : sensors_.radio_front_end_enabled();
     send_ack(radio, IRIS_COMMAND_RADIO_POWER, data, result,
              static_cast<std::uint16_t>((fem ? 0x100U : 0U) | static_cast<std::uint8_t>(now)));
+    if (switch_off) {
+        if (radio) {
+            front_end_off_pending_ = true;
+            front_end_off_due_ = xTaskGetTickCount() + pdMS_TO_TICKS(kRadioAckGuardMs);
+        } else {
+            sensors_.set_radio_front_end_enabled(false);
+        }
+    }
+#ifdef WITNESS_HAVE_RADIO_POWER_STORE
+    // Keep the chosen drive level across resets (a reset in flight otherwise
+    // drops the downlink to -17 dBm). Front-end on/off is never stored.
+    // Ground only: an NVS write stalls both cores for a few ms.
+    if (result == IRIS_ACK_OK && command_policy::allow_persist_radio_power(state)) {
+        const esp_err_t saved = radio_power_store::save(static_cast<std::int8_t>(now));
+        if (saved != ESP_OK) ESP_LOGW(kLogTag, "radio power not stored: %s", esp_err_to_name(saved));
+    }
+#else
+    // TODO(radio_power_store): radio_power_store::save(now) goes here once
+    // main/radio_power_store.h exists (audit W1). Not wired in this build.
+#endif
     if (result == IRIS_ACK_OK) {
         ESP_LOGI(kLogTag, "radio TX drive %d dBm over %s, front end %s (%s)", now, source,
                  fem ? "on" : "OFF", fem ? "~+26 dB" : "PA unpowered, bench only");
     } else {
         ESP_LOGW(kLogTag, "radio TX power over %s refused%s: target %u, %d dBm (allowed -17..%d); still %d dBm",
-                 source, result == IRIS_ACK_REFUSED ? " in Boost" : "", data[0], requested,
+                 source, result == IRIS_ACK_REFUSED ? " (Boost; or Coast/Descent lowering / front end off)" : "",
+                 data[0], requested,
                  IRIS_RADIO_TX_POWER_MAX_DBM, now);
     }
 }
@@ -1027,9 +1228,11 @@ std::uint8_t UsbSerialEcho::switch_to_maintenance(const int kind, const int tx_d
         detail = result.refuse_detail;
         return IRIS_ACK_REFUSED;
     }
-    if (!maintenance_mode::restart_after_ms(radio ? kRadioAckGuardMs + kSwitchRestartDelayMs
-                                                  : kSwitchRestartDelayMs)) {
-        maintenance_mode::cancel();
+    if (!schedule_restart(command_policy::PendingRestart::Maintenance, radio)) {
+        // prepare_switch already selected the maintenance slot: put the boot
+        // partition back, or a later reset would boot maintenance first
+        // (audit B10).
+        (void)boot_manager::revert_switch();
         detail = IRIS_MAINT_REFUSE_BUSY;
         return IRIS_ACK_BUSY;
     }
@@ -1059,12 +1262,21 @@ std::uint8_t UsbSerialEcho::run_log_maintenance(const std::uint16_t command, con
             ESP_LOGW(kLogTag, "USB export requested: restarting into the maintenance image (USB disk)");
         }
         return result;
-    } else if (command == IRIS_COMMAND_ERASE_LOG_SESSIONS) {
-        erase_log_sessions();
-    } else if (command == IRIS_COMMAND_CLEAR_LOG_SESSIONS) {
-        clear_log_sessions();
     }
-    return IRIS_ACK_OK;
+    // Over radio, erase/clear need the same command twice within 10 s
+    // (accident / replay protection). USB stays single shot.
+    if (radio && !erase_confirm_.accept(command, now_ms())) {
+        ESP_LOGW(kLogTag, "radio command 0x%04X: send it again within %u s to confirm", command,
+                 static_cast<unsigned>(command_policy::kEraseConfirmWindowMs / 1000U));
+        detail = IRIS_ACK_DETAIL_CONFIRM_NEEDED;
+        return IRIS_ACK_BUSY;
+    }
+    const esp_err_t erased = command == IRIS_COMMAND_ERASE_LOG_SESSIONS ? erase_log_sessions()
+                                                                         : clear_log_sessions();
+    if (erased == ESP_OK) return IRIS_ACK_OK;
+    detail = static_cast<std::uint16_t>(erased);
+    // Timeout / logger busy: try again later; anything else: not done.
+    return (erased == ESP_ERR_TIMEOUT || erased == ESP_ERR_INVALID_STATE) ? IRIS_ACK_BUSY : IRIS_ACK_REFUSED;
 }
 
 esp_err_t UsbSerialEcho::set_flight_state(const std::uint8_t state, const bool radio)
@@ -1075,6 +1287,25 @@ esp_err_t UsbSerialEcho::set_flight_state(const std::uint8_t state, const bool r
         ESP_LOGW(kLogTag, "flight state 0x%02X -> 0x%02X over %s refused", current, state,
                  radio ? "radio" : "USB");
         return ESP_ERR_NOT_ALLOWED;
+    }
+    if (command_policy::is_reset_to_pad(current, state)) {
+        // The flight states are one-way: the way back to Pad Idle is a restart
+        // (a Landed record is not resumed, so the next boot is Pad Idle with a
+        // fresh position filter). The caller acknowledges after this returns;
+        // the restart timer lets that ack go out first. Any pending
+        // maintenance-image request is dropped so this restart boots flight.
+        if (pending_restart_ == command_policy::PendingRestart::Maintenance) {
+            (void)boot_manager::revert_switch();   // also drops the request
+        } else {
+            maintenance_mode::cancel();
+        }
+        if (!schedule_restart(command_policy::PendingRestart::ResetToPad, radio)) {
+            ESP_LOGE(kLogTag, "reset to Pad Idle: restart timer failed");
+            return ESP_ERR_NO_MEM;
+        }
+        ESP_LOGW(kLogTag, "Landed -> Pad Idle over %s: restarting (flight states are one-way)",
+                 radio ? "radio" : "USB");
+        return ESP_OK;
     }
     const bool commanded_launch =
         flight_state_machine_.state() == FlightStateMachine::State::PadIdle &&
@@ -1090,6 +1321,70 @@ esp_err_t UsbSerialEcho::set_flight_state(const std::uint8_t state, const bool r
                  state, esp_err_to_name(result));
     }
     return result;
+}
+
+bool UsbSerialEcho::schedule_restart(const command_policy::PendingRestart kind, const bool radio)
+{
+    // The timer only raises a flag; service_pending_restart() (run loop)
+    // checks the flight state again before it restarts (audit B2 / W11).
+    pending_restart_ = kind;
+    if (!maintenance_mode::restart_deferred_after_ms(radio ? kRadioAckGuardMs + kSwitchRestartDelayMs
+                                                           : kSwitchRestartDelayMs)) {
+        pending_restart_ = command_policy::PendingRestart::None;
+        return false;
+    }
+    return true;
+}
+
+void UsbSerialEcho::service_pending_restart()
+{
+    if (pending_restart_ == command_policy::PendingRestart::None || !maintenance_mode::deferred_restart_due()) {
+        return;
+    }
+    const command_policy::PendingRestart kind = pending_restart_;
+    pending_restart_ = command_policy::PendingRestart::None;
+    maintenance_mode::deferred_restart_clear();
+    const std::uint8_t state = static_cast<std::uint8_t>(flight_state_machine_.state());
+    if (command_policy::restart_still_allowed(kind, state)) {
+        ESP_LOGW(kLogTag, "restarting now (%s)",
+                 kind == command_policy::PendingRestart::Maintenance ? "maintenance image" : "reset to Pad Idle");
+        maintenance_mode::restart();
+    }
+    ESP_LOGE(kLogTag, "restart abandoned: flight state is now 0x%02X", state);
+    if (kind == command_policy::PendingRestart::Maintenance) {
+        (void)boot_manager::revert_switch();   // boot partition back to the flight image
+    } else {
+        maintenance_mode::cancel();
+    }
+}
+
+void UsbSerialEcho::service_deferred_front_end_off()
+{
+    if (!front_end_off_pending_ || static_cast<std::int32_t>(xTaskGetTickCount() - front_end_off_due_) < 0) return;
+    front_end_off_pending_ = false;
+    const std::uint8_t state = static_cast<std::uint8_t>(flight_state_machine_.state());
+    const int current = sensors_.radio_tx_power_dbm();
+    if (!command_policy::allow_radio_power_change(state, current, current, true)) {
+        ESP_LOGW(kLogTag, "radio front end stays on: flight state is now 0x%02X", state);
+        return;
+    }
+    sensors_.set_radio_front_end_enabled(false);
+    ESP_LOGW(kLogTag, "radio front end OFF (PA unpowered, bench only)");
+}
+
+void UsbSerialEcho::log_stack_if_due()
+{
+    const TickType_t now = xTaskGetTickCount();
+    if (static_cast<TickType_t>(now - last_stack_log_) < pdMS_TO_TICKS(kStackLogIntervalMs)) return;
+    last_stack_log_ = now;
+    const unsigned free_bytes = static_cast<unsigned>(uxTaskGetStackHighWaterMark(nullptr));
+    if (free_bytes < 1024U) {
+        ESP_LOGW(kLogTag, "stack high-water: only %u of %u bytes ever free", free_bytes,
+                 static_cast<unsigned>(kTaskStackSize));
+    } else {
+        ESP_LOGI(kLogTag, "stack high-water: %u of %u bytes never used", free_bytes,
+                 static_cast<unsigned>(kTaskStackSize));
+    }
 }
 
 void UsbSerialEcho::process_protocol_command(const std::uint16_t command)
@@ -1182,8 +1477,16 @@ void UsbSerialEcho::run()
             // dropped so it cannot absorb the next command.
             hitl_frames_.reset();
             report_hitl_frame_error("incomplete frame followed by idle input");
+        } else if (hitl_hold_length_ != 0U &&
+                   (xTaskGetTickCount() - hitl_last_byte_time_) >= read_timeout) {
+            // A stray 0x0C/0x0E that never became a frame: hand the bytes
+            // after it back to the command parser.
+            replay_hitl_hold();
         }
 
         process_queued_radio_commands();
+        service_deferred_front_end_off();
+        service_pending_restart();
+        log_stack_if_due();
     }
 }

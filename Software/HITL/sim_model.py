@@ -304,14 +304,31 @@ def generate(params: SimParams) -> list:
 # ---------------------------------------------------------------------------
 
 class ReferenceStateMachine:
-    """Python copy of flight_state_machine.cpp (2026-11-14: Kalman AGL).
+    """Python copy of flight_state_machine.cpp (2026-11-14: Kalman AGL;
+    2026-11-15: Boost also needs vertical velocity >= 30 m/s, and the states
+    are one-way: this model never steps back down).
 
     The firmware works on the position filter's height above the pad (AGL)
     and vertical velocity. The filter tracks the truth to within metres, so
     the prediction is fed the simulated true AGL and vertical velocity.
     """
     LAUNCH_AGL_M = 30.0
+    LAUNCH_VEL_MPS = 30.0   # Kalman vertical velocity too (2026-11-15)
     LAUNCH_MS = 300
+    # Second, independent launch rule (2026-11-15, needs no attitude/filter):
+    # axial acceleration >= 2.5 g, as a leaky budget (drains 2x as fast as it
+    # fills) reaching 300 ms; one observation credits at most 50 ms.
+    LAUNCH_ACCEL_G = 2.5
+    LAUNCH_ACCEL_MS = 300
+    LAUNCH_ACCEL_DRAIN = 2
+    ACCEL_MAX_STEP_US = 50_000
+    # Airborne at boot: raw barometer rate >= 20 m/s up (Boost) / down
+    # (Descent) for 1 s while in Pad Idle.
+    AIRBORNE_RATE_MPS = 20.0
+    AIRBORNE_MS = 1000
+    # A flight below 50 m AGL and 3 g axial is a false trigger when Landed.
+    EVIDENCE_AGL_M = 50.0
+    EVIDENCE_AXIAL_G = 3.0
     BURNOUT_G = 1.0
     BURNOUT_MS = 500
     DESCENT_FRACTION = 0.95
@@ -342,12 +359,45 @@ class ReferenceStateMachine:
         self._coast_start = 0
         self._vel_active = False
         self._vel_start = 0
+        self._accel_budget_us = 0
+        self._accel_last_us = 0
+        self._air_up_start = None
+        self._air_down_start = None
+        self._peak_axial_g = 0.0
+        self._inferred = False
+        self.false_flight = False   # Landed without flight evidence
         self.transitions = []  # (timestamp_us, from, to)
 
     def _set(self, state, ts):
         if state != self.state:
             self.transitions.append((ts, self.state, state))
         self.state = state
+
+    def flight_evidence(self):
+        return (self._inferred
+                or (self._max_valid and self._max_alt >= self.EVIDENCE_AGL_M)
+                or self._peak_axial_g >= self.EVIDENCE_AXIAL_G)
+
+    def _accel_launch(self, axial_g, ts):
+        prev, self._accel_last_us = self._accel_last_us, ts
+        if prev == 0 or ts <= prev:
+            return False
+        dt = min(ts - prev, self.ACCEL_MAX_STEP_US)
+        if axial_g is not None and axial_g >= self.LAUNCH_ACCEL_G:
+            self._accel_budget_us += dt
+        else:
+            self._accel_budget_us = max(0, self._accel_budget_us - dt * self.LAUNCH_ACCEL_DRAIN)
+        return self._accel_budget_us >= self.LAUNCH_ACCEL_MS * 1000
+
+    def _airborne(self, start_attr, cond, ts):
+        start = getattr(self, start_attr)
+        if not cond:
+            setattr(self, start_attr, None)
+            return False
+        if start is None:
+            setattr(self, start_attr, ts)
+            return False
+        return ts - start >= self.AIRBORNE_MS * 1000
 
     def _held(self, cond, ts, ms):
         if not cond:
@@ -381,9 +431,14 @@ class ReferenceStateMachine:
             return False
         return ts - self._land_start >= self.LAND_MS * 1000
 
-    def update(self, ts_us, low_g_x, accel_g, gyro_dps, agl_m, vz_mps):
+    def update(self, ts_us, low_g_x, accel_g, gyro_dps, agl_m, vz_mps,
+               axial_g=None, baro_rate_mps=None):
         """One observation: low-g axial (g), low-g and gyro xyz vectors, AGL
-        (m above the pad) and vertical velocity (m/s, up positive)."""
+        (m above the pad) and vertical velocity (m/s, up positive).
+        axial_g: the filtered axial acceleration the launch rule uses
+        (default: low_g_x). baro_rate_mps: raw barometer rate, None = invalid."""
+        if axial_g is None:
+            axial_g = low_g_x
         if ts_us == 0:
             return self.state
         cur = self.state
@@ -391,14 +446,21 @@ class ReferenceStateMachine:
             self._observed_state = cur
             self._cond_active = False
             self._vel_active = False
+            self._accel_budget_us = 0
+            self._accel_last_us = 0
+            self._air_up_start = None
+            self._air_down_start = None
             if cur == hp.COAST:
                 self._coast_start = ts_us
             if cur in (hp.PAD_IDLE, hp.BOOST):
                 self._climb_seen = False
+                self._peak_axial_g = 0.0
                 self._max_valid = True
                 self._max_alt = agl_m
             if cur in (hp.PAD_IDLE, hp.LANDED):
                 self._land_active = False
+        if cur in (hp.BOOST, hp.COAST, hp.DESCENT) and axial_g > self._peak_axial_g:
+            self._peak_axial_g = axial_g
         if cur in (hp.BOOST, hp.COAST) and vz_mps > self.APOGEE_SEEN_MPS:
             self._climb_seen = True
         if cur in (hp.BOOST, hp.COAST) and (not self._max_valid or agl_m > self._max_alt):
@@ -409,10 +471,24 @@ class ReferenceStateMachine:
         if cur in (hp.BOOST, hp.COAST, hp.DESCENT) and self._landing(
                 accel_g, gyro_dps, agl_m, ts_us):
             self._set(hp.LANDED, ts_us)
+            self.false_flight = not self.flight_evidence()
             return self.state
         if cur == hp.PAD_IDLE:
-            if self._held(agl_m > self.LAUNCH_AGL_M, ts_us, self.LAUNCH_MS):
+            kalman = self._held(agl_m > self.LAUNCH_AGL_M and vz_mps >= self.LAUNCH_VEL_MPS,
+                                ts_us, self.LAUNCH_MS)
+            accel = self._accel_launch(axial_g, ts_us)
+            up = self._airborne("_air_up_start", baro_rate_mps is not None
+                                and baro_rate_mps >= self.AIRBORNE_RATE_MPS, ts_us)
+            down = self._airborne("_air_down_start", baro_rate_mps is not None
+                                  and baro_rate_mps <= -self.AIRBORNE_RATE_MPS, ts_us)
+            if kalman or accel:
                 self._set(hp.BOOST, ts_us)
+            elif up:
+                self._inferred = True
+                self._set(hp.BOOST, ts_us)
+            elif down:
+                self._inferred = True
+                self._set(hp.DESCENT, ts_us)
         elif cur == hp.BOOST:
             if self._held(low_g_x < self.BURNOUT_G, ts_us, self.BURNOUT_MS):
                 self._set(hp.COAST, ts_us)

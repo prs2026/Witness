@@ -102,14 +102,69 @@ struct Config {
     // times in a row is accepted anyway so the filter can re-synchronize.
     float gate_sigma = 5.0F;
     std::uint32_t max_consecutive_rejects = 25;
-    // Pad stillness: |specific force| within this of 1 g.
+    // Pad stillness: |specific force| within this of 1 g (referenced to
+    // kGravity, not to the measured gravity).
     float still_band_g = 0.05F;
+    // Subtract the gravity measured on the pad (mean |specific force| while
+    // still, see Filter::gravity_mps2) instead of the fixed kGravity.
+    bool measure_pad_gravity = true;
     // Process noise when predicting without IMU (e.g. under a parachute).
     float no_imu_accel_noise_mps2 = 10.0F;
 };
 
 enum class Phase : std::uint8_t {  // numerically FlightStateMachine::State
     PadIdle = 0, Boost = 1, Coast = 2, Descent = 3, Landed = 4,
+};
+
+// The pad references and the last motion estimate: what a reset in flight needs
+// to keep AGL meaningful (persisted in RTC memory by flight_state_store, see
+// export_pad_references / restore_after_reset).
+struct PadReferences {
+    bool baro_valid = false;
+    float baro_reference_m = 0.0F;       // barometric altitude of the pad (ISA, MSL)
+    bool gps_valid = false;
+    double gps_origin_lat_deg = 0.0;
+    double gps_origin_lon_deg = 0.0;
+    float gps_origin_alt_m = 0.0F;       // GPS altitude of the pad (MSL)
+    bool gravity_valid = false;
+    float gravity_mps2 = kGravity;       // pad-measured gravity
+    bool motion_valid = false;
+    float agl_m = 0.0F;                  // last AGL (up position)
+    float vertical_velocity_mps = 0.0F;  // last vertical velocity
+};
+
+// Raw barometric altitude rate (m/s), independent of the Kalman filter and of
+// its pad hold: the average altitude of the newest 3 of 10 consecutive 100 ms
+// bins minus that of the oldest 3, over their 0.7 s centre separation. Noise is
+// ~0.4 m/s, so |rate| >= 20 m/s sustained is real vertical motion (used by the
+// state machine to notice an airborne vehicle after a cold reset, when the pad
+// hold would otherwise pin the filter to "still": a vehicle under a parachute
+// reads 1 g). Not valid above ~Mach 0.8 (transonic static pressure).
+class BaroRate {
+public:
+    void reset() { *this = BaroRate(); }
+    // t_us: sample time; non-finite altitudes are ignored.
+    void add(std::uint64_t t_us, float altitude_m);
+    // True when 10 consecutive bins exist and the newest sample is at most
+    // kStaleUs old at now_us.
+    bool valid(std::uint64_t now_us) const;
+    float rate_mps() const { return rate_; }
+
+    static constexpr std::uint64_t kBinUs = 100'000ULL;
+    static constexpr int kBins = 10;
+    static constexpr std::uint64_t kStaleUs = 500'000ULL;
+private:
+    void finish_bin();
+    void push(float mean);   // NaN = empty bin
+    std::uint64_t bin_index_ = 0;
+    bool bin_open_ = false;
+    float bin_sum_ = 0.0F;
+    std::uint32_t bin_count_ = 0;
+    float bins_[kBins]{};
+    int filled_ = 0;
+    std::uint64_t last_add_us_ = 0;
+    float rate_ = 0.0F;
+    bool rate_valid_ = false;
 };
 
 // One measurement's innovation (measurement - prediction) and its variance
@@ -144,6 +199,29 @@ public:
     // the barometer and GPS carry the estimate.
     void predict_without_imu(float dt_s, Phase phase);
     bool imu_ignored() const { return imu_ignored_; }
+    // Predict with no attitude at all (never initialised, or lost) but with the
+    // magnitude of the specific force (m/s^2, rotation invariant): the vertical
+    // acceleration is unknown (zero is assumed, with no_imu_accel_noise), but
+    // the pad stillness test and the pad gravity measurement only need the
+    // magnitude, so on the pad the hold works exactly as with an attitude and
+    // baro/GPS give AGL and vertical velocity in flight. A later switch to
+    // predict() (attitude became valid) keeps the state.
+    void predict_magnitude_only(float specific_force_mps2, float dt_s, Phase phase);
+    // Reset in flight: re-establish the pad references and start from the last
+    // persisted AGL / vertical velocity with a large covariance, so baro and
+    // GPS pull the state in. Horizontal position/velocity start at 0 with a
+    // large covariance (the GPS origin is the pad, the next fix sets them).
+    void restore_after_reset(const PadReferences &refs);
+    // Current references and motion (motion_valid only when initialized()).
+    void export_pad_references(PadReferences &out) const;
+    // Inputs rejected for being non-finite (acceleration, dt, baro, GPS).
+    std::uint32_t rejected_inputs() const { return rejected_inputs_; }
+    // Times the state or covariance became non-finite (or absurd) and the
+    // filter was reset to a large covariance, keeping the pad references.
+    std::uint32_t divergence_resets() const { return divergence_resets_; }
+    // predict()/predict_without_imu() calls with dt > 0.1 s that were bridged
+    // by propagating the current velocity with grown covariance.
+    std::uint32_t predict_gaps() const { return predict_gaps_; }
 
     // Barometric altitude (any fixed reference, e.g. ISA from 1013.25 hPa)
     // and pressure. Returns true if it was used.
@@ -220,6 +298,14 @@ private:
                      bool allow_resync = true,
                      float predicted = std::numeric_limits<float>::quiet_NaN());
     static void symmetrize(Axis &axis);
+    // Position += velocity * dt and covariance growth with the no-IMU process
+    // noise (zero acceleration assumed). Shared by predict_without_imu,
+    // predict_magnitude_only and the bridging of a predict gap.
+    void propagate_without_acceleration(float dt_s, float accel_noise_mps2);
+    // After every predict/update: a non-finite (or absurd) state or covariance
+    // resets the filter to a large covariance with the pad references kept.
+    void check_health();
+    void recover_from_divergence();
     void grow_baro_scale(float dt_s);
     bool baro_scale_started_ = false;
 public:
@@ -227,7 +313,17 @@ public:
     // its standard deviation.
     float baro_scale() const { return axes_[2].b; }
     float baro_scale_sigma() const { return std::sqrt(axes_[2].P22); }
+    // Gravity subtracted from the up specific force: the mean |specific
+    // force| measured while still on the pad (it includes the local g and the
+    // residual accelerometer offset), kGravity until ~1 s of still samples
+    // was averaged, frozen once the vehicle leaves the pad.
+    float gravity_mps2() const { return gravity_mps2_; }
+    bool gravity_measured() const { return gravity_still_s_ >= 1.0F; }
+    bool gravity_frozen() const { return gravity_frozen_; }
+    // Times the pad average fell outside kGravity +- 5 % (kGravity kept).
+    std::uint32_t gravity_clamped_count() const { return gravity_clamped_count_; }
 private:
+    void track_pad_gravity(float specific_force, float dt_s, Phase phase);
 
     Config config_;
     Axis axes_[3]{};
@@ -235,6 +331,13 @@ private:
     bool still_ = true;
     bool imu_ignored_ = false;
     bool baro_gated_ = false;
+    float gravity_mps2_ = kGravity;
+    float gravity_mean_mps2_ = kGravity;
+    float gravity_still_s_ = 0.0F;
+    float gravity_moving_s_ = 0.0F;
+    bool gravity_frozen_ = false;
+    bool gravity_out_of_range_ = false;
+    std::uint32_t gravity_clamped_count_ = 0;
     float last_baro_sigma_m_ = 0.0F;
     float last_gps_sigma_h_ = 0.0F;
     float gps_stress_ = 0.0F;
@@ -262,6 +365,9 @@ private:
     std::uint32_t baro_rejects_total_ = 0;
     std::uint32_t gps_rejects_total_ = 0;
     std::uint32_t baro_gated_count_ = 0;
+    std::uint32_t rejected_inputs_ = 0;
+    std::uint32_t divergence_resets_ = 0;
+    std::uint32_t predict_gaps_ = 0;
     Innovation baro_innovation_{};
     Innovation gps_innovation_[3]{};
 };

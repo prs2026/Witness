@@ -41,6 +41,22 @@ struct StoredV1 {
 };
 
 std::atomic_bool busy{false};
+std::atomic<std::uint32_t> rejected_count{0};
+
+// Validates a loaded calibration (see sanitize()); a bad section falls back
+// to identity so a corrupt blob can never divide flight data by zero or feed
+// NaN into the filters. Logged loudly and counted.
+void check_loaded(Calibration &calibration)
+{
+    const std::uint32_t rejected = sanitize(calibration);
+    if (rejected != 0) {
+        rejected_count.fetch_add(rejected);
+        ESP_LOGE(kLogTag,
+                 "stored IMU calibration REJECTED (%u section(s) non-finite or out of range); "
+                 "using identity for them, recalibrate on the pad",
+                 static_cast<unsigned>(rejected));
+    }
+}
 Stored pending{};
 bool pending_erase = false;
 
@@ -84,12 +100,30 @@ esp_err_t start(const bool erase, const Calibration *calibration)
 
 }  // namespace
 
-esp_err_t init_storage()
+std::uint32_t rejected_sections()
+{
+    return rejected_count.load();
+}
+
+esp_err_t init_storage(const bool allow_erase)
 {
     esp_err_t result = nvs_flash_init();
+    if ((result == ESP_ERR_NVS_NO_FREE_PAGES ||
+         result == ESP_ERR_NVS_NEW_VERSION_FOUND) && !allow_erase) {
+        // In flight (resumed after a reset) never wipe NVS: the calibration
+        // and the boot bookkeeping (flight slot, maintenance request) live
+        // here, and the erase stalls both cores. Run without NVS; the next
+        // cold boot reformats it on the pad.
+        ESP_LOGE(kLogTag, "NVS init failed (%s) in a resumed flight: NOT erasing; "
+                          "NVS unavailable until the next cold boot",
+                 esp_err_to_name(result));
+        return result;
+    }
     if (result == ESP_ERR_NVS_NO_FREE_PAGES ||
         result == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_LOGW(kLogTag, "NVS partition reformatted (%s)", esp_err_to_name(result));
+        ESP_LOGW(kLogTag, "NVS partition reformatted (%s): calibration and boot "
+                          "bookkeeping are lost",
+                 esp_err_to_name(result));
         result = nvs_flash_erase();
         if (result == ESP_OK) result = nvs_flash_init();
     }
@@ -116,6 +150,7 @@ esp_err_t load(Calibration &calibration)
         if (result != ESP_OK) return result;
         if (stored.version != kLayoutVersion) return ESP_ERR_NOT_FOUND;
         calibration = stored.calibration;
+        check_loaded(calibration);
         return ESP_OK;
     }
     if (length == sizeof(StoredV1)) {
@@ -133,6 +168,7 @@ esp_err_t load(Calibration &calibration)
         }
         calibration.gyro_valid = old.calibration.gyro_valid;
         calibration.accel_valid = old.calibration.accel_valid;
+        check_loaded(calibration);
         ESP_LOGI(kLogTag, "calibration layout 1 loaded (high-g scale 1 until the next six-face calibration)");
         return ESP_OK;
     }

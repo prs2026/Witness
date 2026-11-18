@@ -6,6 +6,7 @@
 
 #include "esp_err.h"
 #include "esp_twai.h"
+#include "recovery_logic.h"
 #include "freertos/FreeRTOS.h"
 
 class TwaiDriver final {
@@ -44,8 +45,16 @@ public:
 
     std::uint32_t dropped_receive_frames() const;
     std::uint32_t failed_transmit_frames() const;
+    // Times the node was torn down and rebuilt because all transmit slots
+    // stayed in use with no completion (I6).
+    std::uint32_t node_resets() const { return node_resets_; }
 
 private:
+    // No tx completion for this long with every slot busy = stuck (a healthy
+    // bus completes or fails a frame in well under 10 ms).
+    static constexpr std::int64_t kTxStuckTimeoutUs = 1000000;
+    esp_err_t reset_node();
+
     static constexpr std::size_t kReceiveQueueDepth = 16;
     static constexpr std::size_t kTransmitQueueDepth = 8;
 
@@ -88,5 +97,7 @@ private:
     std::uint32_t failed_transmit_frames_ = 0;
     bool bus_off_ = false;
     bool recovery_started_ = false;
+    std::int64_t last_tx_progress_us_ = 0;
+    std::uint32_t node_resets_ = 0;
     mutable portMUX_TYPE lock_ = portMUX_INITIALIZER_UNLOCKED;
 };

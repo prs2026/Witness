@@ -34,6 +34,22 @@ inline constexpr std::size_t kMaximumBlob = 4096;
 inline constexpr std::size_t kChunkBytes = 4;
 inline constexpr std::size_t kMaximumRecord = 128;
 
+// Whitelist of receiver messages an upload may carry (audit G4). The ground
+// tool (Horizon gps_assist.py) sends exactly one kind: 0x41 "Set GPS
+// Ephemeris", 87 bytes. Everything else is refused, in particular 0x05
+// (configure serial port / baud), 0x04 (set factory defaults), 0x01 (system
+// restart) and anything with a "write to flash" attribute: the firmware is
+// fixed-baud and never writes the receiver's flash, and an upload must not be
+// able to change that. Checked at COMMIT (BadFormat) and again in
+// GpsReceiver::begin_assist().
+inline constexpr std::uint8_t kMessageSetGpsEphemeris = 0x41;
+inline constexpr std::size_t kEphemerisBodyLength = 87;
+inline bool is_allowed_message(const std::uint8_t *body, const std::size_t length)
+{
+    return body != nullptr && length == kEphemerisBodyLength &&
+           body[0] == kMessageSetGpsEphemeris;
+}
+
 inline bool is_assist_command(const std::uint16_t command)
 {
     return command == kCommandBegin || command == kCommandData ||
@@ -68,6 +84,13 @@ public:
     std::size_t chunks_expected() const { return chunk_count(); }
     std::uint8_t transfer_id() const { return id_; }
     State state() const { return state_; }
+    // The caller could not hand a Complete blob over (receiver-side slot
+    // busy): reopen the transfer so a repeated COMMIT verifies and hands it
+    // over again instead of being answered AlreadyComplete = OK for a blob
+    // that was never submitted (audit G10). The received chunks are kept.
+    void handover_failed() {
+        if (state_ == State::Complete) { state_ = State::Receiving; active_ = true; }
+    }
     // First chunk not yet received (chunks_expected() when none is missing).
     std::size_t first_missing_chunk() const;
     // Received-chunk bitmap from `start`: bit i of out (LSB first per byte)

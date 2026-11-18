@@ -5,6 +5,7 @@
 #include <cstdint>
 
 #include "esp_twai_onchip.h"
+#include "esp_timer.h"
 #include "hardware.h"
 
 TwaiDriver::~TwaiDriver()
@@ -83,13 +84,22 @@ esp_err_t TwaiDriver::transmit(const Frame &frame)
     }
 
     TransmitSlot *slot = nullptr;
+    const std::int64_t now_us = esp_timer_get_time();
     portENTER_CRITICAL(&lock_);
+    bool any_busy = false;
+    for (const TransmitSlot &candidate : transmit_slots_) {
+        any_busy = any_busy || candidate.in_use;
+    }
     for (TransmitSlot &candidate : transmit_slots_) {
         if (!candidate.in_use) {
             candidate.in_use = true;
             slot = &candidate;
             break;
         }
+    }
+    // Idle -> busy: start the "no progress" clock from now.
+    if (slot != nullptr && !any_busy) {
+        last_tx_progress_us_ = now_us;
     }
     portEXIT_CRITICAL(&lock_);
     if (slot == nullptr) {
@@ -138,10 +148,58 @@ bool TwaiDriver::receive(Frame &frame)
     return true;
 }
 
+esp_err_t TwaiDriver::reset_node()
+{
+    ++node_resets_;
+    (void)shutdown();  // disables (bus-off: already disabled) and deletes
+    if (node_ != nullptr) {
+        // Could not delete: retry on the next poll (progress clock restarts
+        // so we do not spin).
+        portENTER_CRITICAL(&lock_);
+        last_tx_progress_us_ = esp_timer_get_time();
+        portEXIT_CRITICAL(&lock_);
+        return ESP_FAIL;
+    }
+    portENTER_CRITICAL(&lock_);
+    for (TransmitSlot &slot : transmit_slots_) {
+        slot.in_use = false;
+    }
+    bus_off_ = false;
+    recovery_started_ = false;
+    last_tx_progress_us_ = esp_timer_get_time();
+    portEXIT_CRITICAL(&lock_);
+    return initialize();
+}
+
 esp_err_t TwaiDriver::poll()
 {
     if (node_ == nullptr) {
-        return ESP_ERR_INVALID_STATE;
+        // A failed rebuild leaves no node: keep trying (once per second).
+        const std::int64_t now_us = esp_timer_get_time();
+        if (now_us - last_tx_progress_us_ < 1000000) {
+            return ESP_ERR_INVALID_STATE;
+        }
+        last_tx_progress_us_ = now_us;
+        return initialize();
+    }
+
+    // I6: if every transmit slot is in use and nothing has completed for
+    // kTxStuckTimeoutUs (frames lost across a bus-off without a tx-done
+    // event), rebuild the node, which frees the driver queue and all slots.
+    {
+        int in_use = 0;
+        std::int64_t progress_us = 0;
+        portENTER_CRITICAL(&lock_);
+        for (const TransmitSlot &slot : transmit_slots_) {
+            in_use += slot.in_use ? 1 : 0;
+        }
+        progress_us = last_tx_progress_us_;
+        portEXIT_CRITICAL(&lock_);
+        if (iris_recovery::tx_slots_stuck(
+                in_use, static_cast<int>(kTransmitQueueDepth),
+                esp_timer_get_time(), progress_us, kTxStuckTimeoutUs)) {
+            return reset_node();
+        }
     }
 
     bool start_recovery = false;
@@ -264,6 +322,7 @@ void TwaiDriver::handle_transmit_done_from_isr(
             break;
         }
     }
+    last_tx_progress_us_ = esp_timer_get_time();
     if (!event.is_tx_success) {
         ++failed_transmit_frames_;
     }

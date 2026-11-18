@@ -29,7 +29,16 @@ esp_err_t FlightStateMachine::set_state(const std::uint8_t state_value)
     }
 
     const State next = static_cast<State>(state_value);
-    const State previous = state_.exchange(next);
+    // One-way: compare-and-swap so a concurrent automatic transition (sensor
+    // task) and a commanded one (USB task) can never move the state down.
+    State previous = state_.load();
+    do {
+        if (state_value < static_cast<std::uint8_t>(previous)) {
+            ESP_LOGW(kLogTag, "refused %s -> %s: flight states are one-way (reset to re-arm)",
+                     state_name(previous), state_name(next));
+            return ESP_ERR_INVALID_STATE;
+        }
+    } while (!state_.compare_exchange_weak(previous, next));
     witness_status_.set_flight_state(state_value);
     if (previous != next) {
         ESP_LOGI(kLogTag, "%s -> %s", state_name(previous), state_name(next));
@@ -56,6 +65,7 @@ void FlightStateMachine::restore(
     maximum_altitude_valid_ = maximum_valid;
     coast_entered_us_ = 0;           // set on the first update
     climb_seen_ = true;              // a persisted flight state implies a climb
+    flight_inferred_ = true;         // a resumed flight is a real flight
     velocity_condition_active_ = false;
     reset_condition();
     reset_landing_condition();
@@ -85,6 +95,52 @@ bool FlightStateMachine::condition_held(
     }
     return timestamp_us - condition_started_us_ >=
            milliseconds_to_microseconds(duration_ms);
+}
+
+bool FlightStateMachine::flight_evidence() const
+{
+    return flight_inferred_ ||
+           (maximum_altitude_valid_ && maximum_altitude_meters_ >= kFlightEvidenceAglMeters) ||
+           peak_axial_g_ >= kFlightEvidenceAxialG;
+}
+
+bool FlightStateMachine::dwell_held(Dwell &dwell, const bool condition,
+                                    const std::uint64_t timestamp_us,
+                                    const std::uint32_t duration_ms)
+{
+    if (!condition) {
+        dwell.active = false;
+        return false;
+    }
+    if (!dwell.active) {
+        dwell.active = true;
+        dwell.start_us = timestamp_us;
+        return false;
+    }
+    return timestamp_us - dwell.start_us >= milliseconds_to_microseconds(duration_ms);
+}
+
+bool FlightStateMachine::acceleration_launch_detected(const Observation &observation)
+{
+    const std::uint64_t previous = launch_accel_last_us_;
+    launch_accel_last_us_ = observation.timestamp_us;
+    if (previous == 0U || observation.timestamp_us <= previous) {
+        return false;
+    }
+    // A long gap (stalled loop) credits at most 50 ms either way.
+    const std::uint64_t dt = std::min<std::uint64_t>(
+        observation.timestamp_us - previous, 50'000ULL);
+    const bool above = observation.axial_acceleration_valid &&
+                       std::isfinite(observation.axial_acceleration_g) &&
+                       observation.axial_acceleration_g >= kLaunchAccelerationG;
+    if (above) {
+        launch_accel_budget_us_ += dt;
+    } else {
+        const std::uint64_t drain = dt * kLaunchAccelerationDrainFactor;
+        launch_accel_budget_us_ = launch_accel_budget_us_ > drain ? launch_accel_budget_us_ - drain : 0U;
+    }
+    return launch_accel_budget_us_ >=
+           milliseconds_to_microseconds(kLaunchAccelerationQualificationMs);
 }
 
 void FlightStateMachine::reset_condition()
@@ -185,11 +241,16 @@ void FlightStateMachine::reset_for_state(
     observed_state_ = state;
     reset_condition();
     velocity_condition_active_ = false;
+    launch_accel_budget_us_ = 0;
+    launch_accel_last_us_ = 0;
+    airborne_up_ = Dwell{};
+    airborne_down_ = Dwell{};
     if (state == State::Coast) {
         coast_entered_us_ = observation.timestamp_us;
     }
     if (state == State::PadIdle || state == State::Boost) {
         climb_seen_ = false;
+        peak_axial_g_ = 0.0F;
         // Start flight-relative peak tracking at launch (Kalman AGL).
         maximum_altitude_valid_ = observation.agl_valid;
         maximum_altitude_meters_ = observation.agl_meters;
@@ -222,6 +283,14 @@ void FlightStateMachine::update(const Observation &observation)
         reset_for_state(current, observation);
     }
 
+    // Peak axial acceleration since launch: evidence that a flight was real.
+    if ((current == State::Boost || current == State::Coast || current == State::Descent) &&
+        observation.axial_acceleration_valid &&
+        std::isfinite(observation.axial_acceleration_g) &&
+        observation.axial_acceleration_g > peak_axial_g_) {
+        peak_axial_g_ = observation.axial_acceleration_g;
+    }
+
     if ((current == State::Boost || current == State::Coast) &&
         observation.vertical_velocity_valid &&
         observation.vertical_velocity_mps > kApogeeSeenVelocityMps) {
@@ -247,20 +316,61 @@ void FlightStateMachine::update(const Observation &observation)
          current == State::Descent) &&
         landing_detected(observation)) {
         (void)set_state(static_cast<std::uint8_t>(State::Landed));
+        if (kFalseFlightRestartEnabled && false_flight_ != nullptr && !flight_evidence()) {
+            ESP_LOGW(kLogTag,
+                     "Landed without flight evidence (max AGL %.1f m < %.0f m, peak axial %.2f g < %.1f g): "
+                     "false trigger, requesting the soft reset to Pad Idle",
+                     static_cast<double>(maximum_altitude_valid_ ? maximum_altitude_meters_ : 0.0F),
+                     static_cast<double>(kFlightEvidenceAglMeters),
+                     static_cast<double>(peak_axial_g_), static_cast<double>(kFlightEvidenceAxialG));
+            false_flight_();
+        }
         return;
     }
 
     switch (current) {
-    case State::PadIdle:
-        if (condition_held(
-                agl_valid && agl > kLaunchAglMeters,
-                observation.timestamp_us,
-                kLaunchQualificationMs)) {
+    case State::PadIdle: {
+        // Every rule's timer is evaluated each time (no short-circuit), so
+        // each keeps its own continuous-qualification state.
+        const bool kalman_launch = condition_held(
+            agl_valid && agl > kLaunchAglMeters &&
+                observation.vertical_velocity_valid &&
+                std::isfinite(observation.vertical_velocity_mps) &&
+                observation.vertical_velocity_mps >= kLaunchVerticalVelocityMps,
+            observation.timestamp_us,
+            kLaunchQualificationMs);
+        const bool accel_launch = acceleration_launch_detected(observation);
+        const bool rate_ok = observation.baro_rate_valid &&
+                             std::isfinite(observation.baro_rate_mps);
+        const bool airborne_up = dwell_held(
+            airborne_up_, rate_ok && observation.baro_rate_mps >= kAirborneRateMps,
+            observation.timestamp_us, kAirborneQualificationMs);
+        const bool airborne_down = dwell_held(
+            airborne_down_, rate_ok && observation.baro_rate_mps <= -kAirborneRateMps,
+            observation.timestamp_us, kAirborneQualificationMs);
+        if (kalman_launch) {
             ESP_LOGI(kLogTag, "launch detected: Kalman AGL %.1f m, vertical velocity %.1f m/s",
                      agl, observation.vertical_velocity_mps);
             (void)trigger_launch();
+        } else if (accel_launch) {
+            ESP_LOGI(kLogTag, "launch detected: axial acceleration %.2f g (>= %.1f g for %u ms)",
+                     static_cast<double>(observation.axial_acceleration_g),
+                     static_cast<double>(kLaunchAccelerationG),
+                     static_cast<unsigned>(kLaunchAccelerationQualificationMs));
+            (void)trigger_launch();
+        } else if (airborne_up) {
+            ESP_LOGW(kLogTag, "airborne at boot (barometer %.1f m/s up): declaring Boost",
+                     static_cast<double>(observation.baro_rate_mps));
+            flight_inferred_ = true;
+            (void)trigger_launch();
+        } else if (airborne_down) {
+            ESP_LOGW(kLogTag, "airborne at boot (barometer %.1f m/s down): declaring Descent",
+                     static_cast<double>(observation.baro_rate_mps));
+            flight_inferred_ = true;
+            (void)set_state(static_cast<std::uint8_t>(State::Descent));
         }
         break;
+    }
 
     case State::Boost:
         if (condition_held(

@@ -1,6 +1,7 @@
 #include "accel_filter.h"
 
 #include <cmath>
+#include <cstring>
 #include <cstdio>
 #include <cstdlib>
 
@@ -189,6 +190,53 @@ void test_high_g_calibration()
     CHECK(std::fabs(burn[0] - 40000.0F) < 120.0F);    // 40 g read right after the fit
 }
 
+// apply() fits each axis once (it runs per IMU sample); it must stay
+// bit-identical to the definition (high - offset_mg) / scale, through the
+// no-data, no-spread and clamped-scale cases as well as a real fit.
+void test_apply_matches_definition()
+{
+    accel_filter::HighGCalibration cal;
+    unsigned seed = 12345U;
+    const auto noise = [&seed]() {
+        seed = seed * 1664525U + 1013904223U;
+        return static_cast<float>((seed >> 8) & 0xFFFFU) / 65536.0F - 0.5F;
+    };
+    const auto check_axes = [&](const char *when) {
+        const float raw[3] = {1234.5F, -678.9F, 40.0F};
+        float out[3] = {raw[0], raw[1], raw[2]};
+        cal.apply(out);
+        for (int axis = 0; axis < 3; ++axis) {
+            float expected = raw[axis];
+            if (cal.valid()) expected = (raw[axis] - cal.offset_mg(axis)) / cal.scale(axis);
+            if (std::memcmp(&expected, &out[axis], sizeof(float)) != 0) {
+                std::printf("apply differs (%s, axis %d): %.9g vs %.9g\n", when, axis,
+                            static_cast<double>(out[axis]), static_cast<double>(expected));
+                CHECK(false);
+            }
+        }
+    };
+    check_axes("empty");
+    float low[3];
+    float high[3];
+    for (int i = 0; i < 3000; ++i) {              // pad: no spread, offset only
+        for (int a = 0; a < 3; ++a) {
+            low[a] = (a == 2 ? 1000.0F : 0.0F) + 3.0F * noise();
+            high[a] = low[a] + 20.0F + 2.0F * noise();
+        }
+        cal.observe(low, high, true);
+        if (i % 500 == 0) check_axes("pad");
+    }
+    for (int i = 0; i < 9600; ++i) {              // flight: real spread on axis 0
+        const float x = -5000.0F + 4500.0F * static_cast<float>(i) / 9600.0F;
+        low[0] = i < 96 ? x - 2000.0F : x;
+        low[1] = 10.0F * std::sin(0.1F * static_cast<float>(i)); low[2] = -5.0F;
+        high[0] = 1.04F * x + 15.0F; high[1] = low[1] + 8.0F; high[2] = low[2] - 6.0F;
+        cal.observe(low, high, false);
+        if (i % 1200 == 0) check_axes("flight");
+    }
+    check_axes("fitted");
+}
+
 }  // namespace
 
 int main()
@@ -197,6 +245,7 @@ int main()
     test_instant_switch_and_hysteresis();
     test_filtered_switch_is_continuous();
     test_high_g_calibration();
+    test_apply_matches_definition();
     if (failures == 0) {
         std::printf("accel_filter_test: all passed\n");
         return EXIT_SUCCESS;
