@@ -78,18 +78,25 @@ def tailscale_ipv4():
     return None
 
 
-def enable_keepalive(sock) -> None:
-    """Detect a silently dead remote peer within seconds (not hours)."""
+def enable_keepalive(sock, idle_ms=None, interval_ms=None) -> None:
+    """Detect a silently dead peer within seconds (not hours).
+
+    idle_ms/interval_ms default to the module values; the ground-station TCP
+    inputs pass shorter ones. Every option is guarded: a platform without it
+    just keeps the application-level no-data watchdog."""
+    idle_ms = KEEPALIVE_IDLE_MS if idle_ms is None else idle_ms
+    interval_ms = KEEPALIVE_INTERVAL_MS if interval_ms is None else interval_ms
     try:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         if hasattr(socket, "SIO_KEEPALIVE_VALS"):
-            sock.ioctl(socket.SIO_KEEPALIVE_VALS, (1, KEEPALIVE_IDLE_MS, KEEPALIVE_INTERVAL_MS))
+            sock.ioctl(socket.SIO_KEEPALIVE_VALS, (1, idle_ms, interval_ms))
         else:
-            for name, value in (("TCP_KEEPIDLE", KEEPALIVE_IDLE_MS // 1000),
-                                ("TCP_KEEPINTVL", KEEPALIVE_INTERVAL_MS // 1000), ("TCP_KEEPCNT", 5)):
+            idle_name = "TCP_KEEPIDLE" if hasattr(socket, "TCP_KEEPIDLE") else "TCP_KEEPALIVE"  # macOS
+            for name, value in ((idle_name, idle_ms // 1000), ("TCP_KEEPINTVL", interval_ms // 1000),
+                                ("TCP_KEEPCNT", 5)):
                 if hasattr(socket, name):
                     sock.setsockopt(socket.IPPROTO_TCP, getattr(socket, name), max(1, value))
-    except OSError:
+    except (OSError, ValueError, AttributeError):
         pass
 
 
@@ -176,7 +183,9 @@ class WitnessPublisher:
         self.session = uuid.uuid4().hex
         self.sequence = 0
         self.dropped = 0
-        self.error = None
+        self.error = None           # set while the feed is down (cleared when it restarts)
+        self.last_error = None      # the most recent failure, kept for the UI
+        self.restarts = 0           # times the serving loop was restarted after a failure
         self._lock = threading.Lock()
         self._pending = deque()
         self._latest = OrderedDict()
@@ -195,9 +204,12 @@ class WitnessPublisher:
     def max_pending(self, value):
         self._max_pending = value
 
-    def start(self):
-        if self._thread is not None:
-            raise RuntimeError("Witness feed already started")
+    @property
+    def healthy(self):
+        """True while the serving thread is alive and no failure is pending."""
+        return self._thread is not None and self._thread.is_alive() and self.error is None
+
+    def _make_listener(self):
         family = socket.AF_INET6 if ":" in str(self.host) else socket.AF_INET
         listener = socket.socket(family, socket.SOCK_STREAM)
         try:
@@ -211,7 +223,12 @@ class WitnessPublisher:
             listener.close()
             raise
         self.port = listener.getsockname()[1]
-        self._listener = listener
+        return listener
+
+    def start(self):
+        if self._thread is not None:
+            raise RuntimeError("Witness feed already started")
+        self._listener = self._make_listener()
         self._thread = threading.Thread(target=self._run, name="witness-feed", daemon=True)
         self._thread.start()
 
@@ -236,6 +253,35 @@ class WitnessPublisher:
             self._pending.append((self.sequence, wire))
 
     def _run(self):
+        """Supervisor: the flight/attitude tabs read this feed, so ANY failure of
+        the serving loop (not only OSError) closes the clients, re-creates the
+        listener and carries on, instead of ending the thread."""
+        while not self._stop.is_set():
+            try:
+                self._serve()
+            except Exception as exc:  # noqa: BLE001
+                if self._stop.is_set():
+                    break
+                self.error = self.last_error = f"{type(exc).__name__}: {exc}"
+            finally:
+                try:
+                    self._listener.close()
+                except Exception:  # noqa: BLE001
+                    pass
+            if self._stop.is_set():
+                break
+            # Bring the listener back (same port); retry until it binds.
+            while not self._stop.is_set():
+                self._stop.wait(0.5)
+                try:
+                    self._listener = self._make_listener()
+                    self.restarts += 1
+                    self.error = None
+                    break
+                except Exception as exc:  # noqa: BLE001
+                    self.error = self.last_error = f"restart failed: {exc}"
+
+    def _serve(self):
         clients = {}
         def close_client(client):
             clients.pop(client, None)
@@ -250,8 +296,14 @@ class WitnessPublisher:
                 )
                 for client in readable:
                     if client is self._listener:
-                        connection, _ = self._listener.accept()
-                        connection.setblocking(False)
+                        try:
+                            connection, _ = self._listener.accept()
+                            connection.setblocking(False)
+                        except (BlockingIOError, InterruptedError):
+                            continue
+                        except OSError:
+                            # A client that reset between SYN-ACK and accept: not our failure.
+                            continue
                         if len(clients) >= self.max_clients:
                             connection.close()
                             continue
@@ -303,13 +355,9 @@ class WitnessPublisher:
                         continue
                     except OSError:
                         close_client(client)
-        except OSError as exc:
-            if not self._stop.is_set():
-                self.error = str(exc)
         finally:
             for client in list(clients):
                 close_client(client)
-            self._listener.close()
 
     def close(self):
         self._stop.set()

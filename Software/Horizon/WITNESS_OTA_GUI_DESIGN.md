@@ -6,6 +6,7 @@ Status: design plus `ota_workflow.py`, `ota_wifi.py` and `tests/test_ota_workflo
 The laptop running witnessOS does everything itself: it joins the Witness access point (`witness-XXXX`, WPA2, 192.168.4.1) with its own Wi-Fi and uploads with `witness_ota.Witness` directly. No Pi, no SSH, no bench setup. (`witness_ota.py` is stdlib and already works this way when run on any machine that has joined the AP; the bench Pi path stays a separate developer option.) The radio/USB link witnessOS already has carries only the commands that put Witness into maintenance.
 
 ## End-to-end flow (`OtaWorkflow.update(path, force)`)
+
 | Step | What | Refuse / fail handling |
 |---|---|---|
 | inspect | read the .bin: `check_image` + the 48-byte image-info record at offset 288 (kind, version, store/command-set versions, LoRa settings, build id, size vs slot). A `flight.bin`/`maint.bin` sibling in the same folder is checked with a Python port of `check_maintenance` | not a Witness image, no image-info, too big, sibling incompatible: refused, nothing sent |

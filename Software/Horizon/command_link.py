@@ -136,9 +136,22 @@ class CommandLink:
     # ---------------------------------------------------- resumable upload
     def upload_assist(self, write, blob: bytes, transfer_id: int = 1, pace_s: float = 0.06,
                       timeout: float = 1.5, resume_deadline_s: float = 600.0,
-                      progress=None, cancel: threading.Event | None = None):
+                      progress=None, cancel: threading.Event | None = None,
+                      max_dead_rounds: int = 3, status_timeout: float | None = None):
         """Deliver a GPS-assist blob reliably. Returns (ok, message).
-        progress(received, expected, note) is called as it goes."""
+        progress(received, expected, note) is called as it goes.
+
+        A dead link must not keep the uplink busy for resume_deadline_s: after
+        max_dead_rounds consecutive rounds with no answer at all (BEGIN or STATUS
+        unanswered) the upload gives up. `cancel` should also be set when the
+        link drops (MonitorCore does that).
+
+        status_timeout: how long to wait for the 0x07 answer to STATUS (default:
+        timeout). Over radio the uplink is paced (Aperture: 3 commands per burst
+        then 1.5 s quiet), so a 32-frame upload needs 20-28 s: pass >= 30. A long
+        status_timeout also sends each chunk once (duplicates queued back to back
+        collapse in the receiver anyway)."""
+        status_wait = timeout if status_timeout is None else max(timeout, status_timeout)
         transfer_id &= 0xFF
         crc = ga.crc16(blob)
         begin = ga.command_frame(ga.CMD_BEGIN, struct.pack(">HHBB", len(blob), crc, ga.FORMAT_SKYTRAQ,
@@ -155,13 +168,18 @@ class CommandLink:
         def cancelled():
             return cancel is not None and cancel.is_set()
 
+        dead = [0]      # consecutive unanswered rounds (BEGIN or STATUS)
+
         def begin_until_acked(note):
-            while not cancelled() and time.monotonic() < deadline:
+            while not cancelled() and time.monotonic() < deadline and dead[0] < max_dead_rounds:
                 ack = self.send_reliable(write, begin, timeout=timeout, attempts=3, cancel=cancel)
                 if ack is not None:
+                    dead[0] = 0
                     return ack.get("result") == ACK_OK
-                report(None, expected, f"{note}: no answer, link down? retrying")
-                time.sleep(1.0)
+                dead[0] += 1
+                report(None, expected, f"{note}: no answer ({dead[0]}/{max_dead_rounds}), link down?")
+                if dead[0] < max_dead_rounds:
+                    time.sleep(2.0)       # space retries; never a continuous uplink
             return False
 
         if not begin_until_acked("BEGIN"):
@@ -174,7 +192,7 @@ class CommandLink:
             # (~170 ms per packet), so a short resend round at a fixed rhythm
             # can keep landing in the same deaf window: send the last few
             # missing chunks twice and leave a random gap before STATUS.
-            repeat = 2 if pace_s and len(to_send) <= 8 else 1
+            repeat = 2 if pace_s and len(to_send) <= 8 and status_wait <= timeout else 1
             for chunk in to_send:
                 for _ in range(repeat):
                     if cancelled():
@@ -185,18 +203,23 @@ class CommandLink:
             if pace_s:
                 time.sleep(rng.uniform(0.0, 0.4))
             rounds += 1
-            st = self.request_status(write, timeout=timeout, cancel=cancel, transfer_id=transfer_id)
+            st = self.request_status(write, timeout=status_wait, cancel=cancel, transfer_id=transfer_id)
             if st is None:
                 # Link lost: keep asking; when it answers again, BEGIN (same
                 # transfer) resumes and only the missing chunks go out.
                 if time.monotonic() > deadline:
                     return False, f"link lost; gave up after {resume_deadline_s:.0f} s"
+                dead[0] += 1
+                if dead[0] >= max_dead_rounds:
+                    return False, (f"no reply from Witness after {max_dead_rounds} tries; "
+                                   "link down? upload aborted (nothing more is sent)")
                 report(None, expected, "no status reply: waiting for the link")
-                time.sleep(1.0)
+                time.sleep(2.0)
                 if not begin_until_acked("resume"):
                     return False, "link did not come back in time"
                 to_send = []
                 continue
+            dead[0] = 0
             received = st.get("chunks_received", 0)
             report(received, expected, f"round {rounds}")
             if st.get("transfer_id") != transfer_id or st.get("state") != "receiving":

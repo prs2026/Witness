@@ -111,6 +111,16 @@
 // or no 0x0C packet for IRIS_HITL_INPUT_TIMEOUT_MS returns to real sensors.
 #define IRIS_COMMAND_HITL_ENTER 0x4849U
 #define IRIS_COMMAND_HITL_EXIT 0x4858U
+// Bench restart (test only): reboots Witness in any flight state so a reset in
+// flight can be tested. Accepted only as a canonical USB frame and only while
+// HITL is active (so never in a real flight); radio -> IRIS_ACK_UNKNOWN, never
+// forwarded to Iris. d0 = IRIS_BENCH_RESTART_SOFTWARE (esp_restart, reset
+// reason SW) or IRIS_BENCH_RESTART_PANIC (abort, reset reason PANIC); both are
+// warm resets that resume the flight state. Acked IRIS_ACK_OK ~100 ms before
+// the reset; HITL off -> IRIS_ACK_REFUSED; other d0 -> IRIS_ACK_BAD_ARGUMENT.
+#define IRIS_COMMAND_BENCH_RESTART 0x4252U
+#define IRIS_BENCH_RESTART_SOFTWARE 0x00U
+#define IRIS_BENCH_RESTART_PANIC 0x01U
 // IMU calibration (USB only, Pad Idle, real sensors): 0x05, 0x43, then one of
 // these arguments. GYRO captures 2 s still and stores the gyro bias; FACE
 // captures 2 s on one face (+/-X, +/-Y, +/-Z, any order) and, after all six,
@@ -688,6 +698,7 @@
 #define IRIS_ACK_INCOMPLETE 0x05U    // assist COMMIT with chunks missing (detail = received)
 #define IRIS_ACK_BAD_CRC 0x06U       // assist COMMIT: CRC mismatch, transfer discarded
 #define IRIS_ACK_BAD_FORMAT 0x07U    // assist COMMIT: records do not parse
+#define IRIS_ACK_DETAIL_CONFIRM_NEEDED 0xC0F1U  // BUSY detail: radio erase/clear sent once, send it again to confirm
 
 // 0x07 Transfer status (Witness -> host), the reply to a GPS assist STATUS
 // command (0x4751). d0-d1 of the STATUS command select the first chunk of the

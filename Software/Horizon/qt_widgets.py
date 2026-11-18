@@ -23,9 +23,34 @@ def mono_font(size: int = 9) -> QtGui.QFont:
     return font
 
 
+class _OnDestroyed:
+    """Slot for ``QObject.destroyed`` that runs a callback.
+
+    This is deliberately a callable object, not a lambda/closure. When a widget tree
+    is only released by Python's cyclic GC, the collector clears every function in the
+    garbage first, and then the C++ destructors emit ``destroyed`` into those
+    half-cleared functions: calling one dereferences its cleared globals and the
+    process dies with an access violation inside ``gc.collect``. A callable instance
+    is dispatched through its (live) class, and a cleared instance is just a no-op.
+    """
+
+    __slots__ = ("callback",)
+
+    def __init__(self, callback: Callable[[], None]):
+        self.callback = callback
+
+    def __call__(self, *_args) -> None:
+        try:
+            callback = self.callback
+            if callback is not None:
+                callback()
+        except Exception:  # noqa: BLE001 - never raise out of a destruction signal
+            pass
+
+
 def _owned(widget: QtWidgets.QWidget, unsubscribe: Callable[[], None]) -> None:
     """Drop a Cell subscription when its widget is destroyed."""
-    widget.destroyed.connect(lambda *_: unsubscribe())
+    widget.destroyed.connect(_OnDestroyed(unsubscribe))
 
 
 def bind_label(cell: Cell, label: QtWidgets.QLabel, fmt: Callable = str) -> None:
@@ -107,14 +132,21 @@ class LogConsole(QtWidgets.QPlainTextEdit):
         self.setFont(mono_font())
         self.setMaximumBlockCount(max_lines)
         self.setLineWrapMode(QtWidgets.QPlainTextEdit.LineWrapMode.WidgetWidth)
+        self._max_lines = max_lines
 
     def append_lines(self, lines: Iterable[str]) -> None:
         lines = list(lines)
         if not lines:
             return
-        self.appendPlainText("\n".join(lines))
+        # Only the last max_lines of a burst can survive the block limit, so never
+        # build more than that (audit #15), and follow the end only while the
+        # operator is already at the end (scrolled-back reading is not yanked away).
+        lines = lines[-self._max_lines:]
         bar = self.verticalScrollBar()
-        bar.setValue(bar.maximum())
+        follow = bar.value() >= bar.maximum() - 2
+        self.appendPlainText("\n".join(lines))
+        if follow:
+            bar.setValue(bar.maximum())
 
     def line_count(self) -> int:
         return self.blockCount()

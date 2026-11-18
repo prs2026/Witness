@@ -26,12 +26,12 @@ import pyqtgraph as pg
 import attitude_math as am
 from attitude_data import AttitudeTrack, LiveAttitude, load_attitude_csv, state_name
 from attitude_scene import (  # noqa: F401 - re-exported
-    AIM_ALPHA, AIM_COLOR, AXIS_COLORS, BAD, BG, CONVENTIONS, FIN_FILL, FIN_ROLES, GHOST, GRID, MARK, MUTED, OK, Q_COLORS,
+    AIM_ALPHA, AIM_COLOR, AXIS_COLORS, STALE_ALPHA, BAD, BG, CONVENTIONS, FIN_FILL, FIN_ROLES, GHOST, GRID, MARK, MUTED, OK, Q_COLORS,
     ROCKET_FAR, ROCKET_NEAR, TEXT, VIEWS, WARN, body_axes_world, chart_series, fmt, ground_grid,
     projector, rocket_segments, rocket_world,
 )
 from observable import Cell
-from qt_common import message_error
+from qt_common import guard_call, guarded_slot, message_error
 from qt_widgets import light_axes, mono_font
 
 STALE_S = 3.0
@@ -81,6 +81,21 @@ def _faded(color, alpha=1.0):
 def _rgba(color, alpha=1.0):
     c = QtGui.QColor(color)
     return (c.redF(), c.greenF(), c.blueF(), alpha)
+
+
+def _scrolling_bar(row, parent):
+    """A toolbar row that scrolls sideways instead of forcing the window wide
+    (so the tab fits a 1080 px portrait monitor)."""
+    scroll = QtWidgets.QScrollArea(parent)
+    holder = QtWidgets.QWidget(scroll)
+    holder.setLayout(row)
+    row.setContentsMargins(0, 0, 0, 0)
+    scroll.setWidget(holder)
+    scroll.setWidgetResizable(True)
+    scroll.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+    scroll.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+    scroll.setFixedHeight(holder.sizeHint().height() + 14)
+    return scroll
 
 
 class _Overlay(QtWidgets.QLabel):
@@ -476,10 +491,14 @@ class AttitudeTab(QtWidgets.QWidget):
         window = QtWidgets.QComboBox()
         bind_combo(self.window, window, [str(v) for v in LIVE_WINDOWS])
         bar_widgets += [QtWidgets.QLabel("Live window s"), window]
-        for widget in bar_widgets:
-            bar.addWidget(widget)
+        # Two rows, so the tab fits a 1080 px portrait monitor.
+        second = QtWidgets.QHBoxLayout()
+        for index, widget in enumerate(bar_widgets):
+            (bar if index < 4 else second).addWidget(widget)
         bar.addStretch(1)
+        second.addStretch(1)
         layout.addLayout(bar)
+        layout.addLayout(second)
         views = QtWidgets.QHBoxLayout()
         views.addWidget(QtWidgets.QLabel("Camera:"))
         for name in VIEWS:
@@ -493,7 +512,7 @@ class AttitudeTab(QtWidgets.QWidget):
         conventions = QtWidgets.QPushButton("Conventions...")
         conventions.clicked.connect(self.show_conventions)
         views.addWidget(conventions)
-        layout.addLayout(views)
+        layout.addWidget(_scrolling_bar(views, self))
 
         vertical = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical)
         vertical.setChildrenCollapsible(False)
@@ -672,6 +691,7 @@ class AttitudeTab(QtWidgets.QWidget):
         self._set_scrub(self.play_time)
         self.refresh()
 
+    @guarded_slot
     def _tick(self):
         now = time.monotonic()
         try:
@@ -727,9 +747,11 @@ class AttitudeTab(QtWidgets.QWidget):
         now = time.monotonic() if now is None else now
         sample = self.current_sample(now)
         offset, how = self.heading_offset()
-        self._readouts(sample, now, offset, how)
-        self._draw_scene(sample, offset)
-        self._draw_chart(now)
+        # Each part guarded on its own (audit H2): a bad readout must not stop
+        # the 3-D model or the chart from updating in the same tick.
+        guard_call("AttitudeTab.readouts", self._readouts, sample, now, offset, how)
+        guard_call("AttitudeTab.scene", self._draw_scene, sample, offset, now)
+        guard_call("AttitudeTab.chart", self._draw_chart, now)
         if self.mode == "file" and self.track is not None:
             self.time_label.setText(f"t = {self.play_time:.2f} s  [{self.track.start:.2f} .. {self.track.end:.2f}]")
         else:
@@ -801,7 +823,7 @@ class AttitudeTab(QtWidgets.QWidget):
             elif s.truth is None:
                 self._set("note", f"Truth not available ({s.truth_reason})", WARN)
 
-    def _draw_scene(self, s, offset):
+    def _draw_scene(self, s, offset, now=None):
         truth = s.truth if s is not None and self.mode == "file" and self.show_truth.get() else None
         if s is None or s.q is None:
             message = ("ATTITUDE NOT AVAILABLE" if s is not None else "NO ATTITUDE DATA",
@@ -818,7 +840,13 @@ class AttitudeTab(QtWidgets.QWidget):
             legend += "   truth (blue dashed)"
         if aligned:
             legend += f"   estimate rotated {offset:+.1f}° about U"
-        self.scene.show_attitude(q, ghost=truth, legend=legend)
+        # Live data older than STALE_S (or a snapshot) is drawn faded, like the
+        # Visualizer does, so a frozen last attitude is never mistaken for live.
+        alpha = 1.0
+        if self.mode == "live" and now is not None and (s.snapshot or now - s.time > STALE_S):
+            alpha = STALE_ALPHA
+            legend += "   STALE - last attitude, not live"
+        self.scene.show_attitude(q, ghost=truth, legend=legend, alpha=alpha)
 
     def _series_bounds(self, now):
         if self.mode == "file" and self.track is not None:

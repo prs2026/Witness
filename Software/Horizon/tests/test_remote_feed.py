@@ -68,6 +68,17 @@ class HostRules(unittest.TestCase):
             WitnessReceiver("benchpc.tail1234.ts.net", 8767, tmp)    # names resolve on the worker
 
 
+def wait_remote(core, text=None, timeout=5.0):
+    """The Tailscale probe now runs on a worker thread (audit F15): pump the GUI-side
+    status update until the remote feed is up (or the status text appears)."""
+    end = time.monotonic() + timeout
+    while time.monotonic() < end:
+        core.update_feed_status()
+        if (core.remote_publisher is not None) if text is None else (text in core.remote_feed_status.get()):
+            return
+        time.sleep(0.05)
+
+
 class Independence(unittest.TestCase):
     def test_stuck_remote_viewer_never_delays_the_local_feed(self):
         from monitor_core import MonitorCore
@@ -75,6 +86,7 @@ class Independence(unittest.TestCase):
                 patch("monitor_core.is_tailscale_address", side_effect=loopback_counts_as_tailscale), \
                 patch("monitor_core.tailscale_ipv4", return_value="127.0.0.1"):
             core = MonitorCore(auto_connect=False, feed_port=0, remote_feed="auto", remote_feed_port=0)
+            wait_remote(core)
         try:
             remote = core.remote_publisher
             self.assertIsNotNone(remote, core.remote_feed_status.get())
@@ -126,6 +138,7 @@ class Independence(unittest.TestCase):
                 self.assertIsNone(core.remote_publisher)
                 local_port = core.publisher.port
                 core.set_remote_feed(True)
+                wait_remote(core)
                 self.assertIsNotNone(core.remote_publisher)
                 self.assertIn("viewers connected", core.remote_feed_status.get())
                 core.set_remote_feed(False)
@@ -140,6 +153,7 @@ class Independence(unittest.TestCase):
         from monitor_core import MonitorCore
         with patch("monitor_core.tailscale_ipv4", return_value=None):
             core = MonitorCore(auto_connect=False, feed_port=0, remote_feed="auto", remote_feed_port=0)
+            wait_remote(core, "waiting for Tailscale")
         try:
             self.assertIsNone(core.remote_publisher)
             self.assertIn("waiting for Tailscale", core.remote_feed_status.get())

@@ -13,7 +13,7 @@ from featherweight import FEATHERWEIGHT_BAUD
 from ground_receivers import FeatherweightReceiver, WitnessReceiver
 from ground_settings import WITNESS_FEED_HOST, WITNESS_FEED_PORT
 from observable import Cell
-from qt_common import message_error
+from qt_common import guard_call, guarded_slot, message_error
 from qt_widgets import bind_check, bind_combo, bind_label, bind_line_edit, hbox, wrap_label
 from serial_discovery import SerialDiscovery
 from telemetry_model import FEATHERWEIGHT_FIELDS, WITNESS_FIELDS  # noqa: F401 - re-exported
@@ -67,19 +67,20 @@ class ReceiverTab(ReceiverControl, QtWidgets.QWidget):
             self.remember_source(record)
             try:
                 self.view.update_record(record, witness=self.witness)
-            except (ValueError, TypeError, OverflowError, OSError) as exc:
-                diagnostics.append(f"DISPLAY_ERROR: {exc}")
-        self.view.append(diagnostics)
+            except Exception as exc:    # any bad record (KeyError, IndexError...) must not kill the tab
+                diagnostics.append(f"DISPLAY_ERROR: {type(exc).__name__}: {exc}")
+        guard_call("ReceiverTab.append", self.view.append, diagnostics)
 
     def set_inputs_enabled(self, enabled):
         for entry in self.entries:
             entry.setEnabled(enabled)
 
+    @guarded_slot
     def _poll(self):
-        try:
-            self.poll()
-        finally:
-            self.view.update_ages()
+        # Each step guarded on its own: a failing poll must not skip the age
+        # refresh (stale rows must keep ageing) and vice versa.
+        guard_call("ReceiverTab.poll", self.poll)
+        guard_call("ReceiverTab.update_ages", self.view.update_ages)
 
     def close(self):
         self._timer.stop()

@@ -9,6 +9,14 @@ The converter auto-detects both raw application-packet streams and the fixed
 contains host receive timestamps, so ``time_seconds`` is derived from device
 uptime.
 
+Flash logs from a flight computer that reset in flight and resumed the same
+session (packet stream source 6, a ``log_resumed`` row) are one flight: the
+microsecond clock restarts at the marker, and ``time_seconds`` keeps going
+after the last time before the reset plus the reset gap (GPS UTC when both
+sides have it, else a nominal 1.0 s, flagged ``time_after_reset_estimated``).
+Records of an unknown source are skipped by length and counted, and a missing
+NAND page is re-synchronised over. See the README ("Resumed flights").
+
 State packets (0x02) are 65-byte frames with ``gps_satellites``. Legacy 64-byte
 state frames from older firmware (no satellite byte) are still accepted: the
 65-byte form is tried first and the 64-byte form is used only when frame
@@ -21,6 +29,7 @@ from __future__ import annotations
 import argparse
 import csv
 import math
+import re
 import struct
 import sys
 from pathlib import Path
@@ -526,10 +535,152 @@ def parse_flash_record(record: bytes) -> dict[str, Any] | None:
 
 
 class DecodeStats:
-    """Filled in by the iter_* decoders: bytes not decoded, when finished."""
+    """Filled in by the iter_* decoders (complete once the iterator is exhausted).
+
+    discarded        bytes not decoded (a truncated tail, bytes skipped to
+                     re-synchronise after a gap)
+    gap_events       damaged places the decoder re-synchronised over (a missing
+                     NAND page, a corrupt record); bytes skipped are in discarded
+    unknown_records  records of an unknown source/type, skipped by their length
+    unknown_sources  {source label: count} of those
+    segments         1 + number of in-flight resets (log "resumed" markers, or
+                     time restarts seen in the IMU / WL streams)
+    resumes          one dict per reset: byte_offset, time_seconds, flight_state,
+                     flight_state_name, generation, gap_s, gap_source
+    time_wraps       32-bit microsecond counter wraps that were unwrapped
+    """
 
     def __init__(self) -> None:
         self.discarded = 0
+        self.gap_events = 0
+        self.unknown_records = 0
+        self.unknown_sources: dict[str, int] = {}
+        self.segments = 1
+        self.resumes: list[dict[str, Any]] = []
+        self.time_wraps = 0
+
+    def count_unknown(self, label: Any) -> None:
+        self.unknown_records += 1
+        key = str(label)
+        self.unknown_sources[key] = self.unknown_sources.get(key, 0) + 1
+
+
+def describe_stats(stats: DecodeStats) -> list[str]:
+    """Report lines for the extras of a decode (empty for a plain log)."""
+    lines: list[str] = []
+    for resume in stats.resumes:
+        gap = resume.get("gap_s")
+        if gap is None:
+            gap_text = "gap unknown"
+        elif resume.get("gap_source") == "gps_utc":
+            gap_text = f"gap {gap:.3f} s (from GPS UTC)"
+        else:
+            gap_text = f"gap {gap:.3f} s (ESTIMATED, real reset duration unknown)"
+        state = resume.get("flight_state_name")
+        lines.append(
+            f"Resumed after an in-flight reset at t={resume.get('time_seconds', 0.0):.3f} s"
+            + (f", flight state {state}" if state else "")
+            + (f", generation {resume['generation']}" if resume.get("generation") is not None else "")
+            + f", {gap_text}")
+    if stats.unknown_records:
+        detail = ", ".join(f"{key}={count}" for key, count in sorted(stats.unknown_sources.items()))
+        lines.append(f"Skipped {stats.unknown_records} record(s) of unknown type ({detail})")
+    if stats.gap_events:
+        lines.append(f"Re-synchronised over {stats.gap_events} gap(s) (missing pages or corrupt "
+                     "records); the skipped bytes are counted as discarded")
+    return lines
+
+
+# -- Time axis over 32-bit counters and in-flight resets ----------------------
+#
+# The logger timestamps are the low 32 bits of esp_timer in microseconds: they
+# wrap every 71.6 minutes, and restart from ~0 when the flight computer resets
+# in flight and appends to the same session (a "resumed" flight). _Clock turns
+# one segment's raw values into a monotonic microsecond count; _Axis chains the
+# segments into one time axis.
+
+_WRAP_THRESHOLD_US = 1 << 31   # half the u32 microsecond range
+_U32_MASK = 0xFFFFFFFF
+# A backward step bigger than this is a clock restart, not a record logged a
+# few ms out of order (task race, seen at up to ~8 ms).
+RESTART_BACKWARD_US = 2_000_000
+# A "wrap" has the counter continue forward within this much; a step back by
+# more than half the range that does not is a restart that began near zero.
+WRAP_MAX_FORWARD_US = 300_000_000
+# The real reset duration is unknown. The restarted clock's zero is placed this
+# long after the last timestamp before the reset, unless GPS UTC says better.
+NOMINAL_RESET_GAP_US = 1_000_000
+
+
+class _Clock:
+    """Unwraps one segment's u32 microsecond counter."""
+
+    def __init__(self) -> None:
+        self.previous_raw: int | None = None
+        self.wraps = 0
+        self.total_wraps = 0
+
+    def begin_segment(self) -> None:
+        self.previous_raw = None
+        self.wraps = 0
+
+    def restarted(self, raw_us: int) -> bool:
+        """True when raw_us is the clock restarting (a reset), not a wrap."""
+        previous = self.previous_raw
+        if previous is None or raw_us >= previous:
+            return False
+        back = previous - raw_us
+        if back > _WRAP_THRESHOLD_US:
+            return ((raw_us - previous) & _U32_MASK) > WRAP_MAX_FORWARD_US
+        return back > RESTART_BACKWARD_US
+
+    def unwrap(self, raw_us: int) -> int:
+        previous_raw = self.previous_raw
+        # A real wrap of the 32-bit microsecond counter steps back by ~2^32;
+        # a record logged a few ms out of order (task race) must not add one.
+        if previous_raw is not None and previous_raw - raw_us > _WRAP_THRESHOLD_US:
+            self.wraps += 1
+            self.total_wraps += 1
+        if previous_raw is not None and raw_us - previous_raw > _WRAP_THRESHOLD_US and self.wraps:
+            return raw_us + ((self.wraps - 1) << 32)   # straggler from before the wrap
+        self.previous_raw = raw_us
+        return raw_us + (self.wraps << 32)
+
+
+class _Axis:
+    """Chains segments: axis = unwrapped segment time + the segment's offset."""
+
+    def __init__(self) -> None:
+        self.offset_us = 0
+        self.first_us: int | None = None
+        self.last_us: int | None = None
+        self.segment = 0
+
+    def place(self, unwrapped_us: int) -> int:
+        axis_us = unwrapped_us + self.offset_us
+        if self.first_us is None:
+            self.first_us = axis_us
+        if self.last_us is None or axis_us > self.last_us:
+            self.last_us = axis_us
+        return axis_us
+
+    def new_segment(self, gap_us: int) -> bool:
+        """Start the next segment: its device clock zero lands gap_us after the
+        last time seen so far. False when nothing came before (offset 0)."""
+        self.segment += 1
+        if self.last_us is None:
+            self.offset_us = 0
+            return False
+        self.offset_us = self.last_us + gap_us
+        return True
+
+
+def _resume_columns(row: dict[str, Any], segment: int, estimated: bool,
+                    device_us: int) -> None:
+    """Columns present only on rows after a reset (old logs never get them)."""
+    row["segment"] = segment
+    row["time_after_reset_estimated"] = int(estimated)
+    row["device_timestamp_us"] = device_us
 
 
 def decode_flash_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
@@ -538,36 +689,110 @@ def decode_flash_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
     return rows, stats.discarded
 
 
+def _flash_chain_ok(data: bytes, start: int, size: int, magic: bytes) -> bool:
+    """A whole record at start, and the next two (when present) begin with magic."""
+    if start + size > len(data) or data[start:start + 3] != magic:
+        return False
+    for step in (1, 2):
+        position = start + step * size
+        if position + 3 > len(data):
+            break
+        if data[position:position + 3] != magic:
+            return False
+    return True
+
+
+def _flash_resync(data: bytes, start: int, size: int, magic: bytes) -> int | None:
+    position = data.find(magic, start)
+    while position != -1:
+        if _flash_chain_ok(data, position, size, magic):
+            return position
+        position = data.find(magic, position + 1)
+    return None
+
+
 def iter_flash_log(data: bytes, stats: DecodeStats | None = None):
-    """WL flash records (v1 48-byte / v2 24-byte), one row dict at a time."""
+    """WL flash records (v1 48-byte / v2 24-byte), one row dict at a time.
+
+    A missing NAND page removes ~2 KB from the stream (not a multiple of the
+    record size), so the decoder re-synchronises on the "WL"+version magic
+    instead of stepping blindly. The uptime restarting (a reset in flight that
+    appended to the same session) starts a new segment on a continuous axis.
+    """
     stats = stats or DecodeStats()
     count = 0
     size = flash_record_size(data) or FLASH_RECORD_SIZE
     parse = parse_flash_record_v2 if size == 24 else parse_flash_record
-    discarded = len(data) % size
-    complete_length = len(data) - discarded
+    magic = FLASH_RECORD_MAGIC + bytes([data[2]]) if len(data) >= 3 else b""
+    discarded = 0
+    offset = 0
+    axis_offset_ms = 0
+    last_axis_ms: int | None = None
+    previous_uptime: int | None = None
+    segment = 0
+    gap_before = 0
 
-    for offset in range(0, complete_length, size):
+    while offset + size <= len(data):
         record = data[offset:offset + size]
         packet = parse(record)
-        if packet is None:
-            discarded += size
-            continue
+        intact = packet is not None
+        if intact and offset + size + 3 <= len(data) and data[offset + size:offset + size + 3] != magic:
+            intact = False           # next record not where it should be: torn page?
+        if not intact:
+            found = _flash_resync(data, offset + 1, size, magic) if magic else None
+            if found is not None and found != offset + size:
+                stats.gap_events += 1
+                discarded += found - offset
+                gap_before += found - offset
+                offset = found
+                continue
+            if packet is None:       # corrupt record, aligned stepping as before
+                discarded += size
+                offset += size
+                continue
         uptime_ms = packet["uptime"]
+        resumed = (previous_uptime is not None
+                   and previous_uptime - uptime_ms > RESTART_BACKWARD_US // 1000)
+        if resumed:
+            segment += 1
+            stats.segments += 1
+            axis_offset_ms = (last_axis_ms or 0) + NOMINAL_RESET_GAP_US // 1000
+            stats.resumes.append({
+                "byte_offset": offset,
+                "time_seconds": (axis_offset_ms + uptime_ms) / 1000.0,
+                "flight_state": packet.get("flight_state"),
+                "flight_state_name": packet.get("flight_state_name"),
+                "generation": None,
+                "gap_s": NOMINAL_RESET_GAP_US / 1e6,
+                "gap_source": "nominal",
+            })
+        previous_uptime = uptime_ms
+        axis_ms = axis_offset_ms + uptime_ms
+        if last_axis_ms is None or axis_ms > last_axis_ms:
+            last_axis_ms = axis_ms
         row: dict[str, Any] = {
             "packet_index": count,
             "byte_offset": offset,
             "packet_id": "WL",
             "packet_type": packet["packet"],
             "frame_length": size,
-            "time_seconds": uptime_ms / 1000.0,
+            "time_seconds": axis_ms / 1000.0,
         }
         row.update(flatten_packet(packet))
+        if segment:
+            _resume_columns(row, segment, True, uptime_ms * 1000)
+            if resumed:
+                row["resumed"] = 1
+                row["resume_gap_s"] = NOMINAL_RESET_GAP_US / 1e6
+        if gap_before:
+            row["gap_before_bytes"] = gap_before
+            gap_before = 0
         row["raw_packet_hex"] = record.hex(" ")
         count += 1
+        offset += size
         yield row
 
-    stats.discarded = discarded
+    stats.discarded = discarded + (len(data) - offset)
 
 
 def frame_payload_length(data: bytes, offset: int, lengths: tuple[int, ...]) -> int | None:
@@ -592,56 +817,121 @@ def decode_imu_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
 
     time_seconds is relative to the first record, unwrapping the 32-bit
     microsecond counter. ``missing_before`` counts records lost before this
-    one, from the 8-bit sequence (it cannot see gaps of 256 or more).
+    one, from the 8-bit sequence (it cannot see gaps of 256 or more); it is 0
+    on the first record after a reset (the sequence restarts at 0).
     """
     stats = DecodeStats()
     rows = list(iter_imu_log(data, stats))
     return rows, stats.discarded
 
 
-_WRAP_THRESHOLD_US = 1 << 31   # half the u32 microsecond range
+# The IMU stream has no per-record framing and a NAND page (2036 B) is not a
+# multiple of the 24-byte record, so a missing page leaves the rest of the
+# stream shifted. Consecutive records are 1 ms apart (10 ms in descent) with
+# the u8 sequence +1 (+10 in descent), which is what alignment is checked on.
+_IMU_PAIR_MAX_BACK_US = 50_000
+_IMU_PAIR_MAX_FORWARD_US = 250_000
+_IMU_PAIR_MAX_SEQUENCE_STEP = 16
+_IMU_CHAIN_RECORDS = 4
+_IMU_MAX_RESYNC_SHIFT = 2 * IMU_RECORD_SIZE - 1
+
+
+def _imu_pair_ok(raw_a: int, sequence_a: int, raw_b: int, sequence_b: int) -> bool:
+    step = (raw_b - raw_a) & _U32_MASK
+    if step >= _WRAP_THRESHOLD_US:
+        step -= 1 << 32
+    return (-_IMU_PAIR_MAX_BACK_US <= step <= _IMU_PAIR_MAX_FORWARD_US
+            and 1 <= ((sequence_b - sequence_a) & 0xFF) <= _IMU_PAIR_MAX_SEQUENCE_STEP)
+
+
+def _imu_chain_ok(data: bytes, position: int) -> bool | None:
+    """Do four consecutive records from position look like one aligned stream?
+    None when fewer than four records remain (cannot tell)."""
+    if position + _IMU_CHAIN_RECORDS * IMU_RECORD_SIZE > len(data):
+        return None
+    previous = None
+    for index in range(_IMU_CHAIN_RECORDS):
+        start = position + index * IMU_RECORD_SIZE
+        current = (int.from_bytes(data[start:start + 4], "big"), data[start + 23])
+        if previous is not None and not _imu_pair_ok(*previous, *current):
+            return False
+        previous = current
+    return True
 
 
 def iter_imu_log(data: bytes, stats: DecodeStats | None = None):
-    """decode_imu_log, one row dict at a time (bounded memory)."""
+    """decode_imu_log, one row dict at a time (bounded memory).
+
+    A reset in flight appends to the same session: the microsecond counter and
+    the sequence restart from ~0 (no marker in this stream; the packet stream
+    has one). A step back of more than 2 s that is not a counter wrap starts a
+    new segment, continued on the time axis 1.0 s (nominal, flagged
+    ``time_after_reset_estimated``) after the last time before the reset.
+    A missing page leaves the stream shifted; records are re-aligned where
+    consecutive timestamps and sequence numbers stop fitting.
+    """
     stats = stats or DecodeStats()
     count = 0
-    discarded = len(data) % IMU_RECORD_SIZE
-    stats.discarded = discarded
-    first_us = None
-    previous_raw = None
-    wraps = 0
+    stats.discarded = len(data) % IMU_RECORD_SIZE
+    clock = _Clock()
+    axis = _Axis()
     previous_sequence = None
-    for offset in range(0, len(data) - discarded, IMU_RECORD_SIZE):
+    previous_pair = None
+    offset = 0
+    skipped_total = 0
+    gap_before = 0
+    while offset + IMU_RECORD_SIZE <= len(data):
         record = data[offset:offset + IMU_RECORD_SIZE]
         raw_us = unsigned(record[0:4])
-        # A real wrap of the 32-bit microsecond counter steps back by ~2^32;
-        # a record logged a few ms out of order (task race) must not add one.
-        if previous_raw is not None and previous_raw - raw_us > _WRAP_THRESHOLD_US:
-            wraps += 1
-        if previous_raw is not None and raw_us - previous_raw > _WRAP_THRESHOLD_US and wraps:
-            timestamp_us = raw_us + ((wraps - 1) << 32)   # straggler from before the wrap
-        else:
-            previous_raw = raw_us
-            timestamp_us = raw_us + (wraps << 32)
-        if first_us is None:
-            first_us = timestamp_us
         status = record[22]
         sequence = record[23]
-        missing = 0 if previous_sequence is None else (sequence - previous_sequence - 1) % 256
-        previous_sequence = sequence
+        if previous_pair is not None and not _imu_pair_ok(*previous_pair, raw_us, sequence):
+            # Either a real discontinuity (dropped records, a reset) or the
+            # stream is misaligned after a missing page. It is misaligned when
+            # these records do not chain but a shifted position does.
+            if _imu_chain_ok(data, offset) is False:
+                shift = next((s for s in range(1, _IMU_MAX_RESYNC_SHIFT + 1)
+                              if _imu_chain_ok(data, offset + s) is True), None)
+                if shift is not None:
+                    stats.gap_events += 1
+                    skipped_total += shift
+                    gap_before += shift
+                    offset += shift
+                    continue
+        resumed = clock.restarted(raw_us)
+        if resumed:
+            axis.new_segment(NOMINAL_RESET_GAP_US)
+            clock.begin_segment()
+        unwrapped_us = clock.unwrap(raw_us)
+        timestamp_us = axis.place(unwrapped_us)
         state = status & IMU_STATUS_STATE_MASK
+        if resumed:
+            stats.segments += 1
+            stats.resumes.append({
+                "byte_offset": offset,
+                "time_seconds": round((timestamp_us - axis.first_us) / 1e6, 6),
+                "flight_state": state,
+                "flight_state_name": FLIGHT_STATE_NAMES.get(state, f"Reserved ({state})"),
+                "generation": None,
+                "gap_s": NOMINAL_RESET_GAP_US / 1e6,
+                "gap_source": "nominal",
+            })
+        # The sequence restarts at a reset: that is not dropped records.
+        missing = (0 if previous_sequence is None or resumed
+                   else (sequence - previous_sequence - 1) % 256)
+        previous_sequence = sequence
+        previous_pair = (raw_us, sequence)
         low = [signed(record[i:i + 2]) * LSM6_LOW_ACCEL_G_PER_COUNT for i in (4, 6, 8)]
         high = [signed(record[i:i + 2]) * LSM6_HIGH_ACCEL_G_PER_COUNT for i in (10, 12, 14)]
         gyro = [signed(record[i:i + 2]) * GYRO_DPS_PER_COUNT for i in (16, 18, 20)]
         count += 1
-        yield {
+        row = {
             "packet_index": count - 1,
             "byte_offset": offset,
             "packet_id": "IMU",
             "packet_type": "imu_sample",
             "frame_length": IMU_RECORD_SIZE,
-            "time_seconds": round((timestamp_us - first_us) / 1e6, 6),
+            "time_seconds": round((timestamp_us - axis.first_us) / 1e6, 6),
             "timestamp_us": timestamp_us,
             "sequence": sequence,
             "missing_before": missing,
@@ -655,79 +945,298 @@ def iter_imu_log(data: bytes, stats: DecodeStats | None = None):
             "low_accel_x_g": low[0], "low_accel_y_g": low[1], "low_accel_z_g": low[2],
             "high_accel_x_g": high[0], "high_accel_y_g": high[1], "high_accel_z_g": high[2],
             "gyro_x_dps": gyro[0], "gyro_y_dps": gyro[1], "gyro_z_dps": gyro[2],
-            "raw_packet_hex": record.hex(" "),
         }
+        if axis.segment:
+            _resume_columns(row, axis.segment, True, unwrapped_us)
+            if resumed:
+                row["resumed"] = 1
+                row["resume_gap_s"] = NOMINAL_RESET_GAP_US / 1e6
+        if gap_before:
+            row["gap_before_bytes"] = gap_before
+            gap_before = 0
+        row["raw_packet_hex"] = record.hex(" ")
+        offset += IMU_RECORD_SIZE
+        yield row
+    stats.discarded = skipped_total + (len(data) - offset)
+    stats.time_wraps = clock.total_wraps
 
 
 # Witness store-v4 packet stream (P*.BIN): records of
-# [u32 timestamp_us][u8 source][u8 length][complete frame], big-endian.
+# [u32 timestamp_us][u8 source][u8 length][frame of `length` bytes], big-endian.
+# Sources 1-5 carry one complete wire frame (ID ... 0x0A). Source 6 is the
+# logger's own marker, written when a reset in flight resumed the session:
+# frame = [u8 kind=1 (resumed)][u8 flight state][u32 session generation].
+# After it the timestamps (and the IMU / WL sequences) restart from ~0.
 PACKET_RECORD_HEADER = 6
 PACKET_SOURCES = {1: "witness_state", 2: "can_rx", 3: "can_tx", 4: "radio_rx",
                   5: "kalman_log"}
+PACKET_SOURCE_LOG_MARKER = 6
+LOG_MARKER_RESUMED = 1
+LOG_MARKER_RESUMED_LENGTH = 6
+KALMAN_LOG_FRAME_LENGTH = 103      # 0xE2 + 101-byte payload + EOF
+KALMAN_GPS_TIME_FRAME_OFFSET = 94  # payload[93:97] + the ID byte
+# Sanity limits on a reset gap computed from GPS UTC.
+_GPS_GAP_MIN_S = -2.0
+_GPS_GAP_MAX_S = 12 * 3600.0
+_PACKET_UNKNOWN_CHAIN = 4
+_PACKET_RESYNC_CHAIN = 3
 
 
 def decode_packet_log(data: bytes) -> tuple[list[dict[str, Any]], int]:
     """Decode a P*.BIN packet stream into one row per logged frame.
 
     time_seconds is relative to the first record (32-bit microseconds
-    unwrapped). Frames the wire parser does not know are kept with their
-    raw bytes; a corrupt record ends the scan and counts as discarded.
+    unwrapped, continued across resets). Frames the wire parser does not know
+    are kept with their raw bytes; records of an unknown source are skipped by
+    their length and counted; damaged places are re-synchronised over.
     """
     stats = DecodeStats()
     rows = list(iter_packet_log(data, stats))
     return rows, stats.discarded
 
 
+def _packet_record_at(data: bytes, offset: int) -> tuple[str | None, int]:
+    """Classify the record at offset: ("known", end) for a source 1-5 frame
+    ending in EOF, ("marker", end) for source 6, ("unknown", end) for any
+    other source, (None, offset) when it does not fit or is malformed."""
+    size = len(data)
+    if offset + PACKET_RECORD_HEADER > size:
+        return None, offset
+    source = data[offset + 4]
+    length = data[offset + 5]
+    end = offset + PACKET_RECORD_HEADER + length
+    if end > size:
+        return None, offset
+    if source in PACKET_SOURCES:
+        if length < 2 or data[end - 1] != EOF:
+            return None, offset
+        return "known", end
+    if source == PACKET_SOURCE_LOG_MARKER:
+        return ("marker", end) if length >= 1 else (None, offset)
+    return "unknown", end
+
+
+def _packet_unknown_ok(data: bytes, position: int) -> bool:
+    """An unknown-source record is believed when what follows it is intact:
+    the end of the data, or a known/marker record within a few records."""
+    for _ in range(_PACKET_UNKNOWN_CHAIN):
+        if position + PACKET_RECORD_HEADER > len(data):
+            return True
+        kind, end = _packet_record_at(data, position)
+        if kind is None:
+            return False
+        if kind != "unknown":
+            return True
+        position = end
+    return False
+
+
+def _packet_candidate_ok(data: bytes, position: int) -> bool:
+    """After a candidate known record: the next records must hold together
+    (two of the next three known/marker) or the data must end."""
+    strict = 0
+    for _ in range(_PACKET_RESYNC_CHAIN):
+        if position + PACKET_RECORD_HEADER > len(data):
+            return True
+        kind, end = _packet_record_at(data, position)
+        if kind is None:
+            return False
+        strict += kind != "unknown"
+        position = end
+    return strict >= 2
+
+
+_PACKET_SOURCE_BYTE = re.compile(b"[\x01-\x06]")
+
+
+def _packet_resync(data: bytes, start: int) -> int | None:
+    """First offset >= start where a known/marker record begins and the
+    records after it hold together; None when there is none."""
+    for match in _PACKET_SOURCE_BYTE.finditer(data, start + 4):
+        position = match.start() - 4
+        kind, end = _packet_record_at(data, position)
+        if kind in ("known", "marker") and _packet_candidate_ok(data, end):
+            return position
+    return None
+
+
+def _walk_packet_records(data: bytes, stats: DecodeStats):
+    """Yield (offset, raw_us, source, frame, skipped_before) for each record of
+    a known source (1-5) or the log marker (6).
+
+    Records of any other source are skipped by their length byte and counted
+    in ``stats``. A malformed record (bad frame end, truncated) is stepped over
+    by scanning for the next place where records line up again (a missing NAND
+    page tears a record in two), counted in ``stats.gap_events``; if there is
+    none the rest is discarded, as before.
+    """
+    offset = 0
+    skipped = 0
+    skipped_total = 0
+    while offset + PACKET_RECORD_HEADER <= len(data):
+        kind, end = _packet_record_at(data, offset)
+        if kind == "unknown":
+            if _packet_unknown_ok(data, end):
+                stats.count_unknown(data[offset + 4])
+                offset = end
+                continue
+            kind = None
+        if kind is None:
+            found = _packet_resync(data, offset + 1)
+            if found is None:
+                break
+            stats.gap_events += 1
+            skipped += found - offset
+            skipped_total += found - offset
+            offset = found
+            continue
+        source = data[offset + 4]
+        yield (offset, unsigned(data[offset:offset + 4]), source,
+               data[offset + PACKET_RECORD_HEADER:end], skipped)
+        skipped = 0
+        offset = end
+    stats.discarded = skipped_total + (len(data) - offset)
+
+
+def _is_resume_marker(frame: bytes) -> bool:
+    return len(frame) >= LOG_MARKER_RESUMED_LENGTH and frame[0] == LOG_MARKER_RESUMED
+
+
+def resume_gaps_from_gps(data: bytes) -> list[float | None]:
+    """The reset duration at each resume marker of a packet log, from GPS UTC.
+
+    The Kalman log (0xE2) carries ``gps_time`` (Unix seconds, 0 without a
+    fix). With a GPS time in the last segment before the marker and in the
+    first after it, the true time from the last pre-reset record to the new
+    clock's zero is (UTC at that zero) - (UTC at the last record). One value
+    per marker, in seconds; None where either side has no GPS time or the
+    result is implausible (stale time held across the reset).
+    """
+    clock = _Clock()
+    segments = [{"first": None, "last": None, "last_local": None}]
+    for _offset, raw_us, source, frame, _skipped in _walk_packet_records(data, DecodeStats()):
+        if source == PACKET_SOURCE_LOG_MARKER and _is_resume_marker(frame):
+            clock.begin_segment()
+            segments.append({"first": None, "last": None, "last_local": None})
+        local_us = clock.unwrap(raw_us)
+        segment = segments[-1]
+        if segment["last_local"] is None or local_us > segment["last_local"]:
+            segment["last_local"] = local_us
+        if source == 5 and len(frame) == KALMAN_LOG_FRAME_LENGTH and frame[0] == 0xE2:
+            utc = unsigned(frame[KALMAN_GPS_TIME_FRAME_OFFSET:KALMAN_GPS_TIME_FRAME_OFFSET + 4])
+            if utc:
+                if segment["first"] is None:
+                    segment["first"] = (utc, local_us)
+                segment["last"] = (utc, local_us)
+    gaps: list[float | None] = []
+    for before, after in zip(segments, segments[1:]):
+        gap = None
+        if before["last"] is not None and after["first"] is not None:
+            utc_last = before["last"][0] + (before["last_local"] - before["last"][1]) / 1e6
+            utc_zero = after["first"][0] - after["first"][1] / 1e6
+            candidate = utc_zero - utc_last
+            if _GPS_GAP_MIN_S <= candidate <= _GPS_GAP_MAX_S:
+                gap = max(candidate, 0.0)
+        gaps.append(gap)
+    return gaps
+
+
 def iter_packet_log(data: bytes, stats: DecodeStats | None = None):
-    """decode_packet_log, one row dict at a time (bounded memory)."""
+    """decode_packet_log, one row dict at a time (bounded memory).
+
+    Resume markers (source 6, kind 1) end a segment: a ``log_resumed`` row
+    carries the flight state and session generation, and the time axis goes on
+    after the last time before the reset plus the reset gap (GPS UTC when both
+    sides have it, else 1.0 s nominal; ``time_after_reset_estimated`` flags the
+    rows that depend on the estimate). Old logs get none of the extra columns.
+    """
     stats = stats or DecodeStats()
     count = 0
-    offset = 0
-    first_us = None
-    previous_raw = None
-    wraps = 0
-    while offset + PACKET_RECORD_HEADER <= len(data):
-        raw_us = unsigned(data[offset:offset + 4])
-        source = data[offset + 4]
-        length = data[offset + 5]
-        start = offset + PACKET_RECORD_HEADER
-        frame = data[start:start + length]
-        if source not in PACKET_SOURCES or length < 2 or len(frame) != length \
-                or frame[-1] != 0x0A:
-            break
-        # A real wrap of the 32-bit microsecond counter steps back by ~2^32;
-        # a record logged a few ms out of order (task race) must not add one.
-        if previous_raw is not None and previous_raw - raw_us > _WRAP_THRESHOLD_US:
-            wraps += 1
-        if previous_raw is not None and raw_us - previous_raw > _WRAP_THRESHOLD_US and wraps:
-            timestamp_us = raw_us + ((wraps - 1) << 32)   # straggler from before the wrap
-        else:
-            previous_raw = raw_us
-            timestamp_us = raw_us + (wraps << 32)
-        if first_us is None:
-            first_us = timestamp_us
+    clock = _Clock()
+    axis = _Axis()
+    estimated = False
+    gps_gaps: list[float | None] | None = None
+    for offset, raw_us, source, frame, skipped in _walk_packet_records(data, stats):
+        marker_row: dict[str, Any] | None = None
+        if source == PACKET_SOURCE_LOG_MARKER:
+            if not _is_resume_marker(frame):
+                stats.count_unknown(f"6:kind {frame[0]}")
+                continue
+            if gps_gaps is None:
+                gps_gaps = resume_gaps_from_gps(data)
+            index = len(stats.resumes)
+            gps_gap = gps_gaps[index] if index < len(gps_gaps) else None
+            gap_s = gps_gap if gps_gap is not None else NOMINAL_RESET_GAP_US / 1e6
+            had_previous = axis.new_segment(int(round(gap_s * 1e6)))
+            clock.begin_segment()
+            estimated = had_previous and gps_gap is None
+            state = frame[1]
+            marker_row = {
+                "resumed": 1,
+                "resume_flight_state": state,
+                "resume_flight_state_name": FLIGHT_STATE_NAMES.get(state, f"Reserved ({state})"),
+                "resume_generation": unsigned(frame[2:6]),
+                "resume_gap_s": gap_s if had_previous else "",
+                "resume_gap_source": ("gps_utc" if gps_gap is not None
+                                      else "nominal" if had_previous else "no_previous_data"),
+            }
+        unwrapped_us = clock.unwrap(raw_us)
+        timestamp_us = axis.place(unwrapped_us)
+        time_seconds = round((timestamp_us - axis.first_us) / 1e6, 6)
+        if marker_row is not None:
+            stats.segments += 1
+            stats.resumes.append({
+                "byte_offset": offset,
+                "time_seconds": time_seconds,
+                "flight_state": marker_row["resume_flight_state"],
+                "flight_state_name": marker_row["resume_flight_state_name"],
+                "generation": marker_row["resume_generation"],
+                "gap_s": marker_row["resume_gap_s"] if marker_row["resume_gap_s"] != "" else None,
+                "gap_source": marker_row["resume_gap_source"],
+            })
+            row: dict[str, Any] = {
+                "packet_index": count,
+                "byte_offset": offset,
+                "packet_id": "LOG",
+                "packet_type": "log_resumed",
+                "frame_length": len(frame),
+                "time_seconds": time_seconds,
+                "timestamp_us": timestamp_us,
+                "log_source": "log_marker",
+            }
+            row.update(marker_row)
+            _resume_columns(row, axis.segment, estimated, unwrapped_us)
+            if skipped:
+                row["gap_before_bytes"] = skipped
+            row["raw_packet_hex"] = frame.hex(" ")
+            count += 1
+            yield row
+            continue
         packet_id = frame[0]
         try:
             packet = parse_packet(packet_id, frame[1:-1])
         except (IndexError, struct.error, ValueError):
             packet = None
-        row: dict[str, Any] = {
+        row = {
             "packet_index": count,
             "byte_offset": offset,
             "packet_id": f"0x{packet_id:02X}",
             "packet_type": packet["packet"] if packet else "unknown",
-            "frame_length": length,
-            "time_seconds": round((timestamp_us - first_us) / 1e6, 6),
+            "frame_length": len(frame),
+            "time_seconds": time_seconds,
             "timestamp_us": timestamp_us,
             "log_source": PACKET_SOURCES[source],
         }
         if packet:
             row.update(flatten_packet(packet))
+        if axis.segment:
+            _resume_columns(row, axis.segment, estimated, unwrapped_us)
+        if skipped:
+            row["gap_before_bytes"] = skipped
         row["raw_packet_hex"] = frame.hex(" ")
         count += 1
-        offset = start + length
         yield row
-    stats.discarded = len(data) - offset
+    stats.time_wraps = clock.total_wraps
 
 
 def is_packet_log_name(path: Path) -> bool:
@@ -926,6 +1435,8 @@ def main() -> int:
     if summary:
         print(f"Packets: {summary}")
     print(f"Discarded/unframed bytes: {discarded}")
+    for line in describe_stats(stats):
+        print(line)
     return 0
 
 

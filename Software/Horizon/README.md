@@ -1,5 +1,7 @@
 # Horizon Unified Ground Station
 
+> **Changed 2026-11-16.** Sections changed: "Witness and Featherweight inputs" (automatic reconnect, USB ports and DTR/RTS), "Flight View" (status strip, last-known position, source following, RSSI -128), "Logs and postflight analysis" (debug log rotation, exception log, raw log independence), "Troubleshooting" (link-lost, not-logging and reset banners). Sources: `Software/AUDIT/2026-11-15/fixes/09_horizon_data_fixes.md` and `10_horizon_display_fixes.md`. The automatic-reconnect and banner behaviour is covered by the host tests `tests/test_link_resilience.py` and `tests/test_display_fixes.py`; it was not run against hardware. Not done (from the fix reports): serial hung-port forced reconnect (deliberate: a reopen can toggle DTR/RTS), history depth and multi-source merge, CRC or sequence checking (protocol limit).
+
 Horizon is the desktop ground-station software for viewing Witness, Featherweight GPS, and AIM XTRA telemetry together. It includes a launch dashboard, a layout editor, an attitude view, a map/orientation visualizer, logging, and an embedded MQTT broker. The UI is PyQt6 with pyqtgraph for every plot. This folder contains Python applications, not the embedded firmware that runs on the flight computers.
 
 Start `horizon.py` for the unified display. Witness hardware input comes from the **Witness monitor** tab of witnessOS (`Software/witnessOS/witnessos.py --tab monitor`); the standalone `main.py` window is retired (running `main.py` just prints where the monitor went). AIM BASE still connects to AIM hardware and publishes its telemetry; Horizon replaces the separate MQTT broker application, not AIM BASE.
@@ -54,7 +56,7 @@ Either app may start first. Horizon retries its enabled inputs when unavailable.
 witnessOS also publishes the same receive-only feed on its PC's Tailscale
 address, port 8767 (Witness monitor > **Share over Tailscale**, on by default).
 On the remote machine, in Horizon's Witness tab, set the host to the witnessOS
-PC's Tailscale name (MagicDNS, e.g. `benchpc`) or its `100.x` address and the
+PC's Tailscale name (MagicDNS name) or its `100.x` address and the
 port to 8767, then Connect. Horizon only accepts this PC (loopback) or a
 Tailscale address, so the unauthenticated feed is never read over the LAN or
 the internet; your tailnet's login and ACLs decide who can watch.
@@ -114,14 +116,38 @@ Automatic USB discovery is enabled by default. Recognizable devices are discover
 
 Each Horizon input has its own Auto-connect checkbox. Turning it off stops future retries without dropping an already healthy connection. Manual Disconnect also disables that input’s auto-connect. Only one application should own a given COM port at a time.
 
+**Reconnect (2026-11-16).** Every serial, TCP and USB-auto input (and the Featherweight
+input, and the Witness feed receiver) reconnects by itself after a drop: a read error,
+a closed TCP connection, or an unplugged port. It retries with a backoff of 0.5, 1, 2,
+4 and then 5 s, forever, under the same source name, so Flight View keeps one series
+across the reconnect. A reconnect appends to the same raw `.bin` file, so one Connect
+click gives one raw file. Only a manual Disconnect ends the retries. The status line
+shows "Reconnecting to X (attempt n)", and commands sent while a link is down fail with
+"is reconnecting; nothing sent". Serial ports are opened with DTR and RTS de-asserted
+(this avoids the ESP32 auto-reset), on the first open and on every reopen.
+
+**Link health (2026-11-16).** A TCP connection that has delivered data and then goes
+silent for 5 s is reconnected (keepalive is also enabled). Serial silence is only shown
+(STALE), because a reopen could toggle DTR and RTS. The banner reads "LINK LOST" when a
+source that delivered data is silent for more than 3 s, when a connection never delivers
+data 5 s after connecting, or while it is reconnecting. The Witness monitor's title gets
+a "LINK LOST | " prefix. After a `0x7300` reset the banner reads "WITNESS RESETTING"
+for up to 20 s, the watchdog is held off, and the link reconnects by itself.
+
 Featherweight is read directly in its Horizon tab. Tracker battery voltage and local/ground-station battery voltage are separate fields. No Featherweight commands are sent.
 
 ## Flight View
 
-Flight View is the launch display. It places key flight numbers and state on the left, up to six pyqtgraph graphs in the center, and GPS/power readouts on the right, in a resizable splitter (the side panels scroll only when the window is too small). Panels are dark text on white whatever the system theme. Redraws are timer-driven (the layout's `refresh_ms`, at most 30 Hz), never once per packet. Battery readouts use three decimal places; AIM CPU/ejection batteries share a row. Default AIM continuity placeholders are removed.
+Flight View is the launch display, laid out for a portrait 9:16 monitor (1080x1920) first. A compact readout band sits at the top (flight state and overview metrics across the full width, GPS and power under it; on windows 1500 px or wider all three share one row), and up to six pyqtgraph graphs fill the rest of the height in a vertical splitter. With two columns and an odd number of graphs, the first graph (altitude) takes a full-width row and the others form a grid beneath it, so the default five graphs are altitude over a 2x2 grid (acceleration, vertical velocity, horizontal distance, RSSI); even counts (older saved layouts) keep the plain two-column grid. The default layout no longer ships the Gyro graph; add it back in the Layout Editor if wanted. Panels are dark text on white whatever the system theme. Redraws are timer-driven (the layout's `refresh_ms`, at most 30 Hz), never once per packet. Battery readouts use three decimal places; AIM CPU/ejection batteries share a row. Default AIM continuity placeholders are removed.
 
 - **Witness GPS** (GPS panel, row titled `W`) shows the state packet's satellite count beside the status GPS lock bit, for example `GPS sats 7  lock 1`. `lock` is a literal `1` (fresh fix) or `0`. Satellites are those used in the solution and read 0 when the fix is stale. Each value keeps its own `!` age/invalid marker.
 - **HITL** (state area, under the flight state) shows `HITL ACTIVE - SIMULATED SENSORS` in red whenever Witness reports status byte 1 bit 4, and the banner adds `HITL - SIMULATED SENSORS`. A held HITL value stays red even when old, so a simulated run is never mistaken for flight data. Otherwise the line reads `HITL off - real sensors (...)`.
+- **Status strip** (2026-11-16, always on, not part of the layout file): red chips for NOT LOGGING (log slots full), LOGGING FAILED, FLASH INIT FAILED and MAINTENANCE IMAGE; amber chips for RESUMED AFTER RESET, HITL, GPS NO FIX (with the age of the last known position) and SENSOR NOT READY (names the sensor); green or grey chips for LOGGING OK, GPS LOCKED and SENSORS READY. A green chip turns grey and "STATUS n s OLD" appears when the status word is more than 3 s old; red chips never grey out. A LOG_SLOTS_FULL red banner is also shown in the Witness monitor.
+- **Last known position** (2026-11-16): when a state packet has GPS locked clear and a non-zero position, the map shows a hollow "W GPS last known (NO FIX)" marker. It is never added to the track and never drawn at 0,0. The status strip gives its age.
+- **Landed position** (2026-11-16): packet `0x09` appears in the strip as "LANDED FIX ..." (or "NO VALID FIX") and as a star marker "LANDED" on the map ("(stale fix)" when flagged). It marks the flight as over and freezes the pad reference.
+- **Source following** (2026-11-16): if the source bound to a Flight View input has been silent for more than 3 s and another source delivers live, valid packets, the binding moves to that source, and the banner shows "switched A -> B". Auto traces keep one series across the switch. Same-name reconnects never switch.
+- **Stale values** (2026-11-16): readouts older than 3 s, or invalid, are grey; the banner reads "WITNESS STALE n s - other sources live" when only Featherweight or AIM are fresh. The Aperture RSSI is shown only while a non-0xF0 packet from the same source arrived in the last 5 s. An RSSI of -128 reads "RECEIVER RADIO FAILED (-128)".
+- **Pad and flight segments** (2026-11-16): after Boost, the Witness pad reference stays frozen, even across the Landed reboot. A Boost that follows Pad Idle with at least 10 GPS fixes starts a new flight segment (the earlier track keeps its own origin). "Auto pad" or Clear resets the flight state.
 
 The **Flight controls** menu provides layout loading/saving, Pause/Resume, Clear plots, Set pad, a graph time-window selector, fullscreen, and display details. F11 toggles fullscreen; Escape exits it; Ctrl+P pauses/resumes. Witness traces are solid, AIM traces dashed.
 
@@ -190,7 +216,7 @@ When a truth quaternion is present, truth is drawn as a blue dashed ghost and as
 
 ## Visualizer window
 
-**Windows > Visualizer** (or **F9**) in `horizon.py` opens a separate window with the **orientation view on the left and the map on the right, side by side** in a resizable splitter, so both are visible at once. Both use the same Witness and Featherweight records as Flight View. Tracks are collected from startup, so opening the window later still shows the whole flight.
+**Windows > Visualizer** (or **F9**) in `horizon.py` opens a separate window with the **orientation view and the map** in one resizable splitter, so both are visible at once: stacked (orientation on top, map below) when the window is taller than wide, side by side (orientation left, map right) in landscape. The orientation flips when the window crosses square. The same panel is the **Map & Attitude** tab. Both use the same Witness and Featherweight records as Flight View. Tracks are collected from startup, so opening the window later still shows the whole flight.
 
 **Orientation** draws the Witness quaternion as the Attitude tab's 3D rocket (OpenGL, drag to orbit; 2D fallback without OpenGL) (fresh `0xE0`, else `0x02`; same conventions), with large **tilt from vertical**, **roll** (spin about the nose) and **heading** (nose azimuth) readouts. Heading and roll are relative to the arbitrary heading fixed at initialisation, because Witness has no magnetometer. An all-zero quaternion is explained rather than drawn:
 
@@ -259,10 +285,13 @@ Logs are written under `logs/` next to the scripts:
 | `horizon_featherweight_*.bin`, `horizon_featherweight_*.jsonl` | Featherweight bytes and decoded/diagnostic records |
 | `aim_mqtt_*.jsonl` | AIM message payloads, decoded fields, and connection diagnostics |
 | `mqtt_broker_*.log` | Embedded broker lifecycle and warnings/errors |
+| `horizon_exceptions.log` (2026-11-16) | Tracebacks of any uncaught exception in the GUI, a worker thread or the event hooks. The app keeps running; a red label shows the error. |
 
 The Witness monitor picks GPS NMEA sentences (`$GNGGA`, `$GNRMC`, ...) out of the mixed Witness stream and checks each `*hh` checksum. Valid and damaged sentences both go to the NMEA CSV (`checksum_ok` 1 or 0); a damaged one is usually a sentence with a telemetry frame spliced into it. A status line under the feed status shows the counts per input and the latest GGA fix, satellites and altitude.
 
 The monitor keeps up with fast streams: each GUI tick (30 ms) drains every queued event, keeps every graph sample at its arrival time in numpy ring buffers, updates the labels from the newest packet of each type, and redraws the pyqtgraph graphs through a throttle (at most 20 times a second, and only while the Graphs tab is shown). The on-screen console keeps its newest 2,000 lines and, in a burst, skips lines with a note; the debug log keeps everything.
+
+Debug log (`debug_*.log`) rotates at 50 MB, keeping three files (`.log`, `.log.1`, `.log.2`), so it stays under 150 MB per run. Its decoder messages are merged to one summary line per second per source; bad-packet lines are no longer one per byte. The raw `.bin` log is written before and independently of decoding, so a log write error is counted and shown in the banner ("RAW LOG NOT WRITING") and does not stop the reader.
 
 Broker diagnostic logs rotate at 5 MB with two backups per run. This does not limit the other telemetry log files or remove logs from previous runs; monitor disk space. Broker logs are not a replacement for the AIM message log.
 
@@ -276,6 +305,19 @@ Convert a Witness binary log and open it for plotting:
 Viewer data boards: each graph can have several y axes, left or right, each autoranging over its own traces for the visible time range (x stays shared). Drag a trace (from the list, or a legend entry) onto an existing axis to put it on that axis, onto the left or right edge of the plot to give it a new axis on that side, or into the middle of the plot for a new axis on the side with fewer axes (right when tied); a blue highlight shows where it will land. Drag an axis onto another axis to merge them, or to a plot edge to move it to that side; right-click an axis for "Move axis to left/right", merge and split. An axis with several traces is labelled `first +n` in grey; with one trace it takes that trace's colour. The header's **Own axes** button (or **Overlays on own y axes**) gives every trace its own axis. **Add spectrogram of selected trace to board** (also in the trace and legend right-click menus) docks a spectrogram between the graphs, with its time axis linked to theirs; the up/down arrows reorder it. **Sync logs on** (Time axis panel) sets every open log's time offset so the first rise into a flight state (Pad idle to Boost, Boost to Coast, Coast to Descent, Descent to Landed) is t = 0: from the log's own `flight_state`, else the session's `.TXT` log, else another open log with the same session suffix (`I00000F7` pairs with `S00000F7`). Logs without that transition keep their offset and are listed. **Save board…** writes the graphs (columns, axis groups and sides, order, heights), docked spectrograms (column, FFT size, overlap, window, detrend, Welch, colour range, time window), the x axis, packet filter, graphs per row, the sync transition and each file's time column, unit and offset to a versioned JSON file (`format: horizon-csv-board`, `version: 2`, see `viewer_board.py`; version 1 files still load). **Load board…** rebuilds it on the open log(s), matching columns by name and re-applying the sync; the first open file takes the board's first file, and so on. Columns the new log lacks are listed in a message and skipped. Open the logs before loading a board.
 
 The converter detects raw Witness application streams and `WL` flash records from Witness mass storage. These are 48-byte v1 records, or 24-byte v2 records at 50 Hz with status bytes 0-1 (flight state), sequence, uptime, pressure and both temperatures; the record size comes from the version byte. Files named `I*.BIN` are decoded as the store-v3 IMU stream (24-byte records: low-g and high-g accelerations in g, gyro in dps, flight state, HITL and freshness flags, `high_g_active` (the filtered acceleration came from the high-g sensor), and `missing_before` from the 8-bit sequence; in Descent, records are deliberately decimated 1 in 10, so `missing_before` reads 9 there; time is unwrapped from the 32-bit microsecond counter). Files named `P*.BIN` are the store-v4 packet stream, records of `[u32 us][source][length][frame]`. They are decoded with the normal packet parser into one row per frame, with `log_source` (`witness_state` at 50 Hz, `can_rx`, `can_tx`, `radio_rx`) and `time_seconds` from the record clock. `--format {auto,imu,packets,flash,wire}` overrides detection. It does not decode Featherweight BIN captures or AIM JSONL logs. CSV `time_seconds` derives from device uptime, not host receipt time. The viewer opens with a summary and lets you select traces, including flight state and individual status bits.
+
+### Resumed flights, wrapped clocks and missing pages in flash logs
+
+If Witness resets in flight, the logger (store v4) appends to the same flight session instead of starting a new one. The converter and the viewer's **Open .BIN** keep both parts as one flight:
+
+- **`log_resumed` row.** The packet stream (`P*.BIN`) gets a record of source 6 at the resume, shown as a row with `packet_id` `LOG`, `packet_type` `log_resumed`, `log_source` `log_marker`, `resumed` = 1, `resume_flight_state` / `resume_flight_state_name` (the state the flight computer restored, e.g. Coast), `resume_generation` (session number), `resume_gap_s` and `resume_gap_source`. The converter prints a "Resumed after an in-flight reset" line for each. `I*.BIN` and `S*.BIN` have no marker: a step back of the clock by more than 2 s that is not a counter wrap is taken as the reset, and that row gets `resumed` = 1 and `resume_gap_s` (the state is in its own `flight_state` column).
+- **One time axis.** The microsecond clock (IMU and packet records) and the WL uptime restart from about 0 after the reset, and so do the IMU and WL sequence numbers. `time_seconds` keeps rising: the restarted clock's zero is placed after the last time before the reset plus the gap. The true reset duration is not in the log, so the gap is a nominal 1.0 s unless both parts of a `P*.BIN` carry a GPS UTC time in the Kalman log rows (`0xE2`, `gps_time`), in which case the gap is computed from it (`resume_gap_source` = `gps_utc`; otherwise `nominal`, or `no_previous_data` if the marker is the first record of the file). Rows after the reset carry `segment` (1, 2, ...), `time_after_reset_estimated` (1 while the time depends on the nominal gap, 0 when the gap came from GPS) and `device_timestamp_us` (the unwrapped device clock of that part). So the real gap can be larger than shown, up to several seconds, and `time_seconds` after a resume is a lower bound; use the GPS time or `device_timestamp_us` to check it. IMU and packet files of one flight each estimate their own gap, so they can differ by that much after a reset. Logs without a reset have none of these columns and convert exactly as before.
+- **No false drops.** `missing_before` is 0 on the first IMU record after a reset (the sequence restarted); it is not a dropped-packet count there.
+- **32-bit clock wrap.** The microsecond counter wraps every 71.6 minutes; this is unwrapped inside a segment, and a wrap is told from a reset by the clock continuing forward. A reset in the last 5 minutes before the counter would have wrapped (flight computer up for 66.6 to 71.6 minutes) looks the same as a wrap and is read as one.
+- **Unknown record types.** Packet-stream records of a source this converter does not know are skipped using their length byte and counted (printed as "Skipped N record(s) of unknown type"); they never stop the decode. A source-6 marker of an unknown kind is skipped the same way.
+- **Missing pages.** A bad block or a page that failed to program leaves a gap in the exported stream, and the export skips unreadable pages. The packet and WL streams are re-synchronised on the next intact record, and the IMU stream (no record framing; a page is not a whole number of records) on the next position where timestamps and sequence numbers fit again. The first row after each gap has `gap_before_bytes`, and the converter prints how many gaps it skipped; the skipped bytes count as discarded. Records inside a missing page, and the two records it cuts in half, are lost. An IMU page missing at exactly a record boundary can only be seen as a jump in `missing_before` or time.
+
+The viewer shows the same notes next to the file's summary.
 
 ### Downloading Witness logs through the bench Pi
 
@@ -320,6 +362,11 @@ Commands are sent from the Witness monitor, not Horizon. All command shortcuts, 
 | Witness tab disconnected | Start the witnessOS Witness monitor, check that its local feed is available, and use feed port 8766 rather than a raw TCP telemetry port. |
 | Featherweight missing | Check COM ownership and connect a generic adapter manually once so its identity can be learned. |
 | Values visible but not changing | Inspect receive age, retained/invalid flags, pause state, and the source tab. A held value is not a fresh packet. |
+| "LINK LOST" banner | The source went silent or is reconnecting. Auto-connect retries by itself; if the banner stays, check the port or the serial/TCP path, not Horizon. |
+| "NOT LOGGING" or "LOG SLOTS FULL" (red) | Both NAND slots hold a flight. Witness logs nothing until the store is erased or cleared (`0x6869` or `0x686A`, Pad Idle or Landed). |
+| "RECEIVER RADIO FAILED (-128)" | Aperture's radio is down (init failed, faulted, or its RX front end is off). Not a signal level. |
+| "switched A -> B" in the banner | Flight View followed another live source because the bound one was silent for more than 3 s. |
+| Erase or clear answers BUSY with `0xC0F1` | Radio erase needs a second identical send within 10 s. Horizon sends the second one itself after 1 s (console line `CONFIRM[...]`). |
 | Custom graph empty | Verify packet/topic and flattened field names, source selection, filters, enabled state, axis units, and received messages. |
 | Qt startup error / no window | Install `requirements.txt` (PyQt6, pyqtgraph) into the interpreter you run. |
 | Attitude view says "2D projection (OpenGL unavailable)" | OpenGL could not be initialised (remote desktop, old driver, missing PyOpenGL). The 2D view shows the same attitude; set `HORIZON_NO_GL=1` or `--no-gl` to force it. |
@@ -337,7 +384,7 @@ Commands are sent from the Witness monitor, not Horizon. All command shortcuts, 
 | `flight_view.py`, `flight_render.py`, `flight_data.py` | Dashboard widgets; what to display (no Qt); validated layouts and histories |
 | `flight_editor.py`, `flight_layout_draft.py` | Layout editor widget; draft editing logic and JSON save/load (no Qt) |
 | `attitude_view.py`, `attitude_scene.py`, `attitude_data.py`, `attitude_math.py` | Attitude tab and 3D/2D rocket widget; rocket geometry (no Qt); live/CSV samples; quaternion math |
-| `visualizer.py`, `map_data.py`, `map_tiles.py`, `pad_reference.py`, `geodesy.py` | Visualizer window (orientation + map side by side); tracks, tile cache, pad selection, geodesy |
+| `visualizer.py`, `map_data.py`, `map_tiles.py`, `pad_reference.py`, `geodesy.py` | Visualizer window (attitude over map in portrait, side by side in landscape); tracks, tile cache, pad selection, geodesy |
 | `aim_altitude.py`, `aim_orientation.py` | Derived AIM altitude, velocity, and angular rates |
 | `main.py`, `monitor_core.py`, `witness_protocol.py`, `witness_link.py`, `witness_test_source.py` | `MonitorPanel` Qt widget (embedded by witnessOS); monitor logic and protocol (no Qt); local relay; test playback |
 | `converter.py`, `viewer.py` | Postflight conversion and analysis |
@@ -349,7 +396,7 @@ Run the regression suite from this folder:
 .\.venv\Scripts\python.exe -B -m unittest discover -s tests -q
 ```
 
-Broker tests use isolated loopback ports rather than the live AIM port. They cover MQTT delivery through the AIM receiver, QoS, wildcard subscriptions, retained messages, startup defaults, checkbox shutdown/restart, missing dependencies, and port conflicts. GUI tests run headless (`QT_QPA_PLATFORM=offscreen`, which also exercises the 2D attitude fallback); they include checks that live packets are batched into throttled redraws and that the Visualizer shows the map and attitude side by side. These tests do not replace verification with the actual receivers and deployed firmware before a flight.
+Broker tests use isolated loopback ports rather than the live AIM port. They cover MQTT delivery through the AIM receiver, QoS, wildcard subscriptions, retained messages, startup defaults, checkbox shutdown/restart, missing dependencies, and port conflicts. GUI tests run headless (`QT_QPA_PLATFORM=offscreen`, which also exercises the 2D attitude fallback); they include checks that live packets are batched into throttled redraws and that the Visualizer stacks attitude over the map in portrait and puts them side by side in landscape. These tests do not replace verification with the actual receivers and deployed firmware before a flight.
 
 ## Shared firmware protocol
 

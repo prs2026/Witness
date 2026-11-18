@@ -50,7 +50,7 @@ from map_data import SOURCE_LABELS, MapData
 from map_tiles import ATTRIBUTION, MAX_PRECACHE_TILES, TileCache, precache_plan
 from observable import Cell
 from pad_reference import SOURCE_LABELS as PAD_LABELS
-from qt_common import run_in_thread
+from qt_common import guard_call, guarded_slot, run_in_thread
 from qt_widgets import bind_check, light_axes
 
 REFRESH_MS = 40          # <= 25 Hz redraw, and only when dirty
@@ -61,9 +61,11 @@ TRACK_STYLE = {          # colour, dashed, marker symbol
     "wgps": ("#0050b0", False, "s"),
     "fw": ("#008030", True, "o"),
     "aim": (AIM_COLOR, True, "t"),
+    "land": ("#c00000", False, "star"),          # 0x09 landed position: the recovery marker
 }
-TRACK_TAGS = {"kf": "KF", "wgps": "W GPS", "fw": "FW", "aim": "AIM"}
-TRACK_ORDER = ("aim", "fw", "wgps", "kf")      # drawing order: KF on top
+TRACK_TAGS = {"kf": "KF", "wgps": "W GPS", "fw": "FW", "aim": "AIM", "land": "LANDED"}
+TRACK_ORDER = ("land", "aim", "fw", "wgps", "kf")      # drawing order: KF on top
+MAP_SOURCES = ("kf", "wgps", "fw", "aim", "land")
 PAD_COLOR = "#c00000"
 MIN_MAP_ZOOM, MAX_MAP_ZOOM, DEFAULT_ZOOM = 8, 19, 16
 TILE_ITEMS = 160
@@ -198,6 +200,7 @@ class OrientationPanel(QtWidgets.QWidget):
     def _invalidate(self):
         self._drawn_key = None
 
+    @guarded_slot
     def _tick(self):
         if self.isVisible():
             self.refresh()
@@ -221,10 +224,10 @@ class OrientationPanel(QtWidgets.QWidget):
                self.aim_stale, self.witness_stale)
         if key != self._drawn_key:
             self._drawn_key = key
-            self._draw(sample)
+            guard_call("OrientationPanel.draw", self._draw, sample)
         if now - self._readout_at >= READOUT_MS / 1000 or key != self._readout_key:
             self._readout_at, self._readout_key = now, key
-            self._readouts(sample, now, state, hitl)
+            guard_call("OrientationPanel.readouts", self._readouts, sample, now, state, hitl)
 
     def _draw(self, s):
         code, title, detail = self.condition
@@ -410,6 +413,13 @@ class MapPanel(QtWidgets.QWidget):
             for graphic in (line, marker, label):
                 item.addItem(graphic)
             self._tracks[name] = (line, marker, label)
+        # Witness GPS lost its fix: the flight computer repeats its LAST GOOD position. Drawn
+        # as a hollow marker, never added to a track.
+        self._known = pg.ScatterPlotItem(size=14, symbol="x", pen=pg.mkPen("#c06000", width=2), brush=None)
+        self._known_label = pg.TextItem("W GPS last known (NO FIX)", color="#c06000", anchor=(0, 0))
+        for graphic in (self._known, self._known_label):
+            item.addItem(graphic)
+            graphic.setVisible(False)
         self._site = pg.ScatterPlotItem(size=12, symbol="d", pen=pg.mkPen("#c06000", width=2), brush=None)
         self._site_label = pg.TextItem("Witness pad", color="#c06000", anchor=(0, 0.5))
         self._pad = pg.ScatterPlotItem([0.0], [0.0], size=16, symbol="t1", pen=pg.mkPen("w"),
@@ -438,7 +448,7 @@ class MapPanel(QtWidgets.QWidget):
 
         rows = [("pad", "Pad"), ("pad_pos", "Pad position"), ("pad_alt", "Pad altitude"), None,
                 ("state", "Flight state")]
-        for name in ("kf", "wgps", "fw", "aim"):
+        for name in MAP_SOURCES:
             rows += [None, (name, "● " + SOURCE_LABELS[name])]
         rows += [None, ("tiles", "Map tiles")]
         panel, self.values, self.labels = readout_panel(rows)
@@ -621,6 +631,7 @@ class MapPanel(QtWidgets.QWidget):
     def _invalidate(self):
         self._drawn_key = None
 
+    @guarded_slot
     def _tick(self):
         if self.isVisible():
             self.refresh()
@@ -634,7 +645,7 @@ class MapPanel(QtWidgets.QWidget):
             item = latest.get(name)
             if item is not None and now - item["point"].t <= STALE_S:
                 return item["point"]
-        items = [latest[name]["point"] for name in ("kf", "wgps", "fw", "aim") if name in latest]
+        items = [latest[name]["point"] for name in MAP_SOURCES if name in latest]
         return max(items, key=lambda p: p.t) if items else None
 
     def refresh(self, now=None):
@@ -659,13 +670,13 @@ class MapPanel(QtWidgets.QWidget):
                                             or abs(primary.north - self.pan[1]) > 1e-6):
                     self._set_view((primary.east, primary.north), self.mpp())
             self._drawn_key = key
-            self._draw(snap)
+            guard_call("MapPanel.draw", self._draw, snap)
         if self._tiles_dirty:
             self._tiles_dirty = False
-            self._update_tiles()
+            guard_call("MapPanel.tiles", self._update_tiles)
         if self.last_snapshot is not None and now - self._readout_at >= READOUT_MS / 1000:
             self._readout_at = now
-            self._readouts(self.last_snapshot, now)
+            guard_call("MapPanel.readouts", self._readouts, self.last_snapshot, now)
 
     def _draw(self, snap):
         self.redraws += 1
@@ -684,22 +695,15 @@ class MapPanel(QtWidgets.QWidget):
         self._site.setVisible(show_site)
         self._site_label.setVisible(show_site)
         for name, (line, marker, label) in self._tracks.items():
-            points = snap["tracks"].get(name, [])
-            if not points:
-                line.setData([], [])
-                marker.setData([], [])
-                label.setText("")
-                continue
-            east = np.fromiter((p.east for p in points), float, len(points))
-            north = np.fromiter((p.north for p in points), float, len(points))
-            line.setData(east, north)
-            if name == "wgps":
-                marker.setData(east[-60:], north[-60:], size=[5] * (min(60, len(points)) - 1) + [11])
-            else:
-                marker.setData([east[-1]], [north[-1]])
-            agl = points[-1].agl
-            label.setText(TRACK_TAGS[name] + (f" {agl:.0f} m" if agl is not None else ""))
-            label.setPos(east[-1], north[-1])
+            # One bad track must not stop the others from drawing (audit H2).
+            guard_call(f"MapPanel.track.{name}", self._draw_track, name, line, marker, label,
+                       snap["tracks"].get(name, []), snap)
+        known = snap.get("last_known")
+        self._known.setVisible(known is not None)
+        self._known_label.setVisible(known is not None)
+        if known is not None:
+            self._known.setData([known.east], [known.north])
+            self._known_label.setPos(known.east + self.mpp() * 8, known.north)
         self._pad_label.setPos(0.0, 0.0)
         if ref is None:
             warning = ("PAD POSITION UNKNOWN - grid is relative to the Witness Kalman origin; "
@@ -713,6 +717,24 @@ class MapPanel(QtWidgets.QWidget):
         self.warning.setText(warning)
         self.warning.setVisible(bool(warning))
         self._place_overlays()
+
+    def _draw_track(self, name, line, marker, label, points, snap):
+        if not points:
+            line.setData([], [])
+            marker.setData([], [])
+            label.setText("")
+            return
+        east = np.fromiter((p.east for p in points), float, len(points))
+        north = np.fromiter((p.north for p in points), float, len(points))
+        line.setData(east, north)
+        if name == "wgps":
+            marker.setData(east[-60:], north[-60:], size=[5] * (min(60, len(points)) - 1) + [11])
+        else:
+            marker.setData([east[-1]], [north[-1]], size=18 if name == "land" else 11)
+        agl = points[-1].agl
+        tag = TRACK_TAGS[name] + (" (stale fix)" if name == "land" and snap.get("land_stale") else "")
+        label.setText(tag + (f" {agl:.0f} m" if agl is not None else ""))
+        label.setPos(east[-1], north[-1])
 
     def _draw_rings(self):
         (x0, x1), (y0, y1) = self.view.viewRange()
@@ -837,14 +859,16 @@ class MapPanel(QtWidgets.QWidget):
         state, gps, hitl = snap["status"]
         self._set("state", state_name(state) + (f", GPS lock {gps}" if gps is not None else "")
                   + (", HITL SIMULATED" if hitl == 1 else ""), BAD if hitl == 1 else TEXT)
-        for name in ("kf", "wgps", "fw", "aim"):
+        for name in MAP_SOURCES:
             item = snap["latest"].get(name)
             if item is None:
                 self._set(name, "no data", MUTED)
                 continue
             p = item["point"]
             age = now - p.t
-            if name == "aim":
+            if name == "land":
+                agl = "landed fix" + (" (STALE)" if snap.get("land_stale") else "")
+            elif name == "aim":
                 agl = f"GPS alt {p.alt_raw:.1f} (AIM units)" if p.alt_raw is not None else "GPS alt --"
             else:
                 agl = f"{p.agl:.1f} m AGL" if p.agl is not None else "alt AGL --"
@@ -882,8 +906,11 @@ MapTab = MapPanel
 # ------------------------------------------------------------------ window
 
 class VisualizerPanel(QtWidgets.QWidget):
-    """Orientation (left) and map (right) side by side: Horizon's "Map &
-    Attitude" tab, and the body of the pop-out VisualizerWindow."""
+    """Attitude and map in one resizable splitter: Horizon's "Map & Attitude" tab and
+    the body of the pop-out VisualizerWindow. Portrait (taller than wide, e.g. a 9:16
+    monitor) stacks attitude on top of the map; landscape puts attitude left and map
+    right. The orientation follows the panel's shape and flips when it crosses
+    square; dragging the divider is kept until the next flip."""
 
     def __init__(self, parent=None, *, live=None, aim=None, map_data=None, tiles=None, use_gl=None,
                  on_pop_out=None):
@@ -892,27 +919,44 @@ class VisualizerPanel(QtWidgets.QWidget):
         layout.setContentsMargins(4, 4, 4, 4)
         if on_pop_out is not None:
             bar = QtWidgets.QHBoxLayout()
-            hint = QtWidgets.QLabel("Map of every rocket relative to the pad (right) and the "
-                                    "Witness / AIM attitude (left). Drag the divider to resize.")
+            hint = QtWidgets.QLabel("Witness / AIM attitude (top or left) and the map of every rocket "
+                                    "relative to the pad (below or right). Drag the divider to resize.")
             hint.setStyleSheet(f"color: {MUTED};")
+            hint.setWordWrap(True)
+            hint.setMinimumWidth(100)
             pop = QtWidgets.QPushButton("Open in separate window (F9)")
             pop.clicked.connect(on_pop_out)
             bar.addWidget(hint, 1)
             bar.addWidget(pop)
             layout.addLayout(bar)
-        self.splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
+        self.splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical)
         self.splitter.setChildrenCollapsible(False)
         self.orientation = OrientationPanel(live=live, aim=aim, use_gl=use_gl)
         self.map = MapPanel(data=map_data, tiles=tiles)
-        self.orientation.setMinimumWidth(260)
-        self.map.setMinimumWidth(300)
+        self.orientation.setMinimumSize(260, 240)
+        self.map.setMinimumSize(300, 280)
         self.splitter.addWidget(self.orientation)
         self.splitter.addWidget(self.map)
         self.splitter.setStretchFactor(0, 2)
         self.splitter.setStretchFactor(1, 3)
         layout.addWidget(self.splitter, 1)
-        self.splitter.setSizes([400, 600])
         self._closed = False
+        self._portrait = None
+        self.fit_orientation()
+
+    def fit_orientation(self):
+        """Stack (portrait) or place side by side (landscape) and reset the 2:3 split."""
+        portrait = self.height() >= self.width()
+        if portrait == self._portrait:
+            return
+        self._portrait = portrait
+        self.splitter.setOrientation(QtCore.Qt.Orientation.Vertical if portrait
+                                     else QtCore.Qt.Orientation.Horizontal)
+        self.splitter.setSizes([400, 600])      # proportional: Qt scales to the available length
+
+    def resizeEvent(self, event):  # noqa: N802 - Qt API
+        super().resizeEvent(event)
+        self.fit_orientation()
 
     def close(self):
         if not self._closed:
@@ -923,7 +967,7 @@ class VisualizerPanel(QtWidgets.QWidget):
 
 
 class VisualizerWindow(QtWidgets.QWidget):
-    """Top-level window: orientation (left) and map (right) side by side."""
+    """Top-level window: attitude and map (stacked in portrait, side by side in landscape)."""
 
     closed = QtCore.pyqtSignal()
 
@@ -940,7 +984,6 @@ class VisualizerWindow(QtWidgets.QWidget):
         screen = QtGui.QGuiApplication.primaryScreen()
         area = screen.availableGeometry() if screen is not None else QtCore.QRect(0, 0, 1400, 900)
         self.resize(min(1400, area.width() - 60), min(820, area.height() - 120))
-        self.splitter.setSizes([self.width() * 2 // 5, self.width() * 3 // 5])
         close = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+W"), self)
         close.activated.connect(self.close)
 

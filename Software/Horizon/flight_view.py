@@ -1,7 +1,9 @@
-"""Horizon's launch dashboard (Qt + pyqtgraph): readouts left/right, up to six plots.
+"""Horizon's launch dashboard (Qt + pyqtgraph): compact readout band on top, up to six plots below.
 
-The three panels sit in a resizable splitter; the side panels scroll only when
-the window is too small for them. Plots are pyqtgraph, redrawn on a timer
+Portrait-first (9:16): the readout band and the graph area sit in a vertical splitter.
+With two columns and an odd graph count the first (altitude) graph spans the full width
+and the rest form a grid under it; the band puts GPS and power beside each other under
+the flight overview, or all three on one row when the window is 1500 px or wider. Plots are pyqtgraph, redrawn on a timer
 (layout refresh_ms, at most 30 Hz) from FlightData snapshots, never per packet.
 
 JSON: flight_view_default.json or Flight controls > Load layout / --flight-layout.
@@ -107,7 +109,7 @@ import pyqtgraph as pg
 
 from flight_data import DEFAULT_LAYOUT, FlightData, load_layout, validate_layout
 import flight_render as fr
-from qt_common import message_error
+from qt_common import guard_call, guarded_slot, message_error
 from qt_widgets import light_axes, set_background
 
 WINDOW_CHOICES = (10, 30, 60, 120, 300, 600, 1800, 3600)
@@ -137,6 +139,14 @@ def _set(label, text, color=None):
     if color is not None and label.property("fg") != color:
         label.setProperty("fg", color)
         label.setStyleSheet(f"color: {color};")
+
+
+def _background(widget, background, foreground):
+    """set_background only when it changed: restyling every tick is the costly part."""
+    key = (background, foreground)
+    if widget.property("bg_key") != str(key):
+        widget.setProperty("bg_key", str(key))
+        set_background(widget, background, foreground)
 
 
 class ReadoutPanel(QtWidgets.QFrame):
@@ -182,16 +192,22 @@ class StatusPanel(ReadoutPanel):
             self._shape = shape
             self.clear_body()
             self.rows = []
-            for _title, cells in rows:
+            # One line per readout (name, then its values) keeps the band short.
+            grid = QtWidgets.QGridLayout()
+            grid.setContentsMargins(0, 0, 0, 0)
+            grid.setHorizontalSpacing(8)
+            grid.setVerticalSpacing(1)
+            self.body.addLayout(grid)
+            grid.setColumnStretch(0, 3)
+            for line, (_title, cells) in enumerate(rows):
                 title = _label(size=9, color=fr.MUTED)
-                values = QtWidgets.QHBoxLayout()
+                grid.addWidget(title, line, 0)
                 cell_labels = []
-                for _ in cells:
-                    label = _label(size=11, bold=True)
-                    values.addWidget(label)
+                for column, _ in enumerate(cells, start=1):
+                    label = _label(size=10, bold=True)
+                    grid.addWidget(label, line, column)
+                    grid.setColumnStretch(column, 2)
                     cell_labels.append(label)
-                self.body.addWidget(title)
-                self.body.addLayout(values)
                 self.rows.append((title, cell_labels))
                 self.labels += [title, *cell_labels]
             if not rows:
@@ -205,11 +221,17 @@ class StatusPanel(ReadoutPanel):
 
 
 class FlightPanel(ReadoutPanel):
-    """Flight overview metrics and the Witness flight state."""
+    """Flight overview metrics and the Witness flight state, laid out as one compact
+    row: the state block first, then one column per metric (Altitude, Vz, distance)."""
 
     def __init__(self, parent=None):
         super().__init__("FLIGHT OVERVIEW", parent)
-        self.layout_.insertWidget(1, _label("W = Witness    A = AIM    F = Featherweight", 9, color=fr.MUTED))
+        self.layout_.setContentsMargins(8, 4, 8, 4)
+        self.title.setText("FLIGHT OVERVIEW   W = Witness   A = AIM   F = Featherweight")
+        self.title.setToolTip("Distance: from the pad (Set pad re-references).\n"
+                              "A baro / Vz: estimates; GPS units raw.\n"
+                              "States are one-way (Pad Idle > Boost > Coast > Descent > Landed); 0x7300 in "
+                              "Landed reboots Witness to Pad Idle. Vz positive = up; altitude AGL (m).")
 
     def show_panel(self, panel):
         shape = [len(cells) for _t, cells in panel["metrics"]]
@@ -217,36 +239,42 @@ class FlightPanel(ReadoutPanel):
             self._shape = shape
             self.clear_body()
             self.metric_labels = []
-            for _title, cells in panel["metrics"]:
-                title = _label(size=11, bold=True)
-                self.body.addWidget(title)
-                pairs = []
-                for _ in cells:
-                    value, status = _label(size=14, bold=True), _label(size=9)
-                    row = QtWidgets.QHBoxLayout()
-                    row.addWidget(value, 3)
-                    row.addWidget(status, 1)
-                    self.body.addLayout(row)
-                    pairs.append((value, status))
-                self.metric_labels.append((title, pairs))
-                self.labels += [title, *(label for pair in pairs for label in pair)]
-            line = QtWidgets.QFrame()
-            line.setFrameShape(QtWidgets.QFrame.Shape.HLine)
-            self.body.addWidget(line)
-            heading = _label("WITNESS FLIGHT STATE", 11, True)
-            self.body.addWidget(heading)
-            self.state_value = _label(size=22, bold=True)
+            grid = QtWidgets.QGridLayout()
+            grid.setHorizontalSpacing(14)
+            grid.setVerticalSpacing(0)
+            self.body.addLayout(grid)
+            heading = _label("WITNESS FLIGHT STATE", 9, True)
+            self.state_value = _label(size=20, bold=True)
             self.state_status = _label(size=10, bold=True)
             self.state_source = _label(size=9, color=fr.MUTED)
-            self.state_hitl = _label(size=10, wrap=True)
-            for label in (self.state_value, self.state_status, self.state_source, self.state_hitl):
-                self.body.addWidget(label)
-            notes = [_label("Distance: from the pad (Set pad re-references)", 9, color=fr.MUTED, wrap=True),
-                     _label("A baro / Vz: estimates; GPS units raw", 9, color=fr.WARN, wrap=True)]
-            for label in notes:
-                self.body.addWidget(label)
-            self.labels += [heading, self.state_value, self.state_status, self.state_source,
-                            self.state_hitl, *notes]
+            self.state_hitl = _label(size=9)
+            state_column = QtWidgets.QVBoxLayout()
+            state_column.setSpacing(0)
+            for label in (heading, self.state_value, self.state_status, self.state_source, self.state_hitl):
+                state_column.addWidget(label)
+            state_column.addStretch(1)
+            grid.addLayout(state_column, 0, 0)
+            grid.setColumnStretch(0, 5)
+            self.labels += [heading, self.state_value, self.state_status, self.state_source, self.state_hitl]
+            for column, (_title, cells) in enumerate(panel["metrics"], start=1):
+                box = QtWidgets.QVBoxLayout()
+                box.setSpacing(0)
+                title = _label(size=10, bold=True)
+                box.addWidget(title)
+                pairs = []
+                for _ in cells:
+                    value, status = _label(size=12, bold=True), _label(size=8)
+                    row = QtWidgets.QHBoxLayout()
+                    row.setSpacing(4)
+                    row.addWidget(value, 3)
+                    row.addWidget(status, 2)
+                    box.addLayout(row)
+                    pairs.append((value, status))
+                box.addStretch(1)
+                grid.addLayout(box, 0, column)
+                grid.setColumnStretch(column, 3)
+                self.metric_labels.append((title, pairs))
+                self.labels += [title, *(label for pair in pairs for label in pair)]
         for (title, cells), (title_label, pairs) in zip(panel["metrics"], self.metric_labels):
             _set(title_label, title)
             for (text, color, status, status_color), (value, status_label) in zip(cells, pairs):
@@ -263,6 +291,47 @@ class FlightPanel(ReadoutPanel):
         _set(self.state_source, state["source"])
         hitl = state["hitl"]
         _set(self.state_hitl, hitl[0] if hitl else "", hitl[1] if hitl else None)
+
+
+class StatusStrip(QtWidgets.QFrame):
+    """Always-visible Witness health strip: logging, maintenance, resumed, HITL, GPS,
+    sensors, plus the landed fix. Red chips (NOT LOGGING...) are deliberately loud."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.row = QtWidgets.QHBoxLayout(self)
+        self.row.setContentsMargins(0, 0, 0, 0)
+        self.row.setSpacing(4)
+        self.chips = []
+        self.landed = _label("", 10, True)
+        self.landed.setContentsMargins(8, 2, 8, 2)
+
+    def show_chips(self, chips, landed):
+        if len(chips) != len(self.chips):
+            while self.row.count():
+                item = self.row.takeAt(0)
+                if item.widget() is not None and item.widget() is not self.landed:
+                    item.widget().deleteLater()
+            self.chips = []
+            for _ in chips:
+                chip = _label(size=11, bold=True)
+                chip.setContentsMargins(8, 2, 8, 2)
+                self.row.addWidget(chip)
+                self.chips.append(chip)
+            self.row.addWidget(self.landed)
+            self.row.addStretch(1)
+        for (text, kind), chip in zip(chips, self.chips):
+            _set(chip, text)
+            background, foreground = fr.STRIP_COLORS[kind]
+            _background(chip, background, foreground)
+        _set(self.landed, landed[0] if landed else "")
+        self.landed.setVisible(bool(landed))
+        if landed:
+            background, foreground = fr.STRIP_COLORS[landed[1]]
+            _background(self.landed, background, foreground)
+
+    def texts(self):
+        return [chip.text() for chip in self.chips] + ([self.landed.text()] if self.landed.text() else [])
 
 
 class GraphPanel(QtWidgets.QFrame):
@@ -324,6 +393,11 @@ class GraphPanel(QtWidgets.QFrame):
                 self.right_view.addItem(curve)
             else:
                 item.addItem(curve)
+            # PlotItem.addItem overrides per-curve settings with the plot's own, so
+            # (re)apply after adding: peak downsampling + clip-to-view keep drawing
+            # cost bound by pixels, not by history (audit #9).
+            curve.setClipToView(True)
+            curve.setDownsampling(auto=True, method="peak")
             self.curves.append(curve)
 
     def _sync_right(self):
@@ -356,7 +430,7 @@ class GraphPanel(QtWidgets.QFrame):
 class FlightView(QtWidgets.QWidget):
     def __init__(self, parent=None, *, layout_path=DEFAULT_LAYOUT, pad=None):
         super().__init__(parent)
-        self.paused, self.frozen = False, None
+        self.paused, self.frozen, self.frozen_status = False, None, None
         self.wall_offset = time.time() - time.monotonic()
         self.layout_path = Path(layout_path)
         self.load_error = None
@@ -364,9 +438,14 @@ class FlightView(QtWidgets.QWidget):
         try:
             layout = load_layout(self.layout_path)
         except (OSError, ValueError) as exc:
-            self.load_error = str(exc)
-            layout = validate_layout({"version": 1, "plots": [{"title": "Altitude above pad", "unit": "m",
-                "traces": [{"label": "W", "input": "witness", "packet": "state", "field": "kalman_altitude"}]}]})
+            # A bad/older layout falls back to the BUILT-IN default (all readouts and
+            # plots), never to a one-plot dashboard (audit #8).
+            self.load_error = f"{self.layout_path.name}: {exc}"
+            try:
+                layout = load_layout(DEFAULT_LAYOUT)
+            except (OSError, ValueError):
+                layout = validate_layout({"version": 1, "plots": [{"title": "Altitude above pad", "unit": "m",
+                    "traces": [{"label": "W", "input": "witness", "packet": "state", "field": "kalman_altitude"}]}]})
         self.data = FlightData(layout, pad=pad)
         root = QtWidgets.QVBoxLayout(self)
         root.setContentsMargins(4, 4, 4, 4)
@@ -399,34 +478,33 @@ class FlightView(QtWidgets.QWidget):
         toolbar.addWidget(self.actions_button)
         toolbar.addWidget(self.banner, 1)
         root.addLayout(toolbar)
+        self.strip = StatusStrip()
+        root.addWidget(self.strip)
 
-        self.splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
+        # Portrait-first: a compact readout band on top (state + metrics, GPS, power),
+        # every remaining pixel of height goes to the graphs below. The vertical
+        # splitter between them stays draggable.
+        self.splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical)
         self.splitter.setChildrenCollapsible(False)
         self.flight_panel = FlightPanel()
         self.gps_panel = StatusPanel("GPS / SATELLITES")
         self.power_panel = StatusPanel("POWER")
+        self.band = QtWidgets.QWidget()
+        self.band_grid = QtWidgets.QGridLayout(self.band)
+        self.band_grid.setContentsMargins(0, 0, 0, 0)
+        self.band_grid.setSpacing(4)
+        self.band_wide = None
+        self._arrange_band(False)
+        self.band.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Maximum)
         self.graph_area = QtWidgets.QWidget()
         self.graph_grid = QtWidgets.QGridLayout(self.graph_area)
         self.graph_grid.setContentsMargins(0, 0, 0, 0)
-        self.graph_grid.setSpacing(6)
-        right = QtWidgets.QWidget()
-        right_layout = QtWidgets.QVBoxLayout(right)
-        right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.addWidget(self.gps_panel)
-        right_layout.addWidget(self.power_panel, 1)
-        for widget, minimum in ((self.flight_panel, 170), (self.graph_area, 300), (right, 160)):
-            if widget is not self.graph_area:
-                scroll = QtWidgets.QScrollArea()
-                scroll.setWidgetResizable(True)
-                scroll.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
-                scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-                scroll.setWidget(widget)
-                widget = scroll
-            widget.setMinimumWidth(minimum)
-            self.splitter.addWidget(widget)
-        for index, stretch in enumerate((26, 55, 19)):
-            self.splitter.setStretchFactor(index, stretch)
-        self.splitter.setSizes([260, 550, 190])
+        self.graph_grid.setSpacing(4)
+        self.graph_area.setMinimumHeight(240)
+        self.splitter.addWidget(self.band)
+        self.splitter.addWidget(self.graph_area)
+        self.splitter.setStretchFactor(0, 0)
+        self.splitter.setStretchFactor(1, 1)
         root.addWidget(self.splitter, 1)
         self.graphs = []
         self._build_graphs()
@@ -447,21 +525,57 @@ class FlightView(QtWidgets.QWidget):
     def menu_labels(self):
         return [action.text() for action in self.actions_menu.actions() if not action.isSeparator()]
 
+    def _arrange_band(self, wide):
+        """Readout band: flight overview across the full width; GPS and power share the
+        row below it (portrait / narrow), or all three sit on one row when wide."""
+        if wide == self.band_wide:
+            return
+        self.band_wide = wide
+        for widget in (self.flight_panel, self.gps_panel, self.power_panel):
+            self.band_grid.removeWidget(widget)
+        if wide:
+            cells = ((self.flight_panel, 0, 0, 5), (self.gps_panel, 0, 1, 2), (self.power_panel, 0, 2, 3))
+        else:
+            cells = ((self.flight_panel, 0, 0, 1), (self.gps_panel, 1, 0, 2), (self.power_panel, 1, 1, 3))
+        for widget, row, column, _stretch in cells:
+            self.band_grid.addWidget(widget, row, column, 1, 2 if (not wide and widget is self.flight_panel) else 1)
+        for column in range(3):
+            self.band_grid.setColumnStretch(column, 0)
+        if wide:
+            for _w, _r, column, stretch in cells:
+                self.band_grid.setColumnStretch(column, stretch)
+        else:
+            self.band_grid.setColumnStretch(0, 5)
+            self.band_grid.setColumnStretch(1, 3)
+
+    def resizeEvent(self, event):  # noqa: N802 - Qt API
+        super().resizeEvent(event)
+        self._arrange_band(self.width() >= 1500)
+
     def _build_graphs(self):
         for graph in self.graphs:
             self.graph_grid.removeWidget(graph)
             graph.deleteLater()
         layout = self.data.layout
-        columns = max(1, min(layout.columns, len(layout.plots)))
+        count = len(layout.plots)
+        columns = max(1, min(layout.columns, count))
+        # With two columns and an odd graph count the first graph (altitude) takes a
+        # full-width row of its own and the rest form a grid under it; even counts
+        # (older saved 2x2 / 2x3 layouts) are laid out as before.
+        lead = columns == 2 and count % 2 == 1
         self.graphs = []
         for index, plot in enumerate(layout.plots):
             graph = GraphPanel(plot, self.wall_offset)
-            row, column = divmod(index, columns)
-            self.graph_grid.addWidget(graph, row, column)
+            if lead and index == 0:
+                self.graph_grid.addWidget(graph, 0, 0, 1, columns)
+            else:
+                row, column = divmod(index + (1 if lead else 0), columns)
+                self.graph_grid.addWidget(graph, row, column)
             self.graphs.append(graph)
-        rows = -(-len(layout.plots) // columns)
+        rows = -(-(count + (1 if lead else 0)) // columns)
         for row in range(6):
-            self.graph_grid.setRowStretch(row, 1 if row < rows else 0)
+            # The lead altitude graph gets a bit more height than each grid row.
+            self.graph_grid.setRowStretch(row, (3 if lead and row == 0 else 2) if row < rows else 0)
 
     # ------------------------------------------------------------ actions
     def toggle_fullscreen(self):
@@ -530,7 +644,7 @@ class FlightView(QtWidgets.QWidget):
         if path is not None:
             self.layout_path = Path(path)
         self.load_error = None
-        self.paused, self.frozen = False, None
+        self.paused, self.frozen, self.frozen_status = False, None, None
         self.pause_action.setText("Pause view")
         self._timer.setInterval(max(MIN_REDRAW_MS, layout.refresh_ms))
         self._build_graphs()
@@ -552,18 +666,25 @@ class FlightView(QtWidgets.QWidget):
     def clear(self):
         self.data.clear()
         if self.paused:
-            self.frozen = (time.monotonic(), self.data.snapshot())
+            self._freeze()
         self.redraw()
 
     def set_pad(self):
         self.data.reset_pad()
         if self.paused:
-            self.frozen = (time.monotonic(), self.data.snapshot())
+            self._freeze()
         self.redraw()
+
+    def _freeze(self):
+        self.frozen = (time.monotonic(), self.data.snapshot())
+        self.frozen_status = self.data.status_snapshot()
 
     def toggle_pause(self):
         self.paused = not self.paused
-        self.frozen = (time.monotonic(), self.data.snapshot()) if self.paused else None
+        if self.paused:
+            self._freeze()
+        else:
+            self.frozen = self.frozen_status = None
         self.pause_action.setText("Resume live" if self.paused else "Pause view")
         self.redraw()
 
@@ -571,31 +692,46 @@ class FlightView(QtWidgets.QWidget):
     def redraw(self, end=None):
         """Render the current (or frozen) snapshot. ``end`` overrides 'now' (tests)."""
         if self.paused:
-            frozen_end, histories = self.frozen
+            frozen_end, histories = self.frozen[:2]
+            status = self.frozen_status
             end = frozen_end if end is None else end
         else:
             histories = self.data.snapshot()
+            status = self.data.status_snapshot()
             end = time.monotonic() if end is None else end
         self.redraws += 1
         layout = self.data.layout
-        text, background = fr.banner(layout, histories, end, paused=self.paused, load_error=self.load_error)
+        # Every part is guarded on its own so one failing widget or trace cannot
+        # blank or stop the rest of the dashboard (audit H2).
+        guard_call("FlightView.banner", self._draw_banner, layout, histories, end, status)
+        guard_call("FlightView.strip", lambda: self.strip.show_chips(fr.status_strip(status, end),
+                                                                    fr.landed_line(status, end)))
+        guard_call("FlightView.flight_panel", lambda: self.flight_panel.show_panel(
+            fr.flight_panel(layout, histories, end)))
+        guard_call("FlightView.gps", lambda: self.gps_panel.show_rows(fr.status_rows(layout, histories, end, "gps")))
+        guard_call("FlightView.power", lambda: self.power_panel.show_rows(
+            fr.status_rows(layout, histories, end, "power")))
+        for index, (graph, data) in enumerate(zip(self.graphs, histories)):
+            guard_call(f"FlightView.graph{index}", graph.update_plot, data, layout, end)
+
+    def _draw_banner(self, layout, histories, end, status):
+        load_error = None if self.load_error is None else f"{self.load_error} - built-in default layout in use"
+        text, background = fr.banner(layout, histories, end, paused=self.paused,
+                                     load_error=load_error, status=status)
         _set(self.banner, text)
-        set_background(self.banner, background, fr.TEXT)
-        self.flight_panel.show_panel(fr.flight_panel(layout, histories, end))
-        self.gps_panel.show_rows(fr.status_rows(layout, histories, end, "gps"))
-        self.power_panel.show_rows(fr.status_rows(layout, histories, end, "power"))
-        for graph, data in zip(self.graphs, histories):
-            graph.update_plot(data, layout, end)
+        self.banner.setToolTip(load_error or "")
+        _background(self.banner, background, fr.TEXT)
 
     def texts(self):
         """Every readout / legend text currently shown (tests and diagnostics)."""
-        out = [self.banner.text(), *self.flight_panel.texts(), *self.gps_panel.texts(), *self.power_panel.texts()]
+        out = [self.banner.text(), *self.strip.texts(), *self.flight_panel.texts(), *self.gps_panel.texts(), *self.power_panel.texts()]
         for graph in self.graphs:
             out += graph.texts()
         return [text for text in out if text]
 
+    @guarded_slot
     def _poll(self):
-        if self.isVisible():
+        if self.isVisible():     # hidden tabs are not redrawn; the first visible tick catches up
             self.redraw()
 
     def close(self):

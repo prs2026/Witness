@@ -53,27 +53,27 @@ class AltitudeTests(unittest.TestCase):
         model.accept_aim("A", "pressure_payload/v1", sample(100, 0), 1, False)
         model.accept_aim("A", "pressure_payload/v1", sample(110, 1), 2, False)
         model.accept_aim("A", "gnss_payload/v1", {"gnss_coordinate.altitude": 200, "satellites_used": 6}, 2, False)
-        altitude, velocity = model.snapshot()[0][2], model.snapshot()[3][2]
+        altitude, velocity = model.snapshot()[0][2], model.snapshot()[2][2]
         self.assertAlmostEqual(altitude.latest, 10)   # AGL: referenced to the first live sample (100 m)
         self.assertAlmostEqual(velocity.latest, 10)
         self.assertEqual(model.snapshot()[0][3].latest, 200)
         model.accept_aim("A", "pressure_payload/v1", {"pressure": None, "timestamp": sample(0, 2)["timestamp"]}, 3, False)
-        velocity = model.snapshot()[3][2]
+        velocity = model.snapshot()[2][2]
         self.assertAlmostEqual(velocity.latest, 10)
         self.assertEqual(velocity.received, 2)
         self.assertEqual(velocity.quality, "INVALID")
         self.assertEqual(velocity.points[-1], (3, None))
         self.assertEqual(quality_text(velocity, 15)[0], "INVALID 13.0s")
-        self.assertEqual(value_text(model.layout.plots[3].traces[2], velocity), "10")
+        self.assertEqual(value_text(model.layout.plots[2].traces[2], velocity), "10")
         # Do not revive an out-of-order valid reading after newer bad data.
         model.accept_aim("A", "pressure_payload/v1", sample(500, 2), 2.5, False)
         self.assertAlmostEqual(model.snapshot()[0][2].latest, 10)
         self.assertNotIn("A", model.aim_altitude.previous)
         model.accept_aim("A", "pressure_payload/v1", sample(120, 3), 4, False)
-        self.assertEqual(model.snapshot()[3][2].quality, "INVALID")
+        self.assertEqual(model.snapshot()[2][2].quality, "INVALID")
         model.accept_aim("A", "pressure_payload/v1", sample(130, 4), 5, False)
-        self.assertAlmostEqual(model.snapshot()[3][2].latest, 10)
-        self.assertEqual(model.snapshot()[3][2].quality, "LIVE")
+        self.assertAlmostEqual(model.snapshot()[2][2].latest, 10)
+        self.assertEqual(model.snapshot()[2][2].quality, "LIVE")
         model.accept_aim("A", "gnss_payload/v1", {"gnss_coordinate.altitude": None}, 3, False)
         self.assertEqual(model.snapshot()[0][3].latest, 200)
         model.accept_aim("A", "gnss_payload/v1", {"gnss_coordinate.altitude": 0, "satellites_used": 0}, 4, False)

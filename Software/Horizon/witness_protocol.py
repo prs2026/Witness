@@ -6,6 +6,7 @@ monitor (main.py re-exports everything here), tests and HITL tooling.
 
 from __future__ import annotations
 
+import re
 import struct
 
 # Commands currently defined by comms.h. Most command packets are sent as:
@@ -30,7 +31,9 @@ QUICK_COMMANDS = (
     ("Erase Logs (full, slow)", 0x6869, True),
     # Receiver forgets ephemerides, almanac, position and time (Pad Idle only).
     ("GPS cold start", 0x4752, True),
-    ("State: Pad", 0x7300, False),
+    # One-way states: 0x7300 acks, then restarts Witness, and only while Landed
+    # (Pad Idle: no-op; refused in Boost, Coast and Descent).
+    ("Reset to Pad (Landed only)", 0x7300, True),
     ("State: Boost", 0x7301, False),
     ("State: Coast", 0x7302, False),
     ("State: Descent", 0x7303, False),
@@ -304,8 +307,25 @@ def parse_packet(packet_id: int, payload: bytes):
     return None
 
 
+# Bytes that can appear in the text Witness mirrors onto the same stream
+# (NMEA "$...\r\n", ESP-IDF log lines, ANSI colour codes). A skipped run of
+# mostly these is text, not corruption: it is counted but raises no error event.
+_TEXT_BYTES = bytes(range(0x20, 0x7F)) + b"\t\n\r\x1b"
+
+
 class PacketDecoder:
-    """Decode the single ID-prefixed serial protocol from comms.h."""
+    """Decode the single ID-prefixed serial protocol from comms.h.
+
+    Resync is linear: every input byte is examined a bounded number of times.
+    A byte that is not a packet ID, or an ID whose fixed-length frame does not
+    end in EOF 0x0A, is skipped on its own (never "the whole frame"), and a
+    run of skipped bytes produces ONE summary on_error call (none at all when
+    the run is text). A parse/callback exception loses only that frame.
+    Counters (see stats()): packets, packets_by_id, text_bytes_skipped,
+    garbage_bytes_skipped, unknown_ids (skipped byte value -> count),
+    bad_frames (known packet id -> EOF/length mismatches), undecoded (framed
+    but not decoded), callback_errors, bytes_in.
+    """
     # Sensor frames in the supplied capture are 25 bytes total: ID + 23-byte
     # payload + EOF.  Keep the 21-byte header-defined form as a fallback so
     # older producers remain readable while the firmware/header are reconciled.
@@ -332,90 +352,116 @@ class PacketDecoder:
         self.on_host_packet = on_host_packet or (lambda _packet_id, _count: None)
         self.frame_lengths = {**self.payload_lengths, **self.host_payload_lengths}
         self.host_packet_count = 0
+        # Linear scan: jump straight to the next byte that could start a frame.
+        self._id_search = re.compile(
+            b"[" + b"".join(re.escape(bytes((i,))) for i in sorted(self.frame_lengths)) + b"]").search
+        self.bytes_in = 0
+        self.packets = 0
+        self.packets_by_id = {}
+        self.text_bytes_skipped = 0
+        self.garbage_bytes_skipped = 0
+        self.unknown_ids = {}        # skipped non-text byte value -> count
+        self.bad_frames = {}         # known packet id whose EOF/length did not match -> count
+        self.undecoded = {}          # framed ok but parse_packet returned None -> count
+        self.callback_errors = 0
 
-    def find_valid_frame(self, start=0):
-        """Return the next offset whose fixed-length frame has a valid EOF."""
-        for offset in range(start, len(self.buffer)):
-            packet_id = self.buffer[offset]
-            payload_lengths = self.frame_lengths.get(packet_id)
-            if payload_lengths is None:
-                continue
-            for payload_length in payload_lengths:
-                eof_index = offset + 1 + payload_length
-                if eof_index < len(self.buffer) and self.buffer[eof_index] == self.eof:
-                    return offset
-        return None
+    def stats(self):
+        """Counters for the UI / logs (copies; safe to read from another thread)."""
+        return {"bytes_in": self.bytes_in, "packets": self.packets,
+                "packets_by_id": dict(self.packets_by_id),
+                "text_bytes_skipped": self.text_bytes_skipped,
+                "garbage_bytes_skipped": self.garbage_bytes_skipped,
+                "unknown_ids": dict(self.unknown_ids), "bad_frames": dict(self.bad_frames),
+                "undecoded": dict(self.undecoded), "callback_errors": self.callback_errors}
 
-    def frame_payload_length(self, packet_id: int):
-        """Return the matching payload length, or None if more bytes are needed."""
-        payload_lengths = self.frame_lengths.get(packet_id)
-        if payload_lengths is None:
-            return None
-        for index, payload_length in enumerate(payload_lengths):
-            eof_index = 1 + payload_length
-            if len(self.buffer) > eof_index and self.buffer[eof_index] == self.eof:
+    def _error(self, message):
+        try:
+            self.on_error(message)
+        except Exception:  # noqa: BLE001 - reporting must never break decoding
+            pass
+
+    def _match(self, buf, pos, end, packet_id):
+        """(payload_length, False) for a valid frame at pos, (None, True) when more
+        bytes are needed to decide, (None, False) when the EOF never matches."""
+        lengths = self.frame_lengths[packet_id]
+        for index, payload_length in enumerate(lengths):
+            eof_index = pos + 1 + payload_length
+            if end > eof_index and buf[eof_index] == self.eof:
                 if index and packet_id in self.confirm_shorter:
-                    longest = 1 + max(payload_lengths)
-                    if len(self.buffer) <= longest:
-                        return None  # Wait: the longer form may still complete.
-                return payload_length
-        return None
+                    if end <= pos + 1 + max(lengths):
+                        return None, True  # Wait: the longer form may still complete.
+                return payload_length, False
+        if end < pos + 2 + max(lengths):
+            return None, True              # Do not reject a split frame.
+        return None, False
+
+    def _flush_gap(self, buf, start, stop):
+        """Account for the skipped run buf[start:stop]: counters, one event if binary."""
+        count = stop - start
+        if count <= 0:
+            return
+        run = bytes(buf[start:stop])
+        binary = run.translate(None, _TEXT_BYTES)         # only the non-text bytes remain
+        if len(binary) * 10 <= count:                     # >= 90 % text: NMEA / log lines
+            self.text_bytes_skipped += count
+            return
+        self.garbage_bytes_skipped += count
+        for value in binary:
+            self.unknown_ids[value] = self.unknown_ids.get(value, 0) + 1
+        self._error(f"discarded {count} byte(s) of non-packet data ({len(binary)} non-text), "
+                    f"first bytes {run[:8].hex(' ')}")
 
     def feed(self, data: bytes):
-        self.buffer.extend(data)
-        while self.buffer:
-            try:
-                packet_id = self.buffer[0]
+        buf = self.buffer
+        buf.extend(data)
+        self.bytes_in += len(data)
+        end = len(buf)
+        pos = 0
+        gap = None                  # start of the current run of skipped bytes
+        try:
+            while pos < end:
+                packet_id = buf[pos]
                 if packet_id not in self.frame_lengths:
-                    next_frame = self.find_valid_frame(1)
-                    discard_count = next_frame if next_frame is not None else 1
-                    self.on_error(
-                        f"unknown packet ID 0x{packet_id:02x}; discarded {discard_count} byte(s)"
-                    )
-                    del self.buffer[:discard_count]
+                    found = self._id_search(buf, pos)
+                    if gap is None:
+                        gap = pos
+                    pos = end if found is None else found.start()
                     continue
-
-                payload_length = self.frame_payload_length(packet_id)
+                payload_length, need_more = self._match(buf, pos, end, packet_id)
                 if payload_length is None:
-                    # Do not reject a split frame. For the sensor packet this
-                    # also allows us to wait for the longer observed form
-                    # before deciding that its EOF is bad.
-                    maximum_length = max(self.frame_lengths[packet_id])
-                    if len(self.buffer) < 1 + maximum_length + 1:
-                        return
-                    payload_length = maximum_length
-                frame_length = 1 + payload_length + 1
-                if len(self.buffer) < frame_length:
-                    return
-                frame = bytes(self.buffer[1:1 + payload_length])
-                eof_byte = self.buffer[1 + payload_length]
-                del self.buffer[:frame_length]
-                if eof_byte != self.eof:
-                    next_frame = self.find_valid_frame(1)
-                    self.on_error(
-                        f"bad EOF for 0x{packet_id:02x}: expected 0x0a, got 0x{eof_byte:02x}; "
-                        f"resync={'offset ' + str(next_frame) if next_frame is not None else 'discard 1 byte'}"
-                    )
-                    if next_frame is not None:
-                        del self.buffer[:next_frame]
+                    if need_more:
+                        break              # split frame: wait for the rest
+                    # EOF never matches: skip just this ID byte and rescan.
+                    self.bad_frames[packet_id] = self.bad_frames.get(packet_id, 0) + 1
+                    if gap is None:
+                        gap = pos
+                    pos += 1
+                    continue
+                if gap is not None:
+                    self._flush_gap(buf, gap, pos)
+                    gap = None
+                frame = bytes(buf[pos + 1:pos + 1 + payload_length])
+                pos += payload_length + 2   # consumed BEFORE any callback can raise
+                try:
+                    if packet_id in self.host_payload_lengths:
+                        self.host_packet_count += 1
+                        self.on_host_packet(packet_id, self.host_packet_count)
+                        continue
+                    parsed = parse_packet(packet_id, frame)
+                    if parsed:
+                        self.packets += 1
+                        self.packets_by_id[packet_id] = self.packets_by_id.get(packet_id, 0) + 1
+                        self.on_packet(parsed)
                     else:
-                        # The current frame is invalid, but leave later bytes
-                        # buffered so a split TCP read can complete a frame.
-                        del self.buffer[:1]
-                    continue
-                if packet_id in self.host_payload_lengths:
-                    self.host_packet_count += 1
-                    self.on_host_packet(packet_id, self.host_packet_count)
-                    continue
-                parsed = parse_packet(packet_id, frame)
-                if parsed:
-                    self.on_packet(parsed)
-            except Exception as exc:
-                bad = bytes(self.buffer[: min(len(self.buffer), 32)])
-                self.on_error(f"decoder rejected packet: {exc}; buffer={bad.hex(' ')}")
-                # Always make progress after malformed input.
-                del self.buffer[0]
-
+                        self.undecoded[packet_id] = self.undecoded.get(packet_id, 0) + 1
+                except Exception as exc:  # noqa: BLE001 - lose this frame only, never the next
+                    self.callback_errors += 1
+                    self._error(f"decoder rejected packet 0x{packet_id:02x}: {exc}; "
+                                f"frame={frame[:32].hex(' ')}")
+            if gap is not None:
+                self._flush_gap(buf, gap, pos)
+        finally:
+            del buf[:pos]
 
 
 def build_command_packet(opcode: int) -> bytes:
@@ -531,11 +577,16 @@ def parse_hex_command(text: str) -> bytes:
 
 # ----------------------------------------------------------- display helpers
 
+RSSI_RADIO_DOWN = -128
+
+
 def format_display_value(field, value):
     if value is None:
         return "null"
     if isinstance(value, int) and (field == "status" or field.endswith("_status")):
         return f"0b{value:016b}"
+    if field == "rssi" and value == RSSI_RADIO_DOWN:
+        return "RECEIVER RADIO FAILED (-128)"   # Aperture 0xF0: -128 means its LoRa radio is down
     return str(value)
 
 

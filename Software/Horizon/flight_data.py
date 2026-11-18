@@ -5,6 +5,7 @@ coalescing, preserving short peaks. All plots use host receive time, not uptime.
 """
 
 from collections import deque
+import numpy as np
 from dataclasses import dataclass, field as dataclass_field, replace
 import json
 import math
@@ -13,7 +14,7 @@ import re
 import threading
 import time
 
-from telemetry_model import flatten_fields
+from telemetry_model import flatten_fields, witness_status_fields
 from aim_orientation import AimAngularRateEstimator
 from aim_altitude import AimAltitudeEstimator
 
@@ -217,9 +218,178 @@ def load_layout(path):
     return validate_layout(document)
 
 
+# --------------------------------------------------------------- point storage
+OLD_BUCKET_S = 0.2        # points older than the full-rate buffer keep min+max per 0.2 s (5 Hz)
+OLD_CAP = 40000           # decimated points per trace (1 h at 5 Hz min+max = 36000)
+FOLLOW_SECONDS = 3.0      # bound source silent this long: follow another delivering source
+ESSENTIAL_FRESH_S = 3.0   # state + position/altitude must be this fresh for a green LIVE
+RSSI_ROCKET_FRESH_S = 5.0
+
+
+class _Tier:
+    """Time-sorted (t, v) float arrays: O(1) amortised append, oldest dropped at ``cap``."""
+
+    def __init__(self, cap):
+        self.cap = max(1, cap)
+        self.t = np.empty(min(self.cap * 2, 64))
+        self.v = np.empty(len(self.t))
+        self.s = self.e = 0
+
+    def __len__(self):
+        return self.e - self.s
+
+    def push(self, t, v):
+        """Append; returns the evicted (t, v) when the cap was exceeded, else None."""
+        out = None
+        if self.e - self.s >= self.cap:
+            out = (float(self.t[self.s]), float(self.v[self.s]))
+            self.s += 1
+        if self.e == len(self.t):
+            n = self.e - self.s
+            size = len(self.t) if n * 2 < len(self.t) else min(self.cap * 2, len(self.t) * 2)
+            nt, nv = np.empty(size), np.empty(size)
+            nt[:n], nv[:n] = self.t[self.s:self.e], self.v[self.s:self.e]
+            self.t, self.v, self.s, self.e = nt, nv, 0, n
+        self.t[self.e], self.v[self.e] = t, v
+        self.e += 1
+        return out
+
+    def trim(self, cutoff):
+        self.s += int(np.searchsorted(self.t[self.s:self.e], cutoff, side="left"))
+
+    def clear(self):
+        self.s = self.e = 0
+
+    def window(self):
+        return self.t[self.s:self.e], self.v[self.s:self.e]
+
+
+def _none(value):
+    return None if value != value else float(value)
+
+
+class PointBuffer:
+    """History of one trace: full-rate recent tier (``maxlen`` points) plus a
+    decimated older tier (min/max per 0.2 s) that holds what fell off the recent
+    tier, so a long time window keeps its shape (audit #10) at bounded cost.
+
+    len()/iteration/indexing cover the recent tier as (time, value|None) pairs
+    (None = invalid sample); arrays() returns every tier as numpy arrays (NaN =
+    invalid) for plotting.
+    """
+
+    def __init__(self, maxlen, *, decimate=True):
+        self.maxlen = maxlen
+        self.recent = _Tier(maxlen)
+        self.old = _Tier(OLD_CAP) if decimate and maxlen > 1 else None
+        self._bucket = None
+
+    def append(self, item):
+        t, v = item
+        evicted = self.recent.push(t, math.nan if v is None else v)
+        if evicted is not None and self.old is not None:
+            self._spill(*evicted)
+
+    def _spill(self, t, v):
+        bucket = self._bucket
+        if v != v:                       # invalid marker: keep one NaN to break the line
+            self._flush()
+            if not len(self.old) or self.old.v[self.old.e - 1] == self.old.v[self.old.e - 1]:
+                self.old.push(t, v)
+            return
+        if bucket is not None and t - bucket[0] < OLD_BUCKET_S:
+            if v < bucket[2]:
+                bucket[1], bucket[2] = t, v
+            if v > bucket[4]:
+                bucket[3], bucket[4] = t, v
+            return
+        self._flush()
+        self._bucket = [t, t, v, t, v]
+
+    def _bucket_points(self):
+        b = self._bucket
+        return [] if b is None else sorted({(b[1], b[2]), (b[3], b[4])})
+
+    def _flush(self):
+        for t, v in self._bucket_points():
+            self.old.push(t, v)
+        self._bucket = None
+
+    def trim(self, cutoff):
+        self.recent.trim(cutoff)
+        if self.old is not None:
+            self.old.trim(cutoff)
+            if self._bucket is not None and self._bucket[0] < cutoff:
+                self._bucket = None
+
+    def clear(self):
+        self.recent.clear()
+        if self.old is not None:
+            self.old.clear()
+        self._bucket = None
+
+    def arrays(self):
+        rt, rv = self.recent.window()
+        if self.old is None or not (len(self.old) or self._bucket):
+            return rt.copy(), rv.copy()
+        ot, ov = self.old.window()
+        extra = self._bucket_points()
+        et = np.array([p[0] for p in extra], dtype=float)
+        ev = np.array([p[1] for p in extra], dtype=float)
+        return np.concatenate((ot, et, rt)), np.concatenate((ov, ev, rv))
+
+    def snapshot(self):
+        t, v = self.arrays()
+        return PointSnapshot(t, v, len(self.recent))
+
+    def __len__(self):
+        return len(self.recent)
+
+    def __bool__(self):
+        return len(self.recent) > 0
+
+    def __iter__(self):
+        t, v = self.recent.window()
+        return ((float(a), _none(b)) for a, b in zip(t, v))
+
+    def __getitem__(self, index):
+        t, v = self.recent.window()
+        if isinstance(index, slice):
+            return [(float(a), _none(b)) for a, b in zip(t[index], v[index])]
+        return float(t[index]), _none(v[index])
+
+
+class PointSnapshot:
+    """Immutable copy of a PointBuffer (all tiers); iteration covers the recent tier."""
+
+    def __init__(self, t, v, recent):
+        self.t, self.v, self.n_recent = t, v, recent
+
+    def arrays(self):
+        return self.t, self.v
+
+    def __len__(self):
+        return self.n_recent
+
+    def __bool__(self):
+        return self.n_recent > 0
+
+    def __iter__(self):
+        t, v = self.t[len(self.t) - self.n_recent:], self.v[len(self.v) - self.n_recent:]
+        return ((float(a), _none(b)) for a, b in zip(t, v))
+
+    def __getitem__(self, index):
+        return list(self)[index]
+
+    def __eq__(self, other):
+        return isinstance(other, PointSnapshot) and self.n_recent == other.n_recent and             np.array_equal(self.t, other.t) and np.array_equal(self.v, other.v, equal_nan=True)
+
+    __hash__ = None
+
+
 @dataclass
 class History:
-    points: deque
+    points: object
     latest: float | None = None
     received: float | None = None
     source: str = ""
@@ -255,7 +425,16 @@ class FlightData:
             self.altitude_origins = {}
             self.aim_rates = AimAngularRateEstimator()
             self.aim_altitude = AimAltitudeEstimator()
-            self.histories = [[History(deque(maxlen=layout.max_points if not plot.group else 1),
+            # Audit H7/H8/H9/H10 state, independent of the layout so old user
+            # layouts still get the status strip, landed fix and honest LIVE.
+            self.last_seen = {}      # (kind, source) -> latest live receive time
+            self.rocket_last = {}    # witness source -> latest non-Aperture packet time
+            self.essential = {}      # "witness"/"featherweight"/"aim" -> latest essential packet time
+            self.vehicle = None      # latest Witness status word + held GPS position
+            self.landed = None       # latest 0x09 landed_position
+            self.switch_note = None  # (kind, from, to, when)
+            self.relative_agl = set()  # derived AGL fields currently relative to their first sample
+            self.histories = [[History(PointBuffer(layout.max_points if not plot.group else 1),
                                        quality="NO DATA" if trace.enabled else "UNAVAILABLE")
                                for trace in plot.traces] for plot in layout.rows]
             self.routes = {}
@@ -296,16 +475,19 @@ class FlightData:
             for key in ("status", "fc_status"):
                 value = packet.get(key)
                 if type(value) is int:
-                    fields[f"{key}.flight_state"] = value & 7
-                    if not (key == "status" and packet.get("packet") in ("camera", "iris_debug")):
-                        # Witness status byte 1: bit 3 GPS locked, bit 4 HITL active.
-                        fields[f"{key}.gps_locked"] = (value >> 3) & 1
-                        fields[f"{key}.hitl_active"] = (value >> 4) & 1
-                    for bit in range(8):
-                        fields[f"{key}.byte0.bit{bit}"] = (value >> (8 + bit)) & 1
+                    pass
+            # Shared derivation (flight state, GPS lock, HITL, maintenance, resumed,
+            # log slots full, flash/logging failed, sensors ready, byte0 bits).
+            fields.update({k: v for k, v in witness_status_fields(packet).items() if not isinstance(v, str)})
+        now = time.monotonic()
         received = record.get("received_mono")
         if received is None:
-            received = time.monotonic() - max(0, time.time() - record["received_at"])
+            received = now - max(0, time.time() - record["received_at"])
+        # A sender clock ahead of ours must not make data "from the future".
+        if isinstance(received, (int, float)):
+            received = min(received, now)
+        if kind == "witness":
+            self._note_witness(packet, received, bool(record.get("replay")), record.get("source", ""))
         valid = packet.get("text_crc_valid") is not False
         if kind == "featherweight":
             valid = valid and packet.get("radio_crc_status", "CRC_OK") == "CRC_OK"
@@ -315,6 +497,30 @@ class FlightData:
                         fields[key] = None  # Satellite/fix counts themselves remain useful without a fix.
         self.accept(kind, record["source"], packet["packet"], fields, received,
                     snapshot=bool(record.get("replay")), valid=valid)
+
+    def _note_witness(self, packet, received, replay, source):
+        """Layout-independent Witness state: status word, last GPS position, landed fix."""
+        name = packet.get("packet")
+        if packet.get("text_crc_valid") is False or not isinstance(received, (int, float)):
+            return
+        status = packet.get("fc_status") if name == "camera" else packet.get("status")
+        with self._lock:
+            if type(status) is int and name not in ("iris_debug", "maintenance_status", "ground_station_status"):
+                old = self.vehicle
+                if old is None or received >= old["received"]:
+                    lat, lon = packet.get("latitude"), packet.get("longitude")
+                    held = old.get("position") if old else None
+                    if (name in ("state", "witness_debug") and type(lat) in (int, float) and type(lon) in (int, float)
+                            and (lat or lon) and -90 <= lat <= 90 and -180 <= lon <= 180):
+                        held = (lat, lon, received, bool((status >> 3) & 1))
+                    self.vehicle = {"status": status, "received": received, "source": source, "packet": name,
+                                    "snapshot": replay, "position": held,
+                                    "bits": witness_status_fields({"packet": "state", "status": status})}
+            if name == "landed_position":
+                self.landed = {"received": received, "source": source, "snapshot": replay,
+                               **{k: packet.get(k) for k in ("latitude", "longitude", "gps_altitude", "fix_age",
+                                                              "position_valid", "stale", "ping_reply",
+                                                              "satellites", "battery_voltage")}}
 
     def accept_aim(self, source, topic, fields, received, retained):
         self.accept("aim", source, topic, fields, received, snapshot=retained)
@@ -333,6 +539,13 @@ class FlightData:
                 sats = fields.get("satellites_used", 4)
                 if type(sats) not in (int, float) or not 4 <= sats <= 256:
                     fields = {**fields, "gnss_coordinate.altitude": None}
+            self._track_sources(kind, source, packet, received, snapshot, valid)
+            if kind == "witness" and packet == "ground_station_status" and "rssi" in fields:
+                # Aperture repeats the LAST VALID RSSI in every 0xF0; it is only live
+                # while a rocket packet arrived recently (audit #14).
+                last = self.rocket_last.get(source)
+                if last is None or received - last > RSSI_ROCKET_FRESH_S:
+                    fields = {**fields, "rssi": None}
             fields = self._derive_distance(kind, source, fields, received, snapshot, valid)
             fields = self._derive_agl(kind, source, packet, fields, snapshot, valid)
             for trace, history in self.routes.get((kind, packet), ()):
@@ -360,7 +573,9 @@ class FlightData:
                     continue
                 if not snapshot and value is not None and trace.source == "*":
                     self.selected.setdefault(kind, source)
-                if history.source != source:
+                if history.source != source and trace.source != "*":
+                    # Explicit-source traces restart on a source change; automatic
+                    # ones keep ONE continuous series across a followed source switch.
                     history.points.clear()
                     history.latest = history.received = None
                 history.source, history.seen = source, received
@@ -375,9 +590,30 @@ class FlightData:
                     history.points.append((received, value))
                     # Keep history when zooming in, still bounded by max_points
                     # and the maximum selectable time span.
-                    cutoff = received - 3600 - self.layout.gap_seconds
-                    while history.points and history.points[0][0] < cutoff:
-                        history.points.popleft()
+                    history.points.trim(received - 3600 - self.layout.gap_seconds)
+
+    def _track_sources(self, kind, source, packet, received, snapshot, valid):
+        """Follow the freshest source (audit H7); caller holds the lock."""
+        if snapshot or not valid:
+            return
+        self.last_seen[(kind, source)] = received
+        if len(self.last_seen) > 256:
+            self.last_seen.clear()
+        bound = self.selected.get(kind)
+        if bound is not None and bound != source:
+            quiet = received - self.last_seen.get((kind, bound), received)
+            if quiet > FOLLOW_SECONDS:
+                self.selected[kind] = source
+                self.switch_note = (kind, bound, source, received)
+        if kind == "witness":
+            if packet != "ground_station_status":
+                self.rocket_last[source] = received
+            if packet in ("state", "witness_debug"):
+                self.essential["witness"] = received
+        elif kind == "featherweight" and packet == "GPS_STAT":
+            self.essential["featherweight"] = received
+        elif kind == "aim" and packet in ("gnss_payload/v1", "pressure_payload/v1"):
+            self.essential["aim"] = received
 
     def _pad_msl(self):
         try:
@@ -398,7 +634,10 @@ class FlightData:
                 continue
             value *= scale
             reference = self._pad_msl() if msl else None
+            if reference is not None:
+                self.relative_agl.discard(name)
             if reference is None:
+                self.relative_agl.add(name)    # no pad altitude: shown as "relative to first sample"
                 key = (kind, source, field, fields.get("unit_type", ""), fields.get("unit_id", ""))
                 if key not in self.altitude_origins:
                     if snapshot or len(self.altitude_origins) >= 128:
@@ -461,8 +700,18 @@ class FlightData:
 
     def snapshot(self):
         with self._lock:
-            return [[History(tuple(h.points), h.latest, h.received, h.source, h.quality, h.live, h.seen)
+            return [[History(h.points.snapshot(), h.latest, h.received, h.source, h.quality, h.live, h.seen)
                      for h in row] for row in self.histories]
+
+    def status_snapshot(self):
+        """Layout-independent state for the status strip, landed fix and LIVE banner."""
+        with self._lock:
+            return {"vehicle": dict(self.vehicle) if self.vehicle else None,
+                    "landed": dict(self.landed) if self.landed else None,
+                    "essential": dict(self.essential),
+                    "sources": dict(self.selected),
+                    "relative_agl": sorted(self.relative_agl),
+                    "switch": self.switch_note}
 
 
 def nice_step(span, count=5):

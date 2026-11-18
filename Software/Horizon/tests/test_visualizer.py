@@ -445,6 +445,33 @@ class VisualizerGui(unittest.TestCase):
             window.close()
         self.assertFalse(window.is_open())
 
+    def test_visualizer_stacks_attitude_over_map_in_portrait(self):
+        from PyQt6 import QtCore
+        from horizon_qt_support import pump
+        from visualizer import VisualizerWindow
+        window = VisualizerWindow(map_data=MapData(), tiles=TileCache(self.tmp.name, fetch=None), use_gl=False)
+        try:
+            window.resize(1080, 1900)
+            window.show()
+            pump(0.1)
+            splitter = window.splitter
+            self.assertEqual(splitter.orientation(), QtCore.Qt.Orientation.Vertical)
+            self.assertIs(splitter.widget(0), window.orientation)    # attitude on top
+            self.assertIs(splitter.widget(1), window.map)            # map below
+            top, bottom = window.orientation.geometry(), window.map.geometry()
+            self.assertLessEqual(top.bottom(), bottom.top())
+            self.assertGreater(top.height(), 400)
+            self.assertGreater(bottom.height(), 500)
+            splitter.setSizes([500, 1000])                           # still draggable
+            pump(0.05)
+            self.assertAlmostEqual(splitter.sizes()[0], 500 * sum(splitter.sizes()) / 1500, delta=15)
+            self.assertFalse(splitter.childrenCollapsible())
+            window.resize(1400, 800)                                 # landscape flips back to side by side
+            pump(0.1)
+            self.assertEqual(splitter.orientation(), QtCore.Qt.Orientation.Horizontal)
+        finally:
+            window.close()
+
     def test_horizon_opens_visualizer_fed_by_records(self):
         from horizon_qt_support import make_horizon
         app = make_horizon(self.tmp.name)

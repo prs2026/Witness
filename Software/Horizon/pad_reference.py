@@ -33,6 +33,7 @@ SOURCE_LABELS = {
     "tracker": "Featherweight tracker first fix",
 }
 WITNESS_PAD_FIXES = 120
+NEW_FLIGHT_MIN_FIXES = 10   # Pad Idle fixes needed before a new Boost starts a new flight segment
 
 
 @dataclass(frozen=True)
@@ -69,6 +70,17 @@ class PadReference:
         # Witness left Pad Idle: its pad estimate is frozen (see _accept_witness).
         self.witness_frozen = False
         self._witness_uptime = None
+        # One-way flight states (audit #12): after Boost..Landed was seen the pad is
+        # frozen for good, even across the Landed reboot (uptime restarts, Pad Idle
+        # again at the LANDING site). Idle fixes after the reboot only collect in
+        # _pending; a Boost after that Pad Idle period starts a new flight segment
+        # whose pad is the pending mean. Operator Clear / Auto pad resets all.
+        self.flight_seen = False
+        self._pending = []
+        self._last_state = None
+        self.segment = 0
+        self._segment_sites = {}
+        self._landed = None
         self.version = 0     # bumps whenever the selected pad could have changed
 
     # ------------------------------------------------------------ inputs
@@ -115,10 +127,14 @@ class PadReference:
 
     def _accept_witness(self, packet, received):
         kind = packet.get("packet")
+        if kind == "landed_position":
+            return self._accept_landed(packet, received)
         if kind == "ground_station_status":
             lat, lon = packet.get("latitude"), packet.get("longitude")
             if not valid_lat_lon(lat, lon):
                 return False
+            if packet.get("gps_fix_quality") == 0:
+                return False   # fix lost: the coordinates are the last known position, not a pad fix
             alt = packet.get("gps_altitude")
             quality, age = packet.get("gps_fix_quality"), packet.get("gps_fix_age_ms")
             detail = f"q{quality} {packet.get('gps_satellites')} sats"
@@ -135,16 +151,25 @@ class PadReference:
         with self._lock:
             if type(uptime) is int:
                 if self._witness_uptime is not None and uptime + 5000 < self._witness_uptime:
-                    # Witness rebooted: a new session may start a new pad.
-                    self.witness_frozen = False
-                    self._witness.clear()
+                    if self.flight_seen:
+                        self._pending.clear()   # post-flight reboot: keep the flight's pad
+                    else:
+                        # Witness rebooted before any flight: a new session may start a new pad.
+                        self.witness_frozen = False
+                        self._witness.clear()
                 self._witness_uptime = uptime
-            if status & 0x07 != 0:
+            state = status & 0x07
+            previous, self._last_state = self._last_state, state
+            if state != 0:
                 # Boost or later: the pad is where it was; never follow the
                 # vehicle (nor a landing site after the flight).
+                if state == 1 and self.flight_seen and previous == 0 and len(self._pending) >= NEW_FLIGHT_MIN_FIXES:
+                    self._new_segment()
+                if state in (1, 2, 3, 4):
+                    self.flight_seen = True
                 self.witness_frozen = True
                 return False
-            if self.witness_frozen:
+            if self.witness_frozen and not self.flight_seen:
                 return False
         if not status & 0x08:
             return False   # Only Pad Idle with the GPS-locked bit describes the pad.
@@ -152,6 +177,11 @@ class PadReference:
         if not valid_lat_lon(lat, lon):
             return False
         with self._lock:
+            if self.flight_seen:
+                # Candidate pad for the NEXT flight; the current pad stays frozen.
+                self._pending.append((lat, lon, alt if _finite(alt) else None))
+                del self._pending[:-WITNESS_PAD_FIXES]
+                return False
             self._witness.append((lat, lon, alt if _finite(alt) else None))
             del self._witness[:-WITNESS_PAD_FIXES]
             samples = list(self._witness)
@@ -160,6 +190,41 @@ class PadReference:
                      sum(s[1] for s in samples) / len(samples),
                      sum(alts) / len(alts) if alts else None, received, f"{len(samples)} fixes")
         return self._store(fix)
+
+    def _new_segment(self):
+        """Caller holds the lock: promote the pending Pad Idle fixes to the pad of a new flight."""
+        old = self._fixes.get("witness")
+        if old is not None:
+            self._segment_sites[self.segment] = old
+        self.segment += 1
+        samples, self._pending = self._pending, []
+        # Only fixes near the latest one (~110 m): the rocket may have been carried
+        # from the landing site to the new pad while still in Pad Idle.
+        last = samples[-1]
+        samples = [s for s in samples if abs(s[0] - last[0]) < 0.001 and abs(s[1] - last[1]) < 0.001] or [last]
+        alts = [a for _, _, a in samples if a is not None]
+        self._witness = list(samples)
+        self._fixes["witness"] = PadFix(
+            "witness", sum(s[0] for s in samples) / len(samples), sum(s[1] for s in samples) / len(samples),
+            sum(alts) / len(alts) if alts else None, time.monotonic(), f"{len(samples)} fixes, flight {self.segment + 1}")
+        self.version += 1
+
+    def _accept_landed(self, packet, received):
+        """0x09 landed position: informational (never selected as the pad), but it
+        proves the flight is over, so the Witness pad is frozen."""
+        with self._lock:
+            self.flight_seen = True
+            self.witness_frozen = True
+            self._last_state = 4
+        lat, lon = packet.get("latitude"), packet.get("longitude")
+        if packet.get("position_valid") is False or not valid_lat_lon(lat, lon):
+            return False
+        alt = packet.get("gps_altitude")
+        detail = "stale fix" if packet.get("stale") else "fresh fix"
+        with self._lock:
+            self._landed = PadFix("landed", lat, lon, alt if _finite(alt) else None, received, detail)
+            self.version += 1
+        return True
 
     # ----------------------------------------------------------- control
     def set_manual(self, lat, lon):
@@ -172,6 +237,8 @@ class PadReference:
         with self._lock:
             self._fixes.pop("manual", None)
             self.witness_frozen = False
+            self.flight_seen = False       # operator action: Witness may define the pad again
+            self._pending.clear()
             self.version += 1
 
     def clear(self):
@@ -180,6 +247,12 @@ class PadReference:
             self._witness.clear()
             self.witness_frozen = False
             self._witness_uptime = None
+            self.flight_seen = False
+            self._pending.clear()
+            self._last_state = None
+            self.segment = 0
+            self._segment_sites.clear()
+            self._landed = None
             self.version += 1
 
     # ------------------------------------------------------------ output
@@ -201,6 +274,17 @@ class PadReference:
                 return fix.alt_msl, name
         return None
 
-    def witness_launch_site(self):
-        """Mean Witness pad fix: the Kalman ENU origin when Witness had GPS on the pad."""
+    def witness_launch_site(self, segment=None):
+        """Mean Witness pad fix: the Kalman ENU origin when Witness had GPS on the pad.
+
+        ``segment`` selects the site of an earlier flight (None or the current
+        segment: the current pad), so old tracks keep their own origin."""
+        if segment is not None and segment != self.segment:
+            with self._lock:
+                return self._segment_sites.get(segment)
         return self.fixes().get("witness")
+
+    def landed(self):
+        """Latest valid 0x09 landed-position fix (PadFix source 'landed') or None."""
+        with self._lock:
+            return self._landed

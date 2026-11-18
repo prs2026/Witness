@@ -11,6 +11,8 @@ import time
 from featherweight import FEATHERWEIGHT_BAUD, FeatherweightStreamParser
 import ipaddress
 
+from link_health import RawLog, backoff_delay
+
 from witness_link import (MAX_LINE_BYTES, decode_record, enable_keepalive, is_loopback_address,
                           is_tailscale_address, json_safe)
 
@@ -40,6 +42,12 @@ class LoggedReceiver:
         self.messages = self.bytes_received = self.errors = 0
         self.on_record = on_record
         self.auto_retry = True
+        self.reconnects = 0              # successful re-connections after the first
+        self.last_data = None            # time.monotonic() of the newest byte/record
+
+    def seconds_since_data(self):
+        """Seconds since the last byte/record, or None if nothing arrived yet (UI link status)."""
+        return None if self.last_data is None else max(0.0, time.monotonic() - self.last_data)
 
     @property
     def running(self):
@@ -126,7 +134,7 @@ class LoggedReceiver:
                 if stream is not None:
                     try:
                         stream.close()
-                    except OSError:
+                    except Exception:  # noqa: BLE001
                         pass
             self._raw = self._log = None
 
@@ -179,6 +187,8 @@ class WitnessReceiver(LoggedReceiver):
         self.remote = False
 
     def run(self):
+        connected = False
+        attempt = 0
         while not self._stop.is_set():
             try:
                 self.host, self.remote = resolve_feed_host(self.requested_host)
@@ -186,8 +196,10 @@ class WitnessReceiver(LoggedReceiver):
                 self.report(f"Connecting to Witness at {where}...", status=True)
                 with socket.create_connection((self.host, self.port), timeout=5 if self.remote else 1) as connection:
                     connection.settimeout(0.2)
-                    if self.remote:
-                        enable_keepalive(connection)
+                    enable_keepalive(connection)    # half-open feed: notice within seconds
+                    connected_before, connected = connected, True
+                    if connected_before:
+                        self.reconnects += 1
                     self.report(f"Connected to Witness at {where} (receive only)", status=True)
                     buffer = bytearray()
                     previous = None
@@ -202,6 +214,8 @@ class WitnessReceiver(LoggedReceiver):
                             raise ConnectionError("Witness app disconnected")
                         with self._lock:
                             self.bytes_received += len(data)
+                        self.last_data = time.monotonic()
+                        attempt = 0
                         buffer.extend(data)
                         while b"\n" in buffer:
                             line, _, remainder = buffer.partition(b"\n")
@@ -221,11 +235,16 @@ class WitnessReceiver(LoggedReceiver):
                             raise ValueError("Witness feed record exceeds 64 KiB without a newline")
             except (OSError, ValueError) as exc:
                 if not self._stop.is_set():
-                    self.report(f"Waiting for Witness: {exc}; " +
-                                ("retrying in 1s" if self.auto_retry else "auto-connect off"),
+                    # Once it has worked, a blip heals by itself whatever the
+                    # auto-connect box says; Disconnect (stop) ends it.
+                    keep = self.auto_retry or connected
+                    attempt += 1
+                    delay = 1.0 if keep else 0
+                    self.report(f"Waiting for Witness (attempt {attempt}): {exc}; " +
+                                (f"retrying in {delay:g}s" if keep else "auto-connect off"),
                                 error=isinstance(exc, ValueError), status=True)
-                    self._stop.wait(1)
-                    if not self.auto_retry:
+                    self._stop.wait(delay)
+                    if not keep:
                         break
 
 
@@ -243,24 +262,54 @@ class FeatherweightReceiver(LoggedReceiver):
         self.port, self.serial_factory = port, serial_factory
 
     def run(self):
+        """Read the Featherweight port; reconnect forever (same raw log, appended)
+        until stop(). The raw log is its own guarded object: a write error never
+        stops the reader, and a parse error never stops the log."""
         self.raw_path = self.log_path.with_suffix(".bin")
-        self._raw = self.raw_path.open("xb")
-        self.report(f"Opening {self.port}: {FEATHERWEIGHT_BAUD} baud, 8-N-1, read only", status=True)
-        # Deliberately no write(), break, or protocol command calls anywhere.
-        with self.serial_factory(port=self.port, baudrate=FEATHERWEIGHT_BAUD,
-                                 bytesize=8, parity="N", stopbits=1, timeout=0.2,
-                                 xonxoff=False, rtscts=False, dsrdtr=False) as connection:
-            self.report(f"Connected: {self.port} (receive only)", status=True)
-            parser = FeatherweightStreamParser(
-                self._packet, lambda message: self.report(f"PARSE_ERROR: {message}", error=True))
-            while not self._stop.is_set():
-                data = connection.read(min(connection.in_waiting or 1, 16384))
-                if data:
-                    with self._lock:
-                        self.bytes_received += len(data)
-                    self._raw.write(data)
-                    self._raw.flush()
-                    parser.feed(data)
+        self._raw = RawLog(self.raw_path)
+        attempt = 0
+        opened_once = False
+        raw_warned = False
+        while not self._stop.is_set():
+            try:
+                self.report(f"Opening {self.port}: {FEATHERWEIGHT_BAUD} baud, 8-N-1, read only", status=True)
+                # Deliberately no write(), break, or protocol command calls anywhere.
+                with self.serial_factory(port=self.port, baudrate=FEATHERWEIGHT_BAUD,
+                                         bytesize=8, parity="N", stopbits=1, timeout=0.2,
+                                         xonxoff=False, rtscts=False, dsrdtr=False) as connection:
+                    if opened_once:
+                        self.reconnects += 1
+                    opened_once = True
+                    attempt = 0
+                    self.report(f"Connected: {self.port} (receive only)", status=True)
+                    parser = FeatherweightStreamParser(
+                        self._packet, lambda message: self.report(f"PARSE_ERROR: {message}", error=True))
+                    while not self._stop.is_set():
+                        data = connection.read(min(connection.in_waiting or 1, 16384))
+                        if data:
+                            with self._lock:
+                                self.bytes_received += len(data)
+                            self.last_data = time.monotonic()
+                            self._raw.write(data)          # never raises
+                            try:
+                                parser.feed(data)
+                            except Exception as exc:  # noqa: BLE001 - raw log already has the bytes
+                                self.report(f"PARSE_ERROR: {exc}", error=True)
+                        else:
+                            self._raw.tick()
+                            if self._raw.failing and not raw_warned:
+                                raw_warned = True
+                                self.report(self._raw.warning, error=True)
+                            elif not self._raw.failing:
+                                raw_warned = False
+            except Exception as exc:  # noqa: BLE001
+                if self._stop.is_set():
+                    break
+                if not opened_once and not self.auto_retry:
+                    raise          # first open failed and auto-connect is off: report and stop
+                attempt += 1
+                self.report(f"Reconnecting to {self.port} (attempt {attempt}): {exc}", error=True, status=True)
+                self._stop.wait(backoff_delay(attempt))
 
     def _packet(self, packet):
         if not packet["text_crc_valid"]:

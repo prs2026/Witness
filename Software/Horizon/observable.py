@@ -14,6 +14,28 @@ from __future__ import annotations
 from typing import Any, Callable
 
 
+class _Unsubscribe:
+    """The callable returned by Cell.subscribe.
+
+    A callable object rather than a closure on purpose: Qt ``destroyed`` slots call it
+    while Python's cyclic GC may be clearing the garbage, and a cleared closure (a
+    function with its globals gone) crashes the interpreter when called, whereas a
+    cleared instance is harmless (see qt_widgets._OnDestroyed).
+    """
+
+    __slots__ = ("cell", "listener")
+
+    def __init__(self, cell, listener):
+        self.cell = cell
+        self.listener = listener
+
+    def __call__(self) -> None:
+        try:
+            self.cell._listeners.remove(self.listener)
+        except (ValueError, AttributeError):   # already gone (interpreter exit, or cleared by GC)
+            pass
+
+
 class Cell:
     __slots__ = ("_value", "_listeners", "__weakref__")
 
@@ -37,12 +59,7 @@ class Cell:
         if call_now:
             listener(self._value)
 
-        def unsubscribe():
-            try:
-                self._listeners.remove(listener)
-            except (ValueError, AttributeError):   # already gone (interpreter exit)
-                pass
-        return unsubscribe
+        return _Unsubscribe(self, listener)
 
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
         return f"Cell({self._value!r})"

@@ -21,7 +21,7 @@ from auto_connect import ReceiverControl
 from ground_settings import DEFAULT_MQTT_BROKER_ENABLED, DEFAULT_MQTT_BROKER_PORT
 from mqtt_broker import EmbeddedMqttBroker
 from observable import Cell
-from qt_common import Throttle, add_curve, make_plot, message_error
+from qt_common import Throttle, add_curve, guard_call, guarded_slot, make_plot, message_error, report_guarded_error
 from qt_widgets import LogConsole, bind_check, bind_label, bind_line_edit, hbox, wrap_label
 from telemetry_model import AimFieldTable
 from telemetry_view import configure_tree, paint_row
@@ -238,13 +238,17 @@ class AimMqttTab(ReceiverControl, QtWidgets.QWidget):
         self.chart_curve.setData(data[:, 0] - time.monotonic(), data[:, 1])
 
     # ---------------------------------------------------------------- poll
+    @guarded_slot
     def _poll(self):
+        guard_call("AimMqttTab.broker", self._poll_broker)
+        guard_call("AimMqttTab.poll", self.poll)
         try:
-            self._poll_broker()
-            self.poll()
-        finally:
-            for row in self.model.update_ages():
-                self._show(row)
+            rows = self.model.update_ages()
+        except Exception as exc:
+            report_guarded_error("AimMqttTab.ages", exc)
+            return
+        for row in rows:                # one bad row must not stop the others
+            guard_call("AimMqttTab.row", self._show, row)
 
     def close(self):
         self._timer.stop()

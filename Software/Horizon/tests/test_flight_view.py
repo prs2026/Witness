@@ -16,6 +16,7 @@ from aim_mqtt import AimMqttReceiver, AimSettings  # noqa: E402
 from flight_data import DEFAULT_LAYOUT, FlightData, load_layout, nice_step, plot_segments, validate_layout
 from ground_receivers import LoggedReceiver
 from flight_render import BG, PANEL, TEXT, MUTED, WARN, BAD, readable_color
+from test_aim_orientation import gyro_layout
 
 
 def contrast_on_white(color):
@@ -90,7 +91,7 @@ class LayoutTests(unittest.TestCase):
 
     def test_default_and_strict_validation(self):
         layout = load_layout(DEFAULT_LAYOUT)
-        self.assertEqual(len(layout.plots), 6)
+        self.assertEqual(len(layout.plots), 5)      # altitude full-width row + 2x2 grid
         self.assertEqual(len(layout.readouts), 12)
         self.assertFalse(any("continuity" in row.title.lower() for row in layout.readouts))
         self.assertEqual({t.input for p in layout.plots for t in p.traces}, {"witness", "aim", "featherweight"})
@@ -143,7 +144,7 @@ class HistoryTests(unittest.TestCase):
                 model.set_window(bad)
 
     def test_default_aim_acceleration_uses_independent_raw_axis(self):
-        model = FlightData(load_layout(DEFAULT_LAYOUT))
+        model = FlightData(gyro_layout())
         for value in (1, 9):
             model.accept_aim('A', 'z_acceleration_payload/v1', {'z_acceleration': value}, value, False)
         model.accept('witness', 'W', 'sensors', {'filtered_accel[0]': 2, 'gyro[0]': 3}, 10)
@@ -283,16 +284,16 @@ class HistoryTests(unittest.TestCase):
         def witness(x, y, t, snapshot=False):
             model.accept("witness", "W", "state", {"position[0]": x, "position[1]": y}, t, snapshot=snapshot)
         witness(1000, 2000, 1, snapshot=True)
-        self.assertIsNone(model.snapshot()[4][0].latest)   # cached data never counts
+        self.assertIsNone(model.snapshot()[3][0].latest)   # cached data never counts
         # Witness Kalman ENU has its origin at the pad: distance = hypot(E, N).
         witness(3, 4, 2)
-        self.assertEqual(model.snapshot()[4][0].latest, 5)
+        self.assertEqual(model.snapshot()[3][0].latest, 5)
         witness(0, 0, 1.5)  # Out-of-order updates do not move the latest reading.
-        self.assertEqual(model.snapshot()[4][0].latest, 5)
+        self.assertEqual(model.snapshot()[3][0].latest, 5)
         model.reset_pad()
-        self.assertIsNone(model.snapshot()[4][0].latest)
+        self.assertIsNone(model.snapshot()[3][0].latest)
         witness(6, 8, 4)
-        self.assertEqual(model.snapshot()[4][0].latest, 10)
+        self.assertEqual(model.snapshot()[3][0].latest, 10)
         self.assertFalse(model.origins)
         model.accept_aim("A", "gnss_payload/v1", {"gnss_coordinate.latitude": 0,
                          "gnss_coordinate.longitude": 0, "satellites_used": 0}, 6, False)
@@ -300,7 +301,7 @@ class HistoryTests(unittest.TestCase):
         for longitude, stamp in ((0, 7), (.001, 8)):
             model.accept_aim("A", "gnss_payload/v1", {"gnss_coordinate.latitude": 0,
                              "gnss_coordinate.longitude": longitude, "satellites_used": 9}, stamp, False)
-        self.assertAlmostEqual(model.snapshot()[4][1].latest, 111.1949, places=3)
+        self.assertAlmostEqual(model.snapshot()[3][1].latest, 111.1949, places=3)
 
     def test_shared_pad_reference_sets_agl_and_distance(self):
         from pad_reference import PadReference
@@ -316,7 +317,7 @@ class HistoryTests(unittest.TestCase):
         model.accept_record("featherweight", {"source": "COM22", "received_mono": 2, "packet": tracker})
         altitude = next(i for i, row in enumerate(model.layout.plots) if row.title == "Altitude AGL")
         self.assertAlmostEqual(model.snapshot()[altitude][1].latest, 500 * 0.3048)
-        self.assertAlmostEqual(model.snapshot()[4][2].latest, 111.19, places=1)
+        self.assertAlmostEqual(model.snapshot()[3][2].latest, 111.19, places=1)
         # Witness GPS AGL needs the GPS-locked bit; pad MSL = 304.8 m.
         fields = {"gps_altitude": 404.8, "status.gps_locked": 1}
         derived = model._derive_agl("witness", "W", "state", fields, False, True)
@@ -367,9 +368,11 @@ class FlightGuiTests(unittest.TestCase):
                 flight.pause_action.trigger()
                 self.assertFalse(flight.paused)
                 self.assertIs(app.notebook.currentWidget(), flight)
-                self.assertEqual(flight.splitter.orientation(), QtCore.Qt.Orientation.Horizontal)
-                self.assertEqual(flight.splitter.count(), 3)
-                self.assertEqual(len(flight.graphs), 6)
+                # Portrait-first: readout band on top, graphs below (vertical splitter).
+                self.assertEqual(flight.splitter.orientation(), QtCore.Qt.Orientation.Vertical)
+                self.assertEqual(flight.splitter.count(), 2)
+                self.assertEqual(len(flight.graphs), 5)
+                flight.apply_layout(gyro_layout())      # the default omits Gyro; this test covers it
                 receiver = app.witness.make_receiver()  # No connection opened.
                 decoder = PacketDecoder(lambda packet: receiver.accept({"source": "TEST_flight",
                     "received_at": time.time(), "packet": packet}))
@@ -475,9 +478,9 @@ class FlightGuiTests(unittest.TestCase):
                 app.aim.receiver.on_sample("localhost:1883/entacore/aim/1234", "rssi_payload/v1",
                                            {"rssi": -99}, time.monotonic(), False)
                 flight.redraw()
-                self.assertEqual(flight.data.snapshot()[5][1].latest, -99)
+                self.assertEqual(flight.data.snapshot()[4][1].latest, -99)
                 flight.clear()
-                self.assertIsNone(flight.data.snapshot()[5][1].latest)
+                self.assertIsNone(flight.data.snapshot()[4][1].latest)
                 self.assertIsNotNone(app.featherweight.on_record)
             finally:
                 app.close()

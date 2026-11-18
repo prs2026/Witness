@@ -25,6 +25,11 @@ MUTED = "#444444"
 WARN = "#704000"
 BAD = "#990000"
 STATES = ("PAD IDLE", "BOOST", "COAST", "DESCENT", "LANDED")
+STALE_S = 3.0              # readouts older than this are greyed (audit H10)
+STALE_GREY = "#8a8a8a"
+SENSOR_BITS = ((9, "low-g"), (10, "gyro"), (11, "IMU temp"), (13, "high-g"), (14, "baro"))
+STRIP_COLORS = {"bad": ("#b00000", "#ffffff"), "warn": ("#ffd24d", "#171717"), "ok": ("#d8efdf", "#0a3a1a"),
+                "muted": ("#e4e4e4", "#444444")}
 OLD_MARKERS = ("AGE", "STALE", "INVALID", "SNAPSHOT")
 
 
@@ -62,6 +67,13 @@ def value_text(trace, history):
     if "voltage" in trace.field.lower():
         return f"{value:.3f}"
     return f"{value:.5g}"
+
+
+def dim(color, history, end):
+    """Grey a readout whose data is old, invalid, a snapshot or missing."""
+    if history.received is None or history.quality != "LIVE" or end - history.received >= STALE_S:
+        return STALE_GREY
+    return color
 
 
 def hitl_trace(row, data):
@@ -114,8 +126,24 @@ def short_title(title):
 
 # ------------------------------------------------------------- panels
 
-def banner(layout, histories, end, *, paused=False, load_error=None):
-    """(text, background) for the status banner above the dashboard."""
+def source_text(status):
+    """"W COM7" style text for the sources Flight View currently follows."""
+    if not status:
+        return ""
+    parts = [f"{kind[0].upper()}: {source}" for kind, source in sorted(status["sources"].items())]
+    note = status.get("switch")
+    if note:
+        parts.append(f"switched {note[1]} -> {note[2]}")
+    return " | ".join(parts)
+
+
+def banner(layout, histories, end, *, paused=False, load_error=None, status=None):
+    """(text, background) for the status banner above the dashboard.
+
+    With ``status`` (FlightData.status_snapshot) green LIVE means the essential
+    telemetry is fresh: Witness state + position/altitude packets within 3 s,
+    not "any one of 45 traces" (audit H10).
+    """
     flat = [(trace, history) for row, data in zip(layout.rows, histories)
             for trace, history in zip(row.traces, data) if trace.enabled]
     fresh = sum(h.quality == "LIVE" and h.received is not None and end - h.received < 2 for _, h in flat)
@@ -123,10 +151,30 @@ def banner(layout, histories, end, *, paused=False, load_error=None):
     hitl = any(trace.format == "hitl" and h.latest == 1 for trace, h in flat)
     state = "PAUSED - DISPLAY FROZEN; receiving/logging continues" if paused else (
         f"LIVE - {fresh}/{len(flat)} readings fresh" if fresh else "WAITING / STALE - no fresh live readings")
+    partial = False
+    if status is not None and not paused:
+        ages = {k: max(0.0, end - t) for k, t in status["essential"].items()}
+        witness = ages.get("witness")
+        others = [a for k, a in ages.items() if k != "witness"]
+        if witness is not None and witness < STALE_S:
+            fresh = max(fresh, 1)
+            state = f"LIVE - Witness state/position {witness:.1f}s old | {fresh}/{len(flat)} readings fresh"
+        elif others and min(others) < STALE_S:
+            partial = True
+            lag = f"STALE {witness:.0f}s" if witness is not None else "NO DATA"
+            state = f"WITNESS {lag} - other sources live"
+            fresh = 0
+        else:
+            fresh = 0
+            lag = f"last Witness packet {witness:.0f}s ago" if witness is not None else "no Witness state received"
+            state = f"WAITING / STALE - {lag}"
+        src = source_text(status)
+        if src:
+            state += f" | {src}"
     warning = ("HITL - SIMULATED SENSORS | " if hitl else "") + ("TEST DATA | " if simulated else "")
     if load_error:
         warning = "LAYOUT ERROR (fallback active) | " + warning
-    background = ("#fff2a8" if paused or simulated or hitl or load_error
+    background = ("#fff2a8" if paused or simulated or hitl or load_error or partial
                   else "#d8efdf" if fresh else "#ffd5cf")
     return f"{warning}{state} | {layout.window_seconds:g}s", background
 
@@ -147,7 +195,7 @@ def flight_panel(layout, histories, end):
             unit = trace.unit or row.unit
             status, status_color = quality_text(history, end)
             cells.append((f"{trace.label}: {value_text(trace, history)} {unit}".rstrip(),
-                          readable_color(trace.color), status, status_color))
+                          dim(readable_color(trace.color), history, end), status, status_color))
         metrics.append((row.title, cells))
     state = None
     states = [(row, data) for row, data in rows if row.group == "state"]
@@ -155,11 +203,76 @@ def flight_panel(layout, histories, end):
         row, data = states[0]
         trace, history = row.traces[0], data[0]
         status, status_color = quality_text(history, end)
-        state = {"value": value_text(trace, history), "color": readable_color(trace.color),
+        state = {"value": value_text(trace, history), "color": dim(readable_color(trace.color), history, end),
                  "status": status, "status_color": status_color,
                  "source": history.source or "Waiting for Witness",
                  "hitl": hitl_line(row, data, end)}
     return {"metrics": metrics, "state": state}
+
+
+def status_strip(status, end):
+    """[(text, kind)] chips for the Witness status word, kind: bad/warn/ok/muted.
+
+    Red: NOT LOGGING (log slots full), logging/flash failed, maintenance image.
+    Amber: resumed after reset, HITL, no GPS fix, sensors not ready, old status.
+    Green chips go grey when the status word is older than 3 s; red ones never do.
+    """
+    vehicle = status.get("vehicle") if status else None
+    if not vehicle:
+        return [("NO WITNESS STATUS RECEIVED", "muted")]
+    bits = vehicle["bits"]
+    age = max(0.0, end - vehicle["received"])
+    old = age >= STALE_S or vehicle.get("snapshot")
+    chips = []
+    bad_log = False
+    if bits.get("status.log_slots_full"):
+        chips.append(("NOT LOGGING - LOG SLOTS FULL (erase/clear to log)", "bad"))
+        bad_log = True
+    if bits.get("status.logging_failed"):
+        chips.append(("LOGGING FAILED (NAND write)", "bad"))
+        bad_log = True
+    if bits.get("status.flash_init_failed"):
+        chips.append(("FLASH INIT FAILED - NOT LOGGING", "bad"))
+        bad_log = True
+    if bits.get("status.maintenance"):
+        chips.append(("MAINTENANCE IMAGE - NOT FLIGHT READY", "bad"))
+    if not bad_log:
+        chips.append(("LOGGING OK", "muted" if old else "ok"))
+    if bits.get("status.resumed"):
+        chips.append(("RESUMED AFTER RESET", "warn"))
+    if bits.get("status.hitl_active"):
+        chips.append(("HITL ACTIVE - SIMULATED SENSORS", "warn"))
+    if bits.get("status.gps_locked"):
+        chips.append(("GPS LOCKED", "muted" if old else "ok"))
+    else:
+        held = vehicle.get("position")
+        extra = f" - last known position {max(0.0, end - held[2]):.0f}s old" if held else ""
+        chips.append((f"GPS NO FIX{extra}", "warn"))
+    value = vehicle["status"]
+    missing = [name for bit, name in SENSOR_BITS if not (value >> bit) & 1]
+    chips.append(("SENSORS READY", "muted" if old else "ok") if not missing
+                 else (f"SENSOR NOT READY: {', '.join(missing)}", "warn"))
+    if status.get("relative_agl"):
+        chips.append(("GPS ALT RELATIVE TO FIRST SAMPLE (no pad altitude)", "muted"))
+    if old:
+        chips.append((f"STATUS {age:.0f}s OLD" + (" (snapshot)" if vehicle.get("snapshot") else ""), "warn"))
+    return chips
+
+
+def landed_line(status, end):
+    """(text, kind) for the 0x09 landed position, or None before one arrived."""
+    landed = status.get("landed") if status else None
+    if not landed:
+        return None
+    age = max(0.0, end - landed["received"])
+    flags = (" PING-REPLY" if landed.get("ping_reply") else "") + (" STALE-FIX" if landed.get("stale") else "")
+    if not landed.get("position_valid") or landed.get("latitude") is None:
+        return (f"LANDED PACKET: NO VALID FIX (rx {age:.0f}s ago){flags}", "warn")
+    fix = landed.get("fix_age")
+    fix_text = f", fix {fix:.0f}s old" if isinstance(fix, (int, float)) else ""
+    return (f"LANDED FIX {landed['latitude']:.6f}, {landed['longitude']:.6f} alt "
+            f"{landed['gps_altitude']:.0f} m MSL (rx {age:.0f}s ago{fix_text}){flags}",
+            "warn" if landed.get("stale") else "ok")
 
 
 def status_rows(layout, histories, end, group):
@@ -216,21 +329,39 @@ def legend(plot, histories, end):
 
 
 def trace_arrays(points, start, end, gap):
-    """Visible samples as float arrays with NaN breaks at invalid values and gaps."""
-    xs, ys = [], []
-    previous = None
-    for stamp, value in points:
-        if stamp < start or stamp > end:
-            continue
-        if value is None or (previous is not None and stamp - previous > gap):
-            if xs and not math.isnan(ys[-1]):
-                xs.append(stamp if value is None else previous)
-                ys.append(math.nan)
-        if value is not None:
-            xs.append(stamp)
-            ys.append(value)
-        previous = stamp
-    return np.asarray(xs, dtype=float), np.asarray(ys, dtype=float)
+    """Visible samples as float arrays with NaN breaks at invalid values and gaps.
+
+    ``points`` is a flight_data.PointSnapshot/PointBuffer (numpy, fast) or any
+    iterable of (time, value|None). Vectorised: no per-point Python loop.
+    A break (NaN) is emitted only after a valid sample, before an invalid sample
+    (at its time) or before a sample that follows a gap (at the previous time).
+    """
+    if hasattr(points, "arrays"):
+        t, v = points.arrays()
+    else:
+        items = list(points)
+        t = np.fromiter((p[0] for p in items), float, len(items))
+        v = np.fromiter((math.nan if p[1] is None else p[1] for p in items), float, len(items))
+    mask = (t >= start) & (t <= end)
+    t, v = t[mask], v[mask]
+    n = len(t)
+    if n == 0:
+        return np.empty(0), np.empty(0)
+    bad = np.isnan(v)
+    prev_ok = np.zeros(n, bool)
+    prev_ok[1:] = ~bad[:-1]
+    gapped = np.zeros(n, bool)
+    gapped[1:] = (t[1:] - t[:-1]) > gap
+    brk = prev_ok & (bad | gapped)
+    brk_x = np.where(bad, t, np.concatenate(([t[0]], t[:-1])))
+    keep = ~bad
+    count = brk.astype(np.intp) + keep.astype(np.intp)
+    ends = np.cumsum(count)
+    xs, ys = np.empty(int(ends[-1])), np.empty(int(ends[-1]))
+    xs[ends[keep] - 1], ys[ends[keep] - 1] = t[keep], v[keep]
+    first = ends[brk] - count[brk]
+    xs[first], ys[first] = brk_x[brk], math.nan
+    return xs, ys
 
 
 def axis_ranges(plot, series, layout, pixels=300):

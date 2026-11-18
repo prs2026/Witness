@@ -38,6 +38,9 @@ WITNESS_FIELDS = {
     "maintenance_status": ("beacon_version", "mode", "mode_name", "flags", "ap_up", "usb_disk", "store_mounted", "recovery",
                            "unconfirmed", "radio_ok", "store_version", "command_set", "radio_settings",
                            "maint_image_id", "flight_image_id", "battery_voltage", "uptime", "log_files"),
+    "landed_position": ("status", "flight_state", "uptime", "latitude", "longitude", "gps_altitude", "fix_age",
+                        "flags", "position_valid", "stale", "ping_reply", "utc_aligned", "satellites",
+                        "battery_voltage"),
     "iris_debug": ("status", "uptime", "mcu_temperature", "iris_battery_voltage",
                    "current_sense[0]", "current_sense[1]", "current_sense[2]"),
 }
@@ -105,6 +108,15 @@ def witness_status_fields(packet):
             # Status byte 1 bit 3: GPS locked; bit 4: HITL active (simulated sensors).
             fields[f"{status_field}.gps_locked"] = (status >> 3) & 1
             fields[f"{status_field}.hitl_active"] = (status >> 4) & 1
+            # Status byte 1 bits 5-7 and byte 0 failure/ready bits (audit H8): what the
+            # operator must not miss. Names follow witness_protocol.
+            fields[f"{status_field}.maintenance"] = (status >> 5) & 1
+            fields[f"{status_field}.resumed"] = (status >> 6) & 1
+            fields[f"{status_field}.log_slots_full"] = (status >> 7) & 1
+            fields[f"{status_field}.flash_init_failed"] = (status >> 12) & 1
+            fields[f"{status_field}.logging_failed"] = (status >> 15) & 1
+            ready = all((status >> bit) & 1 for bit in (9, 10, 11, 13, 14))
+            fields[f"{status_field}.sensors_ready"] = 1 if ready else 0
     return fields
 
 

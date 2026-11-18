@@ -17,10 +17,14 @@ Graphs.
 from __future__ import annotations
 
 import sys
+import threading
+import time
+import traceback
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 import pyqtgraph as pg
 
+from link_health import RateLimited
 from qt_common import Throttle, color, make_plot, message_error
 import monitor_core
 from monitor_core import (  # noqa: F401 - re-exported API
@@ -34,7 +38,8 @@ from witness_protocol import *  # noqa: F401,F403 - re-exported protocol API
 from witness_protocol import status_maintenance  # noqa: E402
 from witness_protocol import (  # explicit for linters / readers
     CAMERA_STATUS_FLAG_LABELS, FLIGHT_STATE_LABELS, IMU_CALIBRATION_COMMANDS, QUICK_COMMANDS,
-    SECTION_SPECS, STATUS_BYTE1_FLAG_LABELS, STATUS_FLAG_LABELS, PacketDecoder, build_command_packet,
+    LOG_SLOTS_FULL_MASK, SECTION_SPECS, STATUS_BYTE1_FLAG_LABELS, STATUS_FLAG_LABELS, PacketDecoder,
+    build_command_packet,
     build_imu_calibration_packet, decode_status, format_display_value, format_gps_satellites,
     is_status_field, parse_packet,
 )
@@ -53,6 +58,64 @@ GRAPH_MS = 50          # graph redraw throttle (<= 20 Hz)
 AGE_MS = 100
 AUTO_MS = 250
 GRAPH_MIN_HEIGHT = 210
+
+
+# ---------------------------------------------------------------- safety net
+# PyQt6 aborts the whole process (qFatal) when a slot raises and sys.excepthook is
+# still the default. During a flight that must never happen (audit H2): install
+# a hook that logs the traceback to a file and tells the operator instead.
+EXCEPTION_LOG = LOG_DIR / "horizon_exceptions.log"
+_exception_sinks = []
+_exception_limit = RateLimited(5.0)
+_hook_installed = False
+
+
+def _record_exception(where, exc_type, exc, tb):
+    """Log one uncaught exception; never raises. Repeats are rate-limited per type."""
+    try:
+        text = "".join(traceback.format_exception(exc_type, exc, tb))
+        stamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        try:
+            EXCEPTION_LOG.parent.mkdir(parents=True, exist_ok=True)
+            with EXCEPTION_LOG.open("a", encoding="utf-8") as handle:
+                handle.write(f"[{stamp}] {where}\n{text}\n")
+        except Exception:  # noqa: BLE001 - a full disk must not make this worse
+            pass
+        try:
+            sys.stderr.write(f"[{stamp}] {where}\n{text}")
+        except Exception:  # noqa: BLE001
+            pass
+        name = getattr(exc_type, "__name__", "?")
+        allowed, skipped = _exception_limit.allow((where, name))
+        if allowed:
+            summary = f"UNCAUGHT {where}: {name}: {exc}"
+            if skipped:
+                summary += f" ({skipped} similar suppressed)"
+            for sink in list(_exception_sinks):
+                try:
+                    sink(summary)
+                except Exception:  # noqa: BLE001
+                    pass
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def install_global_excepthook(sink=None):
+    """Install sys.excepthook, threading.excepthook and sys.unraisablehook (once).
+    `sink(summary_line)` is called (rate-limited, maybe on any thread) for the
+    in-app console / status bar. Safe to call repeatedly; returns True the first time."""
+    global _hook_installed
+    if sink is not None and sink not in _exception_sinks:
+        _exception_sinks.append(sink)
+    if _hook_installed:
+        return False
+    _hook_installed = True
+    sys.excepthook = lambda t, e, tb: _record_exception("GUI/main thread", t, e, tb)
+    threading.excepthook = lambda a: _record_exception(
+        f"thread {getattr(a.thread, 'name', '?')}", a.exc_type, a.exc_value, a.exc_traceback)
+    sys.unraisablehook = lambda u: _record_exception(
+        "unraisable", type(u.exc_value), u.exc_value, u.exc_traceback)
+    return True
 
 
 def show_error(parent, title, text):
@@ -203,6 +266,9 @@ class MonitorPanel(QtWidgets.QWidget):
     """
 
     titleChanged = QtCore.pyqtSignal(str)
+    # "LINK LOST - ..." text (empty when the link is fine): a host window can show it
+    # in its own status bar; the panel also shows it as a banner and in the title.
+    linkBannerChanged = QtCore.pyqtSignal(str)
 
     def __init__(self, parent=None, *, on_title=None, **options):
         super().__init__(parent)
@@ -218,6 +284,11 @@ class MonitorPanel(QtWidgets.QWidget):
         self.status_indicators = {}
         self._maintenance_on = False
         self._maintenance_beacon = False
+        self._link_lost = False
+        self._exception_text = ""
+        self._exception_until = 0.0
+        self._slot_errors = RateLimited(5.0)
+        install_global_excepthook(self._note_exception)
         self._build()
         self.core.window_title.subscribe(self._title_changed)
         for key in MAINTENANCE_STATUS_KEYS:
@@ -225,16 +296,73 @@ class MonitorPanel(QtWidgets.QWidget):
                 self.core.values[key].subscribe(lambda _text, key=key: self._update_maintenance(key))
         if MAINTENANCE_BEACON_KEY in self.core.values:
             self.core.values[MAINTENANCE_BEACON_KEY].subscribe(lambda _text: self._update_maintenance_beacon())
+        self.core.link_banner.subscribe(self._link_banner_changed, call_now=True)
+        self.core.log_warning.subscribe(self._log_warning_changed, call_now=True)
         self._graph_throttle = Throttle(self.draw_graphs, GRAPH_MS, self)
-        self._events_timer = self._timer(EVENT_MS, self.process_events)
-        self._auto_timer = self._timer(AUTO_MS, self.core.auto_poll)
-        self._age_timer = self._timer(AGE_MS, self.update_age_indicators)
+        self._events_timer = self._timer(EVENT_MS, self._guarded(self.process_events, "event pump"))
+        self._auto_timer = self._timer(AUTO_MS, self._guarded(self.core.auto_poll, "auto-connect"))
+        self._age_timer = self._timer(AGE_MS, self._guarded(self.update_age_indicators, "age indicators"))
         self.process_events()
         if self.core._test_start_id is not None:
             QtCore.QTimer.singleShot(0, self._start_requested_test)
 
+    # ---------------------------------------------- failure containment / link
+    def _guarded(self, slot, name):
+        """Timer slot wrapper: an exception is logged and reported (rate-limited),
+        never raised into Qt, and the timer keeps running."""
+        def run():
+            try:
+                return slot()
+            except Exception as exc:  # noqa: BLE001
+                _record_exception(f"timer slot {name}", type(exc), exc, exc.__traceback__)
+                allowed, skipped = self._slot_errors.allow(name)
+                if allowed:
+                    self._note_exception(f"SLOT_ERROR[{name}] {type(exc).__name__}: {exc}"
+                                         + (f" ({skipped} similar suppressed)" if skipped else ""))
+        return run
+
+    def _note_exception(self, summary):
+        """Console + status-bar notice of an uncaught exception (any thread)."""
+        try:
+            self.core.console_write(summary)
+        except Exception:  # noqa: BLE001
+            pass
+        self._exception_text = summary
+        self._exception_until = time.monotonic() + 60.0
+
+    def _link_banner_changed(self, text):
+        self._link_lost = bool(text) and not text.startswith("WITNESS RESETTING")
+        label = getattr(self, "link_banner_label", None)
+        if label is not None:
+            label.setText(text)
+            label.setVisible(bool(text))
+            colors = ("background:#ff8c00; color:black;" if text.startswith("WITNESS RESETTING")
+                      else "background:#c00000; color:white;")
+            label.setStyleSheet(colors + " font-size:16pt; font-weight:bold; padding:8px;"
+                                "border:3px solid #ffdd00;")
+        self._title_changed(self.core.window_title.get())
+        self.linkBannerChanged.emit(text)
+
+    def _log_warning_changed(self, text):
+        label = getattr(self, "log_warning_label", None)
+        if label is not None:
+            label.setText(text)
+            label.setVisible(bool(text))
+
+    def _update_log_full(self):
+        """LOG_SLOTS_FULL (status byte 1 bit 7): Witness is NOT logging. Banner on every tab."""
+        full = any(isinstance(self.core.raw_values.get(key), int)
+                   and bool(self.core.raw_values[key] & LOG_SLOTS_FULL_MASK)
+                   for key in MAINTENANCE_STATUS_KEYS)
+        label = getattr(self, "log_full_banner", None)
+        if label is not None and label.isVisibleTo(self) != full:
+            label.setVisible(full)
+            if full:
+                self.core.console_write("WITNESS LOG SLOTS FULL: NOT LOGGING until logs are cleared/erased")
+
     def _update_maintenance(self, key):
         """Show/hide the maintenance banner from the newest Witness status."""
+        self._update_log_full()
         value = self.core.raw_values.get(key)
         if not isinstance(value, int):
             return
@@ -311,6 +439,33 @@ class MonitorPanel(QtWidgets.QWidget):
         root.addWidget(self.maintenance_banner)
         # Hide only after parenting: reparenting a hidden widget un-hides it.
         self.maintenance_banner.setVisible(False)
+        # LINK LOST (no data > 3 s / reconnecting), LOG FULL (not logging), log-file trouble.
+        self.link_banner_label = QtWidgets.QLabel()
+        self.link_banner_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.link_banner_label.setWordWrap(True)
+        root.addWidget(self.link_banner_label)
+        self.link_banner_label.setVisible(False)
+        self.log_full_banner = QtWidgets.QLabel(
+            "WITNESS LOG SLOTS FULL - NOT LOGGING. Clear or erase the logs (Clear Logs / Erase Logs).")
+        self.log_full_banner.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.log_full_banner.setWordWrap(True)
+        self.log_full_banner.setStyleSheet(
+            "background:#c00000; color:white; font-size:16pt; font-weight:bold; padding:8px;"
+            "border:3px solid #ffdd00;")
+        root.addWidget(self.log_full_banner)
+        self.log_full_banner.setVisible(False)
+        self.log_warning_label = QtWidgets.QLabel()
+        self.log_warning_label.setWordWrap(True)
+        self.log_warning_label.setStyleSheet("background:#fff2a8; color:#600000; font-weight:bold; padding:4px;")
+        root.addWidget(self.log_warning_label)
+        self.log_warning_label.setVisible(False)
+        self.link_label = wrap_label(muted=True)
+        bind_label(core.link_summary, self.link_label)
+        root.addWidget(self.link_label)
+        self.exception_label = wrap_label()
+        self.exception_label.setStyleSheet("background:#ffd0d0; color:#600000; padding:2px;")
+        root.addWidget(self.exception_label)
+        self.exception_label.setVisible(False)
 
         self.tcp_entries = []
         tcp_widgets = []
@@ -553,6 +708,8 @@ class MonitorPanel(QtWidgets.QWidget):
     def _title_changed(self, text):
         if self._maintenance_on:
             text = MAINTENANCE_TITLE_PREFIX + text
+        if self._link_lost:
+            text = "LINK LOST | " + text
         self.titleChanged.emit(text)
         if self.on_title is not None:
             self.on_title(text)
@@ -683,6 +840,12 @@ class MonitorPanel(QtWidgets.QWidget):
 
     def update_age_indicators(self):
         self.core.update_feed_status()
+        self.core.update_link_health()
+        show = bool(self._exception_text) and time.monotonic() < self._exception_until
+        if self.exception_label.isVisibleTo(self) != show:
+            self.exception_label.setVisible(show)
+        if show:
+            self.exception_label.setText(self._exception_text)
         for key, age in self.core.data_ages().items():
             label = self.age_labels.get(key)
             if label is None:

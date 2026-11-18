@@ -1,10 +1,27 @@
 """Quaternion-derived angular rates; synthetic rotations have known answers."""
 
+import json
 import math
 import unittest
 
 from aim_orientation import AimAngularRateEstimator, GYRO_FIELDS
-from flight_data import DEFAULT_LAYOUT, FlightData, load_layout
+from flight_data import DEFAULT_LAYOUT, FlightData, load_layout, validate_layout
+
+
+def gyro_layout():
+    """The default layout with the Gyro graph at plots[2]. The default dashboard does
+    not ship that graph (portrait 1 + 2x2 arrangement), so it is added here."""
+    with open(DEFAULT_LAYOUT, encoding="utf-8") as handle:
+        document = json.load(handle)
+    if not any(plot["title"].startswith("Gyro") for plot in document["plots"]):
+        axes = (("WX", "#004b80"), ("WY", "#803900"), ("WZ", "#006020"))
+        traces = [{"label": label, "input": "witness", "packet": ["sensors", "witness_debug"],
+                   "field": f"gyro[{i}]", "color": color} for i, (label, color) in enumerate(axes)]
+        traces += [{"label": label + "~", "input": "aim", "packet": "orientation_payload/v1",
+                    "field": f"_derived.gyro_dps[{i}]", "color": color} for i, (label, color) in
+                   enumerate((("AX", "#004b80"), ("AY", "#803900"), ("AZ", "#006020")))]
+        document["plots"].insert(2, {"title": "Gyro (A est.)", "unit": "deg/s", "traces": traces})
+    return validate_layout(document)
 
 
 def rotation(axis, degrees):
@@ -93,7 +110,7 @@ class AngularRateTests(unittest.TestCase):
         self.assertLessEqual(len(estimator.previous), 128)
 
     def test_flight_routing_reset_and_no_duplicate_freshness(self):
-        model = FlightData(load_layout(DEFAULT_LAYOUT))
+        model = FlightData(gyro_layout())
         def accept(q, seconds, received, retained=False):
             model.accept_aim('A', 'orientation_payload/v1', sample(q, seconds), received, retained)
         accept((1, 0, 0, 0), 0, 1)
@@ -116,7 +133,7 @@ class AngularRateTests(unittest.TestCase):
         self.assertIsNone(model.snapshot()[2][3].latest)
         accept(rotation((1, 0, 0), 36), .4, 1.6)
         self.assertAlmostEqual(model.snapshot()[2][3].latest, 90)
-        model.configure(load_layout(DEFAULT_LAYOUT))
+        model.configure(gyro_layout())
         self.assertFalse(model.aim_rates.previous)
 
 

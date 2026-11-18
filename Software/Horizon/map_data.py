@@ -27,9 +27,9 @@ from geodesy import enu_range_bearing, enu_to_geodetic, geodetic_to_enu, valid_l
 from pad_reference import FT_TO_M, PadReference, record_time
 
 TRACK_POINTS = 5000
-SOURCES = ("kf", "wgps", "fw", "aim")
+SOURCES = ("kf", "wgps", "fw", "aim", "land")
 SOURCE_LABELS = {"kf": "Witness Kalman (ENU)", "wgps": "Witness GPS", "fw": "Featherweight tracker",
-                 "aim": "AIM Xtra GPS"}
+                 "aim": "AIM Xtra GPS", "land": "Witness landed position (0x09)"}
 AIM_GNSS_TOPIC = "gnss_payload/v1"
 
 
@@ -57,6 +57,8 @@ class MapData:
         self._cache = {}
         self._seq = 0
         self.status = (None, None, None)     # flight state, GPS lock, HITL
+        self.last_known = None               # (t, lat, lon): Witness position while its GPS has NO fix
+        self.land_stale = False
         self.version = 0
 
     def clear(self):
@@ -64,6 +66,7 @@ class MapData:
             for track in self._raw.values():
                 track.clear()
             self._cache.clear()
+            self.last_known = None
             self.version += 1
 
     # ------------------------------------------------------------- input
@@ -74,6 +77,8 @@ class MapData:
                 return False
             t = record_time(record)
             if kind == "witness":
+                if packet.get("packet") == "landed_position":
+                    return self._landed(packet, t)
                 return self._witness(packet, t)
             if kind == "featherweight":
                 return self._featherweight(packet, t)
@@ -104,6 +109,8 @@ class MapData:
             if track and item[0] < track[-1][1]:
                 return False      # out of order
             self._seq += 1
+            if name == "kf":
+                item = (*item, self.pad.segment)     # the flight segment this Kalman point belongs to
             track.append((self._seq, *item))
             self.version += 1
         return True
@@ -127,7 +134,24 @@ class MapData:
         lat, lon, alt = packet.get("latitude"), packet.get("longitude"), packet.get("gps_altitude")
         if locked == 1 and valid_lat_lon(lat, lon):
             added = self._append("wgps", (t, lat, lon, alt if _finite(alt) else None)) or added
+            with self._lock:
+                self.last_known = None
+        elif locked == 0 and valid_lat_lon(lat, lon):
+            # The flight computer holds its LAST GOOD position when the fix goes stale:
+            # show it as "last known", never as a new track point (and never (0, 0)).
+            with self._lock:
+                self.last_known = (t, lat, lon)
+                self.version += 1
         return added
+
+    def _landed(self, packet, t):
+        """0x09 landed position: the recovery marker (one point per packet)."""
+        lat, lon = packet.get("latitude"), packet.get("longitude")
+        if packet.get("position_valid") is False or not valid_lat_lon(lat, lon):
+            return False
+        alt = packet.get("gps_altitude")
+        self.land_stale = bool(packet.get("stale"))
+        return self._append("land", (t, lat, lon, alt if _finite(alt) else None))
 
     def _featherweight(self, packet, t):
         if packet.get("packet") != "GPS_STAT" or packet.get("unit_type") != "TRACKER":
@@ -152,7 +176,7 @@ class MapData:
         if site is not None:
             return site.lat, site.lon, "witness"
         with self._lock:
-            for name in ("wgps", "fw", "aim"):
+            for name in ("wgps", "fw", "aim", "land"):
                 if self._raw[name]:
                     _, _, lat, lon, _ = self._raw[name][0]
                     return lat, lon, f"first {name} fix"
@@ -163,10 +187,20 @@ class MapData:
         pad_alt = self.pad.altitude_msl()
         site = self.pad.witness_launch_site()
         kf_origin = (site.lat, site.lon) if site is not None else (tuple(ref[:2]) if ref else None)
-        key = (tuple(ref[:2]) if ref else None, pad_alt[0] if pad_alt else None, kf_origin)
         with self._lock:
             raw = {name: list(track) for name, track in self._raw.items()}
             status, version = self.status, self.version
+            last_known, land_stale = self.last_known, self.land_stale
+        # Each flight segment keeps the origin it had (one-way flights: a later pad must
+        # not re-project an earlier, finished track).
+        origins = {}
+        for item in raw["kf"]:
+            seg = item[-1]
+            if seg not in origins:
+                old = self.pad.witness_launch_site(seg)
+                origins[seg] = (old.lat, old.lon) if old is not None else (tuple(ref[:2]) if ref else None)
+        key = (tuple(ref[:2]) if ref else None, pad_alt[0] if pad_alt else None, kf_origin,
+               tuple(sorted(origins.items())))
         tracks = {}
         for name, items in raw.items():
             cached_key, converted = self._cache.get(name, (None, {}))
@@ -177,7 +211,8 @@ class MapData:
                 seq = item[0]
                 point = converted.get(seq)
                 if point is None and seq not in converted:
-                    point = self._convert(name, item[1:], ref, pad_alt, kf_origin)
+                    point = self._convert(name, item[1:], ref, pad_alt,
+                                          origins.get(item[-1], kf_origin) if name == "kf" else kf_origin)
                 keep[seq] = point
             self._cache[name] = (key, keep)
             tracks[name] = [p for p in keep.values() if p is not None]
@@ -187,14 +222,18 @@ class MapData:
                 p = points[-1]
                 rng, bearing = enu_range_bearing(p.east, p.north)
                 latest[name] = {"point": p, "range": rng, "bearing": bearing}
+        known = None
+        if last_known is not None and ref is not None:
+            e, n, _ = geodetic_to_enu(last_known[1], last_known[2], 0.0, ref[0], ref[1], 0.0)
+            known = TrackPoint(last_known[0], e, n, None, last_known[1], last_known[2])
         return {"reference": ref, "pad": self.pad.position(), "pad_alt": pad_alt, "tracks": tracks,
                 "latest": latest, "status": status, "version": version,
-                "kf_placed": site is not None}
+                "kf_placed": site is not None, "last_known": known, "land_stale": land_stale}
 
     @staticmethod
     def _convert(name, item, ref, pad_alt, kf_origin):
         if name == "kf":
-            t, e, n, u = item
+            t, e, n, u = item[:4]
             if ref is None or kf_origin is None or kf_origin == tuple(ref[:2]):
                 return TrackPoint(t, e, n, u)
             lat, lon, _ = enu_to_geodetic(e, n, 0.0, *kf_origin)

@@ -1172,6 +1172,7 @@ class Dataset:
     total_rows: int = 0
     source_format: str = ""          # set for raw .bin logs decoded here
     discarded: int = 0               # .bin bytes the decoder could not use
+    decode_notes: str = ""           # .bin: resets in flight, skipped records, gaps
     offset: float = 0.0
     time_column: str = AUTO_TIME
     time_unit: str = "s"
@@ -1350,6 +1351,7 @@ def load_bin_dataset(path: Path, label: str | None = None, progress=None,
     dataset = dataset_from_table(path, table, label)
     dataset.source_format = fmt
     dataset.discarded = stats.discarded
+    dataset.decode_notes = "; ".join(converter.describe_stats(stats))
     return dataset
 
 
@@ -1989,6 +1991,8 @@ def summary_details(dataset: Dataset) -> str:
         details += f" | decoded from .bin ({dataset.source_format}"
         details += (f", {dataset.discarded:,} bytes not decoded)" if dataset.discarded
                     else ")")
+        if dataset.decode_notes:
+            details += f" | {dataset.decode_notes}"
     if dataset.format_note:
         details += f" | read as {dataset.format_note}"
     if dataset.kinds:

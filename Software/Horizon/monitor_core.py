@@ -37,11 +37,15 @@ from pathlib import Path
 import numpy as np
 
 from ground_settings import WITNESS_FEED_HOST, WITNESS_FEED_PORT, WITNESS_REMOTE_FEED_PORT
+from link_health import (
+    LINK_LOST_AFTER_S, TCP_NO_DATA_RECONNECT_S, AnyEvent, BoundedEvents, Coalescer, DebugLog,
+    LinkStatus, RateLimited, RawLog, RAW_FSYNC_S, backoff_delay, open_serial_quiet, tcp_send_all,
+)
 from nmea_capture import NmeaExtractor, summarize_gga
 from observable import Cell
 from serial_discovery import RETRY_SECONDS, SerialDiscovery, SerialOpenJob
 from command_link import CommandLink
-from witness_link import WitnessPublisher, is_tailscale_address, tailscale_ipv4
+from witness_link import WitnessPublisher, enable_keepalive, is_tailscale_address, tailscale_ipv4
 from witness_protocol import (
     IMU_CALIBRATION_COMMANDS, QUICK_COMMANDS, SECTION_SPECS, PacketDecoder,
     build_command_packet, build_imu_calibration_packet, format_display_value,
@@ -61,6 +65,17 @@ DEFAULT_WITNESS_FEED_HOST = WITNESS_FEED_HOST
 DEFAULT_WITNESS_FEED_PORT = WITNESS_FEED_PORT
 DEFAULT_REMOTE_FEED_PORT = WITNESS_REMOTE_FEED_PORT
 REMOTE_RETRY_S = 10.0       # look for Tailscale again while the remote feed is waiting
+SERIAL_WRITE_TIMEOUT_S = 2.0
+# Commands that Witness acknowledges are resent only this often (the uplink is a
+# half-duplex radio and Witness pauses telemetry for 1 s after every command).
+COMMAND_RESEND_S = 2.5
+# Aperture paces the radio uplink (3 commands per burst, then 1.5 s quiet): a 32-frame
+# GPS-assist upload takes 20-28 s, so the STATUS answer is awaited at least this long.
+ASSIST_STATUS_TIMEOUT_S = 30.0
+BUSY_CONFIRM_DETAIL = 0xC0F1     # erase/clear over radio: "send again within 10 s to confirm"
+BUSY_CONFIRM_GAP_S = 1.0
+RESET_TO_PAD_OPCODE = 0x7300        # reboots Witness when Landed: the link drops for a few s
+RESET_EXPECTED_S = 20.0
 NO_SERIAL_PORT = "(no port)"
 BAUD_CHOICES = ("115200", "57600", "38400", "9600")
 WINDOW_TITLE = "Witness Communications Monitor"
@@ -147,6 +162,53 @@ class RingHistory:
             yield self[index]
 
 
+class Link:
+    """One live input (serial port or TCP endpoint) that reconnects by itself.
+
+    The reader thread owns the stream: when it fails for any reason other than
+    the operator pressing Disconnect it keeps the Link (same source name, same
+    raw log file) in a "reconnecting" state and re-opens with backoff, forever.
+    """
+
+    def __init__(self, name, kind, opener, raw_log, *, stream=None, auto=False):
+        self.name, self.kind, self.opener, self.raw_log, self.auto = name, kind, opener, raw_log, auto
+        self.stream = stream
+        self.stop = threading.Event()        # operator Disconnect (or core close)
+        self.down = threading.Event()        # set while there is no usable stream
+        if stream is None:
+            self.down.set()
+        self.status = LinkStatus(name, kind)
+        self.send_lock = threading.Lock()
+        self.last_reason = ""
+        self.thread = None
+        self.cancel = AnyEvent(self.stop, self.down)   # for command retry / upload loops
+
+    def drop_stream(self):
+        """Close the current stream; the reader notices and reconnects."""
+        stream = self.stream
+        if stream is not None:
+            try:
+                stream.close()
+            except Exception:  # noqa: BLE001
+                pass
+
+    def write(self, data):
+        """Write a whole command frame or raise; on failure the connection is
+        dropped so a half-written frame can never be followed by another."""
+        stream = self.stream
+        if stream is None:
+            raise ConnectionError(f"{self.name} link is down (reconnecting)")
+        with self.send_lock:
+            try:
+                if self.kind == "tcp":
+                    tcp_send_all(stream, data)
+                else:
+                    stream.write(data)
+            except Exception:
+                self.drop_stream()
+                raise
+
+
 # Confirmation text for quick commands that ask first (default: log erase).
 CONFIRM_TEXT = {
     0x4752: "the GPS receiver forgets its ephemerides, almanac, position and time and "
@@ -179,11 +241,22 @@ class MonitorCore:
         self._test_token = None
         self._test_start_id = True if test_mode else None   # pending start request
         self._test_display = False
-        self.events = queue.Queue()
-        self.log_files = {}
+        # Display events only; raw bytes are logged by the reader thread itself.
+        # When a long GUI stall fills it, the OLDEST display event is dropped.
+        self.events = BoundedEvents(self.max_events_per_tick)
+        self.links = {}             # source name -> Link (serial or TCP, reconnecting)
+        self.log_files = {}         # source name -> RawLog
+        self._sync_thread = None
+        self._pump_errors = RateLimited(5.0)
+        self._last_health = 0.0
+        self.expected_reset_until = 0.0     # monotonic: 0x7300 sent, a link drop is expected
+        self._probe_thread = None           # Tailscale CLI probe runs off the GUI thread
+        self._probe_done = False
+        self._probe_result = None
         self.nmea_files = {}
         self.nmea_counts = {}       # source -> [valid, bad]
         self.nmea_last_gga = {}
+        self.nmea_log_errors = 0
         self._nmea_dirty = False
         self.debug_log_file = None
         self.history = {}
@@ -191,7 +264,7 @@ class MonitorCore:
         self.last_packet_time = {}
         self.command_history = []
         self.command_link = CommandLink()     # 0x06 acks / 0x07 transfer status
-        self.ack_attempts = 5
+        self.ack_attempts = 3       # each resend waits COMMAND_RESEND_S (uplink is half duplex)
         self.command_history_index = 0
         self.command_history_draft = ""
         self.graphs_dirty = False
@@ -220,6 +293,10 @@ class MonitorCore:
         self._remote_retry_at = 0.0
         self.nmea_status = Cell("NMEA: none received")
         self.status_text = Cell("Disconnected")
+        self.link_banner = Cell("")         # "LINK LOST ..." (empty = link fine); GUI thread only
+        self.link_summary = Cell("")        # one line per source: state, age, rate
+        self.log_warning = Cell("")         # raw/debug log trouble, visible to the operator
+        self.link_snapshots = []            # per-source dicts, see LinkStatus.snapshot()
         self.connect_text = Cell("Connect")
         self.window_title = Cell(WINDOW_TITLE)
         self.port_choices = Cell((NO_SERIAL_PORT,))
@@ -277,7 +354,7 @@ class MonitorCore:
         self.refresh_command_targets()
 
     def _connected_label(self):
-        return "Disconnect" if self.serials or self.tcp_sockets else "Connect"
+        return "Disconnect" if self.serials or self.tcp_sockets or self.links else "Connect"
 
     def _auto_changed(self):
         self._next_auto_open = 0
@@ -319,11 +396,18 @@ class MonitorCore:
                 else:
                     self._accept_auto_port(port, stream)
                 self._next_auto_open = time.monotonic() + RETRY_SECONDS
-            if len(self.serials) >= 2 or time.monotonic() < self._next_auto_open:
+            occupied = {*self.serials, *self.links}   # reconnecting ports stay occupied
+            if len(occupied) >= 2 or time.monotonic() < self._next_auto_open:
                 return
-            candidates = self.discovery.candidates(exclude=self.serials)
+            candidates = self.discovery.candidates(exclude=occupied)
             if not candidates:
                 return
+            # A USB device that came back under a NEW port name: the old name will
+            # never return, so release its (auto-opened, reconnecting) link.
+            present = {p.device for p in self.discovery.ports}
+            for name, link in list(self.links.items()):
+                if link.auto and link.down.is_set() and name not in present:
+                    self._remove_link(name, "device re-enumerated under another port name")
             port = candidates[0]
             self.discovery.attempted(port)
             self._next_auto_open = time.monotonic() + RETRY_SECONDS
@@ -351,34 +435,36 @@ class MonitorCore:
             self.test_warning.set(False)
 
     def _accept_auto_port(self, port, stream):
-        if port in self.serials or len(self.serials) >= 2:
+        if port in self.serials or port in self.links or len(self.links) >= 2:
             stream.close()
             return
-        log_file = None
+        try:
+            stream.write_timeout = SERIAL_WRITE_TIMEOUT_S   # SerialOpenJob opens without one
+        except Exception:  # noqa: BLE001
+            pass
+        stamp = _stamp()
         try:
             LOG_DIR.mkdir(parents=True, exist_ok=True)
-            stamp = _stamp()
-            log_file = (LOG_DIR / f"serial_{_safe(port, '')}_{stamp}.bin").open("ab")
             if self.debug_log_file is None:
-                self.debug_log_file = (LOG_DIR / f"debug_{stamp}.log").open("a", encoding="utf-8")
-        except OSError:
-            stream.close()
-            if log_file is not None:
-                log_file.close()
-            raise
+                self.debug_log_file = DebugLog(LOG_DIR / f"debug_{stamp}.log")
+        except OSError as exc:
+            self.console_write(f"DEBUG_LOG_ERROR {exc}")
         self._leave_test_display("Live mode. Test values cleared.")
-        self.serials[port] = stream
-        self.log_files[port] = log_file
+        try:
+            baud = int(self.baud.get())
+        except ValueError:
+            baud = 115200
         self.stop_event.clear()
+        self._start_link(port, "serial", self._serial_opener(port, baud),
+                         LOG_DIR / f"serial_{_safe(port, '')}_{stamp}.bin", stream, auto=True)
         for cell in (self.port_a, self.port_b):
             if cell.get() not in self.serials or cell.get() == port:
                 cell.set(port)
                 break
         self.connect_text.set("Disconnect")
-        self.status_text.set(f"Connected: {', '.join(self.serials)}")
         self.refresh_command_targets()
+        self._refresh_status_text()
         self.console_write(f"AUTO_CONNECT[{port}] connected")
-        threading.Thread(target=self.read_serial, args=(port, stream), daemon=True).start()
 
     # ----------------------------------------------------------- commands
     def refresh_command_targets(self):
@@ -388,16 +474,34 @@ class MonitorCore:
             self.command_target.set(targets[0] if targets else "")
         self.commands_enabled.set(bool(targets))
 
+    def _target_writer(self, target_name):
+        """(write, link) for a connected target, or (None, None). Writes through a
+        Link are serialized, time-limited and drop the connection on failure."""
+        link = self.links.get(target_name)
+        if link is not None and link.stream is not None:
+            return link.write, link
+        serial_port = self.serials.get(target_name)
+        if serial_port is not None:
+            return serial_port.write, None
+        tcp_socket = self.tcp_sockets.get(target_name)
+        if tcp_socket is not None:
+            return tcp_socket.sendall, None
+        return None, None
+
+    def _no_target_message(self, target_name):
+        link = self.links.get(target_name)
+        if link is not None and link.stream is None:
+            return f"TX_ERROR {target_name} is reconnecting; nothing sent"
+        return "TX_ERROR no connected serial/TCP target selected"
+
     def transmit_command(self, target_name, command, description=None):
         if self.test_active:
             self.console_write("TX_BLOCKED test mode never sends commands to hardware")
             return False
-        serial_port = self.serials.get(target_name)
-        tcp_socket = self.tcp_sockets.get(target_name)
-        if serial_port is None and tcp_socket is None:
-            self.console_write("TX_ERROR no connected serial/TCP target selected")
+        write, link = self._target_writer(target_name)
+        if write is None:
+            self.console_write(self._no_target_message(target_name))
             return False
-        write = serial_port.write if serial_port is not None else tcp_socket.sendall
         acked = CommandLink.is_acked_command(command)
         try:
             if acked:
@@ -412,28 +516,61 @@ class MonitorCore:
         except Exception as exc:
             self.console_write(f"TX_ERROR[{target_name}] {exc}")
             return False
+        if len(command) == 10 and (command[7] << 8 | command[8]) == RESET_TO_PAD_OPCODE:
+            # Witness acks, then reboots (Landed only): the link drops for a few
+            # seconds and returns in Pad Idle. Expected, not an error.
+            self.expected_reset_until = time.monotonic() + RESET_EXPECTED_S
         if acked:
             # Radio round trips (Aperture -> LoRa -> Witness -> back) take far
-            # longer than USB; resend until Witness acknowledges.
-            timeout = 0.5 if serial_port is not None else 1.5
+            # longer than USB, and the uplink is half duplex: resend until
+            # Witness acknowledges, but never faster than COMMAND_RESEND_S.
+            cancel = link.cancel if link is not None else self.stop_event
             threading.Thread(target=self._await_ack, name="command-ack", daemon=True,
-                             args=(target_name, write, command, description or sent_text, timeout)).start()
+                             args=(target_name, write, command, description or sent_text,
+                                   COMMAND_RESEND_S, cancel)).start()
         return True
 
-    def _await_ack(self, target_name, write, command, label, timeout):
+    def _await_ack(self, target_name, write, command, label, timeout, cancel=None):
+        cancel = self.stop_event if cancel is None else cancel
         try:
             ack = self.command_link.send_reliable(write, command, timeout=timeout, attempts=self.ack_attempts,
-                                                  cancel=self.stop_event, first_sent=True)
+                                                  cancel=cancel, first_sent=True)
         except Exception as exc:  # noqa: BLE001
             self.console_write(f"TX_ERROR[{target_name}] {label}: resend failed: {exc}")
             return
         if self.stop_event.is_set():
             return
-        if ack is None:
+        if (ack is not None and ack.get("result") == 4 and ack.get("detail") == BUSY_CONFIRM_DETAIL
+                and not cancel.is_set()):
+            # Radio erase/clear needs the same command twice within 10 s. The operator
+            # already confirmed in the dialog, so send it again once, ~1 s later.
+            self.console_write(f"CONFIRM[{target_name}] {label}: Witness asks for the command again "
+                               f"(radio safety); sending it again in {BUSY_CONFIRM_GAP_S:g} s")
+            if self.stop_event.wait(BUSY_CONFIRM_GAP_S) or cancel.is_set():
+                return
+            try:
+                self.command_link.forget(command)
+                write(command)
+                ack = self.command_link.send_reliable(write, command, timeout=timeout,
+                                                      attempts=self.ack_attempts, cancel=cancel,
+                                                      first_sent=True)
+            except Exception as exc:  # noqa: BLE001
+                self.console_write(f"TX_ERROR[{target_name}] {label}: confirm resend failed: {exc}")
+                return
+            if self.stop_event.is_set():
+                return
+        if ack is None and cancel.is_set():
+            self.console_write(f"NO_ACK[{target_name}] {label}: link dropped before the acknowledgement "
+                               "(no more resends; check the log/state after it reconnects)")
+        elif ack is None:
             self.console_write(f"NO_ACK[{target_name}] {label}: no acknowledgement after "
                                f"{self.ack_attempts} tries (link down or Witness off?)")
         elif ack.get("result") == 0:
             self.console_write(f"ACK[{target_name}] {label}: ok")
+        elif ack.get("result") == 4:
+            # Busy: e.g. the camera/load CAN queue was full. Nothing was done: retry.
+            self.console_write(f"BUSY[{target_name}] {label}: Witness is busy (detail {ack.get('detail'):#06x}); "
+                               "RETRY the command")
         else:
             self.console_write(f"NAK[{target_name}] {label}: {ack.get('result_name')} "
                                f"(detail {ack.get('detail')})")
@@ -469,18 +606,17 @@ class MonitorCore:
         if self.test_active:
             self.console_write("TX_BLOCKED test mode never sends commands to hardware")
             return False
-        serial_port = self.serials.get(target_name)
-        tcp_socket = self.tcp_sockets.get(target_name)
-        if serial_port is None and tcp_socket is None:
-            self.console_write("TX_ERROR no connected serial/TCP target selected")
+        write, link = self._target_writer(target_name)
+        if write is None:
+            self.console_write(self._no_target_message(target_name))
             return False
-        write = serial_port.write if serial_port is not None else tcp_socket.sendall
-        pace = pace_s if pace_s is not None else (0.003 if serial_port is not None else 0.06)
+        is_serial = link.kind == "serial" if link is not None else target_name in self.serials
+        pace = pace_s if pace_s is not None else (0.003 if is_serial else 0.06)
         frames = list(frames) + [gps_assist.status_frame()]
 
         def worker():
             try:
-                gps_assist.send_frames(write, frames, pace)
+                gps_assist.send_frames(write, frames, pace)    # a dead link raises (Link.write)
                 self.console_write(f"TX[{target_name}] {description}: {len(frames)} frames sent; "
                                    "Witness logs 'GPS assist done: N/N acknowledged'")
             except Exception as exc:  # noqa: BLE001
@@ -497,14 +633,14 @@ class MonitorCore:
         if self.test_active:
             self.console_write("TX_BLOCKED test mode never sends commands to hardware")
             return False
-        serial_port = self.serials.get(target_name)
-        tcp_socket = self.tcp_sockets.get(target_name)
-        if serial_port is None and tcp_socket is None:
-            self.console_write("TX_ERROR no connected serial/TCP target selected")
+        write, link = self._target_writer(target_name)
+        if write is None:
+            self.console_write(self._no_target_message(target_name))
             return False
-        write = serial_port.write if serial_port is not None else tcp_socket.sendall
-        pace = pace_s if pace_s is not None else (0.003 if serial_port is not None else 0.06)
-        timeout = 0.5 if serial_port is not None else 1.5
+        is_serial = link.kind == "serial" if link is not None else target_name in self.serials
+        pace = pace_s if pace_s is not None else (0.003 if is_serial else 0.06)
+        timeout = COMMAND_RESEND_S          # never resend faster than this on a half-duplex uplink
+        cancel = link.cancel if link is not None else self.stop_event   # also stops when the link drops
         last = [0.0, None]
 
         def progress(received, expected, note):
@@ -518,7 +654,8 @@ class MonitorCore:
             try:
                 ok, message = self.command_link.upload_assist(
                     write, blob, transfer_id=transfer_id, pace_s=pace, timeout=timeout,
-                    resume_deadline_s=resume_deadline_s, progress=progress, cancel=self.stop_event)
+                    status_timeout=ASSIST_STATUS_TIMEOUT_S if not is_serial else None,
+                    resume_deadline_s=resume_deadline_s, progress=progress, cancel=cancel)
             except Exception as exc:  # noqa: BLE001
                 ok, message = False, str(exc)
             if not self.stop_event.is_set():
@@ -552,11 +689,80 @@ class MonitorCore:
 
     # -------------------------------------------------------- connections
     def toggle_connection(self):
-        if self.serials or self.tcp_sockets or self._auto_job is not None:
+        if self.serials or self.tcp_sockets or self.links or self._auto_job is not None:
             self.auto_connect.set(False)
             self.disconnect()
         else:
             self.connect()
+
+    @staticmethod
+    def _serial_opener(port, baud):
+        def open_port():
+            return open_serial_quiet(port, baud, write_timeout=SERIAL_WRITE_TIMEOUT_S)
+        return open_port
+
+    @staticmethod
+    def _tcp_opener(host, port):
+        def open_socket():
+            sock = socket.create_connection((host, port), timeout=3.0)
+            sock.settimeout(0.2)
+            # Half-open links (Wi-Fi drop without FIN) die within seconds, not hours.
+            enable_keepalive(sock, idle_ms=3000, interval_ms=1000)
+            return sock
+        return open_socket
+
+    def _open_debug_log(self, stamp):
+        if self.debug_log_file is not None:
+            self.debug_log_file.close()          # connect() used to leak the previous handle
+        self.debug_log_file = DebugLog(LOG_DIR / f"debug_{stamp}.log")
+
+    def _start_link(self, name, kind, opener, log_path, stream, *, auto=False, label=None):
+        raw = RawLog(log_path)
+        link = Link(name, kind, opener, raw, stream=stream, auto=auto)
+        link.status.label = label or name
+        link.status.connected()
+        self.links[name] = link
+        self.log_files[name] = raw
+        (self.serials if kind == "serial" else self.tcp_sockets)[name] = stream
+        reader = self.read_serial if kind == "serial" else self.read_tcp
+        link.thread = threading.Thread(target=reader, args=(name, stream), name=f"link-{name}", daemon=True)
+        link.thread.start()
+        self._ensure_sync_thread()
+        return link
+
+    def _remove_link(self, name, why=""):
+        """Forget a link for good (operator Disconnect, or it can never return)."""
+        link = self.links.pop(name, None)
+        self.serials.pop(name, None)
+        self.tcp_sockets.pop(name, None)
+        if link is not None:
+            link.stop.set()
+            link.down.set()
+            link.drop_stream()
+            link.raw_log.close()
+        raw = self.log_files.pop(name, None)
+        if raw is not None:
+            raw.close()
+        self._close_nmea_file(name)
+        if why:
+            self.console_write(f"LINK[{name}] removed: {why}")
+        self.refresh_command_targets()
+
+    def _ensure_sync_thread(self):
+        """fsync the raw logs every RAW_FSYNC_S from a separate thread (never the reader)."""
+        if self._sync_thread is not None:
+            return
+        self._sync_stop = threading.Event()
+
+        def run():
+            while not self._sync_stop.wait(RAW_FSYNC_S):
+                for raw in list(self.log_files.values()):
+                    try:
+                        raw.fsync()
+                    except Exception:  # noqa: BLE001
+                        pass
+        self._sync_thread = threading.Thread(target=run, name="rawlog-fsync", daemon=True)
+        self._sync_thread.start()
 
     def connect(self):
         if self._auto_job is not None:
@@ -605,37 +811,40 @@ class MonitorCore:
             return False
         LOG_DIR.mkdir(parents=True, exist_ok=True)
         stamp = _stamp("%Y%m%d_%H%M%S")
-        self.debug_log_file = (LOG_DIR / f"debug_{stamp}.log").open("a", encoding="utf-8")
+        self._open_debug_log(stamp)
         self.stop_event.clear()
         try:
             for port in ports:
-                serial_port = serial.Serial(port, baud, timeout=0.2)
-                self.serials[port] = serial_port
-                self.log_files[port] = (LOG_DIR / f"serial_{_safe(port, '')}_{stamp}.bin").open("ab")
-                threading.Thread(target=self.read_serial, args=(port, serial_port), daemon=True).start()
+                serial_port = open_serial_quiet(port, baud, write_timeout=SERIAL_WRITE_TIMEOUT_S,
+                                                serial_module=serial)
+                self._start_link(port, "serial", self._serial_opener(port, baud),
+                                 LOG_DIR / f"serial_{_safe(port, '')}_{stamp}.bin", serial_port)
             self.refresh_command_targets()
             for _index, tcp_host, tcp_port in tcp_endpoints:
-                tcp_socket = socket.create_connection((tcp_host, tcp_port), timeout=3.0)
-                tcp_socket.settimeout(0.2)
+                tcp_socket = self._tcp_opener(tcp_host, tcp_port)()
                 tcp_source = f"TCP_{tcp_host}_{tcp_port}"
-                self.tcp_sockets[tcp_source] = tcp_socket
-                self.log_files[tcp_source] = (LOG_DIR / f"{_safe(tcp_source, '')}_{stamp}.bin").open("ab")
-                threading.Thread(target=self.read_tcp, args=(tcp_source, tcp_socket), daemon=True).start()
+                self._start_link(tcp_source, "tcp", self._tcp_opener(tcp_host, tcp_port),
+                                 LOG_DIR / f"{_safe(tcp_source, '')}_{stamp}.bin", tcp_socket,
+                                 label=f"TCP {tcp_host}:{tcp_port}")
             self.refresh_command_targets()
         except Exception as exc:
             self.disconnect()
             self.alert("Serial monitor", f"Could not open serial port: {exc}")
             return False
         self.connect_text.set("Disconnect")
-        sources = ports + [f"TCP {host}:{port}" for _, host, port in tcp_endpoints]
-        self.status_text.set(f"Connected: {', '.join(sources)}")
+        self._refresh_status_text()
         return True
 
     def disconnect(self):
+        """Operator Disconnect (or shutdown): the ONLY thing that stops reconnecting."""
         if self._auto_job is not None:
             self._auto_job.cancel()
             self._auto_job = None
         self.stop_event.set()
+        for link in list(self.links.values()):
+            link.stop.set()
+            link.down.set()
+            link.drop_stream()
         for stream in (*self.serials.values(), *self.tcp_sockets.values()):
             try:
                 stream.close()
@@ -643,6 +852,7 @@ class MonitorCore:
                 pass
         self.serials.clear()
         self.tcp_sockets.clear()
+        self.links.clear()
         self.refresh_command_targets()
         for log_file in self.log_files.values():
             try:
@@ -658,6 +868,10 @@ class MonitorCore:
         if self.debug_log_file is not None:
             self.debug_log_file.close()
             self.debug_log_file = None
+        self.link_banner.set("")
+        self.link_summary.set("")
+        self.link_snapshots = []
+        self.expected_reset_until = 0.0
         self.connect_text.set("Connect")
         self.status_text.set("Disconnected")
 
@@ -680,7 +894,7 @@ class MonitorCore:
     def start_test(self):
         if self.test_active:
             return False
-        if self.serials or self.tcp_sockets:
+        if self.serials or self.tcp_sockets or self.links:
             self.alert("Test mode", "Disconnect real serial/TCP inputs before starting a test.")
             return False
         self.auto_connect.set(False)
@@ -693,7 +907,7 @@ class MonitorCore:
             LOG_DIR.mkdir(parents=True, exist_ok=True)
             stamp = _stamp()
             raw_log = (LOG_DIR / f"test_{stamp}.bin").open("xb")
-            self.debug_log_file = (LOG_DIR / f"test_debug_{stamp}.log").open("x", encoding="utf-8")
+            self.debug_log_file = DebugLog(LOG_DIR / f"test_debug_{stamp}.log")
         except (OSError, ValueError) as exc:
             if raw_log is not None:
                 raw_log.close()
@@ -789,7 +1003,10 @@ class MonitorCore:
         received_at = time.time()
         link = getattr(self, "command_link", None)
         if link is not None and test_token is None and isinstance(packet, dict):
-            link.feed(packet)
+            try:
+                link.feed(packet)     # a failure here must not lose the packet for the displays
+            except Exception as exc:  # noqa: BLE001
+                self.events.put(("decoder_error", (source, f"command link: {exc}")))
         try:
             self.publisher.publish(source, packet, received_at=received_at)
         except Exception as exc:
@@ -814,51 +1031,145 @@ class MonitorCore:
                 self.events.put(("nmea", (source, sentence, ok, received_at)))
 
     def _decoder(self, source):
-        return PacketDecoder(
-            lambda p: self.on_decoded_packet(source, p),
-            lambda message: self.events.put(("decoder_error", (source, message))),
+        # Decoder messages are coalesced to one summary line per second per
+        # source (the audit saw 3 M one-byte BAD_PACKET lines in 485 MB of log).
+        coalescer = Coalescer(1.0)
+
+        def on_error(message):
+            summary = coalescer.add(message)
+            if summary:
+                self.events.put(("decoder_error", (source, summary)))
+        decoder = PacketDecoder(
+            lambda p: self.on_decoded_packet(source, p), on_error,
             lambda packet_id, count: self.events.put(("host_packet", (source, packet_id, count))),
         )
+        decoder.coalescer = coalescer
+        return decoder
+
+    def _flush_decoder_errors(self, source, decoder):
+        summary = decoder.coalescer.flush_due()
+        if summary:
+            self.events.put(("decoder_error", (source, summary)))
 
     def _log_input(self, source, data):
-        log_file = self.log_files.get(source)
-        if log_file is not None:
-            log_file.write(data)
-            log_file.flush()
+        raw = self.log_files.get(source)
+        if raw is not None:
+            raw.write(data)       # RawLog.write never raises
+
+    def _link_for(self, name, kind, stream):
+        link = self.links.get(name)
+        if link is None or link.stream is not stream:
+            # A caller that registered the stream itself (no reconnect possible).
+            link = Link(name, kind, None, self.log_files.get(name), stream=stream)
+            link.status.connected()
+        return link
 
     def read_serial(self, port_name, serial_port):
-        nmea = NmeaExtractor()
-        decoder = self._decoder(port_name)
-        while not self.stop_event.is_set() and self.serials.get(port_name) is serial_port:
-            try:
-                data = serial_port.read(serial_port.in_waiting or 1)
-                if data:
-                    self._log_input(port_name, data)
-                    self.events.put(("bytes", (port_name, bytes(data))))
-                    decoder.feed(data)
-                    self._queue_nmea(port_name, nmea, data)
-            except Exception as exc:
-                self.events.put(("error", (port_name, str(exc), serial_port)))
-                break
+        self._run_link(self._link_for(port_name, "serial", serial_port))
 
     def read_tcp(self, source_name, tcp_socket):
-        nmea = NmeaExtractor()
-        decoder = self._decoder(source_name)
-        while not self.stop_event.is_set() and self.tcp_sockets.get(source_name) is tcp_socket:
-            try:
-                data = tcp_socket.recv(4096)
-                if not data:
-                    self.events.put(("error", (source_name, "TCP server closed the connection", tcp_socket)))
+        self._run_link(self._link_for(source_name, "tcp", tcp_socket))
+
+    def _run_link(self, link):
+        """Reader thread of one input. Ends ONLY on operator Disconnect (link.stop);
+        any other failure re-opens the same source with backoff (0.5, 1, 2, 4, 5 s ... forever)."""
+        name, status = link.name, link.status
+        attempt = 0
+        try:
+            while not link.stop.is_set():
+                stream = link.stream
+                if stream is None:
+                    attempt += 1
+                    status.lost(link.last_reason, attempt)
+                    if link.stop.wait(backoff_delay(attempt)):
+                        break
+                    if link.raw_log is not None:
+                        link.raw_log.tick()
+                    try:
+                        stream = link.opener()
+                    except Exception as exc:  # noqa: BLE001 - port busy / gone / host down: retry
+                        link.last_reason = f"{type(exc).__name__}: {exc}"
+                        continue
+                    if link.stop.is_set():
+                        try:
+                            stream.close()
+                        except Exception:  # noqa: BLE001
+                            pass
+                        break
+                    link.stream = stream
+                    status.connected()
+                    link.down.clear()
+                    attempt = 0
+                    self.events.put(("link_up", (link, stream)))
+                reason = self._read_loop(link, stream)
+                link.down.set()
+                try:
+                    stream.close()
+                except Exception:  # noqa: BLE001
+                    pass
+                if link.stream is stream:
+                    link.stream = None
+                if link.stop.is_set():
                     break
-                self._log_input(source_name, data)
-                self.events.put(("bytes", (source_name, bytes(data))))
-                decoder.feed(data)
-                self._queue_nmea(source_name, nmea, data)
-            except socket.timeout:
-                continue
-            except Exception as exc:
-                self.events.put(("error", (source_name, str(exc), tcp_socket)))
-                break
+                link.last_reason = reason
+                status.lost(reason, 1)
+                if link.opener is None:      # cannot reconnect: legacy behaviour
+                    self.events.put(("error", (name, reason, stream)))
+                    break
+                self.events.put(("link_down", (link, stream, reason)))
+        except Exception as exc:  # noqa: BLE001 - a bug here must be loud, never a silent dead input
+            self.events.put(("error", (name, f"link supervisor failed: {exc!r}", link.stream)))
+
+    def _read_loop(self, link, stream):
+        """Read one connection until it fails; returns the reason. The raw log is
+        written FIRST and independently of decoding: a decode exception never
+        stops the log, and a log OSError never stops the reader or the decoder."""
+        name, status, tcp = link.name, link.status, link.kind == "tcp"
+        nmea = NmeaExtractor()
+        decoder = self._decoder(name)
+        while not link.stop.is_set():
+            try:
+                if tcp:
+                    try:
+                        data = stream.recv(4096)
+                    except socket.timeout:
+                        data = None
+                    else:
+                        if not data:
+                            return "TCP server closed the connection"
+                else:
+                    data = stream.read(stream.in_waiting or 1)
+            except Exception as exc:  # noqa: BLE001
+                return f"{type(exc).__name__}: {exc}"
+            if data:
+                if link.raw_log is not None:
+                    link.raw_log.write(data)
+                status.note_bytes(len(data))
+                self.events.put(("bytes", (name, bytes(data))))
+                try:
+                    decoder.feed(data)
+                except Exception as exc:  # noqa: BLE001 - PacketDecoder should not raise; belt and braces
+                    self.events.put(("decoder_error", (name, f"decoder failure: {exc!r}")))
+                    decoder.buffer.clear()
+                try:
+                    self._queue_nmea(name, nmea, data)
+                except Exception as exc:  # noqa: BLE001
+                    self.events.put(("decoder_error", (name, f"NMEA extractor failure: {exc!r}")))
+                status.bad_bytes = decoder.garbage_bytes_skipped
+                status.text_bytes = decoder.text_bytes_skipped
+            else:
+                if link.raw_log is not None:
+                    link.raw_log.tick()
+            self._flush_decoder_errors(name, decoder)
+            if tcp and status.conn_received and status.last_byte is not None:
+                now = time.monotonic()
+                silent = now - status.last_byte
+                # Half-open link (no FIN, e.g. Wi-Fi drop): force a reconnect. Not
+                # while Witness is expected to be rebooting (0x7300). Serial ports
+                # are NOT cycled on silence: reopening may toggle DTR/RTS.
+                if silent > TCP_NO_DATA_RECONNECT_S and now > self.expected_reset_until:
+                    return f"no data for {silent:.1f} s (half-open link?)"
+        return "stopped"
 
     def stream_feeder(self, source_name):
         """Return feed(bytes) that decodes a byte stream owned by someone else.
@@ -875,8 +1186,12 @@ class MonitorCore:
             if self._closed:
                 return
             self.events.put(("bytes", (source_name, bytes(data))))
-            decoder.feed(data)
-            self._queue_nmea(source_name, nmea, data)
+            try:
+                decoder.feed(data)
+                self._queue_nmea(source_name, nmea, data)
+            except Exception as exc:  # noqa: BLE001 - the HITL reader thread must survive
+                self.events.put(("decoder_error", (source_name, f"mirror decode failure: {exc!r}")))
+            self._flush_decoder_errors(source_name, decoder)
 
         return feed
 
@@ -902,18 +1217,45 @@ class MonitorCore:
                 self._handle_event(kind, payload, latest, ports_seen, console_lines)
             except Exception as exc:
                 # A malformed packet or display value must never stop the pump.
-                console_lines.append(self._console_stamp(f"GUI_ERROR {exc}"))
+                self._pump_error(f"event {kind}", exc, console_lines)
         for port_name in ports_seen:
-            if port_name in self.serials:
-                self.discovery.remember(port_name)
+            try:
+                if port_name in self.serials:
+                    self.discovery.remember(port_name)
+            except Exception as exc:  # noqa: BLE001 - e.g. read-only learned-device file
+                self._pump_error("discovery.remember", exc, console_lines)
         for _port_name, packet in latest.values():
             try:
                 self.update_values("packet", packet, record=False)
             except Exception as exc:
-                console_lines.append(self._console_stamp(f"GUI_ERROR {exc}"))
-        self._write_console_lines(console_lines)
-        self._refresh_nmea_status()
+                self._pump_error("update_values", exc, console_lines)
+        try:
+            self._write_console_lines(console_lines)
+        except Exception as exc:  # noqa: BLE001 - must never escape into the Qt slot
+            self._pump_error("console", exc, None)
+        try:
+            self._refresh_nmea_status()
+        except Exception as exc:  # noqa: BLE001
+            self._pump_error("nmea status", exc, None)
+        now = time.monotonic()
+        if now - self._last_health >= 0.25:
+            self._last_health = now
+            try:
+                self.update_link_health(now)
+            except Exception as exc:  # noqa: BLE001
+                self._pump_error("link health", exc, None)
         return handled
+
+    def _pump_error(self, where, exc, console_lines):
+        """Rate-limited report of a failure in the GUI-thread pump (one line / 5 s per kind)."""
+        allowed, skipped = self._pump_errors.allow((where, type(exc).__name__))
+        if allowed:
+            more = f" ({skipped} similar suppressed)" if skipped else ""
+            line = self._console_stamp(f"GUI_ERROR[{where}] {type(exc).__name__}: {exc}{more}")
+            if console_lines is not None:
+                console_lines.append(line)
+            else:
+                self.console_pending.append(line)
 
     @staticmethod
     def _console_stamp(line):
@@ -958,6 +1300,25 @@ class MonitorCore:
                 console_lines.append(self._console_stamp(
                     f"HOST_ECHO[{port_name}] skipped 0x{packet_id:02x} host packet "
                     f"(HITL input; {count} so far)"))
+        elif kind == "link_up":
+            link, stream = payload
+            if self.links.get(link.name) is link and not link.stop.is_set():
+                (self.serials if link.kind == "serial" else self.tcp_sockets)[link.name] = stream
+                self.refresh_command_targets()
+                self._refresh_status_text()
+                console_lines.append(self._console_stamp(
+                    f"LINK_UP[{link.name}] reconnected (reconnect #{link.status.reconnects}); "
+                    "raw log continues in the same file"))
+        elif kind == "link_down":
+            link, stream, reason = payload
+            inputs = self.serials if link.kind == "serial" else self.tcp_sockets
+            if inputs.get(link.name) is stream:
+                inputs.pop(link.name)
+            self.refresh_command_targets()
+            self._refresh_status_text()
+            expected = " (expected: Witness is restarting)" if time.monotonic() < self.expected_reset_until else ""
+            console_lines.append(self._console_stamp(
+                f"LINK_DOWN[{link.name}] {reason}{expected}; reconnecting automatically"))
         elif kind == "error":
             # Rare and stateful: flush what came before so the log stays in order.
             self._write_console_lines(console_lines)
@@ -981,14 +1342,28 @@ class MonitorCore:
         """Log one NMEA sentence (valid or damaged) and refresh the summary."""
         counts = self.nmea_counts.setdefault(source, [0, 0])
         counts[0 if ok else 1] += 1
-        handle = self._nmea_file(source)
         stamp = _dt.datetime.fromtimestamp(received_at, _dt.timezone.utc).isoformat(timespec="milliseconds")
-        handle.write(f"{stamp},{int(ok)},{sentence}\n")
+        try:
+            self._nmea_file(source).write(f"{stamp},{int(ok)},{sentence}\n")
+        except (OSError, ValueError) as exc:     # the NMEA csv is secondary: count it, keep going
+            self.nmea_log_errors += 1
+            self._nmea_files_drop(source)
+            allowed, _ = self._pump_errors.allow(("nmea csv", type(exc).__name__))
+            if allowed:
+                self.console_write(f"NMEA_LOG_ERROR {exc} ({self.nmea_log_errors} sentence(s) not logged)")
         self._nmea_dirty = True
         if ok:
             gga = summarize_gga(sentence)
             if gga:
                 self.nmea_last_gga[source] = gga
+
+    def _nmea_files_drop(self, source):
+        handle = self.nmea_files.pop(source, None)
+        if handle is not None:
+            try:
+                handle.close()
+            except Exception:  # noqa: BLE001
+                pass
 
     def _refresh_nmea_status(self):
         if not self._nmea_dirty:
@@ -1001,8 +1376,11 @@ class MonitorCore:
                 text += f", last {self.nmea_last_gga[source]}"
             parts.append(text)
         self.nmea_status.set("NMEA " + "; ".join(parts) + f" - logged to {LOG_DIR.name}/nmea_*.csv")
-        for handle in self.nmea_files.values():
-            handle.flush()
+        for source, handle in list(self.nmea_files.items()):
+            try:
+                handle.flush()
+            except (OSError, ValueError):
+                self._nmea_files_drop(source)
 
     def _close_nmea_file(self, source):
         handle = self.nmea_files.pop(source, None)
@@ -1010,24 +1388,82 @@ class MonitorCore:
             handle.close()
 
     def _handle_input_error(self, payload):
+        """An input that cannot reconnect (no opener) or whose supervisor failed."""
         port_name, message, stream = payload
         inputs = self.serials if port_name in self.serials else self.tcp_sockets
-        if inputs.get(port_name) is not stream:
+        if inputs.get(port_name) is not stream and port_name not in self.links:
             return  # A late failure from a replaced/disconnected worker.
-        inputs.pop(port_name)
-        stream.close()
+        inputs.pop(port_name, None)
+        try:
+            if stream is not None:
+                stream.close()
+        except Exception:  # noqa: BLE001
+            pass
+        link = self.links.pop(port_name, None)
+        if link is not None:
+            link.stop.set()
+            link.down.set()
         log_file = self.log_files.pop(port_name, None)
         if log_file is not None:
             log_file.close()
         self._close_nmea_file(port_name)
         self.refresh_command_targets()
-        if not self.serials and not self.tcp_sockets:
+        if not self.serials and not self.tcp_sockets and not self.links:
             self.connect_text.set("Connect")
         self.status_text.set(f"Serial error on {port_name}: {message}")
         self.console_write(f"ERROR[{port_name}] {message}")
-        if not self.serials and not self.tcp_sockets and self.debug_log_file is not None:
+        if not self.serials and not self.tcp_sockets and not self.links and self.debug_log_file is not None:
             self.debug_log_file.close()
             self.debug_log_file = None
+
+    # -------------------------------------------------------- link health
+    def _refresh_status_text(self):
+        """Status line from the links: "Connected: A, B; Reconnecting to X (attempt n)"."""
+        if not self.links:
+            return
+        snaps = [link.status.snapshot() for link in self.links.values()]
+        up = [link.status.label for link, snap in zip(self.links.values(), snaps)
+              if snap["state"] not in ("reconnecting", "connecting")]
+        parts = ([f"Connected: {', '.join(up)}"] if up else [])
+        parts += [snap["text"] for snap in snaps if snap["state"] == "reconnecting"]
+        self.status_text.set("; ".join(parts))
+
+    def update_link_health(self, now=None):
+        """Refresh per-source link state, the LINK LOST banner and log warnings.
+        Runs from process_events (GUI thread; throttled to 4 Hz). Read the result
+        from link_snapshots / link_banner / link_summary / log_warning."""
+        now = time.monotonic() if now is None else now
+        links = list(self.links.values())
+        snaps = [link.status.snapshot(now) for link in links]
+        self.link_snapshots = snaps
+        problems = [snap for snap in snaps if snap["state"] in ("reconnecting", "stale", "no data")]
+        if problems and now < self.expected_reset_until:
+            banner = ("WITNESS RESETTING - the link drops for a few seconds and returns in Pad Idle; "
+                      "it reconnects by itself")
+        elif problems:
+            banner = "LINK LOST - " + "; ".join(snap["text"] for snap in problems)
+        else:
+            banner = ""
+        self.link_banner.set(banner)
+        self.link_summary.set(" | ".join(
+            f"{link.status.label}: {snap['state']}"
+            + ("" if snap["seconds_since_last_byte"] is None else f", last byte {snap['seconds_since_last_byte']:.1f} s ago")
+            + f", {snap['bytes_per_s']:.0f} B/s, reconnects {snap['reconnects']}, bad bytes {snap['bad_bytes']}"
+            for link, snap in zip(links, snaps)))
+        warnings = [raw.warning for raw in self.log_files.values() if getattr(raw, "warning", "")]
+        debug_warning = getattr(self.debug_log_file, "warning", "")
+        if debug_warning:
+            warnings.append(debug_warning)
+        if self.events.dropped:
+            warnings.append(f"{self.events.dropped} display event(s) dropped after a GUI stall "
+                            "(raw logs are complete)")
+        self.log_warning.set(" | ".join(warnings))
+        self._refresh_status_text()
+
+    def source_silence(self, source=None):
+        """Seconds since the last byte for a source (None = no data yet / unknown)."""
+        link = self.links.get(source) if source is not None else next(iter(self.links.values()), None)
+        return None if link is None else link.status.silent_for()
 
     # ------------------------------------------------------------ readouts
     # ------------------------------------------------------------ remote feed
@@ -1039,7 +1475,19 @@ class MonitorCore:
             return self.remote_publisher is not None
         self._remote_retry_at = time.monotonic() + REMOTE_RETRY_S
         mode = self.remote_feed_mode
-        host = tailscale_ipv4() if mode in ("auto", "on") else mode
+        if mode in ("auto", "on"):
+            # tailscale_ipv4() may run the CLI (3 s timeout): never on the GUI thread.
+            if not self._probe_done:
+                if self._probe_thread is None or not self._probe_thread.is_alive():
+                    self._probe_thread = threading.Thread(target=self._probe_tailscale,
+                                                          name="tailscale-probe", daemon=True)
+                    self._probe_thread.start()
+                self._remote_retry_at = time.monotonic() + 0.2     # collect the answer soon
+                self.remote_feed_status.set("Remote feed (Tailscale): checking for Tailscale...")
+                return False
+            host, self._probe_done = self._probe_result, False
+        else:
+            host = mode
         if not host:
             self.remote_feed_status.set("Remote feed (Tailscale): waiting for Tailscale "
                                         "(not connected on this PC); retrying")
@@ -1057,6 +1505,13 @@ class MonitorCore:
         self._remote_status_text()
         self.console_write(f"Remote feed on {publisher.host}:{publisher.port} (Tailscale, receive only)")
         return True
+
+    def _probe_tailscale(self):
+        try:
+            self._probe_result = tailscale_ipv4()
+        except Exception:  # noqa: BLE001
+            self._probe_result = None
+        self._probe_done = True
 
     def stop_remote_feed(self):
         publisher, self.remote_publisher = self.remote_publisher, None
@@ -1096,7 +1551,11 @@ class MonitorCore:
             self.start_remote_feed()
         self._remote_status_text()
         if self.publisher.error:
-            self.feed_status.set(f"Horizon feed stopped: {self.publisher.error}")
+            self.feed_status.set(f"Horizon feed stopped: {self.publisher.error}; restarting")
+        elif self.publisher.restarts:
+            self.feed_status.set(
+                f"Horizon feed: {self.publisher.host}:{self.publisher.port}; restarted "
+                f"{self.publisher.restarts} time(s), last failure: {self.publisher.last_error}")
         elif self.publisher.dropped:
             self.feed_status.set(
                 f"Horizon feed: {self.publisher.host}:{self.publisher.port}; "
@@ -1121,8 +1580,11 @@ class MonitorCore:
         if not lines:
             return
         if self.debug_log_file is not None:
-            self.debug_log_file.write("\n".join(lines) + "\n")
-            self.debug_log_file.flush()
+            try:
+                self.debug_log_file.write("\n".join(lines) + "\n")
+                self.debug_log_file.flush()
+            except Exception:  # noqa: BLE001 - the debug log is optional; DebugLog.warning reports it
+                pass
         shown = lines
         if len(lines) > self.max_console_lines_per_tick:
             skipped = len(lines) - self.max_console_lines_per_tick
@@ -1213,6 +1675,9 @@ class MonitorCore:
         self._test_start_id = None
         self.stop_test()
         self.disconnect()
+        stop = getattr(self, "_sync_stop", None)
+        if stop is not None:
+            stop.set()
         self.publisher.close()
         self.stop_remote_feed()
 

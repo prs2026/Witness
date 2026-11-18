@@ -21,8 +21,11 @@ Rules the tools follow (they are what keeps big logs from freezing the UI):
 
 from __future__ import annotations
 
+import functools
+import logging
 import os
 import sys
+import time
 import traceback
 from typing import Any, Callable
 
@@ -207,6 +210,64 @@ def add_curve(plot: pg.PlotWidget, x, y, *, name: str | None = None,
     return curve
 
 
+# ---------------------------------------------------------------- slot guards
+# PyQt6 aborts the whole process when a slot raises and no excepthook handles it
+# (audit H2). Every timer/queue callback in the displays goes through these, so
+# one failing widget logs a traceback (once per distinct error per 10 s) and the
+# timer keeps running.
+_LOG = logging.getLogger("horizon.ui")
+_GUARD_SEEN: dict = {}
+GUARD_LOG_INTERVAL_S = 10.0
+GUARD_ERRORS: list = []          # (monotonic, where, "Type: message"); newest last, bounded
+
+
+def report_guarded_error(where: str, exc: BaseException) -> bool:
+    """Log ``exc`` unless the same error was logged < 10 s ago. True when logged."""
+    now = time.monotonic()
+    key = (where, type(exc).__name__, str(exc)[:200])
+    last = _GUARD_SEEN.get(key)
+    if last is not None and now - last < GUARD_LOG_INTERVAL_S:
+        return False
+    if len(_GUARD_SEEN) > 256:
+        _GUARD_SEEN.clear()
+    _GUARD_SEEN[key] = now
+    GUARD_ERRORS.append((now, where, f"{type(exc).__name__}: {exc}"))
+    del GUARD_ERRORS[:-50]
+    try:
+        _LOG.error("UI error in %s (repeats suppressed for %.0f s)\n%s", where, GUARD_LOG_INTERVAL_S,
+                   "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)))
+        if not _LOG.handlers and not logging.getLogger().handlers:
+            traceback.print_exception(type(exc), exc, exc.__traceback__)
+    except Exception:  # logging itself must never take the app down
+        pass
+    return True
+
+
+def guard_call(where: str, fn: Callable, *args, **kwargs) -> bool:
+    """Run one widget/trace update; on error log it and return False so the
+    caller's remaining updates in the same tick still happen."""
+    try:
+        fn(*args, **kwargs)
+        return True
+    except Exception as exc:
+        report_guarded_error(where, exc)
+        return False
+
+
+def guarded_slot(method: Callable) -> Callable:
+    """Decorator for timer/queue slots: never raises, keeps the timer alive."""
+    where = getattr(method, "__qualname__", repr(method))
+
+    @functools.wraps(method)
+    def wrapper(*args, **kwargs):
+        try:
+            return method(*args, **kwargs)
+        except Exception as exc:
+            report_guarded_error(where, exc)
+            return None
+    return wrapper
+
+
 class Throttle(QtCore.QObject):
     """Coalesce many update requests into at most one call per interval.
 
@@ -240,8 +301,8 @@ class Throttle(QtCore.QObject):
         self._pending = False
         try:
             self._callback()
-        except Exception:  # keep the timer alive; report like Qt would
-            traceback.print_exc()
+        except Exception as exc:  # keep the timer alive; rate-limited report
+            report_guarded_error("Throttle callback", exc)
 
 
 class Debounce(QtCore.QObject):

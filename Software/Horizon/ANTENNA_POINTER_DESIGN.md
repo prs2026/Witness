@@ -84,7 +84,7 @@ the feed disappears.
 
 ### 2.2 Data path
 
-```
+```text
 Witness -> LoRa -> Aperture --serial--> witnessOS/Horizon MonitorPanel
                                          |-- WitnessPublisher 127.0.0.1:8766 / Tailscale :8767
 Featherweight (serial) -> FeatherweightReceiver -------+
@@ -278,7 +278,7 @@ bubble/inclinometer; an IMU is cheap). Store calibration in a JSON beside
 |---|---|---|---|---|
 | Hardware | Arduino Uno/Nano (8-bit) | ARM/ESP32/etc., lots of boards | ESP32 | 3D-printer boards |
 | Live target updates | `$J=` jog + `0x85` cancel | same, plus more realtime | same as GRBL, plus WebSocket/telnet | no jog command; planner queue only |
-| Real-time status | `?` -> `<Idle|MPos:..|FS:..>` | same | same, also auto-report | `M114`, polling is slow |
+| Real-time status | `?` -> `<Idle\|MPos:..\|FS:..>` | same | same, also auto-report | `M114`, polling is slow |
 | Streaming | character counting, 127-byte RX buffer | same, larger buffers | same + network | `ok`-per-line |
 | Network | no | optional (Ethernet/Wi-Fi plugins) | built in: Wi-Fi, telnet, WebUI, config by YAML | optional |
 | Limits/homing | yes (`$20`, `$21`, `$H`) | yes | yes | yes |

@@ -205,6 +205,9 @@ def convert(path: Path) -> Path | None:
         print(f"  convert {path.name} failed: {result.stderr.strip() or result.stdout.strip()}")
         return None
     print(f"  converted {path.name} -> {output.name}")
+    for line in result.stdout.splitlines():   # resets in flight, skipped records, gaps
+        if line.startswith(("Resumed", "Skipped", "Re-synchronised")):
+            print(f"    {line}")
     if path.name.upper().startswith("P"):
         rows = count_kalman_rows(output)
         print(f"    {rows} Kalman filter log rows (packet_type kalman_log: kf_* flags, "
