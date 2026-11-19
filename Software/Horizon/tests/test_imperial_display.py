@@ -175,5 +175,24 @@ class FlightUnitDisplayTest(unittest.TestCase):
         panel.close()
 
 
+class WitnessTableUnitsTest(unittest.TestCase):
+    """The Witness tab table shows ft / ft/s, as its note says; the feed stays SI."""
+
+    def test_length_fields_converted_once(self):
+        import time
+        from telemetry_model import TelemetryTable, WITNESS_FIELDS
+        table = TelemetryTable(WITNESS_FIELDS)
+        packet = {"packet": "state", "status": 0, "kalman_altitude": 304.8,
+                  "position": [3.048, 0.0, 30.48], "velocity": [0.0, 0.0, -3.048]}
+        table.update_record({"source": "W", "received_at": time.time(), "packet": packet},
+                            witness=True)
+        value = {key[2]: row.value for key, row in table.rows.items() if key[1] == "state"}
+        self.assertEqual(value.get("kalman_altitude"), "1000.00")
+        self.assertEqual(value.get("position[0]"), "10.00")
+        self.assertEqual(value.get("position[2]"), "100.00")
+        self.assertEqual(value.get("velocity[2]"), "-10.00")
+        self.assertEqual(packet["kalman_altitude"], 304.8)   # input untouched
+
+
 if __name__ == "__main__":
     unittest.main()

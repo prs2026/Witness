@@ -93,6 +93,27 @@ std::uint32_t now_ms32()
     return static_cast<std::uint32_t>(esp_timer_get_time() / 1000LL);
 }
 
+// Ack sent by Aperture itself on USB (never over radio) for a command it
+// could not pass on: same frame as Witness's ack, detail kAckDetail* so the
+// PC can tell it came from Aperture.
+constexpr std::uint16_t kAckDetailUplinkSendFailed = 0xA901U;   // radio TX failed kUplinkAttempts times
+constexpr std::uint16_t kAckDetailUplinkQueueFull = 0xA902U;
+constexpr std::uint8_t kUplinkAttempts = 3U;
+
+void send_local_ack(const std::uint8_t *command, const std::uint8_t result, const std::uint16_t detail)
+{
+    std::array<std::uint8_t, IRIS_PACKET_COMMAND_ACK_FRAME_LENGTH> ack{};
+    ack[0] = IRIS_PACKET_ID_COMMAND_ACK;
+    ack[1] = command[7];
+    ack[2] = command[8];
+    for (std::size_t i = 0; i < 6U; ++i) ack[3U + i] = command[1U + i];
+    ack[9] = result;
+    ack[10] = static_cast<std::uint8_t>(detail >> 8);
+    ack[11] = static_cast<std::uint8_t>(detail & 0xFFU);
+    ack[12] = IRIS_PACKET_EOF_VALUE;
+    usb_send(ack.data(), ack.size());
+}
+
 // 0x5250 ground-radio command, handled locally and acked on USB.
 void handle_ground_radio_power(const std::uint8_t *command, std::uint32_t now,
                                std::uint32_t &front_end_off_since_ms)
@@ -176,6 +197,7 @@ extern "C" void app_main(void)
     unsigned receive_errors = 0U;
     std::uint32_t front_end_off_since_ms = 0U;
     std::uint32_t uplink_dups = 0U, uplink_full = 0U, uplink_failed = 0U;
+    std::uint8_t uplink_attempts = 0U;   // failed sends of the command at the queue front
     std::uint32_t radio_failures_total = 0U;
     std::uint32_t last_logged_sum = 0U;
     std::uint32_t next_stats_log_ms = now_ms32() + kStatsLogPeriodMs;
@@ -250,6 +272,7 @@ extern "C" void app_main(void)
                         break;
                     case UplinkQueue::Push::Full:
                         ++uplink_full;
+                        send_local_ack(command, IRIS_ACK_BUSY, kAckDetailUplinkQueueFull);
                         break;
                     default:
                         break;
@@ -293,10 +316,20 @@ extern "C" void app_main(void)
                     const esp_err_t result = radio.transmit(uplink.front(), IRIS_PACKET_COMMAND_FRAME_LENGTH);
                     if (result != ESP_OK) {
                         ++uplink_failed;
-                        ESP_LOGW(kLogTag, "Command send failed: %s (0x%x)",
+                        ++uplink_attempts;
+                        ESP_LOGW(kLogTag, "Command send failed (attempt %u of %u): %s (0x%x)",
+                                 static_cast<unsigned>(uplink_attempts), static_cast<unsigned>(kUplinkAttempts),
                                  esp_err_to_name(result), static_cast<unsigned>(result));
                     }
-                    uplink.pop();
+                    // A failed send stays queued for the next allowed slot;
+                    // after kUplinkAttempts it is dropped and the PC told.
+                    if (result == ESP_OK || uplink_attempts >= kUplinkAttempts) {
+                        if (result != ESP_OK) {
+                            send_local_ack(uplink.front(), IRIS_ACK_BUSY, kAckDetailUplinkSendFailed);
+                        }
+                        uplink.pop();
+                        uplink_attempts = 0U;
+                    }
                     uplink_sent_before = true;
                     last_uplink_ms = static_cast<std::uint64_t>(esp_timer_get_time() / 1000LL);
                     pacer.on_sent(last_uplink_ms);

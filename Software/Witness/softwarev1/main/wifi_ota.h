@@ -31,6 +31,8 @@ public:
     static constexpr UBaseType_t kTaskPriority = 3;
     static constexpr std::uint32_t kTaskStackSize = 6144;
     static constexpr std::uint32_t kPollIntervalMs = 250;
+    // AP failed to start: return to the flight image after this long.
+    static constexpr std::uint32_t kFailedStartLeaveMs = 60'000;
     static constexpr std::uint32_t kRestartDelayMs = 1000;
     static constexpr std::size_t kTransferChunk = 4096;
     static constexpr int kDefaultTxPowerDbm = CONFIG_WITNESS_WIFI_TX_POWER_DBM;

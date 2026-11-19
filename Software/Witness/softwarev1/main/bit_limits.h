@@ -46,8 +46,9 @@ constexpr std::uint32_t kHeapMinBlockingBytes = 6 * 1024;     // [PROPOSED]
 // (4 KB stack) and the IMU calibration save task (3 KB), about 4.5 KB each with
 // the TCB, so allocations start failing near 5 KB. Bench 2026-11-18 with the
 // 32 KB data cache: heap min 15.2 KB, flat through a HITL flight. Owner
-// decision 2026-11-18: warn only near the real failure point.
-constexpr std::uint32_t kHeapMinDegradedBytes = 8 * 1024;     // [OWNER]
+// decision 2026-11-18: warn only near the real failure point; 10 KB set by the
+// owner 2026-11-19.
+constexpr std::uint32_t kHeapMinDegradedBytes = 10 * 1024;    // [OWNER]
 constexpr std::uint32_t kHeapLargestDegradedBytes = 5 * 1024; // [OWNER] those ~4.5 KB need one free block
 constexpr std::uint32_t kStackBlockingBytes = 256;            // [PROPOSED] sensors/flash_logger/flash_capture
 constexpr std::uint32_t kStackDegradedBytes = 512;            // [PROPOSED] any other task

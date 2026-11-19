@@ -123,12 +123,25 @@ void WifiOta::run()
     if (result != ESP_OK) {
         // Nothing to serve: the beacon (status word, "AP down") still tells the
         // ground station, and the operator can send Wi-Fi off over LoRa.
-        ESP_LOGE(kLogTag, "Wi-Fi start failed: %s", esp_err_to_name(result));
+        // The auto-off below only runs with the AP up, so without this the
+        // board would stay in maintenance (no sensors, no logging) until a
+        // Wi-Fi off command or a power cycle: return to flight after
+        // kFailedStartLeaveMs instead (audit 2026-11-19 02 M1).
+        ESP_LOGE(kLogTag, "Wi-Fi start failed: %s; back to flight in %u s", esp_err_to_name(result),
+                 static_cast<unsigned>(kFailedStartLeaveMs / 1000U));
         failed_.store(true);
     }
+    const std::uint32_t failed_at_ms = now_ms();
+    bool failed_leave_sent = false;
     for (;;) {
         vTaskDelay(pdMS_TO_TICKS(kPollIntervalMs));
         maint::shared().wifi_status.store(status_word());
+        // Not in recovery (no flight image: auto-off 0), where staying up is the point.
+        if (failed_.load() && !failed_leave_sent && auto_off_ms_.load() != 0 &&
+            now_ms() - failed_at_ms >= kFailedStartLeaveMs) {
+            maint::leave(200, "Wi-Fi start failed");
+            failed_leave_sent = true;
+        }
         const std::uint32_t window = auto_off_ms_.load();
         if (enabled_.load() && window != 0 && now_ms() - last_activity_ms_.load() >= window) {
             maint::leave(200, "Wi-Fi auto-off, no HTTP activity");

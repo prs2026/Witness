@@ -75,6 +75,9 @@ COMMAND_RESEND_S = 2.5
 # GPS-assist upload takes 20-28 s, so the STATUS answer is awaited at least this long.
 ASSIST_STATUS_TIMEOUT_S = 30.0
 BUSY_CONFIRM_DETAIL = 0xC0F1     # erase/clear over radio: "send again within 10 s to confirm"
+# BUSY acks Aperture sends itself (never from Witness): the command did not go out.
+APERTURE_BUSY_DETAILS = {0xA901: "Aperture could not transmit it (3 radio send failures)",
+                         0xA902: "Aperture's uplink queue is full"}
 BUSY_CONFIRM_GAP_S = 1.0
 RESET_TO_PAD_OPCODE = 0x7300        # reboots Witness when Landed: the link drops for a few s
 LANDED_STATE = 4                    # witness flight state (status byte 1 bits 2:0)
@@ -663,6 +666,9 @@ class MonitorCore:
                                f"{self.ack_attempts} tries (link down or Witness off?)")
         elif ack.get("result") == 0:
             self.console_write(f"ACK[{target_name}] {label}: ok")
+        elif ack.get("result") == 4 and ack.get("detail") in APERTURE_BUSY_DETAILS:
+            self.console_write(f"NOT_SENT[{target_name}] {label}: "
+                               f"{APERTURE_BUSY_DETAILS[ack.get('detail')]}; Witness never got it. RETRY")
         elif ack.get("result") == 4:
             # Busy: e.g. the camera/load CAN queue was full. Nothing was done: retry.
             self.console_write(f"BUSY[{target_name}] {label}: Witness is busy (detail {ack.get('detail'):#06x}); "

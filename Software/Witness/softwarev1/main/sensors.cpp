@@ -2173,6 +2173,20 @@ bool Sensors::in_flight() const
 
 void Sensors::service_position(const std::uint64_t now_us)
 {
+    // IMU down (supervisor fault, re-init every 0.5 s): no samples arrive, so
+    // predict_position() never runs. Keep the filter moving in time without
+    // the IMU (zero acceleration, extra process noise) so baro and GPS keep
+    // AGL and vertical velocity live for the state machine (audit 2026-11-19
+    // 01 M1). Both clocks are esp_timer microseconds; when the IMU returns,
+    // predict_position() continues from this timestamp.
+    if (!imu_ready_ && position_filter_.initialized() && position_last_predict_us_ != 0 &&
+        now_us > position_last_predict_us_ &&
+        now_us - position_last_predict_us_ >= kNoImuPredictIntervalUs) {
+        const float dt_s = static_cast<float>(now_us - position_last_predict_us_) * 1e-6F;
+        position_last_predict_us_ = now_us;
+        position_filter_.predict_without_imu(
+            dt_s, static_cast<position::Phase>(flight_state_machine_.state()));
+    }
     // GPS: each new fix is used as soon as it is parsed (every fix at the
     // receiver's 25 Hz), not on the next update tick, which could skip one.
     if (position_filter_.initialized()) {

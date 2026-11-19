@@ -17,8 +17,8 @@ Witness only moves forward (PI, B, C, D, L). The way back to Pad Idle is a resta
 
 | ID | Name | Frame bytes | Direction | Where it goes | Rate |
 |---|---|---:|---|---|---|
-| `0x01` | Sensors (filtered accel, gyro) | 23 | Witness -> ground | USB 10 Hz; LoRa 1 Hz in flight, every 3 s in Pad Idle; NAND | |
-| `0x02` | Estimated state (quaternion, ENU position/velocity, GPS, Kalman altitude, battery, sats) | 65 | Witness -> ground | USB 1 Hz; LoRa 1 Hz in flight, every 3 s in Pad Idle; NAND | |
+| `0x01` | Sensors (filtered accel, gyro) | 23 | Witness -> ground | USB 10 Hz; LoRa 2 Hz in flight, every 3 s in Pad Idle; NAND | |
+| `0x02` | Estimated state (quaternion, ENU position/velocity, GPS, Kalman altitude, battery, sats) | 65 | Witness -> ground | USB 2 Hz; LoRa 2 Hz in flight, every 3 s in Pad Idle; NAND | |
 | `0x03` | Camera / Iris telemetry (relayed from Iris over CAN) | 19 | Iris -> Witness -> ground | USB and LoRa 1 Hz in every state | |
 | `0x05` | Command | 10 | ground -> Witness (USB or LoRa via Aperture); also Iris | Witness acts locally and forwards to Iris over CAN | on demand |
 | `0x06` | Command acknowledgement (opcode, 6 data bytes, result, detail) | 13 | Witness -> ground (USB or LoRa, same path as the command); Aperture on USB for ground radio power | immediate queue (never held by time slots) | per command |
@@ -64,6 +64,8 @@ Radio scheduling (`main/tx_slot.h`, since 2026-11-14; hold-off rules changed 202
 |---|---|---|
 | BUSY (`0x04`) | `0xC0F1` (`IRIS_ACK_DETAIL_CONFIRM_NEEDED`, `comms.h`) | Radio erase/clear received once; send the same command again within 10 s to execute |
 | BUSY | 0 | Load/5 V command not forwarded to Iris (CAN queue full); retry |
+| BUSY | `0xA901` | Sent by **Aperture** on USB (not by Witness): the radio send failed 3 times, the command was dropped; retry |
+| BUSY | `0xA902` | Sent by **Aperture** on USB: its uplink queue (64) was full, the command was dropped; retry |
 | BUSY | esp_err | Erase/clear timed out or the logger was busy; the detail is the `esp_err_t` value |
 | REFUSED | esp_err | Erase/clear failed (for example `ESP_ERR_INVALID_STATE` when refused in flight) |
 | REFUSED | flight state | `0x5250` refused by policy |

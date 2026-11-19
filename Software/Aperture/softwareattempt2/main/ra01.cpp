@@ -252,6 +252,15 @@ esp_err_t Ra01::initialize()
         } else {
             ESP_LOGW(kLogTag, "DIO1 interrupt unavailable (%s); polling", esp_err_to_name(isr));
         }
+    } else {
+        // Re-init: gpio_config() above set DIO1 to GPIO_INTR_DISABLE, which
+        // also disables the interrupt. Re-arm it, or the rest of the session
+        // falls back to the 10 ms poll (audit 2026-11-19 03 M1).
+        esp_err_t isr = gpio_set_intr_type(IRIS_PIN_RADIO_DIO1, GPIO_INTR_POSEDGE);
+        if (isr == ESP_OK) isr = gpio_intr_enable(IRIS_PIN_RADIO_DIO1);
+        if (isr != ESP_OK) {
+            ESP_LOGW(kLogTag, "DIO1 interrupt re-arm failed (%s); polling", esp_err_to_name(isr));
+        }
     }
 
     result = enter_rx();

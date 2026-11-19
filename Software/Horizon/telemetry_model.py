@@ -14,6 +14,8 @@ import math
 import time
 from dataclasses import dataclass
 
+import witness_protocol
+
 WITNESS_FIELDS = {
     "sensors": ("status", "uptime", "filtered_accel[0]", "filtered_accel[1]", "filtered_accel[2]",
                 "gyro[0]", "gyro[1]", "gyro[2]", "sensor_trailing_u16"),
@@ -73,6 +75,11 @@ FEATHERWEIGHT_FIELDS.update({
 })
 FLIGHT_STATE_NAMES = ("Pad idle", "Boost", "Coast", "Descent", "Landed")
 MAX_ROWS = 8192
+
+
+def witness_display_unit(field):
+    """"ft" / "ft/s" for a flattened Witness field shown in imperial units ("position[2]"), else None."""
+    return witness_protocol.display_unit_for_field(field.split("[", 1)[0])
 
 
 def flatten_fields(packet, max_fields=512):
@@ -208,6 +215,9 @@ class TelemetryTable:
                 continue
             if witness and field in ("status", "fc_status") and isinstance(value, int):
                 row.value = f"0b{value:016b}"
+            elif witness and witness_display_unit(field) and isinstance(value, (int, float)):
+                # Feed is SI; this table shows ft / ft/s like the rest of Horizon.
+                row.value = witness_protocol.format_display_value(field.split("[", 1)[0], value)
             else:
                 row.value = value if isinstance(value, str) else json.dumps(value, ensure_ascii=True)
             row.received, row.age, row.quality = received_at, "--", quality

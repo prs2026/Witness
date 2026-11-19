@@ -636,6 +636,8 @@ private:
     bool pad_heading_pending_apply_ = false;
     position::Filter position_filter_{};
     std::uint64_t position_last_predict_us_ = 0;
+    // IMU down: predict without it at this interval (service_position).
+    static constexpr std::uint64_t kNoImuPredictIntervalUs = 10'000;
     std::uint64_t position_last_update_us_ = 0;
     std::uint64_t position_report_us_ = 0;
     std::uint32_t position_last_gps_sequence_ = 0;
