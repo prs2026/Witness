@@ -326,6 +326,7 @@ class MonitorCore:
         self.commands_enabled = Cell(False)
         # "False flight on pad: reset Witness" (0x7300): only while Witness reports Landed.
         self.reset_witness_enabled = Cell(False)
+        self.wifi_on_enabled = Cell(False)
         self.commands_enabled.subscribe(lambda _value: self._refresh_reset_enabled())
         # Built-in self test (BIT): the newest summary/detail Witness sent, a one-line status for the
         # readouts, and the two buttons. "Run BIT" (0x5442) is enabled only in Pad Idle and is sent
@@ -517,6 +518,8 @@ class MonitorCore:
         self.reset_witness_enabled.set(bool(self.commands_enabled.get())
                                        and self.witness_flight_state() == LANDED_STATE)
         state = self.witness_flight_state()
+        self.wifi_on_enabled.set(bool(self.commands_enabled.get())
+                                 and state in (None, PAD_IDLE_STATE, LANDED_STATE))
         self.bit_run_enabled.set(bool(self.commands_enabled.get()) and state == PAD_IDLE_STATE)
         self.bit_detail_enabled.set(bool(self.commands_enabled.get()) and state != BOOST_STATE)
 
@@ -695,6 +698,19 @@ class MonitorCore:
         if confirm and not self.confirm("Confirm command", f"{name}: {text}"):
             return False
         return self.transmit_command(self.command_target.get(), build_command_packet(opcode), name)
+
+    WIFI_ON_CONFIRM = ("Witness restarts into its maintenance image: flight logging OFF, not "
+                       "flight-ready, until Wi-Fi is turned off or it resets. Only accepted in "
+                       "Pad Idle or Landed.")
+
+    def send_wifi(self, on):
+        """Wi-Fi ON (maintenance) asks first; OFF (back to flight) does not. Same send path
+        (target, ack resend) as every other command button."""
+        from witness_protocol import build_wifi_packet
+        if on and not self.confirm("Confirm command", f"Wi-Fi ON (maintenance): {self.WIFI_ON_CONFIRM}"):
+            return False
+        name = "Wi-Fi ON (maintenance)" if on else "Wi-Fi OFF (back to flight)"
+        return self.transmit_command(self.command_target.get(), build_wifi_packet(bool(on)), name)
 
     def send_bit_run(self):
         """Run BIT button: 0x5442 (full run, no options) after a confirmation, Pad Idle only.

@@ -700,6 +700,9 @@ class MonitorPanel(QtWidgets.QWidget):
             else:
                 bind_enabled(core.commands_enabled, widget)
         layout.addLayout(hbox(QtWidgets.QLabel("Commands:"), grid_widget))
+        from wifi_ota_box import WifiOtaBox
+        self.wifi_ota_box = WifiOtaBox(core)
+        layout.addWidget(self.wifi_ota_box)
         layout.addLayout(self._bit_row())
         return box
 

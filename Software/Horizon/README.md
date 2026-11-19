@@ -118,6 +118,8 @@ If port 1883 is occupied, Horizon reports the bind failure without taking over o
 
 Witness hardware is opened by the Witness monitor (witnessOS tab; logic in `monitor_core.py`), not by Horizon. The monitor supports two serial inputs, two TCP inputs, decoded telemetry, diagnostic displays, graphs, and command transmission. Select `(no port)` for an unused serial slot. Serial/TCP streams use the same application decoder and the TCP inputs expect raw binary telemetry, not Telnet negotiation or terminal echo traffic.
 
+**Wi-Fi / OTA box (Witness monitor, under the command buttons).** *Wi-Fi ON (maintenance)* and *Wi-Fi OFF (back to flight)* send the 0x5746 command through the normal command path (selected target, USB or Aperture/LoRa); ON asks first and is enabled only in Pad Idle or Landed (or before any state is known). The HTTP buttons (*OTA info*, *Upload image...* with a *Force* checkbox, *List logs*, *Download all logs...*, *Reboot Witness (HTTP)*) use `witness_ota.py` against 192.168.4.1 on a background thread, one at a time, and print their results in the console. Join the Witness Wi-Fi yourself first; Horizon does not change your network settings.
+
 Automatic USB discovery is enabled by default. Recognizable devices are discovered automatically. For a generic adapter, select its port manually once; after a valid packet, its USB identity can be learned in `auto_connect_witness.json` or `auto_connect_featherweight.json`. Changing a COM number does not change a learned USB identity.
 
 Each Horizon input has its own Auto-connect checkbox. Turning it off stops future retries without dropping an already healthy connection. Manual Disconnect also disables that input’s auto-connect. Only one application should own a given COM port at a time.
