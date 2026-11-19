@@ -2,7 +2,8 @@
 
 The map always works without this (pad-centred grid). When online, missing
 tiles are fetched in the background and written to TILE_CACHE_DIR so they are
-available at the launch site without internet. The GUI never runs on the worker:
+available at the launch site without internet. The cache lives outside the
+repository (default_tile_cache_dir), so pulling or cleaning the repo never clears it. The GUI never runs on the worker:
 the UI calls request() (non-blocking, returns a cached path or None) and
 drain_completed() from its timer, then decodes the PNG on a Qt worker thread (visualizer.load_tile_rgba).
 
@@ -27,13 +28,65 @@ from geodesy import MAX_ZOOM, tiles_covering
 
 TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
 USER_AGENT = "HorizonGroundStation/1.0 (amateur rocketry ground station map; Python urllib)"
-TILE_CACHE_DIR = Path(__file__).resolve().parent / "tile_cache" / "osm"
+LEGACY_TILE_CACHE_DIR = Path(__file__).resolve().parent / "tile_cache" / "osm"
+
+
+def default_tile_cache_dir():
+    """Per-user cache outside the repository, so git pull/clean/re-clone never clears it.
+
+    HORIZON_TILE_CACHE overrides it. Windows: %LOCALAPPDATA%/Horizon/tile_cache/osm;
+    elsewhere $XDG_CACHE_HOME (or ~/.cache)/horizon/tile_cache/osm.
+    """
+    override = os.environ.get("HORIZON_TILE_CACHE")
+    if override:
+        return Path(override).expanduser()
+    if os.name == "nt" and os.environ.get("LOCALAPPDATA"):
+        return Path(os.environ["LOCALAPPDATA"]) / "Horizon" / "tile_cache" / "osm"
+    base = os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache"
+    return Path(base) / "horizon" / "tile_cache" / "osm"
+
+
+TILE_CACHE_DIR = default_tile_cache_dir()
+
+
+def migrate_legacy_cache(src=LEGACY_TILE_CACHE_DIR, dst=TILE_CACHE_DIR):
+    """Move tiles from the old in-repo tile_cache/ into dst (keeps tiles already in dst).
+
+    Returns the number of tiles moved. Never raises: a failed move leaves the tile where it was.
+    """
+    src, dst = Path(src), Path(dst)
+    moved = 0
+    try:
+        if not src.is_dir() or src.resolve() == dst.resolve():
+            return 0
+        for tile in src.rglob("*.png"):
+            target = dst / tile.relative_to(src)
+            try:
+                if target.exists():
+                    continue
+                target.parent.mkdir(parents=True, exist_ok=True)
+                os.replace(tile, target)
+                moved += 1
+            except OSError:
+                try:
+                    import shutil
+                    shutil.copy2(tile, target)
+                    moved += 1
+                except OSError:
+                    pass
+    except OSError:
+        pass
+    return moved
 ATTRIBUTION = "© OpenStreetMap contributors"
 MAX_REQUESTS_PER_S = 2.0
 REFRESH_AFTER_S = 30 * 24 * 3600
 OFFLINE_BACKOFF_S = 30.0
 MAX_QUEUE = 256
-MAX_PRECACHE_TILES = 600
+MAX_PRECACHE_TILES = 1500
+# Pre-cache area: wide context at low zoom, detail near the pad. A full 10 km
+# radius at zoom 16-17 would be 8,000-12,000 tiles (1-2 h at 2 req/s), which is
+# bulk downloading under the OSM tile policy, so detail zooms cover less.
+PRECACHE_TIERS = ((10_000.0, range(10, 16)), (3_000.0, (16,)), (1_500.0, (17,)))
 MAX_PRECACHE_ZOOM = 17
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
@@ -58,6 +111,17 @@ def precache_plan(lat, lon, radius_m, zooms):
     return plan
 
 
+def precache_area_plan(lat, lon, tiers=PRECACHE_TIERS):
+    """precache_plan() for each (radius_m, zooms) tier, without duplicates, at most MAX_PRECACHE_TILES."""
+    plan, seen = [], set()
+    for radius, zooms in tiers:
+        for key in precache_plan(lat, lon, radius, zooms):
+            if key not in seen:
+                seen.add(key)
+                plan.append(key)
+    return plan[:MAX_PRECACHE_TILES]
+
+
 def _default_fetch(url, timeout=10.0):
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "image/png"})
     with urllib.request.urlopen(request, timeout=timeout) as response:
@@ -67,8 +131,11 @@ def _default_fetch(url, timeout=10.0):
 class TileCache:
     """Disk cache plus background fetcher. fetch=None disables the network."""
 
-    def __init__(self, root=TILE_CACHE_DIR, *, online=True, fetch=_default_fetch,
+    def __init__(self, root=None, *, online=True, fetch=_default_fetch,
                  rate=MAX_REQUESTS_PER_S, clock=time.monotonic):
+        if root is None:
+            root = TILE_CACHE_DIR
+            migrate_legacy_cache(LEGACY_TILE_CACHE_DIR, root)
         self.root = Path(root)
         self.fetch = fetch
         self.online = bool(online) and fetch is not None

@@ -613,9 +613,35 @@ def parse_hex_command(text: str) -> bytes:
 RSSI_RADIO_DOWN = -128
 
 
+FT_M = 0.3048   # exact; display conversion only (packets, logs and files stay metres)
+# Witness fields decoded in metres / m/s, shown as feet / ft/s (lists element-wise).
+DISPLAY_LENGTH_FIELDS = {"position": "ft", "gps_altitude": "ft", "kalman_altitude": "ft", "velocity": "ft/s"}
+
+
+def display_unit_for_field(field):
+    """"ft" / "ft/s" for a field shown in imperial units, else None."""
+    return DISPLAY_LENGTH_FIELDS.get(field)
+
+
+def display_scale(field):
+    """Multiplier from the decoded SI value to the displayed value of `field`."""
+    return 1.0 / FT_M if field in DISPLAY_LENGTH_FIELDS else 1.0
+
+
+def _feet(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return "null" if value is None else str(value)
+    return f"{value / FT_M:.2f}"
+
+
 def format_display_value(field, value):
     if value is None:
         return "null"
+    if field in DISPLAY_LENGTH_FIELDS:
+        if isinstance(value, (list, tuple)):
+            return "[" + ", ".join(_feet(v) for v in value) + "]"
+        if not isinstance(value, bool) and isinstance(value, (int, float)):
+            return _feet(value)
     if isinstance(value, int) and (field == "status" or field.endswith("_status")):
         return f"0b{value:016b}"
     if field == "rssi" and value == RSSI_RADIO_DOWN:
@@ -650,11 +676,11 @@ SECTION_SPECS = {
     "state": [
         ("status", "Status"), ("uptime", "Uptime"),
         ("orientation", "Orientation [x, y, z, w; 0 = n/a]"),
-        ("position", "Kalman position [m; E, N, U from pad]"),
-        ("velocity", "Kalman velocity [m/s; E, N, U]"),
+        ("position", "Kalman position [ft; E, N, U from pad]"),
+        ("velocity", "Kalman velocity [ft/s; E, N, U]"),
         ("latitude", "Latitude [deg]"), ("longitude", "Longitude [deg]"),
-        ("gps_altitude", "GPS altitude [m MSL]"),
-        ("kalman_altitude", "Kalman altitude above pad [m]"),
+        ("gps_altitude", "GPS altitude [ft MSL]"),
+        ("kalman_altitude", "Kalman altitude above pad [ft]"),
         ("witness_battery_voltage", "Witness battery voltage [V]"),
         # Shown as "<sats>  lock <0|1>": lock is status byte 1 bit 3.
         ("gps_satellites", "GPS sats"),
@@ -673,7 +699,7 @@ SECTION_SPECS = {
         ("gps_satellites", "Aperture GPS satellites"),
         ("latitude", "Aperture latitude [deg]"),
         ("longitude", "Aperture longitude [deg]"),
-        ("gps_altitude", "Aperture GPS altitude [m MSL]"),
+        ("gps_altitude", "Aperture GPS altitude [ft MSL]"),
         ("gps_hdop", "Aperture GPS HDOP"),
         ("gps_fix_age_ms", "Aperture GPS fix age [ms]"),
     ],
@@ -687,17 +713,17 @@ SECTION_SPECS = {
         ("witness_battery_voltage", "Witness battery voltage [V]"),
         ("filtered_accel", "Filtered accel [g; x, y, z]"),
         ("orientation", "Orientation [x, y, z, w; 0 = n/a]"),
-        ("position", "Kalman position [m; E, N, U from pad]"),
-        ("velocity", "Kalman velocity [m/s; E, N, U]"),
+        ("position", "Kalman position [ft; E, N, U from pad]"),
+        ("velocity", "Kalman velocity [ft/s; E, N, U]"),
         ("low_accel", "LSM6 low accel [g; x, y, z]"),
         ("lsm6_temperature", "LSM6 temperature [C]"),
         ("high_accel", "LSM6 high accel [g; x, y, z]"),
         ("gyro", "Gyro [dps; x, y, z]"),
         ("pressure", "MS5607 pressure [Pa]"),
         ("ms5607_temperature", "MS5607 temperature [C]"),
-        ("kalman_altitude", "Kalman altitude above pad [m]"),
+        ("kalman_altitude", "Kalman altitude above pad [ft]"),
         ("latitude", "Latitude [deg]"), ("longitude", "Longitude [deg]"),
-        ("gps_time", "GPS time [Unix s]"), ("gps_altitude", "GPS altitude [m MSL]"),
+        ("gps_time", "GPS time [Unix s]"), ("gps_altitude", "GPS altitude [ft MSL]"),
     ],
     "maintenance_status": [
         ("mode_name", "Maintenance mode"), ("uptime", "Uptime"), ("ap_up", "Wi-Fi AP up"),
@@ -709,7 +735,7 @@ SECTION_SPECS = {
     ],
     "landed_position": [
         ("uptime", "Uptime"), ("latitude", "Latitude [deg]"), ("longitude", "Longitude [deg]"),
-        ("gps_altitude", "GPS altitude [m MSL]"), ("fix_age", "Fix age [s]"), ("stale", "Stale"),
+        ("gps_altitude", "GPS altitude [ft MSL]"), ("fix_age", "Fix age [s]"), ("stale", "Stale"),
         ("ping_reply", "Ping reply"), ("utc_aligned", "UTC aligned"), ("satellites", "Satellites"),
         ("battery_voltage", "Battery [V]"),
     ],

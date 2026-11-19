@@ -57,7 +57,7 @@ class NmeaExtractorTests(unittest.TestCase):
 
     def test_gga_summary(self):
         text = sentence(GGA).decode().strip()
-        self.assertEqual(summarize_gga(text), "GGA 12:35:19 UTC, fix 1, sats 8, alt 680.5 m")
+        self.assertEqual(summarize_gga(text), "GGA 12:35:19 UTC, fix 1, sats 8, alt 2233 ft")
         self.assertIsNone(summarize_gga(sentence(RMC).decode().strip()))
 
 

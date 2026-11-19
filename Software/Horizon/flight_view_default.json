@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Fixed, non-scrolling launch dashboard. W=Witness, A=AIM, F=Featherweight. A baro~ is standard pressure altitude in m, interpreting AIM pressure as Pa with 101325 Pa reference; A~ vertical velocity is delta barometric altitude / delta publisher timestamp in m/s, positive up. These are estimates, not AIM calibrated/fused outputs. A GPS remains raw on the right altitude axis and GPS readout (publisher units unverified). Altitudes are m above the pad: W KF is Witness's Kalman altitude (already AGL); F GPS is Featherweight ft ASL minus the pad MSL altitude (Featherweight GS, Aperture GPS, Witness pad GPS, else its first fix); A baro~ is referenced to its first live sample. Set pad re-references F/A altitudes and distances. Horizontal distance is from the pad: Witness Kalman E/N, GPS sources from the pad position (else their first fix). Invalid data holds the last valid readout with original age and an INVALID flag, with gaps in plots. FW tracker and local/GS batteries stay separate. Zero battery readings are invalid. AIM acceleration AZ stays on a separate raw axis; AX~/AY~/AZ~ gyro traces are quaternion-derived deg/s estimates. Window selector preserves history. The Witness GPS row shows satellites used beside the status GPS lock bit (1 = fresh fix). The state row adds the Witness HITL bit: HITL ACTIVE means simulated sensors, never flight data. Graph arrangement: the first graph (Altitude AGL) is a full-width row, the other four form a 2x2 grid under it (portrait 9:16 first; the Gyro graph was dropped from the default, add it back in the Layout Editor if wanted). See flight_view.py for configuration.",
+  "description": "Fixed, non-scrolling launch dashboard. W=Witness, A=AIM, F=Featherweight. A baro~ is standard pressure altitude (shown in ft), interpreting AIM pressure as Pa with 101325 Pa reference; A~ vertical velocity is delta barometric altitude / delta publisher timestamp in ft/s, positive up. These are estimates, not AIM calibrated/fused outputs. A GPS remains raw on the right altitude axis and GPS readout (publisher units unverified). Altitudes are shown in feet (ft) above the pad, velocities in ft/s; the layout units m and m/s are SI internally and converted only for display, so keep them as m / m/s here. Altitudes are above the pad: W KF is Witness's Kalman altitude (already AGL); F GPS is Featherweight ft ASL minus the pad MSL altitude (Featherweight GS, Aperture GPS, Witness pad GPS, else its first fix); A baro~ is referenced to its first live sample. Set pad re-references F/A altitudes. The Gyro graph shows Witness body rates in deg/s (sensors packet) and the AIM AX~/AY~/AZ~ estimates; the Gyro readout shows Witness X/Y/Z. Invalid data holds the last valid readout with original age and an INVALID flag, with gaps in plots. FW tracker and local/GS batteries stay separate. Zero battery readings are invalid. AIM acceleration AZ stays on a separate raw axis; AX~/AY~/AZ~ gyro traces are quaternion-derived deg/s estimates. Window selector preserves history. The Witness GPS row shows satellites used beside the status GPS lock bit (1 = fresh fix). The state row adds the Witness HITL bit: HITL ACTIVE means simulated sensors, never flight data. Graph arrangement: the first graph (Altitude AGL) is a full-width row, the other four form a 2x2 grid under it (portrait 9:16 first; Gyro replaced Horizontal distance on 2026-11-18, add distance back in the Layout Editor if wanted). See flight_view.py for configuration.",
   "title": "Horizon Flight View",
   "window_seconds": 120,
   "auto_scale": true,
@@ -23,7 +23,7 @@
           ],
           "field": "kalman_altitude",
           "color": "#171717",
-          "note": "Witness Kalman altitude, m above the pad"
+          "note": "Witness Kalman altitude above the pad (shown in ft)"
         },
         {
           "label": "F GPS",
@@ -34,7 +34,7 @@
           "match": {
             "unit_type": "TRACKER"
           },
-          "note": "Featherweight ft ASL to m minus pad MSL (rel. to first fix if none)"
+          "note": "Featherweight ft ASL minus pad MSL (rel. to first fix if none)"
         },
         {
           "label": "A baro~",
@@ -148,35 +148,65 @@
       ]
     },
     {
-      "title": "Horizontal distance",
-      "unit": "m",
+      "title": "Gyro",
+      "unit": "deg/s",
       "traces": [
         {
-          "label": "W",
+          "label": "WX",
           "input": "witness",
           "packet": [
-            "state",
+            "sensors",
             "witness_debug"
           ],
-          "field": "_derived.horizontal_distance_m",
-          "color": "#171717"
+          "field": "gyro[0]",
+          "color": "#004b80",
+          "note": "Witness IMU gyro, body axis, deg/s"
         },
         {
-          "label": "A",
-          "input": "aim",
-          "packet": "gnss_payload/v1",
-          "field": "_derived.horizontal_distance_m",
-          "color": "#990000"
+          "label": "WY",
+          "input": "witness",
+          "packet": [
+            "sensors",
+            "witness_debug"
+          ],
+          "field": "gyro[1]",
+          "color": "#803900",
+          "note": "Witness IMU gyro, body axis, deg/s"
         },
         {
-          "label": "F",
-          "input": "featherweight",
-          "packet": "GPS_STAT",
-          "field": "_derived.horizontal_distance_m",
+          "label": "WZ",
+          "input": "witness",
+          "packet": [
+            "sensors",
+            "witness_debug"
+          ],
+          "field": "gyro[2]",
           "color": "#006020",
-          "match": {
-            "unit_type": "TRACKER"
-          }
+          "note": "Witness IMU gyro, body axis, deg/s"
+        },
+        {
+          "label": "AX~",
+          "input": "aim",
+          "packet": "orientation_payload/v1",
+          "field": "_derived.gyro_dps[0]",
+          "color": "#004b80",
+          "note": "AIM rate estimated from successive orientation quaternions, deg/s"
+        },
+        {
+          "label": "AY~",
+          "input": "aim",
+          "packet": "orientation_payload/v1",
+          "field": "_derived.gyro_dps[1]",
+          "color": "#803900",
+          "note": "AIM rate estimated from successive orientation quaternions, deg/s"
+        },
+        {
+          "label": "AZ~",
+          "input": "aim",
+          "packet": "orientation_payload/v1",
+          "field": "_derived.gyro_dps[2]",
+          "color": "#006020",
+          "note": "AIM rate estimated from successive orientation quaternions, deg/s"
         }
       ]
     },
@@ -226,7 +256,7 @@
           ],
           "field": "kalman_altitude",
           "color": "#171717",
-          "note": "Witness Kalman altitude, m above the pad"
+          "note": "Witness Kalman altitude above the pad (shown in ft)"
         },
         {
           "label": "A baro~",
@@ -245,7 +275,7 @@
           "match": {
             "unit_type": "TRACKER"
           },
-          "note": "Featherweight ft ASL to m minus pad MSL (rel. to first fix if none)"
+          "note": "Featherweight ft ASL minus pad MSL (rel. to first fix if none)"
         }
       ]
     },
@@ -287,35 +317,41 @@
     },
     {
       "group": "flight",
-      "title": "Horizontal distance",
-      "unit": "m",
+      "title": "Gyro",
+      "unit": "deg/s",
       "traces": [
         {
-          "label": "W",
+          "label": "WX",
           "input": "witness",
           "packet": [
-            "state",
+            "sensors",
             "witness_debug"
           ],
-          "field": "_derived.horizontal_distance_m",
-          "color": "#171717"
+          "field": "gyro[0]",
+          "color": "#004b80",
+          "note": "Witness IMU gyro, body axis, deg/s"
         },
         {
-          "label": "A",
-          "input": "aim",
-          "packet": "gnss_payload/v1",
-          "field": "_derived.horizontal_distance_m",
-          "color": "#990000"
+          "label": "WY",
+          "input": "witness",
+          "packet": [
+            "sensors",
+            "witness_debug"
+          ],
+          "field": "gyro[1]",
+          "color": "#803900",
+          "note": "Witness IMU gyro, body axis, deg/s"
         },
         {
-          "label": "F",
-          "input": "featherweight",
-          "packet": "GPS_STAT",
-          "field": "_derived.horizontal_distance_m",
+          "label": "WZ",
+          "input": "witness",
+          "packet": [
+            "sensors",
+            "witness_debug"
+          ],
+          "field": "gyro[2]",
           "color": "#006020",
-          "match": {
-            "unit_type": "TRACKER"
-          }
+          "note": "Witness IMU gyro, body axis, deg/s"
         }
       ]
     },

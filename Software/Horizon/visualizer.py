@@ -44,10 +44,10 @@ from attitude_scene import (AIM_ALPHA, AIM_COLOR, AIM_STALE_ALPHA, BAD, MUTED, O
                             TEXT, VIEWS, WARN,
                             attitude_condition, fmt)
 from attitude_view import RocketScene, readout_panel, set_colored
-from geodesy import (TILE_SIZE, compass_point, enu_to_geodetic, format_distance, geodetic_to_enu,
-                     lat_lon_to_world_px, metres_per_pixel, nice_ring_step)
+from geodesy import (FT_M, FT_PER_MI, TILE_SIZE, compass_point, enu_to_geodetic, format_distance, geodetic_to_enu,
+                     lat_lon_to_world_px, m_to_ft, metres_per_pixel, nice_ring_step)
 from map_data import SOURCE_LABELS, MapData
-from map_tiles import ATTRIBUTION, MAX_PRECACHE_TILES, TileCache, precache_plan
+from map_tiles import ATTRIBUTION, PRECACHE_TIERS, TileCache, precache_area_plan
 from observable import Cell
 from pad_reference import SOURCE_LABELS as PAD_LABELS
 from qt_common import guard_call, guarded_slot, run_in_thread
@@ -73,12 +73,13 @@ MAX_VISIBLE_TILES = 120
 DEFAULT_VIEW_PX = 600
 # Auto range: the view's half-extent (pad to the nearest edge) steps through
 # these so it never jitters; the farthest rocket stays inside ~80% of it.
-AUTO_RANGE_STEPS_M = (500, 750, 1000, 1500, 2000, 3000, 5000, 7500, 10000, 15000, 20000)
+# Steps are round numbers in the DISPLAYED unit (ft, then miles), stored in metres.
+AUTO_RANGE_STEPS_M = tuple(feet * FT_M for feet in (1500, 2500, *(FT_PER_MI * mi for mi in (1, 1.5, 2, 3, 5, 7.5, 10, 15))))
 AUTO_RANGE_MARGIN = 1.25
 
 
 def auto_range_radius(snap):
-    """Half-extent (m) showing every rocket's latest position: 500 m to 20 km."""
+    """Half-extent (m) showing every rocket's latest position: 1500 ft to 15 mi."""
     far = max((item["range"] for item in snap["latest"].values()), default=0.0)
     need = far * AUTO_RANGE_MARGIN
     for step in AUTO_RANGE_STEPS_M:
@@ -353,7 +354,7 @@ class MapPanel(QtWidgets.QWidget):
         centre = QtWidgets.QPushButton("Centre on pad")
         centre.clicked.connect(self.centre)
         auto = QtWidgets.QCheckBox("Auto range")
-        auto.setToolTip("Scale the map to the farthest rocket (500 m to 20 km). "
+        auto.setToolTip("Scale the map to the farthest rocket (1500 ft to 15 mi). "
                         "Zooming or panning by hand turns it off.")
         bind_check(self.auto_range, auto, on_user=self._invalidate)
         follow = QtWidgets.QCheckBox("Follow rocket")
@@ -389,8 +390,13 @@ class MapPanel(QtWidgets.QWidget):
         item.setAspectLocked(True)
         light_axes(item)
         item.showGrid(x=True, y=True, alpha=0.25)
-        item.setLabel("bottom", "East of pad [m]")
-        item.setLabel("left", "North of pad [m]")
+        # Scene coordinates stay metres; the axes only LABEL them in feet.
+        item.setLabel("bottom", "East of pad [ft]")
+        item.setLabel("left", "North of pad [ft]")
+        for name in ("bottom", "left"):
+            axis = item.getAxis(name)
+            axis.enableAutoSIPrefix(False)
+            axis.setScale(1 / FT_M)
         item.hideButtons()
         item.setMenuEnabled(False)
         self.view = item.getViewBox()
@@ -612,16 +618,14 @@ class MapPanel(QtWidgets.QWidget):
         if not self.online.get():
             inform(self, "Pre-cache map", "Turn on OSM tiles first (needs internet).")
             return False
-        radius, zooms = 2000.0, range(12, 18)
-        plan = precache_plan(ref[0], ref[1], radius, zooms)
-        if len(plan) > MAX_PRECACHE_TILES:
-            radius, plan = 1500.0, precache_plan(ref[0], ref[1], 1500.0, zooms)
+        plan = precache_area_plan(ref[0], ref[1])
+        detail = ", ".join(f"{format_distance(radius)} at zoom {min(zooms)}" + (f"-{max(zooms)}" if len(zooms) > 1 else "")
+                           for radius, zooms in PRECACHE_TIERS)
         if not ask_yes_no(
                 self, "Pre-cache map",
-                f"Download up to {min(len(plan), MAX_PRECACHE_TILES)} OpenStreetMap tiles covering "
-                f"{radius / 1000:.1f} km around the pad (zoom {zooms.start}-{zooms.stop - 1}) into "
+                f"Download up to {len(plan)} OpenStreetMap tiles around the pad ({detail}) into "
                 f"{self.tiles.root}?\nAlready-cached tiles are skipped. Downloads run slowly in the "
-                "background (tile usage policy)."):
+                "background (tile usage policy, about 2 tiles/s)."):
             return False
         queued = self.tiles.precache(plan)
         self._set("tiles", f"pre-cache: {queued} tiles queued")
@@ -733,7 +737,7 @@ class MapPanel(QtWidgets.QWidget):
             marker.setData([east[-1]], [north[-1]], size=18 if name == "land" else 11)
         agl = points[-1].agl
         tag = TRACK_TAGS[name] + (" (stale fix)" if name == "land" and snap.get("land_stale") else "")
-        label.setText(tag + (f" {agl:.0f} m" if agl is not None else ""))
+        label.setText(tag + (f" {m_to_ft(agl):.0f} ft" if agl is not None else ""))
         label.setPos(east[-1], north[-1])
 
     def _draw_rings(self):
@@ -763,7 +767,7 @@ class MapPanel(QtWidgets.QWidget):
     def _update_scale_bar(self):
         length = nice_ring_step(120 * max(self.mpp(), 1e-6), 1)
         if self.scale_bar is None:
-            self.scale_bar = pg.ScaleBar(size=length, suffix="m", offset=(-14, -14),
+            self.scale_bar = pg.ScaleBar(size=length, offset=(-14, -14),
                                          pen=pg.mkPen("#171717"), brush=pg.mkBrush("#171717"))
             self.scale_bar.setParentItem(self.view)
             self.scale_bar.length = None
@@ -854,7 +858,7 @@ class MapPanel(QtWidgets.QWidget):
                       WARN if pad.source in ("tracker", "manual") else TEXT)
             self._set("pad_pos", f"{pad.lat:.6f}, {pad.lon:.6f}")
         alt = snap["pad_alt"]
-        self._set("pad_alt", f"{alt[0]:.1f} m MSL ({alt[1]})" if alt else "unknown (GPS AGL unavailable)",
+        self._set("pad_alt", f"{m_to_ft(alt[0]):.0f} ft MSL ({alt[1]})" if alt else "unknown (GPS AGL unavailable)",
                   TEXT if alt else WARN)
         state, gps, hitl = snap["status"]
         self._set("state", state_name(state) + (f", GPS lock {gps}" if gps is not None else "")
@@ -871,7 +875,7 @@ class MapPanel(QtWidgets.QWidget):
             elif name == "aim":
                 agl = f"GPS alt {p.alt_raw:.1f} (AIM units)" if p.alt_raw is not None else "GPS alt --"
             else:
-                agl = f"{p.agl:.1f} m AGL" if p.agl is not None else "alt AGL --"
+                agl = f"{m_to_ft(p.agl):.0f} ft AGL" if p.agl is not None else "alt AGL --"
             text = (f"{format_distance(item['range'])} @ {item['bearing']:.0f}° "
                     f"{compass_point(item['bearing'])}\n{agl}   age {age:.1f} s")
             if name == "kf" and snap["reference"] is not None and not snap["kf_placed"]:

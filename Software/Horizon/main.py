@@ -41,7 +41,7 @@ from witness_protocol import (  # explicit for linters / readers
     CAMERA_STATUS_FLAG_LABELS, FLIGHT_STATE_LABELS, IMU_CALIBRATION_COMMANDS, QUICK_COMMANDS,
     LOG_SLOTS_FULL_MASK, SECTION_SPECS, STATUS_BYTE1_FLAG_LABELS, STATUS_FLAG_LABELS, PacketDecoder,
     build_command_packet,
-    build_imu_calibration_packet, decode_status, format_display_value, format_gps_satellites,
+    build_imu_calibration_packet, decode_status, display_scale, display_unit_for_field, format_display_value, format_gps_satellites,
     is_status_field, parse_packet,
 )
 
@@ -251,10 +251,12 @@ class GraphPlot:
             return
         times, values = history.arrays()
         self._ensure_curves(values.shape[1])
+        scale = display_scale(field)   # metres -> feet for altitude/position/velocity fields
         for index, curve in enumerate(self.curves):
-            curve.setData(times, values[:, index], connect="finite")
+            curve.setData(times, values[:, index] * scale, connect="finite")
         latest = format_display_value(field, history.last_value)
-        self.widget.setTitle(f"{self.key}    Latest: {latest}")
+        unit = display_unit_for_field(field)
+        self.widget.setTitle(f"{self.key}    Latest: {latest}" + (f" {unit}" if unit else ""))
 
 
 class MonitorPanel(QtWidgets.QWidget):

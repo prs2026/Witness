@@ -9,18 +9,18 @@ from flight_data import DEFAULT_LAYOUT, FlightData, load_layout, validate_layout
 
 
 def gyro_layout():
-    """The default layout with the Gyro graph at plots[2]. The default dashboard does
-    not ship that graph (portrait 1 + 2x2 arrangement), so it is added here."""
+    """The default layout with a Witness + AIM Gyro graph at plots[2] (the default
+    dashboard has its Gyro graph at plots[3]; it is moved here so indices are fixed)."""
     with open(DEFAULT_LAYOUT, encoding="utf-8") as handle:
         document = json.load(handle)
-    if not any(plot["title"].startswith("Gyro") for plot in document["plots"]):
-        axes = (("WX", "#004b80"), ("WY", "#803900"), ("WZ", "#006020"))
-        traces = [{"label": label, "input": "witness", "packet": ["sensors", "witness_debug"],
-                   "field": f"gyro[{i}]", "color": color} for i, (label, color) in enumerate(axes)]
-        traces += [{"label": label + "~", "input": "aim", "packet": "orientation_payload/v1",
-                    "field": f"_derived.gyro_dps[{i}]", "color": color} for i, (label, color) in
-                   enumerate((("AX", "#004b80"), ("AY", "#803900"), ("AZ", "#006020")))]
-        document["plots"].insert(2, {"title": "Gyro (A est.)", "unit": "deg/s", "traces": traces})
+    document["plots"] = [plot for plot in document["plots"] if not plot["title"].startswith("Gyro")]
+    axes = (("WX", "#004b80"), ("WY", "#803900"), ("WZ", "#006020"))
+    traces = [{"label": label, "input": "witness", "packet": ["sensors", "witness_debug"],
+               "field": f"gyro[{i}]", "color": color} for i, (label, color) in enumerate(axes)]
+    traces += [{"label": label + "~", "input": "aim", "packet": "orientation_payload/v1",
+                "field": f"_derived.gyro_dps[{i}]", "color": color} for i, (label, color) in
+               enumerate((("AX", "#004b80"), ("AY", "#803900"), ("AZ", "#006020")))]
+    document["plots"].insert(2, {"title": "Gyro (A est.)", "unit": "deg/s", "traces": traces})
     return validate_layout(document)
 
 

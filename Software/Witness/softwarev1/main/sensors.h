@@ -60,10 +60,10 @@ public:
     // Simulated HITL GPS fixes (0x0C GPS fields) are used at this rate.
     static constexpr std::uint32_t kHitlGpsRateHz = 25;
     // State packets are logged to NAND at 50 Hz, the barometer's rate (USB and
-    // radio keep 1 Hz).
+    // radio send 2 Hz).
     static constexpr std::uint32_t kStateLogRateHz = 50;
     static constexpr std::uint32_t kPacketRateHz = 10;
-    static constexpr std::uint32_t kStatePacketRateHz = 1;
+    static constexpr std::uint32_t kStatePacketRateHz = 2;
     static constexpr std::uint32_t kDebugPacketRateHz = 10;
     static constexpr std::uint32_t kBatterySampleRateHz = 10;
     // Float formatting in the attitude log lines needs more than 4 KiB; the
@@ -74,12 +74,14 @@ public:
     // Independent LoRa downlink rates. Each transmission uses the most recent
     // canonical frame generated at the packet's normal producer/USB rate.
     // Rates must be non-zero integer divisors of 1000 Hz.
-    // Only sensors, state and camera go over the air (~59 ms of airtime per
-    // second at SF7/500). Heartbeat, command relay and the debug packets stay
+    // Only sensors, state and camera go over the air. Sensors and state at 2 Hz,
+    // camera at 1 Hz: about 105 ms of airtime per second at SF7/500 (~10 % duty),
+    // all inside the 700 ms GPS-slot downlink window (tx_slot.h). Heartbeat,
+    // command relay and the debug packets stay
     // on USB/CAN; command acks (0x06) and transfer status (0x07) are replies
     // sent through the immediate queue, not this rotation.
-    static constexpr std::uint32_t kRadioSensorPacketRateHz = 1;
-    static constexpr std::uint32_t kRadioStatePacketRateHz = 1;
+    static constexpr std::uint32_t kRadioSensorPacketRateHz = 2;
+    static constexpr std::uint32_t kRadioStatePacketRateHz = 2;
     static constexpr std::uint32_t kRadioCameraPacketRateHz = 1;
     static constexpr std::size_t kRadioPacketTypeCount = 3;
 

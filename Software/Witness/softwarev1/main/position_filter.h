@@ -37,6 +37,7 @@
 // No ESP-IDF dependencies (host-tested in tests/position_filter_test.cpp).
 
 #include <cmath>
+#include "gps_trust.h"
 #include <cstdint>
 #include <limits>
 
@@ -102,6 +103,22 @@ struct Config {
     // times in a row is accepted anyway so the filter can re-synchronize.
     float gate_sigma = 5.0F;
     std::uint32_t max_consecutive_rejects = 25;
+    // GPS in flight (Boost, Coast, Descent): trust ramp instead of the hard
+    // gate + 25-reject resync (gps_trust.h). The gate compares the innovation
+    // with the GPS sigma plus the filter's prior sigma capped at
+    // gps_trust_sigma_cap_m, so a dead-reckoned km-wide sigma cannot make a
+    // km-off fix look plausible. A gated fix is still used once the axis's
+    // trust reaches gps_trust_large_accept_weight (the receiver has been
+    // consistent), and every correction is slew-limited to
+    // gps_trust_slew_floor_m + gps_trust_slew_mps * (time since the last fix),
+    // so a really-off filter is pulled back over seconds, not in one step.
+    // gps_trust_enabled = 0 restores the old behaviour in flight.
+    std::uint32_t gps_trust_enabled = 1;
+    float gps_trust_sigma_cap_m = 100.0F;
+    float gps_trust_large_accept_weight = 0.5F;
+    float gps_trust_slew_mps = 100.0F;
+    float gps_trust_slew_floor_m = 1.0F;
+    GpsTrustConfig gps_trust{};
     // Pad stillness: |specific force| within this of 1 g (referenced to
     // kGravity, not to the measured gravity).
     float still_band_g = 0.05F;
@@ -274,6 +291,8 @@ public:
     std::uint32_t gps_updates() const { return gps_updates_; }
     std::uint32_t baro_rejects() const { return baro_rejects_total_; }
     std::uint32_t gps_rejects() const { return gps_rejects_total_; }
+    // GPS trust weight of an axis (0 = E, 1 = N, 2 = U), see gps_trust.h.
+    float gps_trust_weight(int axis) const { return gps_trust_[axis].weight(); }
     std::uint32_t baro_gated_count() const { return baro_gated_count_; }
 
     // Exposed for tests and logging.
@@ -370,6 +389,10 @@ private:
     std::uint32_t predict_gaps_ = 0;
     Innovation baro_innovation_{};
     Innovation gps_innovation_[3]{};
+    // Filter clock (sum of predict dt) for the GPS trust windows.
+    double clock_s_ = 0.0;
+    double gps_prev_fix_t_ = -1.0;
+    GpsTrust gps_trust_[3]{};
 };
 
 }  // namespace position

@@ -82,9 +82,10 @@ class AimVisualizerGui(unittest.TestCase):
         import tempfile
         from map_tiles import TileCache
         from visualizer import MapPanel, auto_range_radius
-        self.assertEqual(auto_range_radius({"latest": {}}), 500)
-        self.assertEqual(auto_range_radius({"latest": {"a": {"range": 1300}}}), 2000)
-        self.assertEqual(auto_range_radius({"latest": {"a": {"range": 90000}}}), 20000)
+        ft, mi = geo.FT_M, geo.MI_M     # steps are round ft / mi numbers, held in metres
+        self.assertAlmostEqual(auto_range_radius({"latest": {}}), 1500 * ft)
+        self.assertAlmostEqual(auto_range_radius({"latest": {"a": {"range": 1300}}}), 1.5 * mi)
+        self.assertAlmostEqual(auto_range_radius({"latest": {"a": {"range": 90000}}}), 15 * mi)
         with tempfile.TemporaryDirectory() as tmp:
             data = MapData()
             data.pad.accept_record("featherweight", fw("BASE", PAD_LAT, PAD_LON))
@@ -97,18 +98,18 @@ class AimVisualizerGui(unittest.TestCase):
                     (x0, x1), (y0, y1) = tab.view.viewRange()
                     return min(x1 - x0, y1 - y0) / 2
 
-                self.assertEqual(tab.auto_radius, 500)
-                self.assertAlmostEqual(half_extent(), 500, delta=5)
+                self.assertAlmostEqual(tab.auto_radius, 1500 * geo.FT_M)
+                self.assertAlmostEqual(half_extent(), 1500 * geo.FT_M, delta=5)
                 lat, lon, _ = geo.enu_to_geodetic(0, 3500, 0, PAD_LAT, PAD_LON)
                 data.accept_aim("AIM", "gnss_payload/v1", aim_gnss(lat, lon), time.monotonic(), False)
                 tab.refresh()
-                self.assertEqual(tab.auto_radius, 5000)
-                self.assertAlmostEqual(half_extent(), 5000, delta=50)
+                self.assertAlmostEqual(tab.auto_radius, 3 * geo.MI_M)
+                self.assertAlmostEqual(half_extent(), 3 * geo.MI_M, delta=50)
                 self.assertAlmostEqual(tab.pan[0], 0, delta=1)
                 lat, lon, _ = geo.enu_to_geodetic(40000, 0, 0, PAD_LAT, PAD_LON)
                 data.accept_record("featherweight", fw("TRACKER", lat, lon, t=time.monotonic()))
                 tab.refresh()
-                self.assertEqual(tab.auto_radius, 20000)          # capped at 20 km
+                self.assertAlmostEqual(tab.auto_radius, 15 * geo.MI_M)   # capped at 15 mi
                 tab._manual_zoom(tab.zoom + 1)                    # +/- (or wheel/drag) takes over
                 self.assertFalse(tab.auto_range.get())
             finally:

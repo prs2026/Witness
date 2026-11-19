@@ -16,6 +16,17 @@ MEAN_EARTH_RADIUS_M = 6371008.8
 TILE_SIZE = 256
 MAX_MERCATOR_LAT = 85.05112878
 MIN_ZOOM, MAX_ZOOM = 0, 19
+FT_M = 0.3048                 # exact: 1 ft in metres (display conversion only)
+FT_PER_MI = 5280
+MI_M = FT_PER_MI * FT_M
+
+
+def m_to_ft(metres):
+    return metres / FT_M
+
+
+def ft_to_m(feet):
+    return feet * FT_M
 
 
 def valid_lat_lon(lat, lon, *, reject_null_island=True):
@@ -149,17 +160,30 @@ def tiles_covering(lat, lon, radius_m, zoom):
     return [(x % n, y) for x in range(x0, x1 + 1) for y in range(y0, y1 + 1)]
 
 
+_NICE_FT = tuple(m * 10 ** k for k in range(4) for m in (1, 2, 2.5, 5) if m * 10 ** k <= 2000)
+_NICE_MI = (0.5, *(m * 10 ** k for k in range(7) for m in (1, 2, 5)))
+
+
 def nice_ring_step(span_m, rings=4):
-    """Range-ring spacing (1/2/2.5/5 x 10^k metres) giving about `rings` rings."""
-    raw = max(span_m / max(1, rings), 1.0)
-    magnitude = 10 ** math.floor(math.log10(raw))
-    for step in (1, 2, 2.5, 5, 10):
-        if step * magnitude >= raw:
-            return step * magnitude
-    return 10 * magnitude
+    """Range-ring / scale-bar spacing, in METRES, that is a nice number in the
+    displayed unit: ... 100/200/250/500/1000/2000 ft, then 0.5/1/2/5/10/20/50 mi ...
+    giving about `rings` rings across `span_m`."""
+    raw_ft = max(span_m / max(1, rings), 1.0) / FT_M
+    for feet in _NICE_FT:
+        if feet >= raw_ft:
+            return feet * FT_M
+    miles = raw_ft / FT_PER_MI
+    for step in _NICE_MI:
+        if step >= miles:
+            return step * MI_M
+    return _NICE_MI[-1] * MI_M
 
 
 def format_distance(metres):
+    """Display text for a metre distance: whole feet below 1 mi, else miles to 0.01."""
     if metres is None or not math.isfinite(metres):
         return "--"
-    return f"{metres / 1000:.2f} km" if abs(metres) >= 1000 else f"{metres:.0f} m"
+    feet = metres / FT_M
+    if round(abs(feet)) < FT_PER_MI:
+        return f"{feet:.0f} ft"
+    return f"{feet / FT_PER_MI:.2f} mi"

@@ -18,6 +18,11 @@ lock bit ("GPS sats 7  lock 1"). The single state row may add a second trace
 with format hitl (Witness status.hitl_active): it is drawn under the flight
 state, and HITL ACTIVE - SIMULATED SENSORS also appears in the banner.
 Voltage fields display three decimal places.
+Units: histories, derived fields and the layout JSON stay SI. Layout units "m",
+"m/s" and "km" are converted ONLY when drawn (flight_render.DISPLAY_UNITS) and
+shown as ft, ft/s and mi: readout/legend values, plot data, fixed y_range limits
+(given in the layout unit) and axis labels. Keep "m" / "m/s" in layouts; other
+units (g, deg/s, V, raw) are shown as written. Do not pre-convert with scale.
   version: 1; title; window_seconds; refresh_ms; columns; max_points; gap_seconds
   auto_scale: true (default) fits each Y axis to all visible valid samples;
     false honors explicit left-axis y_range limits. Bounds do not force zero
@@ -47,7 +52,7 @@ _derived.horizontal_distance_m is distance from the pad, not slant range:
 hypot(E, N) of the Witness Kalman ENU position (its origin is the pad), and
 great-circle distance of FW/AIM GPS lat/lon from the shared pad position
 (pad_reference.py) or, before one is known, from the first valid live fix.
-Altitudes are metres above the pad: Witness kalman_altitude (0x02/0xE0) is
+Altitudes are metres internally (shown in ft) above the pad: Witness kalman_altitude (0x02/0xE0) is
 the Kalman filter's up estimate, already relative to the pad. MSL sources use
 derived fields with the pad's MSL altitude subtracted (Featherweight GS,
 Aperture LC86G GPS, Witness on-pad GPS, first tracker fix, in that order):
@@ -231,7 +236,7 @@ class FlightPanel(ReadoutPanel):
         self.title.setToolTip("Distance: from the pad (Set pad re-references).\n"
                               "A baro / Vz: estimates; GPS units raw.\n"
                               "States are one-way (Pad Idle > Boost > Coast > Descent > Landed); 0x7300 in "
-                              "Landed reboots Witness to Pad Idle. Vz positive = up; altitude AGL (m).")
+                              "Landed reboots Witness to Pad Idle. Vz positive = up; altitude AGL (ft).")
 
     def show_panel(self, panel):
         shape = [len(cells) for _t, cells in panel["metrics"]]
@@ -348,7 +353,7 @@ class GraphPanel(QtWidgets.QFrame):
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(4, 2, 4, 2)
         layout.setSpacing(1)
-        units = plot.unit + (f" | {plot.right_unit}" if plot.right_unit else "")
+        units = fr.unit_label(plot.unit) + (f" | {fr.unit_label(plot.right_unit)}" if plot.right_unit else "")
         self.title = _label(f"{plot.title} [{units}]", 11, True)
         layout.addWidget(self.title)
         legend = QtWidgets.QGridLayout()
@@ -368,7 +373,7 @@ class GraphPanel(QtWidgets.QFrame):
         item.setMenuEnabled(False)
         item.setMouseEnabled(x=False, y=False)
         item.hideButtons()
-        item.setLabel("left", plot.unit)
+        item.setLabel("left", fr.unit_label(plot.unit))
         light_axes(item, fr.MUTED)
         self.widget.setMinimumHeight(90)
         layout.addWidget(self.widget, 1)
@@ -379,7 +384,7 @@ class GraphPanel(QtWidgets.QFrame):
             item.showAxis("right")
             item.scene().addItem(self.right_view)
             item.getAxis("right").linkToView(self.right_view)
-            item.getAxis("right").setLabel(plot.right_unit, color=fr.BAD)
+            item.getAxis("right").setLabel(fr.unit_label(plot.right_unit), color=fr.BAD)
             self.right_view.setXLink(item)
             item.vb.sigResized.connect(self._sync_right)
         self.curves = []
@@ -407,7 +412,8 @@ class GraphPanel(QtWidgets.QFrame):
         for (text, color), label in zip(fr.legend(self.plot, histories, end), self.legend_labels):
             _set(label, text, color)
         start = end - layout.window_seconds
-        series = [fr.trace_arrays(h.points, start, end, layout.gap_seconds) for h in histories]
+        series = fr.scale_series(self.plot, [fr.trace_arrays(h.points, start, end, layout.gap_seconds)
+                                             for h in histories])
         for curve, (x, y), trace in zip(self.curves, series, self.plot.traces):
             if trace.enabled and len(x):
                 curve.setData(x + self.wall_offset, y)

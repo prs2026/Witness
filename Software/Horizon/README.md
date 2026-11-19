@@ -167,7 +167,7 @@ The **Flight controls** menu provides layout loading/saving, Pause/Resume, Clear
 
 ### Units and derived values
 
-Witness data uses the decoder’s protocol scaling. The Altitude AGL graph and readout show metres above the pad for every source:
+Horizon displays everything imperial: feet (ft) for altitudes and short distances, miles (mi) for long distances (feet below 1 mi, e.g. `1640 ft`, then miles to two decimals, e.g. `1.25 mi`) and ft/s for velocities. Conversion (1 ft = 0.3048 m exactly, 1 mi = 5280 ft) happens only when a value is displayed: decoded packets, derived fields, logs, files and the map maths stay SI metres, and Flight View layouts keep `"m"` / `"m/s"` units (shown as ft / ft/s). The CSV/log file viewer shows file columns as stored. The Altitude AGL graph and readout show feet above the pad for every source:
 
 - **W KF** is `kalman_altitude` from `0x02`/`0xE0`: the Witness position Kalman filter's up estimate, already relative to the pad (firmware before 2026-11-10 sent barometric altitude in this slot).
 - **F GPS** is the Featherweight tracker's altitude (ft ASL × 0.3048) minus the pad's MSL altitude (`_derived.altitude_agl_m`).
@@ -229,7 +229,7 @@ When a truth quaternion is present, truth is drawn as a blue dashed ghost and as
 - on the pad: `ATTITUDE NOT INITIALISED` (waiting for the 1 s stationary window; HITL entry/exit resets it);
 - in Boost/Coast/Descent/Landed after a valid attitude: `ATTITUDE LOST`. Witness stops its attitude for the rest of the flight once a gyro axis saturates (≥ 1950 dps), and its Kalman filter then ignores the IMU. The last valid attitude is drawn as a blue ghost.
 
-**Map** is a top-down, north-up pyqtgraph plot in local ENU metres centred on the pad, with locked aspect, showing:
+**Map** is a top-down, north-up pyqtgraph plot in local ENU coordinates (metres internally, labelled in feet) centred on the pad, with locked aspect, showing:
 
 - range rings, a north arrow and a scale bar;
 - a track for each source, distinguished by colour and marker:
@@ -241,7 +241,7 @@ When a truth quaternion is present, truth is drawn as a blue dashed ghost and as
 
 The Kalman position is relative to the vehicle's own pad. It is placed using the mean Witness GPS fix on the pad when one exists, and is otherwise assumed to start at the selected pad. Drag to pan, use the mouse wheel or **+/-** to zoom (the tile zoom level follows the view), and tick **Follow rocket** to keep the newest position centred. **Set pad here...** then a click overrides the pad position. **Auto pad** returns to automatic selection.
 
-The map always works offline as a metric grid. With **OSM tiles** ticked (the default), OpenStreetMap raster tiles are drawn underneath. They are fetched on one background thread at no more than 2 requests/s, with a User-Agent naming Horizon and no personal data, and cached in `tile_cache/osm/<z>/<x>/<y>.png` (ignored by git). Cached tiles are re-used offline and refreshed only after 30 days. **Pre-cache area...** downloads up to 600 tiles covering about 2 km around the pad at zoom 12–17. Do this once at home with internet, after the pad is known or set manually. Start with `horizon.py --offline-map` to never download. The map shows "© OpenStreetMap contributors" whenever tiles are drawn.
+The map always works offline as a plain grid (axes in feet; scale bar and range rings use round ft / mi steps). With **OSM tiles** ticked (the default), OpenStreetMap raster tiles are drawn underneath. They are fetched on one background thread at no more than 2 requests/s, with a User-Agent naming Horizon and no personal data, and cached outside the repository in `%LOCALAPPDATA%\Horizon\tile_cache\osm\<z>\<x>\<y>.png` on Windows (`~/.cache/horizon/tile_cache/osm` elsewhere; set `HORIZON_TILE_CACHE` to override), so pulling, cleaning or re-cloning the repo never clears it; an old in-repo `tile_cache/` is moved there on first start. Cached tiles are re-used offline and refreshed only after 30 days. **Pre-cache area...** downloads up to 1500 tiles: 6.21 mi around the pad at zoom 10–15, 1.86 mi at zoom 16 and 4921 ft at zoom 17 (about 900–1300 tiles, 8–11 minutes). Do this once at home with internet, after the pad is known or set manually. Start with `horizon.py --offline-map` to never download. The map shows "© OpenStreetMap contributors" whenever tiles are drawn.
 
 Redraws are timer-driven: at most 25 Hz, and only when data or the view changed. Tiles are downloaded by the `map_tiles.py` worker (same User-Agent and rate policy), decoded on a worker thread and shown as pyqtgraph `ImageItem`s.
 

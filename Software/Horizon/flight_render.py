@@ -51,8 +51,40 @@ def readable_color(color):
         rgb = [int(v * .9) for v in rgb]
 
 
-def value_text(trace, history):
+# Display-only unit conversion. Histories, derived fields and layout JSON stay
+# SI ("m", "m/s", "km"); they are converted to imperial only when drawn or printed.
+FT_M = 0.3048
+MI_M = 5280 * FT_M
+DISPLAY_UNITS = {"m": ("ft", 1 / FT_M), "m/s": ("ft/s", 1 / FT_M), "km": ("mi", 1000 / MI_M)}
+
+
+def display_unit(unit):
+    """(label, factor) a layout unit is shown as; unknown units pass through."""
+    return DISPLAY_UNITS.get(unit, (unit, 1.0))
+
+
+def unit_label(unit):
+    return display_unit(unit)[0]
+
+
+def trace_unit(row, trace):
+    """Layout unit of one trace: its override, else its axis's (right_unit or row unit)."""
+    if trace.unit:
+        return trace.unit
+    if getattr(trace, "axis", "left") == "right" and getattr(row, "right_unit", None):
+        return row.right_unit
+    return row.unit
+
+
+def display_factor(row, trace):
+    return display_unit(trace_unit(row, trace))[1]
+
+
+def value_text(trace, history, unit=None):
+    """Readout text; `unit` is the row's layout unit (a trace unit override wins)."""
     value = history.latest
+    if type(value) in (int, float) and (trace.unit or unit):
+        value = value * display_unit(trace.unit or unit)[1]
     if not trace.enabled:
         return "N/A"
     if value is None:
@@ -193,9 +225,9 @@ def flight_panel(layout, histories, end):
             continue
         cells = []
         for trace, history in zip(row.traces, data):
-            unit = trace.unit or row.unit
+            unit = unit_label(trace.unit or row.unit)
             status, status_color = quality_text(history, end)
-            cells.append((f"{trace.label}: {value_text(trace, history)} {unit}".rstrip(),
+            cells.append((f"{trace.label}: {value_text(trace, history, row.unit)} {unit}".rstrip(),
                           dim(readable_color(trace.color), history, end), status, status_color))
         metrics.append((row.title, cells))
     state = None
@@ -281,7 +313,7 @@ def landed_line(status, end):
     fix = landed.get("fix_age")
     fix_text = f", fix {fix:.0f}s old" if isinstance(fix, (int, float)) else ""
     return (f"LANDED FIX {landed['latitude']:.6f}, {landed['longitude']:.6f} alt "
-            f"{landed['gps_altitude']:.0f} m MSL (rx {age:.0f}s ago{fix_text}){flags}",
+            f"{landed['gps_altitude'] / FT_M:.0f} ft MSL (rx {age:.0f}s ago{fix_text}){flags}",
             "warn" if landed.get("stale") else "ok")
 
 
@@ -301,17 +333,17 @@ def status_rows(layout, histories, end, group):
             for trace, history in zip(row.traces, data):
                 marker, color = _marker(history, end)
                 alert = alert or color
-                parts.append(f"{trace.label} {value_text(trace, history)}{marker}")
+                parts.append(f"{trace.label} {value_text(trace, history, row.unit)}{marker}")
             out.append((title, [("  ".join(parts), alert or readable_color(row.traces[0].color))]))
             continue
         cells = []
         for trace, history in zip(row.traces, data):
             marker, color = _marker(history, end)
-            unit = trace.unit or row.unit
+            unit = unit_label(trace.unit or row.unit)
             if len(data) == 2:
-                text = f"{value_text(trace, history)}{marker} {unit}"
+                text = f"{value_text(trace, history, row.unit)}{marker} {unit}"
             else:
-                text = value_text(trace, history)
+                text = value_text(trace, history, row.unit)
                 if trace.format == "number" and trace.enabled:
                     text += " " + unit
                 if marker:
@@ -333,7 +365,7 @@ def legend(plot, histories, end):
         _status, color = quality_text(history, end)
         stale = history.received is not None and end - history.received >= 2
         marker = "!" if stale or history.quality in ("INVALID", "SNAPSHOT") else ""
-        items.append((f"{trace.label} {value_text(trace, history)}{marker}",
+        items.append((f"{trace.label} {value_text(trace, history, trace_unit(plot, trace))}{marker}",
                       color if marker else readable_color(trace.color)))
     return items
 
@@ -374,13 +406,29 @@ def trace_arrays(points, start, end, gap):
     return xs, ys
 
 
+def scale_series(plot, series):
+    """Display-unit copies of trace_arrays results (m -> ft, m/s -> ft/s, km -> mi)."""
+    out = []
+    for trace, (x, y) in zip(plot.traces, series):
+        factor = display_factor(plot, trace)
+        out.append((x, y * factor) if factor != 1.0 else (x, y))
+    return out
+
+
 def axis_ranges(plot, series, layout, pixels=300):
-    """{"left"/"right": (low, high, step)} and whether any sample is clipped."""
+    """{"left"/"right": (low, high, step)} and whether any sample is clipped.
+
+    `series` is in display units (scale_series); fixed y_range limits are given in
+    the layout unit and converted the same way.
+    """
     ranges, clipped = {}, False
     for axis in ("left", "right"):
         values = np.concatenate([y[np.isfinite(y)] for trace, (_x, y) in zip(plot.traces, series)
                                  if trace.axis == axis] or [np.empty(0)])
         limits = plot.y_range if axis == "left" and not layout.auto_scale else None
+        if limits is not None:
+            factor = display_unit(plot.unit)[1]
+            limits = (limits[0] * factor, limits[1] * factor)
         low, high, step = graph_range(values.tolist() if limits is None and len(values) < 4096
                                       else ([float(values.min()), float(values.max())] if len(values) else []),
                                       pixels, limits)

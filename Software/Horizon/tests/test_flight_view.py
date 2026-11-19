@@ -30,6 +30,18 @@ def document(**changes):
         {"label": "X", "input": "witness", "packet": "sensors", "field": "filtered_accel[0]"}]}], **changes}
 
 
+def distance_layout():
+    """Default layout with plot 3 swapped back to Horizontal distance (Gyro replaced it on the main page)."""
+    doc = json.loads(Path(DEFAULT_LAYOUT).read_text(encoding="utf-8"))
+    match = {"unit_type": "TRACKER"}
+    doc["plots"][3] = {"title": "Horizontal distance", "unit": "m", "traces": [
+        {"label": "W", "input": "witness", "packet": ["state", "witness_debug"], "field": "_derived.horizontal_distance_m"},
+        {"label": "A", "input": "aim", "packet": "gnss_payload/v1", "field": "_derived.horizontal_distance_m"},
+        {"label": "F", "input": "featherweight", "packet": "GPS_STAT", "field": "_derived.horizontal_distance_m",
+         "match": match}]}
+    return validate_layout(doc)
+
+
 class LayoutTests(unittest.TestCase):
     def test_compact_power_rows_and_voltage_precision(self):
         from flight_data import History
@@ -280,7 +292,7 @@ class HistoryTests(unittest.TestCase):
         self.assertEqual(nice_step(120), 25)
 
     def test_distance_origin_reset_and_cached_data(self):
-        model = FlightData(load_layout(DEFAULT_LAYOUT))
+        model = FlightData(distance_layout())
         def witness(x, y, t, snapshot=False):
             model.accept("witness", "W", "state", {"position[0]": x, "position[1]": y}, t, snapshot=snapshot)
         witness(1000, 2000, 1, snapshot=True)
@@ -306,7 +318,7 @@ class HistoryTests(unittest.TestCase):
     def test_shared_pad_reference_sets_agl_and_distance(self):
         from pad_reference import PadReference
         pad = PadReference()
-        model = FlightData(load_layout(DEFAULT_LAYOUT), pad=pad)
+        model = FlightData(distance_layout(), pad=pad)
         base = {"packet": "GPS_STAT", "unit_type": "BASE", "altitude_ft": 1000, "fix_type": 3,
                 "latitude_deg": 34.0, "longitude_deg": -117.0, "text_crc_valid": True,
                 "radio_crc_status": "CRC_OK"}
@@ -457,7 +469,7 @@ class FlightGuiTests(unittest.TestCase):
                 with patch("flight_view.show_error") as error:
                     self.assertFalse(flight.load_config(bad))
                     self.assertTrue(error.called)
-                    self.assertEqual(len(flight.data.layout.plots), 6)
+                    self.assertEqual(len(flight.data.layout.plots), 5)
                 good = Path(directory) / "custom.json"
                 good.write_text(json.dumps(document(title="Custom flight")))
                 self.assertTrue(flight.load_config(good))

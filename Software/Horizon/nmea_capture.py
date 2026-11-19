@@ -86,7 +86,10 @@ def summarize_gga(sentence: str) -> str | None:
         return None
     quality = fields[6] or "0"
     satellites = fields[7] or "0"
-    altitude = fields[9] or "-"
+    try:   # GGA altitude is metres (the sentence and logs stay as received); shown in feet
+        altitude = f"{float(fields[9]) / 0.3048:.0f} ft"
+    except ValueError:
+        altitude = "-"
     utc = fields[1][:6]
     utc = f"{utc[0:2]}:{utc[2:4]}:{utc[4:6]}" if len(utc) == 6 else "--:--:--"
-    return f"GGA {utc} UTC, fix {quality}, sats {int(satellites)}, alt {altitude} m"
+    return f"GGA {utc} UTC, fix {quality}, sats {int(satellites)}, alt {altitude}"

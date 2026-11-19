@@ -29,7 +29,7 @@ The Map & Attitude tab shows the 3D orientation view and the top-down map
 side by side (resizable splitter); Windows > Visualizer (F9), or the tab's
 button, opens the same view in a separate window. The map is an
 offline metric grid; with "OSM tiles" on it also draws OpenStreetMap tiles
-cached under tile_cache/ (use --offline-map to never fetch). Tracks are
+cached per user outside the repo (use --offline-map to never fetch). Tracks are
 collected while the window is closed.
 
 Flight View opens first. The Attitude tab draws the Witness quaternion as a 3D

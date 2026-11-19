@@ -37,7 +37,7 @@ PHASES = {"Pad idle": 0, "Boost": 1, "Coast": 2, "Descent": 3, "Landed": 4}
 SOURCES = ["tools/kalman_replay.cpp", "main/position_filter.cpp", "main/accel_filter.cpp",
            "main/heading_align.cpp"]
 HEADERS = ["main/position_filter.h", "main/accel_filter.h", "main/pressure_altitude.h",
-           "main/heading_align.h"]
+           "main/heading_align.h", "main/gps_trust.h"]
 
 
 def build(force: bool = False, compiler: str = "g++") -> Path:

@@ -43,6 +43,7 @@ HINT = ("Select an item on the left to edit it. Graph order is reading order.\n"
         "Limits: 6 graphs, 3 flight rows, 1 state row, 6 GPS rows, 10 power rows.\n"
         "Values per row: flight 3; state, GPS and power 2 (state: add format hitl).\n"
         "Packet lists use commas. Fixed Y limits apply only with Auto-scale off.\n"
+        "Units m, m/s and km stay SI in the layout (and Y limits) and are shown as ft, ft/s and mi.\n"
         'FW tracker filter: {"unit_type": "TRACKER"}. Leave {} for no filter.\n'
         "Existing custom fields and filters are preserved. Right axis requires right-axis units.")
 DEFAULT_STATUS = "Edit a draft, then Apply to Flight View. Applying clears graph history, not logs or connections."
@@ -142,7 +143,7 @@ class LayoutDraft:
         elif self.selected.count(":") == 1:
             self.title = "Graph / readout"
             self._field("title", "Title", target["title"])
-            self._field("unit", "Units", target.get("unit", "value"))
+            self._field("unit", "Units (m, m/s, km display as ft, ft/s, mi)", target.get("unit", "value"))
             if self.selected.startswith("readouts"):
                 self._field("group", "Position / section", GROUPS.get(target["group"], target["group"]),
                             "choice", list(GROUPS.values()))

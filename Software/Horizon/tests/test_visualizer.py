@@ -77,8 +77,8 @@ class Geodesy(unittest.TestCase):
         lat, lon, _ = geo.enu_to_geodetic(800, 600, 0, PAD_LAT, PAD_LON)
         self.assertAlmostEqual(geo.haversine_m(PAD_LAT, PAD_LON, lat, lon), 1000, delta=5)
         self.assertAlmostEqual(geo.initial_bearing_deg(PAD_LAT, PAD_LON, lat, lon), 53.13, delta=0.2)
-        self.assertEqual(geo.format_distance(950), "950 m")
-        self.assertEqual(geo.format_distance(1500), "1.50 km")
+        self.assertEqual(geo.format_distance(500), "1640 ft")     # Horizon shows feet below 1 mi
+        self.assertEqual(geo.format_distance(2012), "1.25 mi")    # ... and miles from 1 mi up
 
     def test_validity(self):
         self.assertTrue(geo.valid_lat_lon(PAD_LAT, PAD_LON))
@@ -105,7 +105,8 @@ class Geodesy(unittest.TestCase):
         self.assertGreaterEqual(len(tiles), math.floor(span) ** 2)
         wrapped = geo.tiles_covering(0, 179.9999, 50000, 6)
         self.assertTrue(all(0 <= x < 64 for x, _ in wrapped))
-        self.assertEqual([geo.nice_ring_step(s, 4) for s in (90, 1000, 3000)], [25, 250, 1000])
+        # Nice steps in the displayed unit (ft, then mi), returned in metres.
+        self.assertEqual([round(geo.nice_ring_step(s, 4) / geo.FT_M, 6) for s in (90, 1000, 3000)], [100, 1000, 2640])
 
 
 class Tiles(unittest.TestCase):
@@ -359,13 +360,13 @@ class VisualizerGui(unittest.TestCase):
             tab.set_zoom(16)
             tab._readout_at = 0
             tab.refresh()
-            self.assertIn("500 m @ 37", tab.values["kf"].get())
-            self.assertIn("120.0 m AGL", tab.values["kf"].get())
+            self.assertIn("1640 ft @ 37", tab.values["kf"].get())
+            self.assertIn("394 ft AGL", tab.values["kf"].get())
             self.assertIn("Aperture", tab.values["pad"].get())
             texts = tab.texts()
             self.assertIn("PAD", texts)
             self.assertIn("N", texts)
-            self.assertIn("KF 120 m", texts)
+            self.assertIn("KF 394 ft", texts)
             self.assertNotIn(map_tiles.ATTRIBUTION, texts)        # offline: no tiles drawn
             self.assertEqual(tab.view.state["aspectLocked"], 1.0)
             # Track drawn in ENU metres relative to the pad.

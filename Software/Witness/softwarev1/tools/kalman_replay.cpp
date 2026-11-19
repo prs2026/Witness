@@ -59,11 +59,32 @@ const Key kConfigKeys[] = {
     {"baro_scale_rate", &position::Config::baro_scale_rate, nullptr},
     {"gate_sigma", &position::Config::gate_sigma, nullptr},
     {"max_consecutive_rejects", nullptr, &position::Config::max_consecutive_rejects},
+    {"gps_trust_enabled", nullptr, &position::Config::gps_trust_enabled},
+    {"gps_trust_sigma_cap_m", &position::Config::gps_trust_sigma_cap_m, nullptr},
+    {"gps_trust_large_accept_weight", &position::Config::gps_trust_large_accept_weight, nullptr},
+    {"gps_trust_slew_mps", &position::Config::gps_trust_slew_mps, nullptr},
+    {"gps_trust_slew_floor_m", &position::Config::gps_trust_slew_floor_m, nullptr},
     {"no_imu_accel_noise_mps2", &position::Config::no_imu_accel_noise_mps2, nullptr},
 };
 
 bool set_key(position::Config &c, const char *key, const char *value)
 {
+    struct TrustKey { const char *name; float position::GpsTrustConfig::*f; };
+    static const TrustKey kTrustKeys[] = {
+        {"trust_window_s", &position::GpsTrustConfig::window_s},
+        {"trust_gap_s", &position::GpsTrustConfig::gap_s},
+        {"trust_fast_ramp_s", &position::GpsTrustConfig::fast_ramp_s},
+        {"trust_slow_ramp_s", &position::GpsTrustConfig::slow_ramp_s},
+        {"trust_drop_factor", &position::GpsTrustConfig::drop_factor},
+        {"trust_velocity_tol_mps", &position::GpsTrustConfig::velocity_tol_mps},
+        {"trust_accel_tol_mps", &position::GpsTrustConfig::accel_tol_mps},
+        {"trust_low_satellite_cap", &position::GpsTrustConfig::low_satellite_cap},
+    };
+    for (const TrustKey &k : kTrustKeys) {
+        if (std::strcmp(k.name, key) != 0) continue;
+        c.gps_trust.*(k.f) = static_cast<float>(std::atof(value));
+        return true;
+    }
     for (const Key &k : kConfigKeys) {
         if (std::strcmp(k.name, key) != 0) continue;
         if (k.f) c.*(k.f) = static_cast<float>(std::atof(value));

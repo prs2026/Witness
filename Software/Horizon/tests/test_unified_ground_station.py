@@ -264,7 +264,7 @@ class GuiTests(unittest.TestCase):
                 self.assertTrue(witness.publisher._thread.is_alive())
                 # Closing Horizon's feed does not close or command Witness ports.
                 self.assertTrue(pump_until(
-                    lambda: witness.values["packet.state.kalman_altitude"].get() == "125.5"))
+                    lambda: witness.values["packet.state.kalman_altitude"].get() == "411.75"))   # 125.5 m shown in ft
             finally:
                 if witness is not None:
                     witness.close()

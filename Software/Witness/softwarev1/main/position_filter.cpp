@@ -84,6 +84,7 @@ void Filter::predict(const float acceleration_world_mps2[3], const float dt_s,
     if (!(dt_s > 0.0F)) {
         return;
     }
+    clock_s_ += static_cast<double>(dt_s);
     if (dt_s > kMaxPredictDtS) {
         // Gap (stall, overrun): do not integrate the IMU over an unknown
         // interval, but do not freeze either. Advance the position with the
@@ -214,6 +215,7 @@ void Filter::predict_without_imu(const float dt_s, const Phase phase)
     if (!(dt_s > 0.0F)) {
         return;
     }
+    clock_s_ += static_cast<double>(dt_s);
     if (dt_s > kMaxPredictDtS) ++predict_gaps_;   // bridged, see predict()
     propagate_without_acceleration(std::fmin(dt_s, kMaxGapBridgeS),
                                    config_.no_imu_accel_noise_mps2);
@@ -232,6 +234,7 @@ void Filter::predict_magnitude_only(const float specific_force_mps2, const float
     if (!(dt_s > 0.0F)) {
         return;
     }
+    clock_s_ += static_cast<double>(dt_s);
     const bool gap = dt_s > kMaxPredictDtS;
     if (gap) ++predict_gaps_;
     const float dt = std::fmin(dt_s, kMaxGapBridgeS);
@@ -626,18 +629,64 @@ bool Filter::update_gps(const double latitude_deg, const double longitude_deg,
     bool used = false;
     const float measurement[3] = {east, north, up};
     const float variance[3] = {h * h, h * h, v * v};
+    // Trust weights are tracked in every phase, so they are warm at launch.
+    const double fix_dt = gps_prev_fix_t_ >= 0.0 ? clock_s_ - gps_prev_fix_t_ : 0.04;
+    gps_prev_fix_t_ = clock_s_;
+    const float current_speed = speed();
+    float weight[3];
     for (int i = 0; i < 3; ++i) {
-        // A GPS altitude stream that keeps failing the gate is forced in
-        // (re-synchronization after an outage) only when no barometer was
-        // accepted for kBaroHealthyCycles: a healthy subsonic barometer
-        // outranks a receiver reporting km-off fixes (seen in HITL after a
-        // bad reacquisition).
-        const bool resync = i != 2 || cycles_since_baro_ >= kBaroHealthyCycles;
-        if (update_position(axes_[i], measurement[i], variance[i], gps_consecutive_rejects_[i],
-                            &gps_innovation_[i], config_.gps_latency_s, resync)) {
-            used = true;
-        } else {
-            ++gps_rejects_total_;
+        weight[i] = gps_trust_[i].on_fix(clock_s_, measurement[i], axes_[i].v,
+                                         std::sqrt(std::fmax(axes_[i].P11, 0.0F)), current_speed,
+                                         satellites, config_.gps_trust);
+    }
+    const bool flying = phase == Phase::Boost || phase == Phase::Coast || phase == Phase::Descent;
+    if (flying && config_.gps_trust_enabled != 0U) {
+        const float lag = config_.gps_latency_s;
+        const float gate2 = config_.gate_sigma * config_.gate_sigma;
+        const float cap2 = config_.gps_trust_sigma_cap_m * config_.gps_trust_sigma_cap_m;
+        const float max_step = config_.gps_trust_slew_floor_m +
+                               config_.gps_trust_slew_mps *
+                                   static_cast<float>(std::fmin(std::fmax(fix_dt, 0.0), 0.5));
+        for (int i = 0; i < 3; ++i) {
+            Axis &axis = axes_[i];
+            const float hph = axis.P00 - 2.0F * lag * axis.P01 + lag * lag * axis.P11;
+            const float innovation = measurement[i] - (axis.p - lag * axis.v);
+            const float gate_s = std::fmin(hph, cap2) + variance[i];
+            const bool large = innovation * innovation > gate2 * gate_s;
+            // A healthy subsonic barometer outranks a GPS altitude far off.
+            const bool baro_first = i == 2 && cycles_since_baro_ < kBaroHealthyCycles;
+            if (!std::isfinite(innovation) ||
+                (large && (weight[i] < config_.gps_trust_large_accept_weight || baro_first))) {
+                gps_innovation_[i] = Innovation{innovation, gate_s, false};
+                ++gps_consecutive_rejects_[i];
+                ++gps_rejects_total_;
+                continue;
+            }
+            float r = variance[i] / weight[i];
+            const float size = std::fabs(innovation);
+            if (size > max_step && hph > 0.0F) r = std::fmax(r, hph * (size / max_step - 1.0F));
+            if (update_axis(axis, 1.0F, -lag, 0.0F, measurement[i], r, nullptr,
+                            &gps_innovation_[i], false)) {
+                gps_consecutive_rejects_[i] = 0;
+                used = true;
+            } else {
+                ++gps_rejects_total_;
+            }
+        }
+    } else {
+        for (int i = 0; i < 3; ++i) {
+            // A GPS altitude stream that keeps failing the gate is forced in
+            // (re-synchronization after an outage) only when no barometer was
+            // accepted for kBaroHealthyCycles: a healthy subsonic barometer
+            // outranks a receiver reporting km-off fixes (seen in HITL after a
+            // bad reacquisition).
+            const bool resync = i != 2 || cycles_since_baro_ >= kBaroHealthyCycles;
+            if (update_position(axes_[i], measurement[i], variance[i], gps_consecutive_rejects_[i],
+                                &gps_innovation_[i], config_.gps_latency_s, resync)) {
+                used = true;
+            } else {
+                ++gps_rejects_total_;
+            }
         }
     }
     if (used) ++gps_updates_;
