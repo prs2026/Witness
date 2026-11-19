@@ -162,6 +162,74 @@ class Independence(unittest.TestCase):
             core.close()
 
 
+class _SkewedTime:
+    """The ``time`` module as seen by a sender whose wall clock is off by ``skew`` s."""
+
+    def __init__(self, skew):
+        self.skew = skew
+
+    def time(self):
+        return time.time() + self.skew
+
+    def __getattr__(self, name):
+        return getattr(time, name)
+
+
+class ClockSkew(unittest.TestCase):
+    """Ages are measured on the receiver: a sender clock hours off must not make
+    live data look stale (or old data look fresh)."""
+
+    def _ages(self, skew, live_age=0.0, snapshot_age=5.0):
+        publisher = WitnessPublisher("127.0.0.1", 0)
+        records = []
+        with tempfile.TemporaryDirectory() as tmp,                 patch.object(witness_link, "time", _SkewedTime(skew)):
+            publisher.start()
+            sender_now = time.time() + skew
+            # A packet received 5 s before the receiver connects (snapshot) ...
+            publisher.publish("COM7", dict(PACKET, uptime=1), received_at=sender_now - snapshot_age)
+            receiver = WitnessReceiver("127.0.0.1", publisher.port, tmp, on_record=records.append)
+            receiver.start()
+            try:
+                deadline = time.monotonic() + 10
+                while not records and time.monotonic() < deadline:
+                    time.sleep(0.02)
+                # ... and a live packet, received now by the sender.
+                publisher.publish("COM7", dict(PACKET, uptime=2),
+                                  received_at=time.time() + skew - live_age)
+                while len(records) < 2 and time.monotonic() < deadline:
+                    time.sleep(0.02)
+            finally:
+                receiver.stop()
+                publisher.close()
+        self.assertEqual(len(records), 2)
+        now = time.monotonic()
+        return {r["packet"]["uptime"]: now - r["received_mono"] for r in records}, records
+
+    def test_sender_clock_far_ahead_or_behind(self):
+        for skew in (3600.0, -3600.0, 40.0):
+            with self.subTest(skew=skew):
+                ages, records = self._ages(skew)
+                live = next(r for r in records if not r["replay"])
+                snap = next(r for r in records if r["replay"])
+                self.assertLess(ages[2], 1.5, "live data must look live")
+                self.assertGreater(ages[1], 4.5, "a snapshot keeps its real age")
+                self.assertLess(ages[1], 8.0)
+                # received_at itself is on the receiver's clock now.
+                self.assertAlmostEqual(live["received_at"], time.time(), delta=3.0)
+                self.assertAlmostEqual(snap["received_at"], time.time() - 5.0, delta=3.0)
+                self.assertIn("sender_received_at", live)
+
+    def test_old_sender_without_sent_at(self):
+        record = {"received_at": time.time() + 3600, "replay": False}
+        self.assertEqual(witness_link.receiver_age_s(record), 0.0)
+        record = {"received_at": time.time() - 4, "replay": True}
+        self.assertAlmostEqual(witness_link.receiver_age_s(record), 4.0, delta=0.5)
+        record = {"received_at": time.time() + 3600, "replay": True}
+        self.assertEqual(witness_link.receiver_age_s(record), 0.0)     # never negative
+        self.assertEqual(witness_link.receiver_age_s({"sent_at": float("nan"), "received_at": 1.0,
+                                                      "replay": False}), 0.0)
+
+
 TS_IP = tailscale_ipv4()
 
 

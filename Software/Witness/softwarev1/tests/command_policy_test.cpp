@@ -1,12 +1,38 @@
 #include "command_policy.h"
+#include "comms.h"
 
 #include <cassert>
 #include <initializer_list>
 
 using namespace command_policy;
 
+static_assert(command_policy::kBenchRestart == IRIS_COMMAND_BENCH_RESTART &&
+                  command_policy::kBenchHang == IRIS_COMMAND_BENCH_HANG &&
+                  command_policy::kBenchIrisReset == IRIS_COMMAND_BENCH_IRIS_RESET,
+              "bench opcodes must match comms.h");
+
 int main()
 {
+    // Bench-only commands (restart, hang, Iris reset): USB with HITL active only;
+    // never from radio, never without HITL; no other opcode is a bench command.
+    for (const std::uint16_t c : {kBenchRestart, kBenchHang, kBenchIrisReset}) {
+        assert(is_bench_command(c));
+        assert(allow_bench_command(Source::Usb, true));
+        assert(!allow_bench_command(Source::Usb, false));
+        assert(!allow_bench_command(Source::Radio, true));
+        assert(!allow_bench_command(Source::Radio, false));
+        // After a warm reset (RESUMED, HITL off): USB only.
+        assert(allow_bench_command(Source::Usb, false, true));
+        assert(!allow_bench_command(Source::Radio, false, true));
+        assert(!allow_bench_command(Source::Radio, true, true));
+        assert(!allow_bench_command(Source::Usb, false, false));
+    }
+    assert(kBenchRestart != kBenchHang && kBenchHang != kBenchIrisReset && kBenchRestart != kBenchIrisReset);
+    for (const std::uint16_t c : {0x4251, 0x4253, 0x4247, 0x424A, 0x4848, 0x4749, 0x0030, 0x5746, 0x0000, 0xFFFF})
+        assert(!is_bench_command(c));
+    // None of them collides with a command that has a meaning in flight.
+    assert(!is_log_maintenance_command(kBenchHang) && !is_iris_load_command(kBenchIrisReset) &&
+           kBenchRestart != kRadioPower && kBenchHang != kGpsAssistBegin && kBenchIrisReset != kGpsAssistData);
     assert(is_log_maintenance_command(0x6868) && is_log_maintenance_command(0x6869) &&
            is_log_maintenance_command(0x686A) && !is_log_maintenance_command(0x6867));
 

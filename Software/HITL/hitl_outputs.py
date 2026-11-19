@@ -241,8 +241,9 @@ def fetch_fc_logs(session, run, config: dict, log, activity=None) -> dict:
                 time.sleep(1)
         if not files:
             raise RuntimeError("no files listed on the Witness log disk")
-        newest = max(wd.generation(f["name"]) for f in files)
-        wanted = [f for f in files if wd.generation(f["name"]) == newest]
+        newest, wanted = wd.latest_session_files(files)
+        if not wanted:
+            raise RuntimeError("no Witness session files in the listing")
         os.makedirs(out_dir, exist_ok=True)
         for i, f in enumerate(wanted, 1):
             step(f"FC logs: downloading {f['name']} ({i}/{len(wanted)}, {f['size'] / 1e6:.1f} MB)")

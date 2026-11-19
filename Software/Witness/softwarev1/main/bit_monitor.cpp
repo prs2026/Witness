@@ -406,7 +406,7 @@ void BitMonitor::apply_fault_view(bit::Inputs &in, const std::uint32_t)
     if (on(IRIS_BIT_FAULT_GRAVITY)) { in.still.valid = true; in.still.accel_mag_g = 2.0F; }
     if (on(IRIS_BIT_FAULT_HEAP_PRESSURE)) {
         // View-level: nothing is allocated. Level 1 (d2 = 1 on the command) shows a blocking minimum.
-        in.heap_known = true; in.heap_min = fault_heap_blocking_ ? 4000U : 10'000U; in.heap_largest = 5000U;
+        in.heap_known = true; in.heap_min = fault_heap_blocking_ ? 4000U : 7000U; in.heap_largest = 5000U;
     }
     if (on(IRIS_BIT_FAULT_LOGGER_STALL)) in.logger_pass_age_ms = 6000;
     if (on(IRIS_BIT_FAULT_WDT_UNSUBSCRIBED)) in.wdt_subscribed = static_cast<std::uint16_t>(in.wdt_subscribed & ~kTaskSensors);

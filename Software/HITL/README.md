@@ -92,6 +92,17 @@ py -3.14 hitl_gui.py --headless --csv trajectories/a3241569-trajectory.csv --dry
 py -3.14 hitl_gui.py --headless --csv my.csv --set site_alt_msl_m=1200 --set after_apogee_attitude=pendulum --att-final-tilt 3
 ```
 
+**`--no-fetch-logs` (read this before a headless run).** A hardware run
+fetches the flash logs by default, and the fetch power-cycles the bench hub
+afterwards, which resets every board on it (Witness, Iris and Aperture). A
+headless run therefore resets the bench unless you pass `--no-fetch-logs`.
+Pass it for back-to-back runs, for runs that must not interrupt another test,
+and whenever another agent or a soak is using the bench. It also skips the
+SSH step, so no Pi user is needed. `fetch_fc_logs: false` in
+`hitl_settings.json` does the same. `fetch_restart_hub: false` keeps the fetch
+but skips the power cycle (Witness then stays in export mode until you
+power-cycle it).
+
 `--dry-run` builds the frames and prints the conversion report and expected
 transitions without connecting. `--speed N` sends N ticks per 10 ms and is
 refused unless the host is loopback, because Witness integrates with its own
@@ -477,6 +488,17 @@ The fetch is skipped, with a log line, in two cases:
   boards after you pressed Stop);
 - no Pi user is set (SSH would otherwise try your Windows user name and fail,
   leaving Witness in export mode).
+
+**Reset during a run.** After a warm reset (`0x4252`) HITL is off and the
+board runs on its real sensors, which read the bench, not the simulated site.
+The session notices the reset (uptime restart or the resumed bit) and states
+at or after that sim time show as `AFTER RESET` and are not scored; the dropped
+HITL bit is not a failure. The restored pad reference is the simulated site's
+barometric altitude (609 m MSL by default), so on a bench at a different
+altitude the real barometer gives a large negative AGL (about -418 m on the
+2026-11-17 bench), a false Descent and then Landed. To test the resumed
+filter against matching sensors, run with `--set site_alt_msl_m=<bench altitude>`
+so the restored reference equals what the bench reads.
 
 If Witness is ever left in export mode, power-cycle the hub
 (`sudo uhubctl -l 2 -a 2` on the Pi) or replug it.

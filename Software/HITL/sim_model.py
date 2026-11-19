@@ -517,15 +517,83 @@ class ReferenceStateMachine:
                            decoded["gyro_dps"], agl_m, vz_mps)
 
 
+class BaroRate:
+    """Python copy of position::BaroRate (position_filter.cpp): the average
+    altitude of the newest 3 of 10 consecutive 100 ms bins minus that of the
+    oldest 3, over their 0.7 s centre separation. Up positive."""
+    BIN_US = 100_000
+    BINS = 10
+    STALE_US = 500_000
+
+    def __init__(self):
+        self._bin_open = False
+        self._bin_index = 0
+        self._sum = 0.0
+        self._count = 0
+        self._bins = []
+        self._rate = 0.0
+        self._valid = False
+        self._last_add_us = 0
+
+    def _push(self, mean):
+        self._bins.append(mean)
+        if len(self._bins) > self.BINS:
+            del self._bins[0]
+        self._valid = False
+        if len(self._bins) == self.BINS:
+            b = self._bins
+            old3, new3 = b[0] + b[1] + b[2], b[-3] + b[-2] + b[-1]
+            if math.isfinite(old3) and math.isfinite(new3):
+                self._rate = (new3 - old3) / 3.0 / (0.1 * (self.BINS - 3))
+                self._valid = True
+
+    def _finish_bin(self):
+        self._push(self._sum / self._count if self._count else float("nan"))
+
+    def add(self, t_us, altitude_m):
+        if not math.isfinite(altitude_m):
+            return
+        index = t_us // self.BIN_US
+        if not self._bin_open:
+            self._bin_open = True
+            self._bin_index = index
+        if index < self._bin_index:
+            return
+        if index > self._bin_index:
+            self._finish_bin()
+            for _ in range(min(index - self._bin_index - 1, self.BINS)):
+                self._push(float("nan"))
+            self._bin_index = index
+            self._sum = 0.0
+            self._count = 0
+        self._sum += altitude_m
+        self._count += 1
+        self._last_add_us = t_us
+
+    def valid(self, now_us):
+        return (self._valid and now_us >= self._last_add_us
+                and now_us - self._last_add_us <= self.STALE_US)
+
+    @property
+    def rate_mps(self):
+        return self._rate
+
+
 def _feed(samples):
     fsm = ReferenceStateMachine()
+    baro = BaroRate()
     site = samples[0].alt_msl_m if samples else 0.0
     track = []
     for s in samples:
         frame = hp.encode_hitl(s.hitl)
+        dec = hp.decode_hitl(frame)
         # Firmware ignores timestamp 0; offset by one tick like a real clock.
-        track.append(fsm.update_from_sample((s.t_ms + TICK_MS) * 1000, hp.decode_hitl(frame),
-                                            s.alt_msl_m - site, s.vel_mps))
+        ts_us = (s.t_ms + TICK_MS) * 1000
+        # Raw barometer rate from the quantised pressure, as sensors.cpp does.
+        baro.add(ts_us, hp.pressure_altitude_m(dec["pressure_pa"]))
+        rate = baro.rate_mps if baro.valid(ts_us) else None
+        track.append(fsm.update(ts_us, dec["low_g"][0], dec["low_g"], dec["gyro_dps"],
+                                s.alt_msl_m - site, s.vel_mps, baro_rate_mps=rate))
     return fsm, track
 
 

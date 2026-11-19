@@ -113,7 +113,9 @@
 #define IRIS_COMMAND_HITL_EXIT 0x4858U
 // Bench restart (test only): reboots Witness in any flight state so a reset in
 // flight can be tested. Accepted only as a canonical USB frame and only while
-// HITL is active (so never in a real flight); radio -> IRIS_ACK_UNKNOWN, never
+// HITL is active or after a warm reset that resumed an in-flight state (the
+// RESUMED status bit; HITL is off after every reset, so this allows repeated
+// resets; USB is never connected in a real flight); radio -> IRIS_ACK_UNKNOWN, never
 // forwarded to Iris. d0 = IRIS_BENCH_RESTART_SOFTWARE (esp_restart, reset
 // reason SW) or IRIS_BENCH_RESTART_PANIC (abort, reset reason PANIC); both are
 // warm resets that resume the flight state. Acked IRIS_ACK_OK ~100 ms before
@@ -162,6 +164,23 @@
 #define IRIS_BIT_FAULT_LOGGER_STALL 9U
 #define IRIS_BIT_FAULT_WDT_UNSUBSCRIBED 10U
 #define IRIS_BIT_FAULT_CLEAR_ALL 0xFFU
+
+// Bench hang (test only, same gating as IRIS_COMMAND_BENCH_RESTART: canonical
+// USB frame, HITL active, never from radio, never forwarded): the sensors task
+// stops feeding the task watchdog and spins, so the REAL task watchdog trips
+// (8 s, reset reason TASK_WDT, a warm reset that resumes the flight state).
+// Acked IRIS_ACK_OK; HITL off -> IRIS_ACK_REFUSED. d0-d5 ignored.
+#define IRIS_COMMAND_BENCH_HANG 0x4248U
+// Bench Iris warm reset (test only, same gating): Witness sends this frame to
+// Iris over CAN with the arming bytes IRIS_BENCH_IRIS_RESET_ARM0/1 in d0/d1,
+// and Iris answers by esp_restart() (reset reason SW, a warm reset: its load
+// restore and expander-reset-pin hold are exercised). Iris accepts it only from
+// CAN and only with the arming bytes. Witness acks IRIS_ACK_OK when the CAN
+// queue took the frame (IRIS_ACK_BUSY otherwise); HITL off -> IRIS_ACK_REFUSED.
+// Radio and USB-text forms are never forwarded to Iris.
+#define IRIS_COMMAND_BENCH_IRIS_RESET 0x4249U
+#define IRIS_BENCH_IRIS_RESET_ARM0 0xA5U
+#define IRIS_BENCH_IRIS_RESET_ARM1 0x5AU
 // IMU calibration (USB only, Pad Idle, real sensors): 0x05, 0x43, then one of
 // these arguments. GYRO captures 2 s still and stores the gyro bias; FACE
 // captures 2 s on one face (+/-X, +/-Y, +/-Z, any order) and, after all six,

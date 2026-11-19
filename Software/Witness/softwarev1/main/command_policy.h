@@ -96,6 +96,28 @@ constexpr bool allow_gps_assist(const std::uint16_t command, const std::uint8_t 
     return flight_state == kPadIdle || flight_state == kLanded;
 }
 
+// Bench-only commands (comms.h: 0x4252 restart, 0x4248 hang, 0x4249 Iris
+// reset). They exist only for tests: accepted as a canonical USB frame while
+// HITL is active, never from radio and never forwarded to Iris or re-sent over
+// LoRa (the bridge refuses them for the radio and USB-forward paths; USB
+// handles them locally).
+constexpr std::uint16_t kBenchRestart = 0x4252U;
+constexpr std::uint16_t kBenchHang = 0x4248U;
+constexpr std::uint16_t kBenchIrisReset = 0x4249U;
+constexpr bool is_bench_command(const std::uint16_t command)
+{
+    return command == kBenchRestart || command == kBenchHang || command == kBenchIrisReset;
+}
+// The only source and modes in which a bench command runs: USB, and either HITL
+// active or this boot RESUMED an in-flight state after a warm reset (HITL is off
+// after every reset, so without the second case a test could not reset twice in a
+// row). USB is never connected in a real flight; radio is never allowed.
+constexpr bool allow_bench_command(const Source source, const bool hitl_active,
+                                   const bool resumed_after_reset = false)
+{
+    return source == Source::Usb && (hitl_active || resumed_after_reset);
+}
+
 // GPS cold start (0x4752): loses the fix for 30 s or more. Pad Idle only; the
 // state is checked again when the request is made.
 constexpr bool allow_gps_cold_start(const std::uint8_t flight_state)

@@ -111,6 +111,36 @@ def json_safe(value):
     return value
 
 
+def receiver_age_s(record):
+    """Age of a feed record in seconds, from the sender's clock differences only.
+
+    ``received_at`` is the sender's wall clock when it received the packet and
+    ``sent_at`` is the sender's wall clock when it wrote this record to the feed,
+    so ``sent_at - received_at`` is skew-free: it is how long the sender held the
+    packet (0 for a live record, the real age for a snapshot of the latest
+    packets). The receiver adds that to its own clock and never compares the
+    sender's clock with its own. Without ``sent_at`` (an older sender) a live
+    record counts as new, and a replayed one falls back to the clocks being
+    close, clamped to be non-negative.
+    """
+    sent = record.get("sent_at")
+    received = record.get("received_at")
+    if type(sent) in (int, float) and math.isfinite(sent) and type(received) in (int, float):
+        return max(0.0, sent - received)
+    if not record.get("replay"):
+        return 0.0
+    return max(0.0, time.time() - received) if type(received) in (int, float) else 0.0
+
+
+def to_receiver_clock(record, now=None):
+    """Copy of ``record`` whose ``received_at`` is on THIS machine's clock, so
+    every consumer (age readouts, staleness, pad reference) is independent of
+    the sender's clock. The sender's value is kept as ``sender_received_at``."""
+    now = time.time() if now is None else now
+    return dict(record, received_at=now - receiver_age_s(record),
+                sender_received_at=record.get("received_at"))
+
+
 def encode_record(record):
     wire = json.dumps(record, ensure_ascii=True, allow_nan=False,
                       separators=(",", ":")).encode("utf-8") + b"\n"
@@ -241,7 +271,9 @@ class WitnessPublisher:
                       "sequence": self.sequence, "source": source,
                       "received_at": time.time() if received_at is None else received_at,
                       "replay": False, "packet": json_safe(packet)}
-            wire = encode_record(record)
+            # sent_at is stamped when the record is written to a client (below);
+            # the stored copy has none so a snapshot is stamped when it is sent.
+            wire = encode_record(dict(record, sent_at=time.time()))
             key = (source, packet["packet"])
             self._latest[key] = record
             self._latest.move_to_end(key)
@@ -311,7 +343,8 @@ class WitnessPublisher:
                             enable_keepalive(connection)
                         with self._lock:
                             latest = sorted(self._latest.values(), key=lambda item: item["sequence"])
-                            snapshot = b"".join(encode_record(dict(item, replay=True)) for item in latest)
+                            snapshot = b"".join(encode_record(dict(item, replay=True, sent_at=time.time()))
+                                                for item in latest)
                             sequence = self.sequence
                         if len(snapshot) > self.max_pending:
                             connection.close()

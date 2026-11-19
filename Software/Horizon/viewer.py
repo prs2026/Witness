@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import functools
 import json
 import math
 import os
@@ -47,6 +48,7 @@ import spectrum
 import viewer_board as vb_file
 import viewer_data as vd
 from qt_common import add_curve, Debounce, ensure_app, run_in_thread, Throttle
+from qt_widgets import _OnDestroyed
 # Compatibility: the data helpers were importable from viewer before the Qt
 # port (Horizon main.py imports these four; tests and scripts use the rest).
 from viewer_data import *  # noqa: F401,F403
@@ -2970,7 +2972,7 @@ class CsvViewerWidget(QtWidgets.QWidget):
             return None
         window = SpectrogramWindow(self, ref)
         self._spectrum_windows.append(window)
-        window.destroyed.connect(lambda _o=None, w=window: self._forget_window(w))
+        window.destroyed.connect(_OnDestroyed(functools.partial(self._forget_window, window)))
         window.show()
         return window
 

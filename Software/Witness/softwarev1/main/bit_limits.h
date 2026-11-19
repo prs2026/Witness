@@ -41,8 +41,14 @@ constexpr std::uint8_t kDebounceRecover = 5;    // passes needed after a fail
 
 // ---- Group 0: platform -----------------------------------------------------
 constexpr std::uint32_t kHeapMinBlockingBytes = 6 * 1024;     // [PROPOSED]
-constexpr std::uint32_t kHeapMinDegradedBytes = 20 * 1024;    // [PROPOSED]
-constexpr std::uint32_t kHeapLargestDegradedBytes = 8 * 1024; // [PROPOSED]
+// Degraded = close to where the flight image could actually fail. It links no
+// Wi-Fi; after boot its largest allocations are the post-OTA self-test task
+// (4 KB stack) and the IMU calibration save task (3 KB), about 4.5 KB each with
+// the TCB, so allocations start failing near 5 KB. Bench 2026-11-18 with the
+// 32 KB data cache: heap min 15.2 KB, flat through a HITL flight. Owner
+// decision 2026-11-18: warn only near the real failure point.
+constexpr std::uint32_t kHeapMinDegradedBytes = 8 * 1024;     // [OWNER]
+constexpr std::uint32_t kHeapLargestDegradedBytes = 5 * 1024; // [OWNER] those ~4.5 KB need one free block
 constexpr std::uint32_t kStackBlockingBytes = 256;            // [PROPOSED] sensors/flash_logger/flash_capture
 constexpr std::uint32_t kStackDegradedBytes = 512;            // [PROPOSED] any other task
 constexpr std::uint32_t kPendingVerifyGraceMs = 30'000;       // [CODE] flight_selftest kWindowMs

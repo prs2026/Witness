@@ -263,7 +263,7 @@ void GpsReceiver::fail(const char *reason)
     status_ = Status::Failed;
     background_config_ = false;
     // Full re-probe no sooner than kProbeRetryMs (and only without valid NMEA).
-    next_probe_ms_ = last_service_ms_ + kProbeRetryMs;
+    next_probe_ms_ = last_service_ms_ + (identification_retries_ == 0 ? kFirstProbeRetryMs : kProbeRetryMs);
     // An unidentified receiver leaves the host at the rate where valid NMEA
     // was last heard (else the operational rate) so raw logging continues
     // where a receiver is most likely to be talking. Never while NMEA is
@@ -577,7 +577,8 @@ void GpsReceiver::observe_gga(const std::uint32_t now_ms, const std::uint32_t co
 bool GpsReceiver::probe_due(const std::uint32_t now_ms) const
 {
     if (status_ != Status::Failed) return false;
-    if (have_gga_ && now_ms - last_gga_ms_ < kFullProbeSilenceMs) return false;
+    const std::uint32_t silence = identification_retries_ == 0 ? kNmeaArrivingMs : kFullProbeSilenceMs;
+    if (have_gga_ && now_ms - last_gga_ms_ < silence) return false;
     return static_cast<std::int32_t>(now_ms - next_probe_ms_) >= 0;
 }
 
@@ -672,7 +673,8 @@ bool GpsReceiver::retry_identification(const std::uint32_t now_ms)
 {
     if (!can_retry_identification()) return false;
     // Never disturb a receiver that is delivering valid NMEA (audit G2).
-    if (have_gga_ && now_ms - last_gga_ms_ < kFullProbeSilenceMs) return false;
+    const std::uint32_t silence = identification_retries_ == 0 ? kNmeaArrivingMs : kFullProbeSilenceMs;
+    if (have_gga_ && now_ms - last_gga_ms_ < silence) return false;
     next_probe_ms_ = now_ms + kProbeRetryMs;
     background_config_ = false;
     status_ = Status::Configuring;
@@ -736,6 +738,13 @@ void GpsReceiver::service(const std::uint32_t now_ms)
     if (!started_) {
         started_ = true;
         step_time_ms_ = now_ms;
+    }
+    // Configuring a receiver that was talking and then went silent: it has
+    // moved (see kConfigSilenceFailMs). Fail at once so the probe finds it.
+    if (!background_config_ && (step_ == Step::Configure || step_ == Step::Verify) && have_gga_ &&
+        now_ms - last_gga_ms_ >= kConfigSilenceFailMs && now_ms - step_time_ms_ >= kConfigSilenceFailMs) {
+        fail("the receiver went silent during configuration (it probably changed rate)");
+        return;
     }
 
     if (step_ == Step::RestartWait) {

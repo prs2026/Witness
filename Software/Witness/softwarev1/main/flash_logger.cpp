@@ -8,9 +8,11 @@
 #include <cstring>
 
 #include "comms.h"
+#include "esp_system.h"
 #include "esp_timer.h"
 #include "sdkconfig.h"
 #include "flight_state_machine.h"
+#include "radio_edge_logic.h"
 #if !CONFIG_WITNESS_IMAGE_MAINTENANCE
 #include "sensors.h"
 #endif
@@ -99,6 +101,7 @@ esp_err_t FlashLogger::start() {
         !erase_semaphore_)
         return ESP_ERR_NO_MEM;
     install_log_capture();
+    (void)esp_register_shutdown_handler(&FlashLogger::restart_flush_handler);
     if (xTaskCreatePinnedToCore(capture_task_entry, "flash_capture",
                     kCaptureTaskStackSize, this, kCaptureTaskPriority,
                     &capture_task_handle_, task_cores::kSystem) != pdPASS) {
@@ -674,42 +677,27 @@ esp_err_t FlashLogger::write_flight_marker()
     return r;
 }
 
-esp_err_t FlashLogger::erase_session_blocks()
+// Background wipe after a full erase (erase_wipe.h): a few blocks of the slot
+// that is not the current session per logger pass, ground states only.
+void FlashLogger::service_background_wipe()
 {
-    esp_err_t first_error = ESP_OK;
-    constexpr std::uint32_t kLogBlockCount = kSlotCount * kBlocksPerSlot;
-    bool aborted = false;
-
-    for (std::uint32_t block = 0; block < kLogBlockCount; ++block) {
-        // The erase takes seconds; a launch in that window stops it (the state
-        // was only checked when the command was accepted).
+    if (!wipe_.active()) return;
+    std::uint32_t first = 0;
+    std::uint32_t count = 0;
+    if (!wipe_.next(current_slot_, ground_state(), first, count)) {
+        if (!wipe_.active()) {
+            ESP_LOGI(kLogTag, "background wipe ended: %lu blocks erased in %lu ms",
+                     static_cast<unsigned long>(wipe_.erased()),
+                     static_cast<unsigned long>(
+                         static_cast<std::uint32_t>(esp_timer_get_time() / 1000) - wipe_start_ms_));
+        }
+        return;
+    }
+    for (std::uint32_t block = first; block < first + count; ++block) {
         task_supervision::feed();
-        if ((block & 15U) == 0 && !ground_state()) { aborted = true; break; }
         bool bad = false;
-        esp_err_t result = flash_.is_bad_block(block, bad);
-        if (result == ESP_OK && !bad) {
-            result = flash_.erase_block(block);
-        }
-        if (result != ESP_OK && first_error == ESP_OK) {
-            first_error = result;
-        }
+        if (flash_.is_bad_block(block, bad) == ESP_OK && !bad) (void)flash_.erase_block(block);
     }
-    if (aborted) {
-        first_error = ESP_ERR_INVALID_STATE;
-        current_generation_ = next_usable_generation(current_generation_ + 1);
-        ESP_LOGW(kLogTag, "erase stopped: the flight state is no longer Pad Idle/Landed");
-    } else {
-        current_generation_ = 1;
-    }
-    // Logging resumes even if some blocks would not erase (they are skipped by
-    // the writer); the caller still gets the first error.
-    current_slot_ = 0;
-    session_bad_count_ = 0;
-    slot_unusable_[0] = slot_unusable_[1] = false;
-    reset_session_buffers();
-    const esp_err_t created = create_session();
-    session_ready_ = created == ESP_OK;
-    return first_error != ESP_OK ? first_error : created;
 }
 
 esp_err_t FlashLogger::clear_session_headers()
@@ -725,6 +713,9 @@ esp_err_t FlashLogger::clear_session_headers()
     }
     // Keep counting: stale pages carry older tags and never match this one.
     current_slot_ = 0;
+    // Both slots are empty now: the slot choice made at start-up (SlotsFull) is stale, and BIT
+    // check 6.1 reads it (it kept failing after an erase until the next reboot).
+    choice_action_ = log_slot::Action::NewSession;
     current_generation_ = next_usable_generation(current_generation_ + 1);
     session_bad_count_ = 0;
     slot_unusable_[0] = slot_unusable_[1] = false;
@@ -1147,6 +1138,26 @@ esp_err_t FlashLogger::prepare_mass_storage(TickType_t timeout) {
     return xSemaphoreTake(frozen_semaphore_, timeout) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
+esp_err_t FlashLogger::flush_for_restart(const TickType_t timeout)
+{
+    if (!task_handle_ || frozen_.load() || !session_ready_ || slots_full_) return ESP_ERR_INVALID_STATE;
+    const std::uint32_t target = flush_requested_.fetch_add(1) + 1U;
+    const TickType_t start = xTaskGetTickCount();
+    while (!radio_edge::sequence_reached(flush_done_.load(), target)) {
+        if (xTaskGetTickCount() - start >= timeout) return ESP_ERR_TIMEOUT;
+        vTaskDelay(1);
+    }
+    return ESP_OK;
+}
+
+// esp_restart() runs this before it resets (software restarts: the bench
+// restart, the Landed -> Pad Idle reset, the maintenance switch).
+void FlashLogger::restart_flush_handler()
+{
+    FlashLogger *self = log_sink_;
+    if (self != nullptr) (void)self->flush_for_restart(pdMS_TO_TICKS(150));
+}
+
 // Posts an erase (1) or fast clear (2) and waits for the logger task, at most
 // kEraseWaitMs when the caller passes portMAX_DELAY (full erase worst case is
 // ~12 s). A request the task has not started is cancelled on timeout.
@@ -1317,6 +1328,9 @@ void FlashLogger::run() {
         vTaskDelay(pdMS_TO_TICKS(2000));
         if (chip_ready && (init_failures % 3) == 0) (void)flash_.recover();
     }
+    // A session exists (created or appended) unless both slots hold flights.
+    // BIT checks 6.1/6.2/5.2/6.3 and the commanded NAND slice read this flag.
+    session_ready_ = !slots_full_;
     set_uart_capture_enabled(true);
     capture_binary_records_.store(true);
     if (slots_full_) {
@@ -1402,7 +1416,17 @@ void FlashLogger::run() {
             capture_logs_.store(false);
             const bool quick = erase_req == 2;
             const std::uint32_t erase_start_ms = now_ms();
-            erase_result_ = quick ? clear_session_headers() : erase_session_blocks();
+            // Both erase modes clear the slot headers at once (about 40 ms) and
+            // start a new session; the full erase then wipes the other slot in
+            // the background (service_background_wipe), so the logger, the
+            // packet queue and the USB command task are never held for the 4.3 s
+            // the old all-blocks erase needed.
+            wipe_.cancel();
+            erase_result_ = clear_session_headers();
+            if (!quick && session_ready_) {
+                wipe_.start(kBlocksPerSlot, kSlotCount);
+                wipe_start_ms_ = now_ms();
+            }
             const std::uint32_t erase_ms = now_ms() - erase_start_ms;
             capture_logs_.store(session_ready_);
             capture_binary_records_.store(session_ready_);
@@ -1425,7 +1449,8 @@ void FlashLogger::run() {
                              static_cast<unsigned long>(erase_ms),
                              static_cast<unsigned long>(current_generation_));
                 } else {
-                    ESP_LOGI(kLogTag, "all stored sessions erased (%lu ms); new session %lu created",
+                    ESP_LOGI(kLogTag, "all stored sessions erased (headers %lu ms, the other slot is wiped in "
+                                      "the background); new session %lu created",
                              static_cast<unsigned long>(erase_ms),
                              static_cast<unsigned long>(current_generation_));
                 }
@@ -1488,14 +1513,19 @@ void FlashLogger::run() {
             r = write_flight_marker();
         if (r == ESP_OK) r = drain_packet_records();
         if (r == ESP_OK) r = drain_uart_records(false);
+        if (r == ESP_OK) service_background_wipe();
         const TickType_t now = xTaskGetTickCount();
-        if (r == ESP_OK && now - last_flush >= pdMS_TO_TICKS(kFlushIntervalMs)) {
+        // A restart handler asked for everything to be written now.
+        const std::uint32_t flush_target = flush_requested_.load();
+        const bool restart_flush = !radio_edge::sequence_reached(flush_done_.load(), flush_target);
+        if (r == ESP_OK && (restart_flush || now - last_flush >= pdMS_TO_TICKS(kFlushIntervalMs))) {
             r = flush_binary();
             if (r == ESP_OK) r = flush_imu();
             if (r == ESP_OK) r = flush_packets();
             if (r == ESP_OK) r = flush_text();
             if (r == ESP_OK) r = drain_uart_records(true);
             last_flush = now;
+            if (restart_flush && r == ESP_OK) flush_done_.store(flush_target);
             const std::uint32_t packet_drops = packets_dropped_.load();
             if (packet_drops != reported_packet_drops) {
                 ESP_LOGW(kLogTag, "packet log queue full: %lu packets dropped so far",

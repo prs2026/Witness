@@ -11,6 +11,7 @@
 #include "driver/usb_serial_jtag_vfs.h"
 #include "driver/uart.h"
 #include "esp_log.h"
+#include "esp_system.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "comms.h"
@@ -675,6 +676,17 @@ void UsbSerialEcho::process_binary_command_packet(
         packet + IRIS_PACKET_ID_LENGTH;
     const std::uint16_t command = load_u16_be(
         payload + IRIS_PACKET_COMMAND_VALUE_OFFSET);
+    if (command == IRIS_COMMAND_BENCH_IRIS_RESET) {
+        // Bench-only warm reset (comms.h): only from the CAN link, i.e. from
+        // Witness, which sends it only for a USB command while its HITL mode is
+        // active, and only with the arming bytes. Anything else is ignored.
+        if (source == CommandSource::can && payload[0] == IRIS_BENCH_IRIS_RESET_ARM0 &&
+            payload[1] == IRIS_BENCH_IRIS_RESET_ARM1) {
+            ESP_LOGW("main", "bench warm reset from Witness over CAN: esp_restart()");
+            esp_restart();
+        }
+        return;
+    }
     (void)execute_binary_command(command, source);
 }
 

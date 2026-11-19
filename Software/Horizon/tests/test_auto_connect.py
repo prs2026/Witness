@@ -99,7 +99,10 @@ class DiscoveryTests(unittest.TestCase):
             job = SerialOpenJob("COM_FAKE", 115200)
             job.thread.join(1)
             self.assertEqual(job.take(), (stream, None))
-            factory.assert_called_once_with("COM_FAKE", 115200, timeout=0.2)
+            factory.assert_called_once_with()          # opened late, after DTR/RTS are low
+            self.assertIs(stream.dtr, False)
+            self.assertIs(stream.rts, False)
+            stream.open.assert_called_once_with()
             job.cancel()
             stream.close.assert_not_called()  # Ownership transferred to the UI.
             job = SerialOpenJob("COM_FAKE", 115200)

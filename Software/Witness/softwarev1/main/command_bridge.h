@@ -32,6 +32,10 @@ public:
         const std::uint8_t *data,
         std::size_t length);
 
+    // Bench only (comms.h IRIS_COMMAND_BENCH_IRIS_RESET): sends the armed Iris
+    // warm-reset frame over CAN. The caller (USB handler) has checked HITL.
+    esp_err_t send_bench_iris_reset();
+
     // Flight-state source for the load-command gate (command_policy.h:
     // allow_iris_load_command). Without one the state is taken as Pad Idle.
     // The reader must be thread safe (it is called from the USB and sensor

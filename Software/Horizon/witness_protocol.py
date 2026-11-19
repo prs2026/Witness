@@ -9,11 +9,14 @@ from __future__ import annotations
 import re
 import struct
 
+import bit_model
+
 # Commands currently defined by comms.h. Most command packets are sent as:
 # ID (0x05) | status (2) | uptime (4) | command (2) | EOF (0x0A).
 # Every shortcut uses a full frame so it works directly or through Aperture.
 COMMAND_PACKET_ID = 0x05
 COMMAND_PACKET_EOF = 0x0A
+RESET_WITNESS_LABEL = "False flight on pad: reset Witness"
 QUICK_COMMANDS = (
     ("CH1 Off", 0x0030, False),
     ("CH1 On", 0x0031, False),
@@ -32,8 +35,9 @@ QUICK_COMMANDS = (
     # Receiver forgets ephemerides, almanac, position and time (Pad Idle only).
     ("GPS cold start", 0x4752, True),
     # One-way states: 0x7300 acks, then restarts Witness, and only while Landed
-    # (Pad Idle: no-op; refused in Boost, Coast and Descent).
-    ("Reset to Pad (Landed only)", 0x7300, True),
+    # (Pad Idle: no-op; refused in Boost, Coast and Descent). The monitor enables
+    # this button only while Witness reports Landed.
+    (RESET_WITNESS_LABEL, 0x7300, True),
     ("State: Boost", 0x7301, False),
     ("State: Coast", 0x7302, False),
     ("State: Descent", 0x7303, False),
@@ -297,6 +301,10 @@ def parse_packet(packet_id: int, payload: bytes):
         return decode_maintenance_status(payload)
     if packet_id == 0x09:
         return decode_landed_position(payload)
+    if packet_id == 0x0B:
+        return bit_model.decode_summary(payload)
+    if packet_id == 0x10:
+        return bit_model.decode_detail(payload)
     if packet_id == 0xE1 and len(payload) == 12:
         return {
             "packet": "iris_debug", "status": number(payload[0:2]),
@@ -333,7 +341,10 @@ class PacketDecoder:
     # 62 bytes is the legacy 64-byte frame from older firmware/logs.
     payload_lengths = {0x01: (23, 21), 0x02: (63, 62), 0x03: (17,), 0xFF: (6,),
                        0xF0: (27, 11), 0x05: (8,), 0xE0: (101,), 0xE1: (12,),
-                       0x06: (11,), 0x07: (74,), 0x08: (17,), 0x09: (26,)}
+                       0x06: (11,), 0x07: (74,), 0x08: (17,), 0x09: (26,),
+                       # BIT summary / detail: framed by length so their data bytes (which can equal
+                       # any packet ID) are never scanned for other frames.
+                       0x0B: (12,), 0x10: (99,)}
     # Host -> Witness packets that Witness may echo on USB. They are deframed
     # (fixed length + EOF) and skipped, never decoded or shown as telemetry.
     # 0x0C = HITL sensor input, 47-byte frame.
@@ -560,6 +571,28 @@ def build_wifi_packet(on: bool, tx_dbm: int = 0, minutes: int = 0) -> bytes:
         raise ValueError(f"minutes must be 0 (default) or 1..{WIFI_AUTO_OFF_MAX_MINUTES}")
     data = bytes((1 if on else 0, tx & 0xFF, mins)) + bytes(3)
     return (bytes((COMMAND_PACKET_ID,)) + data + WIFI_COMMAND.to_bytes(2, "big")
+            + bytes((COMMAND_PACKET_EOF,)))
+
+
+# comms.h IRIS_COMMAND_BIT_RUN / IRIS_COMMAND_BIT_REPORT (built-in self test). Horizon sends BIT_RUN only
+# from the "Run BIT" button (Pad Idle), never by itself; BIT_REPORT only asks for a re-send.
+BIT_RUN_COMMAND = 0x5442
+BIT_REPORT_COMMAND = 0x5452
+BIT_REPORT_SUMMARY = 0xFF
+
+
+def build_bit_run_packet(nonce: int = 0) -> bytes:
+    """Command frame for a full commanded BIT with no options: d0 0 (full), d1 0, d2-d5 nonce (u32 BE,
+    echoed in the 0x06 ack so a late ack of an earlier run is not taken for this one)."""
+    return (bytes((COMMAND_PACKET_ID, 0x00, 0x00)) + (int(nonce) & 0xFFFFFFFF).to_bytes(4, "big")
+            + BIT_RUN_COMMAND.to_bytes(2, "big") + bytes((COMMAND_PACKET_EOF,)))
+
+
+def build_bit_report_packet(page: int = BIT_REPORT_SUMMARY) -> bytes:
+    """Command frame asking Witness to re-send the BIT summary (page 0xFF) or detail page `page`."""
+    if not 0 <= page <= 0xFF:
+        raise ValueError("BIT report page must fit in one byte")
+    return (bytes((COMMAND_PACKET_ID, page)) + bytes(5) + BIT_REPORT_COMMAND.to_bytes(2, "big")
             + bytes((COMMAND_PACKET_EOF,)))
 
 

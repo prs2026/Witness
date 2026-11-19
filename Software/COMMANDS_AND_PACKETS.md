@@ -44,7 +44,18 @@ Radio scheduling (`main/tx_slot.h`, since 2026-11-14; hold-off rules changed 202
 - Aperture pacing: at most 3 commands in a burst, then at least 1.5 s with nothing
   sent (`main/uplink_pacing.h`). The tx_slot rules still apply (800 ms after a
   command for follow-ups; the GPS window when there is a fix).
-- Acks and replies (`0x06`, `0x07`, `0x09` ping replies) are never held.
+- Acks and replies (`0x06`, `0x07`, `0x09` ping replies) are never held by the time
+  slots or the hold-off. Since 2026-11-18 they are paced for the half-duplex link
+  (`main/radio_edge_logic.h` `AckPacer`): an ack waits until the radio has heard
+  nothing for 40 ms (at most 300 ms), so a burst of commands is not cut by the
+  ack of the first one, and they go out in order from a 16-deep queue. A frame
+  that cannot be queued is logged (`radio reply ... not queued`), never silent.
+  Only a complete 10-byte command frame arms the hold-off (a stray 3-byte frame
+  does not). With the radio interrupt line (DIO1) stuck low, the radio IRQ status
+  is still read every 200 ms, so commands are heard late instead of never.
+- USB acks wait up to 50 ms for room in the USB queue (they were dropped at once
+  when it was full) and are flushed to the host before a deliberate restart
+  (`0x5746` on, `0x7300`, `0x4252`).
 - Without GPS time on a side, that side sends whenever it can.
 
 ## Ack details
@@ -140,11 +151,13 @@ same for USB and radio unless a row says otherwise.
 | `0x4844` | Pad heading (body axis -> azimuth) | axis, 0.01 deg | yes | yes | PI | yes | |
 | `0x4849` | HITL enter | | yes | no | PI | yes | canonical frame only |
 | `0x4858` | HITL exit | | yes | yes | any | yes | |
-| `0x4252` | Bench restart (test only) | d0: 0 software restart, 1 panic | yes | no | any, HITL active only | yes | canonical frame only, never forwarded to Iris. Warm reset that resumes the flight state; refused when HITL is off, unknown over radio |
+| `0x4248` | Bench hang (test only) | d0-d5 ignored | yes | no | any, HITL active **or RESUMED after a warm reset** (USB only) | **never** | canonical USB frame only. The sensors task stops feeding the task watchdog and idles, so the real task watchdog trips (8 s, reset reason TASK_WDT, a warm reset that resumes the flight state). Acked OK before the hang; REFUSED when HITL is off; UNKNOWN over radio; never forwarded to Iris or over LoRa |
+| `0x4249` | Bench Iris warm reset (test only) | d0 `0xA5`, d1 `0x5A` (arming bytes, set by Witness) | yes | no | any, HITL active **or RESUMED after a warm reset** (USB only) | restarts Iris | canonical USB frame only. Witness sends the armed frame to Iris over CAN (never from a received frame); Iris calls `esp_restart()` (reset reason SW, warm: load restore and expander reset-pin hold run). Iris ignores it from USB/UART or without the arming bytes. Acked OK when the CAN queue took the frame, BUSY otherwise; REFUSED when HITL is off; UNKNOWN over radio, and the radio copy is not forwarded to Iris |
+| `0x4252` | Bench restart (test only) | d0: 0 software restart, 1 panic | yes | no | any, HITL active **or RESUMED after a warm reset** (USB only) | **never** | canonical frame only (the 3-byte and text forms are refused by the bridge too). Warm reset that resumes the flight state; refused when HITL is off, unknown over radio. The ack is flushed to the USB host before the reset; a software restart also flushes the flash log (shutdown handler), a panic cannot |
 | `0x5250` | Radio power (drive dBm, front end) | target, dBm, FE | yes | yes | see the radio power rules below | no | refused in Boost. Coast/Descent: front end OFF and any lowering refused. Detail = FE bit 8, drive dBm now |
 | `0x5746` | Wi-Fi / maintenance image (on, off, status) | on, TX dBm, minutes | yes | yes | PI, L | yes | "on" restarts into the maintenance image; refusal detail 0x0001-0x0008 |
 | `0x6868` | USB export (maintenance image USB disk) | | yes | **no** | PI, L | yes | restarts into the maintenance image |
-| `0x6869` | Erase all log sessions (every block, slow) | | yes | yes (radio: **send twice within 10 s**) | PI, L | yes | frees a full store. Radio first send: BUSY, detail `0xC0F1`, nothing done; an identical second send within 10 s executes. USB is single shot. Waits are bounded to 30 s |
+| `0x6869` | Erase all log sessions (every block) | | yes | yes (radio: **send twice within 10 s**) | PI, L | yes | frees a full store. Radio first send: BUSY, detail `0xC0F1`, nothing done; an identical second send within 10 s executes. USB is single shot. Since 2026-11-18 it answers in about 40 ms: the slot headers are cleared and a new session starts at once (the session number keeps counting up, it no longer restarts at 1), and the other slot is wiped in the background in 8-block chunks, Pad Idle and Landed only (a launch cancels the wipe). The USB task and the packet log are no longer held for 4.3 s |
 | `0x686A` | Clear all log sessions (headers only, fast) | | yes | yes (radio: **send twice within 10 s**) | PI, L | yes | frees a full store; same confirm rule as `0x6869` |
 | `0x7300` | **Reset to Pad Idle (Landed only)** | | yes | yes (Landed) | PI (no-op), L (restart) | yes | Landed: ack OK, then Witness restarts (about 0.4 s later over USB, 1.0 s over LoRa) and boots Pad Idle with a fresh filter and log session. The restart is checked again when it fires; a state change in that window abandons it. Pad Idle: ack OK, nothing happens. Boost, Coast, Descent: refused |
 | `0x7301`-`0x7304` | Set flight state B/C/D/L | | yes | no | PI; from B/C/D only L | yes | forward only; `0x7301` from Pad Idle is a manual launch (USB) |

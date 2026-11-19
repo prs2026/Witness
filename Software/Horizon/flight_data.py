@@ -14,6 +14,7 @@ import re
 import threading
 import time
 
+import bit_model
 from telemetry_model import flatten_fields, witness_status_fields
 from aim_orientation import AimAngularRateEstimator
 from aim_altitude import AimAltitudeEstimator
@@ -432,6 +433,7 @@ class FlightData:
             self.essential = {}      # "witness"/"featherweight"/"aim" -> latest essential packet time
             self.vehicle = None      # latest Witness status word + held GPS position
             self.landed = None       # latest 0x09 landed_position
+            self.bit = bit_model.BitModel()   # latest 0x0B BIT summary / 0x10 detail pages
             self.switch_note = None  # (kind, from, to, when)
             self.relative_agl = set()  # derived AGL fields currently relative to their first sample
             self.histories = [[History(PointBuffer(layout.max_points if not plot.group else 1),
@@ -502,6 +504,9 @@ class FlightData:
         """Layout-independent Witness state: status word, last GPS position, landed fix."""
         name = packet.get("packet")
         if packet.get("text_crc_valid") is False or not isinstance(received, (int, float)):
+            return
+        if name in ("bit_summary", "bit_detail"):
+            self.bit.feed(packet, received, snapshot=replay)
             return
         status = packet.get("fc_status") if name == "camera" else packet.get("status")
         with self._lock:
@@ -708,6 +713,7 @@ class FlightData:
         with self._lock:
             return {"vehicle": dict(self.vehicle) if self.vehicle else None,
                     "landed": dict(self.landed) if self.landed else None,
+                    "bit": self.bit,
                     "essential": dict(self.essential),
                     "sources": dict(self.selected),
                     "relative_agl": sorted(self.relative_agl),

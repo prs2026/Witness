@@ -333,7 +333,7 @@ int main()
         e.begin(RunKind::Startup, 0);
         Inputs in = good();
         run(e, in, 3);
-        in.heap_min = 10'000;                                        // degraded fail
+        in.heap_min = 7'000;                                         // degraded fail
         e.update(in); e.update(in);
         CHECK(e.summarize(in.uptime_ms).degraded_fail_mask == 0);    // needs 3
         e.update(in);

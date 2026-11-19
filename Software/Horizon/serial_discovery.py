@@ -138,8 +138,10 @@ class SerialOpenJob:
 
         def open_port():
             try:
-                from serial import Serial
-                result = (Serial(port, baud, timeout=0.2), None)
+                # DTR and RTS low BEFORE the open: asserting them resets an ESP32 board
+                # (the Witness USB bridge wires them to EN/IO0).
+                from link_health import open_serial_quiet
+                result = (open_serial_quiet(port, baud, timeout=0.2, write_timeout=None), None)
             except Exception as exc:
                 result = (None, str(exc))
             with self._lock:

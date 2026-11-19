@@ -119,6 +119,14 @@ public:
     static constexpr std::uint32_t kRecoveryListenMs = 2000;   // per baud in Recovering
     static constexpr std::uint32_t kFullProbeSilenceMs = 5000; // full probe only after this
     static constexpr std::uint32_t kProbeRetryMs = 10000;      // between full probes
+    // Power-on (bench 2026-11-17): the receiver is identified at 115200, then
+    // moves to ~88.4 kbaud during configuration. The first failure is therefore
+    // retried after kFirstProbeRetryMs (not kProbeRetryMs) and with only
+    // kNmeaArrivingMs of silence; the configuration step also gives up as soon
+    // as the stream has been silent for kConfigSilenceFailMs instead of waiting
+    // for three 1 s readback timeouts. Later retries keep the 10 s / 5 s rules.
+    static constexpr std::uint32_t kFirstProbeRetryMs = 500;
+    static constexpr std::uint32_t kConfigSilenceFailMs = 2000;
     static constexpr std::uint32_t kConfigRetryMinMs = 5000;   // background config backoff
     static constexpr std::uint32_t kConfigRetryMaxMs = 60000;
     void observe_gga(std::uint32_t now_ms, std::uint32_t count = 1);

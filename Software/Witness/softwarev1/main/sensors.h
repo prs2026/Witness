@@ -24,6 +24,7 @@
 #include "nmea_gps.h"
 #include "landed_logic.h"
 #include "ra01.h"
+#include "radio_edge_logic.h"
 #include "tx_slot.h"
 
 class SpiDataForwarder;
@@ -215,6 +216,8 @@ public:
     // position predict, NAND IMU log), without calibration.
     bool submit_hitl_imu_batch(const hitl::ImuBatch &batch);
     bool hitl_active() const;
+    // This boot resumed an in-flight state after a warm reset (status RESUMED bit).
+    bool resumed_after_reset() const;
     // The GPS UART (receiver configuration, assistance uploads).
     UartDriver &gps_uart() { return gps_uart_; }
 
@@ -230,6 +233,13 @@ public:
     // IMU calibration command from USB (argument: IRIS_IMU_CALIBRATION_*).
     // Thread-safe; the capture runs in the sensor task and logs its result.
     esp_err_t request_calibration(std::uint8_t argument);
+
+    // Bench only (IRIS_COMMAND_BENCH_HANG): the sensor task stops feeding the
+    // task watchdog and idles, so the real watchdog trips (8 s). The caller
+    // (the USB handler) has checked HITL; there is no way back but the reset.
+    void bench_hang() { bench_hang_.store(true); }
+    // Frames found by slow polling while the radio interrupt line read low.
+    std::uint32_t radio_frames_found_with_dio1_low() const { return dio1_poll_.frames_found_with_dio1_low(); }
 
 private:
     friend class BitProbe;   // read-only BIT probes (bit_monitor.cpp)
@@ -478,6 +488,10 @@ private:
     std::array<TickType_t, kRadioPacketTypeCount> radio_last_sent_{};
     std::size_t next_radio_packet_index_ = 0;
     std::atomic_bool radio_transmission_enabled_{true};
+    std::atomic_bool bench_hang_{false};
+    radio_edge::Dio1SlowPoll dio1_poll_{};     // sensor task only
+    radio_edge::AckPacer ack_pacer_{};         // sensor task only
+    std::uint64_t dio1_log_next_ms_ = 0;
     std::atomic_bool debug_packet_output_enabled_{false};
     Sample working_sample_{};
     Sample latest_sample_{};

@@ -167,6 +167,22 @@ def generation(name: str) -> int:
     return int(match.group(1), 16) if match else -1
 
 
+def latest_session_files(files: list[dict]) -> tuple[int, list[dict]]:
+    """(generation, files) of the newest session on the disk.
+
+    The session generation is the highest number in the file names. A session
+    that was resumed after a reset in flight keeps writing the same files, so
+    it is still one generation; a full erase restarts the counter at 1, but it
+    also removes every earlier file, so the highest number is still the newest
+    session. Returns (-1, []) for an empty or unrecognised listing."""
+    numbered = [(generation(f["name"]), f) for f in files]
+    numbered = [(g, f) for g, f in numbered if g >= 0]
+    if not numbered:
+        return -1, []
+    newest = max(g for g, _f in numbered)
+    return newest, [f for g, f in numbered if g == newest]
+
+
 def download(pi: Pi, name: str, size: int, destination: Path) -> None:
     started = time.monotonic()
     process = pi.agent("cat", name)
@@ -283,8 +299,7 @@ def main() -> int:
         else:
             wanted = files
             if args.latest:
-                newest = max((generation(f["name"]) for f in files), default=-1)
-                wanted = [f for f in files if generation(f["name"]) == newest]
+                _newest, wanted = latest_session_files(files)
             elif not args.all:
                 names = {n.upper() for n in args.names}
                 if not names:

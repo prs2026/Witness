@@ -66,6 +66,12 @@ or dropped remote viewer is disconnected from it (Horizon reconnects
 automatically) and never delays the local `127.0.0.1:8766` feed. TCP
 keepalive detects a dead link within seconds.
 
+Data ages are measured on the receiving machine. Each feed record carries the sender's
+`received_at` and `sent_at`; Horizon uses only their difference (how long the sender held the
+packet: 0 for live data, the real age for the snapshot sent on connect) and re-stamps the record
+on its own clock, so a remote PC whose clock is minutes or hours off never makes live data look
+stale or old data look fresh. Records from an older sender without `sent_at` count as new when live.
+
 These defaults are in [ground_settings.py](ground_settings.py). Witness raw TCP defaults are at the top of [monitor_core.py](monitor_core.py). Do not point the Horizon Witness feed at a raw telemetry TCP port: the feed carries decoded JSON records, not binary application packets.
 
 The subscriber UUID is an identifier, not a password. Horizon adds a unique suffix to its MQTT client ID to avoid collisions between instances.

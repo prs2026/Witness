@@ -90,9 +90,53 @@ esp_err_t SpiDataForwarder::queue_packet(
 
     cache_radio_packet(packet_id, payload, payload_length);
 
-    return xQueueSend(forward_queue_, &packet, 0) == pdTRUE
-               ? ESP_OK
-               : ESP_ERR_NO_MEM;
+    if (xQueueSend(forward_queue_, &packet, 0) != pdTRUE) return ESP_ERR_NO_MEM;
+    usb_queued_.fetch_add(1);
+    return ESP_OK;
+}
+
+esp_err_t SpiDataForwarder::queue_packet_wait(
+    const std::uint8_t packet_id,
+    const std::uint8_t *payload,
+    const std::size_t payload_length,
+    const TickType_t wait)
+{
+    if (forward_queue_ == nullptr) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    if (!valid_packet(packet_id, payload, payload_length)) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    Packet packet{};
+    packet.packet_id = packet_id;
+    packet.payload_length = static_cast<std::uint8_t>(payload_length);
+    std::memcpy(packet.payload, payload, payload_length);
+    packet.raw = false;
+    cache_radio_packet(packet_id, payload, payload_length);
+    if (xQueueSend(forward_queue_, &packet, wait) != pdTRUE) return ESP_ERR_NO_MEM;
+    usb_queued_.fetch_add(1);
+    return ESP_OK;
+}
+
+esp_err_t SpiDataForwarder::flush(const TickType_t timeout)
+{
+    if (forward_queue_ == nullptr) return ESP_ERR_INVALID_STATE;
+    const TickType_t start = xTaskGetTickCount();
+    // FIFO: everything counted by now is handled once usb_handled_ passes it.
+    const std::uint32_t target = usb_queued_.load();
+    while (!radio_edge::sequence_reached(usb_handled_.load(), target)) {
+        if (xTaskGetTickCount() - start >= timeout) return ESP_ERR_TIMEOUT;
+        vTaskDelay(1);
+    }
+    if (!usb_serial_jtag_is_connected()) return ESP_OK;
+    const TickType_t used = xTaskGetTickCount() - start;
+    const TickType_t left = used >= timeout ? 0 : timeout - used;
+    return usb_serial_jtag_wait_tx_done(left) == ESP_OK ? ESP_OK : ESP_ERR_TIMEOUT;
+}
+
+bool SpiDataForwarder::immediate_radio_pending() const
+{
+    return immediate_radio_queue_ != nullptr && uxQueueMessagesWaiting(immediate_radio_queue_) != 0U;
 }
 
 void SpiDataForwarder::cache_radio_packet(
@@ -137,9 +181,9 @@ esp_err_t SpiDataForwarder::queue_immediate_radio_packet(
     RadioPacket packet{};
     packet.length = static_cast<std::uint8_t>(length);
     std::memcpy(packet.data, data, length);
-    return xQueueSend(immediate_radio_queue_, &packet, 0) == pdTRUE
-               ? ESP_OK
-               : ESP_ERR_NO_MEM;
+    if (xQueueSend(immediate_radio_queue_, &packet, 0) == pdTRUE) return ESP_OK;
+    immediate_dropped_.fetch_add(1);   // an ack or a forwarded command is lost: counted, never silent
+    return ESP_ERR_NO_MEM;
 }
 
 bool SpiDataForwarder::receive_immediate_radio_packet(RadioPacket &packet)
@@ -182,9 +226,9 @@ esp_err_t SpiDataForwarder::queue_raw_bytes(
     packet.payload_length = static_cast<std::uint8_t>(length);
     std::memcpy(packet.payload, data, length);
     packet.raw = true;
-    return xQueueSend(forward_queue_, &packet, 0) == pdTRUE
-               ? ESP_OK
-               : ESP_ERR_NO_MEM;
+    if (xQueueSend(forward_queue_, &packet, 0) != pdTRUE) return ESP_ERR_NO_MEM;
+    usb_queued_.fetch_add(1);
+    return ESP_OK;
 }
 
 esp_err_t SpiDataForwarder::queuecommand(
@@ -286,6 +330,7 @@ void SpiDataForwarder::run_forwarder()
     for (;;) {
         if (xQueueReceive(forward_queue_, &packet, portMAX_DELAY) == pdTRUE) {
             forward_packet(packet);
+            usb_handled_.fetch_add(1);
         }
     }
 }

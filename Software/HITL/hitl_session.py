@@ -93,6 +93,7 @@ class RunState:
     abort_reason: str = ""
     hitl_seen: bool = False
     hitl_dropped: bool = False
+    reset_sim_s: float | None = None   # sim time of a board reset seen during the run
     initial_state: int | None = None
     observed: dict = field(default_factory=dict)     # state -> sim s
     sequence: list = field(default_factory=list)     # confirmed states
@@ -297,6 +298,15 @@ def evaluate(run: RunState) -> dict:
         delta = None if exp is None or obs is None else obs - exp
         if exp is None and obs is None:
             continue
+        rs = run.reset_sim_s
+        if rs is not None and ((obs is not None and obs >= rs)
+                               or (obs is None and exp is not None and exp >= rs)):
+            # After a reset the board uses real sensors: not comparable.
+            rows.append({"state": hp.FLIGHT_STATES[st],
+                         "expected_s": None if exp is None else round(exp, 3),
+                         "witness_s": None if obs is None else round(obs, 3),
+                         "delta_s": None, "result": "AFTER RESET"})
+            continue
         if exp is None:
             res = "UNEXPECTED"
         elif obs is None:
@@ -314,8 +324,11 @@ def evaluate(run: RunState) -> dict:
                      "witness_s": None if obs is None else round(obs, 3),
                      "delta_s": None if delta is None else round(delta, 3),
                      "result": res})
-    expected_order = sorted(run.expected, key=run.expected.get)
-    observed_order = [s for s in run.sequence if s != hp.PAD_IDLE]
+    rs = run.reset_sim_s
+    expected_order = sorted((st for st in run.expected
+                             if rs is None or run.expected[st] < rs), key=run.expected.get)
+    observed_order = [st for st in run.sequence if st != hp.PAD_IDLE
+                      and (rs is None or run.observed.get(st, -1.0) < rs)]
     order_ok = observed_order == expected_order
     problems = []
     if not order_ok:
@@ -376,6 +389,64 @@ def format_table(result: dict) -> str:
     return "\n".join(lines)
 
 
+class ResetDetector:
+    """Spots a board reset from the telemetry status packets (uptime, RESUMED bit).
+
+    A single odd packet is never enough: the stream is a mix of binary frames and text, and a
+    frame of a type this tool did not know (the BIT frames 0x0B / 0x10 once were) can be
+    misread as a sensor frame with a wild uptime (bench 2026-11-18: a false "board reset seen
+    at sim 5.4 s" while the uptime was continuous). So a reset needs two packets that agree:
+
+    - uptime: a drop of more than UPTIME_DROP_MS, then the next packet within CONFIRM_MS above
+      the dropped value (the board keeps counting from its new, low uptime). A single stray
+      value, high or low, is dropped without being taken as the new baseline.
+    - RESUMED bit: seen set in two consecutive packets after one without it. A bit already
+      set at the start is not a reset.
+    ``feed`` returns the sim time of the first packet of the reset, once, or None.
+    """
+    UPTIME_DROP_MS = 2000
+    FORWARD_JUMP_MS = 60_000
+    CONFIRM_MS = 5000
+
+    def __init__(self):
+        self._ref = None             # last accepted uptime
+        self._uptime_cand = None     # (uptime, sim_s) of a suspect packet waiting for its partner
+        self._resumed = None         # last accepted RESUMED bit
+        self._resumed_cand = None    # sim_s of the first packet that showed it rising
+
+    def feed(self, uptime_ms, resumed, sim_s):
+        hit = None
+        confirmed_uptime = False
+        cand = self._uptime_cand
+        self._uptime_cand = None
+        if cand is not None and cand[0] <= uptime_ms <= cand[0] + self.CONFIRM_MS:
+            if self._ref is not None and cand[0] + self.UPTIME_DROP_MS < self._ref:
+                hit = cand[1]            # the time base really went back
+            self._ref = uptime_ms        # (a forward jump is only a new baseline)
+            confirmed_uptime = True
+        if not confirmed_uptime:
+            if self._ref is None or self._ref - self.UPTIME_DROP_MS <= uptime_ms <= self._ref + self.FORWARD_JUMP_MS:
+                self._ref = uptime_ms
+            else:
+                self._uptime_cand = (uptime_ms, sim_s)
+        resumed = bool(resumed)
+        if self._resumed is None or resumed == self._resumed:
+            self._resumed = resumed if self._resumed is None else self._resumed
+            self._resumed_cand = None
+        elif resumed:
+            if self._resumed_cand is None:
+                self._resumed_cand = sim_s
+            else:
+                self._resumed = True
+                if hit is None:
+                    hit = self._resumed_cand
+                self._resumed_cand = None
+        else:
+            self._resumed = False
+            self._resumed_cand = None
+        return hit
+
+
 class HitlSession:
     """One TCP connection to Witness (via ser2net) plus at most one run."""
 
@@ -397,6 +468,7 @@ class HitlSession:
         self._pending_count = 0
         self._pending_sim = 0.0
         self._hitl_off_count = 0
+        self._reset_detector = ResetDetector()
         self._entered = False
         self._host = None
         self._nmea_tap: deque = deque(maxlen=20000)
@@ -723,6 +795,15 @@ class HitlSession:
             v.gps_locked = status["gps_locked"]
             was_active = v.hitl_active
             v.hitl_active = status["hitl_active"]
+        reset_sim_s = self._reset_detector.feed(uptime_ms, status.get("resumed_after_reset"), self._sim_s())
+        if run is not None and run.running and run.reset_sim_s is None and reset_sim_s is not None:
+            # The board reset in flight: HITL is off from here and it runs on
+            # its real sensors, which read the bench, not the simulated site.
+            run.reset_sim_s = reset_sim_s
+            self._warn(f"board reset seen at sim {run.reset_sim_s:.1f} s: HITL is off after a "
+                       "reset, so later states come from the bench sensors and are not scored "
+                       "(for a restored pad reference that matches them, set site_alt_msl_m to "
+                       "the bench altitude)")
         if run is not None and run.running:
             if status["hitl_active"]:
                 self._hitl_off_count = 0
@@ -731,7 +812,8 @@ class HitlSession:
                     self.log(f"HITL active bit seen at sim "
                              f"{self._sim_s():.2f} s")
                     self._event("hitl", True)
-            elif run.hitl_seen and not run.hitl_dropped and run.streaming:
+            elif (run.hitl_seen and not run.hitl_dropped and run.streaming
+                  and run.reset_sim_s is None):
                 self._hitl_off_count += 1
                 if self._hitl_off_count >= STATE_CONFIRM_PACKETS:
                     run.hitl_dropped = True
@@ -943,6 +1025,7 @@ class HitlSession:
         self.run = run
         self._stop_run.clear()
         self._hitl_off_count = 0
+        self._reset_detector = ResetDetector()
         if self.view.flight_state is not None:
             run.initial_state = self.view.flight_state
             run.sequence.append(self.view.flight_state)

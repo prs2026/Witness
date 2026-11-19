@@ -29,7 +29,8 @@ STALE_S = 3.0              # readouts older than this are greyed (audit H10)
 STALE_GREY = "#8a8a8a"
 SENSOR_BITS = ((9, "low-g"), (10, "gyro"), (11, "IMU temp"), (13, "high-g"), (14, "baro"))
 STRIP_COLORS = {"bad": ("#b00000", "#ffffff"), "warn": ("#ffd24d", "#171717"), "ok": ("#d8efdf", "#0a3a1a"),
-                "muted": ("#e4e4e4", "#444444")}
+                "muted": ("#e4e4e4", "#444444"),
+                "bench": ("#d9c9f2", "#2a0a4a")}
 OLD_MARKERS = ("AGE", "STALE", "INVALID", "SNAPSHOT")
 
 
@@ -210,6 +211,12 @@ def flight_panel(layout, histories, end):
     return {"metrics": metrics, "state": state}
 
 
+def bit_chip(status, end):
+    """(text, kind, tooltip) of the built-in self test chip, or None before a BIT summary arrived."""
+    model = status.get("bit") if status else None
+    return model.status(end) if model is not None else None
+
+
 def status_strip(status, end):
     """[(text, kind)] chips for the Witness status word, kind: bad/warn/ok/muted.
 
@@ -254,6 +261,9 @@ def status_strip(status, end):
                  else (f"SENSOR NOT READY: {', '.join(missing)}", "warn"))
     if status.get("relative_agl"):
         chips.append(("GPS ALT RELATIVE TO FIRST SAMPLE (no pad altitude)", "muted"))
+    shown = bit_chip(status, end)
+    if shown is not None:
+        chips.append((shown[0], shown[1]))
     if old:
         chips.append((f"STATUS {age:.0f}s OLD" + (" (snapshot)" if vehicle.get("snapshot") else ""), "warn"))
     return chips

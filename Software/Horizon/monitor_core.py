@@ -44,12 +44,14 @@ from link_health import (
 from nmea_capture import NmeaExtractor, summarize_gga
 from observable import Cell
 from serial_discovery import RETRY_SECONDS, SerialDiscovery, SerialOpenJob
+import bit_model
 from command_link import CommandLink
 from witness_link import WitnessPublisher, enable_keepalive, is_tailscale_address, tailscale_ipv4
 from witness_protocol import (
     IMU_CALIBRATION_COMMANDS, QUICK_COMMANDS, SECTION_SPECS, PacketDecoder,
+    BIT_REPORT_SUMMARY, BIT_RUN_COMMAND, build_bit_report_packet, build_bit_run_packet,
     build_command_packet, build_imu_calibration_packet, format_display_value,
-    format_gps_satellites, format_packet, is_status_field, parse_hex_command,
+    format_gps_satellites, format_packet, is_status_field, parse_hex_command, FLIGHT_STATE_MASK,
 )
 from witness_test_source import builtin_scenario, load_scenario, play_scenario, validate_speed
 
@@ -75,7 +77,13 @@ ASSIST_STATUS_TIMEOUT_S = 30.0
 BUSY_CONFIRM_DETAIL = 0xC0F1     # erase/clear over radio: "send again within 10 s to confirm"
 BUSY_CONFIRM_GAP_S = 1.0
 RESET_TO_PAD_OPCODE = 0x7300        # reboots Witness when Landed: the link drops for a few s
+LANDED_STATE = 4                    # witness flight state (status byte 1 bits 2:0)
+WITNESS_STATE_PACKETS = ("state", "sensors", "heartbeat")   # carry the Witness status word
 RESET_EXPECTED_S = 20.0
+PAD_IDLE_STATE = 0                  # witness flight state; BIT runs only here (from the button, never automatic)
+BOOST_STATE = 1                     # Witness refuses a BIT report in Boost
+BIT_RUN_ACK_WAIT_S = 30.0           # the run ack comes at the END of the run (about 6-12 s); never resent
+BIT_DETAIL_PAGE_WAIT_S = 5.0        # wait for a re-sent detail page before asking for the next
 NO_SERIAL_PORT = "(no port)"
 BAUD_CHOICES = ("115200", "57600", "38400", "9600")
 WINDOW_TITLE = "Witness Communications Monitor"
@@ -211,6 +219,13 @@ class Link:
 
 # Confirmation text for quick commands that ask first (default: log erase).
 CONFIRM_TEXT = {
+    BIT_RUN_COMMAND: "runs the Witness built-in self test now (about 10 s): it writes and reads back a test "
+                     "page in NAND and checks the sensors, logger and radio, so keep the rocket still on "
+                     "the pad. Witness accepts it only in Pad Idle (or Landed). It does not change the "
+                     "flight state.",
+    0x7300: "use this only for a FALSE FLIGHT ON THE PAD (Witness reached Landed without a real "
+            "flight). Witness restarts now: the link drops for a few seconds, it boots into Pad Idle "
+            "with a fresh filter and a new log session. It accepts this only in Landed.",
     0x4752: "the GPS receiver forgets its ephemerides, almanac, position and time and "
             "needs a new fix (30 s or more). Witness accepts it only in Pad Idle.",
 }
@@ -309,6 +324,19 @@ class MonitorCore:
         self.command_target = Cell("")
         self.command_text = Cell("")
         self.commands_enabled = Cell(False)
+        # "False flight on pad: reset Witness" (0x7300): only while Witness reports Landed.
+        self.reset_witness_enabled = Cell(False)
+        self.commands_enabled.subscribe(lambda _value: self._refresh_reset_enabled())
+        # Built-in self test (BIT): the newest summary/detail Witness sent, a one-line status for the
+        # readouts, and the two buttons. "Run BIT" (0x5442) is enabled only in Pad Idle and is sent
+        # only by the operator; "BIT detail" (0x5452) only asks Witness to re-send.
+        self.bit = bit_model.BitModel()
+        self.bit_text = Cell("BIT: no data yet")
+        self.bit_kind = Cell("muted")
+        self.bit_tooltip = Cell("No BIT summary (0x0B) received from Witness yet.")
+        self.bit_run_enabled = Cell(False)
+        self.bit_detail_enabled = Cell(False)
+        self._bit_report_busy = threading.Lock()
         self.values = {}
         self.check_vars = {}
         self.section_keys = {}      # packet -> [(key, field, label)]
@@ -473,6 +501,39 @@ class MonitorCore:
         if self.command_target.get() not in targets:
             self.command_target.set(targets[0] if targets else "")
         self.commands_enabled.set(bool(targets))
+        self._refresh_reset_enabled()
+
+    def witness_flight_state(self):
+        """Flight state (0..4) from the newest Witness status word seen, or None."""
+        best = None
+        for name in WITNESS_STATE_PACKETS:
+            value = self.raw_values.get(f"packet.{name}.status")
+            when = self.last_packet_time.get(f"packet.{name}")
+            if isinstance(value, int) and when is not None and (best is None or when > best[0]):
+                best = (when, value & FLIGHT_STATE_MASK)
+        return None if best is None else best[1]
+
+    def _refresh_reset_enabled(self):
+        self.reset_witness_enabled.set(bool(self.commands_enabled.get())
+                                       and self.witness_flight_state() == LANDED_STATE)
+        state = self.witness_flight_state()
+        self.bit_run_enabled.set(bool(self.commands_enabled.get()) and state == PAD_IDLE_STATE)
+        self.bit_detail_enabled.set(bool(self.commands_enabled.get()) and state != BOOST_STATE)
+
+    def _note_bit(self, packet, received_mono):
+        """Every BIT summary/detail packet, not only the newest per tick: the three detail pages of a
+        run arrive together."""
+        if self.bit.feed(packet, received_mono):
+            self._refresh_bit_text()
+
+    def _refresh_bit_text(self, now=None):
+        shown = self.bit.status(time.monotonic() if now is None else now)
+        if shown is None:
+            return
+        text, kind, tooltip = shown
+        self.bit_text.set(text)
+        self.bit_kind.set(kind)
+        self.bit_tooltip.set(tooltip)
 
     def _target_writer(self, target_name):
         """(write, link) for a connected target, or (None, None). Writes through a
@@ -502,9 +563,12 @@ class MonitorCore:
         if write is None:
             self.console_write(self._no_target_message(target_name))
             return False
-        acked = CommandLink.is_acked_command(command)
+        is_bit_run = len(command) == 10 and (command[7] << 8 | command[8]) == BIT_RUN_COMMAND
+        # A BIT run is acknowledged only when it ends, so it is NOT resent (a resend would start a
+        # second run): one write, then wait for the ack.
+        acked = CommandLink.is_acked_command(command) and not is_bit_run
         try:
-            if acked:
+            if acked or is_bit_run:
                 self.command_link.forget(command)
             write(command)
             sent_text = command.hex(" ")
@@ -520,6 +584,10 @@ class MonitorCore:
             # Witness acks, then reboots (Landed only): the link drops for a few
             # seconds and returns in Pad Idle. Expected, not an error.
             self.expected_reset_until = time.monotonic() + RESET_EXPECTED_S
+        if is_bit_run:
+            cancel = link.cancel if link is not None else self.stop_event
+            threading.Thread(target=self._await_bit_run_ack, name="bit-run-ack", daemon=True,
+                             args=(target_name, command, description or "BIT run", cancel)).start()
         if acked:
             # Radio round trips (Aperture -> LoRa -> Witness -> back) take far
             # longer than USB, and the uplink is half duplex: resend until
@@ -529,6 +597,31 @@ class MonitorCore:
                              args=(target_name, write, command, description or sent_text,
                                    COMMAND_RESEND_S, cancel)).start()
         return True
+
+    def _await_bit_run_ack(self, target_name, command, label, cancel):
+        try:
+            ack = self.command_link.send_reliable(None, command, timeout=BIT_RUN_ACK_WAIT_S, attempts=1,
+                                                  cancel=cancel, first_sent=True)
+        except Exception as exc:  # noqa: BLE001
+            self.console_write(f"TX_ERROR[{target_name}] {label}: {exc}")
+            return
+        if self.stop_event.is_set():
+            return
+        if ack is None:
+            self.console_write(f"NO_ACK[{target_name}] {label}: no result within {BIT_RUN_ACK_WAIT_S:g} s "
+                               "(not resent: check the BIT status, or use BIT detail)")
+            return
+        result, detail = ack.get("result"), ack.get("detail") or 0
+        verdict, groups = bit_model.ack_verdict(detail)
+        if result == 0:
+            self.console_write(f"ACK[{target_name}] {label}: {verdict}, {groups} blocking group(s) failed")
+        elif result == 4:
+            self.console_write(f"BUSY[{target_name}] {label}: a BIT run is already in progress")
+        elif result == 1:
+            self.console_write(f"REFUSED[{target_name}] {label}: Witness refused (detail {detail:#06x}; "
+                               "0x8000 + reason = test gate: not still, state changed or moving)")
+        else:
+            self.console_write(f"NAK[{target_name}] {label}: {ack.get('result_name')} (detail {detail})")
 
     def _await_ack(self, target_name, write, command, label, timeout, cancel=None):
         cancel = self.stop_event if cancel is None else cancel
@@ -591,10 +684,75 @@ class MonitorCore:
     build_quick_command_packet = staticmethod(build_command_packet)
 
     def send_quick_command(self, name, opcode, confirm=False):
+        if opcode == RESET_TO_PAD_OPCODE:
+            state = self.witness_flight_state()
+            if state != LANDED_STATE:
+                shown = "no state telemetry yet" if state is None else f"state {state}, not Landed"
+                self.console_write(f"TX_BLOCKED {name}: Witness is not Landed ({shown}); "
+                                   "it only accepts this in Landed")
+                return False
         text = CONFIRM_TEXT.get(opcode, "delete all stored log sessions? This cannot be undone.")
         if confirm and not self.confirm("Confirm command", f"{name}: {text}"):
             return False
         return self.transmit_command(self.command_target.get(), build_command_packet(opcode), name)
+
+    def send_bit_run(self):
+        """Run BIT button: 0x5442 (full run, no options) after a confirmation, Pad Idle only.
+        Called by nothing but that button."""
+        state = self.witness_flight_state()
+        if state != PAD_IDLE_STATE:
+            shown = "no state telemetry yet" if state is None else f"state {state}, not Pad Idle"
+            self.console_write(f"TX_BLOCKED Run BIT: Witness is not in Pad Idle ({shown})")
+            return False
+        if not self.confirm("Confirm command", f"Run BIT: {CONFIRM_TEXT[BIT_RUN_COMMAND]}"):
+            return False
+        nonce = int(time.time() * 1000) & 0xFFFFFFFF
+        return self.transmit_command(self.command_target.get(), build_bit_run_packet(nonce), "Run BIT")
+
+    def request_bit_report(self):
+        """BIT detail button: ask Witness to re-send the detail pages not held yet, or the summary when
+        all are held (0x5452; it never runs a test). One request at a time on a worker thread: each
+        page is awaited (or times out) before the next goes out, so a radio uplink is not flooded."""
+        state = self.witness_flight_state()
+        if state == BOOST_STATE:
+            self.console_write("TX_BLOCKED BIT detail: Witness refuses reports in Boost")
+            return False
+        if self.test_active:
+            self.console_write("TX_BLOCKED test mode never sends commands to hardware")
+            return False
+        target_name = self.command_target.get()
+        write, link = self._target_writer(target_name)
+        if write is None:
+            self.console_write(self._no_target_message(target_name))
+            return False
+        if not self._bit_report_busy.acquire(blocking=False):
+            self.console_write("BIT detail: a request is already in progress")
+            return False
+        cancel = link.cancel if link is not None else self.stop_event
+        threading.Thread(target=self._bit_report_worker, name="bit-report", daemon=True,
+                         args=(target_name, cancel)).start()
+        return True
+
+    def _bit_report_worker(self, target_name, cancel):
+        try:
+            pages = self.bit.missing_pages()
+            if self.bit.summary is None:
+                requests = [BIT_REPORT_SUMMARY, *pages]
+            else:
+                requests = pages or [BIT_REPORT_SUMMARY]
+            for page in requests:
+                if cancel.is_set() or self.stop_event.is_set():
+                    return
+                name = "BIT summary" if page == BIT_REPORT_SUMMARY else f"BIT detail page {page}"
+                if not self.transmit_command(target_name, build_bit_report_packet(page), name):
+                    return
+                if page != BIT_REPORT_SUMMARY:
+                    deadline = time.monotonic() + BIT_DETAIL_PAGE_WAIT_S
+                    while page in self.bit.missing_pages() and time.monotonic() < deadline:
+                        if cancel.wait(0.1):
+                            return
+        finally:
+            self._bit_report_busy.release()
 
     def send_gps_assist(self, frames, description="GPS ephemeris upload", pace_s=None):
         """Send GPS assistance frames (gps_assist.assist_frames) to the
@@ -889,6 +1047,7 @@ class MonitorCore:
         self.raw_values.clear()
         self.history.clear()
         self.last_packet_time.clear()
+        self._refresh_reset_enabled()
         self.graphs_dirty = True
 
     def start_test(self):
@@ -1241,6 +1400,10 @@ class MonitorCore:
         if now - self._last_health >= 0.25:
             self._last_health = now
             try:
+                self._refresh_bit_text(now)       # the summary ages: STALE after 5 minutes
+            except Exception as exc:  # noqa: BLE001
+                self._pump_error("bit status", exc, None)
+            try:
                 self.update_link_health(now)
             except Exception as exc:  # noqa: BLE001
                 self._pump_error("link health", exc, None)
@@ -1282,6 +1445,8 @@ class MonitorCore:
             received_at = payload[2] if len(payload) > 2 else time.time()
             ports_seen.add(port_name)
             self.record_history("packet", packet, received_at)
+            if packet.get("packet") in ("bit_summary", "bit_detail"):
+                self._note_bit(packet, time.monotonic())
             latest[packet.get("packet")] = (port_name, packet)
             console_lines.append(self._console_stamp(f"PACKET[{port_name}] {format_packet(packet)}"))
         elif kind == "nmea":
@@ -1634,6 +1799,8 @@ class MonitorCore:
                 self.values[key].set(format_gps_satellites(packet))
             else:
                 self.values[key].set(format_display_value(field, value))
+        if packet["packet"] in WITNESS_STATE_PACKETS:
+            self._refresh_reset_enabled()
 
     def selected_fields(self):
         return [key for key, cell in self.check_vars.items() if cell.get()]

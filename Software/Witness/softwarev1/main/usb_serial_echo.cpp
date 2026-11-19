@@ -45,6 +45,10 @@ static_assert(command_policy::kCh1LoadOff == IRIS_COMMAND_CH1_LOAD_OFF &&
                   command_policy::kRegulator5vOff == IRIS_COMMAND_5V_REGULATOR_OFF &&
                   command_policy::kRegulator5vOn == IRIS_COMMAND_5V_REGULATOR_ON,
               "command_policy load opcodes must match comms.h");
+static_assert(command_policy::kBenchRestart == IRIS_COMMAND_BENCH_RESTART &&
+                  command_policy::kBenchHang == IRIS_COMMAND_BENCH_HANG &&
+                  command_policy::kBenchIrisReset == IRIS_COMMAND_BENCH_IRIS_RESET,
+              "command_policy bench opcodes must match comms.h");
 
 namespace {
 
@@ -474,7 +478,7 @@ void UsbSerialEcho::finish_binary_command()
         packet_length == IRIS_PACKET_COMMAND_FRAME_LENGTH &&
         (gps_assist::is_assist_command(frame_opcode) ||
          frame_opcode == IRIS_COMMAND_GPS_COLD_START ||
-         frame_opcode == IRIS_COMMAND_BENCH_RESTART ||
+         command_policy::is_bench_command(frame_opcode) ||
          bit::policy::is_bit_command(frame_opcode));   // BIT is local to Witness: never forwarded
     if (packet_length > 1U) {
         if (!assist_frame) {
@@ -529,25 +533,46 @@ void UsbSerialEcho::process_canonical_binary_command(
         send_ack(false, command, args, r == ESP_OK ? IRIS_ACK_OK : IRIS_ACK_REFUSED);
         return;
     }
-    if (command == IRIS_COMMAND_BENCH_RESTART) {
-        // Bench-only warm reset in any flight state (tests the RTC resume).
-        // Gated on HITL, which only USB can start and only in Pad Idle, so a
-        // real flight can never reach it.
-        const std::uint8_t mode = args[0];
-        if (!sensors_.hitl_active()) {
-            ESP_LOGW(kLogTag, "bench restart refused: HITL not active");
+    if (command_policy::is_bench_command(command)) {
+        // Bench-only commands (restart 0x4252, hang 0x4248, Iris reset 0x4249):
+        // canonical USB frames while HITL is active. HITL can only be entered
+        // over USB and only in Pad Idle, so a real flight cannot reach them;
+        // radio and the USB-forward path refuse them (command_bridge.cpp).
+        if (!command_policy::allow_bench_command(command_policy::Source::Usb, sensors_.hitl_active(),
+                                                    sensors_.resumed_after_reset())) {
+            ESP_LOGW(kLogTag, "bench command 0x%04X refused: HITL not active and not resumed after a reset", command);
             send_ack(false, command, args, IRIS_ACK_REFUSED);
             return;
         }
+        const std::uint8_t state = static_cast<std::uint8_t>(flight_state_machine_.state());
+        if (command == IRIS_COMMAND_BENCH_HANG) {
+            ESP_LOGW(kLogTag, "bench hang in flight state %u: the sensor task stops, the watchdog resets in ~8 s",
+                     static_cast<unsigned>(state));
+            send_ack(false, command, args, IRIS_ACK_OK);
+            (void)spi_interface_.flush(pdMS_TO_TICKS(200));
+            sensors_.bench_hang();
+            return;
+        }
+        if (command == IRIS_COMMAND_BENCH_IRIS_RESET) {
+            const esp_err_t sent = command_bridge_.send_bench_iris_reset();
+            ESP_LOGW(kLogTag, "bench Iris warm reset in flight state %u: CAN send %s",
+                     static_cast<unsigned>(state), esp_err_to_name(sent));
+            send_ack(false, command, args, sent == ESP_OK ? IRIS_ACK_OK : IRIS_ACK_BUSY);
+            return;
+        }
+        // IRIS_COMMAND_BENCH_RESTART: a warm reset in any flight state (tests
+        // the RTC resume).
+        const std::uint8_t mode = args[0];
         if (mode != IRIS_BENCH_RESTART_SOFTWARE && mode != IRIS_BENCH_RESTART_PANIC) {
             send_ack(false, command, args, IRIS_ACK_BAD_ARGUMENT);
             return;
         }
         ESP_LOGW(kLogTag, "bench restart (%s) in flight state %u",
-                 mode == IRIS_BENCH_RESTART_PANIC ? "panic" : "software",
-                 static_cast<unsigned>(flight_state_machine_.state()));
+                 mode == IRIS_BENCH_RESTART_PANIC ? "panic" : "software", static_cast<unsigned>(state));
         send_ack(false, command, args, IRIS_ACK_OK);
-        vTaskDelay(pdMS_TO_TICKS(100));   // let the ack leave over USB
+        // The ack must be out before the reset (queued before the flush, so the
+        // flush covers it).
+        (void)spi_interface_.flush(pdMS_TO_TICKS(200));
         if (mode == IRIS_BENCH_RESTART_PANIC) abort();
         esp_restart();
     }
@@ -1053,7 +1078,11 @@ void UsbSerialEcho::send_reply(const bool radio, const std::uint8_t packet_id,
                                const std::uint8_t *payload, const std::size_t length)
 {
     if (!radio) {
-        (void)spi_interface_.queue_packet(packet_id, payload, length);
+        // Acks wait briefly for room: a full USB queue used to drop them silently.
+        const esp_err_t queued = spi_interface_.queue_packet_wait(packet_id, payload, length, pdMS_TO_TICKS(50));
+        if (queued != ESP_OK) {
+            ESP_LOGW(kLogTag, "USB reply 0x%02X not queued: %s", packet_id, esp_err_to_name(queued));
+        }
         return;
     }
     std::uint8_t frame[SpiDataForwarder::kMaximumFrameLength]{};
@@ -1061,8 +1090,13 @@ void UsbSerialEcho::send_reply(const bool radio, const std::uint8_t packet_id,
     frame[0] = packet_id;
     std::memcpy(frame + IRIS_PACKET_ID_LENGTH, payload, length);
     frame[IRIS_PACKET_ID_LENGTH + length] = IRIS_PACKET_EOF_VALUE;
-    (void)spi_interface_.queue_immediate_radio_packet(
+    const esp_err_t queued = spi_interface_.queue_immediate_radio_packet(
         frame, length + IRIS_PACKET_ID_LENGTH + IRIS_PACKET_EOF_LENGTH);
+    if (queued != ESP_OK) {
+        // The radio reply queue is full (a very long burst): never silent.
+        ESP_LOGW(kLogTag, "radio reply 0x%02X not queued: %s (%lu frames lost so far)", packet_id,
+                 esp_err_to_name(queued), static_cast<unsigned long>(spi_interface_.immediate_radio_dropped()));
+    }
 }
 
 void UsbSerialEcho::send_ack(const bool radio, const std::uint16_t command, const std::uint8_t *data6,
@@ -1372,6 +1406,8 @@ void UsbSerialEcho::service_pending_restart()
     if (command_policy::restart_still_allowed(kind, state)) {
         ESP_LOGW(kLogTag, "restarting now (%s)",
                  kind == command_policy::PendingRestart::Maintenance ? "maintenance image" : "reset to Pad Idle");
+        // The ack went out 400 ms ago over USB; make sure it left the chip.
+        (void)spi_interface_.flush(pdMS_TO_TICKS(200));
         maintenance_mode::restart();
     }
     ESP_LOGE(kLogTag, "restart abandoned: flight state is now 0x%02X", state);

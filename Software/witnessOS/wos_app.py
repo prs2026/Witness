@@ -8,7 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import wos_paths  # noqa: F401  (must precede the tool imports)
-from PyQt6 import QtGui, QtWidgets
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 import hitl_gui
 import hitl_session as hs
@@ -19,8 +19,32 @@ from wos_monitor_tab import MonitorTab, shutdown_panel
 from wos_widgets import scroll_tab
 
 
+def install_crash_hook(sink=None) -> bool:
+    """Install Horizon's global exception hook (sys.excepthook, threading.excepthook,
+    sys.unraisablehook). PyQt6 aborts the whole process when a slot raises and the
+    hook is still the default, which would end a HITL run or a monitor session with no
+    trace. Tracebacks go to Horizon/logs/horizon_exceptions.log; ``sink(summary)`` gets
+    a rate-limited one-line summary (any thread). Safe to call repeatedly. Returns False
+    when the Horizon module offers no hook (test stand-ins)."""
+    import main as horizon_main
+    install = getattr(horizon_main, "install_global_excepthook", None)
+    if install is None:
+        return False
+    install(sink)
+    return True
+
+
+LINK_BANNER_STYLE = ("background:#c00000; color:white; font-size:16pt; font-weight:bold; "
+                     "padding:8px; border:3px solid #ffdd00;")
+RESET_BANNER_STYLE = ("background:#ff8c00; color:black; font-size:16pt; font-weight:bold; "
+                      "padding:8px; border:3px solid #ffdd00;")
+
+
 class WitnessOS(QtWidgets.QMainWindow):
-    """The main window: a QTabWidget holding the three tool panels."""
+    """The main window: a QTabWidget holding the three tool panels, under a
+    banner that shows the Witness link state on every tab."""
+
+    exceptionRaised = QtCore.pyqtSignal(str)
 
     def __init__(self, *, csv_files=None,
                  start_tab: str = "hitl",
@@ -30,6 +54,10 @@ class WitnessOS(QtWidgets.QMainWindow):
                  monitor_options: dict | None = None):
         ensure_app()
         super().__init__()
+        # First: any exception raised while the tabs are built or used is logged
+        # and shown in the status bar instead of killing the process.
+        self.exceptionRaised.connect(self._show_exception)
+        self.crash_hook_installed = install_crash_hook(self.exceptionRaised.emit)
         import viewer   # Horizon; imported here so tests can stand in
         self._closed = False
         self._viewer_title = ""
@@ -46,7 +74,20 @@ class WitnessOS(QtWidgets.QMainWindow):
 
         self.tabs = QtWidgets.QTabWidget()
         self.tabs.setDocumentMode(True)
-        self.setCentralWidget(self.tabs)
+        # LINK LOST / WITNESS RESETTING banner above every tab (the monitor tab has
+        # its own copy; this one is hidden there to avoid showing it twice).
+        self.link_banner = QtWidgets.QLabel()
+        self.link_banner.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.link_banner.setWordWrap(True)
+        self.link_banner.setVisible(False)
+        self._link_text = ""
+        central = QtWidgets.QWidget()
+        column = QtWidgets.QVBoxLayout(central)
+        column.setContentsMargins(0, 0, 0, 0)
+        column.setSpacing(0)
+        column.addWidget(self.link_banner)
+        column.addWidget(self.tabs, 1)
+        self.setCentralWidget(central)
 
         self.hitl = HitlWidget(
             settings=hitl_settings, settings_path=hitl_settings_path,
@@ -57,6 +98,9 @@ class WitnessOS(QtWidgets.QMainWindow):
         self.monitor = MonitorTab(hitl_session=self.hitl.session,
                                   on_title=self._monitor_titled,
                                   **(monitor_options or {}))
+        signal = getattr(getattr(self.monitor, "monitor", None), "linkBannerChanged", None)
+        if signal is not None:
+            signal.connect(self._link_banner_changed)
         self.panels = {"hitl": self.hitl, "viewer": self.viewer,
                        "monitor": self.monitor}
         self.pages: dict[str, QtWidgets.QScrollArea] = {}
@@ -69,6 +113,25 @@ class WitnessOS(QtWidgets.QMainWindow):
         start_tab = TAB_ALIASES.get(start_tab, start_tab)
         self.select("viewer" if csv_files else start_tab)
         self._tab_changed()
+
+    def _show_exception(self, summary: str):
+        self.statusBar().showMessage(summary, 60_000)
+
+    def _link_banner_changed(self, text: str):
+        self._link_text = text or ""
+        self._refresh_link_banner()
+
+    def _refresh_link_banner(self):
+        text = self._link_text
+        try:
+            on_monitor = self.current_tab() == "monitor"
+        except StopIteration:
+            on_monitor = False
+        self.link_banner.setText(text)
+        self.link_banner.setStyleSheet(RESET_BANNER_STYLE if text.startswith("WITNESS RESETTING")
+                                       else LINK_BANNER_STYLE)
+        # "isVisibleTo(self)" style checks stay valid while the window is hidden.
+        self.link_banner.setVisible(bool(text) and not on_monitor)
 
     def select(self, key: str):
         self.tabs.setCurrentWidget(self.pages[TAB_ALIASES.get(key, key)])
@@ -100,6 +163,7 @@ class WitnessOS(QtWidgets.QMainWindow):
         elif key == "monitor" and self._monitor_title:
             suffix = self._monitor_title
         self.setWindowTitle(f"{APP_NAME} - {suffix}")
+        self._refresh_link_banner()
 
     def shutdown(self):
         """Shut all three panels down (monitor, HITL, viewer); idempotent."""
@@ -122,6 +186,7 @@ class WitnessOS(QtWidgets.QMainWindow):
 def run(args) -> int:
     """Open the window for parsed witnessos.py arguments; run the event loop."""
     app = ensure_app()
+    install_crash_hook()
     import stall_watchdog   # Horizon: logs where the UI freezes (Horizon/logs/ui_stalls.log)
     stall_watchdog.install(Path(wos_paths.HORIZON_DIR) / "logs")
     window = WitnessOS(csv_files=args.csv_files, start_tab=args.tab,

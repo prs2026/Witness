@@ -47,6 +47,8 @@ FRAME_LENGTHS = {
     0x07: 76,   # GPS assist transfer status (IRIS_PACKET_ID_TRANSFER_STATUS)
     0x08: 19,   # maintenance status beacon (IRIS_PACKET_ID_MAINTENANCE_STATUS)
     0x09: 28,   # landed position (IRIS_PACKET_ID_LANDED_POSITION)
+    0x0B: 14,   # BIT summary (IRIS_PACKET_ID_BIT_SUMMARY): sent about once a second
+    0x10: 101,  # BIT detail (IRIS_PACKET_ID_BIT_DETAIL)
 }
 
 PACKET_NAMES = {
@@ -63,6 +65,8 @@ PACKET_NAMES = {
     0x07: "transfer_status",
     0x08: "maintenance_status",
     0x09: "landed_position",
+    0x0B: "bit_summary",
+    0x10: "bit_detail",
 }
 
 # Packets whose bytes 1-2 are the Witness status field.
@@ -370,6 +374,15 @@ def decode_frame(frame: bytes) -> dict | None:
                    lon_deg=struct.unpack_from(">i", frame, 11)[0] * 1e-7,
                    gps_alt_m=f32(frame, 15), fix_age_s=None if age == 0xFFFFFFFF else age,
                    satellites=frame[24], battery_mv=u16(frame, 25))
+        return pkt
+    if pid == 0x0B:
+        # Known only so that its bytes are not scanned for frames of other types: it carries
+        # no Witness status or uptime, and its data bytes can equal other frame IDs.
+        pkt.update(verdict=frame[1] & 0x07, bench=bool(frame[1] & 0x08), version=frame[1] >> 4,
+                   run_kind=frame[2] & 0x03, sequence=frame[10])
+        return pkt
+    if pid == 0x10:
+        pkt.update(page=frame[1], page_count=frame[2], sequence=frame[3])
         return pkt
     if pid == 0x07:
         pkt.update(transfer_id=frame[1], state=frame[2], chunks_expected=(frame[5] << 8) | frame[6],

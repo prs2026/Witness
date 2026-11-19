@@ -7,6 +7,7 @@
 
 #include "comms.h"
 #include "esp_err.h"
+#include "radio_edge_logic.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
@@ -41,6 +42,21 @@ public:
         const std::uint8_t *payload,
         std::size_t payload_length);
 
+    // Same as queue_packet, but waits up to `wait` for room in the USB queue
+    // instead of dropping at once. For command acknowledgements: at 936 Hz
+    // sensor packets keep the 16-deep queue nearly full, and a stalled
+    // forwarder (a flash write) used to drop the ack.
+    esp_err_t queue_packet_wait(
+        std::uint8_t packet_id,
+        const std::uint8_t *payload,
+        std::size_t payload_length,
+        TickType_t wait);
+
+    // Returns once every packet queued before this call has been written to the
+    // USB driver and the USB FIFO has drained (or `timeout` passes). Used before
+    // a deliberate restart so the last ack is not cut off by it.
+    esp_err_t flush(TickType_t timeout);
+
     // Queues bytes exactly as received from another transport. Unlike an
     // application packet, no packet ID or EOF byte is added.
     esp_err_t queue_raw_bytes(
@@ -52,6 +68,9 @@ public:
         const std::uint8_t *data,
         std::size_t length);
     bool receive_immediate_radio_packet(RadioPacket &packet);
+    // Immediate-queue state for the radio ack pacing (sensor task).
+    bool immediate_radio_pending() const;
+    std::uint32_t immediate_radio_dropped() const { return immediate_dropped_.load(); }
 
     // Returns the newest locally generated canonical frame for a packet ID.
     bool latest_radio_packet(
@@ -70,7 +89,7 @@ private:
     static constexpr UBaseType_t kSpiTaskPriority = 2;
     static constexpr std::uint32_t kTaskStackSize = 3072;
     static constexpr std::size_t kQueueDepth = 16;
-    static constexpr std::size_t kImmediateRadioQueueDepth = 8;
+    static constexpr std::size_t kImmediateRadioQueueDepth = 16;
     static constexpr std::size_t kMinimumPayloadSize = 6;
     static constexpr std::size_t kMaximumPayloadSize =
         IRIS_PACKET_MAX_DATA_LENGTH;
@@ -122,6 +141,10 @@ private:
     std::uint32_t usb_drops_reported_ = 0;
     TickType_t usb_last_drop_report_ = 0;
     std::atomic<bool> radio_available_{false};
+    std::atomic<std::uint32_t> immediate_dropped_{0};
+    // flush(): packets accepted into the USB queue / fully handled by the forwarder.
+    std::atomic<std::uint32_t> usb_queued_{0};
+    std::atomic<std::uint32_t> usb_handled_{0};
     std::array<RadioCacheSlot, kRadioPacketTypeCount> radio_cache_{{
         {IRIS_PACKET_ID_SENSORS},
         {IRIS_PACKET_ID_STATE},

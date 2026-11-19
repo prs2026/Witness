@@ -6,6 +6,7 @@
 #include <cstring>
 
 #include "bit_limits.h"
+#include "bit_marker_scan.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "flash_logger.h"
@@ -13,7 +14,6 @@
 namespace {
 constexpr char kLogTag[] = "flash_logger";
 constexpr std::size_t kMarkerLength = 12;
-constexpr unsigned kMarkerPagesBack = 3;
 }  // namespace
 
 void FlashLogger::bit_finish(const std::uint8_t state, const std::uint16_t value)
@@ -93,6 +93,7 @@ void FlashLogger::bit_slice(const bool flushed)
         std::memcpy(marker + 4, bit_nonce_, 4);
         marker[8] = 'E'; marker[9] = 'N'; marker[10] = 'D'; marker[11] = 0x0A;
         bit_pages_before_ = packet_writer_.sequence;
+        bit_marker_start_page_ = packet_writer_.page_index;
         const esp_err_t r = log_packet(kPacketSourceBit, marker, sizeof(marker));
         if (r == ESP_ERR_INVALID_STATE) { bit_finish(kBitStateFail, 1); return; }   // packet capture is off
         if (r != ESP_OK) { bit_finish(kBitStateFail, 2); return; }                  // queue full
@@ -106,30 +107,42 @@ void FlashLogger::bit_slice(const bool flushed)
         // packet stream by reading them back from the NAND (not from a buffer).
         if (now_ms - bit_started_ms_ > bit::limits::kEndToEndTimeoutMs) { bit_finish(kBitStateFail, 5); return; }
         if (!flushed || packet_buffer_used_ != 0 || packet_writer_.sequence == bit_pages_before_) return;
-        if (packet_writer_.page_index < kMarkerPagesBack) { bit_finish(kBitStateFail, 6); return; }   // ring wrapped
+        // The marker is somewhere after the page the writer was on when it was queued (behind
+        // the traffic queued before it, in front of the traffic after it).
         invalidate_export_read_cache();
-        std::uint8_t needle[8] = {'B', 'I', 'T', 1};
+        std::uint8_t needle[bit_marker::kNeedleLength] = {'B', 'I', 'T', 1};
         std::memcpy(needle + 4, bit_nonce_, 4);
+        bit_marker::Scanner scanner(needle);
+        const std::uint32_t capacity = packet_writer_.block_count * W25n01kv::kPagesPerBlock;
+        const std::uint32_t pages = bit_marker::pages_to_scan(bit_marker_start_page_, packet_writer_.page_index, capacity);
         bool found = false;
         std::uint16_t code = 0;
-        for (unsigned back = 1; back <= kMarkerPagesBack && !found && code == 0; ++back) {
-            const std::uint32_t page =
-                packet_writer_.first_block * W25n01kv::kPagesPerBlock + packet_writer_.page_index - back;
+        std::uint32_t scanned = 0;
+        for (; scanned < pages && !found; ++scanned) {
+            const std::uint32_t page = packet_writer_.first_block * W25n01kv::kPagesPerBlock +
+                                       (bit_marker_start_page_ + scanned) % capacity;
             const esp_err_t r = read_page_retry(page, 0, export_read_page_, W25n01kv::kPageDataSize);
-            if (r == ESP_ERR_INVALID_CRC) { code = 3; break; }
-            if (r != ESP_OK) { code = 4; break; }
-            for (std::size_t i = kPageHeaderSize; i + sizeof(needle) <= W25n01kv::kPageDataSize; ++i) {
-                if (export_read_page_[i] == 'B' && std::memcmp(export_read_page_ + i, needle, sizeof(needle)) == 0) {
-                    found = true;
-                    break;
-                }
+            if (r != ESP_OK) {   // unreadable or an abandoned page: no continuity, keep looking
+                if (code == 0) code = r == ESP_ERR_INVALID_CRC ? 3 : 4;
+                scanner.gap();
+                continue;
             }
+            const std::uint8_t *h = export_read_page_;
+            const std::uint32_t magic = (static_cast<std::uint32_t>(h[0]) << 24) | (static_cast<std::uint32_t>(h[1]) << 16) |
+                                        (static_cast<std::uint32_t>(h[2]) << 8) | h[3];
+            if (magic != kPageMagic) { scanner.gap(); continue; }   // not written
+            std::size_t length = (static_cast<std::size_t>(h[6]) << 8) | h[7];
+            if (length > kPagePayloadSize) length = kPagePayloadSize;
+            found = scanner.feed(export_read_page_ + kPageHeaderSize, length);
         }
         invalidate_export_read_cache();
         if (found) {
             const std::uint32_t latency = now_ms - bit_started_ms_;
             bit_finish(kBitStatePass, static_cast<std::uint16_t>(latency > 65535U ? 65535U : latency));
         } else {
+            ESP_LOGW(kLogTag, "BIT end-to-end: marker not found in %lu of %lu page(s) after the marker was queued (page %lu to %lu)",
+                     static_cast<unsigned long>(scanned), static_cast<unsigned long>(pages),
+                     static_cast<unsigned long>(bit_marker_start_page_), static_cast<unsigned long>(packet_writer_.page_index));
             bit_finish(kBitStateFail, code != 0 ? code : 4);
         }
         return;

@@ -30,10 +30,11 @@ import monitor_core
 from monitor_core import (  # noqa: F401 - re-exported API
     BAUD_CHOICES, DEFAULT_TCP_1_HOST, DEFAULT_TCP_1_PORT, DEFAULT_TCP_2_HOST, DEFAULT_TCP_2_PORT,
     DEFAULT_WITNESS_FEED_HOST, DEFAULT_WITNESS_FEED_PORT, LOG_DIR, NO_SERIAL_PORT, ROOT, WINDOW_TITLE,
-    MonitorCore, RingHistory,
+    RESET_TO_PAD_OPCODE, MonitorCore, RingHistory,
 )
+from flight_render import STRIP_COLORS
 from qt_widgets import (LogConsole, RetilingGrid, age_color, bind_check, bind_combo, bind_enabled,
-                        bind_label, bind_line_edit, hbox, scroll_area, set_background, wrap_label)
+                        bind_label, bind_line_edit, hbox, scroll_area, set_background, wrap_label, _owned)
 from witness_protocol import *  # noqa: F401,F403 - re-exported protocol API
 from witness_protocol import status_maintenance  # noqa: E402
 from witness_protocol import (  # explicit for linters / readers
@@ -643,12 +644,18 @@ class MonitorPanel(QtWidgets.QWidget):
         grid.setSpacing(3)
         columns = 4
         self.quick_command_buttons = []
+        self.reset_witness_button = None
         for index, (label, opcode, confirm) in enumerate(QUICK_COMMANDS):
             button = QtWidgets.QPushButton(label)
             button.clicked.connect(lambda _c=False, n=label, v=opcode, c=confirm:
                                    core.send_quick_command(n, v, c))
             grid.addWidget(button, index // columns, index % columns)
             self.quick_command_buttons.append(button)
+            if opcode == RESET_TO_PAD_OPCODE:
+                self.reset_witness_button = button
+                button.setToolTip("Witness reached Landed on the pad without a real flight? This "
+                                  "restarts it into Pad Idle (fresh filter, new log session). "
+                                  "Enabled only while Witness reports Landed; asks first.")
         offset = len(QUICK_COMMANDS)
         offset += (-offset) % columns
         for index, (label, argument) in enumerate(IMU_CALIBRATION_COMMANDS, start=offset):
@@ -686,9 +693,41 @@ class MonitorPanel(QtWidgets.QWidget):
         self.quick_command_buttons.append(ping)
         index += 1
         for widget in (self.command_entry, self.send_command_button, *self.quick_command_buttons):
-            bind_enabled(core.commands_enabled, widget)
+            if widget is self.reset_witness_button:
+                bind_enabled(core.reset_witness_enabled, widget)
+            else:
+                bind_enabled(core.commands_enabled, widget)
         layout.addLayout(hbox(QtWidgets.QLabel("Commands:"), grid_widget))
+        layout.addLayout(self._bit_row())
         return box
+
+    def _bit_row(self):
+        """Compact built-in self test (BIT) status with its two buttons. Run BIT (0x5442) is enabled
+        only in Pad Idle and asks first; BIT detail (0x5452) only asks Witness to re-send.
+        Horizon never runs BIT by itself."""
+        core = self.core
+        self.bit_label = QtWidgets.QLabel()
+        self.bit_label.setWordWrap(True)
+        self.bit_label.setMargin(2)
+        bind_label(core.bit_text, self.bit_label)
+        _owned(self.bit_label, core.bit_tooltip.subscribe(self.bit_label.setToolTip, call_now=True))
+        _owned(self.bit_label, core.bit_kind.subscribe(self._show_bit_kind, call_now=True))
+        self.run_bit_button = QtWidgets.QPushButton("Run BIT")
+        self.run_bit_button.setToolTip("Run Witness's built-in self test (0x5442). Pad Idle only; asks first. "
+                                       "Never run automatically.")
+        self.run_bit_button.clicked.connect(lambda _c=False: core.send_bit_run())
+        self.bit_detail_button = QtWidgets.QPushButton("BIT detail")
+        self.bit_detail_button.setToolTip("Ask Witness to re-send the BIT detail pages (0x5452). "
+                                          "Does not run a test.")
+        self.bit_detail_button.clicked.connect(lambda _c=False: core.request_bit_report())
+        bind_enabled(core.bit_run_enabled, self.run_bit_button)
+        bind_enabled(core.bit_detail_enabled, self.bit_detail_button)
+        return hbox(QtWidgets.QLabel("BIT:"), self.bit_label, self.run_bit_button, self.bit_detail_button,
+                    stretch_last=False)
+
+    def _show_bit_kind(self, kind):
+        background, foreground = STRIP_COLORS.get(kind, STRIP_COLORS["muted"])
+        set_background(self.bit_label, background, foreground)
 
     def eventFilter(self, obj, event):  # noqa: N802 - Qt API
         if obj is self.command_entry and event.type() == QtCore.QEvent.Type.KeyPress:

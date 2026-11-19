@@ -13,7 +13,7 @@ import ipaddress
 
 from link_health import RawLog, backoff_delay
 
-from witness_link import (MAX_LINE_BYTES, decode_record, enable_keepalive, is_loopback_address,
+from witness_link import (MAX_LINE_BYTES, decode_record, enable_keepalive, is_loopback_address, to_receiver_clock,
                           is_tailscale_address, json_safe)
 
 
@@ -230,7 +230,7 @@ class WitnessReceiver(LoggedReceiver):
                                 if previous and previous[0] == current[0] and current[1] > previous[1] + 1:
                                     self.report(f"Witness sequence gap: {previous[1]} -> {current[1]}", error=True)
                                 previous = current
-                            self.accept(record)
+                            self.accept(to_receiver_clock(record, time.time()))
                         if len(buffer) > MAX_LINE_BYTES:
                             raise ValueError("Witness feed record exceeds 64 KiB without a newline")
             except (OSError, ValueError) as exc:

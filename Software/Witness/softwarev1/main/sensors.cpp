@@ -512,6 +512,11 @@ std::size_t Sensors::take_hitl_imu_samples(const std::uint64_t now_us)
     return imu_batch_count_;
 }
 
+bool Sensors::resumed_after_reset() const
+{
+    return (witness_status_.state_flags() & IRIS_WITNESS_STATUS_RESUMED_MASK) != 0U;
+}
+
 bool Sensors::hitl_active() const
 {
     portENTER_CRITICAL(&hitl_lock_);
@@ -1625,7 +1630,14 @@ void Sensors::task_entry(void *context)
 
 void Sensors::poll_radio_commands()
 {
-    if (!radio_ready_ || gpio_get_level(HW_PIN_RAD_DIO1) == 0) {
+    if (!radio_ready_) {
+        return;
+    }
+    // DIO1 is the normal trigger. With the line low the IRQ status is still
+    // read every 200 ms (radio_edge::Dio1SlowPoll), so a stuck-low line costs
+    // a delay of at most that, not the whole uplink.
+    const bool dio1_high = gpio_get_level(HW_PIN_RAD_DIO1) != 0;
+    if (!dio1_poll_.should_poll(dio1_high, monotonic_ms())) {
         return;
     }
 
@@ -1638,6 +1650,15 @@ void Sensors::poll_radio_commands()
 
     if (receive_result == ESP_ERR_NOT_FOUND) {
         return;
+    }
+    // Something was received (or failed): the radio is busy with a frame, so
+    // an ack for the previous command waits for the quiet window.
+    ack_pacer_.note_command_rx(monotonic_ms());
+    if (dio1_poll_.note_frame(dio1_high) && monotonic_ms() >= dio1_log_next_ms_) {
+        dio1_log_next_ms_ = monotonic_ms() + 5000U;
+        ESP_LOGW(kLogTag, "radio frame found with the DIO1 line low (%lu so far): interrupt line stuck or "
+                          "an edge was missed; receiving by slow polling",
+                 static_cast<unsigned long>(dio1_poll_.frames_found_with_dio1_low()));
     }
     // Logging from the sensor task is rate limited (audit F13): one line per
     // 2 s at most, with a count of the lines held back.
@@ -1693,11 +1714,12 @@ void Sensors::poll_radio_commands()
         // of a command stream are heard, but only for a frame that passed the
         // bridge's validation (ESP_ERR_INVALID_ARG = not a command), never in
         // Boost, and capped (UplinkHoldOff forces a telemetry cycle).
-        if (command_result != ESP_ERR_INVALID_ARG) {
-            uplink_holdoff_.note_command(
-                monotonic_ms(),
-                flight_state_machine_.state() != FlightStateMachine::State::Boost);
-        }
+        // Only a complete 10-byte command frame arms it (radio_edge::arms_holdoff):
+        // a stray 3-byte frame must not silence the downlink.
+        uplink_holdoff_.note_command(
+            monotonic_ms(),
+            radio_edge::arms_holdoff(packet_length, command_result != ESP_ERR_INVALID_ARG,
+                                     flight_state_machine_.state() != FlightStateMachine::State::Boost));
         if (command_result != ESP_OK) {
             ESP_LOGW(
                 kLogTag,
@@ -1717,7 +1739,14 @@ void Sensors::service_radio_transmit(const TickType_t now)
     }
 
     SpiDataForwarder::RadioPacket packet{};
-    if (data_forwarder_.receive_immediate_radio_packet(packet)) {
+    // Acks and forwarded commands: held until the radio has been quiet for a
+    // moment (a command burst is not cut by our own ack), then sent in order.
+    const std::uint64_t pace_ms = monotonic_ms();
+    const bool ack_pending = data_forwarder_.immediate_radio_pending();
+    if (!ack_pacer_.may_transmit(ack_pending, pace_ms)) {
+        if (ack_pending) return;   // no telemetry transmission starts while an ack waits
+    } else if (data_forwarder_.receive_immediate_radio_packet(packet)) {
+        ack_pacer_.note_sent();
         const esp_err_t result =
             radio_.start_transmit(packet.data, packet.length);
         ++radio_tx_started_;
@@ -2734,6 +2763,12 @@ void Sensors::run()
     task_supervision::subscribe();
 
     for (;;) {
+        if (bench_hang_.load()) {
+            // Bench-only deliberate hang (IRIS_COMMAND_BENCH_HANG): never feed
+            // the watchdog again; the task watchdog (8 s) resets the MCU.
+            ESP_LOGW(kLogTag, "BENCH HANG: sensor task stopped; the task watchdog should reset in 8 s");
+            for (;;) vTaskDelay(pdMS_TO_TICKS(100));
+        }
         task_supervision::feed();
         // The GPS task re-checks this when it executes a cold start request.
         gps_uart_.set_cold_start_allowed(command_policy::allow_gps_cold_start(

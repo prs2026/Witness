@@ -15,6 +15,7 @@
 #include "freertos/stream_buffer.h"
 #include "w25n01kv.h"
 #include "log_slot_logic.h"
+#include "erase_wipe.h"
 
 class Sensors;
 class WitnessStatus;
@@ -160,6 +161,12 @@ public:
     // (never reset), so stale data pages carry other session tags and are
     // never exported. Data blocks are erased lazily before they are rewritten.
     esp_err_t clear_all_sessions(TickType_t timeout = portMAX_DELAY);
+    // Flushes everything buffered (sensor, IMU, packet, text and GPS records) to
+    // NAND and returns once the logger task has done it, at most `timeout`.
+    // Used by the restart handler so a software restart loses well under the 1 s
+    // flush interval of log. Panics and watchdog resets cannot run it. Safe to
+    // call from any task; ESP_ERR_INVALID_STATE when nothing is being logged.
+    esp_err_t flush_for_restart(TickType_t timeout);
     std::size_t export_file_count() const;
     const ExportFile &export_file(std::size_t index) const;
     esp_err_t read_export_file(
@@ -328,7 +335,9 @@ private:
     esp_err_t request_erase(std::uint8_t mode, TickType_t timeout);
     esp_err_t scan_sessions(bool build_export_table);
     esp_err_t run_startup_self_test();
-    esp_err_t erase_session_blocks();
+    // Full erase (0x6869): header clear now, wipe of the other slot afterwards.
+    void service_background_wipe();
+    static void restart_flush_handler();
     esp_err_t clear_session_headers();
     void reset_session_buffers();
     esp_err_t create_session();
@@ -380,6 +389,7 @@ private:
     std::uint8_t bit_phase_ = 0;                    // logger task only
     std::uint32_t bit_started_ms_ = 0;
     std::uint32_t bit_pages_before_ = 0;
+    std::uint32_t bit_marker_start_page_ = 0;       // packet stream page the writer was on when the marker was queued
 
     Sensors *sensors_;
     WitnessStatus &witness_status_;
@@ -431,6 +441,10 @@ private:
     std::atomic<std::uint32_t> imu_records_dropped_{0};
     std::atomic<std::uint32_t> prelaunch_reset_generation_{0};
     esp_err_t erase_result_ = ESP_OK;
+    erase_wipe::BackgroundWipe wipe_{};
+    std::uint32_t wipe_start_ms_ = 0;
+    std::atomic<std::uint32_t> flush_requested_{0};
+    std::atomic<std::uint32_t> flush_done_{0};
     std::uint8_t binary_buffer_[4096]{};
     std::size_t binary_buffer_used_ = 0;
     std::uint8_t imu_buffer_[2 * kPagePayloadSize]{};

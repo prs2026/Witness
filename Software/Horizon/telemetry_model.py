@@ -41,6 +41,12 @@ WITNESS_FIELDS = {
     "landed_position": ("status", "flight_state", "uptime", "latitude", "longitude", "gps_altitude", "fix_age",
                         "flags", "position_valid", "stale", "ping_reply", "utc_aligned", "satellites",
                         "battery_voltage"),
+    "bit_summary": ("version", "verdict", "verdict_name", "bench", "run_kind", "run_kind_name", "flight_state",
+                    "core_done", "settled", "active_ran", "blocking_mask", "degraded_mask",
+                    "not_evaluated_mask", "first_fail_id", "sequence", "age_s"),
+    "bit_detail": ("page", "page_count", "sequence",
+                   *(f"records[{i}].{name}" for i in range(24)
+                     for name in ("id", "result", "class", "bench", "value"))),
     "iris_debug": ("status", "uptime", "mcu_temperature", "iris_battery_voltage",
                    "current_sense[0]", "current_sense[1]", "current_sense[2]"),
 }

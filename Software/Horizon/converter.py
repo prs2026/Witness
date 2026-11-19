@@ -55,6 +55,13 @@ HOST_PAYLOAD_LENGTHS = {
     0x0C: (45,),
 }
 
+# BIT summary (0x0B) and detail (0x10): framed by length and skipped whole, so their data bytes
+# are never scanned for other frames (they can equal any packet ID). Not exported as rows.
+SKIPPED_PAYLOAD_LENGTHS = {
+    0x0B: (12,),
+    0x10: (99,),
+}
+
 # The current capture format uses a 23-byte sensor payload.  The 21-byte form
 # declared by comms.h is also accepted for compatibility.
 PAYLOAD_LENGTHS = {
@@ -1269,7 +1276,7 @@ def iter_log(data: bytes, stats: DecodeStats | None = None):
 
     while offset < len(data):
         packet_id = data[offset]
-        host_lengths = HOST_PAYLOAD_LENGTHS.get(packet_id)
+        host_lengths = HOST_PAYLOAD_LENGTHS.get(packet_id) or SKIPPED_PAYLOAD_LENGTHS.get(packet_id)
         if host_lengths is not None:
             payload_length = frame_payload_length(data, offset, host_lengths)
             if payload_length is not None:

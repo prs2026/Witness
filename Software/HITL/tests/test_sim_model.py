@@ -171,6 +171,54 @@ class SimModelTests(unittest.TestCase):
         self.assertGreaterEqual(fsm.state, hp.BOOST)
         self.assertTrue(all(to > frm for _ts, frm, to in fsm.transitions))
 
+    @staticmethod
+    def _smooth_samples(rate_mps, pad_s=10.0, run_s=20.0, g=1.1):
+        """Samples of a vehicle that sits still, then moves at a steady vertical
+        rate with only g (low-g axial) of acceleration: no acceleration rule, no
+        30 m/s Kalman rule, only the barometer rate can notice it."""
+        site = 609.0
+        out = []
+        for k in range(int((pad_s + run_s) / sm.DT_S)):
+            t = k * sm.DT_S
+            moving = t >= pad_s
+            alt = site + (rate_mps * (t - pad_s) if moving else 0.0)
+            hi = hp.HitlInput(sim_time_ms=k * sm.TICK_MS, low_g=(g if moving else 1.0, 0.0, 0.0),
+                              high_g=(0.0, 0.0, 0.0), gyro_dps=(0.0, 0.0, 0.0),
+                              pressure_pa=sm.isa_pressure_pa(alt), satellites=9, fix_quality=1)
+            out.append(sm.SimSample(t_ms=k * sm.TICK_MS, phase="coast", alt_msl_m=alt,
+                                    vel_mps=rate_mps if moving else 0.0, hitl=hi))
+        return out
+
+    def test_reference_feed_uses_barometer_rate_25mps_climb(self):
+        # Bench 2026-11-17 bug 3: the predictor ignored the barometer-rate rule, so
+        # a correct Boost on a 25 m/s low-g climb was scored FAIL (UNEXPECTED).
+        samples = self._smooth_samples(25.0)
+        exp = sm.predict_transitions(samples)
+        self.assertIn(hp.BOOST, exp)
+        # 20 m/s is reached ~0.4 s after the move starts; add the 0.7 s filter lag
+        # and the 1 s dwell.
+        self.assertGreater(exp[hp.BOOST], 11.0)
+        self.assertLess(exp[hp.BOOST], 13.5)
+        # A slow climb never qualifies.
+        self.assertEqual(sm.predict_transitions(self._smooth_samples(10.0)), {})
+        # A fast descent from rest is noticed as Descent.
+        down = sm.predict_transitions(self._smooth_samples(-25.0))
+        self.assertIn(hp.DESCENT, down)
+        self.assertNotIn(hp.BOOST, down)
+
+    def test_baro_rate_matches_firmware_filter(self):
+        r = sm.BaroRate()
+        for k in range(0, 3000):             # 3 s at 1 kHz, 20 m/s
+            t = k * 1000
+            r.add(t, 20.0 * t / 1e6)
+        self.assertTrue(r.valid(3_000_000))
+        self.assertAlmostEqual(r.rate_mps, 20.0, delta=0.05)
+        self.assertFalse(r.valid(3_700_000))     # stale after 0.5 s without a sample
+        r2 = sm.BaroRate()
+        for k in range(5):
+            r2.add(k * 100_000, 0.0)
+        self.assertFalse(r2.valid(400_000))      # fewer than 10 bins
+
 
 if __name__ == "__main__":
     unittest.main()

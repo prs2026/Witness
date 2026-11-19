@@ -16,6 +16,7 @@
 #include "esp_timer.h"
 #include "hardware_pins.h"
 #include "landed_logic.h"
+#include "led_pattern.h"
 #include "landed_power.h"
 #include "spi_data_forwarder.h"
 #include "witness_status.h"
@@ -197,6 +198,13 @@ void Heartbeat::beep(const std::uint32_t duration_ms)
     }
 }
 
+unsigned Heartbeat::led_pulse_count() const
+{
+    const bool bit_nogo = bit::led_nogo() &&
+                          (witness_status_.flight_state() & IRIS_WITNESS_STATUS_FLIGHT_STATE_MASK) == IRIS_FLIGHT_STATE_PAD_IDLE;
+    return bit::policy::pulses(led_pattern::pulses(witness_status_.flags(), witness_status_.state_flags()), bit_nogo);
+}
+
 void Heartbeat::play_buzzer_pattern()
 {
 #if !HEARTBEAT_BUZZER_ENABLED
@@ -204,14 +212,17 @@ void Heartbeat::play_buzzer_pattern()
     return;
 #else
     ++buzzer_cycle_;
-    if (bit::led_nogo() &&
-        (witness_status_.flight_state() & IRIS_WITNESS_STATUS_FLIGHT_STATE_MASK) == IRIS_FLIGHT_STATE_PAD_IDLE) {
-        // BIT NO-GO: the same 4-pulse pattern as the LED.
-        for (unsigned tone = 0; tone < bit::policy::kNoGoPulses; ++tone) {
-            beep(100);
-            vTaskDelay(pdMS_TO_TICKS(100));
+    if ((witness_status_.flight_state() & IRIS_WITNESS_STATUS_FLIGHT_STATE_MASK) == IRIS_FLIGHT_STATE_PAD_IDLE) {
+        // On the pad the buzzer follows the red LED warning pattern (3 pulses
+        // not logging, else 4 pulses BIT NO-GO).
+        const unsigned led_pulses = led_pulse_count();
+        if (led_pulses > led_pattern::kNormalPulses) {
+            for (unsigned tone = 0; tone < led_pulses; ++tone) {
+                beep(100);
+                vTaskDelay(pdMS_TO_TICKS(100));
+            }
+            return;
         }
-        return;
     }
     const std::uint8_t flight_state = static_cast<std::uint8_t>(
         witness_status_.flight_state() &
@@ -260,21 +271,46 @@ void Heartbeat::play_buzzer_pattern()
 
 void Heartbeat::blink_gpio()
 {
-    const bool base_state = led_on_.load();
-    esp_err_t result = gpio_set_level(kHeartbeatGpio, !base_state);
-    if (result != ESP_OK) {
-        ESP_LOGE(kLogTag, "failed to pulse red LED GPIO%d: %s",
-                 static_cast<int>(kHeartbeatGpio), esp_err_to_name(result));
-        return;
+    // One pulse a second; three quick pulses when the vehicle is not logging to
+    // flash (led_pattern.h), so it is visible on the pad without a ground station.
+    const std::uint8_t byte0 = witness_status_.flags();
+    const std::uint8_t byte1 = witness_status_.state_flags();
+    // Priority: NOT LOGGING (3 pulses) over BIT NO-GO (4 pulses, Pad Idle only)
+    // over the normal single pulse (bit::policy::pulses: the larger existing
+    // warning wins only when it is not the plain heartbeat).
+    const unsigned pulses = led_pulse_count();
+    const bool warning = led_pattern::not_logging(byte0, byte1);
+    if (warning != not_logging_reported_) {
+        not_logging_reported_ = warning;
+        if (warning) {
+            ESP_LOGW(kLogTag, "NOT LOGGING to flash (status 0x%02X%02X: init failed %d, log failed %d, "
+                              "both slots full %d): red LED shows 3 pulses a second",
+                     byte0, byte1,
+                     (byte0 & IRIS_WITNESS_STATUS_FLASH_INIT_FAILED_MASK) != 0,
+                     (byte0 & IRIS_WITNESS_STATUS_FLASH_LOG_FAILED_MASK) != 0,
+                     (byte1 & IRIS_WITNESS_STATUS_LOG_SLOTS_FULL_MASK) != 0);
+        } else {
+            ESP_LOGI(kLogTag, "logging to flash again: red LED back to one pulse a second");
+        }
     }
+    for (unsigned pulse = 0; pulse < pulses; ++pulse) {
+        const bool base_state = led_on_.load();
+        esp_err_t result = gpio_set_level(kHeartbeatGpio, !base_state);
+        if (result != ESP_OK) {
+            ESP_LOGE(kLogTag, "failed to pulse red LED GPIO%d: %s",
+                     static_cast<int>(kHeartbeatGpio), esp_err_to_name(result));
+            return;
+        }
 
-    vTaskDelay(kPulseDuration);
+        vTaskDelay(kPulseDuration);
 
-    // Restore the latest commanded state in case it changed during the pulse.
-    result = gpio_set_level(kHeartbeatGpio, led_on_.load());
-    if (result != ESP_OK) {
-        ESP_LOGE(kLogTag, "failed to restore red LED GPIO%d: %s",
-                 static_cast<int>(kHeartbeatGpio), esp_err_to_name(result));
+        // Restore the latest commanded state in case it changed during the pulse.
+        result = gpio_set_level(kHeartbeatGpio, led_on_.load());
+        if (result != ESP_OK) {
+            ESP_LOGE(kLogTag, "failed to restore red LED GPIO%d: %s",
+                     static_cast<int>(kHeartbeatGpio), esp_err_to_name(result));
+        }
+        if (pulse + 1U < pulses) vTaskDelay(kPulseDuration);
     }
 }
 
@@ -339,14 +375,7 @@ void Heartbeat::run()
             log_stack_margins();
         }
         queue_heartbeat_packet();
-        // BIT NO-GO (Pad Idle only): 4 pulses instead of 1 (owner decision Q6); the buzzer follows below.
-        const bool bit_nogo = bit::led_nogo() &&
-                              (witness_status_.flight_state() & IRIS_WITNESS_STATUS_FLIGHT_STATE_MASK) == IRIS_FLIGHT_STATE_PAD_IDLE;
-        const unsigned pulses = bit::policy::pulses(1U, bit_nogo);
-        for (unsigned pulse = 0; pulse < pulses; ++pulse) {
-            if (pulse != 0U) vTaskDelay(kPulseDuration);
-            blink_gpio();
-        }
+        blink_gpio();   // 1 pulse, 3 not logging, or 4 BIT NO-GO (see led_pulse_count)
         play_buzzer_pattern();
     }
 }

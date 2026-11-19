@@ -37,6 +37,7 @@ private:
     esp_err_t set_buzzer_pwm(bool enabled);
     void beep(std::uint32_t duration_ms);
     void play_buzzer_pattern();
+    unsigned led_pulse_count() const;
     void blink_gpio();
     void queue_heartbeat_packet();
     void run();
@@ -46,5 +47,6 @@ private:
     TaskHandle_t task_handle_ = nullptr;
     std::atomic_bool led_on_{false};
     bool heartbeat_status_ = false;
+    bool not_logging_reported_ = false;   // LED warning pattern state (led_pattern.h)
     std::uint32_t buzzer_cycle_ = 0;
 };

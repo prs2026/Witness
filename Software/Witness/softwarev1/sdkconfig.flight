@@ -33,14 +33,19 @@ CONFIG_ESP_TASK_WDT_TIMEOUT_S=8
 # Core-1 performance (bench 2026-11-17c, BENCH_REPORT_2026-11-17c.md). Core 1 was 96-100 %
 # busy with ~480 loop overruns/s: the 16 KB instruction cache (shared by both cores, code
 # fetched from DIO flash) thrashed. -Os (smaller code), a 32 KB icache and 240 MHz bring it
-# to ~23 %. The 32 KB icache takes 16 KB from the heap; the 16 KB data cache (only flash
-# rodata uses it, there is no PSRAM) gives 16 KB back. Assertions stay enabled. Do not use
-# 64 KB dcache (it costs 32 KB of heap). QIO flash does not boot on this module.
+# to ~23 %. The 32 KB icache takes 16 KB from the heap. Do NOT use the 16 KB data cache to
+# get it back (bench 2026-11-18, BENCH_REPORT_2026-11-18b.md "boot cache-error panic"): the
+# 16 KB it hands to the heap sits at 0x3C000000, a cached address range that is unreadable
+# while a flash write has the cache off, and FreeRTOS put task control blocks and stacks
+# there; a level-1 interrupt during an NVS write then panicked ("Cache disabled but cached
+# memory region accessed", _frxt_int_enter). 32 KB dcache keeps all heap in plain DRAM.
+# Do not use 64 KB dcache (it costs 32 KB more heap). Assertions stay enabled. QIO flash
+# does not boot on this module.
 # CONFIG_COMPILER_OPTIMIZATION_DEBUG is not set
 CONFIG_COMPILER_OPTIMIZATION_SIZE=y
 # CONFIG_ESP32S3_INSTRUCTION_CACHE_16KB is not set
 CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB=y
-# CONFIG_ESP32S3_DATA_CACHE_32KB is not set
-CONFIG_ESP32S3_DATA_CACHE_16KB=y
+CONFIG_ESP32S3_DATA_CACHE_32KB=y
+# CONFIG_ESP32S3_DATA_CACHE_16KB is not set
 # CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_160 is not set
 CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y

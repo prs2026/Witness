@@ -956,5 +956,54 @@ int main() {
         assert(!gps.assist_progress().active);
         assert_no_forbidden(uart);
     }
+    // Power-on (2026-11-17 bench): identified at 115200 while GGA streams, then the
+    // receiver moves to another rate during configuration and goes silent. The
+    // configuration fails as soon as the silence has lasted kConfigSilenceFailMs
+    // (not after the full readback timeouts), and the first full probe is due
+    // kFirstProbeRetryMs later; the second failure uses the normal 10 s.
+    if (GpsReceiver::kFixedBaud) {
+        FakeUart uart;
+        GpsReceiver gps(uart.transport());
+        auto time = start(gps);
+        feed(gps, skytraq({0x64, 0x8B, 0}), time);
+        gps.observe_gga(time, 1);
+        const std::uint32_t t0 = time;
+        std::uint32_t t = time + 1;
+        gps.service(t);                                     // first configuration command
+        assert(gps.status() == Status::Configuring && !uart.sent.empty());
+        for (; gps.status() == Status::Configuring && t < t0 + 20000; t += 50) gps.service(t);
+        assert(gps.status() == Status::Failed);
+        t -= 50;                                            // the pass that failed
+        assert(t - t0 >= GpsReceiver::kConfigSilenceFailMs && t - t0 <= GpsReceiver::kConfigSilenceFailMs + 100);
+        assert(!gps.probe_due(t + GpsReceiver::kFirstProbeRetryMs - 1));
+        assert(gps.probe_due(t + GpsReceiver::kFirstProbeRetryMs));
+        assert(gps.retry_identification(t + GpsReceiver::kFirstProbeRetryMs));
+        assert(gps.identification_retries() == 1);
+        // Second failure: the long retry delay and the 5 s silence rule are back.
+        std::uint32_t u = t + GpsReceiver::kFirstProbeRetryMs;
+        std::uint32_t failed_at = u;
+        for (int i = 0; gps.status() != Status::Failed && i < 4000; ++i) { u += 50; gps.service(u); failed_at = u; }
+        assert(gps.status() == Status::Failed);
+        u = failed_at;
+        assert(!gps.probe_due(u + GpsReceiver::kProbeRetryMs - 1));
+        assert(gps.probe_due(u + GpsReceiver::kProbeRetryMs));
+        assert_no_forbidden(uart);
+    }
+    // A receiver that keeps sending GGA (1 Hz here) while it ignores commands is
+    // not failed by the silence rule.
+    if (GpsReceiver::kFixedBaud) {
+        FakeUart uart;
+        GpsReceiver gps(uart.transport());
+        auto time = start(gps);
+        feed(gps, skytraq({0x64, 0x8B, 0}), time);
+        gps.observe_gga(time, 1);
+        std::uint32_t t = time;
+        for (int i = 0; i < 6000 / 50; ++i) {
+            t += 50;
+            if (i % 20 == 0) gps.observe_gga(t, 1);
+            gps.service(t);
+            assert(gps.status() == Status::Configuring);
+        }
+    }
     std::puts("gps_receiver tests passed");
 }

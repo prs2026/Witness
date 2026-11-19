@@ -61,7 +61,23 @@ esp_err_t CommandBridge::check_policy(const std::uint8_t *const canonical) const
 {
     const std::uint16_t opcode = static_cast<std::uint16_t>((canonical[7] << 8U) | canonical[8]);
     const std::uint8_t state = state_reader_ != nullptr ? state_reader_(state_context_) : command_policy::kPadIdle;
+    // Bench-only commands are handled locally over USB and go nowhere else.
+    if (command_policy::is_bench_command(opcode)) return ESP_ERR_NOT_ALLOWED;
     return command_policy::allow_iris_load_command(opcode, state) ? ESP_OK : ESP_ERR_NOT_ALLOWED;
+}
+
+esp_err_t CommandBridge::send_bench_iris_reset()
+{
+    // Built here, never from received bytes: the arming bytes are what Iris
+    // checks. Sent over CAN only (not re-sent over LoRa).
+    std::uint8_t frame[IRIS_PACKET_COMMAND_FRAME_LENGTH]{};
+    frame[0] = IRIS_PACKET_ID_COMMAND;
+    frame[1] = IRIS_BENCH_IRIS_RESET_ARM0;
+    frame[2] = IRIS_BENCH_IRIS_RESET_ARM1;
+    frame[7] = static_cast<std::uint8_t>(IRIS_COMMAND_BENCH_IRIS_RESET >> 8U);
+    frame[8] = static_cast<std::uint8_t>(IRIS_COMMAND_BENCH_IRIS_RESET);
+    frame[9] = IRIS_PACKET_EOF_VALUE;
+    return forward_command(frame, sizeof(frame));
 }
 
 esp_err_t CommandBridge::submit_usb_command(
