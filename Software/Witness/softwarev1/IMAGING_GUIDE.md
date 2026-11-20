@@ -55,13 +55,16 @@ Current flight candidate: **`a443972`**. It is verified on the bench on 2026-11-
 
 Use only `flash_verified.ps1`. Before it writes anything, it reads the board's installed app descriptor and refuses a board that isn't a Witness (Aperture is `softwareattempt2`, Iris is an ESP32-C3). On the bench Pi, port numbers move around when boards are replugged, so this check matters.
 
+`-Port` is required. There is no default, because a default once sent a flash to the bench board instead of the board on the PC. Find the board's COM port in Device Manager (USB JTAG/serial debug unit) before you start.
+
 ```powershell
-.\flash_verified.ps1 -CheckOnly            # bench Pi port 7000 (default)
-.\flash_verified.ps1                       # flash
-.\flash_verified.ps1 -Port COM7 -CheckOnly # a board on this PC's USB
-.\flash_verified.ps1 -Port COM7
-.\flash_verified.ps1 -Port COM7 -Force     # blank board with no app yet (first flash only)
+.\flash_verified.ps1 -Port COM7 -CheckOnly   # a board on this PC's USB: identify only
+.\flash_verified.ps1 -Port COM7              # flash it
+.\flash_verified.ps1 -Port COM7 -Force       # blank board with no app yet (first flash)
+.\flash_verified.ps1 -Port rfc2217://<bench Pi>:7000   # the bench Witness
 ```
+
+`-Force` skips the "is this a Witness" check, so with `-Force` make sure the port is the board in front of you. Unplug other boards if in doubt.
 
 - `-CheckOnly` must print `is a ESP32-S3 running 'softwarev1' ... OK to flash`.
 - The flash writes 5 regions, and each must print **`Hash of data verified`**. If any is missing, flash again. Don't go on to step 3.
@@ -162,4 +165,5 @@ Once a board has the two-image layout from step 2, both images can be updated ov
 | `-CheckOnly` says not OK | The port reaches a different board. On the bench, ports move after replugs or hub power cycles. Find the Witness port, or use `-Port`. |
 | `pending verification` stays, then the board reboots into the old image | The new image failed its self-test and was rolled back. Read its boot log for the failing check. |
 | GPS at 88.4 kbaud, no fix for minutes | The receiver is in its slow power-up state. On images before `3a66505` this followed every power-up. On a current image, check that `already at 25 Hz` is printed (section 3). |
+| Boot loops with `invalid header: 0xffffffff` and `rst:0x7 (TG0WDT_SYS_RST)` | The ROM reads only erased flash (0xFF) where the bootloader should be. Read it back: `esptool -p COMx read-flash 0x0 0x20 hdr.bin`. If `hdr.bin` starts `E9`, the flash is written but unreadable at boot: check `espefuse -p COMx summary` for the VDD_SPI setting and the GPIO45 strap (it must be low at reset for the 3.3 V in-package flash). If it is all `FF`, the write never reached this board: flash again and check for 5 × `Hash of data verified` on this port (`-Force` skips the identity check, so a wrong port flashes another board). |
 | Nothing logged in a flight | Both log slots were full. Erase (`0x6869`) before flight and check BIT `6.1 log session`. |

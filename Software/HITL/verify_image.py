@@ -165,7 +165,8 @@ def image_info(path: Path) -> dict:
 
 def flash() -> list:
     notes = []
-    ps = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(SOFTWAREV1 / "flash_verified.ps1")]
+    ps = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(SOFTWAREV1 / "flash_verified.ps1"),
+          "-Port", f"rfc2217://{host()}:7000"]          # the bench Witness flash port
     r = subprocess.run(ps + ["-CheckOnly"], capture_output=True, text=True, cwd=SOFTWAREV1, timeout=180)
     ok = "OK to flash" in (r.stdout + r.stderr)
     notes.append(f"target check: {'OK to flash' if ok else 'FAILED'}")

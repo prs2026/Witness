@@ -5,9 +5,10 @@
 # boards are replugged or the hub is power-cycled, so a port number alone can
 # reach a different board; MACs change when a board is swapped.
 #
-#   .\flash_verified.ps1                                   # port 7000
-#   .\flash_verified.ps1 -Port rfc2217://prs2026hitl:7002
-#   .\flash_verified.ps1 -Force   # blank or unreadable app (first flash)
+#   .\flash_verified.ps1 -Port COM7                       # board on this PC's USB
+#   .\flash_verified.ps1 -Port rfc2217://<bench Pi>:7000  # bench board
+#   .\flash_verified.ps1 -Port COM7 -Force                # blank or unreadable app (first flash)
+# -Port is required: there is no default, so a board elsewhere is never flashed by accident.
 #
 # TWO-IMAGE LAYOUT (partitions.csv): flight_a 0x20000, flight_b 0x220000,
 # maint_a 0x420000, maint_b 0x5A0000. The flash step writes images/flash_args
@@ -19,7 +20,8 @@
 # (flight_a, flight_b, maint_a, maint_b, or the old layouts' 0x320000 and
 # 0x10000) and accepts either image kind (both are project "softwarev1").
 param(
-    [string]$Port = 'rfc2217://prs2026hitl:7000',
+    # No default: a default port once flashed the bench board instead of the one on this PC's USB.
+    [string]$Port = '',
     [string]$Project = 'softwarev1',
     [string]$Chip = 'ESP32-S3',
     [switch]$Force,
@@ -30,6 +32,10 @@ param(
 # Native tools write warnings to stderr; judge them by exit code and output.
 $ErrorActionPreference = 'Continue'
 Set-Location $PSScriptRoot
+if (-not $Port) {
+    Write-Error "give the board's port: -Port COM7 (this PC's USB) or -Port rfc2217://<bench Pi>:7000"; exit 2
+}
+Write-Host "Port: $Port"
 # The application descriptor (esp_app_desc_t) is 0x20 bytes into the app.
 # Candidate app offsets: the four slots above, then the old layouts.
 $candidates = @(0x20000, 0x220000, 0x420000, 0x5A0000, 0x320000, 0x10000)
