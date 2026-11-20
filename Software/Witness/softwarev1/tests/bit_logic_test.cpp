@@ -77,6 +77,15 @@ int main()
         CHECK(run(e, in) == Verdict::Go);
     }
 
+    // ---- 1.2 task watchdog: sensors and logger only (flash_capture is never subscribed) ----
+    {
+        Inputs in = good();
+        in.wdt_subscribed = kTaskSensors | kTaskFlashLogger;   // the real flight image
+        CHECK(ev(make_id(1, 2), in).result == Result::Pass);
+        in.wdt_subscribed = kTaskSensors;                      // logger lost its subscription
+        CHECK(ev(make_id(1, 2), in).result == Result::Fail && ev(make_id(1, 2), in).value == kTaskFlashLogger);
+    }
+
     // ---- group boundaries: heap ----
     {
         Inputs in = good();

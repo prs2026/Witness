@@ -46,6 +46,11 @@ enum TaskBit : std::uint16_t {
 constexpr std::uint16_t kTasksRequired = kTaskSensors | kTaskFlashLogger | kTaskFlashCapture;
 constexpr std::uint16_t kTasksAll = kTasksRequired | kTaskUart1 | kTaskUsb | kTaskHeartbeat |
                                     kTaskForwarder | kTaskCanLink;
+// Tasks that must be subscribed to the task watchdog (check 1.2). flash_capture
+// is deliberately not: it blocks on the full record queue while the logger
+// is unsubscribed for a long NAND operation, and waits 10 s per pass in Landed
+// low power, so a subscription would reboot the MCU on a slow NAND.
+constexpr std::uint16_t kTasksWatchdogRequired = kTaskSensors | kTaskFlashLogger;
 
 // Window statistics gathered from the sample stream while the board is still.
 struct StillStats {
@@ -281,7 +286,7 @@ inline Eval eval_check(const std::uint8_t id, const Inputs &in)
     }
     case make_id(1, 2): {
         if (!in.wdt_known) return not_yet();
-        const std::uint16_t missing = static_cast<std::uint16_t>(~in.wdt_subscribed & kTasksRequired);
+        const std::uint16_t missing = static_cast<std::uint16_t>(~in.wdt_subscribed & kTasksWatchdogRequired);
         return missing ? fail(Class::Degraded, missing) : pass(0);
     }
     case make_id(1, 3): {
