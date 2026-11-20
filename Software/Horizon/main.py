@@ -704,6 +704,7 @@ class MonitorPanel(QtWidgets.QWidget):
         self.wifi_ota_box = WifiOtaBox(core)
         layout.addWidget(self.wifi_ota_box)
         layout.addLayout(self._bit_row())
+        layout.addWidget(self._bit_detail_box())
         return box
 
     def _bit_row(self):
@@ -729,6 +730,60 @@ class MonitorPanel(QtWidgets.QWidget):
         bind_enabled(core.bit_detail_enabled, self.bit_detail_button)
         return hbox(QtWidgets.QLabel("BIT:"), self.bit_label, self.run_bit_button, self.bit_detail_button,
                     stretch_last=False)
+
+    # Row colors of the BIT detail box: (result, class) -> STRIP_COLORS kind.
+    @staticmethod
+    def _bit_row_kind(result, cls, bench):
+        if result in ("FAIL", "ERROR"):
+            if bench:
+                return "bench"
+            return "bad" if cls == "blocking" else "warn"
+        return "ok" if result == "pass" else "muted"
+
+    def _bit_detail_box(self):
+        """Every BIT check of the current run, failures first, one row per check with its result
+        (pass / FAIL / not yet / n/a ...), class and value. Filled from the detail pages (0x10)."""
+        box = QtWidgets.QGroupBox("BIT detail")
+        layout = QtWidgets.QVBoxLayout(box)
+        self.bit_detail_counts = QtWidgets.QLabel("No BIT detail yet: press 'BIT detail'.")
+        self.bit_detail_table = QtWidgets.QTableWidget(0, 4)
+        self.bit_detail_table.setHorizontalHeaderLabels(["Check", "Result", "Class", "Value"])
+        self.bit_detail_table.verticalHeader().setVisible(False)
+        self.bit_detail_table.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.bit_detail_table.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.NoSelection)
+        header = self.bit_detail_table.horizontalHeader()
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.Stretch)
+        for column in (1, 2, 3):
+            header.setSectionResizeMode(column, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self.bit_detail_table.setMinimumHeight(160)
+        layout.addWidget(self.bit_detail_counts)
+        layout.addWidget(self.bit_detail_table)
+        _owned(box, self.core.bit_rows.subscribe(self._show_bit_rows, call_now=True))
+        return box
+
+    def _show_bit_rows(self, rows):
+        table = self.bit_detail_table
+        if not rows:
+            table.setRowCount(0)
+            self.bit_detail_counts.setText("No BIT detail yet: press 'BIT detail'.")
+            return
+        fails = [r for r in rows if r[1] in ("FAIL", "ERROR")]
+        passes = [r for r in rows if r[1] == "pass"]
+        others = [r for r in rows if r[1] not in ("FAIL", "ERROR", "pass")]
+        fails.sort(key=lambda r: (r[2] != "blocking", r[4]))     # blocking first, bench last
+        ordered = fails + passes + others
+        self.bit_detail_counts.setText(f"{len(fails)} FAIL, {len(passes)} pass, {len(others)} other "
+                                       "(not yet / skipped / n/a / no data)")
+        table.setRowCount(len(ordered))
+        for i, (label, result, cls, value, bench) in enumerate(ordered):
+            background, foreground = STRIP_COLORS[self._bit_row_kind(result, cls, bench)]
+            cells = (label, result + (" (bench)" if bench and result in ("FAIL", "ERROR") else ""),
+                     cls, "" if value is None else str(value))
+            for column, text in enumerate(cells):
+                item = QtWidgets.QTableWidgetItem(text)
+                item.setBackground(QtGui.QColor(background))
+                item.setForeground(QtGui.QColor(foreground))
+                table.setItem(i, column, item)
 
     def _show_bit_kind(self, kind):
         background, foreground = STRIP_COLORS.get(kind, STRIP_COLORS["muted"])

@@ -403,6 +403,61 @@ class Monitor(unittest.TestCase):
         self.assertEqual([c[1] for c, _ in self.sent], [0, 1, 2])
         self.assertTrue(all(c[7:9] == bytes([0x54, 0x52]) for c, _ in self.sent))
 
+    def test_detail_request_waits_on_a_link_cancel_without_crashing(self):
+        # Bench bug 2026-11-20: with a real link the worker waits on link.cancel (an AnyEvent), which had
+        # no wait(): "AttributeError: 'AnyEvent' object has no attribute 'wait'" in thread bit-report.
+        import threading
+        from link_health import AnyEvent
+
+        class Link:
+            cancel = AnyEvent(threading.Event(), threading.Event())
+        self.core.command_target.set("COM_TEST")
+        self.core._target_writer = lambda name: (lambda data: None, Link())
+        self.state(self.PAD)
+        self.bit_packet(summary_frame(verdict=bm.VERDICT_NO_GO, blocking=1, first=3, seq=7))
+        errors = []
+        old_hook = threading.excepthook
+        threading.excepthook = lambda args: errors.append(args.exc_value)
+        self.addCleanup(setattr, threading, "excepthook", old_hook)
+
+        def answer(target, command, label=""):
+            self.sent.append((command, label))
+            page = command[1]
+            # Witness answers a moment later, so the worker has to wait on the cancel event.
+            threading.Timer(0.15, lambda: self.core.bit.feed(
+                wp.parse_packet(0x10, detail_frame(page, 7, [])[1:-1]), time.monotonic())).start()
+            return True
+        self.core.transmit_command = answer
+        self.assertTrue(self.core.request_bit_report())
+        deadline = time.time() + 5
+        while self.core._bit_report_busy.locked() and time.time() < deadline:
+            time.sleep(0.02)
+        self.assertEqual(errors, [])
+        self.assertEqual([c[1] for c, _ in self.sent], [0, 1, 2])
+
+    def test_detail_box_lists_every_check_failures_first(self):
+        table = self.monitor.bit_detail_table
+        self.assertEqual(table.rowCount(), 0)
+        self.assertIn("No BIT detail yet", self.monitor.bit_detail_counts.text())
+        self.bit_packet(summary_frame(verdict=bm.VERDICT_NO_GO, blocking=0x0100, degraded=0x0002, first=0x83,
+                                      bench=True, seq=8))
+        records = [(cid, bm.RESULT_PASS, 0, False, 0) for cid, _c, _n in bm.CHECKS]
+        records = [r for r in records if r[0] not in (0x12, 0x83, 0x26)]
+        records += [(0x83, bm.RESULT_FAIL, 2, True, 0xFFEF), (0x12, bm.RESULT_FAIL, 1, False, 4),
+                    (0x26, bm.RESULT_NOT_YET, 0, False, 0)]
+        for page in range(3):
+            raw = detail_frame(page, 8, records[page * 24:(page + 1) * 24])
+            self.monitor.events.put(("packet", ("COM_TEST", wp.parse_packet(0x10, raw[1:-1]), time.time())))
+        self.monitor.process_events()
+        self.assertEqual(table.rowCount(), bm.CHECK_COUNT)
+        rows = [tuple(table.item(r, c).text() for c in range(4)) for r in range(table.rowCount())]
+        self.assertEqual(rows[0], ("8.3 radio power", "FAIL (bench)", "blocking", str(0xFFEF)))
+        self.assertEqual(rows[1], ("1.2 task watchdog", "FAIL", "degraded", "4"))
+        self.assertTrue(all(r[1] == "pass" for r in rows[2:-1]))
+        self.assertEqual(rows[-1][:2], ("2.6 imu temperature", "not yet"))
+        self.assertIn("2 FAIL", self.monitor.bit_detail_counts.text())
+        self.assertIn(f"{bm.CHECK_COUNT - 3} pass", self.monitor.bit_detail_counts.text())
+
     def test_detail_request_is_refused_in_boost_and_the_button_follows(self):
         self.state(self.BOOST)
         self.assertFalse(self.monitor.bit_detail_button.isEnabled())

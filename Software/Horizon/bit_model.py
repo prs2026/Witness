@@ -208,6 +208,27 @@ class BitModel:
         out.sort(key=lambda r: (r[2] != "blocking", r[0]))
         return out
 
+    def results(self):
+        """Every check of the current run in table order, for the BIT detail box:
+        [(label, result name, class name, value, bench)]. A check that is in the table but not in a held
+        page reads "no data". None when no detail page of the current run is held."""
+        _summary, pages = self._held()
+        if not pages:
+            return None
+        held = {rec["id"]: rec for page in pages.values() for rec in page["records"]}
+        rows = []
+        for cid, _cls, _name in CHECKS:
+            rec = held.pop(cid, None)
+            if rec is None:
+                rows.append((check_label(cid), "no data", "", None, False))
+            else:
+                rows.append((check_label(cid), RESULT_NAMES.get(rec["result"], "?"),
+                             CLASS_NAMES.get(rec["class"], "?"), rec["value"], rec["bench"]))
+        for cid, rec in sorted(held.items()):      # IDs the table does not know (newer firmware)
+            rows.append((check_label(cid), RESULT_NAMES.get(rec["result"], "?"),
+                         CLASS_NAMES.get(rec["class"], "?"), rec["value"], rec["bench"]))
+        return rows
+
     def missing_pages(self):
         """Detail pages not held for the current run (all of them while none is)."""
         _summary, pages = self._held()

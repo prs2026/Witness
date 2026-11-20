@@ -338,6 +338,8 @@ class MonitorCore:
         self.bit_text = Cell("BIT: no data yet")
         self.bit_kind = Cell("muted")
         self.bit_tooltip = Cell("No BIT summary (0x0B) received from Witness yet.")
+        # Per-check rows of the current run for the BIT detail box (bit_model.BitModel.results), or None.
+        self.bit_rows = Cell(None)
         self.bit_run_enabled = Cell(False)
         self.bit_detail_enabled = Cell(False)
         self._bit_report_busy = threading.Lock()
@@ -534,6 +536,8 @@ class MonitorCore:
 
     def _refresh_bit_text(self, now=None):
         shown = self.bit.status(time.monotonic() if now is None else now)
+        rows = self.bit.results()
+        self.bit_rows.set(tuple(rows) if rows is not None else None)
         if shown is None:
             return
         text, kind, tooltip = shown

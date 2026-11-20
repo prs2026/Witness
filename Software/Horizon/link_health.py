@@ -441,3 +441,14 @@ class AnyEvent:
 
     def is_set(self):
         return any(event.is_set() for event in self.events)
+
+    def wait(self, timeout=None):
+        """Like threading.Event.wait: True as soon as any event is set, False on timeout."""
+        deadline = None if timeout is None else time.monotonic() + timeout
+        while not self.is_set():
+            remaining = None if deadline is None else deadline - time.monotonic()
+            if remaining is not None and remaining <= 0:
+                return False
+            # Block on the first event so a stop is seen at once; poll the others.
+            self.events[0].wait(0.02 if remaining is None else min(0.02, remaining))
+        return True
