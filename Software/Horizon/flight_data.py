@@ -20,6 +20,12 @@ from aim_orientation import AimAngularRateEstimator
 from aim_altitude import AimAltitudeEstimator
 
 DEFAULT_LAYOUT = Path(__file__).resolve().parent / "flight_view_default.json"
+# Graph lines bridge gaps up to this long. Witness sends one state/sensors packet every 3 s in Pad
+# Idle, so 7 s keeps the line through one lost packet plus radio jitter; longer gaps still break it.
+DEFAULT_GAP_SECONDS = 7.0
+# The AIM rate/velocity estimators never difference samples further apart than this, whatever the
+# layout's line gap is (no estimate across missing data).
+AIM_MAX_GAP_S = 3.0
 # number: numeric value; state: Witness flight state name; continuity: 0/1
 # OPEN/CONTINUITY; flag: a 0/1 bit shown literally (e.g. GPS lock); hitl:
 # Witness HITL bit (1 = SIMULATED sensors, shown as a warning).
@@ -103,7 +109,7 @@ def validate_layout(document):
         raise ValueError("Layout version must be 1")
     title = _text(document.get("title", "Flight View"), "title")
     window = _number(document.get("window_seconds", 120), "window_seconds", 5, 3600)
-    gap = _number(document.get("gap_seconds", 3), "gap_seconds", 0.1, 120)
+    gap = _number(document.get("gap_seconds", DEFAULT_GAP_SECONDS), "gap_seconds", 0.1, 120)
     integers = {}
     for key, default, low, high in (("refresh_ms", 250, 100, 2000), ("columns", 2, 1, 2),
                                    ("plot_height", 220, 140, 600), ("max_points", 6000, 100, 20000)):
@@ -536,10 +542,10 @@ class FlightData:
         with self._lock:
             if kind == "aim" and packet == "orientation_payload/v1":
                 fields = {**fields, **self.aim_rates.update(source, fields, received,
-                          retained=snapshot, valid=valid, max_gap=self.layout.gap_seconds)}
+                          retained=snapshot, valid=valid, max_gap=min(self.layout.gap_seconds, AIM_MAX_GAP_S))}
             if kind == "aim" and packet == "pressure_payload/v1":
                 fields = {**fields, **self.aim_altitude.update(source, fields, received,
-                          retained=snapshot, valid=valid, max_gap=self.layout.gap_seconds)}
+                          retained=snapshot, valid=valid, max_gap=min(self.layout.gap_seconds, AIM_MAX_GAP_S))}
             if kind == "aim" and packet == "gnss_payload/v1":
                 sats = fields.get("satellites_used", 4)
                 if type(sats) not in (int, float) or not 4 <= sats <= 256:

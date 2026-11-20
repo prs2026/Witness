@@ -224,6 +224,18 @@ class History(unittest.TestCase):
         x2, y2 = fr.trace_arrays(buf.snapshot(), 0, 20, 3)
         self.assertTrue(np.array_equal(x, x2) and np.array_equal(y, y2, equal_nan=True))
 
+    def test_pad_idle_3_s_packets_draw_one_line(self):
+        # Witness sends one packet every 3 s in Pad Idle; with radio jitter and one lost packet the
+        # spacing reaches ~6.1 s. The default layout's gap must keep that one continuous line.
+        layout = load_layout(DEFAULT_LAYOUT)
+        self.assertEqual(layout.gap_seconds, 7)
+        times = [0.0, 3.04, 6.02, 12.1, 15.13, 18.2]          # 6.02 -> 12.1: one packet lost
+        x, y = fr.trace_arrays([(t, 1.0) for t in times], 0, 30, layout.gap_seconds)
+        self.assertFalse(np.isnan(y).any())
+        # A real dropout (longer than the gap) still breaks the line.
+        x, y = fr.trace_arrays([(0.0, 1.0), (3.0, 1.0), (11.0, 1.0)], 0, 30, layout.gap_seconds)
+        self.assertTrue(np.isnan(y).any())
+
 
 class Guards(unittest.TestCase):
     def test_guarded_slot_swallows_and_rate_limits(self):

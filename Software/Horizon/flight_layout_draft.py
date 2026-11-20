@@ -136,7 +136,7 @@ class LayoutDraft:
             self.title = "Overall layout"
             for key, label, default in (("title", "Dashboard title", "Flight View"),
                     ("window_seconds", "Time window (seconds)", 120), ("columns", "Graph columns (1–2)", 2),
-                    ("refresh_ms", "Refresh interval (ms)", 250), ("gap_seconds", "Gap threshold (seconds)", 3),
+                    ("refresh_ms", "Refresh interval (ms)", 250), ("gap_seconds", "Gap threshold (seconds)", 7),
                     ("max_points", "History points per trace", 6000)):
                 self._field(key, label, target.get(key, default))
             self._field("auto_scale", "Auto-scale all graphs", target.get("auto_scale", True), "bool")

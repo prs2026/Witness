@@ -68,7 +68,7 @@ _derived.vertical_velocity_mps is its altitude difference / publisher time
 difference, positive upwards, not AIM's fused velocity. A baro~ and A~ denote
 these estimates. GPS altitude stays on a separate raw-unit graph axis and GPS
 trace until publisher units are verified. Two fresh pressure samples within
-gap_seconds are required for velocity; duplicate/retained/backwards times are
+3 s (AIM_MAX_GAP_S, not the layout's line gap_seconds) are required for velocity; duplicate/retained/backwards times are
 ignored and gaps/invalid pressure re-prime it. Clear/reload resets both AIM
 estimators. Invalid samples hold the last valid displayed value and original
 age, flag it INVALID, and leave a gap in graphs; they never plot held values
@@ -97,7 +97,7 @@ timestamp is microseconds, independent of the graph's host receive clock.
 The calculation assumes Hamilton body-to-world quaternions; AIM axis convention
 and mounting relative to Witness have not been verified. Duplicates, retained
 samples and backwards times produce no estimate; invalid data or a gap longer
-than gap_seconds re-primes the estimator. No extrapolation across missing data.
+than 3 s (AIM_MAX_GAP_S) re-primes the estimator. No extrapolation across missing data.
 Clear/reload resets the estimator; Pause/time-window changes do not. More than
 180 degrees of rotation between samples is ambiguous. Witness uses solid lines;
 AIM uses dashed lines. See aim_orientation.py for the calculation and limits.

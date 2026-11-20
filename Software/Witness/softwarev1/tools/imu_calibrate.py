@@ -26,7 +26,9 @@ GYRO = bytes([0x05, 0x43, 0x47])
 FACE = bytes([0x05, 0x43, 0x41])
 CLEAR = bytes([0x05, 0x43, 0x58])
 STATUS = bytes([0x05, 0x43, 0x53])
-LOG_LINE = re.compile(rb"[IWE] \(\d+\) (?:sensors|imu_cal): [^\r\n]*")
+# Only complete lines (ending in CR or LF): a line still arriving must stay in the
+# buffer, or its first half is consumed and the result ("... done") is never seen.
+LOG_LINE = re.compile(rb"[IWE] \(\d+\) (?:sensors|imu_cal): [^\r\n]*[\r\n]")
 INTERESTING = re.compile(r"calibrat|face|NVS", re.I)
 
 
@@ -62,7 +64,7 @@ class Link:
                     # Keep only a tail that could still hold a partial line.
                     del self.buffer[:max(0, len(self.buffer) - 512)]
                     break
-                line = match.group().decode("ascii", "replace")
+                line = match.group().decode("ascii", "replace").rstrip()
                 del self.buffer[:match.end()]
                 if INTERESTING.search(line):
                     print("   ", line)
