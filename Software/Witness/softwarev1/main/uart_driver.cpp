@@ -380,6 +380,11 @@ void UartDriver::select_gps_pins()
             ESP_LOGW(kTag, "GPS RX bit rate %lu baud matches no standard rate; trying it first",
                      static_cast<unsigned long>(estimate));
         }
+        if (estimate >= 86000U && estimate <= 91000U) {
+            // 115200 x 0.767: the PX1120S slow state (bench 2026-11-19).
+            ESP_LOGW(kTag, "GPS receiver is in its ~88.4 kbaud slow state (115200 x 0.767): "
+                           "expect no fix until it restarts itself");
+        }
     }
     if (verified_baud != 0) gps_.set_start_baud(verified_baud);
 }
@@ -725,6 +730,11 @@ void UartDriver::run()
                          gps_.model_name(),
                          static_cast<unsigned long>(gps_.update_rate_hz()),
                          static_cast<unsigned long>(gps_.baud()));
+                if (gps_.rate_set_skipped() != 0U) {
+                    ESP_LOGI(kTag, "%s already at %lu Hz: update-rate command not sent (%u time(s))",
+                             gps_.model_name(), static_cast<unsigned long>(gps_.update_rate_hz()),
+                             gps_.rate_set_skipped());
+                }
                 if (gps_.optional_rejects() != 0U) {
                     ESP_LOGW(kTag, "%s rejected %u optional setting(s), last: %s",
                              gps_.model_name(), gps_.optional_rejects(),

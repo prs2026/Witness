@@ -43,7 +43,11 @@ constexpr SkytraqCommand kSkytraqConfigure[] = {
     {"QZSS on", {0x62, 0x03, 0x01, 0x01, 0x00}, 5, true},
     {"SBAS corrections on",
      {0x62, 0x01, 0x01, 0x02, 0x08, 0x01, 0x01, 0x07, 0x00}, 9, true},
-    // 0x0E position update rate.
+    // 0x0E position update rate. Sent only if the 0x10 query first shows a
+    // different rate: on the bench (2026-11-19, 4 of 4 power-ups) a 0x0E sent
+    // about 2.6 s after power-on was never ACKed and left the receiver at
+    // ~88.4 kbaud with no fix until it restarted itself minutes later. The
+    // receiver keeps 25 Hz in its own flash, so the command is redundant there.
     {"position update rate",
      {0x0E, GpsReceiver::kSkytraqUpdateRateHz, 0x00}, 3, false, true},
 };
@@ -254,6 +258,7 @@ void GpsReceiver::begin_step(const Step step, const std::uint32_t now_ms)
     index_ = 0;
     attempts_ = 0;
     waiting_ = false;
+    rate_query_ = 0;
     if (step == Step::Configure) unacked_required_ = false;   // a fresh pass
 }
 
@@ -303,6 +308,7 @@ void GpsReceiver::advance(const std::uint32_t now_ms)
     ++index_;
     attempts_ = 0;
     waiting_ = false;
+    rate_query_ = 0;
     if (step_ == Step::Configure && index_ >= configure_count()) {
         begin_step(Step::Verify, now_ms);
     } else if (step_ == Step::Verify && index_ >= verify_count()) {
@@ -389,6 +395,12 @@ bool GpsReceiver::send_current(const std::uint32_t now_ms)
                                 command.payload, command.length);
             } else {
                 const auto &command = kSkytraqConfigure[index_];
+                if (command.payload[0] == 0x0E && rate_query_ != 2) {
+                    // Ask the current rate first (reply 86 <rate>).
+                    rate_query_ = 1;
+                    const std::uint8_t rate_query[] = {0x10};
+                    return send_skytraq(rate_query, sizeof(rate_query));
+                }
                 return send_skytraq(command.payload, command.length);
             }
         case Step::Verify:
@@ -808,6 +820,13 @@ void GpsReceiver::service(const std::uint32_t now_ms)
 
     if (waiting_ && now_ms - sent_time_ms_ < kReplyTimeoutMs) return;
 
+    if (step_ == Step::Configure && rate_query_ == 1 && attempts_ >= kMaximumAttempts) {
+        // No answer to the rate query: send the 0x0E itself (previous behaviour).
+        rate_query_ = 2;
+        attempts_ = 0;
+        waiting_ = false;
+    }
+
     if (attempts_ >= kMaximumAttempts) {
         switch (step_) {
             case Step::Identify:
@@ -1084,6 +1103,23 @@ void GpsReceiver::handle_skytraq(const std::uint8_t *payload, const std::size_t 
         return;
     }
     if (model_ != Model::Px1120s) return;
+    if (step_ == Step::Configure && rate_query_ == 1) {
+        if (length == 2 && payload[0] == 0x86) {
+            if (payload[1] == kSkytraqUpdateRateHz) {
+                ++rate_set_skipped_;      // already at the rate: nothing to send
+                advance(now_ms);
+            } else {
+                rate_query_ = 2;          // different rate: send the 0x0E next
+                attempts_ = 0;
+                waiting_ = false;
+            }
+        } else if (length >= 2 && payload[0] == kSkytraqNack && payload[1] == 0x10) {
+            rate_query_ = 2;
+            attempts_ = 0;
+            waiting_ = false;
+        }
+        return;                           // the 83 10 ACK is not the answer
+    }
     if (step_ == Step::Configure) {
         const auto &command = kSkytraqConfigure[index_];
         const std::uint8_t id = command.payload[0];

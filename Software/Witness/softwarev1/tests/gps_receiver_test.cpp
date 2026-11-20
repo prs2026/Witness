@@ -92,7 +92,8 @@ void assert_no_forbidden(const FakeUart &uart) {
     }
 }
 
-std::uint32_t finish_skytraq(GpsReceiver &gps, FakeUart &uart, std::uint32_t time, bool acks = true) {
+std::uint32_t finish_skytraq(GpsReceiver &gps, FakeUart &uart, std::uint32_t time, bool acks = true,
+                             std::uint8_t flash_rate = 25) {
     // Airborne mode (frame verified on hardware), NMEA GGA+RMC, then 25 Hz.
     gps.service(time);
     assert(uart.sent.back() == (Bytes{0xA0, 0xA1, 0x00, 0x04, 0x64, 0x17, 0x05, 0x00,
@@ -119,10 +120,27 @@ std::uint32_t finish_skytraq(GpsReceiver &gps, FakeUart &uart, std::uint32_t tim
             time = time_out(gps, time + 4);
         }
     }
+    // The rate is asked first; 0x0E is only sent when it differs (or no answer).
     gps.service(time + 4);
-    assert(uart.sent.back() == skytraq({0x0E, 25, 0}));
-    if (acks) feed(gps, skytraq({0x83, 0x0E}), time + 5);
-    else time = time_out(gps, time + 4);
+    assert(uart.sent.back() == skytraq({0x10}));
+    const std::size_t query_index = uart.sent.size() - 1;
+    if (acks) {
+        feed(gps, skytraq({0x83, 0x10}), time + 4);           // ACK alone: keep waiting
+        feed(gps, skytraq({0x86, flash_rate}), time + 4);
+    } else {
+        time = time_out(gps, time + 4);
+    }
+    if (!acks || flash_rate != 25) {
+        gps.service(time + 4);
+        assert(uart.sent.back() == skytraq({0x0E, 25, 0}));
+        if (acks) feed(gps, skytraq({0x83, 0x0E}), time + 5);
+        else time = time_out(gps, time + 4);
+    } else {
+        for (std::size_t i = query_index; i < uart.sent.size(); ++i) {
+            const auto &f = uart.sent[i];
+            assert(!(f.size() > 4 && f[0] == 0xA0 && f[4] == 0x0E));
+        }
+    }
     assert(gps.status() == Status::Configuring);  // ACKs alone are insufficient.
     gps.service(time + 6);
     assert(uart.sent.back() == skytraq({0x64, 0x18}));
@@ -197,6 +215,23 @@ int main() {
         feed(gps, skytraq({0x64, 0x8B, 0}), time);
         finish_skytraq(gps, uart, time + 1, false);
     }
+    // Rate query before 0x0E: 25 Hz already (flash) skips it, another rate sends it.
+    {
+        FakeUart uart;
+        GpsReceiver gps(uart.transport());
+        auto time = start(gps);
+        feed(gps, skytraq({0x64, 0x8B, 0}), time);
+        finish_skytraq(gps, uart, time + 1, true, 25);
+        assert(gps.rate_set_skipped() == 1);
+    }
+    {
+        FakeUart uart;
+        GpsReceiver gps(uart.transport());
+        auto time = start(gps);
+        feed(gps, skytraq({0x64, 0x8B, 0}), time);
+        finish_skytraq(gps, uart, time + 1, true, 1);
+        assert(gps.rate_set_skipped() == 0);
+    }
     // Valid NMEA but no binary reply: no baud hunting, assume the PX1120S.
     {
         FakeUart uart;
@@ -228,7 +263,7 @@ int main() {
         const Bytes acks[] = {skytraq({0x83, 0x64, 0x17}), skytraq({0x83, 0x08}),
                               skytraq({0x83, 0x64, 0x19}), skytraq({0x83, 0x2B}),
                               skytraq({0x83, 0x62, 0x03}), skytraq({0x83, 0x62, 0x01}),
-                              skytraq({0x83, 0x0E})};
+                              skytraq({0x86, 1}), skytraq({0x83, 0x0E})};
         for (const auto &ack : acks) {
             gps.service(time++);
             feed(gps, ack, time++);

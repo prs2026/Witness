@@ -174,6 +174,9 @@ public:
     // last one's name; configuration carries on without them.
     unsigned optional_rejects() const { return optional_rejects_; }
     const char *last_optional_reject() const { return last_optional_reject_; }
+    // PX1120S: times the update-rate command (0x0E) was skipped because the
+    // receiver already reported the configured rate (see kSkytraqConfigure).
+    unsigned rate_set_skipped() const { return rate_set_skipped_; }
 
     // Assistance upload (PX1120S, after Ready). Copies the blob; false if it
     // cannot start (wrong receiver, not ready, upload already running).
@@ -324,6 +327,9 @@ private:
     std::uint32_t sleeps_ = 0;
     unsigned optional_rejects_ = 0;
     const char *last_optional_reject_ = "";
+    // Rate query before the PX1120S 0x0E: 0 not asked, 1 query sent, 2 send 0x0E.
+    std::uint8_t rate_query_ = 0;
+    unsigned rate_set_skipped_ = 0;
     const char *assist_refusal_ = "";
 
     // Supervision state.
