@@ -30,6 +30,10 @@ STATUS = bytes([0x05, 0x43, 0x53])
 # buffer, or its first half is consumed and the result ("... done") is never seen.
 LOG_LINE = re.compile(rb"[IWE] \(\d+\) (?:sensors|imu_cal): [^\r\n]*[\r\n]")
 INTERESTING = re.compile(r"calibrat|face|NVS", re.I)
+# Witness refusing or ignoring a calibration command. Only these exact messages:
+# a bare "rejected" also matches the periodic sensors status line ("baro ...
+# rejected", "GPS ... rejected"), which ended the tool silently.
+REFUSED = r"IMU calibration (rejected|command ignored|command 0x[0-9A-F]+ unknown)"
 
 
 class Link:
@@ -80,11 +84,14 @@ class Link:
 
 def gyro(link):
     input("Gyro bias: leave the board still in any orientation, then press Enter.")
-    line = link.command(GYRO, r"gyro calibration (done|failed)|rejected", 10)
+    line = link.command(GYRO, r"gyro calibration (done|failed)|" + REFUSED, 12)
     if line is None:
         print("No answer from Witness (is it in Pad Idle and the port free?)")
         return False
-    return "done" in line
+    if "done" not in line:
+        print("Gyro calibration did not complete:", line)
+        return False
+    return True
 
 
 def faces(link):
@@ -93,7 +100,7 @@ def faces(link):
         missing = [f for f in ("+X", "-X", "+Y", "-Y", "+Z", "-Z") if f not in captured]
         input(f"Face {len(captured) + 1}/6: rest the board with one of {' '.join(missing)} "
               "pointing UP (that axis reads +1 g), keep it still, press Enter.")
-        line = link.command(FACE, r"face \S+ captured|face capture failed|rejected", 8)
+        line = link.command(FACE, r"face \S+ captured|face capture failed|" + REFUSED, 8)
         if line is None:
             print("No answer from Witness; try again.")
             continue
@@ -122,7 +129,7 @@ def main():
         link.command(STATUS, r"faces captured", 5)
         return 0
     if args.clear:
-        link.command(CLEAR, r"cleared|rejected", 5)
+        link.command(CLEAR, r"calibration cleared|" + REFUSED, 5)
         link.wait_for(r"NVS", 3)
         return 0
     if not gyro(link):
