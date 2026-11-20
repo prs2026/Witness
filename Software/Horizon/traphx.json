@@ -7,7 +7,7 @@
   "refresh_ms": 250,
   "columns": 2,
   "max_points": 6000,
-  "gap_seconds": 3.0,
+  "gap_seconds": 7,
   "plots": [
     {
       "title": "Altitude AGL",
