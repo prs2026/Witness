@@ -18,10 +18,11 @@
 
 # Build artifacts and directories
 **/build/
-build/
+build_*/
 build_maint/
 build/
 images/
+images_*/
 *.o
 *.a
 *.out
