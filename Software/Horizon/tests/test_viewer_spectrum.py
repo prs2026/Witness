@@ -99,6 +99,19 @@ class SpectrumTests(unittest.TestCase):
         self.assertAlmostEqual(hit[1], 5.0, delta=analysis.freqs[1])
         self.assertIsNone(analysis.value_at(analysis.t_end + 1, 5.0))
 
+    def test_mixed_rate_log_keeps_the_fast_rate(self):
+        # 10 s at 960 Hz, then 200 s of every 10th sample (96 Hz): most rows are slow.
+        fast = np.arange(0, 10, 1 / 960.0)
+        slow = 10 + np.arange(0, 200, 10 / 960.0)
+        t = np.concatenate([fast, slow])
+        t += np.random.default_rng(1).normal(0, 2e-6, t.size)
+        y = np.sin(2 * np.pi * 300.0 * t)
+        s = spectrum.uniform_signal(t, y)
+        self.assertAlmostEqual(s.fs, 960.0, delta=2.0)
+        self.assertTrue(any("more coarsely" in w for w in s.warnings))
+        a = spectrum.analyze(t, y, start=0, end=9.5, nfft=1024)
+        self.assertAlmostEqual(a.freqs[np.argmax(a.result.welch)], 300.0, delta=1.0)
+
     def test_zero_padded_bins_and_band(self):
         fs, f0 = 500.0, 2.3
         t, y = sine(f0, fs, 30)

@@ -98,7 +98,7 @@ def uniform_signal(t, y, start: float | None = None, end: float | None = None,
     if t.size < 2:
         raise ValueError("fewer than 2 samples in the time window")
     dt = np.diff(t)
-    median_dt = float(np.median(dt))
+    median_dt = base_step(dt)
     if not median_dt > 0:
         raise ValueError("the time column does not increase")
     deviation = np.abs(dt - median_dt) / median_dt
@@ -109,11 +109,17 @@ def uniform_signal(t, y, start: float | None = None, end: float | None = None,
     warnings = []
     values = y
     resampled = False
+    coarse = float(np.sum(dt[dt > 1.5 * median_dt]))
+    if coarse > 0.05 * float(t[-1] - t[0]):
+        warnings.append(
+            f"{coarse / (t[-1] - t[0]) * 100:.0f}% of the window is sampled more coarsely than "
+            f"{fs:.6g} Hz (e.g. 1-in-10 Descent records); it is interpolated, so it shows no "
+            "power above its own Nyquist frequency")
     if uneven:
-        text = (f"uneven sampling: dt varies up to {jitter * 100:.3g}% from the median "
+        text = (f"uneven sampling: dt varies up to {jitter * 100:.3g}% from the base step "
                 f"{median_dt * 1e3:.4g} ms")
         if gaps:
-            text += f", {gaps} gap(s) (largest {dt.max():.4g} s)"
+            text += f", {gaps} longer step(s) (largest {dt.max():.4g} s)"
         if duplicates:
             text += f", {duplicates} duplicate timestamp(s) dropped"
         if resample:
@@ -126,6 +132,25 @@ def uniform_signal(t, y, start: float | None = None, end: float | None = None,
     return Sampling(t0=float(t[0]), values=values, fs=fs, median_dt=median_dt,
                     n_original=n_original, uneven=uneven, resampled=resampled,
                     jitter=jitter, gaps=gaps, duplicates=duplicates, warnings=warnings)
+
+
+def base_step(dt: np.ndarray, share: float = 0.05) -> float:
+    """The finest regular time step of a trace. Start from the median step;
+    while at least ``share`` of all steps are much shorter (< 0.6 x), take
+    the median of those instead. Unlike the plain median, a log that switches
+    rate (960 Hz to apogee, 1-in-10 after) keeps its fast rate however long
+    the slow part is, while jitter and a few odd short steps change nothing."""
+    dt = np.asarray(dt, dtype=np.float64)
+    dt = dt[dt > 0]
+    if dt.size == 0:
+        return 0.0
+    need = max(1, int(math.ceil(share * dt.size)))
+    step = float(np.median(dt))
+    while True:
+        short = dt[dt < 0.6 * step]
+        if short.size < need:
+            return step
+        step = float(np.median(short))
 
 
 def _detrend(segments: np.ndarray, mode: str) -> np.ndarray:

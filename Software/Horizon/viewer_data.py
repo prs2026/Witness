@@ -2129,7 +2129,7 @@ def spectrum_status_text(analysis) -> str:
     low, high = analysis.band_edges()
     fft = f"FFT {r.nfft}" if r.fft_len in (0, r.nfft) else f"FFT {r.nfft} padded to {r.fft_len:,}"
     text = (f"{s.values.size:,} samples ({s.duration:.6g} s) | fs = {s.fs:.6g} Hz "
-            f"(median dt {s.median_dt * 1e3:.4g} ms) | {fft} "
+            f"(step {s.median_dt * 1e3:.4g} ms) | {fft} "
             f"({r.bin_hz:.4g} Hz/bin), hop {r.hop}, {r.segments:,} segment(s) | "
             f"{low:.6g}..{high:.6g} Hz, {r.freqs.size:,} bins")
     if r.columns < r.segments:
