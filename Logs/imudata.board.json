@@ -1,0 +1,128 @@
+{
+  "format": "horizon-csv-board",
+  "version": 2,
+  "x_axis": "time [s] (per-file time axes)",
+  "packet_filter": "All",
+  "sync": null,
+  "graphs_per_row": 1,
+  "sources": [
+    {
+      "label": "BlRv_SN2878_HR_11-21-2026_13_47_32.csv",
+      "time_column": "Flight_Time_(s)",
+      "time_unit": "s",
+      "offset": 0.0
+    },
+    {
+      "label": "BlRv_SN2878_LR_11-21-2026_13_47_32.csv",
+      "time_column": "Flight_Time_(s)",
+      "time_unit": "s",
+      "offset": 0.0
+    },
+    {
+      "label": "I00003E1.csv",
+      "time_column": "time_seconds",
+      "time_unit": "s",
+      "offset": -1.9
+    }
+  ],
+  "panels": [
+    {
+      "type": "plot",
+      "height": null,
+      "traces": [
+        {
+          "source": 0,
+          "column": "Accel_X"
+        },
+        {
+          "source": 0,
+          "column": "Accel_Y"
+        },
+        {
+          "source": 0,
+          "column": "Accel_Z"
+        },
+        {
+          "source": 2,
+          "column": "high_accel_x_g"
+        },
+        {
+          "source": 2,
+          "column": "high_accel_y_g"
+        },
+        {
+          "source": 2,
+          "column": "high_accel_z_g"
+        }
+      ],
+      "axes": [
+        {
+          "side": "left",
+          "traces": [
+            {
+              "source": 0,
+              "column": "Accel_X"
+            },
+            {
+              "source": 0,
+              "column": "Accel_Y"
+            },
+            {
+              "source": 0,
+              "column": "Accel_Z"
+            },
+            {
+              "source": 2,
+              "column": "high_accel_x_g"
+            },
+            {
+              "source": 2,
+              "column": "high_accel_y_g"
+            },
+            {
+              "source": 2,
+              "column": "high_accel_z_g"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "plot",
+      "height": null,
+      "traces": [
+        {
+          "source": 2,
+          "column": "gyro_x_dps"
+        },
+        {
+          "source": 2,
+          "column": "gyro_y_dps"
+        },
+        {
+          "source": 2,
+          "column": "gyro_z_dps"
+        }
+      ],
+      "axes": [
+        {
+          "side": "left",
+          "traces": [
+            {
+              "source": 2,
+              "column": "gyro_x_dps"
+            },
+            {
+              "source": 2,
+              "column": "gyro_y_dps"
+            },
+            {
+              "source": 2,
+              "column": "gyro_z_dps"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

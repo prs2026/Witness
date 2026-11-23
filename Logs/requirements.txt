@@ -1,0 +1,11 @@
+# Flight-log tools in this folder: witness_to_mcap.py, logs_to_mcap.py, merge_mcap.py, to_rerun.py
+#   py -3.14 -m venv .venv
+#   .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+# witness_to_mcap.py (and to_rerun.py for Witness logs) also needs ..\Software\Horizon\converter.py
+# (standard library only); it is found there automatically.
+
+mcap==1.6.0          # MCAP read/write
+zstandard==0.25.0    # zstd chunk compression (mcap's default)
+lz4==4.4.5           # reading lz4-compressed MCAP files
+numpy==2.5.5
+rerun-sdk==0.43.2    # to_rerun.py; its API changes between versions, keep this pinned

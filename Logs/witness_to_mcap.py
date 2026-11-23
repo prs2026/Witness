@@ -12,7 +12,9 @@ time_seconds (device uptime, so the three files of one session line up). The off
 default, so the timeline starts at uptime 0; --utc-offset SECONDS shifts it, or --liftoff TIME puts
 each file's own Pad idle -> Boost transition at TIME (a local date/time, or seconds such as 2410.01
 to match the AIM clock). The three files' clocks differ, so each file is aligned on its own liftoff:
-without --liftoff, all three are put on the P*.BIN file's uptime at liftoff. U*.BIN (raw
+without --liftoff, all three are put on the I*.BIN file's uptime at liftoff. A file without a
+liftoff (in-flight resets can let the P*.BIN ring overwrite the launch) is aligned on the last
+in-flight reset it shares with an aligned file, else on the end of the logs. U*.BIN (raw
 GPS) is skipped. Needs the `mcap` package (pip install mcap).
 """
 
@@ -74,6 +76,13 @@ MAX_SPAN_S = 6 * 3600.0          # rows further than this from a file's median t
 STATE_ROWS = ("state", "flash_sample", "imu_sample")     # rows whose flight_state is Witness's own
 
 
+def last_resume(rows):
+    """Uptime (s) of the last in-flight reset marker (resumed row) in a file, or None."""
+    times = [row.get("time_seconds") for row in rows if row.get("resumed")]
+    times = [t for t in times if isinstance(t, (int, float))]
+    return max(times) if times else None
+
+
 def liftoff_time(rows):
     """Uptime (s) of the first Pad idle -> Boost transition in a file's state rows, or None."""
     previous = None
@@ -102,29 +111,18 @@ def to_ns(seconds: float) -> int:
     return max(0, int(round(seconds * 1e9)))
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("inputs", nargs="+", type=Path, help="I/S/P *.BIN files or folders")
-    ap.add_argument("-o", "--output", type=Path, help="output .mcap (default: next to the first input)")
-    when = ap.add_mutually_exclusive_group()
-    when.add_argument("--utc-offset", type=float, default=0.0,
-                      help="seconds to add to Witness uptime (default 0: the timeline is Witness uptime)")
-    when.add_argument("--liftoff",
-                      help="time to put Witness's Pad idle -> Boost transition at: a date and time "
-                           "('2026-11-21 13:47:32.6', local time unless it ends in Z or +hh:mm) or a "
-                           "number of seconds (e.g. 2410.01 to match the AIM clock)")
-    args = ap.parse_args()
-
+def find_witness_files(inputs) -> list:
+    """I/S/P *.BIN files from files and folders."""
     files = []
-    for p in args.inputs:
+    for p in inputs:
+        p = Path(p)
         files += sorted(f for f in p.glob("*.BIN") if f.name[:1].upper() in KIND) if p.is_dir() else [p]
-    files = [f for f in files if f.name[:1].upper() in KIND]
-    if not files:
-        print("no I*/S*/P*.BIN files given", file=sys.stderr)
-        return 2
-    out = args.output or files[0].with_name(files[0].stem[1:] + ".mcap")
+    return [f for f in files if f.name[:1].upper() in KIND]
 
-    target = parse_liftoff(args.liftoff) if args.liftoff else None
+
+def load_witness(files, target=None, utc_offset=0.0):
+    """Decode and synchronise Witness I/S/P files. Returns ([(time_ns, topic, msg)], liftoff_s):
+    liftoff_s is where liftoff sits on the returned timeline (None if no file has one)."""
     loaded = []              # (file, kind, rows, [(t, topic, msg)], liftoff uptime or None)
     for f in files:
         kind = KIND[f.name[0].upper()]
@@ -148,26 +146,66 @@ def main() -> int:
         loaded.append((f, kind, rows, file_messages, lift))
 
     # Synchronise: the files' clocks differ, so each file's own first Pad idle -> Boost is put at
-    # the same instant: --liftoff if given, else the liftoff of the P*.BIN file (or the first file
-    # that has one), so the timeline is Witness uptime of that file. --utc-offset is added after.
+    # the same instant: --liftoff if given, else the liftoff of the I*.BIN file (or the first file
+    # that has one). A file without a liftoff (the P*.BIN packet ring can overwrite the launch after
+    # in-flight resets) is aligned on the last in-flight reset (resume marker) it shares with a
+    # file that has a liftoff; failing that, on the end of the logs. --utc-offset is added after.
     lifts = {f.name[0].upper(): lift for f, _k, _r, _m, lift in loaded if lift is not None}
     if target is None and lifts:
-        target = lifts.get("P", next(iter(lifts.values())))
-    offsets = [target - lift for *_x, lift in loaded if lift is not None] if target is not None else []
-    fallback = sorted(offsets)[len(offsets) // 2] if offsets else 0.0
+        target = lifts.get("I", next(iter(lifts.values())))
+    offset_of = {}
+    for f, _k, _r, _m, lift in loaded:
+        if target is not None and lift is not None:
+            offset_of[f] = target - lift
+            print(f"{f.name}: liftoff at its uptime {lift:.3f} s")
+    refs = [(f, rows, msgs) for f, _k, rows, msgs, _l in loaded if f in offset_of]
     messages = []            # (time_ns, topic, dict)
     for f, kind, rows, file_messages, lift in loaded:
-        if target is not None and lift is not None:
-            offset = target - lift
-            print(f"{f.name}: liftoff at its uptime {lift:.3f} s")
-        else:
-            offset = fallback
-            if target is not None:
-                print(f"{f.name}: no Pad idle -> Boost in this file; shifted like the others "
-                      f"({offset:+.3f} s), so it may be off by the clock difference", file=sys.stderr)
-        offset += args.utc_offset or 0.0
+        if f not in offset_of:
+            offset_of[f] = 0.0
+            if refs:
+                mine = last_resume(rows)
+                pairs = [(rf, last_resume(rrows)) for rf, rrows, _ in refs]
+                pairs = [(rf, t) for rf, t in pairs if t is not None]
+                if mine is not None and pairs:
+                    rf, t = pairs[0]
+                    offset_of[f] = offset_of[rf] + t - mine
+                    how = f"its last in-flight reset (uptime {mine:.1f} s) = {rf.name}'s ({t:.1f} s)"
+                else:
+                    rf, _rows, rmsgs = refs[0]
+                    end_ref = max(m[0] for m in rmsgs) if rmsgs else 0.0
+                    end_me = max(m[0] for m in file_messages) if file_messages else 0.0
+                    offset_of[f] = offset_of[rf] + end_ref - end_me
+                    how = f"the end of the log, matched to the end of {rf.name}"
+                print(f"{f.name}: no Pad idle -> Boost in this file; aligned on {how} "
+                      "(approximate: reset gaps without GPS time are estimated)", file=sys.stderr)
+        offset = offset_of[f] + (utc_offset or 0.0)
         messages += [(to_ns(t + offset), topic, msg) for t, topic, msg in file_messages if t + offset >= 0]
         print(f"{f.name}: {len(file_messages)} of {len(rows)} rows ({kind})")
+    return messages, target
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("inputs", nargs="+", type=Path, help="I/S/P *.BIN files or folders")
+    ap.add_argument("-o", "--output", type=Path, help="output .mcap (default: next to the first input)")
+    when = ap.add_mutually_exclusive_group()
+    when.add_argument("--utc-offset", type=float, default=0.0,
+                      help="seconds to add to Witness uptime (default 0: the timeline is Witness uptime)")
+    when.add_argument("--liftoff",
+                      help="time to put Witness's Pad idle -> Boost transition at: a date and time "
+                           "('2026-11-21 13:47:32.6', local time unless it ends in Z or +hh:mm) or a "
+                           "number of seconds (e.g. 2410.01 to match the AIM clock)")
+    args = ap.parse_args()
+
+    files = find_witness_files(args.inputs)
+    if not files:
+        print("no I*/S*/P*.BIN files given", file=sys.stderr)
+        return 2
+    out = args.output or files[0].with_name(files[0].stem[1:] + ".mcap")
+
+    target = parse_liftoff(args.liftoff) if args.liftoff else None
+    messages, target = load_witness(files, target, args.utc_offset)
     if args.liftoff and target > 1e8:
         print(f"liftoff = {dt.datetime.fromtimestamp(target).isoformat(sep=' ')} local time")
     if messages:
