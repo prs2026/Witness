@@ -99,6 +99,33 @@ class SpectrumTests(unittest.TestCase):
         self.assertAlmostEqual(hit[1], 5.0, delta=analysis.freqs[1])
         self.assertIsNone(analysis.value_at(analysis.t_end + 1, 5.0))
 
+    def test_zero_padded_bins_and_band(self):
+        fs, f0 = 500.0, 2.3
+        t, y = sine(f0, fs, 30)
+        plain = spectrum.analyze(t, y, nfft=1024)
+        self.assertAlmostEqual(plain.bin_hz, fs / 1024)
+        fine = spectrum.analyze(t, y, nfft=1024, bin_hz=0.01, fmin=1.0, fmax=5.0)
+        self.assertLessEqual(fine.bin_hz, 0.01)
+        self.assertGreaterEqual(fine.freqs[0], 1.0 - 1e-9)
+        self.assertLessEqual(fine.freqs[-1], 5.0 + 1e-9)
+        self.assertEqual(fine.db.shape[1], fine.freqs.size)
+        self.assertTrue(any("zero padding" in w for w in fine.warnings))
+        peak = fine.freqs[np.argmax(fine.result.welch)]
+        self.assertAlmostEqual(peak, f0, delta=0.02)            # interpolated peak
+        # Power is the same in the band as in the unpadded spectrum (Parseval).
+        band = (plain.freqs >= 1.0) & (plain.freqs <= 5.0)
+        self.assertAlmostEqual(np.sum(fine.result.welch) * fine.bin_hz,
+                               np.sum(plain.result.welch[band]) * plain.bin_hz, delta=0.05)
+        # Readout on a band that does not start at 0.
+        hit = fine.value_at((fine.t_start + fine.t_end) / 2, 2.3)
+        self.assertAlmostEqual(hit[1], 2.3, delta=0.01)
+        self.assertIsNone(fine.value_at((fine.t_start + fine.t_end) / 2, 0.5))
+        with self.assertRaises(ValueError):
+            spectrum.analyze(t, y, nfft=1024, bin_hz=0.001)     # too many bins in the band
+        with self.assertRaises(ValueError):
+            viewer.spectrum_settings("0", "1", 1024, 50, "Hann", "Mean", "", "5", "2")
+        self.assertIsNone(viewer.spectrum_settings("0", "1", 1024, 50, "Hann", "Mean")["bin_hz"])
+
     def test_image_grid_and_colours(self):
         db = np.zeros((3000, 513))
         db[1234, 100] = 50.0                                   # one hot cell
@@ -177,6 +204,49 @@ class SpectrogramWindowTests(ViewerCase):
         window.end_edit.setText("-5")
         window.compute()
         self.assertIn("Check the settings", window.status_label.text())
+        window.close()
+        pump()
+
+    def test_bin_width_and_band_controls(self):
+        path = Path(self.tmp) / "low.csv"
+        t, y = sine(3.0, 500.0, 20)
+        with path.open("w") as f:
+            f.write("Flight_Time_(s),Accel_X\n")
+            for ti, yi in zip(t, y):
+                f.write(f"{ti:.3f},{yi:.5f}\n")
+        panel = self.make(900, 600)
+        self.assertTrue(panel.load_csv(path))
+        self.plots(panel)
+        window = panel.open_spectrogram((next(iter(panel.datasets)), "Accel_X"))
+        pump()
+        self.assertTrue(window.wait(30))
+        window.refine_check.setChecked(False)
+        window.bin_edit.setText("0.05")
+        window.fmax_edit.setText("10")
+        window.compute()
+        self.assertTrue(window.wait(30))
+        a = window.analysis
+        self.assertLessEqual(a.bin_hz, 0.05)
+        self.assertLessEqual(a.freqs[-1], 10.0)
+        self.assertIn("padded to", window.status_label.text())
+        y_range = window.p1.vb.viewRange()[1]
+        self.assertAlmostEqual(y_range[0], 0.0, places=6)
+        self.assertAlmostEqual(y_range[1], a.band_edges()[1], places=6)
+        self.assertRegex(window.readout_at((a.t_start + a.t_end) / 2, 3.0), r"f = 3(\.0+)? Hz")
+        self.assertIsNone(window.readout_at((a.t_start + a.t_end) / 2, 50.0))   # outside the band
+        settings = window.board_settings()
+        self.assertEqual((settings["bin_hz"], settings["fmin"], settings["fmax"]), (0.05, None, 10.0))
+        # Zooming the frequency axis recomputes just the visible band.
+        window.refine_check.setChecked(True)
+        window.p1.setYRange(2.0, 4.0, padding=0)
+        window._refine_to_view()
+        self.assertTrue(window.wait(30))
+        low, high = window.analysis.band_edges()
+        self.assertAlmostEqual(low, 2.0, delta=0.05)
+        self.assertAlmostEqual(high, 4.0, delta=0.05)
+        window.use_all_frequencies()
+        self.assertTrue(window.wait(30))
+        self.assertAlmostEqual(window.analysis.band_edges()[1], 250.0)
         window.close()
         pump()
 

@@ -2072,17 +2072,35 @@ def spectrum_source(dataset: Dataset | None, column: str, packet_filter: str = "
     return t[keep], y[keep]
 
 
+def _optional_float(text, name: str, positive: bool = False):
+    text = str(text if text is not None else "").strip()
+    if not text:
+        return None
+    value = float(text)
+    if not math.isfinite(value) or value < 0 or (positive and value <= 0):
+        raise ValueError(f"{name} must be a {'positive' if positive else 'non-negative'} number")
+    return value
+
+
 def spectrum_settings(start: str, end: str, nfft, overlap_percent, window: str,
-                      detrend: str) -> dict:
-    """Analysis arguments from the window's controls (ValueError if malformed)."""
+                      detrend: str, bin_hz="", fmin="", fmax="") -> dict:
+    """Analysis arguments from the window's controls (ValueError if malformed).
+    ``bin_hz``, ``fmin`` and ``fmax`` are optional: blank means the FFT's own
+    bins and the full 0..Nyquist band."""
     start, end = float(start), float(end)
     if not (math.isfinite(start) and math.isfinite(end)) or end <= start:
         raise ValueError("the end of the time window must be after its start")
     overlap = float(overlap_percent)
     if not 0 <= overlap <= 95:
         raise ValueError("overlap must be 0 to 95 %")
+    bin_hz = _optional_float(bin_hz, "the bin width", positive=True)
+    fmin = _optional_float(fmin, "the minimum frequency")
+    fmax = _optional_float(fmax, "the maximum frequency", positive=True)
+    if fmin is not None and fmax is not None and fmax <= fmin:
+        raise ValueError("the maximum frequency must be above the minimum")
     return {"start": start, "end": end, "nfft": int(nfft), "overlap": overlap / 100.0,
-            "window": window, "detrend": detrend}
+            "window": window, "detrend": detrend, "bin_hz": bin_hz, "fmin": fmin,
+            "fmax": fmax}
 
 
 @dataclass
@@ -2108,10 +2126,12 @@ def compute_spectrogram(t, y, params: dict, max_columns: int = SPECTRUM_MAX_COLU
 
 def spectrum_status_text(analysis) -> str:
     s, r = analysis.sampling, analysis.result
-    df = r.fs / r.nfft
+    low, high = analysis.band_edges()
+    fft = f"FFT {r.nfft}" if r.fft_len in (0, r.nfft) else f"FFT {r.nfft} padded to {r.fft_len:,}"
     text = (f"{s.values.size:,} samples ({s.duration:.6g} s) | fs = {s.fs:.6g} Hz "
-            f"(median dt {s.median_dt * 1e3:.4g} ms) | FFT {r.nfft} "
-            f"({df:.4g} Hz/bin), hop {r.hop}, {r.segments:,} segment(s)")
+            f"(median dt {s.median_dt * 1e3:.4g} ms) | {fft} "
+            f"({r.bin_hz:.4g} Hz/bin), hop {r.hop}, {r.segments:,} segment(s) | "
+            f"{low:.6g}..{high:.6g} Hz, {r.freqs.size:,} bins")
     if r.columns < r.segments:
         text += f" averaged into {r.columns:,} columns"
     if analysis.warnings:

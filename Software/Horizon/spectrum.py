@@ -24,7 +24,10 @@ import numpy as np
 
 WINDOWS = ("Hann", "Hamming", "Blackman", "Rectangular")
 DETRENDS = ("Mean", "Linear", "None")
-FFT_LENGTHS = (256, 512, 1024, 2048, 4096, 8192, 16384)
+FFT_LENGTHS = (256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536)
+MAX_FFT_LEN = 1 << 21            # zero-padded FFT length limit
+MAX_BAND_BINS = 16384            # frequency bins kept per column (memory bound)
+MAX_FFT_WORK = 600_000_000       # segments x FFT length (time bound, a few seconds)
 UNEVEN_TOLERANCE = 0.01          # relative dt deviation that counts as uneven
 BATCH_SAMPLES = 4_000_000        # samples per FFT batch (memory bound)
 
@@ -147,19 +150,29 @@ class Spectrogram:
     welch: np.ndarray            # (bins,) mean PSD over every segment
     segments: int
     hop: int
-    nfft: int
+    nfft: int                    # segment length (samples): the time resolution
     fs: float
+    fft_len: int = 0             # FFT length incl. zero padding: the bin width
 
     @property
     def columns(self) -> int:
         return int(self.psd.shape[0])
 
+    @property
+    def bin_hz(self) -> float:
+        return self.fs / (self.fft_len or self.nfft)
+
 
 def spectrogram(values, fs: float, nfft: int = 1024, overlap: float = 0.5,
                 window: str = "Hann", detrend: str = "Mean",
-                max_columns: int | None = 2000) -> Spectrogram:
+                max_columns: int | None = 2000, fft_len: int | None = None,
+                fmin: float | None = None, fmax: float | None = None) -> Spectrogram:
     """Short-time FFT power spectral density and the Welch average.
 
+    ``nfft`` is the segment length (time resolution). ``fft_len`` (>= nfft)
+    zero-pads each segment so the bins are fs / fft_len wide: finer bins that
+    interpolate the spectrum (the true resolution stays about fs / nfft).
+    Only bins with fmin <= f <= fmax are kept (at most MAX_BAND_BINS).
     ``overlap`` is a fraction (0 to 0.95). When there are more segments than
     ``max_columns``, consecutive segments are averaged into that many
     columns. The Welch average always uses every segment.
@@ -171,28 +184,45 @@ def spectrogram(values, fs: float, nfft: int = 1024, overlap: float = 0.5,
     if values.size < nfft:
         raise ValueError(f"the window has {values.size} samples, fewer than the "
                          f"FFT length {nfft}")
+    fft_len = max(nfft, int(fft_len or nfft))
+    if fft_len > MAX_FFT_LEN:
+        raise ValueError(f"FFT length {fft_len} is over the {MAX_FFT_LEN} limit; "
+                         "use wider frequency bins")
     overlap = min(max(float(overlap), 0.0), 0.95)
     hop = max(1, int(round(nfft * (1.0 - overlap))))
     nseg = 1 + (values.size - nfft) // hop
     columns = nseg if not max_columns else min(nseg, int(max_columns))
+    if fft_len > nfft and nseg * fft_len > MAX_FFT_WORK:
+        raise ValueError(f"{fs / fft_len:.4g} Hz bins over {nseg:,} segments is too much work: "
+                         "use wider bins, a shorter time window or less overlap")
     w = window_array(window, nfft)
     scale = 1.0 / (fs * float(np.sum(w * w)))
-    nbins = nfft // 2 + 1
-    one_sided = np.full(nbins, 2.0)
+    all_freqs = np.fft.rfftfreq(fft_len, 1.0 / fs)
+    lo = 0 if fmin is None else int(np.searchsorted(all_freqs, max(0.0, float(fmin)) - 1e-9))
+    hi = all_freqs.size if fmax is None else int(np.searchsorted(all_freqs, float(fmax) + 1e-9,
+                                                                 side="right"))
+    lo = max(0, min(lo, all_freqs.size - 1))
+    hi = max(lo + 1, min(hi, all_freqs.size))
+    nbins = hi - lo
+    if nbins > MAX_BAND_BINS:
+        raise ValueError(f"{nbins:,} frequency bins in the band (at most {MAX_BAND_BINS:,}): "
+                         "narrow the frequency range or use wider bins")
+    one_sided = np.full(all_freqs.size, 2.0)
     one_sided[0] = 1.0
-    if nfft % 2 == 0:
+    if fft_len % 2 == 0:
         one_sided[-1] = 1.0
+    one_sided = one_sided[lo:hi]
     frames = np.lib.stride_tricks.sliding_window_view(values, nfft)[::hop][:nseg]
     # Column of each segment: equal runs of consecutive segments.
     column_of = (np.arange(nseg, dtype=np.int64) * columns) // nseg
     psd = np.zeros((columns, nbins))
     counts = np.bincount(column_of, minlength=columns).astype(np.float64)
     welch = np.zeros(nbins)
-    batch = max(1, BATCH_SAMPLES // nfft)
+    batch = max(1, BATCH_SAMPLES // fft_len)
     for first in range(0, nseg, batch):
         last = min(nseg, first + batch)
         segment = _detrend(np.array(frames[first:last], dtype=np.float64), detrend) * w
-        spectrum = np.fft.rfft(segment, axis=1)
+        spectrum = np.fft.rfft(segment, n=fft_len, axis=1)[:, lo:hi]
         power = (spectrum.real ** 2 + spectrum.imag ** 2) * (scale * one_sided)
         welch += power.sum(axis=0)
         cols = column_of[first:last]
@@ -202,9 +232,9 @@ def spectrogram(values, fs: float, nfft: int = 1024, overlap: float = 0.5,
     welch /= nseg
     centres = (np.arange(nseg) * hop + nfft / 2.0) / fs
     times = np.bincount(column_of, weights=centres, minlength=columns) / counts
-    return Spectrogram(freqs=np.fft.rfftfreq(nfft, 1.0 / fs), times=times,
+    return Spectrogram(freqs=all_freqs[lo:hi], times=times,
                        psd=psd.astype(np.float32), welch=welch, segments=nseg, hop=hop,
-                       nfft=nfft, fs=fs)
+                       nfft=nfft, fs=fs, fft_len=fft_len)
 
 
 def welch(values, fs: float, nfft: int = 1024, overlap: float = 0.5,
@@ -255,23 +285,43 @@ class Analysis:
 
     def value_at(self, t: float, f: float):
         """(column time, bin freq, dB) nearest to time t and frequency f."""
-        if not self.t_start <= t <= self.t_end or not 0 <= f <= self.freqs[-1]:
+        index = self.bin_index(f)
+        if not self.t_start <= t <= self.t_end or index is None:
             return None
         span = self.t_end - self.t_start
         column = min(self.result.columns - 1,
                      int((t - self.t_start) / span * self.result.columns)) if span > 0 else 0
-        df = self.freqs[1] - self.freqs[0] if self.freqs.size > 1 else 1.0
-        index = min(self.freqs.size - 1, int(round(f / df)))
         return float(self.times[column]), float(self.freqs[index]), float(self.db[column, index])
+
+    @property
+    def bin_hz(self) -> float:
+        return self.result.bin_hz
+
+    def band_edges(self) -> tuple[float, float]:
+        """(low, high) Hz covered by the kept bins (half a bin past the end centres)."""
+        half = self.bin_hz / 2.0
+        return (max(0.0, float(self.freqs[0]) - half),
+                min(self.sampling.fs / 2.0, float(self.freqs[-1]) + half))
+
+    def bin_index(self, f: float):
+        """Index of the kept bin nearest to f, or None outside the band."""
+        low, high = self.band_edges()
+        if self.freqs.size == 0 or not low <= f <= high:
+            return None
+        return int(min(self.freqs.size - 1,
+                       max(0, round((f - float(self.freqs[0])) / self.bin_hz))))
 
 
 def analyze(t, y, start: float | None = None, end: float | None = None,
             nfft: int = 1024, overlap: float = 0.5, window: str = "Hann",
-            detrend: str = "Mean", max_columns: int = 2000) -> Analysis:
+            detrend: str = "Mean", max_columns: int = 2000,
+            bin_hz: float | None = None, fmin: float | None = None,
+            fmax: float | None = None) -> Analysis:
     """uniform_signal + spectrogram + dB, as the spectrogram window shows it.
 
     A window shorter than ``nfft`` uses the largest power of two that fits
-    (at least 8 samples), with a warning.
+    (at least 8 samples), with a warning. ``bin_hz`` asks for bins at most
+    that wide, by zero-padding the FFT; ``fmin`` / ``fmax`` keep only that band.
     """
     sampling = uniform_signal(t, y, start, end)
     warnings = list(sampling.warnings)
@@ -284,8 +334,20 @@ def analyze(t, y, start: float | None = None, end: float | None = None,
         warnings.append(f"only {n} samples in the window: FFT length reduced "
                         f"from {nfft} to {fitted}")
         nfft = fitted
+    fft_len = nfft
+    if bin_hz:
+        wanted = int(math.ceil(sampling.fs / float(bin_hz) - 1e-9))
+        if wanted > MAX_FFT_LEN:
+            warnings.append(f"{bin_hz:g} Hz bins need a {wanted:,}-point FFT; limited to "
+                            f"{MAX_FFT_LEN:,} ({sampling.fs / MAX_FFT_LEN:.4g} Hz bins)")
+            wanted = MAX_FFT_LEN
+        fft_len = max(nfft, wanted)
+        if fft_len > nfft:
+            warnings.append(f"{sampling.fs / fft_len:.4g} Hz bins are interpolated by zero padding; "
+                            f"a {nfft}-sample segment resolves about {sampling.fs / nfft:.4g} Hz "
+                            "(a longer FFT length resolves finer, at the cost of time resolution)")
     result = spectrogram(sampling.values, sampling.fs, nfft, overlap, window, detrend,
-                         max_columns)
+                         max_columns, fft_len=fft_len, fmin=fmin, fmax=fmax)
     t_start = sampling.t0
     t_end = sampling.t0 + ((result.segments - 1) * result.hop + result.nfft) / sampling.fs
     return Analysis(sampling=sampling, result=result,

@@ -3118,8 +3118,48 @@ class SpectrogramWindow(QtWidgets.QWidget):
         self.auto_range_check.setChecked(True)
         self.auto_range_check.toggled.connect(lambda _c: self.render())
         row3.addWidget(self.auto_range_check)
+        row3.addSpacing(16)
+        row3.addWidget(QtWidgets.QLabel("Bin width Hz"))
+        self.bin_edit = QtWidgets.QLineEdit()
+        self.bin_edit.setMaximumWidth(80)
+        self.bin_edit.setPlaceholderText("FFT")
+        self.bin_edit.setToolTip(
+            "Frequency bin width. Blank: fs / FFT length. Narrower bins zero-pad the FFT "
+            "(a smoother, interpolated spectrum); a longer FFT length gives true resolution "
+            "at the cost of time resolution.")
+        row3.addWidget(self.bin_edit)
+        row3.addWidget(QtWidgets.QLabel("Freq Hz  min"))
+        self.fmin_edit = QtWidgets.QLineEdit()
+        self.fmin_edit.setMaximumWidth(80)
+        self.fmin_edit.setPlaceholderText("0")
+        row3.addWidget(self.fmin_edit)
+        row3.addWidget(QtWidgets.QLabel("max"))
+        self.fmax_edit = QtWidgets.QLineEdit()
+        self.fmax_edit.setMaximumWidth(80)
+        self.fmax_edit.setPlaceholderText("Nyquist")
+        row3.addWidget(self.fmax_edit)
+        for edit in (self.bin_edit, self.fmin_edit, self.fmax_edit):
+            edit.returnPressed.connect(self.compute)
+        band_button = QtWidgets.QPushButton("Use visible band")
+        band_button.setToolTip("Recompute for the frequency range shown on the plot")
+        band_button.clicked.connect(self.use_visible_band)
+        row3.addWidget(band_button)
+        all_button = QtWidgets.QPushButton("All frequencies")
+        all_button.clicked.connect(self.use_all_frequencies)
+        row3.addWidget(all_button)
+        self.refine_check = QtWidgets.QCheckBox("Recompute on frequency zoom")
+        self.refine_check.setToolTip(
+            "After zooming the frequency axis (mouse wheel or right-drag), recompute just "
+            "that band so it gets the full image resolution")
+        self.refine_check.setChecked(True)
+        row3.addWidget(self.refine_check)
         row3.addStretch(1)
         layout.addLayout(row3)
+        self._rendering = False
+        self._refine_timer = QtCore.QTimer(self)
+        self._refine_timer.setSingleShot(True)
+        self._refine_timer.setInterval(400)
+        self._refine_timer.timeout.connect(self._refine_to_view)
 
         self.status_label = QtWidgets.QLabel("")
         self.status_label.setWordWrap(True)
@@ -3164,6 +3204,7 @@ class SpectrogramWindow(QtWidgets.QWidget):
         self.graphics.ci.layout.setRowStretchFactor(0, 7)
         self.graphics.ci.layout.setRowStretchFactor(1, 3)
         self.graphics.scene().sigMouseMoved.connect(self._mouse_moved)
+        self.p1.vb.sigYRangeChanged.connect(self._y_zoomed)
 
         self.hover_label = QtWidgets.QLabel("Hover the plot for time, frequency and dB.")
         layout.addWidget(self.hover_label)
@@ -3171,6 +3212,7 @@ class SpectrogramWindow(QtWidgets.QWidget):
     def shutdown(self) -> None:
         self._closed = True
         self._pending = False
+        self._refine_timer.stop()
         CsvViewerWidget._disconnect_worker(self._worker)
         self._worker = None
 
@@ -3200,6 +3242,52 @@ class SpectrogramWindow(QtWidgets.QWidget):
     def use_full(self) -> None:
         self.set_window(*self.full_range())
         self.compute()
+
+    # ------------------------------------------------------ frequency band
+    def set_band(self, low: float | None, high: float | None) -> None:
+        """Fill the band fields (None or out-of-range ends leave them blank)."""
+        nyquist = self.analysis.sampling.fs / 2.0 if self.analysis is not None else math.inf
+        self.fmin_edit.setText("" if low is None or low <= 0 else f"{low:.6g}")
+        self.fmax_edit.setText("" if high is None or high >= nyquist else f"{high:.6g}")
+
+    def use_visible_band(self) -> None:
+        low, high = self.p1.vb.viewRange()[1]
+        self.set_band(max(0.0, low), high)
+        self.compute()
+
+    def use_all_frequencies(self) -> None:
+        self.set_band(None, None)
+        self.compute()
+
+    def _y_zoomed(self, _vb=None, _range=None) -> None:
+        if self._rendering or self.result is None or not self.refine_check.isChecked():
+            return
+        low, high = self.p1.vb.viewRange()[1]
+        shown = getattr(self, "_shown_band", None)
+        if shown and abs(low - shown[0]) <= 1e-6 * (shown[1] - shown[0] or 1) \
+                and abs(high - shown[1]) <= 1e-6 * (shown[1] - shown[0] or 1):
+            return                    # the range render() set, not a user zoom
+        self._refine_timer.start()
+
+    def _refine_to_view(self) -> None:
+        """After a frequency zoom: recompute the visible band if it leaves the
+        computed band or is much narrower than it (more image rows, and with a
+        bin width set, the same bins over a smaller span)."""
+        a = self.analysis
+        if a is None or self._closed:
+            return
+        nyquist = a.sampling.fs / 2.0
+        low, high = self.p1.vb.viewRange()[1]
+        low, high = max(0.0, low), min(nyquist, high)
+        if high <= low:
+            return
+        band_low, band_high = a.band_edges()
+        span = high - low
+        outside = low < band_low - 0.01 * span or high > band_high + 0.01 * span
+        narrower = span < 0.5 * (band_high - band_low)
+        if outside or narrower:
+            self.set_band(low, high)
+            self.compute()
 
     def set_pads(self, left: int, right: int) -> None:
         """Match the graphs: left axis width, and empty space right of the
@@ -3234,7 +3322,18 @@ class SpectrogramWindow(QtWidgets.QWidget):
                 "detrend": self.detrend_combo.currentText(),
                 "welch": self.welch_check.isChecked(),
                 "colour_range": colours,
-                "time_window": "full" if same else window}
+                "time_window": "full" if same else window,
+                **{key: self._field_number(edit) for key, edit in
+                   (("bin_hz", self.bin_edit), ("fmin", self.fmin_edit), ("fmax", self.fmax_edit))},
+                "refine": self.refine_check.isChecked()}
+
+    @staticmethod
+    def _field_number(edit) -> float | None:
+        try:
+            value = float(edit.text())
+        except ValueError:
+            return None
+        return value if math.isfinite(value) else None
 
     def apply_board_settings(self, settings: dict) -> None:
         for combo, value in ((self.nfft_combo, str(settings["nfft"])),
@@ -3251,12 +3350,18 @@ class SpectrogramWindow(QtWidgets.QWidget):
         self.auto_range_check.setChecked(colours == "auto")
         window = settings["time_window"]
         self.set_window(*(self.full_range() if window == "full" else window))
+        for key, edit in (("bin_hz", self.bin_edit), ("fmin", self.fmin_edit),
+                          ("fmax", self.fmax_edit)):
+            value = settings.get(key)
+            edit.setText("" if value is None else value_text(value))
+        self.refine_check.setChecked(bool(settings.get("refine", True)))
 
     def settings(self) -> dict:
         return vd.spectrum_settings(self.start_edit.text(), self.end_edit.text(),
                                     self.nfft_combo.currentText(), self.overlap_spin.value(),
                                     self.window_combo.currentText(),
-                                    self.detrend_combo.currentText())
+                                    self.detrend_combo.currentText(), self.bin_edit.text(),
+                                    self.fmin_edit.text(), self.fmax_edit.text())
 
     # ----------------------------------------------------------- compute
     @property
@@ -3354,23 +3459,34 @@ class SpectrogramWindow(QtWidgets.QWidget):
         self.message.hide()
         a = result.analysis
         low, high = self.db_range()
-        fmax = float(a.freqs[-1])
-        self.image.setImage(result.image, autoLevels=False, levels=(low, high))
-        self.image.setRect(QtCore.QRectF(a.t_start, 0.0, a.t_end - a.t_start, fmax))
-        self.colorbar.setLevels((low, high))
-        if self.embedded:
-            # The board's graphs own the time zoom; only the data fixes y.
-            self.p1.setLimits(yMin=0.0, yMax=fmax)
-            self.p1.setYRange(0.0, fmax, padding=0)
-            if self.p1.vb.linkedView(pg.ViewBox.XAxis) is None:
-                self.p1.setXRange(a.t_start, a.t_end, padding=0)
-        else:
-            self.p1.setLimits(xMin=a.t_start, xMax=a.t_end, yMin=0.0, yMax=fmax)
-            self.p1.setRange(xRange=(a.t_start, a.t_end), yRange=(0.0, fmax), padding=0)
-        welch = np.where(a.welch_db > -299, a.welch_db, np.nan)
-        self.welch_curve.setData(a.freqs, welch)
-        self.p2.setLimits(xMin=0.0, xMax=fmax)
-        self.p2.setXRange(0.0, fmax, padding=0)
+        f_low, f_high = a.band_edges()
+        nyquist = a.sampling.fs / 2.0
+        # Zooming the frequency axis is free within 0..Nyquist; the minimum span
+        # is a few bins so the view cannot shrink to nothing.
+        min_span = min(nyquist, 4 * a.bin_hz)
+        self._rendering = True
+        try:
+            self.image.setImage(result.image, autoLevels=False, levels=(low, high))
+            self.image.setRect(QtCore.QRectF(a.t_start, f_low, a.t_end - a.t_start,
+                                             f_high - f_low))
+            self.colorbar.setLevels((low, high))
+            if self.embedded:
+                # The board's graphs own the time zoom; only the data fixes y.
+                self.p1.setLimits(yMin=0.0, yMax=nyquist, minYRange=min_span)
+                self.p1.setYRange(f_low, f_high, padding=0)
+                if self.p1.vb.linkedView(pg.ViewBox.XAxis) is None:
+                    self.p1.setXRange(a.t_start, a.t_end, padding=0)
+            else:
+                self.p1.setLimits(xMin=a.t_start, xMax=a.t_end, yMin=0.0, yMax=nyquist,
+                                  minYRange=min_span)
+                self.p1.setRange(xRange=(a.t_start, a.t_end), yRange=(f_low, f_high), padding=0)
+            self._shown_band = tuple(self.p1.vb.viewRange()[1])
+            welch = np.where(a.welch_db > -299, a.welch_db, np.nan)
+            self.welch_curve.setData(a.freqs, welch)
+            self.p2.setLimits(xMin=0.0, xMax=nyquist, minXRange=min_span)
+            self.p2.setXRange(f_low, f_high, padding=0)
+        finally:
+            self._rendering = False
         self.p2.setTitle(f"average spectrum (Welch, {a.result.segments:,} segments)",
                          size="9pt")
 
@@ -3387,10 +3503,9 @@ class SpectrogramWindow(QtWidgets.QWidget):
 
     def welch_readout_at(self, f: float) -> str | None:
         a = self.analysis
-        if a is None or not 0 <= f <= a.freqs[-1]:
+        index = None if a is None else a.bin_index(f)
+        if index is None:
             return None
-        df = a.freqs[1] - a.freqs[0] if a.freqs.size > 1 else 1.0
-        index = min(a.freqs.size - 1, int(round(f / df)))
         return (f"f = {a.freqs[index]:.6g} Hz    {a.welch_db[index]:.1f} dB "
                 "(average spectrum)")
 

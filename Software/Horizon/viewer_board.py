@@ -23,7 +23,9 @@ each)::
        {"type": "spectrogram", "trace": {"source": 0, "column": "ax"},
         "nfft": 1024, "overlap": 50, "window": "Hann", "detrend": "Mean",
         "welch": false, "colour_range": "auto" | [low_db, high_db],
-        "time_window": "full" | [start_s, end_s]}]}
+        "time_window": "full" | [start_s, end_s],
+        "bin_hz": null | Hz, "fmin": null | Hz, "fmax": null | Hz,  (optional)
+        "refine": true}]}                                       (optional)
 
 ``source`` is the position of a file in the open-file order; the board is
 applied to the files open when it is loaded, first file to source 0. Each
@@ -158,7 +160,11 @@ def validate(data) -> dict:
                 "detrend": str(raw.get("detrend", "Mean")),
                 "welch": bool(raw.get("welch", False)),
                 "colour_range": "auto" if colour == "auto" else _pair(colour, "colour_range"),
-                "time_window": "full" if window == "full" else _pair(window, "time_window")})
+                "time_window": "full" if window == "full" else _pair(window, "time_window"),
+                # Optional (older boards lack them): bin width and band, None = default.
+                **{key: None if raw.get(key) is None else _number(raw.get(key), key)
+                   for key in ("bin_hz", "fmin", "fmax")},
+                "refine": bool(raw.get("refine", True))})
         else:
             raise BoardError(f"{where}: unknown panel type {kind!r}")
     for panel in panels:
