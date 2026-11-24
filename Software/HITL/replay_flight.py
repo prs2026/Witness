@@ -114,6 +114,18 @@ def apply_calibration(data, cal):
     return out
 
 
+PAD_HEADING_AXES = {"+Y": 0, "-Y": 1, "+Z": 2, "-Z": 3}
+PAD_HEADING_SEND_SIM_S = 6.0     # into the pad hold: after the first stationary window
+
+
+def pad_heading_frame(axis: str, azimuth_deg: float) -> bytes:
+    """comms.h IRIS_COMMAND_PAD_HEADING (0x4844), as Horizon's "Set pad heading" sends it:
+    05, axis code, azimuth in 0.01 deg (u16 BE), 3 zero bytes, 48 44, 0A."""
+    centideg = int(round((azimuth_deg % 360.0) * 100.0)) % 36000
+    return (bytes((0x05, PAD_HEADING_AXES[axis])) + centideg.to_bytes(2, "big") + bytes(3)
+            + (0x4844).to_bytes(2, "big") + bytes((0x0A,)))
+
+
 def counts(values, scale):
     return np.clip(np.round(values / scale), -32768, 32767).astype(">i2")
 
@@ -166,7 +178,16 @@ def main() -> int:
                          "data (use with a bench board that has no calibration)")
     ap.add_argument("--expected", default="1=0,2=1.41,3=73.8",
                     help="real-flight Witness transitions, state=flight seconds")
+    ap.add_argument("--pad-heading", metavar="AXIS:DEG",
+                    help="send the pad heading command during the pad hold, e.g. +Y:183.6 "
+                         "(body axis across the rocket and its azimuth, degrees from true north)")
     args = ap.parse_args()
+    heading_frame = None
+    if args.pad_heading:
+        axis, deg = args.pad_heading.split(":")
+        if axis not in PAD_HEADING_AXES:
+            raise SystemExit(f"--pad-heading axis must be one of {sorted(PAD_HEADING_AXES)}")
+        heading_frame = pad_heading_frame(axis, float(deg))
     expected = {int(k): float(v) for k, v in (x.split("=") for x in args.expected.split(","))}
 
     ft, data = load_imu(args.imu_csv, args.end)
@@ -189,12 +210,17 @@ def main() -> int:
     session.connect(vi.host(), vi.WITNESS_PORT, timeout=5)
     session.start_run(run, abort_on_no_hitl=True)
     while not session.wait_run(0.5):
+        if heading_frame is not None and session._sim_s() >= PAD_HEADING_SEND_SIM_S:
+            session._send(heading_frame)
+            print(f"  sent pad heading {args.pad_heading} at sim {session._sim_s():.1f} s "
+                  f"({heading_frame.hex(' ')})", flush=True)
+            heading_frame = None
         while True:
             try:
                 kind, payload = session.events.get_nowait()
             except queue.Empty:
                 break
-            if kind in ("log", "warning") and re.search(r"state|FC logs|ENTER|EXIT|attitude|saturat|reset",
+            if kind in ("log", "warning") and re.search(r"state|FC logs|ENTER|EXIT|attitude|saturat|reset|heading",
                                                          str(payload)):
                 print(" ", payload, flush=True)
         if not session.connected and run.streaming:
@@ -206,7 +232,8 @@ def main() -> int:
     print(hs.format_table(result))
     print("RUNDIR", run.run_dir, "liftoff sim", lift_sim)
     Path(run.run_dir, "replay_info.json").write_text(json.dumps(
-        {"liftoff_sim_s": lift_sim, "expected_flight_s": expected, "source": str(args.imu_csv)}))
+        {"liftoff_sim_s": lift_sim, "expected_flight_s": expected, "source": str(args.imu_csv),
+         "pad_heading": args.pad_heading}))
     return 0
 
 

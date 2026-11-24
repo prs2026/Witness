@@ -65,7 +65,7 @@ Telemetry `kalman_altitude` and `velocity[2]`, compared with the Raven's baro AG
 - **Altitude:** the error is +43 to +50 m through the coast with no time shift applied. With the best-fit shift of 0.32 s (receive latency plus the 2 Hz sample timing), it's 23 m RMS. The remaining offset builds up during the boost: −42 m to +107 m while the samples are only 0.5 s apart and the vehicle moves 350 m/s.
 - **Vertical speed:** −3.4 m/s mean and 6.6 m/s RMS against the baro slope from 2 to 19.9 s. The largest error, 28 m/s, is right after burnout, where the baro slope is least trustworthy.
 - **The Raven's own `Velocity_Up`** reads about 26 m/s lower than its baro slope during the coast, and crosses zero 3 s before its baro apogee. It isn't a good truth for vertical speed, so the baro slope is used instead.
-- **Horizontal velocity** was about 28 m/s to the south-west by the end of the burn, and position 520 m from the pad at apogee.
+- **Horizontal velocity** was about 28 m/s by the end of the burn, and position 520 m from the pad at apogee. Witness reported this as south-west, but no pad heading was set, so the direction was arbitrary: the GPS track went east (see section 7).
 
 **Conclusion:** the IMU-only prediction and the GPS trust ramp code did their job up to apogee. The weak point is what happens after the attitude is lost.
 
@@ -166,3 +166,63 @@ Telemetry `kalman_altitude` and `velocity[2]`, compared with the Raven's baro AG
 **This replay is the regression test for the fixes.** Command:
 
 `py -3.14 replay_flight.py <I*.csv> --raven <Raven LR csv> --calibration-from <S*.TXT>`, on a bench board without a stored calibration.
+
+## 7. Horizontal direction: no pad heading was set (2026-11-24)
+
+**Finding:** the Kalman track went almost the opposite way from the GPS because Witness had no heading, not because a heading was entered wrong.
+- No pad heading command (`0x4844`, Horizon's "Set pad heading…") was sent: there is no command in the Horizon log and no "pad heading applied" line in `S00003E1.TXT`.
+- Witness has no magnetometer. On the pad it initialises its attitude from gravity alone (shortest-arc rotation onto +Up), so tilt is known but heading is not: the board's +Y axis is taken as north.
+- Its GPS heading alignment could not help either: the receiver had no fix in flight.
+
+**Track against the AIM GPS (from the pad, bearings clockwise from true north):**
+
+| Flight time | Witness (telemetry) | AIM GPS |
+|---|---|---|
+| ~8 s | 247 m at 247° | 177 m at 15° |
+| apogee (19–20 s) | 486 m at 245° | 488 m at 82° |
+| after apogee | velocity frozen at 241° | 675–1,020 m at 75–84° |
+
+- The distance agrees within 2 m at apogee: the filter measured the sideways motion; only its frame was rotated.
+- The flight track has to turn about 164° to reach the GPS apogee. That does **not** give the rail heading directly, because the flight board's "north" was not its +Y axis (see 7.1); the replay puts the board's +Y axis at about **152° true**.
+- The GPS track's side-to-side detail before apogee is not trusted (it bends north-west then east); only its apogee position is used.
+
+**Fix for the next flight:** set the pad heading before launch (a body axis across the rocket, +Y/−Y/+Z/−Z, and its compass bearing). With a GPS fix in flight, Witness would also correct it.
+
+### 7.1 HITL replay with the pad heading set (runs `20261124-133524`, `-134423`, `-135321`)
+
+**Method:** `replay_flight.py --pad-heading +Y:DEG` (new option) sends the pad heading command 6 s into the pad hold, as Horizon's "Set pad heading…" would. Witness confirmed each one (`pad heading applied: body +Y at 183.6 deg (turned +176.3 deg)`). The GPS track's side-to-side detail is not trusted, so the only horizontal truth used is the **AIM GPS apogee position: 488 m from the pad at 81.7°, 20.43 s after liftoff**. Liftoff for the AIM is taken from its acceleration jump; its Boost state comes 0.64 s late.
+
+| Case | Witness apogee | Bearing error | Position error at apogee |
+|---|---|---|---|
+| Flight, no pad heading | 526 m at 245° | +164° | 1004 m |
+| Replay, +Y at 183.6° | 525 m at 114° | +32° | 285 m |
+| Replay, +Y at 136.1° | 526 m at 67° | −15° | 138 m |
+| Replay, +Y at 151.6° | 526 m at 82° | +0.4° | **38 m** |
+
+**Reading the result:**
+- The heading command works exactly: every replay is the same track rotated by the heading change (183.6° → 136.1° moved the apogee bearing by 47.5°), and nothing else changed.
+- **The heading that matches the GPS apogee is +Y at about 152° true.** That value comes from the GPS apogee itself, so the bearing match in the last row is by construction. The independent result is the **distance: 526 m against 488 m, 38 m (8 %) long**, which is the filter's own horizontal error once the heading is right.
+- **A ±15° pad heading would put the apogee about 140 m off** (right panel of `heading_apogee_error_2026-11-21.png`). Without a heading the error can be anything up to about 1 km.
+- The first guess, 184°, assumed the flight board's +Y axis was its "north". It wasn't: Witness sets up its attitude the first time it is still on the pad, and the frame then follows the gyro. If that happened before the rocket was raised on the rail, "north" ends up wherever the raise turned it. **Send the pad heading after the rocket is vertical on the rail.**
+- Replay detail: this firmware reached Landed (sim 241.6 s) in the first run; the flight never did.
+
+![Apogee error against GPS](heading_apogee_error_2026-11-21.png)
+
+### 7.2 Cross-check: pad heading from the AIM magnetometer (no GPS)
+
+**Method:** the AIM's pad magnetometer and accelerometer (9 s before liftoff, 10 Hz) were rotated into Witness's frame with the mapping found earlier (`x=z,y=x,z=y`, roll +5.8°). The local declination, dip and field strength come from the World Magnetic Model, computed offline (the site isn't recorded here).
+
+**Axis checks:**
+- **Cross axes OK:** over the coast the rocket rolled +444° (AIM gyro) and the measured cross-axis field turned −452°, slope −1.00 as it should.
+- **Sign:** the measured dip came out with the opposite sign to the model's, so the field is reversed. Integrating the AIM gyro from the pad and checking which version of the field stays fixed in the world as the nose pitches over (up to 56°): every axis reversed (or as logged), median 15° drift; only the nose axis reversed, up to 111°. With the dip sign, the AIM's magnetometer reports the field with **every axis reversed** relative to its accelerometer.
+- **Hard iron:** a circle fit to the cross-axis field during the coast roll gives an offset of 22 % of the field; after removing it the dip is within 1.2° of the model's.
+
+**Result:**
+
+| Source | Board +Y axis on the rail (true) |
+|---|---|
+| AIM magnetometer, as calibrated by the flight's roll | **153.1°** |
+| AIM magnetometer, no hard-iron correction | 144.3° |
+| HITL replay fitted to the GPS apogee (7.1) | 151.6° |
+
+**Reading it:** a magnetometer on the pad would have given the heading to within about 2° (7° without calibration), both well inside the ±15° that keeps the apogee within about 140 m. The AIM-to-Witness roll alignment (±a few degrees) is the largest remaining uncertainty. **A magnetometer on the next Witness revision is worth it.** Calibrate it in the rocket (a gyro-tracked rotation), and check its field strength and dip against the World Magnetic Model at the pad before trusting it.
