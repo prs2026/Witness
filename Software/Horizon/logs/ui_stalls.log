@@ -8210,3 +8210,355 @@
   File "C:\Users\Esohn\Documents\GitHub\Witness\Software\Horizon\witness_link.py", line 324, in _serve
     readable, writable, _ = select.select(
 === stall ended after 1.2 s ===
+
+=== 2026-11-21T18:09:24 GUI thread blocked for 1.1 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 91, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 87, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 198, in run
+    return app.exec()
+
+--- 62200 ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\qt_common.py", line 372, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\viewer.py", line 1542, in work
+    return vd.load_dataset(request.path, progress=progress, cancel=cancel,
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\viewer_data.py", line 1307, in load_dataset
+    return load_bin_dataset(path, label, progress, cancel, columns=columns)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\viewer_data.py", line 1340, in load_bin_dataset
+    table = csv_columns.table_from_rows(path, decoder(data, stats), converter.BASE_COLUMNS,
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\csv_columns.py", line 348, in table_from_rows
+    for row in rows:
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\converter.py", line 1287, in iter_log
+    lengths = PAYLOAD_LENGTHS.get(packet_id)
+
+--- link-COM9 ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\monitor_core.py", line 1253, in read_serial
+    self._run_link(self._link_for(port_name, "serial", serial_port))
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\monitor_core.py", line 1269, in _run_link
+    if link.stop.wait(backoff_delay(attempt)):
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 670, in wait
+    signaled = self._cond.wait(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 373, in wait
+    gotit = waiter.acquire(True, timeout)
+
+--- rawlog-fsync ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\monitor_core.py", line 942, in run
+    while not self._sync_stop.wait(RAW_FSYNC_S):
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 670, in wait
+    signaled = self._cond.wait(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 373, in wait
+    gotit = waiter.acquire(True, timeout)
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 293, in _run
+    self._serve()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 324, in _serve
+    readable, writable, _ = select.select(
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 293, in _run
+    self._serve()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 324, in _serve
+    readable, writable, _ = select.select(
+=== stall ended after 1.3 s ===
+
+=== 2026-11-21T18:09:45 GUI thread blocked for 1.0 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 91, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 87, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 198, in run
+    return app.exec()
+
+--- link-COM9 ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\monitor_core.py", line 1253, in read_serial
+    self._run_link(self._link_for(port_name, "serial", serial_port))
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\monitor_core.py", line 1269, in _run_link
+    if link.stop.wait(backoff_delay(attempt)):
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 670, in wait
+    signaled = self._cond.wait(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 373, in wait
+    gotit = waiter.acquire(True, timeout)
+
+--- rawlog-fsync ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\monitor_core.py", line 942, in run
+    while not self._sync_stop.wait(RAW_FSYNC_S):
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 670, in wait
+    signaled = self._cond.wait(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 373, in wait
+    gotit = waiter.acquire(True, timeout)
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 293, in _run
+    self._serve()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 324, in _serve
+    readable, writable, _ = select.select(
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 293, in _run
+    self._serve()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 324, in _serve
+    readable, writable, _ = select.select(
+--- still blocked after 5.1 s ---
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 91, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 87, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 198, in run
+    return app.exec()
+
+--- link-COM9 ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\monitor_core.py", line 1253, in read_serial
+    self._run_link(self._link_for(port_name, "serial", serial_port))
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\monitor_core.py", line 1269, in _run_link
+    if link.stop.wait(backoff_delay(attempt)):
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 670, in wait
+    signaled = self._cond.wait(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 373, in wait
+    gotit = waiter.acquire(True, timeout)
+
+--- rawlog-fsync ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\monitor_core.py", line 942, in run
+    while not self._sync_stop.wait(RAW_FSYNC_S):
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 670, in wait
+    signaled = self._cond.wait(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 373, in wait
+    gotit = waiter.acquire(True, timeout)
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 293, in _run
+    self._serve()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 324, in _serve
+    readable, writable, _ = select.select(
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 293, in _run
+    self._serve()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 324, in _serve
+    readable, writable, _ = select.select(
+=== stall ended after 6.6 s ===
+
+=== 2026-11-21T19:27:56 GUI thread blocked for 5.0 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 91, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 87, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 198, in run
+    return app.exec()
+
+--- link-COM9 ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\monitor_core.py", line 1253, in read_serial
+    self._run_link(self._link_for(port_name, "serial", serial_port))
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\monitor_core.py", line 1269, in _run_link
+    if link.stop.wait(backoff_delay(attempt)):
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 670, in wait
+    signaled = self._cond.wait(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 373, in wait
+    gotit = waiter.acquire(True, timeout)
+
+--- rawlog-fsync ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\monitor_core.py", line 942, in run
+    while not self._sync_stop.wait(RAW_FSYNC_S):
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 670, in wait
+    signaled = self._cond.wait(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 373, in wait
+    gotit = waiter.acquire(True, timeout)
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 293, in _run
+    self._serve()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 324, in _serve
+    readable, writable, _ = select.select(
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 293, in _run
+    self._serve()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 324, in _serve
+    readable, writable, _ = select.select(
+=== stall ended after 66752.3 s ===
+
+=== 2026-11-22T14:25:11 GUI thread blocked for 1.0 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 91, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\witnessos.py", line 87, in main
+    return wos_app.run(args)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\witnessOS\wos_app.py", line 198, in run
+    return app.exec()
+
+--- link-COM9 ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\monitor_core.py", line 1253, in read_serial
+    self._run_link(self._link_for(port_name, "serial", serial_port))
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\monitor_core.py", line 1269, in _run_link
+    if link.stop.wait(backoff_delay(attempt)):
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 670, in wait
+    signaled = self._cond.wait(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 373, in wait
+    gotit = waiter.acquire(True, timeout)
+
+--- rawlog-fsync ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\monitor_core.py", line 942, in run
+    while not self._sync_stop.wait(RAW_FSYNC_S):
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 670, in wait
+    signaled = self._cond.wait(timeout)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 373, in wait
+    gotit = waiter.acquire(True, timeout)
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 293, in _run
+    self._serve()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 324, in _serve
+    readable, writable, _ = select.select(
+
+--- witness-feed ---
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1044, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+  File "C:\Users\Ejfso\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 293, in _run
+    self._serve()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\witness_link.py", line 324, in _serve
+    readable, writable, _ = select.select(
+=== stall ended after 1.5 s ===
+
+=== 2026-11-22T18:16:16 GUI thread blocked for 2.7 s (still blocked) ===
+--- GUI thread ---
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\viewer.py", line 3512, in <module>
+    sys.exit(main())
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\viewer.py", line 3506, in main
+    window = CsvViewerWindow(args.csv_files, prompt_on_start=not args.csv_files)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\viewer.py", line 3482, in __init__
+    self.viewer = CsvViewerWidget(self, files, on_title=self.setWindowTitle)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\viewer.py", line 1103, in __init__
+    self._build_ui()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\viewer.py", line 1140, in _build_ui
+    self.file_label = ElidedLabel("No file loaded")
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\viewer.py", line 126, in __init__
+    self.setText(text)
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\viewer.py", line 131, in setText
+    self._elide()
+  File "C:\Users\Ejfso\Documents\GitHub\witness\Software\Horizon\viewer.py", line 142, in _elide
+    shown = self.fontMetrics().elidedText(self._full, QtCore.Qt.TextElideMode.ElideRight,
+=== stall ended after 3.2 s ===

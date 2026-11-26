@@ -1,0 +1,149 @@
+{
+  "format": "horizon-csv-board",
+  "version": 2,
+  "x_axis": "time [s] (per-file time axes)",
+  "packet_filter": "All",
+  "sync": null,
+  "graphs_per_row": 1,
+  "sources": [
+    {
+      "label": "I00003E1.BIN",
+      "time_column": "auto (Witness uptime)",
+      "time_unit": "us",
+      "offset": 0.0
+    },
+    {
+      "label": "P00003E1.BIN",
+      "time_column": "auto (Witness uptime)",
+      "time_unit": "s",
+      "offset": 0.0
+    },
+    {
+      "label": "U00003E1.BIN",
+      "time_column": "auto (Witness uptime)",
+      "time_unit": "s",
+      "offset": 0.0
+    }
+  ],
+  "panels": [
+    {
+      "type": "plot",
+      "height": null,
+      "traces": [
+        {
+          "source": 1,
+          "column": "position_x"
+        },
+        {
+          "source": 1,
+          "column": "position_y"
+        },
+        {
+          "source": 1,
+          "column": "position_z"
+        }
+      ],
+      "axes": [
+        {
+          "side": "left",
+          "traces": [
+            {
+              "source": 1,
+              "column": "position_x"
+            },
+            {
+              "source": 1,
+              "column": "position_y"
+            },
+            {
+              "source": 1,
+              "column": "position_z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "plot",
+      "height": null,
+      "traces": [
+        {
+          "source": 1,
+          "column": "kalman_altitude"
+        }
+      ],
+      "axes": [
+        {
+          "side": "left",
+          "traces": [
+            {
+              "source": 1,
+              "column": "kalman_altitude"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "plot",
+      "height": null,
+      "traces": [
+        {
+          "source": 0,
+          "column": "low_accel_x_g"
+        },
+        {
+          "source": 0,
+          "column": "low_accel_y_g"
+        },
+        {
+          "source": 0,
+          "column": "low_accel_z_g"
+        },
+        {
+          "source": 0,
+          "column": "high_accel_x_g"
+        },
+        {
+          "source": 0,
+          "column": "high_accel_y_g"
+        },
+        {
+          "source": 0,
+          "column": "high_accel_z_g"
+        }
+      ],
+      "axes": [
+        {
+          "side": "left",
+          "traces": [
+            {
+              "source": 0,
+              "column": "low_accel_x_g"
+            },
+            {
+              "source": 0,
+              "column": "low_accel_y_g"
+            },
+            {
+              "source": 0,
+              "column": "low_accel_z_g"
+            },
+            {
+              "source": 0,
+              "column": "high_accel_x_g"
+            },
+            {
+              "source": 0,
+              "column": "high_accel_y_g"
+            },
+            {
+              "source": 0,
+              "column": "high_accel_z_g"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
