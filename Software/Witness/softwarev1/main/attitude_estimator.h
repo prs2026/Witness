@@ -41,10 +41,28 @@
 //  - Landed: integration stops and the attitude is held.
 //  - Gyro saturation in flight (any raw axis at or above
 //    gyro_saturation_rad_s for saturation_samples consecutive samples, as a
-//    parachute deployment can cause): the rate is unknown, so the attitude is
-//    unrecoverable. Integration stops, valid() becomes false (quaternion all
-//    zero) and lost() is set for the rest of the flight; only a new
-//    stationary window after returning to Pad Idle re-initializes it.
+//    parachute deployment can cause): the rate is unknown, so valid() becomes
+//    false (quaternion all zero) and lost() is set. The gyro keeps being
+//    integrated internally (clipped samples at their clipped value), so the
+//    heading is carried as well as it can be.
+//  - Recovery (Step.recovery_allowed, which the caller sets in Descent and
+//    Landed): only when the vehicle is AT REST. The specific force equals
+//    gravity only when nothing accelerates the vehicle; under a parachute it
+//    also carries drag transients, swinging (centripetal and tangential terms)
+//    and spin, so a "calm enough" window in the air gives a wrong tilt. A body
+//    that does not rotate (every |gyro| below recovery_max_gyro_rad_s, 3 dps)
+//    with |a| steady at 1 g (every sample in [recovery_min_g, recovery_max_g])
+//    for recovery_window_us (5 s) is not accelerating: on the ground, or a
+//    steady unaccelerated descent, where the force IS gravity. A swing of even
+//    1 deg at a 2-3 s pendulum period exceeds 3 dps. In the 2026-11-21 flight
+//    the descent ran at 330-410 dps median; the first such window was on the
+//    ground. Each sample's specific force is rotated to the world by the
+//    tracked attitude. If the window mean is coherent (|mean| / mean|a| at or
+//    above recovery_min_coherence) and near 1 g, the tracked attitude's tilt is
+//    snapped to it, valid() returns and lost() clears (recoveries() counts).
+//    The heading after a recovery is the gyro-carried one and is off by the
+//    rotation missed while saturated. Back in Pad Idle a new stationary
+//    window also re-initializes it.
 namespace attitude {
 
 struct Quaternion {
@@ -104,6 +122,15 @@ struct Config {
     // on-chip filter rounding a clipped input just below full scale).
     float gyro_saturation_rad_s = 1950.0F * kDpsToRadS;
     std::uint32_t saturation_samples = 2U;
+    // Recovery after a saturation loss (see the header comment).
+    std::uint32_t recovery_window_us = 5'000'000U;
+    std::uint32_t recovery_min_samples = 250U;
+    float recovery_max_gyro_rad_s = 3.0F * kDpsToRadS;   // every sample
+    float recovery_min_g = 0.96F;         // every sample (calibration error ~1.5 %)
+    float recovery_max_g = 1.04F;
+    float recovery_mean_min_g = 0.97F;    // window mean |a|
+    float recovery_mean_max_g = 1.03F;
+    float recovery_min_coherence = 0.998F;
 };
 
 struct Step {
@@ -111,6 +138,10 @@ struct Step {
     Vector3 specific_force_g{}; // Body specific force (accelerometer), g.
     std::uint64_t timestamp_us = 0;
     FlightPhase phase = FlightPhase::PadIdle;
+    // After a saturation loss: the caller allows a recovery from gravity in
+    // flight (after apogee only: in powered or fast coasting flight, drag can
+    // read about 1 g along the nose and would look like gravity).
+    bool recovery_allowed = false;
 };
 
 struct StepResult {
@@ -120,6 +151,8 @@ struct StepResult {
     bool entered_landed = false;    // First step in Landed: log the hold.
     bool gap = false;               // dt rejected; not integrated.
     bool lost_now = false;          // Gyro saturated in flight on this step.
+    bool recovered_now = false;     // Attitude rebuilt from gravity in flight.
+    float recovery_tilt_correction_deg = 0.0F;  // Tilt snapped on recovery.
 };
 
 class Estimator final {
@@ -137,11 +170,22 @@ public:
     // Attitude given up after gyro saturation in flight (see header comment).
     bool lost() const { return lost_; }
     std::uint32_t saturation_events() const { return saturation_events_; }
+    // Attitude rebuilt from gravity after a saturation loss.
+    std::uint32_t recoveries() const { return recoveries_; }
     // Non-finite input samples dropped, plus quaternion divergences that made
     // the attitude invalid.
     std::uint32_t nonfinite_events() const { return nonfinite_events_; }
     // All-zero until valid().
     Quaternion quaternion() const { return valid_ ? q_ : Quaternion{}; }
+    // For logging and telemetry: the attitude including the gyro-carried one
+    // after a saturation (lost(): the gyro keeps being integrated, clipped
+    // samples at their clipped value). Its absolute tilt and heading are
+    // wrong by whatever the saturation hid, but the motion since (spin,
+    // swing, tumbling rate under the parachute) is still measured. All-zero
+    // before the first initialization. carried() says it has been through a
+    // saturation since that initialization (set until the next pad init).
+    Quaternion tracked_quaternion() const { return (valid_ || lost_) ? q_ : Quaternion{}; }
+    bool carried() const { return carried_; }
     Vector3 gyro_bias_rad_s() const { return bias_; }
     // Angle between body +X and world +Z, degrees; 0 upright, 90 horizontal.
     float tilt_from_vertical_deg() const;
@@ -172,10 +216,16 @@ public:
     static Quaternion normalized(const Quaternion &q);
     static Quaternion tilt_corrected(const Quaternion &q, const Vector3 &accel_unit,
                                      float fraction);
+    // Same, with the measured "up" already in the world frame.
+    static Quaternion tilt_corrected_world(const Quaternion &q, const Vector3 &up_world,
+                                           float fraction);
 
 private:
     void reset_window();
+    void reset_recovery();
     void clear_filter();
+    // One sample of the recovery window (lost() only).
+    void recovery_step(const Step &step, bool gap, StepResult &result);
     // Evaluates a complete window ending at timestamp_us.
     void finish_window(std::uint64_t timestamp_us, StepResult &result);
     float median_in_scratch(std::size_t count);
@@ -188,6 +238,13 @@ private:
     bool lost_ = false;
     std::uint32_t saturation_run_ = 0;
     std::uint32_t saturation_events_ = 0;
+    bool carried_ = false;
+    std::uint32_t recoveries_ = 0;
+    // Recovery window: specific force rotated to the world, summed.
+    double recovery_up_sum_[3]{};
+    double recovery_norm_sum_ = 0.0;
+    std::uint32_t recovery_count_ = 0;
+    std::uint64_t recovery_start_us_ = 0;
     std::uint32_t nonfinite_events_ = 0;
     bool have_time_ = false;
     std::uint64_t last_timestamp_us_ = 0;

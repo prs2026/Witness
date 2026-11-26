@@ -146,6 +146,10 @@ def attitude_condition(sample, last_valid, flight_state, hitl=None):
     if sample is None:
         return "none", "NO ATTITUDE DATA", "waiting for Witness 0x02 / 0xE0"
     if sample.q is not None:
+        if getattr(sample, "carried", False):
+            return ("carried", "GYRO-CARRIED ATTITUDE",
+                    "The gyro saturated in flight; Witness kept integrating it. Spin, swing and tumbling "
+                    "since then are measured, but the absolute tilt and heading are not.")
         return "ok", "", ""
     if flight_state in IN_FLIGHT or flight_state == 4:
         if last_valid is not None:

@@ -1,9 +1,15 @@
 #include "heartbeat.h"
 #include "task_cores.h"
 
-// Set to 0 to disable heartbeat buzzing. GPIO48 remains configured as an
-// output and held low. The frequency controls the passive-buzzer PWM tone.
+// CONFIG_WITNESS_BUZZER_ENABLED (Kconfig, off in bench builds: build_images.ps1
+// -Bench) disables heartbeat buzzing; GPIO48 remains configured as an output
+// and held low. The frequency controls the passive-buzzer PWM tone.
+#include "sdkconfig.h"
+#ifdef CONFIG_WITNESS_BUZZER_ENABLED
 #define HEARTBEAT_BUZZER_ENABLED 1
+#else
+#define HEARTBEAT_BUZZER_ENABLED 0
+#endif
 #define HEARTBEAT_BUZZER_FREQUENCY_HZ 4000
 
 #include <cstdint>

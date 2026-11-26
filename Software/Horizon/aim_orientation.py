@@ -3,7 +3,9 @@
 Hamilton quaternions in (w, x, y, z) order are normalized before computing
 conjugate(previous) * current. Its shortest rotation vector divided by dt is
 the interval-average rate in degrees/second. This assumes body-to-world
-orientation; AIM's frame convention/mounting relative to Witness is unverified.
+orientation. The rate is in AIM's body axes; FlightData turns it into Witness's
+axes with the shared "AIM axes..." mount (to_witness_axes; _derived.gyro_dps
+is then Witness X/Y/Z and _derived.gyro_dps_aim keeps AIM's own axes).
 It is NOT a raw gyro measurement: fusion corrections, quantization and motion
 over 180 degrees between samples cannot be distinguished from actual rotation.
 
@@ -21,6 +23,26 @@ import math
 
 
 GYRO_FIELDS = tuple(f"_derived.gyro_dps[{i}]" for i in range(3))
+GYRO_AIM_FIELDS = tuple(f"_derived.gyro_dps_aim[{i}]" for i in range(3))
+
+
+def to_witness_axes(rates, frame=None):
+    """Estimator output in Witness body axes, with the AIM-axis rate kept beside it.
+
+    The quaternion-difference rate is a body-frame vector in AIM's axes; the
+    "AIM axes..." mount (aim_alignment.AimFrame) turns it into Witness's axes:
+    GYRO_FIELDS become Witness X/Y/Z, GYRO_AIM_FIELDS keep AIM's own axes.
+    Heading is a world turn and does not apply. ``frame`` None = identity.
+    """
+    if not rates:
+        return rates
+    values = tuple(rates.get(key) for key in GYRO_FIELDS)
+    out = dict(zip(GYRO_AIM_FIELDS, values))
+    if any(v is None for v in values):
+        out.update(dict.fromkeys(GYRO_FIELDS))
+    else:
+        out.update(zip(GYRO_FIELDS, values if frame is None else frame.body_to_witness(values)))
+    return out
 
 
 def rotation_rate(previous, current, seconds):

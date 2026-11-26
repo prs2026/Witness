@@ -140,6 +140,25 @@ void write_quaternion(std::uint8_t *payload, const std::size_t x_offset,
     write_float_be(&payload[w_offset], q.w);
 }
 
+// Telemetry/log attitude (0x02, 0xE0): q and -q are the same rotation, so the
+// sign of w carries a flag (comms.h, IRIS_FIELD_ORIENTATION_*): w >= +0 for a
+// normal attitude, w <= -0 (negative zero when w is 0) for the gyro-carried
+// attitude after a saturation, whose absolute orientation is unknown but
+// whose relative motion is still measured. All-zero: not initialized.
+attitude::Quaternion telemetry_quaternion(const attitude::Estimator &est)
+{
+    attitude::Quaternion q = est.tracked_quaternion();
+    if (q.w == 0.0F && q.x == 0.0F && q.y == 0.0F && q.z == 0.0F) return q;
+    const bool carried = est.carried();
+    if (std::signbit(q.w) != carried) {
+        q.w = -q.w;
+        q.x = -q.x;
+        q.y = -q.y;
+        q.z = -q.z;
+    }
+    return q;
+}
+
 constexpr float kMilliDegreesToRadians = 3.14159265358979F / 180'000.0F;
 constexpr float kRadiansToDegrees = 180.0F / 3.14159265358979F;
 
@@ -1431,7 +1450,7 @@ void Sensors::build_state_payload(std::uint8_t *payload)
                      IRIS_PACKET_STATE_ORIENTATION_Y_OFFSET,
                      IRIS_PACKET_STATE_ORIENTATION_Z_OFFSET,
                      IRIS_PACKET_STATE_ORIENTATION_W_OFFSET,
-                     attitude_.quaternion());
+                     telemetry_quaternion(attitude_));
     {
         // Position filter: ENU metres / m/s relative to the pad.
         float p[3];
@@ -1541,7 +1560,7 @@ esp_err_t Sensors::queue_debug_packet()
                      IRIS_PACKET_WITNESS_DEBUG_ORIENTATION_Y_OFFSET,
                      IRIS_PACKET_WITNESS_DEBUG_ORIENTATION_Z_OFFSET,
                      IRIS_PACKET_WITNESS_DEBUG_ORIENTATION_W_OFFSET,
-                     attitude_.quaternion());
+                     telemetry_quaternion(attitude_));
     {
         float p[3];
         float v[3];
@@ -2094,8 +2113,21 @@ void Sensors::predict_position(const std::uint64_t timestamp_us)
         vy + q.w * ty + (q.z * tx - q.x * tz),
         vz + q.w * tz + (q.x * ty - q.y * tx),
     };
-    position_filter_.predict(world, dt_s,
-                             static_cast<position::Phase>(flight_state_machine_.state()));
+    const auto fsm_state = flight_state_machine_.state();
+    position_filter_.predict(world, dt_s, static_cast<position::Phase>(fsm_state));
+    // Zero-velocity hold in Descent/Landed when at rest (see
+    // Filter::hold_unaided_velocity): only acts when no barometer/GPS is used.
+    if (fsm_state == FlightStateMachine::State::Descent || fsm_state == FlightStateMachine::State::Landed) {
+        const float a2 = vx * vx + vy * vy + vz * vz;
+        const float g0 = position::kGravity;
+        const float gx = working_sample_.gyro_mdps[0] * 1e-3F;
+        const float gy = working_sample_.gyro_mdps[1] * 1e-3F;
+        const float gz = working_sample_.gyro_mdps[2] * 1e-3F;
+        const bool at_rest = a2 > (kRestMinG * g0) * (kRestMinG * g0) &&
+                             a2 < (kRestMaxG * g0) * (kRestMaxG * g0) &&
+                             gx * gx + gy * gy + gz * gz < kRestMaxGyroDps * kRestMaxGyroDps;
+        if (at_rest) position_filter_.hold_unaided_velocity(dt_s);
+    }
     heading_aligner_.add_inertial(world[0], world[1], dt_s, in_flight());
 }
 
@@ -2162,6 +2194,18 @@ void Sensors::service_pad_heading(const bool attitude_reinitialized)
              pad_heading_axis_ == 0 ? "+Y" : pad_heading_axis_ == 1 ? "-Y" : pad_heading_axis_ == 2 ? "+Z" : "-Z",
              static_cast<double>(pad_heading_azimuth_rad_ * 57.2957795F),
              static_cast<double>(yaw * 57.2957795F));
+}
+
+bool Sensors::attitude_recovery_allowed() const
+{
+    // Off (kAttitudeRecoveryEnabled). The estimator only recovers at rest
+    // (see attitude::Estimator), which in practice is the ground, and after
+    // landing the attitude is not needed: landing detection uses |a|, |gyro|
+    // and the held AGL, and without the IMU the position filter decays the
+    // velocity (ballistic Descent, then a held AGL for Landed).
+    if (!kAttitudeRecoveryEnabled) return false;
+    const auto state = flight_state_machine_.state();
+    return state == FlightStateMachine::State::Descent || state == FlightStateMachine::State::Landed;
 }
 
 bool Sensors::in_flight() const
@@ -2633,13 +2677,28 @@ void Sensors::update_attitude(const std::uint64_t timestamp_us)
     step.timestamp_us = timestamp_us;
     step.phase =
         static_cast<attitude::FlightPhase>(flight_state_machine_.state());
+    step.recovery_allowed = attitude_recovery_allowed();
     const attitude::StepResult result = attitude_.update(step);
     ++attitude_updates_since_report_;
     service_pad_heading(result.initialized_now);
     if (result.lost_now) {
-        defer_log("gyro saturated (|rate| >= %.0f dps on an axis for %lu samples): attitude "
-                  "tracking stopped for this flight; the position filter now ignores the IMU",
-                  1950.0, static_cast<unsigned long>(2));
+        float v[3]{};
+        position_filter_.velocity(v);
+        const float speed = std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+        attitude_loss_speed_mps_ = std::isfinite(speed) ? speed : 1e6F;
+        defer_log("gyro saturated (|rate| >= %.0f dps on an axis for %lu samples) at %.0f m/s: "
+                  "attitude not trusted, the position filter ignores the IMU for the rest of the "
+                  "flight",
+                  1950.0, static_cast<unsigned long>(2), static_cast<double>(speed));
+    }
+    if (result.recovered_now) {
+        defer_log("attitude recovered from gravity in %s after gyro saturation (recovery %lu): "
+                  "tilt corrected by %.1f deg, now %.1f deg from vertical; heading carried by "
+                  "the gyro only",
+                  FlightStateMachine::state_name(flight_state_machine_.state()),
+                  static_cast<unsigned long>(attitude_.recoveries()),
+                  static_cast<double>(result.recovery_tilt_correction_deg),
+                  static_cast<double>(attitude_.tilt_from_vertical_deg()));
     }
 
     if (result.initialized_now) {
@@ -2686,7 +2745,7 @@ void Sensors::report_attitude_rate(const std::uint64_t now_us)
     }
     const double rate_hz = static_cast<double>(attitude_updates_since_report_) *
                            1e6 / static_cast<double>(elapsed_us);
-    const attitude::Quaternion q = attitude_.quaternion();
+    const attitude::Quaternion q = telemetry_quaternion(attitude_);
     defer_log(
              "attitude: %.1f Hz, max dt %.1f ms, gaps %lu, late %lu, "
              "spikes rejected %lu, windows %lu ok/%lu accel/%lu gyro "
@@ -2703,7 +2762,7 @@ void Sensors::report_attitude_rate(const std::uint64_t now_us)
              static_cast<unsigned long>(max_pass_us_),
              static_cast<unsigned long>(radio_tx_started_),
              static_cast<unsigned long>(radio_tx_failed_),
-             attitude_.lost()    ? "lost (gyro saturated)"
+             attitude_.lost()    ? "lost (gyro saturated; q gyro-carried, w < 0)"
              : attitude_.valid() ? (attitude_.landed_hold() ? "held" : "valid")
                                  : "not initialized",
              static_cast<double>(attitude_.tilt_from_vertical_deg()),
@@ -2860,15 +2919,20 @@ void Sensors::run()
                 (now - last_ms5607_init_attempt) >= kStatePacketPeriod) {
                 last_ms5607_init_attempt = now;
                 const esp_err_t initialization_result =
-                    ms5607_.initialize(kSpiHost);
+                    ms5607_.initialize(kSpiHost, false);
                 if (initialization_result == ESP_OK) {
                     ms5607_initialized_ = true;
                     consecutive_ms5607_errors = 0;
                     ESP_LOGI(kLogTag, "MS5607 initialization recovered");
                 } else {
                     ms5607_.release();
-                    ESP_LOGE(kLogTag, "MS5607 initialization retry failed: %s",
-                             esp_err_to_name(initialization_result));
+                    // The driver logs the PROM words itself (rate-limited).
+                    if (initialization_result != ESP_ERR_INVALID_CRC ||
+                        ms5607_.prom_failures() % 64U == 1U) {
+                        ESP_LOGE(kLogTag, "MS5607 initialization retry failed: %s (PROM failures %lu)",
+                                 esp_err_to_name(initialization_result),
+                                 static_cast<unsigned long>(ms5607_.prom_failures()));
+                    }
                 }
             }
 
@@ -2965,6 +3029,9 @@ void Sensors::run()
                 observation.vertical_velocity_mps = velocity[2];
                 observation.agl_valid = std::isfinite(position_filter_.up().p);
                 observation.agl_meters = position_filter_.up().p;
+                observation.vertical_unaided = position_filter_.vertical_unaided();
+                observation.unaided_entry_vz_mps = position_filter_.unaided_entry_vz_mps();
+                observation.unaided_elapsed_s = position_filter_.unaided_elapsed_s();
             }
             observation.timestamp_us = working_sample_.timestamp_us;
             observation.baro_rate_valid = baro_rate_.valid(working_sample_.timestamp_us);

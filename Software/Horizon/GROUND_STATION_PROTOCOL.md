@@ -208,7 +208,14 @@ with +X along the rocket nose axis, so an upright rocket on the pad has body +X
 pointing to world +Z. **All four components zero means attitude is not
 available**: before the first accepted 1 s stationary window on the pad,
 after HITL entry/exit until a new window is accepted, or when no window was
-accepted before launch. Heading (rotation about world +Z) is not observable without a
+accepted before launch. **The sign of W is a flag** (q and −q are the same
+rotation): W ≥ +0 is a normal attitude; W ≤ −0 (negative zero when W is 0) is
+the attitude carried by the gyro alone after a gyro saturation in flight. Its
+absolute tilt and heading are unknown, but the spin, swing and tumbling since
+the saturation are measured. It stays set until the next pad initialization.
+Witness firmware from 2026-11-25 on sends this; older firmware sent all-zero
+after a saturation and did not fix the sign of W, so on older logs a negative
+W means nothing. Horizon shows it as "GYRO-CARRIED ATTITUDE". Heading (rotation about world +Z) is not observable without a
 magnetometer; it is fixed arbitrarily by the shortest-arc tilt alignment at
 initialization (an exactly upright rocket gets body +Y = north, body +Z =
 west), so compare yaw only relative to that start. The attitude is gyro

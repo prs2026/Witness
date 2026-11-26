@@ -341,7 +341,7 @@ esp_err_t FlashLogger::read_slot_info(const std::uint8_t slot, SlotInfo &info)
     info = {};
     const std::uint32_t first_page = slot_base(slot) * W25n01kv::kPagesPerBlock;
     std::uint8_t header[9]{};
-    std::uint8_t marker[8]{};
+    std::uint8_t marker[kFlightMarkerSize]{};
     esp_err_t r = read_page_retry(first_page, 0, header, sizeof(header));
     if (r == ESP_ERR_INVALID_CRC) {
         ++unreadable_pages_;
@@ -385,6 +385,11 @@ esp_err_t FlashLogger::read_slot_info(const std::uint8_t slot, SlotInfo &info)
     if (r != ESP_OK) return r;
     info.flight = read_u32_be(marker) == kFlightMagic &&
                   read_u32_be(marker + 4) == info.generation;
+    if (info.flight && read_u32_be(marker + 8) == kFlightRingMagic) {
+        info.launch_sequences_valid = true;
+        for (int i = 0; i < 3; ++i)
+            info.launch_sequence[i] = read_u32_be(marker + 12 + 4 * i) & log_slot::kSequenceMask;
+    }
     return ESP_OK;
 }
 
@@ -606,6 +611,24 @@ esp_err_t FlashLogger::resume_session()
         else
             w.last_erased_block = layout.first_block + next / W25n01kv::kPagesPerBlock;
         w.launch_protected = ring && slot_info_[current_slot_].flight;
+        if (w.launch_protected) {
+            // Pages written since launch, from the sequence numbers: before
+            // 2026-11-25 this restarted at 0, so the ring could overwrite the
+            // ascent after a reset in flight (flight 2026-11-21, audit item 9).
+            const SlotInfo &info = slot_info_[current_slot_];
+            const int k = ring_marker_index(type);
+            if (info.launch_sequences_valid && k >= 0) {
+                w.pages_since_launch = log_slot::pages_since_launch(
+                    end.next_sequence, info.launch_sequence[k], capacity);
+                ESP_LOGI(kLogTag, "resume: ring %u has %lu of %lu pages written since launch%s", type,
+                         static_cast<unsigned long>(w.pages_since_launch),
+                         static_cast<unsigned long>(capacity),
+                         w.pages_since_launch >= capacity ? " (full: stays stopped)" : "");
+            } else {
+                ESP_LOGW(kLogTag, "resume: ring %u launch point unknown (old or unreadable marker); "
+                                  "protection counts from here", type);
+            }
+        }
         w.sequence = sequence_base(current_generation_) | end.next_sequence;
         if (!ring && next >= capacity) w.full = true; else any_room = true;
         ESP_LOGI(kLogTag, "resume: stream %u continues at page %lu of %lu%s", type,
@@ -663,9 +686,13 @@ esp_err_t FlashLogger::create_session() {
 
 esp_err_t FlashLogger::write_flight_marker()
 {
-    std::uint8_t marker[8]{};
+    std::uint8_t marker[kFlightMarkerSize]{};
     write_u32_be(marker, kFlightMagic);
     write_u32_be(marker + 4, current_generation_);
+    write_u32_be(marker + 8, kFlightRingMagic);
+    write_u32_be(marker + 12, text_writer_.sequence & log_slot::kSequenceMask);
+    write_u32_be(marker + 16, uart_writer_.sequence & log_slot::kSequenceMask);
+    write_u32_be(marker + 20, packet_writer_.sequence & log_slot::kSequenceMask);
     const std::uint32_t page = slot_base(current_slot_) * W25n01kv::kPagesPerBlock + kFlightMarkerPage;
     const esp_err_t r = program_page_robust(page, marker, sizeof(marker));
     if (r == ESP_OK) {

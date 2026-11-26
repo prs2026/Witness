@@ -83,6 +83,7 @@ struct Feeder {
     std::uint64_t t_us = 1'000'000U;
     attitude::StepResult last{};
     attitude::StepResult accumulated{};
+    bool recovery_allowed = false;
 
     void run(const Vector3 &gyro, const Vector3 &accel, const FlightPhase phase,
              const int count, const std::uint32_t dt_us = 10'000U)
@@ -94,7 +95,9 @@ struct Feeder {
             s.specific_force_g = accel;
             s.timestamp_us = t_us;
             s.phase = phase;
+            s.recovery_allowed = recovery_allowed;
             last = est.update(s);
+            accumulated.recovered_now |= last.recovered_now;
             accumulated.initialized_now |= last.initialized_now;
             accumulated.bias_updated |= last.bias_updated;
             accumulated.entered_landed |= last.entered_landed;
@@ -485,9 +488,9 @@ void test_gyro_saturation()
         CHECK(!est.valid());
         CHECK(is_zero(est.quaternion()));
         CHECK(est.saturation_events() == 1U);
-        // Quiet gyro afterwards (and Landed) does not bring it back.
+        // Quiet gyro afterwards does not bring it back unless the caller
+        // allows a recovery (after apogee).
         f.run(kZero, kUpright, FlightPhase::Descent, 500);
-        f.run(kZero, kUpright, FlightPhase::Landed, 500);
         CHECK(est.lost());
         CHECK(is_zero(est.quaternion()));
         CHECK(est.steps() <= steps + 2U);
@@ -504,6 +507,148 @@ void test_gyro_saturation()
         f.run(Vector3{0.0F, 0.0F, sat}, kUpright, FlightPhase::PadIdle, 10);
         CHECK(!est.lost());
     }
+}
+
+// Gyro integration of a constant body rate for n samples of dt from q.
+Quaternion integrate(Quaternion q, const Vector3 &rate, const int n, const float dt)
+{
+    for (int i = 0; i < n; ++i) {
+        q = Estimator::normalized(Estimator::multiply(
+            q, Estimator::exp_rotation(Vector3{rate.x * dt, rate.y * dt, rate.z * dt})));
+    }
+    return q;
+}
+
+void test_saturation_recovery()
+{
+    const float sat = 2100.0F * kDegToRad;
+    // Ejection shock: 20 ms of clipped rate tumbles the vehicle by an unknown
+    // amount. It then hangs nose-down-ish under a parachute: gravity is
+    // measured along a tilted body direction. Recovery snaps the tilt.
+    {
+        Estimator est;
+        Feeder f{est};
+        initialized_upright(est, f);
+        f.run(kZero, kZero, FlightPhase::Coast, 100);
+        f.run(Vector3{0.0F, sat, 0.0F}, kZero, FlightPhase::Coast, 20, 1000U);
+        CHECK(est.lost());
+        CHECK(est.saturation_events() == 1U);
+        // Lost, but the gyro-carried attitude is still there (telemetry
+        // sends it flagged), and it keeps following the gyro.
+        CHECK(est.carried());
+        const Quaternion qz = est.quaternion();
+        CHECK(qz.w == 0.0F && qz.x == 0.0F && qz.y == 0.0F && qz.z == 0.0F);
+        const Quaternion qt0 = est.tracked_quaternion();
+        CHECK(std::fabs(qt0.w * qt0.w + qt0.x * qt0.x + qt0.y * qt0.y + qt0.z * qt0.z - 1.0F) < 1e-3F);
+        f.run(Vector3{0.0F, 0.0F, 90.0F * kDegToRad}, Vector3{1.0F, 0.0F, 0.0F}, FlightPhase::Coast, 100);
+        const Quaternion qt1 = est.tracked_quaternion();
+        const float dot = std::fabs(qt0.w * qt1.w + qt0.x * qt1.x + qt0.y * qt1.y + qt0.z * qt1.z);
+        const float turned = 2.0F * std::acos(std::fmin(1.0F, dot)) / kDegToRad;
+        std::printf("carried attitude: turned %.1f deg for 90 deg of gyro\n", turned);
+        CHECK(std::fabs(turned - 90.0F) < 3.0F);
+        // Not allowed yet (fast coast): no recovery even though calm and 1 g.
+        const Vector3 hanging{-0.5F, 0.0F, 0.866F};   // body up = 30 deg off -X
+        f.run(kZero, hanging, FlightPhase::Coast, 300);
+        CHECK(est.lost());
+        // Allowed: 5 s at rest recovers (not 4 s).
+        f.recovery_allowed = true;
+        f.run(kZero, hanging, FlightPhase::Descent, 400);
+        CHECK(est.lost());
+        f.run(kZero, hanging, FlightPhase::Descent, 120);
+        CHECK(!est.lost());
+        CHECK(est.valid());
+        CHECK(f.accumulated.recovered_now);
+        CHECK(est.recoveries() == 1U);
+        // The world "up" of the measured specific force is now +Z.
+        const Vector3 up = Estimator::rotate(est.quaternion(), hanging);
+        CHECK(std::fabs(up.z - 1.0F) < 1e-3F);
+    }
+    // Very slow rotation during the window (2 dps) still recovers: samples
+    // are rotated by the tracked attitude.
+    {
+        Estimator est;
+        Feeder f{est};
+        initialized_upright(est, f);
+        f.run(Vector3{sat, sat, 0.0F}, kZero, FlightPhase::Descent, 5, 1000U);
+        CHECK(est.lost());
+        f.recovery_allowed = true;
+        // Body hangs with -X up (nose down) and spins about the body X axis:
+        // gravity stays on -X, so the spin is about the line.
+        f.run(Vector3{2.0F * kDegToRad, 0.0F, 0.0F}, Vector3{-1.0F, 0.0F, 0.0F},
+              FlightPhase::Descent, 520);
+        CHECK(est.valid());
+        CHECK(est.tilt_from_vertical_deg() > 179.0F);
+    }
+    // Swinging (gyro above the limit) or 0 g free fall never recovers.
+    {
+        Estimator est;
+        Feeder f{est};
+        initialized_upright(est, f);
+        f.run(Vector3{0.0F, 0.0F, sat}, kZero, FlightPhase::Descent, 5, 1000U);
+        f.recovery_allowed = true;
+        f.run(Vector3{0.0F, 0.0F, 150.0F * kDegToRad}, kUpright, FlightPhase::Descent, 600);
+        CHECK(est.lost());
+        // Gentle swing or spin under the parachute (10 dps, passed the old
+        // 100 dps test): the force is not pure gravity, never recovers.
+        f.run(Vector3{0.0F, 10.0F * kDegToRad, 0.0F}, kUpright, FlightPhase::Descent, 600);
+        CHECK(est.lost());
+        // Drag transient: steady 1.08 g, no rotation: not at rest.
+        f.run(kZero, Vector3{1.08F, 0.0F, 0.0F}, FlightPhase::Descent, 600);
+        CHECK(est.lost());
+        f.run(kZero, Vector3{0.05F, 0.0F, 0.0F}, FlightPhase::Descent, 300);
+        CHECK(est.lost());
+        // Incoherent: the measured direction flips inside the window.
+        for (int i = 0; i < 30; ++i) {
+            f.run(kZero, Vector3{1.0F, 0.0F, 0.0F}, FlightPhase::Descent, 5);
+            f.run(kZero, Vector3{0.0F, 1.0F, 0.0F}, FlightPhase::Descent, 5);
+        }
+        CHECK(est.lost());
+        // Landed always allows it (on the ground, still).
+        f.recovery_allowed = false;
+        f.run(kZero, Vector3{0.0F, 0.0F, 1.0F}, FlightPhase::Landed, 1100);   // first window ends in the flips
+        CHECK(est.valid());
+        CHECK(std::fabs(est.tilt_from_vertical_deg() - 90.0F) < 0.5F);
+    }
+    // A second shock after a recovery loses it again; a later calm window
+    // recovers again.
+    {
+        Estimator est;
+        Feeder f{est};
+        initialized_upright(est, f);
+        f.recovery_allowed = true;
+        f.run(Vector3{sat, 0.0F, 0.0F}, kZero, FlightPhase::Descent, 3, 1000U);
+        f.run(kZero, kUpright, FlightPhase::Descent, 520);
+        CHECK(est.valid());
+        f.run(Vector3{sat, 0.0F, 0.0F}, kZero, FlightPhase::Descent, 3, 1000U);
+        CHECK(est.lost());
+        CHECK(est.saturation_events() == 2U);
+        f.run(kZero, kUpright, FlightPhase::Descent, 520);
+        CHECK(est.valid());
+        CHECK(est.recoveries() == 2U);
+    }
+    // Heading is carried through a short saturation: a pure roll about the
+    // nose (vertical) at the clip value keeps the tracked yaw close.
+    {
+        Estimator est;
+        Feeder f{est};
+        const Quaternion q0 = initialized_upright(est, f);
+        (void)q0;
+        const Vector3 y0 = Estimator::rotate(est.quaternion(), Vector3{0.0F, 1.0F, 0.0F});
+        // 10 x 10 ms at the clipped 2000 dps about +X (nose up): 200 deg of
+        // roll (longer than the median filter's spike rejection), then 200
+        // deg back at 400 dps (not saturated).
+        f.run(Vector3{2000.0F * kDegToRad, 0.0F, 0.0F}, kZero, FlightPhase::Descent, 10);
+        f.run(Vector3{-400.0F * kDegToRad, 0.0F, 0.0F}, kZero, FlightPhase::Descent, 50);
+        f.recovery_allowed = true;
+        f.run(kZero, kUpright, FlightPhase::Descent, 520);
+        CHECK(est.valid());
+        const Vector3 y1 = Estimator::rotate(est.quaternion(), Vector3{0.0F, 1.0F, 0.0F});
+        const float yaw_deg =
+            std::atan2(y0.x * y1.y - y0.y * y1.x, y0.x * y1.x + y0.y * y1.y) / kDegToRad;
+        std::printf("heading carried through saturation: %.2f deg\n", yaw_deg);
+        CHECK(std::fabs(yaw_deg) < 1.0F);
+    }
+    (void)integrate;
 }
 
 void test_helpers()
@@ -688,6 +833,7 @@ int main()
     test_landed_hold();
     test_bias_below_quantization();
     test_gyro_saturation();
+    test_saturation_recovery();
     test_helpers();
     test_bench_interference();
     if (failures != 0) {

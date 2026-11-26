@@ -28,6 +28,9 @@ struct Rig {
     std::uint64_t t_us = 1'000'000;
     float axial_g = 1.0F;          // low-g axial acceleration (burnout test)
     bool still = false;            // 1 g, no rotation (landing test)
+    bool unaided = false;          // nothing measures the vertical motion
+    float unaided_vz = 0.0F;
+    float unaided_s = 0.0F;        // advanced by step() while unaided
     // One observation every 20 ms (50 Hz): Kalman AGL and vertical velocity.
     void step(float agl, float vel = 0.0F, bool agl_valid = true)
     {
@@ -42,9 +45,13 @@ struct Rig {
         o.angular_rate_valid = true;
         o.acceleration_g[0] = still ? 1.0F : 3.0F;
         o.angular_rate_dps[2] = still ? 0.0F : 50.0F;
+        o.vertical_unaided = unaided;
+        o.unaided_entry_vz_mps = unaided_vz;
+        o.unaided_elapsed_s = unaided ? unaided_s : 0.0F;
         o.timestamp_us = t_us;
         fsm.update(o);
         t_us += 20'000;
+        if (unaided) unaided_s += 0.02F;
     }
     void run(float agl, int n, float vel = 0.0F)
     {
@@ -197,6 +204,73 @@ void test_burnout_then_kalman_descent()
     CHECK(r.fsm.state() == State::Descent);
     std::printf("descent after %d ms\n", steps * 20);
     CHECK(steps * 20 <= 540);
+}
+
+void test_burnout_from_velocity()
+{
+    // Axial burnout missed (low-g axis reads > 1 g all flight): the Kalman
+    // velocity falling 10 m/s below its Boost peak for 1 s ends Boost.
+    Rig r;
+    r.run(0.0F, 10);
+    CHECK(r.fsm.trigger_launch() == ESP_OK);
+    r.axial_g = 3.0F;
+    for (int i = 0; i < 50; ++i) r.step(10.0F * i, 5.0F * i);        // to 245 m/s
+    CHECK(r.fsm.state() == State::Boost);
+    // Slight dip (5 m/s): not enough.
+    r.run(600.0F, 100, 240.0F);
+    CHECK(r.fsm.state() == State::Boost);
+    // Decelerating at ~1.5 g: 10 m/s below the peak after ~0.7 s, then 1 s.
+    int coast_ms = -1;
+    for (int i = 0; i < 200; ++i) {
+        r.step(700.0F + i, 245.0F - 0.3F * i);
+        if (r.fsm.state() == State::Coast) { coast_ms = (i + 1) * 20; break; }
+    }
+    std::printf("velocity burnout: Coast %d ms after the slowdown began\n", coast_ms);
+    CHECK(r.fsm.state() == State::Coast);
+    CHECK(coast_ms > 1000 && coast_ms < 1800);
+    // A slow (never > 20 m/s) climb never uses this path.
+    Rig s;
+    s.run(0.0F, 10);
+    CHECK(s.fsm.trigger_launch() == ESP_OK);
+    s.axial_g = 3.0F;
+    s.run(10.0F, 20, 15.0F);
+    s.run(10.0F, 200, 0.0F);
+    CHECK(s.fsm.state() == State::Boost);
+}
+
+void test_ballistic_descent_unaided()
+{
+    // Flight 2026-11-21 replay: gyro saturated just after apogee (vz -2.2 m/s),
+    // no barometer, no GPS. The Kalman velocity decays to 0 and holds the AGL,
+    // so only the ballistic bound can end Coast: max(vz, 0) / g + 1 s.
+    Rig r;
+    r.to_coast(2700.0F);
+    r.unaided = true;
+    r.unaided_vz = -2.2F;
+    int ms = -1;
+    for (int i = 0; i < 500 && ms < 0; ++i) {
+        r.step(2700.0F, -2.2F * std::exp(-0.02F * i / 2.0F));
+        if (r.fsm.state() == State::Descent) ms = (i + 1) * 20;
+    }
+    std::printf("ballistic descent (vz -2.2 m/s at loss): %d ms\n", ms);
+    CHECK(ms >= 1000 && ms <= 1100);
+
+    // Lost while still climbing at 80 m/s: not before 80 / g + 1 = 9.2 s.
+    Rig s;
+    s.to_coast(1500.0F);
+    s.unaided = true;
+    s.unaided_vz = 80.0F;
+    s.run(1500.0F, 450, 0.0F);                 // 9.0 s
+    CHECK(s.fsm.state() == State::Coast);
+    s.run(1500.0F, 20, 0.0F);                  // 9.4 s
+    CHECK(s.fsm.state() == State::Descent);
+
+    // Aided again (unaided false): the bound never applies.
+    Rig q;
+    q.to_coast(1500.0F);
+    q.unaided_vz = -5.0F;
+    q.run(1500.0F, 500, 0.0F);
+    CHECK(q.fsm.state() == State::Coast);
 }
 
 void test_low_maximum_needs_10m_drop()
@@ -571,6 +645,8 @@ int main()
     test_states_are_one_way();
     test_invalid_agl_no_launch();
     test_burnout_then_kalman_descent();
+    test_burnout_from_velocity();
+    test_ballistic_descent_unaided();
     test_low_maximum_needs_10m_drop();
     test_velocity_path();
     test_velocity_transient_no_descent();

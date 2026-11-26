@@ -301,6 +301,170 @@ void test_predict_without_imu()
     CHECK(!filter.imu_ignored());
 }
 
+void test_baro_thrust_gate()
+{
+    // Liftoff: 12 g for 0.3 s (the launch qualification window, phase still
+    // Pad Idle), the baro reading 6 m high (ignition transient, port lag).
+    // The baro must not touch the velocity: it equals the IMU integral.
+    const float pad_alt = 600.0F;
+    auto pad = [&](Filter &f) {
+        const float still[3] = {0.0F, 0.0F, kG};
+        for (int n = 0; n < 960 * 3; ++n) {
+            f.predict(still, 1.0F / 960.0F, Phase::PadIdle);
+            if (n % 38 == 0) f.update_baro(pad_alt, isa_pressure(pad_alt), Phase::PadIdle);
+        }
+    };
+    Filter f;
+    pad(f);
+    const float thrust[3] = {0.0F, 0.0F, 12.0F * kG};
+    float truth_v = 0.0F;
+    for (int n = 0; n < 288; ++n) {
+        f.predict(thrust, 1.0F / 960.0F, Phase::PadIdle);
+        truth_v += 11.0F * kG / 960.0F;
+        if (n % 38 == 37) {
+            CHECK(!f.update_baro(pad_alt + 6.0F + f.up().p, isa_pressure(pad_alt), Phase::PadIdle));
+            CHECK(f.baro_thrust_gated());
+        }
+    }
+    std::printf("thrust gate: vz %.2f m/s (IMU integral %.2f), gated %d\n", f.up().v, truth_v,
+                f.baro_thrust_gated() ? 1 : 0);
+    CHECK(std::fabs(f.up().v - truth_v) < 0.5F);
+    CHECK(f.baro_gated());
+
+    // Subsonic flight: burnout at ~65 m/s, Coast: the baro is back (Mach
+    // gate never tripped).
+    Filter s;
+    pad(s);
+    const float boost[3] = {0.0F, 0.0F, 3.0F * kG};
+    for (int n = 0; n < 960 * 3 + 300; ++n) s.predict(boost, 1.0F / 960.0F, Phase::Boost);
+    CHECK(!s.update_baro(pad_alt + s.up().p, isa_pressure(pad_alt), Phase::Boost));
+    const float coast[3] = {0.0F, 0.0F, 0.0F};
+    s.predict(coast, 1.0F / 960.0F, Phase::Coast);
+    CHECK(s.update_baro(pad_alt + s.up().p, isa_pressure(pad_alt + s.up().p), Phase::Coast));
+    CHECK(!s.baro_thrust_gated());
+
+    // A 3 g bump on the pad gates it only until the pad hold returns.
+    Filter b;
+    pad(b);
+    const float bump[3] = {0.0F, 0.0F, 3.0F * kG};
+    b.predict(bump, 1.0F / 960.0F, Phase::PadIdle);
+    CHECK(!b.update_baro(pad_alt, isa_pressure(pad_alt), Phase::PadIdle));
+    CHECK(b.baro_thrust_gated());
+    const float still[3] = {0.0F, 0.0F, kG};
+    for (int n = 0; n < 960; ++n) b.predict(still, 1.0F / 960.0F, Phase::PadIdle);
+    b.update_baro(pad_alt, isa_pressure(pad_alt), Phase::PadIdle);
+    CHECK(!b.baro_thrust_gated());
+}
+
+void test_unaided_tracking_and_rest_hold()
+{
+    // vertical_unaided: set on the first no-IMU predict with no altitude
+    // aid, with the velocity before any decay and the elapsed time.
+    Filter f;
+    const float still[3] = {0.0F, 0.0F, kG};
+    const float up[3] = {0.0F, 0.0F, kG + 30.0F};
+    for (int n = 0; n < 960; ++n) f.predict(up, 1.0F / 960.0F, Phase::Boost);   // ~30 m/s up
+    const float vz0 = f.up().v;
+    CHECK(!f.vertical_unaided());
+    f.predict_without_imu(1.0F / 960.0F, Phase::Coast);
+    CHECK(f.vertical_unaided());
+    CHECK(std::fabs(f.unaided_entry_vz_mps() - vz0) < 0.05F);
+    for (int n = 0; n < 960 * 2; ++n) f.predict_without_imu(1.0F / 960.0F, Phase::Coast);
+    std::printf("unaided: entry vz %.2f m/s, elapsed %.2f s, vz now %.2f m/s\n",
+                f.unaided_entry_vz_mps(), f.unaided_elapsed_s(), f.up().v);
+    CHECK(std::fabs(f.unaided_elapsed_s() - 2.0F) < 0.01F);
+    CHECK(std::fabs(f.unaided_entry_vz_mps() - vz0) < 0.05F);   // not overwritten
+    // IMU back: no longer unaided.
+    f.predict(still, 1.0F / 960.0F, Phase::Descent);
+    CHECK(!f.vertical_unaided());
+
+    // Rest hold with the IMU: a small tilt error (0.5 deg -> 0.086 m/s^2
+    // sideways) drifts 2.6 m/s in 30 s without it; with it the velocity
+    // stays near 0 and the AGL moves under a metre.
+    Filter d;
+    Filter h;
+    const float tilted[3] = {0.0856F, 0.0F, kG + 0.02F};
+    d.predict_without_imu(1.0F / 960.0F, Phase::Descent);
+    h.predict_without_imu(1.0F / 960.0F, Phase::Descent);
+    const float p0 = h.up().p;
+    for (int n = 0; n < 960 * 30; ++n) {
+        d.predict(tilted, 1.0F / 960.0F, Phase::Landed);
+        h.predict(tilted, 1.0F / 960.0F, Phase::Landed);
+        h.hold_unaided_velocity(1.0F / 960.0F);
+    }
+    std::printf("rest hold 30 s: without v (%.2f, %.2f) m/s, with v (%.3f, %.3f) m/s, AGL moved %.2f m\n",
+                d.east().v, d.up().v, h.east().v, h.up().v, h.up().p - p0);
+    CHECK(std::fabs(d.east().v) > 1.0F);
+    CHECK(std::fabs(h.east().v) < 0.3F && std::fabs(h.up().v) < 0.1F);
+    CHECK(std::fabs(h.up().p - p0) < 2.0F);   // landing allows 10 m in 30 s
+
+    // With an accepted barometer the hold does nothing to the vertical axis.
+    Filter b;
+    for (int n = 0; n < 960; ++n) b.predict(still, 1.0F / 960.0F, Phase::Descent);
+    const float dn[3] = {0.0F, 0.0F, kG - 5.0F};
+    for (int n = 0; n < 960; ++n) b.predict(dn, 1.0F / 960.0F, Phase::Descent);   // ~ -5 m/s
+    b.update_baro(b.up().p, 90000.0F, Phase::Descent);
+    const float vb = b.up().v;
+    b.hold_unaided_velocity(0.1F);
+    CHECK(std::fabs(b.up().v - vb) < 1e-4F);
+}
+
+void test_unaided_velocity_decays()
+{
+    // Flight 2026-11-21: attitude lost at apogee, no barometer, no GPS. The
+    // velocity used to be held for good (2.4 m/s down, 28 m/s sideways); it
+    // now decays to zero, so the AGL settles and a landing can be detected.
+    Filter f;
+    position::PadReferences refs;
+    refs.motion_valid = true;
+    refs.agl_m = 2600.0F;
+    refs.vertical_velocity_mps = -2.4F;
+    f.restore_after_reset(refs);
+    // Horizontal velocity as at the loss (restore starts it at 0; set by GPS
+    // in a normal flight, here by a pad-frame fix pair is overkill: predict
+    // with an acceleration instead).
+    const float push[3] = {-24.7F / 0.1F, -13.8F / 0.1F, kG};
+    f.predict(push, 0.1F, Phase::Coast);
+    CHECK(std::fabs(f.east().v + 24.7F) < 0.5F);
+    const float p0 = f.up().p;
+    const float e0 = f.east().p;
+    for (int i = 0; i < 960 * 20; ++i) f.predict_without_imu(1.0F / 960.0F, Phase::Coast);
+    CHECK(f.velocity_decaying());
+    std::printf("unaided decay after 20 s: v (%.3f, %.3f, %.3f) m/s, moved %.1f m east, %.1f m up\n",
+                f.east().v, f.north().v, f.up().v, f.east().p - e0, f.up().p - p0);
+    CHECK(std::fabs(f.east().v) < 0.05F && std::fabs(f.north().v) < 0.05F &&
+          std::fabs(f.up().v) < 0.05F);
+    // Moved about v (1 s delay + 2 s tau): bounded, not 20 s of drift.
+    CHECK(std::fabs(f.east().p - e0) < 24.7F * 3.5F);
+    CHECK(std::fabs(f.up().p - p0) < 2.4F * 3.5F);
+    // AGL is now stable: 30 s more moves it by under a metre.
+    const float p1 = f.up().p;
+    for (int i = 0; i < 960 * 30; ++i) f.predict_without_imu(1.0F / 960.0F, Phase::Descent);
+    CHECK(std::fabs(f.up().p - p1) < 1.0F);
+
+    // With a working barometer the vertical velocity is NOT decayed (the
+    // descent rate comes from the baro), but the horizontal one still is.
+    Filter g;
+    const float still[3] = {0.0F, 0.0F, kG};
+    for (int n = 0; n < 960; ++n) g.predict(still, 1.0F / 960.0F, Phase::Coast);
+    g.update_baro(3000.0F, 70000.0F, Phase::Coast);
+    float truth = 0.0F;
+    for (int n = 0; n < 960 * 30; ++n) {
+        g.predict_without_imu(1.0F / 960.0F, Phase::Descent);
+        truth -= 20.0F / 960.0F;
+        if (n % 38 == 0) g.update_baro(3000.0F + truth, 80000.0F, Phase::Descent);
+    }
+    CHECK(std::fabs(g.up().v + 20.0F) < 1.5F);
+
+    // Disabled by config: held as before.
+    position::Config c{};
+    c.no_aid_velocity_tau_s = 0.0F;
+    Filter h(c);
+    h.restore_after_reset(refs);
+    for (int i = 0; i < 960 * 5; ++i) h.predict_without_imu(1.0F / 960.0F, Phase::Coast);
+    CHECK(std::fabs(h.up().v + 2.4F) < 1e-3F);
+}
+
 void test_innovation_record()
 {
     Filter filter;
@@ -786,6 +950,9 @@ int main()
     test_flights();
     test_gate_and_resync();
     test_predict_without_imu();
+    test_unaided_velocity_decays();
+    test_unaided_tracking_and_rest_hold();
+    test_baro_thrust_gate();
     test_innovation_record();
     test_baro_bias_state();
     if (failures == 0) {

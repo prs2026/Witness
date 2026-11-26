@@ -571,12 +571,24 @@ private:
         config.nominal_dt_us = 1'000'000U / kImuSampleRateHz;
         config.late_dt_us = config.nominal_dt_us + config.nominal_dt_us / 2U;
         config.window_min_samples = kImuSampleRateHz / 2U;
+        config.recovery_min_samples = kImuSampleRateHz * 4U;   // of the 5 s window
         return config;
     }
     static_assert(kImuSampleRateHz <= attitude::Estimator::kMaxWindowSamples,
                   "A 1 s stationary window must fit the estimator's buffer");
 
     attitude::Estimator attitude_{attitude_config()};
+    // Recovery of the attitude after a gyro saturation (see
+    // attitude_recovery_allowed): off, the attitude is not needed once landed.
+    static constexpr bool kAttitudeRecoveryEnabled = false;
+    // Speed (filter, m/s) when the attitude was lost to gyro saturation (log).
+    // At rest for the zero-velocity hold (Descent/Landed, no baro/GPS):
+    // filtered |a| within these g and |gyro| below this, per sample.
+    static constexpr float kRestMinG = 0.95F;
+    static constexpr float kRestMaxG = 1.05F;
+    static constexpr float kRestMaxGyroDps = 5.0F;
+    float attitude_loss_speed_mps_ = 0.0F;
+    bool attitude_recovery_allowed() const;
     FlashLogger *imu_log_sink_ = nullptr;
     void log_imu_sample(std::uint64_t timestamp_us, bool hitl);
 

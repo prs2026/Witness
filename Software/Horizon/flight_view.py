@@ -89,13 +89,18 @@ legacy trace colors are darkened for readability without changing saved JSON.
 Window selects the visible timespan without clearing history, including while
 paused. Save layout persists it. History remains bounded by max_points / one
 hour, so a longer selected window may contain empty space at the start.
-AIM BASE 4.3.0 publishes Z acceleration but its units are unverified: it uses
-the right raw axis. AIM gyro traces AX~/AY~/AZ~ are ESTIMATES from quaternion
+AIM vectors are shown in WITNESS axes per the shared "AIM axes..." setting
+(Map & Attitude; aim_alignment.py), named in the overview title when it is not
+identity. AIM BASE 4.3.0 publishes one acceleration component, along AIM +Z,
+units unverified (right raw axis). z_acceleration stays the raw value;
+_derived.accel_witness[0..2] puts it on the Witness axis AIM +Z lies along
+(only that one is filled; the default A X/Y/Z traces use these).
+AIM gyro traces AX~/AY~/AZ~ are ESTIMATES from quaternion
 differences, not raw measurements. They use orientation_payload/v1 and derived
-fields _derived.gyro_dps[0..2], in deg/s on the same axis as Witness. The sample
+fields _derived.gyro_dps[0..2], in deg/s in Witness axes (rotated by the mount;
+_derived.gyro_dps_aim[0..2] keep AIM's own axes). The sample
 timestamp is microseconds, independent of the graph's host receive clock.
-The calculation assumes Hamilton body-to-world quaternions; AIM axis convention
-and mounting relative to Witness have not been verified. Duplicates, retained
+The calculation assumes Hamilton body-to-world quaternions. Duplicates, retained
 samples and backwards times produce no estimate; invalid data or a gap longer
 than 3 s (AIM_MAX_GAP_S) re-primes the estimator. No extrapolation across missing data.
 Clear/reload resets the estimator; Pause/time-window changes do not. More than
@@ -232,11 +237,19 @@ class FlightPanel(ReadoutPanel):
     def __init__(self, parent=None):
         super().__init__("FLIGHT OVERVIEW", parent)
         self.layout_.setContentsMargins(8, 4, 8, 4)
-        self.title.setText("FLIGHT OVERVIEW   W = Witness   A = AIM   F = Featherweight")
+        self._title_text = "FLIGHT OVERVIEW   W = Witness   A = AIM   F = Featherweight"
+        self.title.setText(self._title_text)
         self.title.setToolTip("Distance: from the pad (Set pad re-references).\n"
                               "A baro / Vz: estimates; GPS units raw.\n"
                               "States are one-way (Pad Idle > Boost > Coast > Descent > Landed); 0x7300 in "
                               "Landed reboots Witness to Pad Idle. Vz positive = up; altitude AGL (ft).")
+
+    def show_aim_axes(self, text):
+        """Say in the title when AIM vectors are rotated into Witness axes ('' = as received)."""
+        title = self._title_text + (f"   (A in Witness axes: {text.replace('AIM in Witness axes: ', '')})"
+                                    if text else "")
+        if self.title.text() != title:
+            self.title.setText(title)
 
     def show_panel(self, panel):
         shape = [len(cells) for _t, cells in panel["metrics"]]
@@ -434,9 +447,10 @@ class GraphPanel(QtWidgets.QFrame):
 
 
 class FlightView(QtWidgets.QWidget):
-    def __init__(self, parent=None, *, layout_path=DEFAULT_LAYOUT, pad=None):
+    def __init__(self, parent=None, *, layout_path=DEFAULT_LAYOUT, pad=None, aim_alignment=None):
         super().__init__(parent)
         self.paused, self.frozen, self.frozen_status = False, None, None
+        self.aim_alignment = aim_alignment    # shared aim_alignment.SharedAimAlignment (or None)
         self.wall_offset = time.time() - time.monotonic()
         self.layout_path = Path(layout_path)
         self.load_error = None
@@ -452,7 +466,7 @@ class FlightView(QtWidgets.QWidget):
             except (OSError, ValueError):
                 layout = validate_layout({"version": 1, "plots": [{"title": "Altitude above pad", "unit": "m",
                     "traces": [{"label": "W", "input": "witness", "packet": "state", "field": "kalman_altitude"}]}]})
-        self.data = FlightData(layout, pad=pad)
+        self.data = FlightData(layout, pad=pad, aim_alignment=aim_alignment)
         root = QtWidgets.QVBoxLayout(self)
         root.setContentsMargins(4, 4, 4, 4)
         root.setSpacing(3)
@@ -628,9 +642,18 @@ class FlightView(QtWidgets.QWidget):
     def show_details(self):
         QtWidgets.QMessageBox.information(self, "Flight View details", self.display_details())
 
+    def aim_axes_text(self):
+        """The shared "AIM axes..." setting, or "" while AIM is shown as received."""
+        if self.aim_alignment is None:
+            return ""
+        frame = self.aim_alignment.frame()
+        return "" if frame.identity else frame.description
+
     def display_details(self):
+        axes = self.aim_axes_text() or "AIM axes as received"
         return (f"{self.layout_path.name}\n{self.data.layout.window_seconds:g}s window | UTC receive time\n"
                 "Solid W / dashed A | A gyro ~ = quaternion estimate\n"
+                f"A accel / gyro in Witness axes per 'AIM axes...' (Map & Attitude): {axes}\n"
                 "! old/invalid | History bounded by max_points\n"
                 "AIM GPS altitude remains on the Altitude graph. FW fix mode is on the Featherweight GPS tab.")
 
@@ -714,6 +737,7 @@ class FlightView(QtWidgets.QWidget):
                                                                     fr.landed_line(status, end)))
         guard_call("FlightView.flight_panel", lambda: self.flight_panel.show_panel(
             fr.flight_panel(layout, histories, end)))
+        guard_call("FlightView.aim_axes", lambda: self.flight_panel.show_aim_axes(self.aim_axes_text()))
         guard_call("FlightView.gps", lambda: self.gps_panel.show_rows(fr.status_rows(layout, histories, end, "gps")))
         guard_call("FlightView.power", lambda: self.power_panel.show_rows(
             fr.status_rows(layout, histories, end, "power")))

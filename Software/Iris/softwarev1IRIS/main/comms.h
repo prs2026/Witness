@@ -293,6 +293,13 @@
 // (rotation about world +Z) is not observable without a magnetometer; it is
 // fixed arbitrarily at initialization by the shortest-arc tilt alignment.
 // All four components zero means attitude is not available.
+// Sign of W (q and -q are the same rotation, so it carries a flag): W >= +0
+// is a normal attitude; W <= -0 (negative zero when W is 0) is the attitude
+// carried by the gyro alone after a gyro saturation in flight (the estimator
+// kept integrating; Witness firmware 2026-11-25 and later). Its absolute tilt
+// and heading are unknown (whatever the saturation hid), but the relative
+// motion since (spin, swing, tumbling under the parachute) is measured. Set
+// until the next pad initialization. Older firmware sent all-zero instead.
 #define IRIS_FIELD_ORIENTATION_QUAT_X_LENGTH 4U
 #define IRIS_FIELD_ORIENTATION_QUAT_Y_LENGTH 4U
 #define IRIS_FIELD_ORIENTATION_QUAT_Z_LENGTH 4U

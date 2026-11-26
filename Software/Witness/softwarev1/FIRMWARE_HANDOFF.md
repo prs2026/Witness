@@ -70,6 +70,100 @@ The workbook is `AMA_comms_standard.xlsx`. For software changes, inspect
 `comms.h` first; do not silently regenerate it from a potentially different
 workbook revision. Spreadsheet edits require their own validation workflow.
 
+## Changes of 2026-11-25 (flight 2026-11-21 fixes)
+
+From `Logs/FLIGHT_ANALYSIS_2026-11-21.md` section 5. Host tests: all 29 pass.
+
+- **Attitude recovery after gyro saturation** (`attitude_estimator`): **built,
+  but turned off in the firmware** (`Sensors::kAttitudeRecoveryEnabled = false`).
+  - *How it behaves:* a saturation in flight still makes the attitude invalid
+    (`lost()`), but the gyro keeps being integrated internally. When
+    `Step.recovery_allowed` is set, the tilt is snapped to gravity only after
+    5 s at rest. Every sample needs |gyro| < 3 dps and |a| in 0.96–1.04 g; the
+    window mean must be 0.97–1.03 g and coherent (≥ 0.998).
+  - *Why so strict:* under a parachute, the specific force isn't gravity. It
+    also carries drag transients, swing and spin. The first version (1 s,
+    < 100 dps, 0.7–1.3 g) would have snapped to a wrong tilt in the air. In the
+    2026-11-21 flight, the descent ran at a median 330–410 dps, and the first
+    window at rest was on the ground (154 s).
+  - *Why it's off:* recovering on the ground is useless, because once landed
+    the attitude isn't needed. Landing detection uses |a|, |gyro| and the held
+    AGL. After a saturation, the filter runs without the IMU for the rest of the
+    flight (velocity decay, ballistic Descent, below). Log line: "gyro saturated
+    ... at N m/s".
+- **No-IMU velocity decay** (`position_filter`). When the filter predicts without
+  the IMU (attitude lost or not initialised, IMU down, reset in flight) and an axis
+  has had no accepted measurement for 1 s (vertical: baro or GPS altitude;
+  horizontal: GPS), that axis's velocity decays to zero with τ = 2 s. Before this,
+  it was held, and the altitude drifted 2,300 m. The AGL then settles, so the
+  landing test (calm IMU, AGL span ≤ 10 m for 30 s) passes on the ground. Config
+  `no_aid_velocity_tau_s` (0 = off) and `no_aid_decay_delay_s`.
+- **Boost → Coast from velocity** (`flight_state_machine`). After a climb faster
+  than 20 m/s, Coast also starts when the Kalman vertical velocity has been 10 m/s
+  below its Boost peak for 1 s, in case the axial burnout rule is missed.
+  Mirrored in `HITL/sim_model.py`.
+- **Packet/text/UART ring launch protection across a reset** (`flash_logger`,
+  audit item 9). The flight marker now also holds the three ring sequence numbers
+  at launch ("WLRS" + 3 × u32, 24 bytes). On resume, `pages_since_launch` is
+  computed from them (`log_slot::pages_since_launch`) instead of restarting at 0.
+  Markers written before this have no extension, and resume falls back to the old
+  behaviour with a warning.
+- **MS5607 PROM read** (`ms5607`). At boot, each bus setting is tried in turn
+  (10 MHz mode 3, 2 MHz mode 3, 1 MHz mode 0, 250 kHz mode 3) with 3 resets each,
+  and the first whose PROM passes the CRC is kept and logged. The retry from the
+  sensor task is now one reset and read with the next setting, about 5 ms. The old
+  retry blocked the task for about 20 ms every 0.5 s: that is the 24.8 ms longest
+  pass and the FIFO overruns seen in the flight log. PROM words are logged the
+  first time, when they change, and on every 64th failure.
+- **Descent and landing with nothing measuring altitude** (`flight_state_machine`,
+  `position_filter`, `sensors`). The first HITL replay of the 2026-11-21 flight
+  with the velocity decay stayed in Coast. The gyro saturated just after apogee
+  (vz −2.2 m/s), the decay took vz to 0, and neither Descent rule could trigger.
+  - *Ballistic Descent:* the filter reports `vertical_unaided()` (IMU not used,
+    no baro or GPS altitude for 1 s) with the vz when that started and the time
+    since. In Coast, Descent is declared once that time reaches max(vz, 0)/g + 1 s
+    (`kUnaidedApogeeMarginMs`). Drag only shortens the time to apogee, so this is
+    an upper bound.
+  - *Rest hold:* IMU-only integration drifts on the ground. In a replay with
+    the (since disabled) recovery, it drifted 26 m/s in 85 s from about
+    0.04 °/s of gyro bias, so the AGL moved more than the 10 m landing window.
+    The same applies to a flight that never saturates but has no baro or GPS. In Descent and Landed, while |a| is within
+    0.95–1.05 g and |gyro| < 5 dps, `hold_unaided_velocity` decays the velocity
+    of axes with no baro or GPS (τ 2 s). It has no effect while the baro or GPS
+    is accepted.
+- **Baro thrust gate** (`position_filter`). While the IMU drives the filter, the
+  baro is not used from the first sample with |specific force| > 2 g, or with
+  |vz| > 30 m/s, in Pad Idle (the 300 ms launch qualification window) and in
+  Boost (`kBaroThrustG`, `kBaroThrustSpeedMps`).
+  - *Released:* in Coast once Mach < 0.75, if the Mach gate never tripped
+    (subsonic flights keep the baro for apogee); in Descent; or when the pad
+    hold returns (a bump on the pad).
+  - *Not applied without the IMU:* then the baro is the only vertical
+    measurement, and the launch rule that works without attitude needs it.
+  - *Why:* a HITL replay of the 2026-11-21 flight with the Raven's pressure
+    showed the baro reading 5–8 m high in the first 0.3 s (ignition transient
+    and port lag). Trusted at its pad weight, that put vz 24 m/s high, and the
+    Mach-gated coast carried it to an apogee 345 m high.
+  - `baro_gated()` and the 0xE0 flag `BARO_GATED` now cover both gates;
+    `baro_thrust_gated()` is the thrust gate alone.
+- **Gyro-carried attitude after a saturation** (`attitude_estimator`, `sensors`).
+  - *What changed:* 0x02, 0xE0 and the text log now send the attitude the gyro
+    kept integrating after a saturation (`tracked_quaternion()`), instead of
+    all-zero. It is flagged by the sign of w: w ≤ −0 means gyro-carried (see
+    `comms.h` and `GROUND_STATION_PROTOCOL.md`), and normal attitudes are sent
+    with w ≥ +0. The flag (`carried()`) stays set until the next pad
+    initialization.
+  - *Why:* the absolute tilt and heading are wrong by whatever the saturation
+    hid, but spin, swing and tumbling under the parachute are still measured.
+  - *Inside the firmware, nothing changes:* the position filter and pad heading
+    still use `quaternion()`, which stays all-zero while lost.
+- **Buzzer build switch** (`Kconfig.projbuild`, `heartbeat.cpp`, `build_images.ps1`).
+  `CONFIG_WITNESS_BUZZER_ENABLED` (default y) gates all buzzing; with it off,
+  GPIO48 is held low. `build_images.ps1 -Bench` adds the `sdkconfig.bench` overlay,
+  which turns it off, so bench boards are silent. The script deletes a build
+  dir's `sdkconfig` when the variant (flight or bench) changes, and prints
+  "buzzer ON/OFF" for each image. Flight images must be built without `-Bench`.
+
 ## Changes of 2026-11-16 (audit fixes)
 
 These changes come from the fix reports listed in each item. Nothing here was

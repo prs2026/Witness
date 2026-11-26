@@ -7,11 +7,16 @@
 #
 #   .\build_images.ps1            # build both (incremental) and collect
 #   .\build_images.ps1 -Clean     # full clean of both build dirs first
+#   .\build_images.ps1 -Bench     # bench build: buzzer compiled off (sdkconfig.bench)
+#
+# The generated sdkconfig of a build dir is deleted whenever the variant
+# (flight / bench) differs from that dir's last build, because ESP-IDF only
+# applies SDKCONFIG_DEFAULTS to options missing from an existing sdkconfig.
 #
 # The image is chosen by the WITNESS_IMAGE environment variable (unset =
 # flight) and the sdkconfig overlay: sdkconfig.defaults + sdkconfig.flight /
 # sdkconfig.maint, each with its own generated sdkconfig.
-param([switch]$Clean)
+param([switch]$Clean, [switch]$Bench)
 $ErrorActionPreference = 'Stop'
 . 'C:\Espressif\tools\Microsoft.v6.1.PowerShell_profile.ps1' *> $null
 Set-Location $PSScriptRoot
@@ -21,10 +26,18 @@ function Invoke-Build([string]$Name, [string]$Dir, [string]$Overlay, [string]$Im
     if ($Image) { $env:WITNESS_IMAGE = $Image } else { Remove-Item Env:WITNESS_IMAGE -ErrorAction SilentlyContinue }
     try {
         if ($Clean -and (Test-Path $Dir)) { Remove-Item -Recurse -Force $Dir }
+        $variant = if ($Bench) { 'bench' } else { 'flight' }
+        $marker = Join-Path $Dir 'witness_variant.txt'
+        $last = if (Test-Path $marker) { (Get-Content $marker -Raw).Trim() } else { '' }
+        if ($last -ne $variant -and (Test-Path "$Dir/sdkconfig")) { Remove-Item -Force "$Dir/sdkconfig" }
         $defaults = "sdkconfig.defaults;$Overlay"
+        if ($Bench) { $defaults = "$defaults;sdkconfig.bench" }
         $out = cmd /c "idf.py -B $Dir -D SDKCONFIG=$Dir/sdkconfig -D `"SDKCONFIG_DEFAULTS=$defaults`" build 2>&1"
         $out | Select-String 'error:|warning: |Project build complete|FAILED' | ForEach-Object { $_.Line }
         if ($LASTEXITCODE -ne 0) { throw "$Name build failed" }
+        Set-Content -Path $marker -Value $variant
+        $buzzer = Select-String -Path "$Dir/sdkconfig" -Pattern '^CONFIG_WITNESS_BUZZER_ENABLED=y' -Quiet
+        Write-Host ("$Name image: {0} build, buzzer {1}" -f $variant, $(if ($buzzer) { 'ON' } else { 'OFF' }))
     } finally { Remove-Item Env:WITNESS_IMAGE -ErrorAction SilentlyContinue }
 }
 

@@ -217,6 +217,15 @@ private:
     static constexpr std::uint32_t kFlightMarkerPage = 1;  // within block 0
     static constexpr std::uint32_t kSessionMagic = 0x574C5331U; // WLS1
     static constexpr std::uint32_t kFlightMagic = 0x574C4654U;  // WLFT
+    // Flight marker extension: "WLRS" then the text, UART and packet ring
+    // sequences at launch, so launch protection survives a reset in flight.
+    static constexpr std::uint32_t kFlightRingMagic = 0x574C5253U;  // WLRS
+    static constexpr std::size_t kFlightMarkerSize = 24;
+    // Index of a ring stream in the marker's sequence list (-1: not a ring).
+    static constexpr int ring_marker_index(std::uint8_t type)
+    {
+        return type == kTextType ? 0 : type == kUart1Type ? 1 : type == kPacketType ? 2 : -1;
+    }
     static constexpr std::uint32_t kPageMagic = 0x574C5047U;    // WLPG
     static constexpr std::uint8_t kStoreVersion = 4;
     static_assert(kStoreVersion == IRIS_MAINT_STORE_FORMAT_VERSION,
@@ -296,6 +305,10 @@ private:
         bool dirty = false;    // header/marker page was uncorrectable
         std::uint8_t version = 0;
         std::uint32_t generation = 0;
+        // Ring stream sequences at launch (text, UART, packet; low 20 bits),
+        // from the flight marker; false for markers written before 2026-11-25.
+        bool launch_sequences_valid = false;
+        std::uint32_t launch_sequence[3]{};
     };
     static FileLayout file_layout(std::uint8_t slot, std::uint8_t type,
                                   std::uint8_t version = kStoreVersion);

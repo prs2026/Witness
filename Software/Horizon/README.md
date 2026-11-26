@@ -182,7 +182,9 @@ Featherweight velocity is converted from feet per second.
 
 AIM pressure is interpreted as pascals. Horizon estimates pressure altitude using a standard atmosphere with a 101325 Pa reference, then estimates vertical velocity from successive altitude differences divided by publisher timestamp differences. These are not AIM’s calibrated/fused outputs or height above ground.
 
-AIM gyro traces are estimates from quaternion differences in degrees per second, not direct gyro samples. The calculation assumes Hamilton body-to-world quaternions; mounting and axis agreement with Witness are not verified. Derived gyro and velocity estimates require fresh, ordered samples and are not extrapolated across gaps.
+AIM gyro traces are estimates from quaternion differences in degrees per second, not direct gyro samples. The calculation assumes Hamilton body-to-world quaternions. Derived gyro and velocity estimates require fresh, ordered samples and are not extrapolated across gaps.
+
+**AIM in Witness axes.** AIM's body-frame data are shown in Witness's axes per the one **AIM axes...** setting (button in Map & Attitude / the Visualizer; axis mapping, roll about the nose, heading; saved to `aim_alignment.json`, git-ignored). It applies at once to the purple rocket, the AIM tab and the Flight View AIM traces (`aim_alignment.SharedAimAlignment`). Body-frame vectors use the mount only (v_witness = conjugate(M) v_aim); the heading turns only the orientation. AIM BASE publishes one acceleration component, along AIM +Z: `z_acceleration` stays raw and `_derived.accel_witness[0..2]` puts it on the Witness axis AIM +Z lies along (the default A X/Y/Z traces; only that axis has data). The quaternion-difference gyro `_derived.gyro_dps[0..2]` is in Witness axes (`_derived.gyro_dps_aim[0..2]` keeps AIM's own). The orientation in Witness axes is `_derived.q_witness[0..3]` (x, y, z, w). GNSS, pressure/altitude, temperature, batteries and RSSI are world-frame or scalar and are not rotated. The AIM MQTT JSONL log stays exactly as received, so a different alignment can be applied later. The Flight View overview title says "A in Witness axes" whenever the setting is not identity.
 
 AIM fields whose publisher units remain unverified, including GPS altitude and Z acceleration, retain their raw labeling and separate graph axes where configured. Do not compare raw-unit and physical-unit values as if their units were identical. See [flight_view.py](flight_view.py), [aim_altitude.py](aim_altitude.py), and [aim_orientation.py](aim_orientation.py) for the detailed assumptions.
 
@@ -394,6 +396,7 @@ Commands are sent from the Witness monitor, not Horizon. All command shortcuts, 
 | `attitude_view.py`, `attitude_scene.py`, `attitude_data.py`, `attitude_math.py` | Attitude tab and 3D/2D rocket widget; rocket geometry (no Qt); live/CSV samples; quaternion math |
 | `visualizer.py`, `map_data.py`, `map_tiles.py`, `pad_reference.py`, `geodesy.py` | Visualizer window (attitude over map in portrait, side by side in landscape); tracks, tile cache, pad selection, geodesy |
 | `aim_altitude.py`, `aim_orientation.py` | Derived AIM altitude, velocity, and angular rates |
+| `aim_alignment.py` | AIM-to-Witness axes ("AIM axes..."): shared, thread-safe alignment applied to every AIM readout |
 | `main.py`, `monitor_core.py`, `witness_protocol.py`, `witness_link.py`, `witness_test_source.py` | `MonitorPanel` Qt widget (embedded by witnessOS); monitor logic and protocol (no Qt); local relay; test playback |
 | `converter.py`, `viewer.py` | Postflight conversion and analysis |
 | `witness_download.py`, `witness_pi_agent.py` | Download Witness flash logs through the bench Pi |

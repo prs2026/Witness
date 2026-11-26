@@ -175,8 +175,19 @@ void test_write_health()
 
 }  // namespace
 
+void test_pages_since_launch()
+{
+    assert(pages_since_launch(1500, 1000, 4096) == 500);
+    assert(pages_since_launch(1000, 1000, 4096) == 0);
+    // Sequence wrapped through 2^20 since launch.
+    assert(pages_since_launch(10, kSequenceMask - 9, 4096) == 20);
+    // More than the ring since launch: clamped (stays stopped).
+    assert(pages_since_launch(9000, 1000, 4096) == 4096);
+}
+
 int main()
 {
+    test_pages_since_launch();
     test_choose();
     test_linear_end();
     test_ring_end();

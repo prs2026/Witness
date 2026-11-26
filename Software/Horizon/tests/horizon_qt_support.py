@@ -47,4 +47,7 @@ def make_horizon(log_dir, **options):
     options.setdefault("broker_enabled", False)
     options.setdefault("use_gl", False)
     options.setdefault("tile_cache", TileCache(Path(log_dir) / "tiles", fetch=None))
+    # Never read or write the user's saved aim_alignment.json from tests.
+    from aim_alignment import SharedAimAlignment
+    options.setdefault("aim_alignment", SharedAimAlignment(path=Path(log_dir) / "aim_alignment.json"))
     return HorizonGroundStation(log_dir=Path(log_dir), **options)

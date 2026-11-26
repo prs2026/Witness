@@ -65,7 +65,7 @@ Telemetry `kalman_altitude` and `velocity[2]`, compared with the Raven's baro AG
 - **Altitude:** the error is +43 to +50 m through the coast with no time shift applied. With the best-fit shift of 0.32 s (receive latency plus the 2 Hz sample timing), it's 23 m RMS. The remaining offset builds up during the boost: −42 m to +107 m while the samples are only 0.5 s apart and the vehicle moves 350 m/s.
 - **Vertical speed:** −3.4 m/s mean and 6.6 m/s RMS against the baro slope from 2 to 19.9 s. The largest error, 28 m/s, is right after burnout, where the baro slope is least trustworthy.
 - **The Raven's own `Velocity_Up`** reads about 26 m/s lower than its baro slope during the coast, and crosses zero 3 s before its baro apogee. It isn't a good truth for vertical speed, so the baro slope is used instead.
-- **Horizontal velocity** was about 28 m/s to the south-west by the end of the burn, and position 520 m from the pad at apogee.
+- **Horizontal velocity** was about 28 m/s by the end of the burn, and position 520 m from the pad at apogee. Witness reported this as south-west, but no pad heading was set, so the direction was arbitrary: the GPS track went east (see section 7).
 
 **Conclusion:** the IMU-only prediction and the GPS trust ramp code did their job up to apogee. The weak point is what happens after the attitude is lost.
 
@@ -91,7 +91,17 @@ Telemetry `kalman_altitude` and `velocity[2]`, compared with the Raven's baro AG
 | `lsm6_temperature` | 62–65 °C for most of the log, which needs a look: either the board ran hot or the temperature scale is wrong |
 | IMU FIFO (text log, after the resets) | 918 Hz, about 300 overruns per 10 s, longest sensor-task pass 24.8 ms, "spikes rejected 181" |
 
-## 5. Things to fix (proposals, not done)
+## 5. Things to fix
+
+Status 2026-11-25 (firmware not committed; details in `FIRMWARE_HANDOFF.md`, HITL results in section 8):
+1. Attitude after a saturation: a recovery from gravity is implemented but **turned off**. It is only sound at rest, which in this flight meant on the ground, and once landed the attitude isn't needed. After a saturation the filter runs without the IMU instead.
+2. **Done.** Without the IMU and with no baro or GPS, the velocity decays to 0 (τ 2 s). A ballistic bound (last measured vz / g + 1 s) declares Descent. A rest hold keeps the AGL still on the ground so Landed is detected.
+3. Not done (launch blocking on a baro or GPS failure).
+4. Partly done: Landed works without altitude (2). Low-power mode not done.
+5. **Done.** The flight marker carries the ring sequence numbers at launch.
+6. **Checked.** The temperature scale is right (bench board within 2 °C of its MS5607); the flight board self-heated to 65 °C. The 24.8 ms pass and the FIFO overruns came from the MS5607 PROM retry, which is now short.
+
+Original list (2026-11-22):
 
 1. **Don't give up the attitude for good after a short saturation.** For a shock that saturates for a few samples, re-initialise the attitude once the rates settle. In descent the attitude can be rebuilt from gravity whenever the vehicle is momentarily quiet, or the filter can fall back to the |f| magnitude mode.
 2. **Bound the velocity when the IMU is ignored and there's no barometer or GPS.** Decay it towards zero, or after apogee towards a typical descent rate, instead of holding the last value. And give a Landed fallback by time since apogee when no altitude source is valid.
@@ -166,3 +176,116 @@ Telemetry `kalman_altitude` and `velocity[2]`, compared with the Raven's baro AG
 **This replay is the regression test for the fixes.** Command:
 
 `py -3.14 replay_flight.py <I*.csv> --raven <Raven LR csv> --calibration-from <S*.TXT>`, on a bench board without a stored calibration.
+
+## 7. Horizontal direction: no pad heading was set (2026-11-24)
+
+**Finding:** the Kalman track went almost the opposite way from the GPS because Witness had no heading, not because a heading was entered wrong.
+- No pad heading command (`0x4844`, Horizon's "Set pad heading…") was sent: there is no command in the Horizon log and no "pad heading applied" line in `S00003E1.TXT`.
+- Witness has no magnetometer. On the pad it initialises its attitude from gravity alone (shortest-arc rotation onto +Up), so tilt is known but heading is not: the board's +Y axis is taken as north.
+- Its GPS heading alignment could not help either: the receiver had no fix in flight.
+
+**Track against the AIM GPS (from the pad, bearings clockwise from true north):**
+
+| Flight time | Witness (telemetry) | AIM GPS |
+|---|---|---|
+| ~8 s | 247 m at 247° | 177 m at 15° |
+| apogee (19–20 s) | 486 m at 245° | 488 m at 82° |
+| after apogee | velocity frozen at 241° | 675–1,020 m at 75–84° |
+
+- The distance agrees within 2 m at apogee: the filter measured the sideways motion; only its frame was rotated.
+- The flight track has to turn about 164° to reach the GPS apogee. That does **not** give the rail heading directly, because the flight board's "north" was not its +Y axis (see 7.1); the replay puts the board's +Y axis at about **152° true**.
+- The GPS track's side-to-side detail before apogee is not trusted (it bends north-west then east); only its apogee position is used.
+
+**Fix for the next flight:** set the pad heading before launch (a body axis across the rocket, +Y/−Y/+Z/−Z, and its compass bearing). With a GPS fix in flight, Witness would also correct it.
+
+### 7.1 HITL replay with the pad heading set (runs `20261124-133524`, `-134423`, `-135321`)
+
+**Method:** `replay_flight.py --pad-heading +Y:DEG` (new option) sends the pad heading command 6 s into the pad hold, as Horizon's "Set pad heading…" would. Witness confirmed each one (`pad heading applied: body +Y at 183.6 deg (turned +176.3 deg)`). The GPS track's side-to-side detail is not trusted, so the only horizontal truth used is the **AIM GPS apogee position: 488 m from the pad at 81.7°, 20.43 s after liftoff**. Liftoff for the AIM is taken from its acceleration jump; its Boost state comes 0.64 s late.
+
+| Case | Witness apogee | Bearing error | Position error at apogee |
+|---|---|---|---|
+| Flight, no pad heading | 526 m at 245° | +164° | 1004 m |
+| Replay, +Y at 183.6° | 525 m at 114° | +32° | 285 m |
+| Replay, +Y at 136.1° | 526 m at 67° | −15° | 138 m |
+| Replay, +Y at 151.6° | 526 m at 82° | +0.4° | **38 m** |
+
+**Reading the result:**
+- The heading command works exactly: every replay is the same track rotated by the heading change (183.6° → 136.1° moved the apogee bearing by 47.5°), and nothing else changed.
+- **The heading that matches the GPS apogee is +Y at about 152° true.** That value comes from the GPS apogee itself, so the bearing match in the last row is by construction. The independent result is the **distance: 526 m against 488 m, 38 m (8 %) long**, which is the filter's own horizontal error once the heading is right.
+- **A ±15° pad heading would put the apogee about 140 m off** (right panel of `heading_apogee_error_2026-11-21.png`). Without a heading the error can be anything up to about 1 km.
+- The first guess, 184°, assumed the flight board's +Y axis was its "north". It wasn't: Witness sets up its attitude the first time it is still on the pad, and the frame then follows the gyro. If that happened before the rocket was raised on the rail, "north" ends up wherever the raise turned it. **Send the pad heading after the rocket is vertical on the rail.**
+- Replay detail: this firmware reached Landed (sim 241.6 s) in the first run; the flight never did.
+
+![Apogee error against GPS](heading_apogee_error_2026-11-21.png)
+
+### 7.2 Cross-check: pad heading from the AIM magnetometer (no GPS)
+
+**Method:** the AIM's pad magnetometer and accelerometer (9 s before liftoff, 10 Hz) were rotated into Witness's frame with the mapping found earlier (`x=z,y=x,z=y`, roll +5.8°). The local declination, dip and field strength come from the World Magnetic Model, computed offline (the site isn't recorded here).
+
+**Axis checks:**
+- **Cross axes OK:** over the coast the rocket rolled +444° (AIM gyro) and the measured cross-axis field turned −452°, slope −1.00 as it should.
+- **Sign:** the measured dip came out with the opposite sign to the model's, so the field is reversed. Integrating the AIM gyro from the pad and checking which version of the field stays fixed in the world as the nose pitches over (up to 56°): every axis reversed (or as logged), median 15° drift; only the nose axis reversed, up to 111°. With the dip sign, the AIM's magnetometer reports the field with **every axis reversed** relative to its accelerometer.
+- **Hard iron:** a circle fit to the cross-axis field during the coast roll gives an offset of 22 % of the field; after removing it the dip is within 1.2° of the model's.
+
+**Result:**
+
+| Source | Board +Y axis on the rail (true) |
+|---|---|
+| AIM magnetometer, as calibrated by the flight's roll | **153.1°** |
+| AIM magnetometer, no hard-iron correction | 144.3° |
+| HITL replay fitted to the GPS apogee (7.1) | 151.6° |
+
+**Reading it:** a magnetometer on the pad would have given the heading to within about 2° (7° without calibration), both well inside the ±15° that keeps the apogee within about 140 m. The AIM-to-Witness roll alignment (±a few degrees) is the largest remaining uncertainty. **A magnetometer on the next Witness revision is worth it.** Calibrate it in the rocket (a gyro-tracked rotation), and check its field strength and dip against the World Magnetic Model at the pad before trusting it.
+
+
+## 8. HITL replays with the Raven's barometer (2026-11-25)
+
+**What was run:** the flight IMU replay of section 6.1, pad heading +Y:151.6°, on firmware with the 2026-11-25 fixes (bench build, buzzer off). Four variants:
+- **R1:** no baro (as flown).
+- **R2:** the Raven's recorded static pressure fed as the Witness baro.
+- **R3:** as R2, with the transonic error (0.3–4 s) made three times larger.
+- **R4:** as R2, with overpressure more than 500 Pa above a 1.5 s running median removed (the ejection spike).
+
+**Time alignment:** the Raven's flight time is 0.25 s behind the Witness IMU's. The Witness zero is its launch detection, the Raven's is its own liftoff. They were matched where each vehicle passes 200 m/s in boost. The first set of baro runs used no shift; the 0.25 s lag at 100–300 m/s gave a false 40–75 m baro error in boost and a Descent at 14 s. Those runs are discarded. `replay_flight.py` now aligns automatically (`--raven-shift` overrides it).
+
+| Run | Boost / Coast | Descent (how) | Landed | Kalman apogee | Altitude error, coast 7–19.5 s |
+|---|---|---|---|---|---|
+| Flight (Witness) | 0 / 1.41 s | 20.3 s | 185 s | 2620 m | |
+| R1 no baro | 0 / 1.44 s | 21.0 s (ballistic) | 178.7 s | 2619 m | +37 m RMS |
+| R2 Raven baro | 0 / 1.44 s | 22.2 s (ballistic) | 178.8 s | **2922 m** | **+235 m RMS** |
+| R3 transonic ×3 | 0 / 1.44 s | 22.1 s (ballistic) | 178.7 s | 2922 m | +236 m RMS |
+| R4 spike capped | 0 / 1.44 s | 24.0 s (ballistic) | 178.7 s | **3309 m** | +479 m RMS |
+
+Raven apogee 2577 m at 19.6 s; touchdown about 149 s. Landed at 179 s is touchdown plus the 30 s landing window. The flight's 185 s was later.
+
+![HITL baro replays](hitl_baro_replays_2026-11-25.png)
+
+**Findings:**
+- **The Mach gate works.** The baro is gated from Mach 0.8 (0.34 s) until Descent, so the Mach dip never reaches the filter: R3, with a 3× deeper dip, is identical to R2. The baro rejoins in Descent and tracks the Raven within a few metres all the way down. The ejection spike falls inside the gated time.
+- **The baro hurts the ascent before the gate closes.** In the launch window (from first motion, through the 300 ms launch qualification, to Mach 0.8), the Raven's pressure reads 5–8 m high (ignition transient and port lag). The filter accepts it with its pad trust, and the vertical velocity jumps to 151 m/s against 127 m/s from the IMU alone. The gated coast then integrates that error for 20 s: apogee +345 m, and a Kalman apogee 2.4 s late. In R4 the running-median cap also bends the early pressure, which makes it worse (+732 m).
+- **Descent still came after apogee in every run.** The gyro saturates just after apogee, so the IMU is dropped. The baro is still gated, so nothing measures the altitude and the ballistic bound fires 1–4 s later. With a filter 300 m high, vz at the loss was +11 to +29 m/s, which gives a 2–4 s bound.
+- **IMU only (R1):** the ascent is within +44 m of the Raven up to apogee.
+
+**Fix (done, section 8.1):** don't accept the baro while the vehicle is under thrust. Gate it from the first boost-level acceleration (> 2 g, which covers the launch qualification window where the phase is still Pad Idle) or above about 30 m/s, and keep the existing Mach rule. Release the thrust gate in Coast when the Mach gate never tripped (subsonic flights), so they keep the baro for apogee. Then rerun R2–R4: the ascent should match R1, and the baro should take over in Descent.
+
+### 8.1 With the baro thrust gate (2026-11-25)
+
+**Change:** while the IMU drives the filter, the baro is not used from the first sample above 2 g, or above 30 m/s vertical, in Pad Idle and Boost. It comes back in Coast below Mach 0.75 if the Mach gate never tripped, in Descent, or when the pad hold returns. Same replays as section 8, with the same 0.25 s Raven alignment.
+
+| Run | Descent | Landed | Kalman apogee | Altitude error RMS: ascent 0–7 s / coast / apogee / descent |
+|---|---|---|---|---|
+| R1 no baro | 20.96 s | 178.7 s | 2619 m at 19.72 s | 20 / 37 / 70 / 1570 m |
+| R2 Raven baro | 20.96 s | 178.7 s | 2618 m at 19.70 s | 20 / 37 / 27 / **3.3 m** |
+| R3 transonic ×3 | 20.98 s | 178.7 s | 2620 m at 19.74 s | 19 / 37 / 28 / 3.3 m |
+| R4 spike capped | 20.96 s | 178.8 s | 2618 m at 19.72 s | 20 / 37 / 28 / 3.3 m |
+
+Raven apogee: 2577 m at 19.55 s.
+
+![HITL baro replays with the thrust gate](hitl_baro_thrust_gate_2026-11-25.png)
+
+**Reading it:**
+- **The ascent is now IMU-only in every baro run, exactly as R1:** a Kalman apogee of 2618–2620 m (+1.6 % against the Raven), against 2922–3309 m before the gate.
+- **Mach dip and ejection spike:** a 3× deeper Mach dip (R3) and capping the ejection spike (R4) have no effect. The baro is gated through both.
+- **Descent:** the gyro saturates at apogee and the baro is still gated, so the ballistic bound declares Descent 1.0 s later, at 20.96 s (real apogee 20.3 s). The baro then rejoins and tracks the Raven within 3.3 m RMS all the way down.
+- **Landed:** 178.7 s, touchdown plus the 30 s landing window. Without the baro (R1) the AGL is held at apogee, as designed.
+- **Attitude after the saturation:** the state packets now carry the gyro-carried quaternion with w < 0 from 20.0 s to the end of the log: all 10,999 packets, none all-zero, all of unit norm. Horizon shows it as "GYRO-CARRIED ATTITUDE".

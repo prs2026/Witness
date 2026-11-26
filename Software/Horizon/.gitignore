@@ -4,5 +4,6 @@ __pycache__/
 *$py.class
 auto_connect_*.json
 auto_connect_*.json.tmp
+aim_alignment.json
 tile_cache/
 logs/

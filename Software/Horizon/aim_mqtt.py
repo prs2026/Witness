@@ -5,6 +5,10 @@ topic names below were checked against the installed AIM BASE executable.
 The GUI's illustrative 'gnss/v1' text differs from the actual 'gnss_payload/v1'
 publisher. Subscribe to the configured base subtree to also capture new topics.
 Values are preserved as published; no unverified unit conversions are applied.
+The JSONL log is always the raw message. An optional ``align`` hook (the shared
+aim_alignment.SharedAimAlignment.align_fields) then ADDS Witness-axis versions of
+AIM's body-frame fields beside the raw ones before on_sample and the AIM tab see
+them, so a later different alignment can still be applied to the log.
 """
 
 from __future__ import annotations
@@ -116,7 +120,7 @@ class AimMqttReceiver:
     not cause received payloads to be omitted from the log.
     """
 
-    def __init__(self, settings: AimSettings, log_dir: Path, *, on_sample=None):
+    def __init__(self, settings: AimSettings, log_dir: Path, *, on_sample=None, align=None):
         self.settings = settings
         self.log_dir = Path(log_dir)
         self.client = None
@@ -135,6 +139,7 @@ class AimMqttReceiver:
         self.last_received = None
         self._last_status = None
         self.on_sample = on_sample
+        self.align = align       # (topic, fields) -> fields + Witness-axis fields; after logging
         self.auto_retry = True
         self._thread = None
 
@@ -292,6 +297,12 @@ class AimMqttReceiver:
         except (ValueError, TypeError, RecursionError) as exc:
             record["error"] = str(exc)
         self._write_log(record)
+        if "error" not in record and self.align is not None:
+            # The log line above is already raw; only what Horizon shows is aligned.
+            try:
+                fields = self.align(topic, fields)
+            except Exception as exc:
+                self._diagnostic(f"ALIGN_ERROR: {exc}")
         if "error" not in record and self.on_sample is not None:
             try:
                 source = f"{self.settings.host}:{self.settings.port}/{self.settings.base_path}"

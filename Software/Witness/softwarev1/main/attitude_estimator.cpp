@@ -77,6 +77,7 @@ void Estimator::reset()
     bias_ = Vector3{};
     valid_ = false;
     lost_ = false;
+    carried_ = false;
     saturation_run_ = 0;
     have_time_ = false;
     last_timestamp_us_ = 0;
@@ -85,7 +86,16 @@ void Estimator::reset()
     flight_steps_ = 0;
     flight_time_s_ = 0.0;
     reset_window();
+    reset_recovery();
     clear_filter();
+}
+
+void Estimator::reset_recovery()
+{
+    for (double &v : recovery_up_sum_) v = 0.0;
+    recovery_norm_sum_ = 0.0;
+    recovery_count_ = 0;
+    recovery_start_us_ = 0;
 }
 
 void Estimator::reset_window()
@@ -139,6 +149,8 @@ StepResult Estimator::update(const Step &step)
     if (lost_ && phase_ == FlightPhase::PadIdle) {
         // Back on the pad: allow a new stationary window to initialize.
         lost_ = false;
+        q_ = Quaternion{1.0F, 0.0F, 0.0F, 0.0F};
+        reset_recovery();
         clear_filter();
     }
 
@@ -165,9 +177,6 @@ StepResult Estimator::update(const Step &step)
     have_time_ = true;
     last_timestamp_us_ = step.timestamp_us;
 
-    if (lost_) {
-        return result;  // Attitude given up after gyro saturation.
-    }
     // A non-finite gyro or accelerometer sample must not enter the quaternion,
     // the median history or the stationary window (NaN would stay there):
     // drop the sample like a gap and count it.
@@ -178,9 +187,11 @@ StepResult Estimator::update(const Step &step)
         ++gaps_;
         result.gap = true;
         reset_window();
+        reset_recovery();
         return result;
     }
-    // Gyro saturation in flight: the true rate is unknown, so stop.
+    // Gyro saturation in flight: the true rate is unknown, so the attitude is
+    // no longer trusted. It keeps being tracked (clipped) for a recovery.
     const float limit = config_.gyro_saturation_rad_s;
     const bool saturated = std::fabs(step.gyro_rad_s.x) >= limit ||
                            std::fabs(step.gyro_rad_s.y) >= limit ||
@@ -188,14 +199,17 @@ StepResult Estimator::update(const Step &step)
     saturation_run_ = saturated ? saturation_run_ + 1U : 0U;
     if (saturated && is_flight(phase_) &&
         saturation_run_ >= config_.saturation_samples) {
-        lost_ = true;
-        valid_ = false;
-        ++saturation_events_;
-        result.lost_now = true;
-        return result;
+        if (!lost_ && valid_) {
+            lost_ = true;
+            valid_ = false;
+            carried_ = true;
+            ++saturation_events_;
+            result.lost_now = true;
+        }
+        reset_recovery();
     }
 
-    if (phase_ == FlightPhase::Landed) {
+    if (phase_ == FlightPhase::Landed && !lost_) {
         return result;  // Hold the final attitude.
     }
 
@@ -234,7 +248,7 @@ StepResult Estimator::update(const Step &step)
             ++spikes_rejected_;
         }
         const std::uint32_t centre_dt_us = history_dt_us_[centre];
-        if (valid_ && centre_dt_us > 0U) {
+        if ((valid_ || lost_) && centre_dt_us > 0U) {
             const float dt_s = static_cast<float>(centre_dt_us) * 1e-6F;
             const Vector3 rate{filtered.x - bias_.x, filtered.y - bias_.y,
                                filtered.z - bias_.z};
@@ -249,20 +263,26 @@ StepResult Estimator::update(const Step &step)
                 // stationary window re-initialises it.
                 ++nonfinite_events_;
                 valid_ = false;
+                lost_ = false;
                 q_ = Quaternion{1.0F, 0.0F, 0.0F, 0.0F};
                 clear_filter();
                 reset_window();
+                reset_recovery();
                 return result;
             }
             q_ = normalized(next);
-            ++steps_;
-            if (is_flight(phase_)) {
+            if (valid_) ++steps_;
+            if (is_flight(phase_) && valid_) {
                 ++flight_steps_;
                 flight_time_s_ += static_cast<double>(dt_s);
             }
         }
     }
 
+    if (lost_) {
+        recovery_step(step, result.gap, result);
+        return result;
+    }
     if (!accel_ok) {
         return result;  // Flight phases, or a non-stationary pad sample.
     }
@@ -383,6 +403,7 @@ void Estimator::finish_window(const std::uint64_t timestamp_us, StepResult &resu
     if (!valid_) {
         q_ = shortest_arc(accel_unit, Vector3{0.0F, 0.0F, 1.0F});
         valid_ = true;
+        carried_ = false;
         result.initialized_now = true;
         return;
     }
@@ -395,12 +416,64 @@ void Estimator::finish_window(const std::uint64_t timestamp_us, StepResult &resu
     q_ = tilt_corrected(window_start_q_, accel_unit, fraction);
 }
 
+void Estimator::recovery_step(const Step &step, const bool gap, StepResult &result)
+{
+    const bool phase_ok = phase_ == FlightPhase::Landed ||
+                          (is_flight(phase_) && step.recovery_allowed);
+    const float a = norm(step.specific_force_g);
+    const float w = norm(step.gyro_rad_s);
+    if (!phase_ok || gap || saturation_run_ > 0U || !(a >= config_.recovery_min_g) ||
+        !(a <= config_.recovery_max_g) || !(w < config_.recovery_max_gyro_rad_s)) {
+        reset_recovery();
+        return;
+    }
+    // Specific force in the world frame by the tracked attitude (which lags
+    // the newest sample by the median delay: negligible below 100 dps).
+    const Vector3 up = rotate(q_, step.specific_force_g);
+    if (recovery_count_ == 0U) recovery_start_us_ = step.timestamp_us;
+    recovery_up_sum_[0] += up.x;
+    recovery_up_sum_[1] += up.y;
+    recovery_up_sum_[2] += up.z;
+    recovery_norm_sum_ += a;
+    ++recovery_count_;
+    if (recovery_count_ < config_.recovery_min_samples ||
+        step.timestamp_us - recovery_start_us_ < config_.recovery_window_us) {
+        return;
+    }
+    const double n = static_cast<double>(recovery_count_);
+    const Vector3 mean{static_cast<float>(recovery_up_sum_[0] / n),
+                       static_cast<float>(recovery_up_sum_[1] / n),
+                       static_cast<float>(recovery_up_sum_[2] / n)};
+    const float mean_norm = static_cast<float>(recovery_norm_sum_ / n);
+    const float coherent = norm(mean);
+    reset_recovery();
+    if (!(mean_norm >= config_.recovery_mean_min_g) || !(mean_norm <= config_.recovery_mean_max_g) ||
+        !(coherent >= config_.recovery_min_coherence * mean_norm)) {
+        return;  // Swinging or accelerating: try the next window.
+    }
+    const Vector3 up_unit = scale(mean, 1.0F / coherent);
+    float cz = up_unit.z;
+    if (cz > 1.0F) cz = 1.0F;
+    if (cz < -1.0F) cz = -1.0F;
+    result.recovery_tilt_correction_deg = std::acos(cz) * kRadiansToDegrees;
+    q_ = tilt_corrected_world(q_, up_unit, 1.0F);
+    valid_ = true;
+    lost_ = false;
+    ++recoveries_;
+    result.recovered_now = true;
+}
+
 Quaternion Estimator::tilt_corrected(const Quaternion &q, const Vector3 &accel_unit,
                                      const float fraction)
 {
+    return tilt_corrected_world(q, rotate(q, accel_unit), fraction);
+}
+
+Quaternion Estimator::tilt_corrected_world(const Quaternion &q, const Vector3 &up,
+                                           const float fraction)
+{
     // Measured "up" in WORLD; rotate it toward +Z about a horizontal axis
     // (a_world x Z), which leaves heading unchanged to first order.
-    const Vector3 up = rotate(q, accel_unit);
     const Vector3 axis{up.y, -up.x, 0.0F};
     const float s = norm(axis);
     if (s < 1e-7F) return q;
