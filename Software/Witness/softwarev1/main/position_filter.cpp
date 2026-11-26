@@ -81,6 +81,7 @@ void Filter::predict(const float acceleration_world_mps2[3], const float dt_s,
     }
     initialized_ = true;
     imu_ignored_ = false;
+    vertical_unaided_ = false;
     if (!(dt_s > 0.0F)) {
         return;
     }
@@ -98,6 +99,7 @@ void Filter::predict(const float acceleration_world_mps2[3], const float dt_s,
         return;
     }
     const float specific_force = std::sqrt(ax * ax + ay * ay + az * az);
+    last_specific_force_mps2_ = specific_force;
     still_ = phase == Phase::PadIdle &&
              std::fabs(specific_force - kGravity) < config_.still_band_g * kGravity;
 
@@ -217,9 +219,45 @@ void Filter::predict_without_imu(const float dt_s, const Phase phase)
     }
     clock_s_ += static_cast<double>(dt_s);
     if (dt_s > kMaxPredictDtS) ++predict_gaps_;   // bridged, see predict()
-    propagate_without_acceleration(std::fmin(dt_s, kMaxGapBridgeS),
-                                   config_.no_imu_accel_noise_mps2);
+    const float dt = std::fmin(dt_s, kMaxGapBridgeS);
+    propagate_without_acceleration(dt, config_.no_imu_accel_noise_mps2);
+    decay_unaided_velocity(dt);
     check_health();
+}
+
+void Filter::hold_unaided_velocity(const float dt_s)
+{
+    if (!std::isfinite(dt_s) || !(dt_s > 0.0F)) return;
+    decay_unaided_velocity(std::fmin(dt_s, kMaxGapBridgeS));
+    check_health();
+}
+
+void Filter::decay_unaided_velocity(const float dt_s)
+{
+    velocity_decaying_ = false;
+    const double delay = static_cast<double>(config_.no_aid_decay_delay_s);
+    const bool vertical = last_vertical_aid_s_ < 0.0 || clock_s_ - last_vertical_aid_s_ > delay;
+    const bool horizontal =
+        last_horizontal_aid_s_ < 0.0 || clock_s_ - last_horizontal_aid_s_ > delay;
+    // Unaided vertical motion (for the state machine's apogee bound): record
+    // the velocity and time when it starts, before any decay.
+    const bool unaided = imu_ignored_ && vertical;
+    if (unaided && !vertical_unaided_) {
+        unaided_entry_vz_mps_ = axes_[2].v;
+        unaided_since_s_ = clock_s_;
+    }
+    vertical_unaided_ = unaided;
+    if (!(config_.no_aid_velocity_tau_s > 0.0F) || !(dt_s > 0.0F)) return;
+    const float a = std::exp(-dt_s / config_.no_aid_velocity_tau_s);
+    for (int i = 0; i < 3; ++i) {
+        if (!(i == 2 ? vertical : horizontal)) continue;
+        Axis &s = axes_[i];
+        s.v *= a;
+        s.P01 *= a;
+        s.P11 *= a * a;
+        s.P12 *= a;
+        velocity_decaying_ = true;
+    }
 }
 
 void Filter::predict_magnitude_only(const float specific_force_mps2, const float dt_s,
@@ -238,6 +276,7 @@ void Filter::predict_magnitude_only(const float specific_force_mps2, const float
     const bool gap = dt_s > kMaxPredictDtS;
     if (gap) ++predict_gaps_;
     const float dt = std::fmin(dt_s, kMaxGapBridgeS);
+    last_specific_force_mps2_ = specific_force_mps2;
     // Stillness and pad gravity need only |specific force|, so the pad hold
     // works without an attitude. Away from the pad (or not still) the
     // vertical acceleration is unknown: zero with the no-IMU process noise.
@@ -246,6 +285,12 @@ void Filter::predict_magnitude_only(const float specific_force_mps2, const float
     if (!gap) track_pad_gravity(specific_force_mps2, dt, phase);
     propagate_without_acceleration(
         dt, still_ ? config_.accel_noise_mps2 : config_.no_imu_accel_noise_mps2);
+    if (still_) {
+        velocity_decaying_ = false;
+        vertical_unaided_ = false;   // the pad hold measures it
+    } else {
+        decay_unaided_velocity(dt);
+    }
     check_health();
 }
 
@@ -515,11 +560,26 @@ bool Filter::update_baro(const float altitude_m, const float pressure_pa, const 
         baro_reference_set_ = true;
     }
     if (phase == Phase::PadIdle && still_) {
+        baro_thrust_gated_ = false;   // a bump on the pad, now still again
         baro_reference_m_ += kReferenceAlpha * (altitude_m - baro_reference_m_);
         return false;  // the pad hold pins the state; only track the reference
     }
 
     const float current_mach = mach();
+    // Thrust gate (see the header comment).
+    const bool launch_phase = phase == Phase::PadIdle || phase == Phase::Boost;
+    // Only while the IMU drives the filter: without it the barometer is the
+    // only vertical measurement (and the attitude-free launch rule needs it).
+    if (imu_ignored_) {
+        baro_thrust_gated_ = false;
+    } else if (launch_phase && (last_specific_force_mps2_ > kBaroThrustG * kGravity ||
+                                std::fabs(axes_[2].v) > kBaroThrustSpeedMps)) {
+        baro_thrust_gated_ = true;
+    } else if (baro_thrust_gated_ && !launch_phase) {
+        const bool coast_release =
+            phase == Phase::Coast && !baro_gated_ && current_mach < kBaroMachResume;
+        if (coast_release || phase != Phase::Coast) baro_thrust_gated_ = false;
+    }
     if (baro_gated_) {
         // Once gated, the barometer stays out for the rest of Boost and
         // Coast: the transonic static-pressure error does not end at burnout
@@ -530,9 +590,9 @@ bool Filter::update_baro(const float altitude_m, const float pressure_pa, const 
     } else if (current_mach >= kBaroMachCutoff) {
         baro_gated_ = true;
     }
-    if (baro_gated_) {
+    if (baro_gated_ || baro_thrust_gated_) {
         ++baro_gated_count_;
-        return false;  // zero trust above Mach 0.8
+        return false;  // zero trust above Mach 0.8 or under thrust
     }
 
     const float sigma = baro_sigma_m(pressure_pa, altitude_msl_m());
@@ -560,6 +620,7 @@ bool Filter::update_baro(const float altitude_m, const float pressure_pa, const 
     }
     ++baro_updates_;
     cycles_since_baro_ = 0;
+    last_vertical_aid_s_ = clock_s_;
     check_health();
     return true;
 }
@@ -690,7 +751,12 @@ bool Filter::update_gps(const double latitude_deg, const double longitude_deg,
         }
     }
     if (used) ++gps_updates_;
-    if (gps_innovation_[2].accepted) cycles_since_gps_up_ = 0;
+    if (gps_innovation_[2].accepted) {
+        cycles_since_gps_up_ = 0;
+        last_vertical_aid_s_ = clock_s_;
+    }
+    if (gps_innovation_[0].accepted || gps_innovation_[1].accepted)
+        last_horizontal_aid_s_ = clock_s_;
     check_health();
     return used;
 }

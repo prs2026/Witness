@@ -331,6 +331,10 @@ class ReferenceStateMachine:
     EVIDENCE_AXIAL_G = 3.0
     BURNOUT_G = 1.0
     BURNOUT_MS = 500
+    # Boost -> Coast, second path (2026-11-25): Kalman vz 10 m/s below its
+    # Boost peak for 1 s, after a climb faster than APOGEE_SEEN_MPS.
+    SLOWDOWN_DROP_MPS = 10.0
+    SLOWDOWN_MS = 1000
     DESCENT_FRACTION = 0.95
     DESCENT_MIN_DROP_M = 10.0
     DESCENT_MS = 500
@@ -450,6 +454,8 @@ class ReferenceStateMachine:
             self._accel_last_us = 0
             self._air_up_start = None
             self._air_down_start = None
+            self._boost_peak = None
+            self._slow_start = None
             if cur == hp.COAST:
                 self._coast_start = ts_us
             if cur in (hp.PAD_IDLE, hp.BOOST):
@@ -490,7 +496,15 @@ class ReferenceStateMachine:
                 self._inferred = True
                 self._set(hp.DESCENT, ts_us)
         elif cur == hp.BOOST:
-            if self._held(low_g_x < self.BURNOUT_G, ts_us, self.BURNOUT_MS):
+            if getattr(self, "_boost_peak", None) is None or vz_mps > self._boost_peak:
+                self._boost_peak = vz_mps
+            slowing = self._climb_seen and vz_mps <= self._boost_peak - self.SLOWDOWN_DROP_MPS
+            if not slowing:
+                self._slow_start = None
+            elif getattr(self, "_slow_start", None) is None:
+                self._slow_start = ts_us
+            slowed = slowing and ts_us - self._slow_start >= self.SLOWDOWN_MS * 1000
+            if self._held(low_g_x < self.BURNOUT_G, ts_us, self.BURNOUT_MS) or slowed:
                 self._set(hp.COAST, ts_us)
         elif cur == hp.COAST:
             drop = max(self._max_alt * (1.0 - self.DESCENT_FRACTION), self.DESCENT_MIN_DROP_M)

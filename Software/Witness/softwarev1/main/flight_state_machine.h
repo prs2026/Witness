@@ -83,6 +83,15 @@ public:
     static constexpr float kFlightEvidenceAxialG = 3.0F;
     static constexpr float kBurnoutAccelerationG = 1.0F;
     static constexpr std::uint32_t kBurnoutQualificationMs = 500;
+    // Boost -> Coast, second path (needs no accelerometer axis): after a climb
+    // faster than kApogeeSeenVelocityMps, the Kalman vertical velocity has
+    // fallen at least kBoostSlowdownDropMps below its Boost peak, continuously
+    // for kBoostSlowdownQualificationMs. The vehicle is decelerating, so the
+    // motor is out. Covers a missed axial-acceleration burnout (wrong axis,
+    // a clipped or noisy low-g accelerometer), which would otherwise keep
+    // Boost (and the barometer gating) for the whole flight.
+    static constexpr float kBoostSlowdownDropMps = 10.0F;
+    static constexpr std::uint32_t kBoostSlowdownQualificationMs = 1000;
     // Coast -> Descent (Kalman path): AGL below kDescentAltitudeFraction of
     // the maximum AGL, with downward Kalman vertical velocity, for
     // kDescentQualificationMs.
@@ -106,6 +115,13 @@ public:
     static constexpr std::uint32_t kDescentVelocityQualificationMs = 2000;
     static constexpr std::uint32_t kDescentMinimumCoastMs = 3000;
     static constexpr float kApogeeSeenVelocityMps = 20.0F;
+    // Coast -> Descent (ballistic path): nothing measures the vertical motion
+    // (IMU not used after a gyro saturation, no barometer or GPS altitude), so
+    // the Kalman velocity only decays towards 0 and the other paths never see
+    // it fall. Apogee comes no later than vz / g after the last supported
+    // vertical velocity vz (drag only shortens it): Descent is declared
+    // kUnaidedApogeeMarginMs after that.
+    static constexpr std::uint32_t kUnaidedApogeeMarginMs = 1000;
 
     struct Observation {
         float axial_acceleration_g = 0.0F;
@@ -126,6 +142,12 @@ public:
         // Raw barometer altitude rate (position::BaroRate), up positive.
         bool baro_rate_valid = false;
         float baro_rate_mps = 0.0F;
+        // Position filter: no sensor measures the vertical motion (see
+        // position::Filter::vertical_unaided), with the vertical velocity when
+        // that started and the time since.
+        bool vertical_unaided = false;
+        float unaided_entry_vz_mps = 0.0F;
+        float unaided_elapsed_s = 0.0F;
     };
 
     // Called (from any task) on every state change with the new state, the
@@ -229,6 +251,9 @@ private:
     std::uint64_t launch_accel_last_us_ = 0;
     Dwell airborne_up_{};
     Dwell airborne_down_{};
+    Dwell boost_slowdown_{};
+    float boost_peak_velocity_mps_ = 0.0F;
+    bool boost_peak_valid_ = false;
     float peak_axial_g_ = 0.0F;
     bool flight_inferred_ = false;   // resumed or declared from the barometer
     float landing_minimum_altitude_meters_ = 0.0F;

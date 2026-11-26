@@ -245,6 +245,9 @@ void FlightStateMachine::reset_for_state(
     launch_accel_last_us_ = 0;
     airborne_up_ = Dwell{};
     airborne_down_ = Dwell{};
+    boost_slowdown_ = Dwell{};
+    boost_peak_valid_ = false;
+    boost_peak_velocity_mps_ = 0.0F;
     if (state == State::Coast) {
         coast_entered_us_ = observation.timestamp_us;
     }
@@ -372,7 +375,20 @@ void FlightStateMachine::update(const Observation &observation)
         break;
     }
 
-    case State::Boost:
+    case State::Boost: {
+        const bool vz_ok = observation.vertical_velocity_valid &&
+                           std::isfinite(observation.vertical_velocity_mps);
+        if (vz_ok && (!boost_peak_valid_ ||
+                      observation.vertical_velocity_mps > boost_peak_velocity_mps_)) {
+            boost_peak_velocity_mps_ = observation.vertical_velocity_mps;
+            boost_peak_valid_ = true;
+        }
+        const bool slowing = dwell_held(
+            boost_slowdown_,
+            vz_ok && boost_peak_valid_ && climb_seen_ &&
+                observation.vertical_velocity_mps <=
+                    boost_peak_velocity_mps_ - kBoostSlowdownDropMps,
+            observation.timestamp_us, kBoostSlowdownQualificationMs);
         if (condition_held(
                 observation.low_g_axial_acceleration_valid &&
                     observation.low_g_axial_acceleration_g <
@@ -382,8 +398,17 @@ void FlightStateMachine::update(const Observation &observation)
             ESP_LOGI(kLogTag, "burnout detected: axial acceleration %.2f g",
                      observation.low_g_axial_acceleration_g);
             (void)set_state(static_cast<std::uint8_t>(State::Coast));
+        } else if (slowing) {
+            ESP_LOGW(kLogTag, "burnout detected (Kalman velocity): vertical velocity %.1f m/s, "
+                              "%.1f m/s below the Boost peak %.1f m/s for %u ms",
+                     static_cast<double>(observation.vertical_velocity_mps),
+                     static_cast<double>(boost_peak_velocity_mps_ - observation.vertical_velocity_mps),
+                     static_cast<double>(boost_peak_velocity_mps_),
+                     static_cast<unsigned>(kBoostSlowdownQualificationMs));
+            (void)set_state(static_cast<std::uint8_t>(State::Coast));
         }
         break;
+    }
 
     case State::Coast: {
         // AGL path: below 95 % of the maximum AGL (and at least 10 m below
@@ -405,6 +430,23 @@ void FlightStateMachine::update(const Observation &observation)
                      agl, maximum_altitude_meters_);
             (void)set_state(static_cast<std::uint8_t>(State::Descent));
             break;
+        }
+
+        // Ballistic path: nothing measures the vertical motion (see
+        // kUnaidedApogeeMarginMs).
+        if (observation.vertical_unaided && std::isfinite(observation.unaided_entry_vz_mps) &&
+            std::isfinite(observation.unaided_elapsed_s)) {
+            const float bound_s = std::max(observation.unaided_entry_vz_mps, 0.0F) / 9.80665F +
+                                  static_cast<float>(kUnaidedApogeeMarginMs) * 1e-3F;
+            if (observation.unaided_elapsed_s >= bound_s) {
+                ESP_LOGW(kLogTag, "descent detected (ballistic, no altitude sensor): %.1f s since the "
+                                  "vertical velocity was last measured (%.1f m/s), apogee bound %.1f s",
+                         static_cast<double>(observation.unaided_elapsed_s),
+                         static_cast<double>(observation.unaided_entry_vz_mps),
+                         static_cast<double>(bound_s));
+                (void)set_state(static_cast<std::uint8_t>(State::Descent));
+                break;
+            }
         }
 
         // Velocity path: Kalman vertical velocity clearly downward after an

@@ -32,7 +32,9 @@ offline metric grid; with "OSM tiles" on it also draws OpenStreetMap tiles
 cached per user outside the repo (use --offline-map to never fetch). Tracks are
 collected while the window is closed.
 
-Flight View opens first. The Attitude tab draws the Witness quaternion as a 3D
+AIM vectors (orientation, Z acceleration, derived gyro) are shown in Witness's
+axes per the one "AIM axes..." setting (Map & Attitude; aim_alignment.json); the
+raw AIM MQTT log stays as received. Flight View opens first. The Attitude tab draws the Witness quaternion as a 3D
 rocket (live from the feed, or replaying a converter/HITL CSV); see README.md.
 Use the Layout Editor tab to edit a separate draft, then Apply to update the
 dashboard or Save JSON to reuse it. Applying resets graph history, not
@@ -53,6 +55,7 @@ import sys
 from PyQt6 import QtGui, QtWidgets
 
 from qt_common import ensure_app
+from aim_alignment import SharedAimAlignment
 from aim_tab import AimMqttTab
 from attitude_data import LiveAimAttitude
 from attitude_view import AttitudeTab
@@ -77,7 +80,7 @@ TAB_TITLES = ("Flight View", "Attitude", "Map & Attitude", "Witness", "Featherwe
 class HorizonGroundStation(QtWidgets.QMainWindow):
     def __init__(self, *, log_dir=LOG_DIR, auto_connect=True, flight_layout=DEFAULT_LAYOUT,
                  broker_enabled=DEFAULT_MQTT_BROKER_ENABLED, broker_port=DEFAULT_MQTT_BROKER_PORT,
-                 map_online=True, tile_cache=None, use_gl=None):
+                 map_online=True, tile_cache=None, use_gl=None, aim_alignment=None):
         ensure_app()
         super().__init__()
         # Pad reference and ground track are shared by Flight View (AGL altitudes,
@@ -85,6 +88,9 @@ class HorizonGroundStation(QtWidgets.QMainWindow):
         self.pad = PadReference()
         self.map_data = MapData(self.pad)
         self.aim_attitude = LiveAimAttitude()
+        # The one AIM-to-Witness alignment ("AIM axes...", aim_alignment.json): the Visualizer
+        # rocket, AIM tab fields and Flight View AIM accel/gyro all read it.
+        self.aim_alignment = aim_alignment if aim_alignment is not None else SharedAimAlignment()
         self.tiles = tile_cache if tile_cache is not None else TileCache(online=map_online)
         self.use_gl = use_gl
         self.visualizer = None
@@ -97,18 +103,19 @@ class HorizonGroundStation(QtWidgets.QMainWindow):
         self.notebook = QtWidgets.QTabWidget()
         self.notebook.setDocumentMode(True)
         self.setCentralWidget(self.notebook)
-        self.flight = FlightView(layout_path=flight_layout, pad=self.pad)
+        self.flight = FlightView(layout_path=flight_layout, pad=self.pad, aim_alignment=self.aim_alignment)
         self.attitude = AttitudeTab(use_gl=use_gl)
         self.witness = WitnessTab(log_dir=log_dir, on_record=self._witness_record)
         self.featherweight = FeatherweightTab(log_dir=log_dir, on_record=self._featherweight_record)
         self.aim = AimMqttTab(log_dir=log_dir, host=DEFAULT_AIM_MQTT_HOST, port=DEFAULT_AIM_MQTT_PORT,
                               client_uuid=DEFAULT_AIM_MQTT_UUID, base_path=DEFAULT_AIM_MQTT_BASE_PATH,
                               on_sample=self._aim_sample, broker_enabled=broker_enabled,
-                              broker_port=broker_port)
+                              broker_port=broker_port, alignment=self.aim_alignment)
         self.layout_editor = FlightLayoutEditor(flight=self.flight)
         # The map and attitude visualizer as a tab (it can also pop out, F9).
         self.map_tab = VisualizerPanel(live=self.attitude.live, aim=self.aim_attitude, map_data=self.map_data,
-                                       tiles=self.tiles, use_gl=use_gl, on_pop_out=self.open_visualizer)
+                                       tiles=self.tiles, use_gl=use_gl, on_pop_out=self.open_visualizer,
+                                       alignment=self.aim_alignment)
         for tab, title in zip((self.flight, self.attitude, self.map_tab, self.witness, self.featherweight,
                                self.aim, self.layout_editor), TAB_TITLES):
             self.notebook.addTab(tab, title)
@@ -142,6 +149,7 @@ class HorizonGroundStation(QtWidgets.QMainWindow):
         self.flight.data.accept_record("featherweight", record)
 
     def _aim_sample(self, source, topic, fields, received, retained):
+        # From AimMqttReceiver: raw fields plus their Witness-axis versions (aim_alignment.align_fields).
         self.flight.data.accept_aim(source, topic, fields, received, retained)
         self.map_data.accept_aim(source, topic, fields, received, retained)
         self.aim_attitude.accept_aim(source, topic, fields, received, retained)
@@ -154,7 +162,7 @@ class HorizonGroundStation(QtWidgets.QMainWindow):
             return self.visualizer
         # The Attitude tab's LiveAttitude already ingests every Witness record.
         self.visualizer = VisualizerWindow(live=self.attitude.live, aim=self.aim_attitude, map_data=self.map_data,
-                                           tiles=self.tiles, use_gl=self.use_gl)
+                                           tiles=self.tiles, use_gl=self.use_gl, alignment=self.aim_alignment)
         self.visualizer.show()
         return self.visualizer
 

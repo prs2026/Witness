@@ -1,5 +1,13 @@
 menu "Witness image"
 
+    config WITNESS_BUZZER_ENABLED
+        bool "Buzzer sounds (flight builds: yes)"
+        default y
+        help
+            Off for bench builds (build_images.ps1 -Bench, sdkconfig.bench): the
+            buzzer is never driven and GPIO48 is held low. Flight images must
+            have it on (recovery locator, pad warnings).
+
     choice WITNESS_IMAGE
         prompt "Which Witness image this build produces"
         default WITNESS_IMAGE_FLIGHT

@@ -75,6 +75,10 @@ class AttitudeSample:
     hitl: int | None = None
     snapshot: bool = False          # relay replay of an old record on reconnect
     interpolated: bool = False
+    # Witness sends w <= -0 for the attitude carried by the gyro alone after a
+    # gyro saturation (comms.h, IRIS_FIELD_ORIENTATION_*): relative motion is
+    # measured, absolute tilt and heading are not. q is still the rotation.
+    carried: bool = False
 
 
 def make_sample(t, raw, source, *, truth_raw=None, **fields):
@@ -86,8 +90,16 @@ def make_sample(t, raw, source, *, truth_raw=None, **fields):
             raw_tuple = tuple(float(c) if c is not None else math.nan for c in raw)
         except (TypeError, ValueError):
             raw_tuple = None
+    fields.setdefault("carried", is_carried(raw_tuple) if q is not None else False)
     return AttitudeSample(t, q, raw_tuple, raw_norm, reason, source, truth=truth,
                           truth_reason=truth_reason, **fields)
+
+
+def is_carried(raw):
+    """Witness's gyro-carried flag: the sign of w (x, y, z, w), negative zero included."""
+    if raw is None or len(raw) != 4 or not math.isfinite(raw[3]):
+        return False
+    return math.copysign(1.0, raw[3]) < 0.0
 
 
 # ---------------------------------------------------------------- live feed
@@ -182,8 +194,9 @@ class LiveAimAttitude:
 
     accept_aim() matches AimMqttReceiver's on_sample signature and runs on the
     MQTT thread. AIM publishes x, y, z, w; it is kept in Witness wire order
-    (x, y, z, w). AIM's body frame and heading reference relative to Witness
-    are unverified, so the overlay is a visual comparison, not a truth.
+    (x, y, z, w) and RAW (AIM's own axes); the Visualizer rotates it into
+    Witness's axes at draw time with the shared "AIM axes..." alignment
+    (aim_alignment.py), so a changed alignment also moves older samples.
     """
 
     def __init__(self):

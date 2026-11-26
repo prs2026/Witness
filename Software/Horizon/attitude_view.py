@@ -840,6 +840,8 @@ class AttitudeTab(QtWidgets.QWidget):
             legend += "   truth (blue dashed)"
         if aligned:
             legend += f"   estimate rotated {offset:+.1f}° about U"
+        if s.carried:
+            legend += "   GYRO-CARRIED after saturation: relative motion only"
         # Live data older than STALE_S (or a snapshot) is drawn faded, like the
         # Visualizer does, so a frozen last attitude is never mistaken for live.
         alpha = 1.0

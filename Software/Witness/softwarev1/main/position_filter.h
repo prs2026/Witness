@@ -15,6 +15,18 @@
 //   update  (10/25 Hz):          baro -> U position; GPS -> E, N, U position
 //
 // Barometer trust:
+//  - zero (update skipped) under thrust: from the first sample with
+//    |specific force| above kBaroThrustG, or a vertical speed above
+//    kBaroThrustSpeedMps, in Pad Idle (the launch qualification window) or
+//    Boost. Ignition pressure transients and port lag make the static
+//    pressure read metres off while the vehicle accelerates at 10+ g, and the
+//    pad-level trust turns that into tens of m/s of velocity error (HITL
+//    replay of the 2026-11-21 flight with the Raven's pressure: +24 m/s,
+//    apogee +345 m). Released in Coast below kBaroMachResume when the Mach
+//    gate never tripped (subsonic flights keep the barometer for apogee), in
+//    Descent and later, or when the pad hold is back (a bump on the pad).
+//    Only while the IMU drives the filter: without the IMU the barometer is
+//    the only vertical measurement and stays in (Mach gate only);
 //  - zero (update skipped) at or above kBaroMachCutoff, until the speed falls
 //    below kBaroMachResume (transonic shock waves corrupt static pressure);
 //    once gated in Boost or Coast it stays gated until Descent (the vehicle
@@ -46,6 +58,8 @@ namespace position {
 inline constexpr float kGravity = 9.80665F;
 inline constexpr float kBaroMachCutoff = 0.8F;
 inline constexpr float kBaroMachResume = 0.75F;
+inline constexpr float kBaroThrustG = 2.0F;           // |specific force|, g
+inline constexpr float kBaroThrustSpeedMps = 30.0F;   // |vertical velocity|
 inline constexpr float kBaroMinPressurePa = 1000.0F;  // MS5607: 10 mbar
 
 struct Config {
@@ -127,6 +141,17 @@ struct Config {
     bool measure_pad_gravity = true;
     // Process noise when predicting without IMU (e.g. under a parachute).
     float no_imu_accel_noise_mps2 = 10.0F;
+    // Predicting without the IMU and with no measurement on an axis for
+    // no_aid_decay_delay_s (vertical: an accepted baro or GPS altitude;
+    // horizontal: an accepted GPS fix), that axis's velocity decays to zero
+    // with time constant no_aid_velocity_tau_s instead of being held for the
+    // rest of the flight (flight 2026-11-21: the velocity froze at the attitude
+    // loss and the altitude drifted 2,300 m). With nothing measuring the
+    // motion, "not moving" is the estimate that lets the AGL settle, so the
+    // landing test (calm IMU, AGL stable) can still pass on the ground.
+    // 0 disables.
+    float no_aid_velocity_tau_s = 2.0F;
+    float no_aid_decay_delay_s = 1.0F;
 };
 
 enum class Phase : std::uint8_t {  // numerically FlightStateMachine::State
@@ -273,7 +298,9 @@ public:
     float mach() const;
     // Estimated altitude above mean sea level (pad baro reference + up).
     float altitude_msl_m() const;
-    bool baro_gated() const { return baro_gated_; }
+    // Barometer not used: Mach gate or thrust gate.
+    bool baro_gated() const { return baro_gated_ || baro_thrust_gated_; }
+    bool baro_thrust_gated() const { return baro_thrust_gated_; }
     float last_baro_sigma_m() const { return last_baro_sigma_m_; }
     bool still() const { return still_; }
     bool initialized() const { return initialized_; }
@@ -321,6 +348,40 @@ private:
     // noise (zero acceleration assumed). Shared by predict_without_imu,
     // predict_magnitude_only and the bridging of a predict gap.
     void propagate_without_acceleration(float dt_s, float accel_noise_mps2);
+    // No IMU: decay the velocity of axes no measurement reached recently.
+    void decay_unaided_velocity(float dt_s);
+public:
+    // Times (filter clock) of the last accepted vertical and horizontal
+    // measurement; negative before the first.
+    double last_vertical_aid_s() const { return last_vertical_aid_s_; }
+    double last_horizontal_aid_s() const { return last_horizontal_aid_s_; }
+    // Velocity decay active on any axis in the last no-IMU predict.
+    bool velocity_decaying() const { return velocity_decaying_; }
+    // Nothing measures the vertical motion: the IMU is not used and no
+    // barometer/GPS altitude was accepted for no_aid_decay_delay_s. Then
+    // unaided_entry_vz_mps() is the vertical velocity when that started (the
+    // last estimate anything supported) and unaided_elapsed_s() the time since.
+    // The state machine bounds apogee from them (ballistic: vz / g).
+    bool vertical_unaided() const { return vertical_unaided_; }
+    float unaided_entry_vz_mps() const { return unaided_entry_vz_mps_; }
+    float unaided_elapsed_s() const
+    {
+        return vertical_unaided_ ? static_cast<float>(clock_s_ - unaided_since_s_) : 0.0F;
+    }
+    // Zero-velocity hold while the IMU is used: the caller has seen the
+    // vehicle at rest (Descent/Landed, |a| ~ 1 g, gyro calm). Decays the
+    // velocity of axes that no measurement reached recently, as without the
+    // IMU, so IMU-only drift (gyro bias after an attitude recovery) does not
+    // keep the AGL moving and block landing detection. No effect while the
+    // barometer or GPS is accepted.
+    void hold_unaided_velocity(float dt_s);
+private:
+    double last_vertical_aid_s_ = -1.0;
+    double last_horizontal_aid_s_ = -1.0;
+    bool velocity_decaying_ = false;
+    bool vertical_unaided_ = false;
+    float unaided_entry_vz_mps_ = 0.0F;
+    double unaided_since_s_ = 0.0;
     // After every predict/update: a non-finite (or absurd) state or covariance
     // resets the filter to a large covariance with the pad references kept.
     void check_health();
@@ -350,6 +411,8 @@ private:
     bool still_ = true;
     bool imu_ignored_ = false;
     bool baro_gated_ = false;
+    bool baro_thrust_gated_ = false;
+    float last_specific_force_mps2_ = kGravity;   // last predict's |specific force|
     float gravity_mps2_ = kGravity;
     float gravity_mean_mps2_ = kGravity;
     float gravity_still_s_ = 0.0F;

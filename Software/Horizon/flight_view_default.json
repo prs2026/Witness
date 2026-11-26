@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Fixed, non-scrolling launch dashboard. W=Witness, A=AIM, F=Featherweight. A baro~ is standard pressure altitude (shown in ft), interpreting AIM pressure as Pa with 101325 Pa reference; A~ vertical velocity is delta barometric altitude / delta publisher timestamp in ft/s, positive up. These are estimates, not AIM calibrated/fused outputs. A GPS remains raw on the right altitude axis and GPS readout (publisher units unverified). Altitudes are shown in feet (ft) above the pad, velocities in ft/s; the layout units m and m/s are SI internally and converted only for display, so keep them as m / m/s here. Altitudes are above the pad: W KF is Witness's Kalman altitude (already AGL); F GPS is Featherweight ft ASL minus the pad MSL altitude (Featherweight GS, Aperture GPS, Witness pad GPS, else its first fix); A baro~ is referenced to its first live sample. Set pad re-references F/A altitudes. The Gyro graph shows Witness body rates in deg/s (sensors packet) and the AIM AX~/AY~/AZ~ estimates; the Gyro readout shows Witness X/Y/Z. Invalid data holds the last valid readout with original age and an INVALID flag, with gaps in plots. FW tracker and local/GS batteries stay separate. Zero battery readings are invalid. AIM acceleration AZ stays on a separate raw axis; AX~/AY~/AZ~ gyro traces are quaternion-derived deg/s estimates. Window selector preserves history. The Witness GPS row shows satellites used beside the status GPS lock bit (1 = fresh fix). The state row adds the Witness HITL bit: HITL ACTIVE means simulated sensors, never flight data. Graph arrangement: the first graph (Altitude AGL) is a full-width row, the other four form a 2x2 grid under it (portrait 9:16 first; Gyro replaced Horizontal distance on 2026-11-18, add distance back in the Layout Editor if wanted). See flight_view.py for configuration.",
+  "description": "Fixed, non-scrolling launch dashboard. W=Witness, A=AIM, F=Featherweight. A baro~ is standard pressure altitude (shown in ft), interpreting AIM pressure as Pa with 101325 Pa reference; A~ vertical velocity is delta barometric altitude / delta publisher timestamp in ft/s, positive up. These are estimates, not AIM calibrated/fused outputs. A GPS remains raw on the right altitude axis and GPS readout (publisher units unverified). Altitudes are shown in feet (ft) above the pad, velocities in ft/s; the layout units m and m/s are SI internally and converted only for display, so keep them as m / m/s here. Altitudes are above the pad: W KF is Witness's Kalman altitude (already AGL); F GPS is Featherweight ft ASL minus the pad MSL altitude (Featherweight GS, Aperture GPS, Witness pad GPS, else its first fix); A baro~ is referenced to its first live sample. Set pad re-references F/A altitudes. The Gyro graph shows Witness body rates in deg/s (sensors packet) and the AIM AX~/AY~/AZ~ estimates; the Gyro readout shows Witness X/Y/Z. Invalid data holds the last valid readout with original age and an INVALID flag, with gaps in plots. FW tracker and local/GS batteries stay separate. Zero battery readings are invalid. AIM vectors are in Witness axes per the 'AIM axes...' setting (Map & Attitude): AIM acceleration (one raw component along AIM Z) is drawn as A X/Y/Z on the Witness axis it lies along, on a separate raw axis; AX~/AY~/AZ~ gyro traces are quaternion-derived deg/s estimates in Witness axes. Window selector preserves history. The Witness GPS row shows satellites used beside the status GPS lock bit (1 = fresh fix). The state row adds the Witness HITL bit: HITL ACTIVE means simulated sensors, never flight data. Graph arrangement: the first graph (Altitude AGL) is a full-width row, the other four form a 2x2 grid under it (portrait 9:16 first; Gyro replaced Horizontal distance on 2026-11-18, add distance back in the Layout Editor if wanted). See flight_view.py for configuration.",
   "title": "Horizon Flight View",
   "window_seconds": 120,
   "auto_scale": true,
@@ -101,13 +101,31 @@
           "color": "#006020"
         },
         {
+          "label": "AX",
+          "input": "aim",
+          "packet": "z_acceleration_payload/v1",
+          "field": "_derived.accel_witness[0]",
+          "color": "#004b80",
+          "axis": "right",
+          "note": "AIM raw units, Witness X per 'AIM axes...' (AIM measures its Z only)"
+        },
+        {
+          "label": "AY",
+          "input": "aim",
+          "packet": "z_acceleration_payload/v1",
+          "field": "_derived.accel_witness[1]",
+          "color": "#803900",
+          "axis": "right",
+          "note": "AIM raw units, Witness Y per 'AIM axes...' (AIM measures its Z only)"
+        },
+        {
           "label": "AZ",
           "input": "aim",
           "packet": "z_acceleration_payload/v1",
-          "field": "z_acceleration",
-          "color": "#990000",
+          "field": "_derived.accel_witness[2]",
+          "color": "#006020",
           "axis": "right",
-          "note": "AIM units unverified; separate raw axis"
+          "note": "AIM raw units, Witness Z per 'AIM axes...' (AIM measures its Z only)"
         }
       ],
       "right_unit": "A raw"

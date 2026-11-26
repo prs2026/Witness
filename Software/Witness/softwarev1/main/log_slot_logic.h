@@ -171,6 +171,18 @@ std::uint32_t first_free_page(std::uint32_t e, std::uint32_t capacity, Probe pro
     return e;
 }
 
+// Ring streams after a reset in flight: pages written since launch, from the
+// stream's next sequence number and the sequence it had at launch (both low 20
+// bits, stored in the flight marker). Clamped to the ring capacity: a ring that
+// already holds only post-launch pages stays stopped.
+inline std::uint32_t pages_since_launch(std::uint32_t next_sequence,
+                                        std::uint32_t launch_sequence,
+                                        std::uint32_t capacity)
+{
+    const std::uint32_t d = (next_sequence - launch_sequence) & kSequenceMask;
+    return d > capacity ? capacity : d;
+}
+
 // ---- Write-error policy -----------------------------------------------------
 
 constexpr unsigned kEraseAttempts = 3;       // per block

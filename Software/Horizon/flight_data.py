@@ -16,7 +16,8 @@ import time
 
 import bit_model
 from telemetry_model import flatten_fields, witness_status_fields
-from aim_orientation import AimAngularRateEstimator
+from aim_alignment import align_fields
+from aim_orientation import AimAngularRateEstimator, to_witness_axes
 from aim_altitude import AimAltitudeEstimator
 
 DEFAULT_LAYOUT = Path(__file__).resolve().parent / "flight_view_default.json"
@@ -419,9 +420,11 @@ AGL_FIELDS = {
 
 
 class FlightData:
-    def __init__(self, layout, *, pad=None):
+    def __init__(self, layout, *, pad=None, aim_alignment=None):
         self._lock = threading.Lock()
         self.pad = pad           # optional pad_reference.PadReference (shared with the map)
+        # optional aim_alignment.SharedAimAlignment: AIM body-frame rates in Witness axes
+        self.aim_alignment = aim_alignment
         self.configure(layout)
 
     def configure(self, layout):
@@ -540,9 +543,16 @@ class FlightData:
         if not isinstance(received, (int, float)) or not math.isfinite(received):
             return
         with self._lock:
+            if kind == "aim":
+                # AIM body-frame vectors in Witness axes per the shared "AIM axes..." mount, read
+                # once per sample (immutable snapshot). Raw keys stay; idempotent if the receiver
+                # already added the aligned fields.
+                frame = self.aim_alignment.frame() if self.aim_alignment is not None else None
+                fields = align_fields(packet, fields, frame)
             if kind == "aim" and packet == "orientation_payload/v1":
-                fields = {**fields, **self.aim_rates.update(source, fields, received,
-                          retained=snapshot, valid=valid, max_gap=min(self.layout.gap_seconds, AIM_MAX_GAP_S))}
+                rates = self.aim_rates.update(source, fields, received, retained=snapshot, valid=valid,
+                                              max_gap=min(self.layout.gap_seconds, AIM_MAX_GAP_S))
+                fields = {**fields, **to_witness_axes(rates, frame)}
             if kind == "aim" and packet == "pressure_payload/v1":
                 fields = {**fields, **self.aim_altitude.update(source, fields, received,
                           retained=snapshot, valid=valid, max_gap=min(self.layout.gap_seconds, AIM_MAX_GAP_S))}

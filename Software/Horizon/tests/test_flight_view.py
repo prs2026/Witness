@@ -161,8 +161,10 @@ class HistoryTests(unittest.TestCase):
             model.accept_aim('A', 'z_acceleration_payload/v1', {'z_acceleration': value}, value, False)
         model.accept('witness', 'W', 'sensors', {'filtered_accel[0]': 2, 'gyro[0]': 3}, 10)
         self.assertEqual(model.snapshot()[1][0].latest, 2)
-        self.assertEqual(model.snapshot()[1][3].latest, 9)
-        self.assertEqual(model.layout.plots[1].traces[3].axis, 'right')
+        # A X/Y/Z are in Witness axes; with no alignment AIM +Z is Witness Z (trace 5).
+        self.assertEqual(model.snapshot()[1][5].latest, 9)
+        self.assertIsNone(model.snapshot()[1][3].latest)
+        self.assertEqual([model.layout.plots[1].traces[i].axis for i in (3, 4, 5)], ['right'] * 3)
         self.assertEqual(model.layout.plots[1].right_unit, 'A raw')
         # Partial orientation without a timestamp cannot produce angular rates.
         model.accept_aim('A', 'orientation_payload/v1', {'x': 1, 'y': 2, 'z': 3}, 11, False)

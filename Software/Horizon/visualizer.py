@@ -38,6 +38,7 @@ import numpy as np
 from PyQt6 import QtCore, QtGui, QtWidgets
 import pyqtgraph as pg
 
+from aim_alignment import AXES, DEFAULT_PATH as ALIGNMENT_PATH, AimAlignment, SharedAimAlignment, witness_z_name
 import attitude_math as am
 from attitude_data import LiveAimAttitude, LiveAttitude, state_name
 from attitude_scene import (AIM_ALPHA, AIM_COLOR, AIM_STALE_ALPHA, BAD, MUTED, OK, STALE_ALPHA,  # noqa: F401
@@ -131,10 +132,22 @@ def tile_rect_enu(z, x, y, ref_lat, ref_lon):
 # ------------------------------------------------------------ orientation
 
 class OrientationPanel(QtWidgets.QWidget):
-    def __init__(self, parent=None, *, live=None, aim=None, refresh_ms=REFRESH_MS, use_gl=None):
+    def __init__(self, parent=None, *, live=None, aim=None, refresh_ms=REFRESH_MS, use_gl=None,
+                 alignment=None, alignment_path=ALIGNMENT_PATH):
         super().__init__(parent)
         self.live = live if live is not None else LiveAttitude()
         self.aim = aim if aim is not None else LiveAimAttitude()
+        # One alignment for the whole app: ``alignment`` may be the app's
+        # SharedAimAlignment (Horizon passes it), or a plain AimAlignment / None
+        # (wrapped, saved to alignment_path). Edits are published to every AIM
+        # readout (AIM tab fields, Flight View AIM accel/gyro), not only this rocket.
+        if isinstance(alignment, SharedAimAlignment):
+            self.shared = alignment
+        else:
+            self.shared = SharedAimAlignment(alignment, path=alignment_path)
+        self.alignment_path = self.shared.path
+        self.alignment = self.shared.alignment
+        self._align_dialog = None
         self.aim_shown = None
         self.aim_stale = False
         self.witness_stale = False
@@ -152,6 +165,12 @@ class OrientationPanel(QtWidgets.QWidget):
             button.clicked.connect(lambda _c=False, n=name: self.set_view(n))
             bar.addWidget(button)
         bar.addStretch(1)
+        self.align_button = QtWidgets.QPushButton("AIM axes...")
+        self.align_button.setToolTip("Rotate AIM into Witness's axes (axis mapping, roll, heading) so the two "
+                                     "rockets can be compared. Also applies to every AIM readout and plot "
+                                     "(AIM tab, Flight View AIM accel/gyro); heading only to orientation.")
+        self.align_button.clicked.connect(self.show_alignment)
+        bar.addWidget(self.align_button)
         layout.addLayout(bar)
         hint = QtWidgets.QLabel("Drag to orbit. Solid rocket: Witness quaternion (fresh 0xE0, else 0x02). "
                                 f"<span style='color:{AIM_COLOR}'>Translucent purple rocket: AIM Xtra.</span>")
@@ -168,11 +187,12 @@ class OrientationPanel(QtWidgets.QWidget):
                 ("status", "Attitude"), ("source", "Source"), ("age", "Sample age"),
                 ("state", "Flight state"), ("hitl", "HITL"), ("quat", "q (x, y, z, w)"), ("norm", "|q|"), None,
                 ("aim_tilt", "AIM tilt"), ("aim_roll", "AIM roll"), ("aim_heading", "AIM heading"),
-                ("aim_age", "AIM sample age"))
+                ("aim_age", "AIM sample age"), ("aim_axes", "AIM axes"), ("aim_diff", "Witness vs AIM"))
         panel, self.values, self.labels = readout_panel(rows, big_keys=("tilt", "roll", "heading"))
         note = QtWidgets.QLabel("Witness heading and roll are relative to the arbitrary heading set at "
-                                "initialisation (no magnetometer). Tilt is absolute. AIM's body frame and "
-                                "heading reference relative to Witness are unverified, so compare tilt first.")
+                                "initialisation (no magnetometer). Tilt is absolute. AIM is drawn (and its "
+                                "accel/gyro shown everywhere) in Witness axes per 'AIM axes...'; "
+                                "until that is set, compare tilt first.")
         note.setWordWrap(True)
         note.setStyleSheet(f"color: {MUTED};")
         panel.layout().addWidget(note, panel.layout().rowCount(), 0, 1, 2)
@@ -218,11 +238,11 @@ class OrientationPanel(QtWidgets.QWidget):
         self.condition = attitude_condition(sample, self.last_valid, state, hitl)
         aim = self.aim.current(now)
         # Old samples stay on screen, only fainter.
-        self.aim_shown = aim.q if aim is not None and aim.q is not None else None
+        self.aim_shown = self.alignment.apply(aim.q) if aim is not None and aim.q is not None else None
         self.aim_stale = aim is not None and now - aim.time > STALE_S
         self.witness_stale = sample is not None and (sample.snapshot or now - sample.time > STALE_S)
         key = (id(sample), self.condition[0], id(self.last_valid), id(aim), self.aim_shown is None,
-               self.aim_stale, self.witness_stale)
+               self.aim_stale, self.witness_stale, tuple(self.alignment.to_dict().values()))
         if key != self._drawn_key:
             self._drawn_key = key
             guard_call("OrientationPanel.draw", self._draw, sample)
@@ -238,10 +258,14 @@ class OrientationPanel(QtWidgets.QWidget):
         notes = []
         if aim is not None:
             notes.append("AIM Xtra: translucent purple rocket" + (" (stale, faded)" if self.aim_stale else ""))
-        if code == "ok" and self.witness_stale:
+        if aim is not None and not self.alignment.is_identity():
+            notes.append(self.alignment.describe())
+        if code in ("ok", "carried") and self.witness_stale:
             notes.append("Witness sample stale (faded)")
+        if code == "carried":
+            notes.append("Witness: gyro-carried after saturation (relative motion only)")
         aim_legend = "\n".join(notes)
-        if code == "ok":
+        if code in ("ok", "carried"):
             self.scene.show_attitude(s.q, overlay=aim, legend=aim_legend, alpha=alpha, overlay_alpha=aim_alpha)
         elif code == "lost" and self.last_valid is not None:
             legend = "last valid attitude (blue ghost)" + ("\n" + aim_legend if aim_legend else "")
@@ -266,6 +290,8 @@ class OrientationPanel(QtWidgets.QWidget):
                 self._set(key, "--", MUTED)
         if code == "ok":
             self._set("status", "valid", OK)
+        elif code == "carried":
+            self._set("status", f"{title}: {detail}", WARN)
         else:
             self._set("status", f"{title}: {detail}", BAD if code in ("lost", "unavailable") else WARN)
         if s is None:
@@ -288,7 +314,15 @@ class OrientationPanel(QtWidgets.QWidget):
 
     def _aim_readouts(self, now):
         aim = self.aim.current(now)
-        angles = am.attitude_angles(aim.q) if aim is not None and aim.q is not None else None
+        aligned = self.alignment.apply(aim.q) if aim is not None and aim.q is not None else None
+        angles = am.attitude_angles(aligned) if aligned is not None else None
+        self._set("aim_axes", self.alignment.describe(), MUTED if self.alignment.is_identity() else TEXT)
+        witness = self.live.current(now)
+        if aligned is not None and witness is not None and witness.q is not None:
+            self._set("aim_diff", f"{am.angle_between_deg(witness.q, aligned):.1f}° "
+                                  f"(tilt {am.tilt_deg(witness.q) - am.tilt_deg(aligned):+.1f}°)")
+        else:
+            self._set("aim_diff", "--", MUTED)
         if angles is None:
             for key in ("aim_tilt", "aim_roll", "aim_heading"):
                 self._set(key, "--", MUTED)
@@ -304,9 +338,144 @@ class OrientationPanel(QtWidgets.QWidget):
             self._set("aim_age", f"{age:.1f} s" + (" STALE (faded)" if stale else "")
                       + (f" ({aim.reason})" if aim.q is None and aim.reason else ""), BAD if stale else TEXT)
 
+    # ------------------------------------------------------ AIM alignment
+    def show_alignment(self):
+        if self._align_dialog is None:
+            self._align_dialog = AimAlignmentDialog(self)
+        self._align_dialog.load()
+        self._align_dialog.show()
+        self._align_dialog.raise_()
+
+    def alignment_changed(self):
+        # Publish the edited alignment (atomic snapshot for the MQTT thread) and save it.
+        self.shared.publish(save=True)
+        self._invalidate()
+        self._readout_key = None
+
+    def match_heading_now(self, now=None):
+        """Set the AIM heading offset so AIM's heading equals Witness's now."""
+        now = time.monotonic() if now is None else now
+        witness, aim = self.live.current(now), self.aim.current(now)
+        result = self.alignment.match_heading(witness.q if witness is not None else None,
+                                              aim.q if aim is not None else None)
+        if result is not None:
+            self.alignment_changed()
+        return result
+
     def close(self):
         self._timer.stop()
         return super().close()
+
+
+class AimAlignmentDialog(QtWidgets.QDialog):
+    """Axis mapping, roll and heading that rotate AIM into Witness's axes (aim_alignment)."""
+
+    def __init__(self, panel):
+        super().__init__(panel)
+        self.panel = panel
+        self.setWindowTitle("AIM axes in Witness's frame")
+        form = QtWidgets.QFormLayout(self)
+        text = QtWidgets.QLabel(
+            "Witness: +X along the nose, heading arbitrary (set at pad initialisation). Pick the AIM body "
+            "axis each Witness axis points along, then a roll about the nose for a board clocked a few "
+            "degrees off. 'Match heading now' turns AIM about Up so the headings agree (use it with "
+            "both live, ideally on the pad). Changes apply at once to every AIM readout and plot in "
+            "Horizon (AIM accel and gyro use the axes and roll, not the heading) and are saved. "
+            "The raw AIM MQTT log stays as received.")
+        text.setWordWrap(True)
+        text.setStyleSheet(f"color: {MUTED};")
+        form.addRow(text)
+        self.preset = QtWidgets.QComboBox()
+        self.preset.addItem("Preset...")
+        self.preset.addItems(list(AimAlignment.PRESETS))
+        self.preset.activated.connect(self._preset)
+        form.addRow("Preset", self.preset)
+        self.x_axis, self.y_axis = QtWidgets.QComboBox(), QtWidgets.QComboBox()
+        for combo in (self.x_axis, self.y_axis):
+            combo.addItems(AXES)
+            combo.currentTextChanged.connect(self._edited)
+        form.addRow("Witness +X (nose) = AIM", self.x_axis)
+        form.addRow("Witness +Y = AIM", self.y_axis)
+        self.z_label = QtWidgets.QLabel()
+        form.addRow("Witness +Z = AIM", self.z_label)
+        self.roll, self.heading = QtWidgets.QDoubleSpinBox(), QtWidgets.QDoubleSpinBox()
+        for spin in (self.roll, self.heading):
+            spin.setRange(-180.0, 180.0)
+            spin.setDecimals(1)
+            spin.setSingleStep(1.0)
+            spin.setWrapping(True)
+            spin.setSuffix(" °")
+            spin.valueChanged.connect(self._edited)
+        form.addRow("Roll about Witness +X", self.roll)
+        form.addRow("Heading about Up", self.heading)
+        buttons = QtWidgets.QHBoxLayout()
+        self.match_button = QtWidgets.QPushButton("Match heading now")
+        self.match_button.clicked.connect(self._match)
+        reset = QtWidgets.QPushButton("Reset")
+        reset.clicked.connect(self._reset)
+        close = QtWidgets.QPushButton("Close")
+        close.clicked.connect(self.close)
+        for button in (self.match_button, reset, close):
+            buttons.addWidget(button)
+        form.addRow(buttons)
+        self.status = QtWidgets.QLabel()
+        self.status.setWordWrap(True)
+        form.addRow(self.status)
+        self._loading = False
+        self.load()
+
+    def load(self):
+        a = self.panel.alignment
+        self._loading = True
+        self.x_axis.setCurrentText(a.witness_x)
+        self.y_axis.setCurrentText(a.witness_y)
+        self.roll.setValue(a.roll_deg)
+        self.heading.setValue(a.heading_deg)
+        self._loading = False
+        self.z_label.setText(witness_z_name(a.witness_x, a.witness_y))
+        self.status.setText(a.describe())
+
+    def _edited(self, *_):
+        if self._loading:
+            return
+        x, y = self.x_axis.currentText(), self.y_axis.currentText()
+        candidate = AimAlignment(x, y, self.roll.value(), self.heading.value())
+        if not candidate.valid():
+            self.z_label.setText("--")
+            self.status.setText(f"<span style='color:{BAD}'>Witness +X and +Y must map to "
+                                "perpendicular AIM axes.</span>")
+            return
+        a = self.panel.alignment
+        a.witness_x, a.witness_y, a.roll_deg, a.heading_deg = x, y, self.roll.value(), self.heading.value()
+        self.z_label.setText(witness_z_name(x, y))
+        self.status.setText(a.describe())
+        self.panel.alignment_changed()
+
+    def _preset(self, index):
+        name = self.preset.itemText(index)
+        if name not in AimAlignment.PRESETS:
+            return
+        x, y, roll = AimAlignment.PRESETS[name]
+        a = self.panel.alignment
+        a.witness_x, a.witness_y, a.roll_deg = x, y, roll
+        self.preset.setCurrentIndex(0)
+        self.load()
+        self.panel.alignment_changed()
+
+    def _match(self):
+        result = self.panel.match_heading_now()
+        if result is None:
+            self.status.setText(f"<span style='color:{BAD}'>Needs a valid Witness attitude and a live AIM "
+                                "orientation.</span>")
+            return
+        self.load()
+        self.status.setText(f"Heading matched: {result:+.1f}°. " + self.panel.alignment.describe())
+
+    def _reset(self):
+        a = self.panel.alignment
+        a.witness_x, a.witness_y, a.roll_deg, a.heading_deg = "+X", "+Y", 0.0, 0.0
+        self.load()
+        self.panel.alignment_changed()
 
 
 # -------------------------------------------------------------------- map
@@ -917,7 +1086,7 @@ class VisualizerPanel(QtWidgets.QWidget):
     square; dragging the divider is kept until the next flip."""
 
     def __init__(self, parent=None, *, live=None, aim=None, map_data=None, tiles=None, use_gl=None,
-                 on_pop_out=None):
+                 on_pop_out=None, alignment=None):
         super().__init__(parent)
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
@@ -935,7 +1104,7 @@ class VisualizerPanel(QtWidgets.QWidget):
             layout.addLayout(bar)
         self.splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical)
         self.splitter.setChildrenCollapsible(False)
-        self.orientation = OrientationPanel(live=live, aim=aim, use_gl=use_gl)
+        self.orientation = OrientationPanel(live=live, aim=aim, use_gl=use_gl, alignment=alignment)
         self.map = MapPanel(data=map_data, tiles=tiles)
         self.orientation.setMinimumSize(260, 240)
         self.map.setMinimumSize(300, 280)
@@ -975,13 +1144,15 @@ class VisualizerWindow(QtWidgets.QWidget):
 
     closed = QtCore.pyqtSignal()
 
-    def __init__(self, parent=None, *, live=None, aim=None, map_data=None, tiles=None, use_gl=None):
+    def __init__(self, parent=None, *, live=None, aim=None, map_data=None, tiles=None, use_gl=None,
+                 alignment=None):
         super().__init__(parent, QtCore.Qt.WindowType.Window)
         self.setWindowTitle("Horizon Visualizer")
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, False)
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        self.panel = VisualizerPanel(live=live, aim=aim, map_data=map_data, tiles=tiles, use_gl=use_gl)
+        self.panel = VisualizerPanel(live=live, aim=aim, map_data=map_data, tiles=tiles, use_gl=use_gl,
+                                     alignment=alignment)
         self.splitter, self.orientation, self.map = self.panel.splitter, self.panel.orientation, self.panel.map
         layout.addWidget(self.panel)
         self._closed = False

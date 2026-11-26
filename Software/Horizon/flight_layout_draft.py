@@ -16,9 +16,10 @@ from copy import deepcopy
 import json
 from pathlib import Path
 
+from aim_alignment import ACCEL_WITNESS_FIELDS, ALIGNED_Q_FIELDS
 from aim_altitude import BARO_ALTITUDE, BARO_VELOCITY
 from aim_mqtt import AIM_TOPIC_FIELDS
-from aim_orientation import GYRO_FIELDS
+from aim_orientation import GYRO_AIM_FIELDS, GYRO_FIELDS
 from flight_data import DEFAULT_LAYOUT, DISPLAY_FORMATS, load_layout, validate_layout
 from observable import Cell
 from telemetry_model import FEATHERWEIGHT_FIELDS, WITNESS_FIELDS
@@ -36,7 +37,10 @@ WITNESS_EDITOR_FIELDS = {
 FIELDS = {"witness": WITNESS_EDITOR_FIELDS, "featherweight": FEATHERWEIGHT_FIELDS,
           "aim": {**AIM_TOPIC_FIELDS,
                   "pressure_payload/v1": (*AIM_TOPIC_FIELDS["pressure_payload/v1"], BARO_ALTITUDE, BARO_VELOCITY),
-                  "orientation_payload/v1": (*AIM_TOPIC_FIELDS["orientation_payload/v1"], *GYRO_FIELDS)}}
+                  # _derived.* in Witness axes per "AIM axes..." (gyro_dps_aim: AIM's own axes).
+                  "z_acceleration_payload/v1": (*AIM_TOPIC_FIELDS["z_acceleration_payload/v1"], *ACCEL_WITNESS_FIELDS),
+                  "orientation_payload/v1": (*AIM_TOPIC_FIELDS["orientation_payload/v1"], *GYRO_FIELDS,
+                                             *GYRO_AIM_FIELDS, *ALIGNED_Q_FIELDS)}}
 GROUPS = {"flight": "Flight overview (left)", "state": "Flight state (left)",
           "gps": "GPS (right)", "power": "Power (right)"}
 HINT = ("Select an item on the left to edit it. Graph order is reading order.\n"

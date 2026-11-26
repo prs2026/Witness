@@ -5,6 +5,9 @@ app publishes to. The embedded local-only broker (mqtt_broker.py) runs by
 default. Field state is telemetry_model.AimFieldTable; the connection
 lifecycle is auto_connect.ReceiverControl. Click a numeric field to plot it
 live in the strip chart (pyqtgraph, redrawn by a throttle, not per message).
+With the shared ``alignment`` (aim_alignment.SharedAimAlignment, the Visualizer's
+"AIM axes..." setting), AIM's body-frame fields also appear in Witness axes as
+_derived.q_witness[0..3] / _derived.accel_witness[i] beside the raw published values.
 """
 
 from __future__ import annotations
@@ -36,8 +39,11 @@ class AimMqttTab(ReceiverControl, QtWidgets.QWidget):
     stats_format = "Messages: {messages}   Bytes: {bytes}   Errors: {errors}"
 
     def __init__(self, parent=None, *, log_dir: Path, host, port, client_uuid, base_path, on_sample=None,
-                 broker_enabled=DEFAULT_MQTT_BROKER_ENABLED, broker_port=DEFAULT_MQTT_BROKER_PORT):
+                 broker_enabled=DEFAULT_MQTT_BROKER_ENABLED, broker_port=DEFAULT_MQTT_BROKER_PORT,
+                 alignment=None):
         QtWidgets.QWidget.__init__(self, parent)
+        self.alignment = alignment        # shared AIM axes (aim_alignment.SharedAimAlignment) or None
+        self.axes_text = Cell(self._axes_text())
         self.init_receiver_control()
         self.log_dir = log_dir
         self.on_sample = on_sample
@@ -91,7 +97,7 @@ class AimMqttTab(ReceiverControl, QtWidgets.QWidget):
         bind_check(self.broker_enabled, self.broker_button, on_user=self.broker_changed)
         layout.addLayout(hbox(self.broker_button, wrap_label(
             "Turning this off disconnects its clients; an external broker is unaffected.", muted=True)))
-        for cell in (self.status, self.stats, self.broker_status):
+        for cell in (self.status, self.stats, self.broker_status, self.axes_text):
             label = wrap_label()
             bind_label(cell, label)
             layout.addWidget(label)
@@ -184,7 +190,18 @@ class AimMqttTab(ReceiverControl, QtWidgets.QWidget):
                                str(self.client_uuid.get()).strip(),
                                str(self.base_path.get()).strip().rstrip("/"))
         self._settings = settings
-        return AimMqttReceiver(settings, self.log_dir, on_sample=self.on_sample)
+        align = self.alignment.align_fields if self.alignment is not None else None
+        return AimMqttReceiver(settings, self.log_dir, on_sample=self.on_sample, align=align)
+
+    def _axes_text(self):
+        if self.alignment is None:
+            return "AIM axes as received."
+        frame = self.alignment.frame()
+        if frame.identity:
+            return ("AIM axes as received (no AIM axes setting; set one with 'AIM axes...' in Map & Attitude). "
+                    "_derived.*_witness fields equal the raw ones.")
+        return (frame.description + ". Raw fields are as published (and logged); "
+                "_derived.q_witness / _derived.accel_witness are in Witness axes.")
 
     def connecting_status(self, receiver):
         self.stats.set(self.stats_format.format(messages=0, bytes=0, errors=0))
@@ -242,6 +259,7 @@ class AimMqttTab(ReceiverControl, QtWidgets.QWidget):
     def _poll(self):
         guard_call("AimMqttTab.broker", self._poll_broker)
         guard_call("AimMqttTab.poll", self.poll)
+        guard_call("AimMqttTab.axes", lambda: self.axes_text.set(self._axes_text()))
         try:
             rows = self.model.update_ages()
         except Exception as exc:
